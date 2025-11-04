@@ -1,0 +1,72 @@
+{
+  "printWidth": 120,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "tabWidth": 4,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "quoteProps": "consistent",
+  "singleAttributePerLine": true,
+  "jsxSingleQuote": false,
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "importOrderGroupNamespaceSpecifiers": true,
+  "importOrder": [
+    "^react$",
+    "^react-dom(.*)$",
+    "^classnames(.*)$",
+    "<THIRD_PARTY_MODULES>",
+
+    "^@styles(.*)$",
+
+    "^@app$",
+
+    "^@assets(.*)$",
+    "^@config(.*)$",
+    "^@libs(.*)$",
+    "^@packages(.*)$",
+    "^@application$",
+    "^@application/root(.*)$",
+    "^@application/shared(.*)$",
+    "^@application/authentication(.*)$",
+    "^@application/modules(.*)$",
+    "^@i18n(.*)$",
+    "^@integrations(.*)$",
+    "^@repositories(.*)$",
+
+    "^@infrastructure/abstractions(.*)$",
+    "^@infrastructure/api(.*)$",
+    "^@infrastructure/authentication(.*)$",
+    "^@infrastructure/authorization(.*)$",
+    "^@infrastructure/constants(.*)$",
+    "^@infrastructure/data-structures(.*)$",
+    "^@infrastructure/entities(.*)$",
+    "^@infrastructure/enums(.*)$",
+    "^@infrastructure/exceptions(.*)$",
+    "^@infrastructure/interfaces(.*)$",
+    "^@infrastructure/schemas(.*)$",
+    "^@infrastructure/types(.*)$",
+    "^@infrastructure/utility-types(.*)$",
+    "^@infrastructure/value-objects(.*)$",
+
+    "^@utils/api(.*)$",
+    "^@utils/authorization(.*)$",
+    "^@utils/dev(.*)$",
+    "^@utils/helpers(.*)$",
+    "^@workers(.*)$",
+    "^../(.*)$",
+    "^[./]"
+  ],
+  "importOrderParserPlugins": ["classProperties", "typescript", "jsx"],
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
+  "overrides": [
+    {
+      "files": ["*.json", "*.scss", "*.css", ".prettierrc"],
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
+}

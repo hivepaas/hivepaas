@@ -1,13 +1,15 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 import { HttpException } from "./http.exception";
 
 /**
  * Unprocessable Entity
  */
 export class Http422Exception extends HttpException {
-    constructor(message: string) {
+    constructor(problem: ProblemApiResponse) {
         super({
-            message,
             status: 422,
+            problem,
         });
     }
 }

@@ -1,7 +1,7 @@
-import { ProblemApiResponse } from "./problem.api-response";
+import { ProblemApiResponse } from "@infrastructure/api";
 
 interface ValidationError {
-    name: string;
+    path: string;
     code: string;
     message: string;
 }
@@ -10,6 +10,7 @@ interface ConstructorParams {
     type: string;
     title: string;
     status: number;
+    code: string;
     detail: string;
     errors: ValidationError[];
 }
@@ -20,11 +21,20 @@ export class ValidationProblemApiResponse extends ProblemApiResponse {
             type: params.type,
             title: params.title,
             status: params.status,
+            code: params.code,
             detail: params.detail,
         });
 
-        this.errors = params.errors;
+        this.#errors = params.errors;
     }
 
-    errors: ValidationError[];
+    #errors: ValidationError[];
+
+    get errors(): ValidationError[] {
+        return this.#errors;
+    }
+
+    set errors(errors: ValidationError[]) {
+        this.#errors = errors;
+    }
 }

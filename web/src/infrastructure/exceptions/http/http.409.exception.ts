@@ -1,13 +1,15 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 import { HttpException } from "./http.exception";
 
 /**
  * Conflict
  */
 export class Http409Exception extends HttpException {
-    constructor(message: string) {
+    constructor(problem: ProblemApiResponse) {
         super({
-            message,
             status: 409,
+            problem,
         });
     }
 }

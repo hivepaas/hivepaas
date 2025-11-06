@@ -1,13 +1,15 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 import { HttpException } from "./http.exception";
 
 /**
  * Not found
  */
 export class Http404Exception extends HttpException {
-    constructor(message: string) {
+    constructor(problem: ProblemApiResponse) {
         super({
-            message,
             status: 404,
+            problem,
         });
     }
 }

@@ -1,0 +1,269 @@
+import { type AxiosResponse } from "axios";
+import { z } from "zod";
+
+import {
+    type Auth_ForgotPassword_Res,
+    type Auth_ResetPassword_Res,
+    type Auth_Send2FAToken_Res,
+    type Auth_SignIn2FA_Res,
+    type Auth_SignIn_Res,
+    type Auth_SignUp_Res,
+    type Auth_ValidateAccessCode_Res,
+    type Auth_ValidateInviteToken_Res,
+    type Auth_ValidateResetToken_Res,
+} from "@application/authentication/api/services";
+
+import { parseApiResponse } from "@infrastructure/api";
+
+/**
+ * Sign in API response schema
+ */
+const SignInSchema = z.object({
+    data: z.union([
+        z.object({
+            session: z.object({
+                accessToken: z.string(),
+            }),
+        }),
+
+        z.object({
+            mfaType: z.string(),
+            mfaToken: z.string(),
+        }),
+    ]),
+});
+
+/**
+ * Validate invite token API response schema
+ */
+const ValidateInviteTokenSchema = z.object({
+    data: z.object({
+        invitedWorkspaceUser: z.object({
+            workspaceId: z.string(),
+            email: z.string().trim().email(),
+            isInternal: z.boolean(),
+            entity: z
+                .object({
+                    id: z.string(),
+                    name: z.string(),
+                })
+                .nullable(),
+        }),
+    }),
+});
+
+/**
+ * Validate access code API response schema
+ */
+const ValidateAccessCodeSchema = z.object({
+    data: z.object({
+        workspaceId: z.string(),
+        isInternalUser: z.boolean(),
+        entity: z
+            .object({
+                id: z.string(),
+                name: z.string(),
+            })
+            .nullable(),
+    }),
+});
+
+/**
+ * Send 2FA token API response schema
+ */
+const Send2FATokenSchema = z.object({
+    data: z.object({
+        requestBlockingDuration: z.number(),
+    }),
+});
+
+/**
+ * Sign in 2FA API response schema
+ */
+const SignIn2FASchema = z.object({
+    data: z.object({
+        session: z.object({
+            accessToken: z.string(),
+        }),
+    }),
+});
+
+/**
+ * Forgot password API response schema
+ */
+const ForgotPasswordSchema = z.object({
+    data: z.object({
+        linkExpirationMins: z.number(),
+    }),
+});
+
+export class AuthApiValidator {
+    /**
+     * Validate and transform the sign-up API response
+     */
+    signUp = (_: AxiosResponse): Auth_SignUp_Res => {
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the sign in API response
+     */
+    signIn = (response: AxiosResponse): Auth_SignIn_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: SignInSchema,
+        });
+
+        if ("session" in data) {
+            return {
+                data: {
+                    type: "success",
+                    token: data.session.accessToken,
+                },
+            };
+        }
+
+        return {
+            data: {
+                type: "2fa-required",
+                mfaToken: data.mfaToken,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the validate invite token API response
+     */
+    validateInviteToken = (response: AxiosResponse): Auth_ValidateInviteToken_Res => {
+        const {
+            data: { invitedWorkspaceUser: data },
+        } = parseApiResponse({
+            response,
+            schema: ValidateInviteTokenSchema,
+        });
+
+        if (data.isInternal) {
+            return {
+                data: {
+                    workspaceId: data.workspaceId,
+                    candidate: {
+                        isInternal: true,
+                        email: data.email,
+                        entity: data.entity,
+                    },
+                },
+            };
+        }
+
+        return {
+            data: {
+                workspaceId: data.workspaceId,
+                candidate: {
+                    isInternal: false,
+                    email: data.email,
+                },
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the validate access code API response
+     */
+    validateAccessCode = (response: AxiosResponse): Auth_ValidateAccessCode_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: ValidateAccessCodeSchema,
+        });
+
+        if (data.isInternalUser) {
+            return {
+                data: {
+                    workspaceId: data.workspaceId,
+                    candidate: {
+                        isInternal: true,
+                        entity: data.entity,
+                    },
+                },
+            };
+        }
+
+        return {
+            data: {
+                workspaceId: data.workspaceId,
+                candidate: {
+                    isInternal: false,
+                },
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the send 2FA token API response
+     */
+    send2FAToken = (response: AxiosResponse): Auth_Send2FAToken_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: Send2FATokenSchema,
+        });
+
+        return {
+            data,
+        };
+    };
+
+    /**
+     * Validate and transform the sign in 2FA API response
+     */
+    signIn2FA = (response: AxiosResponse): Auth_SignIn2FA_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: SignIn2FASchema,
+        });
+
+        return {
+            data: {
+                token: data.session.accessToken,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the forgot password API response
+     */
+    forgotPassword = (response: AxiosResponse): Auth_ForgotPassword_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: ForgotPasswordSchema,
+        });
+
+        return {
+            data,
+        };
+    };
+
+    /**
+     * Validate and transform the reset token validation API response
+     */
+    validateResetToken = (_: AxiosResponse): Auth_ValidateResetToken_Res => {
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the reset password API response
+     */
+    resetPassword = (_: AxiosResponse): Auth_ResetPassword_Res => {
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+}

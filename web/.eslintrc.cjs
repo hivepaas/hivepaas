@@ -34,13 +34,20 @@ module.exports = {
     ],
     ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts"],
     rules: {
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                argsIgnorePattern: "^_",
+                varsIgnorePattern: "^_",
+                caughtErrorsIgnorePattern: "^_",
+            },
+        ],
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/prefer-namespace-keyword": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-module-boundary-types": "error",
         "@typescript-eslint/no-inferrable-types": "off",
-        "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", ignoreRestSiblings: true }],
         "@typescript-eslint/typedef": [
             "error",
             {

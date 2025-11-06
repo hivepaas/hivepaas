@@ -1,5 +1,4 @@
 import { type SignUp } from "@application/authentication/domain";
-import { ESignUpType } from "@application/authentication/enums";
 
 interface RequestData {
     email: string;
@@ -32,24 +31,24 @@ class SignUpMapper {
         };
     };
 
-    toEmailApi = (domain: SignUp): Omit<RequestData, "email"> => {
-        if (domain.type !== ESignUpType.Email) {
-            throw new Error("Invalid sign up type");
-        }
+    // toEmailApi = (domain: SignUp): Omit<RequestData, "email"> => {
+    //     if (domain.type !== ESignUpType.Email) {
+    //         throw new Error("Invalid sign up type");
+    //     }
 
-        return this.map(domain.data);
-    };
+    //     return this.map(domain.data);
+    // };
 
-    toCodeApi = (domain: SignUp): RequestData => {
-        if (domain.type !== ESignUpType.Code) {
-            throw new Error("Invalid sign up type");
-        }
+    // toCodeApi = (domain: SignUp): RequestData => {
+    //     if (domain.type !== ESignUpType.Code) {
+    //         throw new Error("Invalid sign up type");
+    //     }
 
-        return {
-            ...this.map(domain.data),
-            email: domain.data.email,
-        };
-    };
+    //     return {
+    //         ...this.map(domain.data),
+    //         email: domain.data.email,
+    //     };
+    // };
 }
 
 export class AuthApiMapper {

@@ -1,7 +1,13 @@
 import { useState } from "react";
 
+import { useSearchParams } from "react-router";
+
+import { AppNavigate } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
-import { Profile } from "@application/shared/entities";
+
+import { useAuthContext } from "@application/authentication/context";
+import { AuthQueries } from "@application/authentication/data/queries";
 
 import { SignInForm } from "../form";
 import type { SignInSchemaOutput } from "../schemas";
@@ -9,6 +15,12 @@ import type { SignInSchemaOutput } from "../schemas";
 function View() {
     const [isPending, setIsPending] = useState(false);
     const profileContext = useProfileContext();
+
+    const { data, isLoading } = AuthQueries.useGetLoginOptions();
+
+    console.log(isLoading);
+
+    console.log(data);
 
     async function onSubmit(values: SignInSchemaOutput) {
         setIsPending(true);
@@ -19,7 +31,14 @@ function View() {
 
         if (values.email === VALID_EMAIL && values.password === VALID_PASSWORD) {
             profileContext.setToken("fake-jwt-token-abc123");
-            profileContext.setProfile(new Profile({ id: "user_1", username: "Test User" }));
+            profileContext.setProfile({
+                id: "user_1",
+                firstName: "Test",
+                lastName: "User",
+                fullName: "Test User",
+                photo: null,
+                email: "test@example.com",
+            });
             setIsPending(false);
             return;
         }
@@ -41,5 +60,21 @@ function View() {
 }
 
 export const SignInRoute = () => {
+    const { data } = useAuthContext();
+
+    const [params] = useSearchParams();
+
+    if (data.required2FA) {
+        return (
+            <AppNavigate
+                to={{
+                    pathname: ROUTE.auth.twoFA.$route,
+                    search: params.toString(),
+                }}
+                replace
+            />
+        );
+    }
+
     return <View />;
 };

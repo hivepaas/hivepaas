@@ -37,13 +37,13 @@ export class AuthApi extends BaseApi {
      * Sign up
      */
     async signUp(request: Auth_SignUp_Req): Promise<Result<Auth_SignUp_Res, Error>> {
-        const json = this.mapper.signUp.toEmailApi(request.data);
+        // const json = this.mapper.signUp.toEmailApi(request.data);
 
         return lastValueFrom(
             from(
                 this.client.v1.post("/users/signup", {
                     inviteToken: request.data.inviteToken,
-                    ...json,
+                    // ...json,
                 }),
             ).pipe(
                 map(this.validator.signUp),

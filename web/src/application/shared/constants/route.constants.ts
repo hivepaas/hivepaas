@@ -19,6 +19,11 @@ export const ROUTE = {
      * Authentication
      */
     auth: {
+        twoFA: {
+            $pattern: "auth/two-fa",
+            $route: "/auth/two-fa/",
+        },
+
         signIn: {
             $pattern: "auth/sign-in",
             $route: "/auth/sign-in/",

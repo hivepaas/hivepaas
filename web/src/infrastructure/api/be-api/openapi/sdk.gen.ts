@@ -69,14 +69,14 @@ import type {
     GetApiKeyErrors,
     GetApiKeyResponses,
     GetAppData,
-    GetAppEnvVarsData,
-    GetAppEnvVarsErrors,
-    GetAppEnvVarsResponses,
     GetAppErrors,
     GetAppResponses,
     GetAppSettingsData,
     GetAppSettingsErrors,
     GetAppSettingsResponses,
+    GetLoginOptionsData,
+    GetLoginOptionsErrors,
+    GetLoginOptionsResponses,
     GetMeData,
     GetMeErrors,
     GetMeResponses,
@@ -84,9 +84,6 @@ import type {
     GetNodeErrors,
     GetNodeResponses,
     GetProjectData,
-    GetProjectEnvVarsData,
-    GetProjectEnvVarsErrors,
-    GetProjectEnvVarsResponses,
     GetProjectErrors,
     GetProjectResponses,
     GetProjectSettingsData,
@@ -116,9 +113,6 @@ import type {
     ListAppData,
     ListAppErrors,
     ListAppResponses,
-    ListNodeBaseData,
-    ListNodeBaseErrors,
-    ListNodeBaseResponses,
     ListNodeData,
     ListNodeErrors,
     ListNodeResponses,
@@ -161,15 +155,9 @@ import type {
     RemoveMfaTotpData,
     RemoveMfaTotpErrors,
     RemoveMfaTotpResponses,
-    UpdateAppEnvVarsData,
-    UpdateAppEnvVarsErrors,
-    UpdateAppEnvVarsResponses,
     UpdateAppSettingsData,
     UpdateAppSettingsErrors,
     UpdateAppSettingsResponses,
-    UpdateProjectEnvVarsData,
-    UpdateProjectEnvVarsErrors,
-    UpdateProjectEnvVarsResponses,
     UpdateProjectSettingsData,
     UpdateProjectSettingsErrors,
     UpdateProjectSettingsResponses,
@@ -277,6 +265,21 @@ export const getApiKey = <ThrowOnError extends boolean = false>(options: Options
 };
 
 /**
+ * Gets login options
+ *
+ * Gets login options
+ */
+export const getLoginOptions = <ThrowOnError extends boolean = false>(
+    options?: Options<GetLoginOptionsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetLoginOptionsResponses, GetLoginOptionsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/auth/login-options",
+        ...options,
+    });
+};
+
+/**
  * Login to system with API key
  *
  * Login to system with API key
@@ -343,21 +346,6 @@ export const listNode = <ThrowOnError extends boolean = false>(options?: Options
     return (options?.client ?? client).get<ListNodeResponses, ListNodeErrors, ThrowOnError>({
         responseType: "json",
         url: "/cluster/nodes",
-        ...options,
-    });
-};
-
-/**
- * Lists cluster nodes
- *
- * Lists cluster nodes
- */
-export const listNodeBase = <ThrowOnError extends boolean = false>(
-    options?: Options<ListNodeBaseData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListNodeBaseResponses, ListNodeBaseErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/cluster/nodes/base-list",
         ...options,
     });
 };
@@ -552,44 +540,6 @@ export const getApp = <ThrowOnError extends boolean = false>(options: Options<Ge
 };
 
 /**
- * Gets app env vars
- *
- * Gets app env vars
- */
-export const getAppEnvVars = <ThrowOnError extends boolean = false>(
-    options: Options<GetAppEnvVarsData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetAppEnvVarsResponses, GetAppEnvVarsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/projects/{projectID}/apps/{appID}/env-vars",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
- * Updates app env vars
- *
- * Updates app env vars
- */
-export const updateAppEnvVars = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateAppEnvVarsData, ThrowOnError>,
-) => {
-    return (options.client ?? client).put<UpdateAppEnvVarsResponses, UpdateAppEnvVarsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/projects/{projectID}/apps/{appID}/env-vars",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
  * Gets app settings
  *
  * Gets app settings
@@ -601,10 +551,6 @@ export const getAppSettings = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/projects/{projectID}/apps/{appID}/settings",
         ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
     });
 };
 
@@ -616,7 +562,7 @@ export const getAppSettings = <ThrowOnError extends boolean = false>(
 export const updateAppSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateAppSettingsData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).put<UpdateAppSettingsResponses, UpdateAppSettingsErrors, ThrowOnError>({
+    return (options.client ?? client).patch<UpdateAppSettingsResponses, UpdateAppSettingsErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/apps/{appID}/settings",
         ...options,
@@ -666,44 +612,6 @@ export const deleteAppTags = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Gets project env vars
- *
- * Gets project env vars
- */
-export const getProjectEnvVars = <ThrowOnError extends boolean = false>(
-    options: Options<GetProjectEnvVarsData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetProjectEnvVarsResponses, GetProjectEnvVarsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/projects/{projectID}/env-vars",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
- * Updates project env vars
- *
- * Updates project env vars
- */
-export const updateProjectEnvVars = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateProjectEnvVarsData, ThrowOnError>,
-) => {
-    return (options.client ?? client).put<UpdateProjectEnvVarsResponses, UpdateProjectEnvVarsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/projects/{projectID}/env-vars",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
  * Gets project settings
  *
  * Gets project settings
@@ -715,10 +623,6 @@ export const getProjectSettings = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/projects/{projectID}/settings",
         ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
     });
 };
 
@@ -730,7 +634,7 @@ export const getProjectSettings = <ThrowOnError extends boolean = false>(
 export const updateProjectSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateProjectSettingsData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).put<UpdateProjectSettingsResponses, UpdateProjectSettingsErrors, ThrowOnError>({
+    return (options.client ?? client).patch<UpdateProjectSettingsResponses, UpdateProjectSettingsErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/settings",
         ...options,

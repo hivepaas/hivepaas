@@ -1,3 +1,4 @@
+import type { DeviceInfo } from "@infrastructure/device";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
@@ -6,6 +7,7 @@ import {
     type AuthApiValidator,
     type Auth_ForgotPassword_Req,
     type Auth_ForgotPassword_Res,
+    type Auth_GetLoginOptions_Res,
     type Auth_ResetPassword_Req,
     type Auth_ResetPassword_Res,
     type Auth_Send2FAToken_Req,
@@ -16,10 +18,6 @@ import {
     type Auth_SignIn_Res,
     type Auth_SignUp_Req,
     type Auth_SignUp_Res,
-    type Auth_ValidateAccessCode_Req,
-    type Auth_ValidateAccessCode_Res,
-    type Auth_ValidateInviteToken_Req,
-    type Auth_ValidateInviteToken_Res,
     type Auth_ValidateResetToken_Req,
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
@@ -30,6 +28,7 @@ export class AuthApi extends BaseApi {
     public constructor(
         private readonly validator: AuthApiValidator,
         private readonly mapper: AuthApiMapper,
+        private readonly device: DeviceInfo,
     ) {
         super();
     }
@@ -43,56 +42,11 @@ export class AuthApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.post("/users/signup", {
-                    workspace: { id: request.meta.workspaceId },
                     inviteToken: request.data.inviteToken,
                     ...json,
                 }),
             ).pipe(
                 map(this.validator.signUp),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    /**
-     * Validate invite token
-     */
-    async validateInviteToken(
-        request: Auth_ValidateInviteToken_Req,
-    ): Promise<Result<Auth_ValidateInviteToken_Res, Error>> {
-        const { data } = request;
-
-        const query = this.queryBuilder.getInstance();
-
-        query.filterBy({
-            inviteToken: [data.inviteToken],
-        });
-
-        return lastValueFrom(
-            from(
-                this.client.v1.get("/signup/invitation-info", {
-                    params: query.build(),
-                }),
-            ).pipe(
-                map(this.validator.validateInviteToken),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    /**
-     * Validate access code
-     */
-    async validateAccessCode(
-        request: Auth_ValidateAccessCode_Req,
-    ): Promise<Result<Auth_ValidateAccessCode_Res, Error>> {
-        const { data } = request;
-
-        return lastValueFrom(
-            from(this.client.v1.post(`/signup/access-code/${data.accessCode}/validate`)).pipe(
-                map(this.validator.validateAccessCode),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -110,6 +64,7 @@ export class AuthApi extends BaseApi {
                     {
                         username: request.data.email,
                         password: request.data.password,
+                        trustedDeviceId: request.data.isTrustDevice ? await this.device.getFingerprint() : undefined,
                     },
                     {
                         withCredentials: true,
@@ -214,6 +169,19 @@ export class AuthApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.resetPassword),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Get login options
+     */
+    async getLoginOptions(signal: AbortSignal): Promise<Result<Auth_GetLoginOptions_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.get("/auth/login-options", { signal })).pipe(
+                map(this.validator.getLoginOptions),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

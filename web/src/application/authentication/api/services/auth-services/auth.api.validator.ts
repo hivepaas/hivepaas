@@ -3,13 +3,12 @@ import { z } from "zod";
 
 import {
     type Auth_ForgotPassword_Res,
+    type Auth_GetLoginOptions_Res,
     type Auth_ResetPassword_Res,
     type Auth_Send2FAToken_Res,
     type Auth_SignIn2FA_Res,
     type Auth_SignIn_Res,
     type Auth_SignUp_Res,
-    type Auth_ValidateAccessCode_Res,
-    type Auth_ValidateInviteToken_Res,
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
 
@@ -31,41 +30,6 @@ const SignInSchema = z.object({
             mfaToken: z.string(),
         }),
     ]),
-});
-
-/**
- * Validate invite token API response schema
- */
-const ValidateInviteTokenSchema = z.object({
-    data: z.object({
-        invitedWorkspaceUser: z.object({
-            workspaceId: z.string(),
-            email: z.string().trim().email(),
-            isInternal: z.boolean(),
-            entity: z
-                .object({
-                    id: z.string(),
-                    name: z.string(),
-                })
-                .nullable(),
-        }),
-    }),
-});
-
-/**
- * Validate access code API response schema
- */
-const ValidateAccessCodeSchema = z.object({
-    data: z.object({
-        workspaceId: z.string(),
-        isInternalUser: z.boolean(),
-        entity: z
-            .object({
-                id: z.string(),
-                name: z.string(),
-            })
-            .nullable(),
-    }),
 });
 
 /**
@@ -94,6 +58,18 @@ const SignIn2FASchema = z.object({
 const ForgotPasswordSchema = z.object({
     data: z.object({
         linkExpirationMins: z.number(),
+    }),
+});
+
+/**
+ * Get login options API response schema
+ */
+const GetLoginOptionsSchema = z.object({
+    data: z.object({
+        options: z.object({
+            allowLoginWithGitHub: z.boolean(),
+            allowLoginWithGitLab: z.boolean(),
+        }),
     }),
 });
 
@@ -129,74 +105,8 @@ export class AuthApiValidator {
 
         return {
             data: {
-                type: "2fa-required",
+                type: "mfa-required",
                 mfaToken: data.mfaToken,
-            },
-        };
-    };
-
-    /**
-     * Validate and transform the validate invite token API response
-     */
-    validateInviteToken = (response: AxiosResponse): Auth_ValidateInviteToken_Res => {
-        const {
-            data: { invitedWorkspaceUser: data },
-        } = parseApiResponse({
-            response,
-            schema: ValidateInviteTokenSchema,
-        });
-
-        if (data.isInternal) {
-            return {
-                data: {
-                    workspaceId: data.workspaceId,
-                    candidate: {
-                        isInternal: true,
-                        email: data.email,
-                        entity: data.entity,
-                    },
-                },
-            };
-        }
-
-        return {
-            data: {
-                workspaceId: data.workspaceId,
-                candidate: {
-                    isInternal: false,
-                    email: data.email,
-                },
-            },
-        };
-    };
-
-    /**
-     * Validate and transform the validate access code API response
-     */
-    validateAccessCode = (response: AxiosResponse): Auth_ValidateAccessCode_Res => {
-        const { data } = parseApiResponse({
-            response,
-            schema: ValidateAccessCodeSchema,
-        });
-
-        if (data.isInternalUser) {
-            return {
-                data: {
-                    workspaceId: data.workspaceId,
-                    candidate: {
-                        isInternal: true,
-                        entity: data.entity,
-                    },
-                },
-            };
-        }
-
-        return {
-            data: {
-                workspaceId: data.workspaceId,
-                candidate: {
-                    isInternal: false,
-                },
             },
         };
     };
@@ -263,6 +173,25 @@ export class AuthApiValidator {
         return {
             data: {
                 type: "success",
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the get login options API response
+     */
+    getLoginOptions = (response: AxiosResponse): Auth_GetLoginOptions_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: GetLoginOptionsSchema,
+        });
+
+        return {
+            data: {
+                options: {
+                    allowGithubLogin: data.options.allowLoginWithGitHub,
+                    allowGitlabLogin: data.options.allowLoginWithGitLab,
+                },
             },
         };
     };

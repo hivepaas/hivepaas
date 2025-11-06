@@ -17,12 +17,7 @@ import { type PreserveUnionOmit } from "@infrastructure/utility-types";
 /**
  * Sign up
  */
-export type Auth_SignUp_Req = ApiRequestBase<
-    SignUp,
-    {
-        workspaceId: string;
-    }
->;
+export type Auth_SignUp_Req = ApiRequestBase<SignUp>;
 
 export type Auth_SignUp_Res = ApiResponseBase<{
     type: "success";
@@ -59,7 +54,7 @@ export type Auth_SignIn_Res = ApiResponseBase<
           token: string;
       }
     | {
-          type: "2fa-required";
+          type: "mfa-required";
           mfaToken: string;
       }
 >;
@@ -109,4 +104,11 @@ export type Auth_ResetPassword_Req = ApiRequestBase<ResetPassword>;
 
 export type Auth_ResetPassword_Res = ApiResponseBase<{
     type: "success";
+}>;
+
+export type Auth_GetLoginOptions_Res = ApiResponseBase<{
+    options: {
+        allowGithubLogin: boolean;
+        allowGitlabLogin: boolean;
+    };
 }>;

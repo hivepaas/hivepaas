@@ -708,10 +708,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginMfaT
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUserSignupDataResp = {
+    accessExpiration: string;
+    email: string;
     mfaTotpSecret?: string;
     qrCode?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoMfaTotpQrCodeResp;
-    requireMfa: boolean;
-    requirePassword: boolean;
+    role: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole;
+    securityOption: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUserSignupReq = {
@@ -952,7 +954,7 @@ export type ListApiKeyBaseData = {
          */
         sort?: string;
     };
-    url: "/api-keys/base-list";
+    url: "/api-keys/base";
 };
 
 export type ListApiKeyBaseErrors = {
@@ -1429,7 +1431,7 @@ export type ListProjectBaseData = {
          */
         sort?: string;
     };
-    url: "/projects/base-list";
+    url: "/projects/base";
 };
 
 export type ListProjectBaseErrors = {
@@ -1644,7 +1646,7 @@ export type ListAppBaseData = {
          */
         sort?: string;
     };
-    url: "/projects/{projectID}/apps/base-list";
+    url: "/projects/{projectID}/apps/base";
 };
 
 export type ListAppBaseErrors = {
@@ -2163,7 +2165,7 @@ export type ListS3StorageBaseData = {
          */
         sort?: string;
     };
-    url: "/s3-storages/base-list";
+    url: "/s3-storages/base";
 };
 
 export type ListS3StorageBaseErrors = {
@@ -2476,7 +2478,7 @@ export type ListSshKeyBaseData = {
          */
         sort?: string;
     };
-    url: "/ssh-keys/base-list";
+    url: "/ssh-keys/base";
 };
 
 export type ListSshKeyBaseErrors = {
@@ -2678,7 +2680,7 @@ export type ListUserBaseData = {
          */
         sort?: string;
     };
-    url: "/users/base-list";
+    url: "/users/base";
 };
 
 export type ListUserBaseErrors = {

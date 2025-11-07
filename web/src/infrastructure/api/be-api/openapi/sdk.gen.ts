@@ -231,7 +231,7 @@ export const listApiKeyBase = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<ListApiKeyBaseResponses, ListApiKeyBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/api-keys/base-list",
+        url: "/api-keys/base",
         ...options,
     });
 };
@@ -433,7 +433,7 @@ export const listProjectBase = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<ListProjectBaseResponses, ListProjectBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/projects/base-list",
+        url: "/projects/base",
         ...options,
     });
 };
@@ -504,7 +504,7 @@ export const createApp = <ThrowOnError extends boolean = false>(options: Options
 export const listAppBase = <ThrowOnError extends boolean = false>(options: Options<ListAppBaseData, ThrowOnError>) => {
     return (options.client ?? client).get<ListAppBaseResponses, ListAppBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/projects/{projectID}/apps/base-list",
+        url: "/projects/{projectID}/apps/base",
         ...options,
     });
 };
@@ -727,7 +727,7 @@ export const listS3StorageBase = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<ListS3StorageBaseResponses, ListS3StorageBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/s3-storages/base-list",
+        url: "/s3-storages/base",
         ...options,
     });
 };
@@ -863,7 +863,7 @@ export const listSshKeyBase = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<ListSshKeyBaseResponses, ListSshKeyBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys/base-list",
+        url: "/ssh-keys/base",
         ...options,
     });
 };
@@ -934,7 +934,7 @@ export const listUserBase = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<ListUserBaseResponses, ListUserBaseErrors, ThrowOnError>({
         responseType: "json",
-        url: "/users/base-list",
+        url: "/users/base",
         ...options,
     });
 };

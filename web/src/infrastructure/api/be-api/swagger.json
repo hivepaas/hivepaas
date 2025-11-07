@@ -138,7 +138,7 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/api-keys/base-list" : {
+    "/api-keys/base" : {
       "get" : {
         "description" : "Lists API key",
         "operationId" : "listAPIKeyBase",
@@ -845,7 +845,7 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/base-list" : {
+    "/projects/base" : {
       "get" : {
         "description" : "Lists projects",
         "operationId" : "listProjectBase",
@@ -1160,7 +1160,7 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/apps/base-list" : {
+    "/projects/{projectID}/apps/base" : {
       "get" : {
         "description" : "Lists apps",
         "operationId" : "listAppBase",
@@ -1993,7 +1993,7 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/s3-storages/base-list" : {
+    "/s3-storages/base" : {
       "get" : {
         "description" : "Lists s3 storages",
         "operationId" : "listS3StorageBase",
@@ -2444,7 +2444,7 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/ssh-keys/base-list" : {
+    "/ssh-keys/base" : {
       "get" : {
         "description" : "Lists SSH key",
         "operationId" : "listSSHKeyBase",
@@ -2732,7 +2732,7 @@
         "tags" : [ "users" ]
       }
     },
-    "/users/base-list" : {
+    "/users/base" : {
       "get" : {
         "description" : "Lists users",
         "operationId" : "listUserBase",
@@ -4999,20 +4999,26 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.BeginUserSignupDataResp" : {
         "properties" : {
+          "accessExpiration" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
           "mfaTotpSecret" : {
             "type" : "string"
           },
           "qrCode" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.MFATotpQRCodeResp"
           },
-          "requireMfa" : {
-            "type" : "boolean"
+          "role" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.UserRole"
           },
-          "requirePassword" : {
-            "type" : "boolean"
+          "securityOption" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.UserSecurityOption"
           }
         },
-        "required" : [ "requireMfa", "requirePassword" ],
+        "required" : [ "accessExpiration", "email", "role", "securityOption" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.BeginUserSignupReq" : {

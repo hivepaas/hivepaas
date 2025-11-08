@@ -66,9 +66,9 @@ export class AuthApi extends BaseApi {
                         password: request.data.password,
                         trustedDeviceId: request.data.isTrustDevice ? await this.device.getFingerprint() : undefined,
                     },
-                    {
-                        withCredentials: true,
-                    },
+                    // {
+                    //     withCredentials: true,
+                    // },
                 ),
             ).pipe(
                 map(this.validator.signIn),
@@ -107,9 +107,9 @@ export class AuthApi extends BaseApi {
                         passcode: request.data.code,
                         mfaToken: request.data.mfaToken,
                     },
-                    {
-                        withCredentials: true,
-                    },
+                    // {
+                    //     withCredentials: true,
+                    // },
                 ),
             ).pipe(
                 map(this.validator.signIn2FA),

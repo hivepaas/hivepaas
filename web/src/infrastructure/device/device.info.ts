@@ -1,8 +1,6 @@
 import FingerprintJS, { type Agent, type GetResult } from "@fingerprintjs/fingerprintjs";
 
-const fp = FingerprintJS.load({
-    monitoring: false,
-});
+const fp = FingerprintJS.load();
 
 export class DeviceInfo {
     /**

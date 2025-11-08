@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
@@ -14,9 +15,9 @@ export function SignInForm({ isPending, onSubmit }: Props) {
         formState: { errors },
     } = useForm<SignInSchemaInput, unknown, SignInSchemaOutput>({
         defaultValues: {
-            email: "test@example.com",
+            email: "",
             password: "123456",
-            rememberMe: false,
+            isTrustDevice: true,
         },
         resolver: zodResolver(SignInSchema),
         mode: "onSubmit",
@@ -38,10 +39,10 @@ export function SignInForm({ isPending, onSubmit }: Props) {
         control,
     });
 
-    // const { field: rememberMe } = useController({
-    //     name: "rememberMe",
-    //     control,
-    // });
+    const { field: isTrustDevice } = useController({
+        name: "isTrustDevice",
+        control,
+    });
 
     function onValid(values: SignInSchemaOutput) {
         console.log(values);
@@ -100,22 +101,33 @@ export function SignInForm({ isPending, onSubmit }: Props) {
                                 />
                             </Field>
                             {isPasswordInvalid && <FieldError errors={[errors.password]} />}
+
+                            <Field>
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        id="isTrustDevice"
+                                        checked={isTrustDevice.value}
+                                        onCheckedChange={isTrustDevice.onChange}
+                                    />
+                                    <FieldLabel htmlFor="isTrustDevice">Trust Device</FieldLabel>
+                                </div>
+                            </Field>
                             <Field>
                                 <Button
                                     type="submit"
-                                    disabled={isPending}
+                                    isLoading={isPending}
                                 >
                                     Login
                                 </Button>
-                                <Button
+                                {/* <Button
                                     variant="outline"
                                     type="button"
                                 >
                                     Login with Google
-                                </Button>
-                                <FieldDescription className="text-center">
+                                </Button> */}
+                                {/* <FieldDescription className="text-center">
                                     Don&apos;t have an account? <a href="#">Sign up</a>
-                                </FieldDescription>
+                                </FieldDescription> */}
                             </Field>
                         </FieldGroup>
                     </form>

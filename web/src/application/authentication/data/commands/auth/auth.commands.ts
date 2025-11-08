@@ -60,11 +60,11 @@ type SignInRes = Auth_SignIn_Res;
 
 type SignInOptions = Omit<UseMutationOptions<SignInRes, Error, SignInReq>, "mutationFn" | "onSuccess"> & {
     onSuccess?: (profile: Profile) => void;
-    onMFARequired?: (data: { email: string; mfaToken: string }) => void;
+    on2FARequired?: (data: { email: string; mfaToken: string }) => void;
     onTooManyAttempts?: (error: Error) => void;
 };
 
-function useSignIn({ onSuccess, onError, onMFARequired, onTooManyAttempts, ...options }: SignInOptions = {}) {
+function useSignIn({ onSuccess, onError, on2FARequired, onTooManyAttempts, ...options }: SignInOptions = {}) {
     // const { changeLanguage } = useI18n();
 
     const {
@@ -72,12 +72,13 @@ function useSignIn({ onSuccess, onError, onMFARequired, onTooManyAttempts, ...op
     } = useSessionApi();
 
     const {
-        mutations: { signIn, send2FAToken },
+        mutations: { signIn },
     } = useAuthApi();
 
     async function signInFn(values: SignIn) {
         const res = await signIn(values);
 
+        console.log(res.data);
         switch (res.data.type) {
             case "success": {
                 const { data: profile } = await getProfile();
@@ -92,11 +93,11 @@ function useSignIn({ onSuccess, onError, onMFARequired, onTooManyAttempts, ...op
             case "mfa-required": {
                 const { mfaToken } = res.data;
 
-                await send2FAToken({
-                    mfaToken,
-                });
+                // await send2FAToken({
+                //     mfaToken,
+                // });
 
-                if (onMFARequired) onMFARequired({ email: values.email, mfaToken });
+                if (on2FARequired) on2FARequired({ email: values.email, mfaToken });
             }
         }
 

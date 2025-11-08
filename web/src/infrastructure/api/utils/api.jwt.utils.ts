@@ -44,7 +44,7 @@ export async function refreshToken(): Promise<Result<string, Error>> {
                 {},
                 {
                     baseURL: EnvConfig.API_URL + ApiConfig.V1,
-                    withCredentials: true,
+                    // withCredentials: true,
                 },
             ),
         ).pipe(

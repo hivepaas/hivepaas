@@ -3,9 +3,6 @@ import { z } from "zod";
 
 import { type Session_GetProfile_Res, type Session_Logout_Res } from "@application/shared/api/services";
 import { ESecuritySettings } from "@application/shared/enums";
-import { LanguageSchema } from "@application/shared/schemas";
-
-import { DEFAULT_LANGUAGE } from "@i18n/constants";
 
 import { parseApiResponse } from "@infrastructure/api";
 
@@ -24,18 +21,7 @@ const GetProfileSchema = z.object({
             mobilePhone: z.string(),
             officePhone: z.string(),
             securityOption: z.nativeEnum(ESecuritySettings),
-            language: z
-                .string()
-                .trim()
-                .transform(value => {
-                    const parsed = LanguageSchema.safeParse(value);
 
-                    if (!parsed.success) {
-                        return DEFAULT_LANGUAGE;
-                    }
-
-                    return parsed.data;
-                }),
             timezone: z
                 .string()
                 .trim()
@@ -64,11 +50,6 @@ export class SessionApiValidator {
                 fullName: user.fullName,
                 photo: user.photo,
                 email: user.email,
-                mobilePhone: user.mobilePhone,
-                officePhone: user.officePhone,
-                securityOption: user.securityOption,
-                language: user.language,
-                timezone: user.timezone,
             },
         };
     };

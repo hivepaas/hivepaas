@@ -1,153 +1,138 @@
-import { use, useMemo } from "react";
+// import { use, useMemo } from "react";
 
-import { match } from "oxide.ts";
+// import { match } from "oxide.ts";
 
-import { ApplicationApiContext } from "@application/shared/api/api-context";
-import {
-    type Profile_UpdateProfileEmail_Req,
-    type Profile_UpdateProfileLocale_Req,
-    type Profile_UpdateProfilePassword_Req,
-    type Profile_UpdateProfilePhoto_Req,
-    type Profile_UpdateProfile_Req,
-} from "@application/shared/api/services";
-import { useWorkspaceId } from "@application/shared/hooks/workspaces";
+// import { ApplicationApiContext } from "@application/shared/api/api-context";
+// import {
+//     type Profile_UpdateProfileEmail_Req,
+//     type Profile_UpdateProfileLocale_Req,
+//     type Profile_UpdateProfilePassword_Req,
+//     type Profile_UpdateProfilePhoto_Req,
+//     type Profile_UpdateProfile_Req,
+// } from "@application/shared/api/services";
 
-import { useApiErrorNotifications } from "@infrastructure/api";
+// import { useApiErrorNotifications } from "@infrastructure/api";
 
-function createHook() {
-    return function useProfileApi() {
-        const { workspaceId } = useWorkspaceId();
+// function createHook() {
+//     return function useProfileApi() {
+//         const { api } = use(ApplicationApiContext);
 
-        const { api } = use(ApplicationApiContext);
+//         const { notifyError } = useApiErrorNotifications();
 
-        const { notifyError } = useApiErrorNotifications();
+//         const mutations = useMemo(
+//             () => ({
+//                 /**
+//                  * Update profile
+//                  */
+//                 update: async (data: Profile_UpdateProfile_Req["data"]) => {
+//                     const result = await api.profile.update({
+//                         data,
+//                     });
 
-        const mutations = useMemo(
-            () => ({
-                /**
-                 * Update profile
-                 */
-                update: async (data: Profile_UpdateProfile_Req["data"]) => {
-                    const result = await api.profile.update({
-                        data,
-                    });
+//                     return match(result, {
+//                         Ok: _ => _,
+//                         Err: error => {
+//                             notifyError({
+//                                 message: "Failed to update profile",
+//                                 error,
+//                             });
 
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to update profile",
-                                error,
-                            });
+//                             throw error;
+//                         },
+//                     });
+//                 },
 
-                            throw error;
-                        },
-                    });
-                },
+//                 /**
+//                  * Update profile photo
+//                  */
+//                 updatePhoto: async (data: Profile_UpdateProfilePhoto_Req["data"]) => {
+//                     const result = await api.profile.updatePhoto({
+//                         data,
+//                     });
 
-                /**
-                 * Update profile photo
-                 */
-                updatePhoto: async (data: Profile_UpdateProfilePhoto_Req["data"]) => {
-                    if (!workspaceId) {
-                        const error = new Error("workspaceId must be defined");
+//                     return match(result, {
+//                         Ok: _ => _,
+//                         Err: error => {
+//                             notifyError({
+//                                 message: "Failed to update profile photo",
+//                                 error,
+//                             });
 
-                        notifyError({
-                            message: "Failed to update profile photo",
-                            error,
-                        });
+//                             throw error;
+//                         },
+//                     });
+//                 },
 
-                        throw error;
-                    }
+//                 /**
+//                  * Update profile email
+//                  */
+//                 updateEmail: async (data: Profile_UpdateProfileEmail_Req["data"]) => {
+//                     const result = await api.profile.updateEmail({
+//                         data,
+//                     });
 
-                    const result = await api.profile.updatePhoto({
-                        data,
-                        meta: { workspaceId },
-                    });
+//                     return match(result, {
+//                         Ok: _ => _,
+//                         Err: error => {
+//                             notifyError({
+//                                 message: "Failed to update profile email",
+//                                 error,
+//                             });
 
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to update profile photo",
-                                error,
-                            });
+//                             throw error;
+//                         },
+//                     });
+//                 },
 
-                            throw error;
-                        },
-                    });
-                },
+//                 /**
+//                  * Update profile password
+//                  */
+//                 updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
+//                     const result = await api.profile.updatePassword({
+//                         data,
+//                     });
 
-                /**
-                 * Update profile email
-                 */
-                updateEmail: async (data: Profile_UpdateProfileEmail_Req["data"]) => {
-                    const result = await api.profile.updateEmail({
-                        data,
-                    });
+//                     return match(result, {
+//                         Ok: _ => _,
+//                         Err: error => {
+//                             notifyError({
+//                                 message: "Failed to update profile password",
+//                                 error,
+//                             });
 
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to update profile email",
-                                error,
-                            });
+//                             throw error;
+//                         },
+//                     });
+//                 },
 
-                            throw error;
-                        },
-                    });
-                },
+//                 /**
+//                  * Update profile locale
+//                  */
+//                 updateLocale: async (data: Profile_UpdateProfileLocale_Req["data"]) => {
+//                     const result = await api.profile.updateLocale({
+//                         data,
+//                     });
 
-                /**
-                 * Update profile password
-                 */
-                updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
-                    const result = await api.profile.updatePassword({
-                        data,
-                    });
+//                     return match(result, {
+//                         Ok: _ => _,
+//                         Err: error => {
+//                             notifyError({
+//                                 message: "Failed to update profile locale",
+//                                 error,
+//                             });
 
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to update profile password",
-                                error,
-                            });
+//                             throw error;
+//                         },
+//                     });
+//                 },
+//             }),
+//             [api, notifyError, workspaceId],
+//         );
 
-                            throw error;
-                        },
-                    });
-                },
+//         return {
+//             mutations,
+//         };
+//     };
+// }
 
-                /**
-                 * Update profile locale
-                 */
-                updateLocale: async (data: Profile_UpdateProfileLocale_Req["data"]) => {
-                    const result = await api.profile.updateLocale({
-                        data,
-                    });
-
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to update profile locale",
-                                error,
-                            });
-
-                            throw error;
-                        },
-                    });
-                },
-            }),
-            [api, notifyError, workspaceId],
-        );
-
-        return {
-            mutations,
-        };
-    };
-}
-
-export const useProfileApi = createHook();
+// export const useProfileApi = createHook();

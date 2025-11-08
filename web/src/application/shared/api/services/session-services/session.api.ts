@@ -36,7 +36,7 @@ export class SessionApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.delete("/sessions", {
-                    withCredentials: true,
+                    // withCredentials: true,
                 }),
             ).pipe(
                 map(this.validator.logout),

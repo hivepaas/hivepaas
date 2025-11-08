@@ -1,0 +1,23 @@
+interface ConstructorParams {
+    type: string;
+    title: string;
+    status: number;
+    code: string;
+    detail: string;
+}
+
+export class ProblemApiResponse {
+    constructor(params: ConstructorParams) {
+        this.type = params.type;
+        this.title = params.title;
+        this.status = params.status;
+        this.code = params.code;
+        this.detail = params.detail;
+    }
+
+    readonly type: string;
+    readonly title: string;
+    readonly status: number;
+    readonly code: string;
+    readonly detail: string;
+}

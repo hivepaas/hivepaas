@@ -1,14 +1,24 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 interface ConstructorParams {
-    message: string;
     status: number;
+    problem: ProblemApiResponse;
 }
 
+/**
+ * Base HTTP exception
+ */
 export class HttpException extends Error {
-    constructor(params: ConstructorParams) {
-        super(params.message);
+    constructor({ status, problem }: ConstructorParams) {
+        super(problem.detail);
 
-        this.status = params.status;
+        this.status = status;
+        this.code = problem.code;
+        this.problem = problem;
     }
 
     readonly status: number;
+    readonly code: string;
+
+    readonly problem: ProblemApiResponse;
 }

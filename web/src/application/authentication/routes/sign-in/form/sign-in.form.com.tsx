@@ -1,9 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 import { SignInSchema, type SignInSchemaInput, type SignInSchemaOutput } from "../schemas";
 
@@ -14,9 +19,9 @@ export function SignInForm({ isPending, onSubmit }: Props) {
         formState: { errors },
     } = useForm<SignInSchemaInput, unknown, SignInSchemaOutput>({
         defaultValues: {
-            email: "test@example.com",
-            password: "123456",
-            rememberMe: false,
+            email: "tiendc@gmail.com",
+            password: "abc123",
+            isTrustDevice: true,
         },
         resolver: zodResolver(SignInSchema),
         mode: "onSubmit",
@@ -38,10 +43,10 @@ export function SignInForm({ isPending, onSubmit }: Props) {
         control,
     });
 
-    // const { field: rememberMe } = useController({
-    //     name: "rememberMe",
-    //     control,
-    // });
+    const { field: isTrustDevice } = useController({
+        name: "isTrustDevice",
+        control,
+    });
 
     function onValid(values: SignInSchemaOutput) {
         console.log(values);
@@ -81,14 +86,14 @@ export function SignInForm({ isPending, onSubmit }: Props) {
                             </Field>
                             {isEmailInvalid && <FieldError errors={[errors.email]} />}
                             <Field>
-                                <div className="flex items-center">
+                                <div className="flex items-center justify-between">
                                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                                    <a
-                                        href="#"
-                                        className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                                    <AppLink
+                                        className="text-sm text-primary hover:text-gray-700"
+                                        to={ROUTE.auth.forgotPassword.$route}
                                     >
-                                        Forgot your password?
-                                    </a>
+                                        Forgot Password?
+                                    </AppLink>
                                 </div>
                                 <Input
                                     id="password"
@@ -100,22 +105,33 @@ export function SignInForm({ isPending, onSubmit }: Props) {
                                 />
                             </Field>
                             {isPasswordInvalid && <FieldError errors={[errors.password]} />}
+
+                            <Field>
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        id="isTrustDevice"
+                                        checked={isTrustDevice.value}
+                                        onCheckedChange={isTrustDevice.onChange}
+                                    />
+                                    <FieldLabel htmlFor="isTrustDevice">Trust Device</FieldLabel>
+                                </div>
+                            </Field>
                             <Field>
                                 <Button
                                     type="submit"
-                                    disabled={isPending}
+                                    isLoading={isPending}
                                 >
                                     Login
                                 </Button>
-                                <Button
+                                {/* <Button
                                     variant="outline"
                                     type="button"
                                 >
                                     Login with Google
-                                </Button>
-                                <FieldDescription className="text-center">
+                                </Button> */}
+                                {/* <FieldDescription className="text-center">
                                     Don&apos;t have an account? <a href="#">Sign up</a>
-                                </FieldDescription>
+                                </FieldDescription> */}
                             </Field>
                         </FieldGroup>
                     </form>

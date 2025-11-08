@@ -1,13 +1,15 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 import { HttpException } from "./http.exception";
 
 /**
  * Internal server error
  */
 export class Http500Exception extends HttpException {
-    constructor(message: string) {
+    constructor(problem: ProblemApiResponse) {
         super({
-            message,
             status: 500,
+            problem,
         });
     }
 }

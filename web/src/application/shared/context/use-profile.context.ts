@@ -3,53 +3,72 @@ import { create } from "zustand";
 
 import { type Profile } from "@application/shared/entities";
 
+import { useAuthContext } from "@application/authentication/context";
+
 interface State {
-  profile: Profile | null;
-  token: string | null;
+    profile: Profile | null;
 }
 
 interface Actions {
-  setProfile: (profile: Profile) => void;
-  setToken: (token: string) => void;
-  reset: () => void;
+    setProfile: (profile: Profile) => void;
+    updateProfile: (profile: Partial<Profile>) => void;
+    clearProfile: () => void;
 }
 
-export const useProfileContext = create<State & Actions>()((set) => ({
-  profile: null,
-  token: localStorage.getItem("token"),
+export const useProfileContext = create<State & Actions>()(set => ({
+    profile: null,
 
-  setProfile: (profile) => {
-    set(
-      produce((draft: Draft<State>) => {
-        draft.profile = profile;
-      })
-    );
-  },
+    setProfile: profile => {
+        set(
+            produce((draft: Draft<State>) => {
+                draft.profile = profile;
+            }),
+        );
+    },
 
-  setToken: (token) => {
-    set(
-      produce((draft: Draft<State>) => {
-        draft.token = token;
+    updateProfile: profile => {
+        set(
+            produce((draft: Draft<State>) => {
+                if (draft.profile === null) {
+                    return;
+                }
 
-        localStorage.setItem("token", token);
-      })
-    );
-  },
+                if (profile.email !== undefined) {
+                    draft.profile.email = profile.email;
+                }
 
-  reset: () => {
-    set(
-      produce((draft: Draft<State>) => {
-        draft.profile = null;
-        draft.token = null;
+                if (profile.photo !== undefined) {
+                    draft.profile.photo = profile.photo;
+                }
 
-        localStorage.removeItem("token");
-      })
-    );
-  },
+                if (profile.securityOption !== undefined) {
+                    draft.profile.securityOption = profile.securityOption;
+                }
+
+                if (profile.fullName !== undefined) {
+                    draft.profile.fullName = profile.fullName;
+                }
+            }),
+        );
+    },
+
+    clearProfile: () => {
+        set(
+            produce((draft: Draft<State>) => {
+                draft.profile = null;
+            }),
+        );
+    },
 }));
 
 useProfileContext.subscribe((state, prevState) => {
-  if (state.profile === prevState.profile) {
-    return;
-  }
+    if (state.profile === prevState.profile) {
+        return;
+    }
+
+    const auth = useAuthContext.getState();
+
+    if (state.profile !== null) {
+        auth.clear();
+    }
 });

@@ -1,13 +1,15 @@
+import { type ProblemApiResponse } from "@infrastructure/api";
+
 import { HttpException } from "./http.exception";
 
 /**
  * Forbidden
  */
 export class Http403Exception extends HttpException {
-    constructor(message: string) {
+    constructor(problem: ProblemApiResponse) {
         super({
-            message,
             status: 403,
+            problem,
         });
     }
 }

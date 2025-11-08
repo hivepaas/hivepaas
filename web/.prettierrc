@@ -51,6 +51,8 @@
     "^@infrastructure/utility-types(.*)$",
     "^@infrastructure/value-objects(.*)$",
 
+    "^@/components(.*)$",
+
     "^@utils/api(.*)$",
     "^@utils/authorization(.*)$",
     "^@utils/dev(.*)$",

@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
@@ -9,6 +6,10 @@ import { z } from "zod";
 import { PasswordStrengthMeter } from "@application/shared/components";
 
 import { BackToSignIn } from "@application/authentication/components";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 const Schema = z
     .object({

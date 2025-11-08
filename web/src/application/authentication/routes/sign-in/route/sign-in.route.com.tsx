@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { Button, Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
 import { useSearchParams } from "react-router";
 
 import { WarningAuthenticationIcon } from "@assets/icons";
@@ -13,6 +12,8 @@ import { useAuthContext } from "@application/authentication/context";
 import { AuthCommands } from "@application/authentication/data/commands";
 import { AuthQueries } from "@application/authentication/data/queries";
 import { AuthenticationLayout } from "@application/authentication/layouts";
+
+import { Button, Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
 
 import { SignInForm } from "../form";
 

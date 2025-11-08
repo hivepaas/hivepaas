@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { Button, Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
 import { useSearchParams } from "react-router";
 
 import { ErrorAuthenticationIcon, SuccessAuthenticationIcon } from "@assets/icons";
@@ -14,6 +13,8 @@ import { useAuthContext } from "@application/authentication/context";
 import { AuthCommands } from "@application/authentication/data/commands";
 import type { SignIn2FA } from "@application/authentication/domain";
 import { AuthenticationLayout } from "@application/authentication/layouts";
+
+import { Button, Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
 
 import { TwoFaForm } from "../form";
 

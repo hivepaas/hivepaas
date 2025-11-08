@@ -1,8 +1,5 @@
 import { useState } from "react";
 
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
-import { useSearchParams } from "react-router";
-
 import { SuccessAuthenticationIcon } from "@assets/icons";
 
 import { BackToSignIn } from "@application/authentication/components";
@@ -10,12 +7,15 @@ import { AuthCommands } from "@application/authentication/data/commands";
 import type { ForgotPassword } from "@application/authentication/domain";
 import { AuthenticationLayout } from "@application/authentication/layouts";
 
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
+
 import { ForgotPasswordForm } from "../form/forgot-password.form.com";
 
 interface State {
     type: "initial" | "success";
 }
-function View() {
+
+export const ForgotPasswordRoute = () => {
     const [state, setState] = useState<State>({
         type: "initial",
     });
@@ -63,10 +63,4 @@ function View() {
             <div>{child}</div>
         </AuthenticationLayout>
     );
-}
-
-export const ForgotPasswordRoute = () => {
-    void useSearchParams;
-
-    return <View />;
 };

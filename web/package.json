@@ -11,6 +11,8 @@
     "lint:ci": "tsc --noEmit && eslint . --ext ts,tsx --report-unused-disable-directives",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "format:src": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:src:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "codegen:download": "curl -o ./src/infrastructure/api/be-api/swagger.json -LJO https://raw.githubusercontent.com/localpaas/localpaas/main/docs/openapi/swagger.json",
     "codegen:gen": "openapi-ts",
     "codegen": "yarn codegen:download && yarn codegen:gen"

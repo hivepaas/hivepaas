@@ -48,7 +48,10 @@ export class AuthApi extends BaseApi {
                     inviteToken,
                     password: data.password,
                     fullName: data.fullName,
-                    photo: data.photo ?? undefined,
+                    photo: data.photo ?? {
+                        fileName: "",
+                        dataBase64: "",
+                    },
                     mfaTotpSecret: data.mfaTotpSecret == "" ? undefined : data.mfaTotpSecret,
                     passcode: data.passcode == "" ? undefined : data.passcode,
                 }),

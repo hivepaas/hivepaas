@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 import {
+    Avatar,
     Button,
     Card,
     CardContent,
@@ -15,20 +18,20 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@components/ui/input-otp";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Pencil } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { PasswordStrengthMeter } from "@application/shared/components";
 import { ESecuritySettings } from "@application/shared/enums";
 
 import { BackToSignIn } from "@application/authentication/components";
+import { PhotoUploadDialog } from "@application/authentication/dialogs";
 import type { Candidate } from "@application/authentication/domain/user";
 import {
     type SighUpFormSchemaInput,
     type SighUpFormSchemaOutput,
     SignUpFormSchema,
 } from "@application/authentication/routes/sign-up/schemas";
-import { useState } from "react";
-import { PhotoUploadDialog } from "@application/authentication/dialogs";
 
 const CODE_LENGTH = 6;
 
@@ -151,6 +154,30 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                         >
                             <FieldGroup>
                                 <Field>
+                                    <div className="flex items-center gap-3 justify-center">
+                                        <div className="relative size-24 rounded-full border">
+                                            <Avatar
+                                                name={fullName.value}
+                                                className="size-full"
+                                                src={photo.value?.dataBase64 ?? undefined}
+                                            />
+                                            <Button
+                                                type="button"
+                                                size="icon-sm"
+                                                className="absolute -bottom-1 -right-1 rounded-full"
+                                                onClick={() => {
+                                                    setOpenCandidatePhoto(true);
+                                                }}
+                                                aria-label="Edit photo"
+                                                title="Edit photo"
+                                            >
+                                                <Pencil />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <FieldError errors={[errors.photo]} />
+                                </Field>
+                                <Field>
                                     <FieldLabel htmlFor="email">Email</FieldLabel>
                                     <Input
                                         id="email"
@@ -243,40 +270,6 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                     </Field>
                                 )}
 
-                                <Field>
-                                    <FieldLabel htmlFor="photo">Profile Photo</FieldLabel>
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-12 overflow-hidden rounded-full border">
-                                            <img
-                                                src={photo.value?.dataBase64 ?? undefined}
-                                                alt="avatar"
-                                                className="size-full object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setOpenCandidatePhoto(true);
-                                                }}
-                                            >
-                                                {photo.value === null ? "Choose Photo" : "Change Photo"}
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                disabled={photo.value === null}
-                                                onClick={() => {
-                                                    photo.onChange(null);
-                                                }}
-                                            >
-                                                Remove
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <FieldError errors={[errors.photo]} />
-                                </Field>
                                 <Field>
                                     <div className="flex items-center gap-3">
                                         <Checkbox

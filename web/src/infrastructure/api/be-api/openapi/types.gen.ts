@@ -27,7 +27,9 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBaseAppStatus = "active" | "l
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseMfaType = "totp" | "email";
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeStatus = "active" | "inactive" | "deleting";
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeRole = "manager" | "worker";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeStatus = "unknown" | "down" | "ready" | "disconnected";
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseProjectStatus = "active" | "locked" | "disabled" | "deleting";
 
@@ -139,11 +141,8 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppBaseResp
     id: string;
     name: string;
     photo: string;
+    slug: string;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseAppStatus;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppEnvVarsResp = {
-    envVars: Array<Array<string>>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppResp = {
@@ -152,20 +151,26 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppResp = {
     name: string;
     note: string;
     photo: string;
+    slug: string;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseAppStatus;
     /**
      * manual copy AppTag -> string
      */
     tags: Array<string>;
     updatedAt: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppSettingsReq = {
-    test: string;
+    userAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppUserAccessResp>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppSettingsResp = {
-    test: string;
+    deploymentSettings?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsResp;
+    envVars?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarsResp;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppUserAccessResp = {
+    access: GithubComLocalpaasLocalpaasLocalpaasAppEntityAccessActions;
+    fullName: string;
+    id: string;
+    photo: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoCreateAppReq = {
@@ -204,22 +209,35 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeleteAppTa
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppEnvVarsReq = {
-    [key: string]: unknown;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsReq = {
+    test: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppEnvVarsResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppEnvVarsResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsResp = {
+    test: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarReq = {
+    isBuildEnv: boolean;
+    key: string;
+    value: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarResp = {
+    isBuildEnv?: boolean;
+    key: string;
+    value: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarsResp = {
+    app: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarResp>;
+    parentApp: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarResp>;
+    project: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarResp>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppResp = {
     data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppResp;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppSettingsReq = {
-    [key: string]: unknown;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppSettingsResp = {
@@ -237,16 +255,9 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoListAppResp
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppEnvVarsReq = {
-    envVars: Array<Array<string>>;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppEnvVarsResp = {
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppSettingsReq = {
-    settings: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppSettingsReq;
+    deploymentSettings: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsReq;
+    envVars: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoEnvVarReq>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppSettingsResp = {
@@ -262,36 +273,30 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoGet
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoListNodeBaseResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeBaseResp>;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoListNodeResp = {
     data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeResp>;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeBaseResp = {
-    hostName: string;
-    id: string;
-    infraStatus: string;
-    ip: string;
-    isLeader: boolean;
-    isManager: boolean;
-    lastSyncedAt: string;
-    status: GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeStatus;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodePlatformResp = {
+    architecture: string;
+    os: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeResources = {
+    memoryBytes: number;
+    nanoCPUs: number;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeResp = {
+    addr: string;
     createdAt: string;
-    hostName: string;
+    hostname: string;
     id: string;
-    infraStatus: string;
-    ip: string;
     isLeader: boolean;
-    isManager: boolean;
-    lastSyncedAt: string;
+    platform: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodePlatformResp;
+    resources: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoNodeResources;
+    role: GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeRole;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeStatus;
     updatedAt: string;
 };
@@ -328,22 +333,33 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoDel
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectEnvVarsReq = {
-    [key: string]: unknown;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarReq = {
+    isBuildEnv: boolean;
+    key: string;
+    value: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectEnvVarsResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectEnvVarsResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarResp = {
+    isBuildEnv?: boolean;
+    key: string;
+    value: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarsResp = {
+    project: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarResp>;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGeneralSettingsReq = {
+    test: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGeneralSettingsResp = {
+    test: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectResp = {
     data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectResp;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectSettingsReq = {
-    [key: string]: unknown;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectSettingsResp = {
@@ -370,11 +386,8 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoPro
     id: string;
     name: string;
     photo: string;
+    slug: string;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseProjectStatus;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectEnvVarsResp = {
-    envVars: Array<Array<string>>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectResp = {
@@ -384,32 +397,31 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoPro
     name: string;
     note: string;
     photo: string;
+    slug: string;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseProjectStatus;
     /**
      * manual copy ProjectTag -> string
      */
     tags: Array<string>;
     updatedAt: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectSettingsReq = {
-    test: string;
+    userAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectUserAccessResp>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectSettingsResp = {
-    test: string;
+    envVars?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarsResp;
+    settings?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGeneralSettingsResp;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectEnvVarsReq = {
-    envVars: Array<Array<string>>;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectEnvVarsResp = {
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectUserAccessResp = {
+    access: GithubComLocalpaasLocalpaasLocalpaasAppEntityAccessActions;
+    fullName: string;
+    id: string;
+    photo: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectSettingsReq = {
-    settings: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectSettingsReq;
+    envVars: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarReq>;
+    settings: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGeneralSettingsReq;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectSettingsResp = {
@@ -520,6 +532,11 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoDev
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetLoginOptionsResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionsResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetMeDataResp = {
     user: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoUserResp;
 };
@@ -527,6 +544,11 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGet
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetMeResp = {
     data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetMeDataResp;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionsResp = {
+    allowLoginWithGitHub: boolean;
+    allowLoginWithGitLab: boolean;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginWithApiKeyDataResp = {
@@ -686,10 +708,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginMfaT
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUserSignupDataResp = {
+    accessExpiration: string;
+    email: string;
     mfaTotpSecret?: string;
     qrCode?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoMfaTotpQrCodeResp;
-    requireMfa: boolean;
-    requirePassword: boolean;
+    role: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole;
+    securityOption: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUserSignupReq = {
@@ -930,7 +954,7 @@ export type ListApiKeyBaseData = {
          */
         sort?: string;
     };
-    url: "/api-keys/base-list";
+    url: "/api-keys/base";
 };
 
 export type ListApiKeyBaseErrors = {
@@ -1022,6 +1046,35 @@ export type GetApiKeyResponses = {
 };
 
 export type GetApiKeyResponse = GetApiKeyResponses[keyof GetApiKeyResponses];
+
+export type GetLoginOptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/auth/login-options";
+};
+
+export type GetLoginOptionsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetLoginOptionsError = GetLoginOptionsErrors[keyof GetLoginOptionsErrors];
+
+export type GetLoginOptionsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetLoginOptionsResp;
+};
+
+export type GetLoginOptionsResponse = GetLoginOptionsResponses[keyof GetLoginOptionsResponses];
 
 export type LoginWithApiKeyData = {
     /**
@@ -1168,56 +1221,6 @@ export type ListNodeResponses = {
 };
 
 export type ListNodeResponse = ListNodeResponses[keyof ListNodeResponses];
-
-export type ListNodeBaseData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * `status=<target>`
-         */
-        status?: string;
-        /**
-         * `search=<target> (support *)`
-         */
-        search?: string;
-        /**
-         * `pageOffset=offset`
-         */
-        pageOffset?: number;
-        /**
-         * `pageLimit=limit`
-         */
-        pageLimit?: number;
-        /**
-         * `sort=[-]field1|field2...`
-         */
-        sort?: string;
-    };
-    url: "/cluster/nodes/base-list";
-};
-
-export type ListNodeBaseErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type ListNodeBaseError = ListNodeBaseErrors[keyof ListNodeBaseErrors];
-
-export type ListNodeBaseResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterucClusterdtoListNodeBaseResp;
-};
-
-export type ListNodeBaseResponse = ListNodeBaseResponses[keyof ListNodeBaseResponses];
 
 export type DeleteNodeData = {
     body?: never;
@@ -1428,7 +1431,7 @@ export type ListProjectBaseData = {
          */
         sort?: string;
     };
-    url: "/projects/base-list";
+    url: "/projects/base";
 };
 
 export type ListProjectBaseErrors = {
@@ -1643,7 +1646,7 @@ export type ListAppBaseData = {
          */
         sort?: string;
     };
-    url: "/projects/{projectID}/apps/base-list";
+    url: "/projects/{projectID}/apps/base";
 };
 
 export type ListAppBaseErrors = {
@@ -1747,93 +1750,8 @@ export type GetAppResponses = {
 
 export type GetAppResponse = GetAppResponses[keyof GetAppResponses];
 
-export type GetAppEnvVarsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppEnvVarsReq;
-    path: {
-        /**
-         * project ID
-         */
-        projectID: string;
-        /**
-         * app ID
-         */
-        appID: string;
-    };
-    query?: never;
-    url: "/projects/{projectID}/apps/{appID}/env-vars";
-};
-
-export type GetAppEnvVarsErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type GetAppEnvVarsError = GetAppEnvVarsErrors[keyof GetAppEnvVarsErrors];
-
-export type GetAppEnvVarsResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppEnvVarsResp;
-};
-
-export type GetAppEnvVarsResponse = GetAppEnvVarsResponses[keyof GetAppEnvVarsResponses];
-
-export type UpdateAppEnvVarsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppEnvVarsReq;
-    path: {
-        /**
-         * project ID
-         */
-        projectID: string;
-        /**
-         * app ID
-         */
-        appID: string;
-    };
-    query?: never;
-    url: "/projects/{projectID}/apps/{appID}/env-vars";
-};
-
-export type UpdateAppEnvVarsErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type UpdateAppEnvVarsError = UpdateAppEnvVarsErrors[keyof UpdateAppEnvVarsErrors];
-
-export type UpdateAppEnvVarsResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppEnvVarsResp;
-};
-
-export type UpdateAppEnvVarsResponse = UpdateAppEnvVarsResponses[keyof UpdateAppEnvVarsResponses];
-
 export type GetAppSettingsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoGetAppSettingsReq;
+    body?: never;
     path: {
         /**
          * project ID
@@ -1844,7 +1762,12 @@ export type GetAppSettingsData = {
          */
         appID: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * `type=<setting type>`
+         */
+        type?: string;
+    };
     url: "/projects/{projectID}/apps/{appID}/settings";
 };
 
@@ -1993,92 +1916,20 @@ export type DeleteAppTagsResponses = {
 
 export type DeleteAppTagsResponse = DeleteAppTagsResponses[keyof DeleteAppTagsResponses];
 
-export type GetProjectEnvVarsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectEnvVarsReq;
-    path: {
-        /**
-         * project ID
-         */
-        projectID: string;
-    };
-    query?: never;
-    url: "/projects/{projectID}/env-vars";
-};
-
-export type GetProjectEnvVarsErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type GetProjectEnvVarsError = GetProjectEnvVarsErrors[keyof GetProjectEnvVarsErrors];
-
-export type GetProjectEnvVarsResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectEnvVarsResp;
-};
-
-export type GetProjectEnvVarsResponse = GetProjectEnvVarsResponses[keyof GetProjectEnvVarsResponses];
-
-export type UpdateProjectEnvVarsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectEnvVarsReq;
-    path: {
-        /**
-         * project ID
-         */
-        projectID: string;
-    };
-    query?: never;
-    url: "/projects/{projectID}/env-vars";
-};
-
-export type UpdateProjectEnvVarsErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type UpdateProjectEnvVarsError = UpdateProjectEnvVarsErrors[keyof UpdateProjectEnvVarsErrors];
-
-export type UpdateProjectEnvVarsResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectEnvVarsResp;
-};
-
-export type UpdateProjectEnvVarsResponse = UpdateProjectEnvVarsResponses[keyof UpdateProjectEnvVarsResponses];
-
 export type GetProjectSettingsData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGetProjectSettingsReq;
+    body?: never;
     path: {
         /**
          * project ID
          */
         projectID: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * `type=<setting type>`
+         */
+        type?: string;
+    };
     url: "/projects/{projectID}/settings";
 };
 
@@ -2314,7 +2165,7 @@ export type ListS3StorageBaseData = {
          */
         sort?: string;
     };
-    url: "/s3-storages/base-list";
+    url: "/s3-storages/base";
 };
 
 export type ListS3StorageBaseErrors = {
@@ -2627,7 +2478,7 @@ export type ListSshKeyBaseData = {
          */
         sort?: string;
     };
-    url: "/ssh-keys/base-list";
+    url: "/ssh-keys/base";
 };
 
 export type ListSshKeyBaseErrors = {
@@ -2829,7 +2680,7 @@ export type ListUserBaseData = {
          */
         sort?: string;
     };
-    url: "/users/base-list";
+    url: "/users/base";
 };
 
 export type ListUserBaseErrors = {

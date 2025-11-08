@@ -1,4 +1,10 @@
-import { ForgotPasswordRoute, ResetPasswordRoute, SignInRoute, TwoFaRoute } from "@/application/authentication/routes";
+import {
+    ForgotPasswordRoute,
+    ResetPasswordRoute,
+    SignInRoute,
+    SignUpRoute,
+    TwoFaRoute,
+} from "@/application/authentication/routes";
 import { ROUTE } from "@/application/shared/constants";
 import { type RouteObject } from "react-router";
 
@@ -19,6 +25,10 @@ export const authenticationRouter: RouteObject = {
         {
             path: ROUTE.auth.forgotPassword.$pattern,
             Component: ForgotPasswordRoute,
+        },
+        {
+            path: ROUTE.auth.signUp.$pattern,
+            Component: SignUpRoute,
         },
     ],
 } as const;

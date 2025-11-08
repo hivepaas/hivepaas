@@ -17,6 +17,8 @@ import {
     type Auth_SignIn_Res,
     type Auth_SignUp_Req,
     type Auth_SignUp_Res,
+    type Auth_ValidateInviteToken_Req,
+    type Auth_ValidateInviteToken_Res,
     type Auth_ValidateResetToken_Req,
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
@@ -287,6 +289,29 @@ function useResetPassword(options: ResetPasswordOptions = {}) {
     });
 }
 
+/**
+ * Validate invite token command
+ */
+type ValidateInviteTokenReq = Auth_ValidateInviteToken_Req["data"];
+type ValidateInviteTokenRes = Auth_ValidateInviteToken_Res;
+
+type ValidateInviteTokenOptions = Omit<
+    UseMutationOptions<ValidateInviteTokenRes, Error, ValidateInviteTokenReq>,
+    "mutationFn"
+>;
+
+function useValidateInviteToken(options: ValidateInviteTokenOptions = {}) {
+    const {
+        mutations: { validateInviteToken },
+    } = useAuthApi();
+
+    return useMutation({
+        mutationFn: validateInviteToken,
+
+        ...options,
+    });
+}
+
 export const AuthCommands = Object.freeze({
     useSignUp,
     useSignIn,
@@ -296,4 +321,5 @@ export const AuthCommands = Object.freeze({
     useForgotPassword,
     useValidateResetToken,
     useResetPassword,
+    useValidateInviteToken,
 });

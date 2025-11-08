@@ -1,6 +1,8 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
+import { ESecuritySettings, EUserRole } from "@application/shared/enums";
+
 import {
     type Auth_ForgotPassword_Res,
     type Auth_GetLoginOptions_Res,
@@ -9,6 +11,7 @@ import {
     type Auth_SignIn2FA_Res,
     type Auth_SignIn_Res,
     type Auth_SignUp_Res,
+    type Auth_ValidateInviteToken_Res,
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
 
@@ -71,6 +74,36 @@ const GetLoginOptionsSchema = z.object({
             allowLoginWithGitLab: z.boolean(),
         }),
     }),
+});
+
+/**
+ * Validate invite token API response schema
+ */
+const ValidateInviteTokenSchema = z.object({
+    data: z.discriminatedUnion("securityOption", [
+        z.object({
+            email: z.string().trim().email(),
+            role: z.nativeEnum(EUserRole),
+            accessExpiration: z.coerce.date(),
+            securityOption: z.literal(ESecuritySettings.PasswordOnly),
+        }),
+        z.object({
+            email: z.string().trim().email(),
+            role: z.nativeEnum(EUserRole),
+            accessExpiration: z.coerce.date(),
+            mfaTotpSecret: z.string(),
+            qrCode: z.object({
+                dataBase64: z.string(),
+            }),
+            securityOption: z.literal(ESecuritySettings.Password2FA),
+        }),
+        z.object({
+            email: z.string().trim().email(),
+            role: z.nativeEnum(EUserRole),
+            accessExpiration: z.coerce.date(),
+            securityOption: z.literal(ESecuritySettings.EnforceSSO),
+        }),
+    ]),
 });
 
 export class AuthApiValidator {
@@ -191,6 +224,44 @@ export class AuthApiValidator {
                 options: {
                     allowGithubLogin: data.options.allowLoginWithGitHub,
                     allowGitlabLogin: data.options.allowLoginWithGitLab,
+                },
+            },
+        };
+    };
+
+    /**
+     * Validate and transform the validate invite token API response
+     */
+    validateInviteToken = (response: AxiosResponse): Auth_ValidateInviteToken_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: ValidateInviteTokenSchema,
+        });
+
+        if (
+            data.securityOption === ESecuritySettings.PasswordOnly ||
+            data.securityOption === ESecuritySettings.EnforceSSO
+        ) {
+            return {
+                data: {
+                    candidate: {
+                        email: data.email,
+                        role: data.role,
+                        securityOption: data.securityOption,
+                        accessExpiration: data.accessExpiration,
+                    },
+                },
+            };
+        }
+        return {
+            data: {
+                candidate: {
+                    email: data.email,
+                    role: data.role,
+                    securityOption: data.securityOption,
+                    accessExpiration: data.accessExpiration,
+                    mfaTotpSecret: data.mfaTotpSecret,
+                    qrCode: data.qrCode.dataBase64,
                 },
             },
         };

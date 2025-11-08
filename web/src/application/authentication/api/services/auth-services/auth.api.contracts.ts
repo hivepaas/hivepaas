@@ -29,7 +29,6 @@ export type Auth_SignUp_Res = ApiResponseBase<{
 export type Auth_ValidateInviteToken_Req = ApiRequestBase<ValidateInviteToken>;
 
 export type Auth_ValidateInviteToken_Res = ApiResponseBase<{
-    workspaceId: string;
     candidate: Candidate;
 }>;
 

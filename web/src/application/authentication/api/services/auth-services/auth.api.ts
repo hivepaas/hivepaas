@@ -18,6 +18,8 @@ import {
     type Auth_SignIn_Res,
     type Auth_SignUp_Req,
     type Auth_SignUp_Res,
+    type Auth_ValidateInviteToken_Req,
+    type Auth_ValidateInviteToken_Res,
     type Auth_ValidateResetToken_Req,
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
@@ -38,12 +40,17 @@ export class AuthApi extends BaseApi {
      */
     async signUp(request: Auth_SignUp_Req): Promise<Result<Auth_SignUp_Res, Error>> {
         // const json = this.mapper.signUp.toEmailApi(request.data);
+        const { inviteToken, data } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post("/users/signup", {
-                    inviteToken: request.data.inviteToken,
-                    // ...json,
+                this.client.v1.post("/users/signup-complete", {
+                    inviteToken,
+                    password: data.password,
+                    fullName: data.fullName,
+                    photo: data.photo ?? undefined,
+                    mfaTotpSecret: data.mfaTotpSecret == "" ? undefined : data.mfaTotpSecret,
+                    passcode: data.passcode == "" ? undefined : data.passcode,
                 }),
             ).pipe(
                 map(this.validator.signUp),
@@ -182,6 +189,27 @@ export class AuthApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.get("/auth/login-options", { signal })).pipe(
                 map(this.validator.getLoginOptions),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Validate invite token
+     */
+    async validateInviteToken(
+        request: Auth_ValidateInviteToken_Req,
+    ): Promise<Result<Auth_ValidateInviteToken_Res, Error>> {
+        const { data } = request;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/users/signup-begin", {
+                    inviteToken: data.inviteToken,
+                }),
+            ).pipe(
+                map(this.validator.validateInviteToken),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

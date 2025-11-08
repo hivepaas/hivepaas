@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 
 import {
@@ -10,24 +8,21 @@ import {
     Frame,
     GalleryVerticalEnd,
     Map,
+    PawPrint,
     PieChart,
     Settings2,
     SquareTerminal,
 } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
+import { useProfileContext } from "@application/shared/context";
+
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
+
+import { NavMain } from "../nav-main";
+import { NavUser } from "../nav-user";
 
 // This is sample data.
 const data = {
-    user: {
-        name: "shadcn",
-        email: "m@example.com",
-        avatar: "/avatars/shadcn.jpg",
-    },
     teams: [
         {
             name: "Acme Inc",
@@ -112,24 +107,6 @@ const data = {
             title: "Settings",
             url: "#",
             icon: Settings2,
-            items: [
-                {
-                    title: "General",
-                    url: "#",
-                },
-                {
-                    title: "Team",
-                    url: "#",
-                },
-                {
-                    title: "Billing",
-                    url: "#",
-                },
-                {
-                    title: "Limits",
-                    url: "#",
-                },
-            ],
         },
     ],
     projects: [
@@ -152,20 +129,24 @@ const data = {
 };
 
 export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { profile } = useProfileContext();
+
+    if (!profile) {
+        return null;
+    }
     return (
         <Sidebar
             collapsible="icon"
             {...props}
         >
-            <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+            <SidebarHeader className="items-center justify-center p-2">
+                <PawPrint size={36} />
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={data.navMain} />
-                <NavProjects projects={data.projects} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavUser user={profile} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

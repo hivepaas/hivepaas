@@ -1,21 +1,11 @@
+import type { ESecuritySettings } from "../enums";
+
 export interface Profile {
     /**
      * User ID
      * @example "8f7123fd-1862-40ad-a082-d16d421c7d8b"
      */
     id: string;
-
-    /**
-     * First name
-     * @example "John"
-     */
-    firstName: string;
-
-    /**
-     * Last name
-     * @example "Doe"
-     */
-    lastName: string;
 
     /**
      * Full name
@@ -34,4 +24,6 @@ export interface Profile {
      * @example "john.dou@.example.com"
      */
     email: string;
+
+    securityOption: ESecuritySettings;
 }

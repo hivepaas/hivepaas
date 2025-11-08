@@ -19,8 +19,8 @@ export function SignInForm({ isPending, onSubmit }: Props) {
         formState: { errors },
     } = useForm<SignInSchemaInput, unknown, SignInSchemaOutput>({
         defaultValues: {
-            email: "",
-            password: "123456",
+            email: "tiendc@gmail.com",
+            password: "abc123",
             isTrustDevice: true,
         },
         resolver: zodResolver(SignInSchema),

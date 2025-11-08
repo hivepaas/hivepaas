@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { BackToSignIn } from "@application/authentication/components";
+
 const Schema = z.object({
     email: z.string().trim().email(),
 });
@@ -78,6 +80,7 @@ export function ForgotPasswordForm({ isPending, onSubmit }: Props) {
                                 >
                                     Send reset link
                                 </Button>
+                                <BackToSignIn />
                             </Field>
                         </FieldGroup>
                     </form>
@@ -91,5 +94,3 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: SchemaOutput) => Promise<void> | void;
 }
-
-

@@ -37,5 +37,9 @@ export const ROUTE = {
             $pattern: "auth/reset-password",
             $route: "/auth/reset-password/",
         },
+        forgotPassword: {
+            $pattern: "auth/forgot-password",
+            $route: "/auth/forgot-password/",
+        },
     },
 } as const;

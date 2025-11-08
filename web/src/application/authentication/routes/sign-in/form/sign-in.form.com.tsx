@@ -6,6 +6,9 @@ import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+
 import { SignInSchema, type SignInSchemaInput, type SignInSchemaOutput } from "../schemas";
 
 export function SignInForm({ isPending, onSubmit }: Props) {
@@ -82,14 +85,14 @@ export function SignInForm({ isPending, onSubmit }: Props) {
                             </Field>
                             {isEmailInvalid && <FieldError errors={[errors.email]} />}
                             <Field>
-                                <div className="flex items-center">
+                                <div className="flex items-center justify-between">
                                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                                    <a
-                                        href="#"
-                                        className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                                    <AppLink
+                                        className="text-sm text-primary hover:text-gray-700"
+                                        to={ROUTE.auth.forgotPassword.$route}
                                     >
-                                        Forgot your password?
-                                    </a>
+                                        Forgot Password?
+                                    </AppLink>
                                 </div>
                                 <Input
                                     id="password"

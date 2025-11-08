@@ -10,6 +10,7 @@ import {
     type Auth_SignIn2FA_Req,
     type Auth_SignIn_Req,
     type Auth_SignUp_Req,
+    type Auth_ValidateInviteToken_Req,
     type Auth_ValidateResetToken_Req,
 } from "@application/authentication/api/services";
 
@@ -174,6 +175,27 @@ function createHook() {
                                 message: "Reset password failed",
                                 error,
                             });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Validate invite token
+                 */
+                validateInviteToken: async (data: Auth_ValidateInviteToken_Req["data"]) => {
+                    const result = await api.auth.validateInviteToken({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            // notifyError({
+                            //     message: "Invalid token",
+                            //     error,
+                            // });
 
                             throw error;
                         },

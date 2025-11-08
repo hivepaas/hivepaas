@@ -1,8 +1,3 @@
-interface Entity {
-    id: string;
-    name: string;
-}
-
 interface Photo {
     fileName: string;
     dataBase64: string;
@@ -10,15 +5,11 @@ interface Photo {
 
 interface Data {
     email: string;
-    firstName: string;
-    lastName: string;
-    position: string;
-    entity?: Entity | null;
-    timezone: string;
-    mobilePhone: string;
-    officePhone: string;
+    fullName: string;
     password: string;
     photo: Photo | null;
+    mfaTotpSecret?: string;
+    passcode?: string;
 }
 
 export type SignUp = {

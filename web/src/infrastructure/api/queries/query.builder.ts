@@ -50,7 +50,7 @@ class Builder {
 
                 return {
                     ...acc,
-                    [`filter[${key}]`]: values,
+                    [key]: values,
                 };
             }, {}),
         };

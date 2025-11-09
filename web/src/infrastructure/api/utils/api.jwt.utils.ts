@@ -4,7 +4,7 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { z } from "zod";
 
-import { ApiConfig, EnvConfig } from "@config";
+import { EnvConfig } from "@config";
 
 import { type AppJwtPayload } from "@infrastructure/api/types";
 import { parseApiError, parseApiResponse } from "@infrastructure/api/utils/api.data.utils";
@@ -43,7 +43,7 @@ export async function refreshToken(): Promise<Result<string, Error>> {
                 "/sessions/refresh",
                 {},
                 {
-                    baseURL: EnvConfig.API_URL + ApiConfig.V1,
+                    baseURL: EnvConfig.API_URL,
                     // withCredentials: true,
                 },
             ),

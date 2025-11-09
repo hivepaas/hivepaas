@@ -11,7 +11,7 @@ export interface ApiClient {
 export function createApiClient(): ApiClient {
     const client: ApiClient = {
         v1: axios.create({
-            baseURL: envConfig.API_URL + envConfig.API_PATH_V1,
+            baseURL: envConfig.API_URL,
             headers: {
                 "Content-Type": "application/json",
             },

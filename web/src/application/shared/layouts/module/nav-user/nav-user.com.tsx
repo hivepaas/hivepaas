@@ -21,8 +21,6 @@ export function NavUser({ user }: { user: Profile }) {
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
 
-    console.log(isMobile);
-
     const { mutate: logout, isPending } = SessionCommands.useLogout({
         onSuccess: clearProfile,
         onSessionInvalid: clearProfile,

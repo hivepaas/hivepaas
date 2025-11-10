@@ -54,7 +54,6 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     });
 
     function onValid(values: SignInSchemaOutput) {
-        console.log(values);
         onSubmit(values);
     }
 

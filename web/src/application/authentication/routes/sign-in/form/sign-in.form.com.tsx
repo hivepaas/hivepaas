@@ -1,9 +1,14 @@
+import { GithubIcon, GitlabIcon, GoogleIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
+import { EnvConfig } from "@config";
+
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
+
+import { type LoginOption } from "@application/authentication/domain";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +17,7 @@ import { Input } from "@/components/ui/input";
 
 import { SignInSchema, type SignInSchemaInput, type SignInSchemaOutput } from "../schemas";
 
-export function SignInForm({ isPending, onSubmit }: Props) {
+export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     const {
         handleSubmit,
         control,
@@ -55,6 +60,10 @@ export function SignInForm({ isPending, onSubmit }: Props) {
 
     function onInvalid(errors: FieldErrors<SignInSchemaOutput>) {
         console.log(errors);
+    }
+
+    function handleLoginWithProvider(provider: LoginOption) {
+        window.location.href = `${EnvConfig.APP_URL}${provider.authURL}`;
     }
     return (
         <div className="flex flex-col gap-6">
@@ -123,15 +132,20 @@ export function SignInForm({ isPending, onSubmit }: Props) {
                                 >
                                     Login
                                 </Button>
-                                {/* <Button
-                                    variant="outline"
-                                    type="button"
-                                >
-                                    Login with Google
-                                </Button> */}
-                                {/* <FieldDescription className="text-center">
-                                    Don&apos;t have an account? <a href="#">Sign up</a>
-                                </FieldDescription> */}
+
+                                {loginOptions.map(option => (
+                                    <Button
+                                        key={option.type}
+                                        variant="outline"
+                                        type="button"
+                                        onClick={() => handleLoginWithProvider(option)}
+                                    >
+                                        {option.type.toLowerCase().includes("github") && <GithubIcon />}
+                                        {option.type.toLowerCase().includes("gitlab") && <GitlabIcon />}
+                                        {option.type.toLowerCase().includes("google") && <GoogleIcon />}
+                                        Login with {option.name}
+                                    </Button>
+                                ))}
                             </Field>
                         </FieldGroup>
                     </form>
@@ -142,6 +156,7 @@ export function SignInForm({ isPending, onSubmit }: Props) {
 }
 
 interface Props {
+    loginOptions: LoginOption[];
     isPending: boolean;
     onSubmit: (values: SignInSchemaOutput) => Promise<void> | void;
 }

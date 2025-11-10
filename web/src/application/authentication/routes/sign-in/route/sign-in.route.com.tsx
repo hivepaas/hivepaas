@@ -31,10 +31,9 @@ function View() {
     const { setProfile } = useProfileContext();
     const { enable2FA } = useAuthContext();
 
-    const { data, isLoading } = AuthQueries.useGetLoginOptions();
+    const { data: { data: loginOptions } = { data: [] } } = AuthQueries.useGetLoginOptions();
 
-    void data;
-    void isLoading;
+    console.log(loginOptions);
 
     const { mutate: signIn, isPending } = AuthCommands.useSignIn({
         onSuccess: setProfile,
@@ -51,6 +50,7 @@ function View() {
     if (state.type === "initial") {
         child = (
             <SignInForm
+                loginOptions={loginOptions}
                 isPending={isPending}
                 onSubmit={signIn}
             />

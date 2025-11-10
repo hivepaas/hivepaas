@@ -7,3 +7,4 @@ export * from "./sign-up.entity";
 export * from "./validate-access-code.entity";
 export * from "./validate-invite-token.entity";
 export * from "./validate-reset-token.entity";
+export * from "./login-option.entity";

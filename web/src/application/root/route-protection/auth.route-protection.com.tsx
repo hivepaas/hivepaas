@@ -16,10 +16,15 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const isMain = useMatch("/") !== null;
     const isAuthGroup = useMatch("auth/*") !== null;
 
-    if (params.has("next")) {
+    const nextPath = params.get("next");
+
+    /**
+     * If the next path is "auth/sso/success", redirect to the sso success page
+     */
+    if (nextPath === "auth/sso/success") {
         return (
             <AppNavigate
-                to={params.get("next")!}
+                to={ROUTE.auth.sso.success.$route}
                 replace
             />
         );

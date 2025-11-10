@@ -80,7 +80,6 @@ function useSignIn({ onSuccess, onError, on2FARequired, onTooManyAttempts, ...op
     async function signInFn(values: SignIn) {
         const res = await signIn(values);
 
-        console.log(res.data);
         switch (res.data.type) {
             case "success": {
                 const { data: profile } = await getProfile();

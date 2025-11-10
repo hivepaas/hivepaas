@@ -1,6 +1,6 @@
 import { type PropsWithChildren } from "react";
 
-import { createSearchParams, useMatch, useSearchParams } from "react-router";
+import { createSearchParams, useLocation, useMatch, useSearchParams } from "react-router";
 
 import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -9,14 +9,21 @@ import { useProfileContext } from "@application/shared/context";
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
 
+    const location = useLocation();
+
     const [params] = useSearchParams();
 
     const isMain = useMatch("/") !== null;
     const isAuthGroup = useMatch("auth/*") !== null;
 
-    console.log("params", params);
-    console.log("isAuthGroup", isAuthGroup);
-    console.log("profile", profile);
+    if (params.has("next")) {
+        return (
+            <AppNavigate
+                to={params.get("next")!}
+                replace
+            />
+        );
+    }
 
     if (profile && isAuthGroup && params.has("next")) {
         // TODO get page to redirect from query, "?next=/modules/projects/dashboard/" for example

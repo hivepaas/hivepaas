@@ -137,7 +137,6 @@ interface ViewProps {
 export const TwoFaRoute = () => {
     const { data } = useAuthContext();
 
-    console.log(data);
     const [params] = useSearchParams();
 
     if (!data.required2FA) {

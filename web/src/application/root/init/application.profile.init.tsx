@@ -1,5 +1,7 @@
 import { type PropsWithChildren } from "react";
 
+import { useCookie } from "react-use";
+
 import { AppLoader } from "@application/shared/components";
 import { useProfileContext } from "@application/shared/context";
 import { SessionQueries } from "@application/shared/data/queries";
@@ -8,6 +10,7 @@ import { PageError } from "@application/shared/pages";
 import { isSessionInvalidException, session } from "@infrastructure/api";
 
 export function ApplicationProfileInit({ children }: PropsWithChildren) {
+    const [, , deleteToken] = useCookie("access_token");
     const { profile, setProfile, clearProfile } = useProfileContext();
 
     const { isLoading, error, refetch } = SessionQueries.useGetProfile({
@@ -16,6 +19,9 @@ export function ApplicationProfileInit({ children }: PropsWithChildren) {
         },
         onSessionInvalid: clearProfile,
         enabled: session.hasToken() && !profile,
+        onError: () => {
+            deleteToken();
+        },
     });
 
     if (isLoading) {

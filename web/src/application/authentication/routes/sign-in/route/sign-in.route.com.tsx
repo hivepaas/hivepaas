@@ -117,11 +117,11 @@ export const SignInRoute = () => {
     });
 
     useMount(() => {
-        if (!token) return;
-
-        signInSSO({
-            token,
-        });
+        if (token) {
+            signInSSO({
+                token,
+            });
+        }
     });
 
     const { data } = useAuthContext();

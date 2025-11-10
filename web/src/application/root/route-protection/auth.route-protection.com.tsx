@@ -6,6 +6,8 @@ import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 
+import { SsoRoute } from "@application/authentication/routes";
+
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
 
@@ -22,12 +24,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
      * If the next path is "auth/sso/success", redirect to the sso success page
      */
     if (nextPath === "auth/sso/success") {
-        return (
-            <AppNavigate
-                to={ROUTE.auth.sso.success.$route}
-                replace
-            />
-        );
+        return <SsoRoute />;
     }
 
     if (profile && isAuthGroup && params.has("next")) {

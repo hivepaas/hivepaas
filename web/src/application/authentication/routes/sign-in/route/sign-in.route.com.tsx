@@ -114,6 +114,9 @@ export const SignInRoute = () => {
 
             setProfile(profile);
         },
+        onError: () => {
+            deleteToken();
+        },
     });
 
     useMount(() => {

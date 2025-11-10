@@ -68,12 +68,13 @@ const ForgotPasswordSchema = z.object({
  * Get login options API response schema
  */
 const GetLoginOptionsSchema = z.object({
-    data: z.object({
-        options: z.object({
-            allowLoginWithGitHub: z.boolean(),
-            allowLoginWithGitLab: z.boolean(),
+    data: z.array(
+        z.object({
+            authURL: z.string(),
+            name: z.string(),
+            type: z.string(),
         }),
-    }),
+    ),
 });
 
 /**
@@ -220,12 +221,7 @@ export class AuthApiValidator {
         });
 
         return {
-            data: {
-                options: {
-                    allowGithubLogin: data.options.allowLoginWithGitHub,
-                    allowGitlabLogin: data.options.allowLoginWithGitLab,
-                },
-            },
+            data,
         };
     };
 

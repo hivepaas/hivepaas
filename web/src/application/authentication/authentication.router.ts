@@ -3,6 +3,7 @@ import {
     ResetPasswordRoute,
     SignInRoute,
     SignUpRoute,
+    SsoRoute,
     TwoFaRoute,
 } from "@/application/authentication/routes";
 import { ROUTE } from "@/application/shared/constants";
@@ -29,6 +30,10 @@ export const authenticationRouter: RouteObject = {
         {
             path: ROUTE.auth.signUp.$pattern,
             Component: SignUpRoute,
+        },
+        {
+            path: ROUTE.auth.sso.success.$pattern,
+            Component: SsoRoute,
         },
     ],
 } as const;

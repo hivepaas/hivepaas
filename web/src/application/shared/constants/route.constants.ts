@@ -19,6 +19,13 @@ export const ROUTE = {
      * Authentication
      */
     auth: {
+        sso: {
+            success: {
+                $pattern: "auth/sso/success",
+                $route: "/auth/sso/success/",
+            },
+        },
+
         twoFA: {
             $pattern: "auth/2fa",
             $route: "/auth/2fa/",

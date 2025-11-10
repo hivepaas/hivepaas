@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 
-import { envConfig } from "@config";
+import { EnvConfig } from "@config";
 
 import { initAuthInterceptors, initLangInterceptors } from "@infrastructure/api/interceptors";
 
@@ -11,7 +11,7 @@ export interface ApiClient {
 export function createApiClient(): ApiClient {
     const client: ApiClient = {
         v1: axios.create({
-            baseURL: envConfig.API_URL,
+            baseURL: EnvConfig.API_URL,
             headers: {
                 "Content-Type": "application/json",
             },

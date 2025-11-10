@@ -13,31 +13,31 @@ const Toaster = ({ ...props }: ToasterProps) => {
                 success: (
                     <CircleCheckIcon
                         className="size-4"
-                        color="var(--success)"
+                        color="var(--color-success)"
                     />
                 ),
                 info: (
                     <InfoIcon
                         className="size-4"
-                        color="var(--info)"
+                        color="var(--color-info)"
                     />
                 ),
                 warning: (
                     <TriangleAlertIcon
                         className="size-4"
-                        color="var(--warning)"
+                        color="var(--color-warning)"
                     />
                 ),
                 error: (
                     <OctagonXIcon
                         className="size-4"
-                        color="var(--error)"
+                        color="var(--color-error)"
                     />
                 ),
                 loading: (
                     <Loader2Icon
                         className="size-4 animate-spin"
-                        color="var(--primary)"
+                        color="var(--color-primary)"
                     />
                 ),
             }}

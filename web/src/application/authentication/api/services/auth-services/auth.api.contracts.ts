@@ -1,6 +1,7 @@
 import {
     type Candidate,
     type ForgotPassword,
+    type LoginOption,
     type ResetPassword,
     type SignIn,
     type SignIn2FA,
@@ -105,9 +106,4 @@ export type Auth_ResetPassword_Res = ApiResponseBase<{
     type: "success";
 }>;
 
-export type Auth_GetLoginOptions_Res = ApiResponseBase<{
-    options: {
-        allowGithubLogin: boolean;
-        allowGitlabLogin: boolean;
-    };
-}>;
+export type Auth_GetLoginOptions_Res = ApiResponseBase<LoginOption[]>;

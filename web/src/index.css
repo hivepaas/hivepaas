@@ -36,14 +36,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --error: #ff0000;
-  --warning: #ffa500;
-  --info: #0000ff;
-  --success: #00ff00;
-  --neutral: #808080;
-  --neutral-foreground: #000000;
-  --neutral-background: #ffffff;
-  --neutral-border: #808080;
+  --color-error: #ff0000;
+  --color-warning: #ffa500;
+  --color-info: #0000ff;
+  --color-success: #00ff00;
+  --color-neutral: #808080;
+  --color-neutral-foreground: #000000;
+  --color-neutral-background: #ffffff;
+  --color-neutral-border: #808080;
 }
 
 .dark {
@@ -78,6 +78,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --color-error: #ff0000;
+  --color-warning: #ffa500;
+  --color-info: #0000ff;
+  --color-success: #00ff00;
+  --color-neutral: #808080;
+  --color-neutral-foreground: #000000;
+  --color-neutral-background: #ffffff;
+  --color-neutral-border: #808080;
 }
 
 @theme inline {

@@ -100,8 +100,6 @@ function View() {
 export const SignInRoute = () => {
     const [token, , deleteToken] = useCookie("access_token");
 
-    console.log("token", token);
-
     const { setProfile } = useProfileContext();
 
     const {
@@ -143,11 +141,11 @@ export const SignInRoute = () => {
         );
     }
 
-    if (isPending) {
+    if (token && isPending) {
         return <AppLoader />;
     }
 
-    if (error) {
+    if (token && error) {
         return <ErrorMessage message={error.message} />;
     }
 

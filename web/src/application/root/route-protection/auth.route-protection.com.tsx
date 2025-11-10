@@ -1,15 +1,30 @@
 import { type PropsWithChildren } from "react";
 
 import { createSearchParams, useLocation, useMatch, useSearchParams } from "react-router";
+import { useCookie } from "react-use";
 
 import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 
+import { AuthCommands } from "@application/authentication/data/commands";
 import { SsoRoute } from "@application/authentication/routes";
 
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
+    const [token, , deleteToken] = useCookie("access_token");
+
+    console.log("token", token);
+
+    const { setProfile } = useProfileContext();
+
+    const { mutate: signInSSO } = AuthCommands.useSignInSSO({
+        onSuccess: profile => {
+            deleteToken();
+
+            setProfile(profile);
+        },
+    });
 
     const location = useLocation();
 
@@ -24,6 +39,11 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
      * If the next path is "auth/sso/success", redirect to the sso success page
      */
     if (nextPath === "auth/sso/success") {
+        if (token) {
+            signInSSO({
+                token,
+            });
+        }
         return <SsoRoute />;
     }
 

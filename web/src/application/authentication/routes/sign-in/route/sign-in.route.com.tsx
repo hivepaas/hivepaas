@@ -1,10 +1,11 @@
 import { useState } from "react";
 
 import { useSearchParams } from "react-router";
+import { useCookie, useMount } from "react-use";
 
 import { WarningAuthenticationIcon } from "@assets/icons";
 
-import { AppNavigate } from "@application/shared/components";
+import { AppLoader, AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 
@@ -19,6 +20,10 @@ import { SignInForm } from "../form";
 
 interface State {
     type: "initial" | "lockout";
+}
+
+function ErrorMessage({ message }: { message: string }) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{message}</div>;
 }
 
 function View() {
@@ -93,6 +98,32 @@ function View() {
 }
 
 export const SignInRoute = () => {
+    const [token, , deleteToken] = useCookie("access_token");
+
+    console.log("token", token);
+
+    const { setProfile } = useProfileContext();
+
+    const {
+        mutate: signInSSO,
+        isPending,
+        error,
+    } = AuthCommands.useSignInSSO({
+        onSuccess: profile => {
+            deleteToken();
+
+            setProfile(profile);
+        },
+    });
+
+    useMount(() => {
+        if (!token) return;
+
+        signInSSO({
+            token,
+        });
+    });
+
     const { data } = useAuthContext();
 
     const [params] = useSearchParams();
@@ -107,6 +138,14 @@ export const SignInRoute = () => {
                 replace
             />
         );
+    }
+
+    if (isPending) {
+        return <AppLoader />;
+    }
+
+    if (error) {
+        return <ErrorMessage message={error.message} />;
     }
 
     return <View />;

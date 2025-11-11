@@ -4,7 +4,7 @@ import { match } from "oxide.ts";
 
 import { ApplicationApiContext } from "@application/shared/api/api-context";
 
-import { isSessionInvalidException, session, useApiErrorNotifications } from "@infrastructure/api";
+import { isHttp404Exception, isSessionInvalidException, session, useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
     return function useSessionApi() {
@@ -23,7 +23,7 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            if (isSessionInvalidException(error)) {
+                            if (isSessionInvalidException(error) || isHttp404Exception(error)) {
                                 session.removeToken();
                             }
 

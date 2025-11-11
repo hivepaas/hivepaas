@@ -3,8 +3,6 @@ import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
-import { EnvConfig } from "@config";
-
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
@@ -62,7 +60,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     }
 
     function handleLoginWithProvider(provider: LoginOption) {
-        window.location.href = `${EnvConfig.APP_URL}${provider.authURL}`;
+        window.location.href = provider.authURL;
     }
     return (
         <div className="flex flex-col gap-6">

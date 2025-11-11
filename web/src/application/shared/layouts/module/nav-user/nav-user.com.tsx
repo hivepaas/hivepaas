@@ -1,4 +1,5 @@
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
+import { useCookie } from "react-use";
 import invariant from "tiny-invariant";
 
 import { useProfileContext } from "@application/shared/context";
@@ -18,11 +19,15 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
 export function NavUser({ user }: { user: Profile }) {
+    const [, , deleteToken] = useCookie("access_token");
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
 
     const { mutate: logout, isPending } = SessionCommands.useLogout({
-        onSuccess: clearProfile,
+        onSuccess: () => {
+            clearProfile();
+            deleteToken();
+        },
         onSessionInvalid: clearProfile,
     });
 

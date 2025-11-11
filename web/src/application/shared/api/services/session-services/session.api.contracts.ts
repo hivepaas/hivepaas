@@ -5,7 +5,7 @@ import { type ApiResponseBase } from "@infrastructure/api";
 /**
  * Get profile
  */
-export type Session_GetProfile_Res = ApiResponseBase<Profile>;
+export type Session_GetProfile_Res = ApiResponseBase<Profile & { nextStep?: string }>;
 
 /**
  * Logout

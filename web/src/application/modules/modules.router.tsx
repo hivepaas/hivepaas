@@ -16,8 +16,8 @@ export const modulesRouter: RouteObject = {
         <>
             <ModuleLayout>
                 <Outlet />
+                <CommonDialogsContainer />
             </ModuleLayout>
-            <CommonDialogsContainer />
         </>
     ),
     children: [usersAndRolesRouter],

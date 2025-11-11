@@ -1,51 +1,58 @@
-import { Dialog, DialogContent } from "@components/ui/dialog";
+import { useState } from "react";
 
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useUpdateEffect } from "react-use";
+
+import { ProfileCommands } from "@application/shared/data/commands";
+
+import { F2aSetupForm } from "../form";
 import { useF2aSetupDialogState } from "../hooks";
 
-// import { type F2aSetupFormRef } from "../types";
-
-// const fnPlaceholder = () => null;
+type State = { QRCode: string; totpToken: string } | null;
 
 export function F2aSetupDialog() {
+    const [stateData, setStateData] = useState<State>(null);
+
     const {
         state,
         // props: { onSuccess = fnPlaceholder, onClose = fnPlaceholder, onError = fnPlaceholder } = {},
         // ...actions
     } = useF2aSetupDialogState();
 
-    // const formRef = useRef<F2aSetupFormRef>(null);
+    const { mutate: getProfile2FASetup, isPending: isGetProfile2FASetupPending } =
+        ProfileCommands.useGetProfile2FASetup();
 
-    // const { mutate: create, isPending: isCreatePending } = PositionsPublicCommands.useCreateOne({
-    //     onSuccess: (response, request) => {
-    //         onSuccess(
-    //             {
-    //                 id: response.data.id,
-    //                 ...request,
-    //             },
-    //             "create",
-    //         );
+    useUpdateEffect(() => {
+        if (state.mode === "open") {
+            getProfile2FASetup(undefined, {
+                onSuccess: data => {
+                    setStateData({
+                        QRCode: data.data.totpQRCode,
+                        totpToken: data.data.totpToken,
+                    });
+                },
+            });
+        }
+    }, [state.mode]);
 
-    //         onClose();
-    //     },
-    //     onError,
-    // });
-
-    // const { mutate: update, isPending: isUpdatePending } = PositionsPublicCommands.useUpdateOne({
-    //     onSuccess: (response, request) => {
-    //         onSuccess(request, "edit");
-
-    //         onClose();
-    //     },
-    //     onError,
-    // });
-
-    // function handleClose() {
-    //     onClose();
-    // }
+    console.log("state", state);
 
     return (
-        <Dialog open={state.mode !== "closed"}>
-            <DialogContent></DialogContent>
+        <Dialog open={state.mode === "open"}>
+            <DialogHeader>
+                <DialogTitle />
+                <DialogDescription />
+            </DialogHeader>
+            <DialogContent>
+                {stateData && (
+                    <F2aSetupForm
+                        isPending={isGetProfile2FASetupPending}
+                        onSubmit={() => {}}
+                        qrCode={stateData.QRCode}
+                        totpToken={stateData.totpToken}
+                    />
+                )}
+            </DialogContent>
         </Dialog>
     );
 }

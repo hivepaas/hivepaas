@@ -1,10 +1,10 @@
 import { createContext } from "react";
 
-import { SessionApi, SessionApiValidator } from "@application/shared/api/services";
+import { ProfileApi, ProfileApiValidator, SessionApi, SessionApiValidator } from "@application/shared/api/services";
 
 function createApplicationApi() {
     return {
-        // profile: new ProfileApi(new ProfileApiValidator()),
+        profile: new ProfileApi(new ProfileApiValidator()),
         session: new SessionApi(new SessionApiValidator()),
     };
 }

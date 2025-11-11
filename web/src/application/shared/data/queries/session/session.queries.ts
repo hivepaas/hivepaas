@@ -15,9 +15,16 @@ type GetProfileOptions = Omit<UseQueryOptions<GetProfileRes>, "queryKey" | "quer
     onSuccess?: (response: GetProfileRes) => void;
     onError?: (error: Error) => void;
     onSessionInvalid?: (error: Error) => void;
+    on2FASetupRequired?: () => void;
 };
 
-function useGetProfile({ onSuccess, onError, onSessionInvalid, ...options }: GetProfileOptions = {}) {
+function useGetProfile({
+    onSuccess,
+    onError,
+    onSessionInvalid,
+    on2FASetupRequired,
+    ...options
+}: GetProfileOptions = {}) {
     // const { changeLanguage } = useI18n();
 
     const {
@@ -29,6 +36,10 @@ function useGetProfile({ onSuccess, onError, onSessionInvalid, ...options }: Get
             const res = await getProfile(signal);
 
             if (onSuccess) onSuccess(res);
+
+            if (on2FASetupRequired && res.data.nextStep === "NextMfaSetup") {
+                on2FASetupRequired();
+            }
 
             return res;
         } catch (error) {

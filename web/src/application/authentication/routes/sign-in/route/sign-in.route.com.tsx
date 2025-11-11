@@ -41,7 +41,7 @@ function View() {
     const { mutate: signIn, isPending } = AuthCommands.useSignIn({
         onSuccess: setProfile,
         on2FARequired: enable2FA,
-        onMfaSetupRequired: enableMfaSetup,
+        on2FASetupRequired: enableMfaSetup,
         onTooManyAttempts: () => {
             setState({
                 type: "lockout",

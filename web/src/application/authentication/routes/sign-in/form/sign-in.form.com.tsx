@@ -60,7 +60,8 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     }
 
     function handleLoginWithProvider(provider: LoginOption) {
-        window.location.href = provider.authURL;
+        console.log(window.location.origin + provider.authURL);
+        window.location.href = window.location.origin + provider.authURL;
     }
     return (
         <div className="flex flex-col gap-6">

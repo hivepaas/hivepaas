@@ -23,6 +23,8 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppApperrorsInnerErrorInfo = {
     path: string;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseActionType = "read" | "write" | "delete";
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseAppStatus = "active" | "locked" | "disabled" | "deleting";
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseMfaType = "totp" | "email";
@@ -31,9 +33,11 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeRole = "manager" | "w
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseNodeStatus = "unknown" | "down" | "ready" | "disconnected";
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseOAuthType = "github" | "gitlab" | "google" | "gitlab-custom";
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseProjectStatus = "active" | "locked" | "disabled" | "deleting";
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole = "owner" | "admin" | "member";
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole = "admin" | "member";
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption =
     | "enforce-sso"
@@ -66,10 +70,6 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectAccessReq = {
     id: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdReq = {
-    id: string;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp = {
     id: string;
 };
@@ -80,61 +80,10 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoPagingMeta = {
     total: number;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoUserBaseResp = {
-    fullName: string;
-    id: string;
-    photo: string;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppEntityAccessActions = {
     delete: boolean;
     read: boolean;
     write: boolean;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyBaseResp = {
-    id: string;
-    keyId: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyDataResp = {
-    id: string;
-    keyId: string;
-    secretKey: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyResp = {
-    actingUser: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoUserBaseResp;
-    id: string;
-    keyId: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoCreateApiKeyReq = {
-    actingUser: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdReq;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoCreateApiKeyResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyDataResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoDeleteApiKeyResp = {
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoGetApiKeyResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoListApiKeyBaseResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyBaseResp>;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoListApiKeyResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoApiKeyResp>;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppBaseResp = {
@@ -409,6 +358,7 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoPro
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoProjectSettingsResp = {
     envVars?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoEnvVarsResp;
+    secrets?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoSecretsResp;
     settings?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoGeneralSettingsResp;
 };
 
@@ -417,6 +367,10 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoPro
     fullName: string;
     id: string;
     photo: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoSecretsResp = {
+    project: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoSecretResp>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpdateProjectSettingsReq = {
@@ -428,92 +382,13 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProjectucProjectdtoUpd
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoCreateS3StorageReq = {
-    accessKeyId: string;
-    bucket: string;
-    name: string;
-    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageProjectAccessReq>;
-    region: string;
-    secretAccessKey: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoCreateS3StorageResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoDeleteS3StorageResp = {
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoGetS3StorageResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageResp;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoListS3StorageBaseResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageBaseResp>;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoListS3StorageResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageResp>;
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageAppAccessReq = {
-    allowed: boolean;
-    id: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageAppAccessResp = {
-    allowed: boolean;
-    id: string;
-    name: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageBaseResp = {
-    accessKeyId?: string;
-    bucket?: string;
-    id: string;
-    name: string;
-    region?: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageProjectAccessReq = {
-    allowed: boolean;
-    /**
-     * NOTE: this field is used to grant access to a project,
-     * but deny access to specific apps within the project
-     */
-    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageAppAccessReq>;
-    id: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageProjectAccessResp = {
-    allowed: boolean;
-    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageAppAccessResp>;
-    id: string;
-    name: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageResp = {
-    accessKeyId: string;
-    bucket: string;
-    id: string;
-    name: string;
-    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoS3StorageProjectAccessResp>;
-    region: string;
-    secretAccessKey?: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoUpdateS3StorageResp = {
-    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoBaseCreateSessionResp = {
     accessToken: string;
     accessTokenExp: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoDeleteAllSessionsResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoDeleteSessionResp = {
@@ -533,11 +408,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoDev
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetLoginOptionsResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionsResp;
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionResp>;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGetMeDataResp = {
+    nextStep?: string;
     user: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoUserResp;
 };
 
@@ -546,9 +422,10 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoGet
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionsResp = {
-    allowLoginWithGitHub: boolean;
-    allowLoginWithGitLab: boolean;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginOptionResp = {
+    authURL: string;
+    name: string;
+    type: GithubComLocalpaasLocalpaasLocalpaasAppBaseOAuthType;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoLoginWithApiKeyDataResp = {
@@ -621,85 +498,296 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoUse
     securityOption: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserStatus;
     updatedAt: string;
+    username: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoCreateSshKeyReq = {
-    name: string;
-    privateKey: string;
-    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyProjectAccessReq>;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoCreateOAuthReq = {
+    authURL: string;
+    callbackURL: string;
+    clientId: string;
+    clientSecret: string;
+    oauthType: GithubComLocalpaasLocalpaasLocalpaasAppBaseOAuthType;
+    organization: string;
+    profileURL: string;
+    scopes: Array<string>;
+    tokenURL: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoCreateSshKeyResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoCreateOAuthResp = {
     data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoDeleteSshKeyResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoDeleteOAuthResp = {
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoGetSshKeyResp = {
-    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyResp;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoGetOAuthResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoOAuthResp;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoListSshKeyBaseResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyBaseResp>;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoListOAuthResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoOAuthResp>;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoListSshKeyResp = {
-    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyResp>;
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoOAuthResp = {
+    authURL: string;
+    callbackURL: string;
+    clientId: string;
+    clientSecret: string;
+    encrypted: boolean;
+    id: string;
+    name: string;
+    organization: string;
+    profileURL: string;
+    scopes: Array<string>;
+    tokenURL: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoUpdateOAuthResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoCreateS3StorageReq = {
+    accessKeyId: string;
+    bucket: string;
+    endpoint: string;
+    name: string;
+    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageProjectAccessReq>;
+    region: string;
+    secretKey: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoCreateS3StorageResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoDeleteS3StorageResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoGetS3StorageResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoListS3StorageResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageResp>;
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyAppAccessReq = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageAppAccessReq = {
     allowed: boolean;
     id: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyAppAccessResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageAppAccessResp = {
     allowed: boolean;
     id: string;
     name: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyBaseResp = {
-    id: string;
-    name: string;
-    privateKey?: string;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyProjectAccessReq = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageProjectAccessReq = {
     allowed: boolean;
     /**
      * NOTE: this field is used to grant access to a project,
      * but deny access to specific apps within the project
      */
-    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyAppAccessReq>;
+    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageAppAccessReq>;
     id: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyProjectAccessResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageProjectAccessResp = {
     allowed: boolean;
-    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyAppAccessResp>;
+    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageAppAccessResp>;
     id: string;
     name: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageResp = {
+    accessKeyId: string;
+    bucket: string;
+    encrypted: boolean;
+    endpoint: string;
     id: string;
     name: string;
-    privateKey?: string;
-    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoSshKeyProjectAccessResp>;
+    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoS3StorageProjectAccessResp>;
+    region: string;
+    secretKey?: string;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoUpdateSshKeyResp = {
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoUpdateS3StorageResp = {
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretReq = {
+    key: string;
+    value: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoDeleteSecretResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoListSecretResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoSecretResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoSecretResp = {
+    encrypted: boolean;
+    id: string;
+    key: string;
+    value: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoCreateSlackReq = {
+    name: string;
+    webhook: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoCreateSlackResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoDeleteSlackResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoGetSlackResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoSlackResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoListSlackResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoSlackResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoSlackResp = {
+    id: string;
+    name: string;
+    webhook: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoUpdateSlackResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoCreateSshKeyReq = {
+    name: string;
+    privateKey: string;
+    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyProjectAccessReq>;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoCreateSshKeyResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoDeleteSshKeyResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoGetSshKeyResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoListSshKeyResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyAppAccessReq = {
+    allowed: boolean;
+    id: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyAppAccessResp = {
+    allowed: boolean;
+    id: string;
+    name: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyProjectAccessReq = {
+    allowed: boolean;
+    /**
+     * NOTE: this field is used to grant access to a project,
+     * but deny access to specific apps within the project
+     */
+    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyAppAccessReq>;
+    id: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyProjectAccessResp = {
+    allowed: boolean;
+    appAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyAppAccessResp>;
+    id: string;
+    name: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyResp = {
+    encrypted: boolean;
+    id: string;
+    name: string;
+    privateKey?: string;
+    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoSshKeyProjectAccessResp>;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoUpdateSshKeyResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyDataResp = {
+    id: string;
+    keyId: string;
+    secretKey: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyResp = {
+    accessAction?: GithubComLocalpaasLocalpaasLocalpaasAppBaseActionType;
+    expiration?: string;
+    id: string;
+    keyId: string;
+    secretKey: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoCreateApiKeyReq = {
+    accessAction: GithubComLocalpaasLocalpaasLocalpaasAppBaseActionType;
+    expiration: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoCreateApiKeyResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyDataResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoDeleteApiKeyResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoGetApiKeyResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoListApiKeyResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginMfaTotpSetupReq = {
-    [key: string]: unknown;
+    currentPasscode: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginMfaTotpSetupResp = {
@@ -714,6 +802,7 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUser
     qrCode?: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoMfaTotpQrCodeResp;
     role: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole;
     securityOption: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption;
+    username: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoBeginUserSignupReq = {
@@ -747,6 +836,7 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoCompleteU
      */
     password: string;
     photo: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserPhotoReq;
+    username: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoCompleteUserSignupResp = {
@@ -816,6 +906,34 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdatePas
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateProfileReq = {
+    email: string;
+    fullName: string;
+    photo: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserPhotoReq;
+    username: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateProfileResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateUserReq = {
+    accessExpiration: string;
+    email: string;
+    fullName: string;
+    moduleAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppBasedtoModuleAccessReq>;
+    photo: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserPhotoReq;
+    projectAccesses: Array<GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectAccessReq>;
+    role: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole;
+    securityOption: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserSecurityOption;
+    status: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserStatus;
+    username: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateUserResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserBaseResp = {
     fullName: string;
     id: string;
@@ -854,198 +972,6 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserResp 
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseUserStatus;
     updatedAt: string;
 };
-
-export type ListApiKeyData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * `search=<target> (support *)`
-         */
-        search?: string;
-        /**
-         * `pageOffset=offset`
-         */
-        pageOffset?: number;
-        /**
-         * `pageLimit=limit`
-         */
-        pageLimit?: number;
-        /**
-         * `sort=[-]field1|field2...`
-         */
-        sort?: string;
-    };
-    url: "/api-keys";
-};
-
-export type ListApiKeyErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type ListApiKeyError = ListApiKeyErrors[keyof ListApiKeyErrors];
-
-export type ListApiKeyResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoListApiKeyResp;
-};
-
-export type ListApiKeyResponse = ListApiKeyResponses[keyof ListApiKeyResponses];
-
-export type CreateApiKeyData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoCreateApiKeyReq;
-    path?: never;
-    query?: never;
-    url: "/api-keys";
-};
-
-export type CreateApiKeyErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type CreateApiKeyError = CreateApiKeyErrors[keyof CreateApiKeyErrors];
-
-export type CreateApiKeyResponses = {
-    /**
-     * Created
-     */
-    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoCreateApiKeyResp;
-};
-
-export type CreateApiKeyResponse = CreateApiKeyResponses[keyof CreateApiKeyResponses];
-
-export type ListApiKeyBaseData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * `search=<target> (support *)`
-         */
-        search?: string;
-        /**
-         * `pageOffset=offset`
-         */
-        pageOffset?: number;
-        /**
-         * `pageLimit=limit`
-         */
-        pageLimit?: number;
-        /**
-         * `sort=[-]field1|field2...`
-         */
-        sort?: string;
-    };
-    url: "/api-keys/base";
-};
-
-export type ListApiKeyBaseErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type ListApiKeyBaseError = ListApiKeyBaseErrors[keyof ListApiKeyBaseErrors];
-
-export type ListApiKeyBaseResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoListApiKeyBaseResp;
-};
-
-export type ListApiKeyBaseResponse = ListApiKeyBaseResponses[keyof ListApiKeyBaseResponses];
-
-export type DeleteApiKeyData = {
-    body?: never;
-    path: {
-        /**
-         * API key ID
-         */
-        ID: string;
-    };
-    query?: never;
-    url: "/api-keys/{ID}";
-};
-
-export type DeleteApiKeyErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type DeleteApiKeyError = DeleteApiKeyErrors[keyof DeleteApiKeyErrors];
-
-export type DeleteApiKeyResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoDeleteApiKeyResp;
-};
-
-export type DeleteApiKeyResponse = DeleteApiKeyResponses[keyof DeleteApiKeyResponses];
-
-export type GetApiKeyData = {
-    body?: never;
-    path: {
-        /**
-         * s3 storage ID
-         */
-        ID: string;
-    };
-    query?: never;
-    url: "/api-keys/{ID}";
-};
-
-export type GetApiKeyErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type GetApiKeyError = GetApiKeyErrors[keyof GetApiKeyErrors];
-
-export type GetApiKeyResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseApikeyucApikeydtoGetApiKeyResp;
-};
-
-export type GetApiKeyResponse = GetApiKeyResponses[keyof GetApiKeyResponses];
 
 export type GetLoginOptionsData = {
     body?: never;
@@ -1171,6 +1097,76 @@ export type LoginWithPasswordResponses = {
 };
 
 export type LoginWithPasswordResponse = LoginWithPasswordResponses[keyof LoginWithPasswordResponses];
+
+export type BeginOAuthData = {
+    body?: never;
+    path: {
+        /**
+         * provider name
+         */
+        provider: string;
+    };
+    query?: never;
+    url: "/auth/sso/callback/{provider}";
+};
+
+export type BeginOAuthErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type BeginOAuthError = BeginOAuthErrors[keyof BeginOAuthErrors];
+
+export type BeginOAuth2Data = {
+    body?: never;
+    path: {
+        /**
+         * provider name
+         */
+        provider: string;
+    };
+    query?: never;
+    url: "/auth/sso/callback/{provider}";
+};
+
+export type BeginOAuth2Errors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type BeginOAuth2Error = BeginOAuth2Errors[keyof BeginOAuth2Errors];
+
+export type SsoOAuthBeginData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/auth/sso/{provider}";
+};
+
+export type SsoOAuthBeginErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type SsoOAuthBeginError = SsoOAuthBeginErrors[keyof SsoOAuthBeginErrors];
 
 export type ListNodeData = {
     body?: never;
@@ -1750,6 +1746,132 @@ export type GetAppResponses = {
 
 export type GetAppResponse = GetAppResponses[keyof GetAppResponses];
 
+export type ListAppSecretsData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+    };
+    query?: {
+        /**
+         * `type=<setting type>`
+         */
+        type?: string;
+    };
+    url: "/projects/{projectID}/apps/{appID}/secrets";
+};
+
+export type ListAppSecretsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListAppSecretsError = ListAppSecretsErrors[keyof ListAppSecretsErrors];
+
+export type ListAppSecretsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoListSecretResp;
+};
+
+export type ListAppSecretsResponse = ListAppSecretsResponses[keyof ListAppSecretsResponses];
+
+export type CreateAppSecretData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretReq;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/apps/{appID}/secrets";
+};
+
+export type CreateAppSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateAppSecretError = CreateAppSecretErrors[keyof CreateAppSecretErrors];
+
+export type CreateAppSecretResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretResp;
+};
+
+export type CreateAppSecretResponse = CreateAppSecretResponses[keyof CreateAppSecretResponses];
+
+export type DeleteAppSecretData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+        /**
+         * secret ID
+         */
+        secretID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/apps/{appID}/secrets/{secretID}";
+};
+
+export type DeleteAppSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteAppSecretError = DeleteAppSecretErrors[keyof DeleteAppSecretErrors];
+
+export type DeleteAppSecretResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoDeleteSecretResp;
+};
+
+export type DeleteAppSecretResponse = DeleteAppSecretResponses[keyof DeleteAppSecretResponses];
+
 export type GetAppSettingsData = {
     body?: never;
     path: {
@@ -1916,6 +2038,120 @@ export type DeleteAppTagsResponses = {
 
 export type DeleteAppTagsResponse = DeleteAppTagsResponses[keyof DeleteAppTagsResponses];
 
+export type ListProjectSecretsData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+    };
+    query?: {
+        /**
+         * `type=<setting type>`
+         */
+        type?: string;
+    };
+    url: "/projects/{projectID}/secrets";
+};
+
+export type ListProjectSecretsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListProjectSecretsError = ListProjectSecretsErrors[keyof ListProjectSecretsErrors];
+
+export type ListProjectSecretsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoListSecretResp;
+};
+
+export type ListProjectSecretsResponse = ListProjectSecretsResponses[keyof ListProjectSecretsResponses];
+
+export type CreateProjectSecretData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretReq;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/secrets";
+};
+
+export type CreateProjectSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateProjectSecretError = CreateProjectSecretErrors[keyof CreateProjectSecretErrors];
+
+export type CreateProjectSecretResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretResp;
+};
+
+export type CreateProjectSecretResponse = CreateProjectSecretResponses[keyof CreateProjectSecretResponses];
+
+export type DeleteProjectSecretData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * secret ID
+         */
+        secretID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/secrets/{secretID}";
+};
+
+export type DeleteProjectSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteProjectSecretError = DeleteProjectSecretErrors[keyof DeleteProjectSecretErrors];
+
+export type DeleteProjectSecretResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoDeleteSecretResp;
+};
+
+export type DeleteProjectSecretResponse = DeleteProjectSecretResponses[keyof DeleteProjectSecretResponses];
+
 export type GetProjectSettingsData = {
     body?: never;
     path: {
@@ -2066,232 +2302,6 @@ export type DeleteProjectTagsResponses = {
 
 export type DeleteProjectTagsResponse = DeleteProjectTagsResponses[keyof DeleteProjectTagsResponses];
 
-export type ListS3StorageData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * `search=<target> (support *)`
-         */
-        search?: string;
-        /**
-         * `pageOffset=offset`
-         */
-        pageOffset?: number;
-        /**
-         * `pageLimit=limit`
-         */
-        pageLimit?: number;
-        /**
-         * `sort=[-]field1|field2...`
-         */
-        sort?: string;
-    };
-    url: "/s3-storages";
-};
-
-export type ListS3StorageErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type ListS3StorageError = ListS3StorageErrors[keyof ListS3StorageErrors];
-
-export type ListS3StorageResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoListS3StorageResp;
-};
-
-export type ListS3StorageResponse = ListS3StorageResponses[keyof ListS3StorageResponses];
-
-export type CreateS3StorageData = {
-    /**
-     * request data
-     */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoCreateS3StorageReq;
-    path?: never;
-    query?: never;
-    url: "/s3-storages";
-};
-
-export type CreateS3StorageErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type CreateS3StorageError = CreateS3StorageErrors[keyof CreateS3StorageErrors];
-
-export type CreateS3StorageResponses = {
-    /**
-     * Created
-     */
-    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoCreateS3StorageResp;
-};
-
-export type CreateS3StorageResponse = CreateS3StorageResponses[keyof CreateS3StorageResponses];
-
-export type ListS3StorageBaseData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * `search=<target> (support *)`
-         */
-        search?: string;
-        /**
-         * `pageOffset=offset`
-         */
-        pageOffset?: number;
-        /**
-         * `pageLimit=limit`
-         */
-        pageLimit?: number;
-        /**
-         * `sort=[-]field1|field2...`
-         */
-        sort?: string;
-    };
-    url: "/s3-storages/base";
-};
-
-export type ListS3StorageBaseErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type ListS3StorageBaseError = ListS3StorageBaseErrors[keyof ListS3StorageBaseErrors];
-
-export type ListS3StorageBaseResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoListS3StorageBaseResp;
-};
-
-export type ListS3StorageBaseResponse = ListS3StorageBaseResponses[keyof ListS3StorageBaseResponses];
-
-export type DeleteS3StorageData = {
-    body?: never;
-    path: {
-        /**
-         * s3 storage ID
-         */
-        ID: string;
-    };
-    query?: never;
-    url: "/s3-storages/{ID}";
-};
-
-export type DeleteS3StorageErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type DeleteS3StorageError = DeleteS3StorageErrors[keyof DeleteS3StorageErrors];
-
-export type DeleteS3StorageResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoDeleteS3StorageResp;
-};
-
-export type DeleteS3StorageResponse = DeleteS3StorageResponses[keyof DeleteS3StorageResponses];
-
-export type GetS3StorageData = {
-    body?: never;
-    path: {
-        /**
-         * s3 storage ID
-         */
-        ID: string;
-    };
-    query?: never;
-    url: "/s3-storages/{ID}";
-};
-
-export type GetS3StorageErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type GetS3StorageError = GetS3StorageErrors[keyof GetS3StorageErrors];
-
-export type GetS3StorageResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoGetS3StorageResp;
-};
-
-export type GetS3StorageResponse = GetS3StorageResponses[keyof GetS3StorageResponses];
-
-export type UpdateS3StorageData = {
-    body?: never;
-    path: {
-        /**
-         * s3 storage ID
-         */
-        ID: string;
-    };
-    query?: never;
-    url: "/s3-storages/{ID}";
-};
-
-export type UpdateS3StorageErrors = {
-    /**
-     * Bad Request
-     */
-    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-    /**
-     * Internal Server Error
-     */
-    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
-};
-
-export type UpdateS3StorageError = UpdateS3StorageErrors[keyof UpdateS3StorageErrors];
-
-export type UpdateS3StorageResponses = {
-    /**
-     * OK
-     */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseS3StorageucS3StoragedtoUpdateS3StorageResp;
-};
-
-export type UpdateS3StorageResponse = UpdateS3StorageResponses[keyof UpdateS3StorageResponses];
-
 export type DeleteSessionData = {
     body?: never;
     path?: never;
@@ -2320,6 +2330,35 @@ export type DeleteSessionResponses = {
 };
 
 export type DeleteSessionResponse = DeleteSessionResponses[keyof DeleteSessionResponses];
+
+export type DeleteAllSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/sessions/delete-all";
+};
+
+export type DeleteAllSessionsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteAllSessionsError = DeleteAllSessionsErrors[keyof DeleteAllSessionsErrors];
+
+export type DeleteAllSessionsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSessionucSessiondtoDeleteAllSessionsResp;
+};
+
+export type DeleteAllSessionsResponse = DeleteAllSessionsResponses[keyof DeleteAllSessionsResponses];
 
 export type GetMeData = {
     body?: never;
@@ -2379,7 +2418,7 @@ export type RefreshSessionResponses = {
 
 export type RefreshSessionResponse = RefreshSessionResponses[keyof RefreshSessionResponses];
 
-export type ListSshKeyData = {
+export type ListOAuthSettingsData = {
     body?: never;
     path?: never;
     query?: {
@@ -2400,10 +2439,10 @@ export type ListSshKeyData = {
          */
         sort?: string;
     };
-    url: "/ssh-keys";
+    url: "/settings/oauth";
 };
 
-export type ListSshKeyErrors = {
+export type ListOAuthSettingsErrors = {
     /**
      * Bad Request
      */
@@ -2414,28 +2453,28 @@ export type ListSshKeyErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type ListSshKeyError = ListSshKeyErrors[keyof ListSshKeyErrors];
+export type ListOAuthSettingsError = ListOAuthSettingsErrors[keyof ListOAuthSettingsErrors];
 
-export type ListSshKeyResponses = {
+export type ListOAuthSettingsResponses = {
     /**
      * OK
      */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoListSshKeyResp;
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoListOAuthResp;
 };
 
-export type ListSshKeyResponse = ListSshKeyResponses[keyof ListSshKeyResponses];
+export type ListOAuthSettingsResponse = ListOAuthSettingsResponses[keyof ListOAuthSettingsResponses];
 
-export type CreateSshKeyData = {
+export type CreateOAuthSettingData = {
     /**
      * request data
      */
-    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoCreateSshKeyReq;
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoCreateOAuthReq;
     path?: never;
     query?: never;
-    url: "/ssh-keys";
+    url: "/settings/oauth";
 };
 
-export type CreateSshKeyErrors = {
+export type CreateOAuthSettingErrors = {
     /**
      * Bad Request
      */
@@ -2446,18 +2485,120 @@ export type CreateSshKeyErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type CreateSshKeyError = CreateSshKeyErrors[keyof CreateSshKeyErrors];
+export type CreateOAuthSettingError = CreateOAuthSettingErrors[keyof CreateOAuthSettingErrors];
 
-export type CreateSshKeyResponses = {
+export type CreateOAuthSettingResponses = {
     /**
      * Created
      */
-    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoCreateSshKeyResp;
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoCreateOAuthResp;
 };
 
-export type CreateSshKeyResponse = CreateSshKeyResponses[keyof CreateSshKeyResponses];
+export type CreateOAuthSettingResponse = CreateOAuthSettingResponses[keyof CreateOAuthSettingResponses];
 
-export type ListSshKeyBaseData = {
+export type DeleteOAuthSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/oauth/{ID}";
+};
+
+export type DeleteOAuthSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteOAuthSettingError = DeleteOAuthSettingErrors[keyof DeleteOAuthSettingErrors];
+
+export type DeleteOAuthSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoDeleteOAuthResp;
+};
+
+export type DeleteOAuthSettingResponse = DeleteOAuthSettingResponses[keyof DeleteOAuthSettingResponses];
+
+export type GetOAuthSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/oauth/{ID}";
+};
+
+export type GetOAuthSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetOAuthSettingError = GetOAuthSettingErrors[keyof GetOAuthSettingErrors];
+
+export type GetOAuthSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoGetOAuthResp;
+};
+
+export type GetOAuthSettingResponse = GetOAuthSettingResponses[keyof GetOAuthSettingResponses];
+
+export type UpdateOAuthSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/oauth/{ID}";
+};
+
+export type UpdateOAuthSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateOAuthSettingError = UpdateOAuthSettingErrors[keyof UpdateOAuthSettingErrors];
+
+export type UpdateOAuthSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsOauthucOauthdtoUpdateOAuthResp;
+};
+
+export type UpdateOAuthSettingResponse = UpdateOAuthSettingResponses[keyof UpdateOAuthSettingResponses];
+
+export type ListS3StorageSettingsData = {
     body?: never;
     path?: never;
     query?: {
@@ -2478,10 +2619,10 @@ export type ListSshKeyBaseData = {
          */
         sort?: string;
     };
-    url: "/ssh-keys/base";
+    url: "/settings/s3-storages";
 };
 
-export type ListSshKeyBaseErrors = {
+export type ListS3StorageSettingsErrors = {
     /**
      * Bad Request
      */
@@ -2492,30 +2633,62 @@ export type ListSshKeyBaseErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type ListSshKeyBaseError = ListSshKeyBaseErrors[keyof ListSshKeyBaseErrors];
+export type ListS3StorageSettingsError = ListS3StorageSettingsErrors[keyof ListS3StorageSettingsErrors];
 
-export type ListSshKeyBaseResponses = {
+export type ListS3StorageSettingsResponses = {
     /**
      * OK
      */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoListSshKeyBaseResp;
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoListS3StorageResp;
 };
 
-export type ListSshKeyBaseResponse = ListSshKeyBaseResponses[keyof ListSshKeyBaseResponses];
+export type ListS3StorageSettingsResponse = ListS3StorageSettingsResponses[keyof ListS3StorageSettingsResponses];
 
-export type DeleteSshKeyData = {
+export type CreateS3StorageSettingData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoCreateS3StorageReq;
+    path?: never;
+    query?: never;
+    url: "/settings/s3-storages";
+};
+
+export type CreateS3StorageSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateS3StorageSettingError = CreateS3StorageSettingErrors[keyof CreateS3StorageSettingErrors];
+
+export type CreateS3StorageSettingResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoCreateS3StorageResp;
+};
+
+export type CreateS3StorageSettingResponse = CreateS3StorageSettingResponses[keyof CreateS3StorageSettingResponses];
+
+export type DeleteS3StorageSettingData = {
     body?: never;
     path: {
         /**
-         * SSH key ID
+         * setting ID
          */
         ID: string;
     };
     query?: never;
-    url: "/ssh-keys/{ID}";
+    url: "/settings/s3-storages/{ID}";
 };
 
-export type DeleteSshKeyErrors = {
+export type DeleteS3StorageSettingErrors = {
     /**
      * Bad Request
      */
@@ -2526,30 +2699,30 @@ export type DeleteSshKeyErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type DeleteSshKeyError = DeleteSshKeyErrors[keyof DeleteSshKeyErrors];
+export type DeleteS3StorageSettingError = DeleteS3StorageSettingErrors[keyof DeleteS3StorageSettingErrors];
 
-export type DeleteSshKeyResponses = {
+export type DeleteS3StorageSettingResponses = {
     /**
      * OK
      */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoDeleteSshKeyResp;
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoDeleteS3StorageResp;
 };
 
-export type DeleteSshKeyResponse = DeleteSshKeyResponses[keyof DeleteSshKeyResponses];
+export type DeleteS3StorageSettingResponse = DeleteS3StorageSettingResponses[keyof DeleteS3StorageSettingResponses];
 
-export type GetSshKeyData = {
+export type GetS3StorageSettingData = {
     body?: never;
     path: {
         /**
-         * s3 storage ID
+         * setting ID
          */
         ID: string;
     };
     query?: never;
-    url: "/ssh-keys/{ID}";
+    url: "/settings/s3-storages/{ID}";
 };
 
-export type GetSshKeyErrors = {
+export type GetS3StorageSettingErrors = {
     /**
      * Bad Request
      */
@@ -2560,30 +2733,30 @@ export type GetSshKeyErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type GetSshKeyError = GetSshKeyErrors[keyof GetSshKeyErrors];
+export type GetS3StorageSettingError = GetS3StorageSettingErrors[keyof GetS3StorageSettingErrors];
 
-export type GetSshKeyResponses = {
+export type GetS3StorageSettingResponses = {
     /**
      * OK
      */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoGetSshKeyResp;
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoGetS3StorageResp;
 };
 
-export type GetSshKeyResponse = GetSshKeyResponses[keyof GetSshKeyResponses];
+export type GetS3StorageSettingResponse = GetS3StorageSettingResponses[keyof GetS3StorageSettingResponses];
 
-export type UpdateSshKeyData = {
+export type UpdateS3StorageSettingData = {
     body?: never;
     path: {
         /**
-         * SSH key ID
+         * setting ID
          */
         ID: string;
     };
     query?: never;
-    url: "/ssh-keys/{ID}";
+    url: "/settings/s3-storages/{ID}";
 };
 
-export type UpdateSshKeyErrors = {
+export type UpdateS3StorageSettingErrors = {
     /**
      * Bad Request
      */
@@ -2594,16 +2767,488 @@ export type UpdateSshKeyErrors = {
     500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
 };
 
-export type UpdateSshKeyError = UpdateSshKeyErrors[keyof UpdateSshKeyErrors];
+export type UpdateS3StorageSettingError = UpdateS3StorageSettingErrors[keyof UpdateS3StorageSettingErrors];
 
-export type UpdateSshKeyResponses = {
+export type UpdateS3StorageSettingResponses = {
     /**
      * OK
      */
-    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSshkeyucSshkeydtoUpdateSshKeyResp;
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsS3StorageucS3StoragedtoUpdateS3StorageResp;
 };
 
-export type UpdateSshKeyResponse = UpdateSshKeyResponses[keyof UpdateSshKeyResponses];
+export type UpdateS3StorageSettingResponse = UpdateS3StorageSettingResponses[keyof UpdateS3StorageSettingResponses];
+
+export type ListSecretsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/settings/secrets";
+};
+
+export type ListSecretsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListSecretsError = ListSecretsErrors[keyof ListSecretsErrors];
+
+export type ListSecretsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoListSecretResp;
+};
+
+export type ListSecretsResponse = ListSecretsResponses[keyof ListSecretsResponses];
+
+export type CreateSecretData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretReq;
+    path?: never;
+    query?: never;
+    url: "/settings/secrets";
+};
+
+export type CreateSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateSecretError = CreateSecretErrors[keyof CreateSecretErrors];
+
+export type CreateSecretResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoCreateSecretResp;
+};
+
+export type CreateSecretResponse = CreateSecretResponses[keyof CreateSecretResponses];
+
+export type DeleteSecretData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/secrets/{ID}";
+};
+
+export type DeleteSecretErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteSecretError = DeleteSecretErrors[keyof DeleteSecretErrors];
+
+export type DeleteSecretResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSecretucSecretdtoDeleteSecretResp;
+};
+
+export type DeleteSecretResponse = DeleteSecretResponses[keyof DeleteSecretResponses];
+
+export type ListSlackSettingsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/settings/slack";
+};
+
+export type ListSlackSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListSlackSettingsError = ListSlackSettingsErrors[keyof ListSlackSettingsErrors];
+
+export type ListSlackSettingsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoListSlackResp;
+};
+
+export type ListSlackSettingsResponse = ListSlackSettingsResponses[keyof ListSlackSettingsResponses];
+
+export type CreateSlackSettingData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoCreateSlackReq;
+    path?: never;
+    query?: never;
+    url: "/settings/slack";
+};
+
+export type CreateSlackSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateSlackSettingError = CreateSlackSettingErrors[keyof CreateSlackSettingErrors];
+
+export type CreateSlackSettingResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoCreateSlackResp;
+};
+
+export type CreateSlackSettingResponse = CreateSlackSettingResponses[keyof CreateSlackSettingResponses];
+
+export type DeleteSlackSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/slack/{ID}";
+};
+
+export type DeleteSlackSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteSlackSettingError = DeleteSlackSettingErrors[keyof DeleteSlackSettingErrors];
+
+export type DeleteSlackSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoDeleteSlackResp;
+};
+
+export type DeleteSlackSettingResponse = DeleteSlackSettingResponses[keyof DeleteSlackSettingResponses];
+
+export type GetSlackSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/slack/{ID}";
+};
+
+export type GetSlackSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetSlackSettingError = GetSlackSettingErrors[keyof GetSlackSettingErrors];
+
+export type GetSlackSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoGetSlackResp;
+};
+
+export type GetSlackSettingResponse = GetSlackSettingResponses[keyof GetSlackSettingResponses];
+
+export type UpdateSlackSettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/slack/{ID}";
+};
+
+export type UpdateSlackSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateSlackSettingError = UpdateSlackSettingErrors[keyof UpdateSlackSettingErrors];
+
+export type UpdateSlackSettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSlackucSlackdtoUpdateSlackResp;
+};
+
+export type UpdateSlackSettingResponse = UpdateSlackSettingResponses[keyof UpdateSlackSettingResponses];
+
+export type ListSshKeySettingsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/settings/ssh-keys";
+};
+
+export type ListSshKeySettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListSshKeySettingsError = ListSshKeySettingsErrors[keyof ListSshKeySettingsErrors];
+
+export type ListSshKeySettingsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoListSshKeyResp;
+};
+
+export type ListSshKeySettingsResponse = ListSshKeySettingsResponses[keyof ListSshKeySettingsResponses];
+
+export type CreateSshKeySettingData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoCreateSshKeyReq;
+    path?: never;
+    query?: never;
+    url: "/settings/ssh-keys";
+};
+
+export type CreateSshKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateSshKeySettingError = CreateSshKeySettingErrors[keyof CreateSshKeySettingErrors];
+
+export type CreateSshKeySettingResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoCreateSshKeyResp;
+};
+
+export type CreateSshKeySettingResponse = CreateSshKeySettingResponses[keyof CreateSshKeySettingResponses];
+
+export type DeleteSshKeySettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/ssh-keys/{ID}";
+};
+
+export type DeleteSshKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteSshKeySettingError = DeleteSshKeySettingErrors[keyof DeleteSshKeySettingErrors];
+
+export type DeleteSshKeySettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoDeleteSshKeyResp;
+};
+
+export type DeleteSshKeySettingResponse = DeleteSshKeySettingResponses[keyof DeleteSshKeySettingResponses];
+
+export type GetSshKeySettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/ssh-keys/{ID}";
+};
+
+export type GetSshKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetSshKeySettingError = GetSshKeySettingErrors[keyof GetSshKeySettingErrors];
+
+export type GetSshKeySettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoGetSshKeyResp;
+};
+
+export type GetSshKeySettingResponse = GetSshKeySettingResponses[keyof GetSshKeySettingResponses];
+
+export type UpdateSshKeySettingData = {
+    body?: never;
+    path: {
+        /**
+         * setting ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/settings/ssh-keys/{ID}";
+};
+
+export type UpdateSshKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateSshKeySettingError = UpdateSshKeySettingErrors[keyof UpdateSshKeySettingErrors];
+
+export type UpdateSshKeySettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSettingsSshkeyucSshkeydtoUpdateSshKeyResp;
+};
+
+export type UpdateSshKeySettingResponse = UpdateSshKeySettingResponses[keyof UpdateSshKeySettingResponses];
 
 export type ListUserData = {
     body?: never;
@@ -2833,6 +3478,184 @@ export type UpdateUserPasswordResponses = {
 
 export type UpdateUserPasswordResponse = UpdateUserPasswordResponses[keyof UpdateUserPasswordResponses];
 
+export type UpdateUserProfileData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateProfileReq;
+    path?: never;
+    query?: never;
+    url: "/users/current/profile";
+};
+
+export type UpdateUserProfileErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateUserProfileError = UpdateUserProfileErrors[keyof UpdateUserProfileErrors];
+
+export type UpdateUserProfileResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateProfileResp;
+};
+
+export type UpdateUserProfileResponse = UpdateUserProfileResponses[keyof UpdateUserProfileResponses];
+
+export type ListApiKeySettingsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/users/current/settings/api-keys";
+};
+
+export type ListApiKeySettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListApiKeySettingsError = ListApiKeySettingsErrors[keyof ListApiKeySettingsErrors];
+
+export type ListApiKeySettingsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoListApiKeyResp;
+};
+
+export type ListApiKeySettingsResponse = ListApiKeySettingsResponses[keyof ListApiKeySettingsResponses];
+
+export type CreateApiKeySettingData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoCreateApiKeyReq;
+    path?: never;
+    query?: never;
+    url: "/users/current/settings/api-keys";
+};
+
+export type CreateApiKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CreateApiKeySettingError = CreateApiKeySettingErrors[keyof CreateApiKeySettingErrors];
+
+export type CreateApiKeySettingResponses = {
+    /**
+     * Created
+     */
+    201: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoCreateApiKeyResp;
+};
+
+export type CreateApiKeySettingResponse = CreateApiKeySettingResponses[keyof CreateApiKeySettingResponses];
+
+export type DeleteApiKeySettingData = {
+    body?: never;
+    path: {
+        /**
+         * API key ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/users/current/settings/api-keys/{ID}";
+};
+
+export type DeleteApiKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type DeleteApiKeySettingError = DeleteApiKeySettingErrors[keyof DeleteApiKeySettingErrors];
+
+export type DeleteApiKeySettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoDeleteApiKeyResp;
+};
+
+export type DeleteApiKeySettingResponse = DeleteApiKeySettingResponses[keyof DeleteApiKeySettingResponses];
+
+export type GetApiKeySettingData = {
+    body?: never;
+    path: {
+        /**
+         * s3 storage ID
+         */
+        ID: string;
+    };
+    query?: never;
+    url: "/users/current/settings/api-keys/{ID}";
+};
+
+export type GetApiKeySettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetApiKeySettingError = GetApiKeySettingErrors[keyof GetApiKeySettingErrors];
+
+export type GetApiKeySettingResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoGetApiKeyResp;
+};
+
+export type GetApiKeySettingResponse = GetApiKeySettingResponses[keyof GetApiKeySettingResponses];
+
 export type InviteUserData = {
     /**
      * request data
@@ -2962,3 +3785,40 @@ export type GetUserResponses = {
 };
 
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
+
+export type UpdateUserData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateUserReq;
+    path: {
+        /**
+         * user ID
+         */
+        userID: string;
+    };
+    query?: never;
+    url: "/users/{userID}";
+};
+
+export type UpdateUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateUserError = UpdateUserErrors[keyof UpdateUserErrors];
+
+export type UpdateUserResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUpdateUserResp;
+};
+
+export type UpdateUserResponse = UpdateUserResponses[keyof UpdateUserResponses];

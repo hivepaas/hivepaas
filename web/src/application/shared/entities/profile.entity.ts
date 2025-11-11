@@ -8,22 +8,28 @@ export interface Profile {
     id: string;
 
     /**
+     * Username
+     * @example "johndoe"
+     */
+    username: string;
+
+    /**
      * Full name
      * @example "John Doe"
      */
-    fullName: string;
+    fullName?: string;
 
     /**
      * Photo
      * @example "https://example.com/photo.jpg"
      */
-    photo: string | null;
+    photo?: string | null;
 
     /**
      * Email
      * @example "john.dou@.example.com"
      */
-    email: string;
+    email?: string | null;
 
     securityOption: ESecuritySettings;
 }

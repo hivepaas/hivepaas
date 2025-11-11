@@ -1,14 +1,8 @@
 import { type SignUp } from "@application/authentication/domain";
 
 interface RequestData {
-    email: string;
-    firstName: string;
-    lastName: string;
-    position: string;
-    entity: { id: string } | null;
-    timezone: string;
-    mobilePhone: string;
-    officePhone: string;
+    email?: string | null;
+    fullName?: string;
     password: string;
     photo: {
         fileName: string;
@@ -19,13 +13,6 @@ interface RequestData {
 class SignUpMapper {
     private map = (data: SignUp["data"]): Omit<RequestData, "email"> => {
         return {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            position: data.position,
-            entity: data.entity ? { id: data.entity.id } : null,
-            timezone: data.timezone,
-            mobilePhone: data.mobilePhone,
-            officePhone: data.officePhone,
             password: data.password,
             photo: data.photo,
         };

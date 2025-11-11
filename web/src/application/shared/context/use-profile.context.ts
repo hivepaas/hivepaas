@@ -33,19 +33,23 @@ export const useProfileContext = create<State & Actions>()(set => ({
                     return;
                 }
 
-                if (profile.email !== undefined) {
+                if (profile.username) {
+                    draft.profile.username = profile.username;
+                }
+
+                if (profile.email) {
                     draft.profile.email = profile.email;
                 }
 
-                if (profile.photo !== undefined) {
+                if (profile.photo) {
                     draft.profile.photo = profile.photo;
                 }
 
-                if (profile.securityOption !== undefined) {
+                if (profile.securityOption) {
                     draft.profile.securityOption = profile.securityOption;
                 }
 
-                if (profile.fullName !== undefined) {
+                if (profile.fullName) {
                     draft.profile.fullName = profile.fullName;
                 }
             }),

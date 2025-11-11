@@ -13,9 +13,10 @@ const GetProfileSchema = z.object({
     data: z.object({
         user: z.object({
             id: z.string(),
-            fullName: z.string(),
+            username: z.string(),
+            fullName: z.string().optional(),
             photo: z.string().transform(arg => arg.trim() || null),
-            email: z.string(),
+            email: z.string().optional(),
             securityOption: z.nativeEnum(ESecuritySettings),
         }),
     }),
@@ -36,6 +37,7 @@ export class SessionApiValidator {
         return {
             data: {
                 id: user.id,
+                username: user.username,
                 fullName: user.fullName,
                 photo: user.photo,
                 email: user.email,

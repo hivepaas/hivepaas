@@ -5,6 +5,10 @@ import type {
     BeginMfaTotpSetupData,
     BeginMfaTotpSetupErrors,
     BeginMfaTotpSetupResponses,
+    BeginOAuth2Data,
+    BeginOAuth2Errors,
+    BeginOAuthData,
+    BeginOAuthErrors,
     BeginUserSignupData,
     BeginUserSignupErrors,
     BeginUserSignupResponses,
@@ -14,60 +18,93 @@ import type {
     CompleteUserSignupData,
     CompleteUserSignupErrors,
     CompleteUserSignupResponses,
-    CreateApiKeyData,
-    CreateApiKeyErrors,
-    CreateApiKeyResponses,
+    CreateApiKeySettingData,
+    CreateApiKeySettingErrors,
+    CreateApiKeySettingResponses,
     CreateAppData,
     CreateAppErrors,
     CreateAppResponses,
+    CreateAppSecretData,
+    CreateAppSecretErrors,
+    CreateAppSecretResponses,
     CreateAppTagData,
     CreateAppTagErrors,
     CreateAppTagResponses,
+    CreateOAuthSettingData,
+    CreateOAuthSettingErrors,
+    CreateOAuthSettingResponses,
     CreateProjectData,
     CreateProjectErrors,
     CreateProjectResponses,
+    CreateProjectSecretData,
+    CreateProjectSecretErrors,
+    CreateProjectSecretResponses,
     CreateProjectTagData,
     CreateProjectTagErrors,
     CreateProjectTagResponses,
-    CreateS3StorageData,
-    CreateS3StorageErrors,
-    CreateS3StorageResponses,
-    CreateSshKeyData,
-    CreateSshKeyErrors,
-    CreateSshKeyResponses,
-    DeleteApiKeyData,
-    DeleteApiKeyErrors,
-    DeleteApiKeyResponses,
+    CreateS3StorageSettingData,
+    CreateS3StorageSettingErrors,
+    CreateS3StorageSettingResponses,
+    CreateSecretData,
+    CreateSecretErrors,
+    CreateSecretResponses,
+    CreateSlackSettingData,
+    CreateSlackSettingErrors,
+    CreateSlackSettingResponses,
+    CreateSshKeySettingData,
+    CreateSshKeySettingErrors,
+    CreateSshKeySettingResponses,
+    DeleteAllSessionsData,
+    DeleteAllSessionsErrors,
+    DeleteAllSessionsResponses,
+    DeleteApiKeySettingData,
+    DeleteApiKeySettingErrors,
+    DeleteApiKeySettingResponses,
     DeleteAppData,
     DeleteAppErrors,
     DeleteAppResponses,
+    DeleteAppSecretData,
+    DeleteAppSecretErrors,
+    DeleteAppSecretResponses,
     DeleteAppTagsData,
     DeleteAppTagsErrors,
     DeleteAppTagsResponses,
     DeleteNodeData,
     DeleteNodeErrors,
     DeleteNodeResponses,
+    DeleteOAuthSettingData,
+    DeleteOAuthSettingErrors,
+    DeleteOAuthSettingResponses,
     DeleteProjectData,
     DeleteProjectErrors,
     DeleteProjectResponses,
+    DeleteProjectSecretData,
+    DeleteProjectSecretErrors,
+    DeleteProjectSecretResponses,
     DeleteProjectTagsData,
     DeleteProjectTagsErrors,
     DeleteProjectTagsResponses,
-    DeleteS3StorageData,
-    DeleteS3StorageErrors,
-    DeleteS3StorageResponses,
+    DeleteS3StorageSettingData,
+    DeleteS3StorageSettingErrors,
+    DeleteS3StorageSettingResponses,
+    DeleteSecretData,
+    DeleteSecretErrors,
+    DeleteSecretResponses,
     DeleteSessionData,
     DeleteSessionErrors,
     DeleteSessionResponses,
-    DeleteSshKeyData,
-    DeleteSshKeyErrors,
-    DeleteSshKeyResponses,
+    DeleteSlackSettingData,
+    DeleteSlackSettingErrors,
+    DeleteSlackSettingResponses,
+    DeleteSshKeySettingData,
+    DeleteSshKeySettingErrors,
+    DeleteSshKeySettingResponses,
     DevModeLoginData,
     DevModeLoginErrors,
     DevModeLoginResponses,
-    GetApiKeyData,
-    GetApiKeyErrors,
-    GetApiKeyResponses,
+    GetApiKeySettingData,
+    GetApiKeySettingErrors,
+    GetApiKeySettingResponses,
     GetAppData,
     GetAppErrors,
     GetAppResponses,
@@ -83,57 +120,69 @@ import type {
     GetNodeData,
     GetNodeErrors,
     GetNodeResponses,
+    GetOAuthSettingData,
+    GetOAuthSettingErrors,
+    GetOAuthSettingResponses,
     GetProjectData,
     GetProjectErrors,
     GetProjectResponses,
     GetProjectSettingsData,
     GetProjectSettingsErrors,
     GetProjectSettingsResponses,
-    GetS3StorageData,
-    GetS3StorageErrors,
-    GetS3StorageResponses,
-    GetSshKeyData,
-    GetSshKeyErrors,
-    GetSshKeyResponses,
+    GetS3StorageSettingData,
+    GetS3StorageSettingErrors,
+    GetS3StorageSettingResponses,
+    GetSlackSettingData,
+    GetSlackSettingErrors,
+    GetSlackSettingResponses,
+    GetSshKeySettingData,
+    GetSshKeySettingErrors,
+    GetSshKeySettingResponses,
     GetUserData,
     GetUserErrors,
     GetUserResponses,
     InviteUserData,
     InviteUserErrors,
     InviteUserResponses,
-    ListApiKeyBaseData,
-    ListApiKeyBaseErrors,
-    ListApiKeyBaseResponses,
-    ListApiKeyData,
-    ListApiKeyErrors,
-    ListApiKeyResponses,
+    ListApiKeySettingsData,
+    ListApiKeySettingsErrors,
+    ListApiKeySettingsResponses,
     ListAppBaseData,
     ListAppBaseErrors,
     ListAppBaseResponses,
     ListAppData,
     ListAppErrors,
     ListAppResponses,
+    ListAppSecretsData,
+    ListAppSecretsErrors,
+    ListAppSecretsResponses,
     ListNodeData,
     ListNodeErrors,
     ListNodeResponses,
+    ListOAuthSettingsData,
+    ListOAuthSettingsErrors,
+    ListOAuthSettingsResponses,
     ListProjectBaseData,
     ListProjectBaseErrors,
     ListProjectBaseResponses,
     ListProjectData,
     ListProjectErrors,
     ListProjectResponses,
-    ListS3StorageBaseData,
-    ListS3StorageBaseErrors,
-    ListS3StorageBaseResponses,
-    ListS3StorageData,
-    ListS3StorageErrors,
-    ListS3StorageResponses,
-    ListSshKeyBaseData,
-    ListSshKeyBaseErrors,
-    ListSshKeyBaseResponses,
-    ListSshKeyData,
-    ListSshKeyErrors,
-    ListSshKeyResponses,
+    ListProjectSecretsData,
+    ListProjectSecretsErrors,
+    ListProjectSecretsResponses,
+    ListS3StorageSettingsData,
+    ListS3StorageSettingsErrors,
+    ListS3StorageSettingsResponses,
+    ListSecretsData,
+    ListSecretsErrors,
+    ListSecretsResponses,
+    ListSlackSettingsData,
+    ListSlackSettingsErrors,
+    ListSlackSettingsResponses,
+    ListSshKeySettingsData,
+    ListSshKeySettingsErrors,
+    ListSshKeySettingsResponses,
     ListUserBaseData,
     ListUserBaseErrors,
     ListUserBaseResponses,
@@ -155,21 +204,35 @@ import type {
     RemoveMfaTotpData,
     RemoveMfaTotpErrors,
     RemoveMfaTotpResponses,
+    SsoOAuthBeginData,
+    SsoOAuthBeginErrors,
     UpdateAppSettingsData,
     UpdateAppSettingsErrors,
     UpdateAppSettingsResponses,
+    UpdateOAuthSettingData,
+    UpdateOAuthSettingErrors,
+    UpdateOAuthSettingResponses,
     UpdateProjectSettingsData,
     UpdateProjectSettingsErrors,
     UpdateProjectSettingsResponses,
-    UpdateS3StorageData,
-    UpdateS3StorageErrors,
-    UpdateS3StorageResponses,
-    UpdateSshKeyData,
-    UpdateSshKeyErrors,
-    UpdateSshKeyResponses,
+    UpdateS3StorageSettingData,
+    UpdateS3StorageSettingErrors,
+    UpdateS3StorageSettingResponses,
+    UpdateSlackSettingData,
+    UpdateSlackSettingErrors,
+    UpdateSlackSettingResponses,
+    UpdateSshKeySettingData,
+    UpdateSshKeySettingErrors,
+    UpdateSshKeySettingResponses,
+    UpdateUserData,
+    UpdateUserErrors,
     UpdateUserPasswordData,
     UpdateUserPasswordErrors,
     UpdateUserPasswordResponses,
+    UpdateUserProfileData,
+    UpdateUserProfileErrors,
+    UpdateUserProfileResponses,
+    UpdateUserResponses,
 } from "./types.gen";
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<
@@ -187,81 +250,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      * used to access values that aren't defined as part of the SDK function.
      */
     meta?: Record<string, unknown>;
-};
-
-/**
- * Lists API key
- *
- * Lists API key
- */
-export const listApiKey = <ThrowOnError extends boolean = false>(options?: Options<ListApiKeyData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListApiKeyResponses, ListApiKeyErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/api-keys",
-        ...options,
-    });
-};
-
-/**
- * Creates a new API key
- *
- * Creates a new API key
- */
-export const createApiKey = <ThrowOnError extends boolean = false>(
-    options: Options<CreateApiKeyData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateApiKeyResponses, CreateApiKeyErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/api-keys",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
- * Lists API key
- *
- * Lists API key
- */
-export const listApiKeyBase = <ThrowOnError extends boolean = false>(
-    options?: Options<ListApiKeyBaseData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListApiKeyBaseResponses, ListApiKeyBaseErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/api-keys/base",
-        ...options,
-    });
-};
-
-/**
- * Deletes an API key
- *
- * Deletes an API key
- */
-export const deleteApiKey = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteApiKeyData, ThrowOnError>,
-) => {
-    return (options.client ?? client).delete<DeleteApiKeyResponses, DeleteApiKeyErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/api-keys/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Gets API key details
- *
- * Gets API key details
- */
-export const getApiKey = <ThrowOnError extends boolean = false>(options: Options<GetApiKeyData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetApiKeyResponses, GetApiKeyErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/api-keys/{ID}",
-        ...options,
-    });
 };
 
 /**
@@ -334,6 +322,44 @@ export const loginWithPassword = <ThrowOnError extends boolean = false>(
             "Content-Type": "*/*",
             ...options.headers,
         },
+    });
+};
+
+/**
+ * Begins SSO flow
+ *
+ * Begins SSO flow
+ */
+export const beginOAuth = <ThrowOnError extends boolean = false>(options: Options<BeginOAuthData, ThrowOnError>) => {
+    return (options.client ?? client).get<unknown, BeginOAuthErrors, ThrowOnError>({
+        url: "/auth/sso/callback/{provider}",
+        ...options,
+    });
+};
+
+/**
+ * Begins SSO flow
+ *
+ * Begins SSO flow
+ */
+export const beginOAuth2 = <ThrowOnError extends boolean = false>(options: Options<BeginOAuth2Data, ThrowOnError>) => {
+    return (options.client ?? client).post<unknown, BeginOAuth2Errors, ThrowOnError>({
+        url: "/auth/sso/callback/{provider}",
+        ...options,
+    });
+};
+
+/**
+ * Starts OAuth SSO flow
+ *
+ * Starts OAuth SSO flow
+ */
+export const ssoOAuthBegin = <ThrowOnError extends boolean = false>(
+    options?: Options<SsoOAuthBeginData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<unknown, SsoOAuthBeginErrors, ThrowOnError>({
+        url: "/auth/sso/{provider}",
+        ...options,
     });
 };
 
@@ -540,6 +566,55 @@ export const getApp = <ThrowOnError extends boolean = false>(options: Options<Ge
 };
 
 /**
+ * Lists app secrets
+ *
+ * Lists app secrets
+ */
+export const listAppSecrets = <ThrowOnError extends boolean = false>(
+    options: Options<ListAppSecretsData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<ListAppSecretsResponses, ListAppSecretsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/secrets",
+        ...options,
+    });
+};
+
+/**
+ * Creates an app secret
+ *
+ * Creates an app secret
+ */
+export const createAppSecret = <ThrowOnError extends boolean = false>(
+    options: Options<CreateAppSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateAppSecretResponses, CreateAppSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/secrets",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes an app secret
+ *
+ * Deletes an app secret
+ */
+export const deleteAppSecret = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteAppSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteAppSecretResponses, DeleteAppSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/secrets/{secretID}",
+        ...options,
+    });
+};
+
+/**
  * Gets app settings
  *
  * Gets app settings
@@ -562,7 +637,7 @@ export const getAppSettings = <ThrowOnError extends boolean = false>(
 export const updateAppSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateAppSettingsData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).patch<UpdateAppSettingsResponses, UpdateAppSettingsErrors, ThrowOnError>({
+    return (options.client ?? client).put<UpdateAppSettingsResponses, UpdateAppSettingsErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/apps/{appID}/settings",
         ...options,
@@ -612,6 +687,55 @@ export const deleteAppTags = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Lists project secrets
+ *
+ * Lists project secrets
+ */
+export const listProjectSecrets = <ThrowOnError extends boolean = false>(
+    options: Options<ListProjectSecretsData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<ListProjectSecretsResponses, ListProjectSecretsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/secrets",
+        ...options,
+    });
+};
+
+/**
+ * Creates a project secret
+ *
+ * Creates a project secret
+ */
+export const createProjectSecret = <ThrowOnError extends boolean = false>(
+    options: Options<CreateProjectSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateProjectSecretResponses, CreateProjectSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/secrets",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes a project secret
+ *
+ * Deletes a project secret
+ */
+export const deleteProjectSecret = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteProjectSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteProjectSecretResponses, DeleteProjectSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/secrets/{secretID}",
+        ...options,
+    });
+};
+
+/**
  * Gets project settings
  *
  * Gets project settings
@@ -634,7 +758,7 @@ export const getProjectSettings = <ThrowOnError extends boolean = false>(
 export const updateProjectSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateProjectSettingsData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).patch<UpdateProjectSettingsResponses, UpdateProjectSettingsErrors, ThrowOnError>({
+    return (options.client ?? client).put<UpdateProjectSettingsResponses, UpdateProjectSettingsErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/settings",
         ...options,
@@ -684,100 +808,6 @@ export const deleteProjectTags = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Lists s3 storages
- *
- * Lists s3 storages
- */
-export const listS3Storage = <ThrowOnError extends boolean = false>(
-    options?: Options<ListS3StorageData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListS3StorageResponses, ListS3StorageErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages",
-        ...options,
-    });
-};
-
-/**
- * Creates a new s3 storage
- *
- * Creates a new s3 storage
- */
-export const createS3Storage = <ThrowOnError extends boolean = false>(
-    options: Options<CreateS3StorageData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateS3StorageResponses, CreateS3StorageErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
- * Lists s3 storages
- *
- * Lists s3 storages
- */
-export const listS3StorageBase = <ThrowOnError extends boolean = false>(
-    options?: Options<ListS3StorageBaseData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListS3StorageBaseResponses, ListS3StorageBaseErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages/base",
-        ...options,
-    });
-};
-
-/**
- * Deletes a s3 storage
- *
- * Deletes a s3 storage
- */
-export const deleteS3Storage = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteS3StorageData, ThrowOnError>,
-) => {
-    return (options.client ?? client).delete<DeleteS3StorageResponses, DeleteS3StorageErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Gets s3 storage details
- *
- * Gets s3 storage details
- */
-export const getS3Storage = <ThrowOnError extends boolean = false>(
-    options: Options<GetS3StorageData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetS3StorageResponses, GetS3StorageErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Updates a s3 storage
- *
- * Updates a s3 storage
- */
-export const updateS3Storage = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateS3StorageData, ThrowOnError>,
-) => {
-    return (options.client ?? client).patch<UpdateS3StorageResponses, UpdateS3StorageErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
  * Deletes the current user session
  *
  * Deletes the current user session
@@ -788,6 +818,21 @@ export const deleteSession = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).delete<DeleteSessionResponses, DeleteSessionErrors, ThrowOnError>({
         responseType: "json",
         url: "/sessions",
+        ...options,
+    });
+};
+
+/**
+ * Deletes all sessions of the user
+ *
+ * Deletes all sessions of the user
+ */
+export const deleteAllSessions = <ThrowOnError extends boolean = false>(
+    options?: Options<DeleteAllSessionsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<DeleteAllSessionsResponses, DeleteAllSessionsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/sessions/delete-all",
         ...options,
     });
 };
@@ -822,29 +867,31 @@ export const refreshSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Lists SSH key
+ * Lists oauth settings
  *
- * Lists SSH key
+ * Lists oauth settings
  */
-export const listSshKey = <ThrowOnError extends boolean = false>(options?: Options<ListSshKeyData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListSshKeyResponses, ListSshKeyErrors, ThrowOnError>({
+export const listOAuthSettings = <ThrowOnError extends boolean = false>(
+    options?: Options<ListOAuthSettingsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListOAuthSettingsResponses, ListOAuthSettingsErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys",
+        url: "/settings/oauth",
         ...options,
     });
 };
 
 /**
- * Creates a new SSH key
+ * Creates a new oauth setting
  *
- * Creates a new SSH key
+ * Creates a new oauth setting
  */
-export const createSshKey = <ThrowOnError extends boolean = false>(
-    options: Options<CreateSshKeyData, ThrowOnError>,
+export const createOAuthSetting = <ThrowOnError extends boolean = false>(
+    options: Options<CreateOAuthSettingData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).post<CreateSshKeyResponses, CreateSshKeyErrors, ThrowOnError>({
+    return (options.client ?? client).post<CreateOAuthSettingResponses, CreateOAuthSettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys",
+        url: "/settings/oauth",
         ...options,
         headers: {
             "Content-Type": "*/*",
@@ -854,59 +901,336 @@ export const createSshKey = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Lists SSH key
+ * Deletes oauth setting
  *
- * Lists SSH key
+ * Deletes oauth setting
  */
-export const listSshKeyBase = <ThrowOnError extends boolean = false>(
-    options?: Options<ListSshKeyBaseData, ThrowOnError>,
+export const deleteOAuthSetting = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteOAuthSettingData, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<ListSshKeyBaseResponses, ListSshKeyBaseErrors, ThrowOnError>({
+    return (options.client ?? client).delete<DeleteOAuthSettingResponses, DeleteOAuthSettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys/base",
+        url: "/settings/oauth/{ID}",
         ...options,
     });
 };
 
 /**
- * Deletes an SSH key
+ * Gets oauth setting details
  *
- * Deletes an SSH key
+ * Gets oauth setting details
  */
-export const deleteSshKey = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteSshKeyData, ThrowOnError>,
+export const getOAuthSetting = <ThrowOnError extends boolean = false>(
+    options: Options<GetOAuthSettingData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).delete<DeleteSshKeyResponses, DeleteSshKeyErrors, ThrowOnError>({
+    return (options.client ?? client).get<GetOAuthSettingResponses, GetOAuthSettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys/{ID}",
+        url: "/settings/oauth/{ID}",
         ...options,
     });
 };
 
 /**
- * Gets SSH key details
+ * Updates oauth
  *
- * Gets SSH key details
+ * Updates oauth
  */
-export const getSshKey = <ThrowOnError extends boolean = false>(options: Options<GetSshKeyData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetSshKeyResponses, GetSshKeyErrors, ThrowOnError>({
+export const updateOAuthSetting = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateOAuthSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateOAuthSettingResponses, UpdateOAuthSettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys/{ID}",
+        url: "/settings/oauth/{ID}",
         ...options,
     });
 };
 
 /**
- * Updates an SSH key
+ * Lists S3 storage settings
  *
- * Updates an SSH key
+ * Lists S3 storage settings
  */
-export const updateSshKey = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateSshKeyData, ThrowOnError>,
+export const listS3StorageSettings = <ThrowOnError extends boolean = false>(
+    options?: Options<ListS3StorageSettingsData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).patch<UpdateSshKeyResponses, UpdateSshKeyErrors, ThrowOnError>({
+    return (options?.client ?? client).get<ListS3StorageSettingsResponses, ListS3StorageSettingsErrors, ThrowOnError>({
         responseType: "json",
-        url: "/ssh-keys/{ID}",
+        url: "/settings/s3-storages",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new S3 storage setting
+ *
+ * Creates a new S3 storage setting
+ */
+export const createS3StorageSetting = <ThrowOnError extends boolean = false>(
+    options: Options<CreateS3StorageSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateS3StorageSettingResponses, CreateS3StorageSettingErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/settings/s3-storages",
+            ...options,
+            headers: {
+                "Content-Type": "*/*",
+                ...options.headers,
+            },
+        },
+    );
+};
+
+/**
+ * Deletes S3 storage setting
+ *
+ * Deletes S3 storage setting
+ */
+export const deleteS3StorageSetting = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteS3StorageSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteS3StorageSettingResponses,
+        DeleteS3StorageSettingErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/settings/s3-storages/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets S3 storage setting details
+ *
+ * Gets S3 storage setting details
+ */
+export const getS3StorageSetting = <ThrowOnError extends boolean = false>(
+    options: Options<GetS3StorageSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetS3StorageSettingResponses, GetS3StorageSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/s3-storages/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Updates S3 storage
+ *
+ * Updates S3 storage
+ */
+export const updateS3StorageSetting = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateS3StorageSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateS3StorageSettingResponses, UpdateS3StorageSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/s3-storages/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Lists secrets
+ *
+ * Lists secrets
+ */
+export const listSecrets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListSecretsResponses, ListSecretsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/secrets",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new secret
+ *
+ * Creates a new secret
+ */
+export const createSecret = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSecretResponses, CreateSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/secrets",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes a secret
+ *
+ * Deletes a secret
+ */
+export const deleteSecret = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSecretResponses, DeleteSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/secrets/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Lists Slack settings
+ *
+ * Lists Slack settings
+ */
+export const listSlackSettings = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSlackSettingsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListSlackSettingsResponses, ListSlackSettingsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/slack",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new Slack setting
+ *
+ * Creates a new Slack setting
+ */
+export const createSlackSetting = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSlackSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSlackSettingResponses, CreateSlackSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/slack",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes Slack setting
+ *
+ * Deletes Slack setting
+ */
+export const deleteSlackSetting = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSlackSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSlackSettingResponses, DeleteSlackSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/slack/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets Slack setting details
+ *
+ * Gets Slack setting details
+ */
+export const getSlackSetting = <ThrowOnError extends boolean = false>(
+    options: Options<GetSlackSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSlackSettingResponses, GetSlackSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/slack/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Updates Slack setting
+ *
+ * Updates Slack setting
+ */
+export const updateSlackSetting = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSlackSettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSlackSettingResponses, UpdateSlackSettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/slack/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Lists ssh-key settings
+ *
+ * Lists ssh-key settings
+ */
+export const listSshKeySettings = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSshKeySettingsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListSshKeySettingsResponses, ListSshKeySettingsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/ssh-keys",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new ssh-key setting
+ *
+ * Creates a new ssh-key setting
+ */
+export const createSshKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSshKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSshKeySettingResponses, CreateSshKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/ssh-keys",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes sshkey setting
+ *
+ * Deletes sshkey setting
+ */
+export const deleteSshKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSshKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSshKeySettingResponses, DeleteSshKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/ssh-keys/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets ssh-key setting details
+ *
+ * Gets ssh-key setting details
+ */
+export const getSshKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<GetSshKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSshKeySettingResponses, GetSshKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/ssh-keys/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Updates ssh-key
+ *
+ * Updates ssh-key
+ */
+export const updateSshKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSshKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSshKeySettingResponses, UpdateSshKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/settings/ssh-keys/{ID}",
         ...options,
     });
 };
@@ -1004,7 +1328,7 @@ export const removeMfaTotp = <ThrowOnError extends boolean = false>(
 export const updateUserPassword = <ThrowOnError extends boolean = false>(
     options: Options<UpdateUserPasswordData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).patch<UpdateUserPasswordResponses, UpdateUserPasswordErrors, ThrowOnError>({
+    return (options.client ?? client).put<UpdateUserPasswordResponses, UpdateUserPasswordErrors, ThrowOnError>({
         responseType: "json",
         url: "/users/current/password",
         ...options,
@@ -1012,6 +1336,89 @@ export const updateUserPassword = <ThrowOnError extends boolean = false>(
             "Content-Type": "*/*",
             ...options.headers,
         },
+    });
+};
+
+/**
+ * Updates user profile
+ *
+ * Updates user profile
+ */
+export const updateUserProfile = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateUserProfileData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateUserProfileResponses, UpdateUserProfileErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/current/profile",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists API key
+ *
+ * Lists API key
+ */
+export const listApiKeySettings = <ThrowOnError extends boolean = false>(
+    options?: Options<ListApiKeySettingsData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListApiKeySettingsResponses, ListApiKeySettingsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/current/settings/api-keys",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new API key
+ *
+ * Creates a new API key
+ */
+export const createApiKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<CreateApiKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateApiKeySettingResponses, CreateApiKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/current/settings/api-keys",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes an API key
+ *
+ * Deletes an API key
+ */
+export const deleteApiKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteApiKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteApiKeySettingResponses, DeleteApiKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/current/settings/api-keys/{ID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets API key details
+ *
+ * Gets API key details
+ */
+export const getApiKeySetting = <ThrowOnError extends boolean = false>(
+    options: Options<GetApiKeySettingData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetApiKeySettingResponses, GetApiKeySettingErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/current/settings/api-keys/{ID}",
+        ...options,
     });
 };
 
@@ -1080,5 +1487,22 @@ export const getUser = <ThrowOnError extends boolean = false>(options: Options<G
         responseType: "json",
         url: "/users/{userID}",
         ...options,
+    });
+};
+
+/**
+ * Updates user data (admin API)
+ *
+ * Updates user data (admin API)
+ */
+export const updateUser = <ThrowOnError extends boolean = false>(options: Options<UpdateUserData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpdateUserResponses, UpdateUserErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/{userID}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
     });
 };

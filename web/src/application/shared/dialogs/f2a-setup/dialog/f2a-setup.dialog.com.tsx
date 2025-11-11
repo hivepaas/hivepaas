@@ -3,24 +3,33 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { useUpdateEffect } from "react-use";
 
+import { useProfileContext } from "@application/shared/context";
 import { ProfileCommands } from "@application/shared/data/commands";
+import { SessionQueries } from "@application/shared/data/queries";
 
-import { F2aSetupForm } from "../form";
+import { F2aSetupForm, type F2aSetupSchemaOutput } from "../form";
 import { useF2aSetupDialogState } from "../hooks";
 
 type State = { QRCode: string; totpToken: string } | null;
 
 export function F2aSetupDialog() {
     const [stateData, setStateData] = useState<State>(null);
+    const { setProfile, clearProfile } = useProfileContext();
 
-    const {
-        state,
-        // props: { onSuccess = fnPlaceholder, onClose = fnPlaceholder, onError = fnPlaceholder } = {},
-        // ...actions
-    } = useF2aSetupDialogState();
+    const { mutate: complete2FASetup, isPending: isComplete2FASetupPending } = ProfileCommands.useComplete2FASetup();
+
+    const { state, ...actions } = useF2aSetupDialogState();
 
     const { mutate: getProfile2FASetup, isPending: isGetProfile2FASetupPending } =
         ProfileCommands.useGetProfile2FASetup();
+
+    const { isPending: isGetProfilePending, refetch } = SessionQueries.useGetProfile({
+        onSuccess: ({ data }) => {
+            setProfile(data);
+        },
+        onSessionInvalid: clearProfile,
+        enabled: false,
+    });
 
     useUpdateEffect(() => {
         if (state.mode === "open") {
@@ -35,7 +44,24 @@ export function F2aSetupDialog() {
         }
     }, [state.mode]);
 
-    console.log("state", state);
+    function onSubmit(values: F2aSetupSchemaOutput) {
+        if (!stateData?.totpToken) {
+            return;
+        }
+
+        complete2FASetup(
+            {
+                totpToken: stateData.totpToken,
+                passcode: values.passcode,
+            },
+            {
+                onSuccess: () => {
+                    refetch();
+                    actions.close();
+                },
+            },
+        );
+    }
 
     return (
         <Dialog open={state.mode === "open"}>
@@ -46,8 +72,8 @@ export function F2aSetupDialog() {
             <DialogContent>
                 {stateData && (
                     <F2aSetupForm
-                        isPending={isGetProfile2FASetupPending}
-                        onSubmit={() => {}}
+                        isPending={isGetProfile2FASetupPending || isComplete2FASetupPending || isGetProfilePending}
+                        onSubmit={onSubmit}
                         qrCode={stateData.QRCode}
                         totpToken={stateData.totpToken}
                     />

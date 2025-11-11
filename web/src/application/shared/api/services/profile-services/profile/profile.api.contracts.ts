@@ -5,7 +5,7 @@
 //     type UpdateProfilePassword,
 //     type UpdateProfilePhoto,
 // } from "@application/shared/entities";
-import { type ApiResponseBase } from "@infrastructure/api";
+import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
 // /**
 //  * Update profile
@@ -59,4 +59,16 @@ import { type ApiResponseBase } from "@infrastructure/api";
 export type Profile_GetProfile2FASetup_Res = ApiResponseBase<{
     totpToken: string;
     totpQRCode: string;
+}>;
+
+/**
+ * Verify profile 2FA setup
+ */
+export type Profile_Complete2FASetup_Req = ApiRequestBase<{
+    totpToken: string;
+    passcode: string;
+}>;
+
+export type Profile_Complete2FASetup_Res = ApiResponseBase<{
+    type: "success";
 }>;

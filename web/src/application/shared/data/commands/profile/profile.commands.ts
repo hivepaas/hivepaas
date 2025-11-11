@@ -1,7 +1,11 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
 import { useProfileApi } from "@application/shared/api";
-import { type Profile_GetProfile2FASetup_Res } from "@application/shared/api/services";
+import {
+    type Profile_Complete2FASetup_Req,
+    type Profile_Complete2FASetup_Res,
+    type Profile_GetProfile2FASetup_Res,
+} from "@application/shared/api/services";
 
 /**
  * Update profile
@@ -22,6 +26,32 @@ function useGetProfile2FASetup({ onSuccess, ...options }: GetProfile2FASetupOpti
     });
 }
 
+/**
+ * Update profile
+ */
+type Complete2FASetupReq = Profile_Complete2FASetup_Req["data"];
+type Complete2FASetupRes = Profile_Complete2FASetup_Res;
+
+type Complete2FASetupOptions = Omit<UseMutationOptions<Complete2FASetupRes, Error, Complete2FASetupReq>, "mutationFn">;
+
+function useComplete2FASetup({ onSuccess, ...options }: Complete2FASetupOptions = {}) {
+    const {
+        mutations: { complete2FASetup },
+    } = useProfileApi();
+
+    return useMutation({
+        mutationFn: complete2FASetup,
+        onSuccess: (response, request, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
+    useComplete2FASetup,
 });

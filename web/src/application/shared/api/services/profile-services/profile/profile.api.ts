@@ -1,7 +1,12 @@
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
-import { type ProfileApiValidator, type Profile_GetProfile2FASetup_Res } from "@application/shared/api/services";
+import {
+    type ProfileApiValidator,
+    type Profile_Complete2FASetup_Req,
+    type Profile_Complete2FASetup_Res,
+    type Profile_GetProfile2FASetup_Res,
+} from "@application/shared/api/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
@@ -156,6 +161,26 @@ export class ProfileApi extends BaseApi {
             from(this.client.v1.post("/users/current/mfa/totp-begin-setup")).pipe(
                 map(this.validator.getProfile2FASetup),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Verify profile 2FA setup
+     */
+    async complete2FASetup(
+        request: Profile_Complete2FASetup_Req,
+    ): Promise<Result<Profile_Complete2FASetup_Res, Error>> {
+        const { data } = request;
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/users/current/mfa/totp-complete-setup", {
+                    totpToken: data.totpToken,
+                    passcode: data.passcode,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" as const } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

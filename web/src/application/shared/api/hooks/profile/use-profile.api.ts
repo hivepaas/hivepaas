@@ -6,6 +6,8 @@ import { ApplicationApiContext } from "@application/shared/api/api-context";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
+import type { Profile_Complete2FASetup_Req } from "../../services";
+
 function createHook() {
     return function useProfileApi() {
         const { api } = use(ApplicationApiContext);
@@ -115,6 +117,25 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get profile 2FA setup",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Verify profile 2FA setup
+                 */
+                complete2FASetup: async (request: Profile_Complete2FASetup_Req["data"]) => {
+                    const result = await api.profile.complete2FASetup({
+                        data: request,
+                    });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to verify profile 2FA setup",
                                 error,
                             });
                             throw error;

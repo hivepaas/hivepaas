@@ -55,7 +55,7 @@ function createHook() {
 
                     return match(result, {
                         Ok: res => {
-                            if (res.data.type === "success") {
+                            if (res.data.type === "success" || res.data.type === "mfa-setup-required") {
                                 session.setToken(res.data.token);
                             }
 

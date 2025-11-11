@@ -1,5 +1,6 @@
 import { Outlet, type RouteObject } from "react-router";
 
+import { CommonDialogsContainer } from "@application/shared/dialogs-container";
 import { ModuleLayout } from "@application/shared/layouts/module";
 import { Page404NotFound } from "@application/shared/pages";
 
@@ -12,9 +13,12 @@ export const modulesRouter: RouteObject = {
         </ModuleLayout>
     ),
     element: (
-        <ModuleLayout>
-            <Outlet />
-        </ModuleLayout>
+        <>
+            <ModuleLayout>
+                <Outlet />
+            </ModuleLayout>
+            <CommonDialogsContainer />
+        </>
     ),
     children: [usersAndRolesRouter],
 } as const;

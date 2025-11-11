@@ -34,15 +34,14 @@ function View() {
     // const { navigate } = useAppNavigate();
 
     const { setProfile } = useProfileContext();
-    const { enable2FA } = useAuthContext();
+    const { enable2FA, enableMfaSetup } = useAuthContext();
 
     const { data: { data: loginOptions } = { data: [] } } = AuthQueries.useGetLoginOptions();
-
-    console.log(loginOptions);
 
     const { mutate: signIn, isPending } = AuthCommands.useSignIn({
         onSuccess: setProfile,
         on2FARequired: enable2FA,
+        onMfaSetupRequired: enableMfaSetup,
         onTooManyAttempts: () => {
             setState({
                 type: "lockout",
@@ -129,13 +128,25 @@ export const SignInRoute = () => {
 
     const [params] = useSearchParams();
 
-    if (data.required2FA) {
+    if ("required2FA" in data && data.required2FA) {
         return (
             <AppNavigate
                 to={{
                     pathname: ROUTE.auth.twoFA.$route,
                     search: params.toString(),
                 }}
+                replace
+            />
+        );
+    }
+
+    if ("mfaSetupRequired" in data && data.mfaSetupRequired) {
+        // User has successfully logged in but needs to setup MFA
+        // Redirect to dashboard - MFA setup can be handled there
+        const nextPath = params.get("next");
+        return (
+            <AppNavigate
+                to={nextPath || ROUTE.modules.usersAndRoles.users.$route}
                 replace
             />
         );

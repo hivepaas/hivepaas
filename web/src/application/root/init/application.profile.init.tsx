@@ -7,17 +7,22 @@ import { useProfileContext } from "@application/shared/context";
 import { SessionQueries } from "@application/shared/data/queries";
 import { PageError } from "@application/shared/pages";
 
+import { useAuthContext } from "@application/authentication/context";
+
 import { isSessionInvalidException, session } from "@infrastructure/api";
 
 export function ApplicationProfileInit({ children }: PropsWithChildren) {
     const [, , deleteToken] = useCookie("access_token");
     const { profile, setProfile, clearProfile } = useProfileContext();
 
+    const { enableMfaSetup } = useAuthContext();
+
     const { isLoading, error, refetch } = SessionQueries.useGetProfile({
         onSuccess: ({ data }) => {
             setProfile(data);
         },
         onSessionInvalid: clearProfile,
+        on2FASetupRequired: enableMfaSetup,
         enabled: session.hasToken() && !profile,
         onError: () => {
             deleteToken();

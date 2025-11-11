@@ -27,17 +27,17 @@ function createHook() {
                                 session.removeToken();
                             }
 
-                            notifyError({
-                                message: "Failed to get user profile",
-                                error,
-                            });
+                            // notifyError({
+                            //     message: "Failed to get user profile",
+                            //     error,
+                            // });
 
                             throw error;
                         },
                     });
                 },
             }),
-            [api, notifyError],
+            [api],
         );
 
         const mutations = useMemo(

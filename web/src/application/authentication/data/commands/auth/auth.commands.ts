@@ -64,9 +64,17 @@ type SignInOptions = Omit<UseMutationOptions<SignInRes, Error, SignInReq>, "muta
     onSuccess?: (profile: Profile) => void;
     on2FARequired?: (data: { email: string; mfaToken: string }) => void;
     onTooManyAttempts?: (error: Error) => void;
+    on2FASetupRequired?: () => void;
 };
 
-function useSignIn({ onSuccess, onError, on2FARequired, onTooManyAttempts, ...options }: SignInOptions = {}) {
+function useSignIn({
+    onSuccess,
+    onError,
+    on2FARequired,
+    onTooManyAttempts,
+    on2FASetupRequired,
+    ...options
+}: SignInOptions = {}) {
     // const { changeLanguage } = useI18n();
 
     const {
@@ -99,6 +107,18 @@ function useSignIn({ onSuccess, onError, on2FARequired, onTooManyAttempts, ...op
                 // });
 
                 if (on2FARequired) on2FARequired({ email: values.email, mfaToken });
+
+                break;
+            }
+
+            case "mfa-setup-required": {
+                const { data: profile } = await getProfile();
+
+                if (onSuccess) onSuccess(profile);
+
+                if (on2FASetupRequired) on2FASetupRequired();
+
+                break;
             }
         }
 

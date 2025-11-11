@@ -57,6 +57,10 @@ export type Auth_SignIn_Res = ApiResponseBase<
           type: "mfa-required";
           mfaToken: string;
       }
+    | {
+          type: "mfa-setup-required";
+          token: string;
+      }
 >;
 
 /**

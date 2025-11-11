@@ -26,6 +26,7 @@ const SignInSchema = z.object({
             session: z.object({
                 accessToken: z.string(),
             }),
+            nextStep: z.string().optional(),
         }),
 
         z.object({
@@ -129,6 +130,15 @@ export class AuthApiValidator {
         });
 
         if ("session" in data) {
+            if ("nextStep" in data && data.nextStep === "NextMfaSetup") {
+                return {
+                    data: {
+                        type: "mfa-setup-required",
+                        token: data.session.accessToken,
+                    },
+                };
+            }
+
             return {
                 data: {
                     type: "success",

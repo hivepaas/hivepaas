@@ -11,6 +11,7 @@ import { parseApiResponse } from "@infrastructure/api";
  */
 const GetProfileSchema = z.object({
     data: z.object({
+        nextStep: z.string().optional(),
         user: z.object({
             id: z.string(),
             username: z.string(),
@@ -28,7 +29,7 @@ export class SessionApiValidator {
      */
     getProfile = (response: AxiosResponse): Session_GetProfile_Res => {
         const {
-            data: { user },
+            data: { user, nextStep },
         } = parseApiResponse({
             response,
             schema: GetProfileSchema,
@@ -42,6 +43,7 @@ export class SessionApiValidator {
                 photo: user.photo,
                 email: user.email,
                 securityOption: user.securityOption,
+                nextStep,
             },
         };
     };

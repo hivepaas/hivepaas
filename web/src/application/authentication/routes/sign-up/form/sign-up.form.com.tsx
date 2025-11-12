@@ -120,7 +120,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
 
         const dataBase64 = p.dataBase64.split(",")[1];
 
-        if (dataBase64 === undefined) {
+        if (!dataBase64) {
             console.error("Invalid base64 data");
 
             return;
@@ -305,7 +305,6 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                 onConfirm={result => {
                     photo.onChange(result);
                 }}
-                aspectRatio={1}
             />
             {/* <div className={cx("sign-up-form")}>
                 <form

@@ -26,4 +26,6 @@ export interface Profile {
     email: string;
 
     securityOption: ESecuritySettings;
+
+    mfaSecret: string;
 }

@@ -18,6 +18,7 @@ const GetProfileSchema = z.object({
             photo: z.string().transform(arg => arg.trim() || null),
             email: z.string(),
             securityOption: z.nativeEnum(ESecuritySettings),
+            mfaSecret: z.string().optional(),
         }),
     }),
 });
@@ -41,6 +42,7 @@ export class SessionApiValidator {
                 photo: user.photo,
                 email: user.email,
                 securityOption: user.securityOption,
+                mfaSecret: user.mfaSecret ?? "",
                 nextStep,
             },
         };

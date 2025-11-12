@@ -27,7 +27,7 @@ function View({ method }: ViewProps) {
                 description: "You can now sign in to your account",
             });
 
-            void navigate(ROUTE.auth.signIn.$route);
+            navigate(ROUTE.auth.signIn.$route);
         },
     });
 
@@ -73,7 +73,7 @@ type State =
           error: Error;
       };
 
-export const SignUpRoute = () => {
+export function SignUpRoute() {
     const [state, setState] = useState<State>({ type: "pending" });
 
     const { mutate: validate } = AuthCommands.useValidateInviteToken({
@@ -150,4 +150,4 @@ export const SignUpRoute = () => {
     }
 
     return <View method={state.method} />;
-};
+}

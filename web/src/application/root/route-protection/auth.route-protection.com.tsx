@@ -19,10 +19,10 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { setProfile } = useProfileContext();
 
     const { mutate: signInSSO } = AuthCommands.useSignInSSO({
-        onSuccess: profile => {
+        onSuccess: profileData => {
             deleteToken();
 
-            setProfile(profile);
+            setProfile(profileData);
         },
     });
 

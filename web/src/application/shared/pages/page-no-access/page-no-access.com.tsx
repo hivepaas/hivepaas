@@ -1,17 +1,17 @@
 import React from "react";
 
 import { Button } from "@components/ui/button";
-import { useNavigate } from "react-router";
 
 import { NoAccessImage } from "@assets/images";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 function View({ withBackButton = true }: Props) {
     const { profile } = useProfileContext();
 
-    const navigate = useNavigate();
+    const { navigate } = useAppNavigate();
 
     return (
         <div className="page-no-access">
@@ -27,14 +27,14 @@ function View({ withBackButton = true }: Props) {
                 <Button
                     onClick={() => {
                         if (profile === null) {
-                            void navigate(ROUTE.auth.signIn.$route, {
+                            navigate(ROUTE.auth.signIn.$route, {
                                 replace: true,
                             });
 
                             return;
                         }
 
-                        void navigate("/", {
+                        navigate("/", {
                             replace: true,
                         });
                     }}

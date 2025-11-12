@@ -56,7 +56,7 @@ export function F2aSetupDialog() {
             },
             {
                 onSuccess: () => {
-                    refetch();
+                    void refetch();
                     actions.close();
                 },
             },

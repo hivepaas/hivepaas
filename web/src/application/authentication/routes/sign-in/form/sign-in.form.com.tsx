@@ -52,11 +52,11 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     });
 
     function onValid(values: SignInSchemaOutput) {
-        onSubmit(values);
+        void onSubmit(values);
     }
 
-    function onInvalid(errors: FieldErrors<SignInSchemaOutput>) {
-        console.log(errors);
+    function onInvalid(_errors: FieldErrors<SignInSchemaOutput>) {
+        console.log(_errors);
     }
 
     function handleLoginWithProvider(provider: LoginOption) {
@@ -136,7 +136,9 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                         key={option.type}
                                         variant="outline"
                                         type="button"
-                                        onClick={() => handleLoginWithProvider(option)}
+                                        onClick={() => {
+                                            handleLoginWithProvider(option);
+                                        }}
                                     >
                                         {option.type.toLowerCase().includes("github") && <GithubIcon />}
                                         {option.type.toLowerCase().includes("gitlab") && <GitlabIcon />}

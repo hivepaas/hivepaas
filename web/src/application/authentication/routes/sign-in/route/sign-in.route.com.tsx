@@ -96,7 +96,7 @@ function View() {
     );
 }
 
-export const SignInRoute = () => {
+export function SignInRoute() {
     const [token, , deleteToken] = useCookie("access_token");
 
     const { setProfile } = useProfileContext();
@@ -140,18 +140,6 @@ export const SignInRoute = () => {
         );
     }
 
-    if ("mfaSetupRequired" in data && data.mfaSetupRequired) {
-        // User has successfully logged in but needs to setup MFA
-        // Redirect to dashboard - MFA setup can be handled there
-        const nextPath = params.get("next");
-        return (
-            <AppNavigate
-                to={nextPath || ROUTE.modules.usersAndRoles.users.$route}
-                replace
-            />
-        );
-    }
-
     if (token && isPending) {
         return <AppLoader />;
     }
@@ -161,4 +149,4 @@ export const SignInRoute = () => {
     }
 
     return <View />;
-};
+}

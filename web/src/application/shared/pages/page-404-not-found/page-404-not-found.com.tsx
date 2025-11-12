@@ -27,7 +27,9 @@ function View() {
                 <div className="pt-2">
                     <Button
                         variant="outline"
-                        onClick={() => navigate("/")}
+                        onClick={() => {
+                            navigate("/", { replace: true });
+                        }}
                     >
                         Back to application
                     </Button>

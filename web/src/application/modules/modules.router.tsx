@@ -13,12 +13,10 @@ export const modulesRouter: RouteObject = {
         </ModuleLayout>
     ),
     element: (
-        <>
-            <ModuleLayout>
-                <Outlet />
-                <CommonDialogsContainer />
-            </ModuleLayout>
-        </>
+        <ModuleLayout>
+            <Outlet />
+            <CommonDialogsContainer />
+        </ModuleLayout>
     ),
     children: [usersAndRolesRouter],
 } as const;

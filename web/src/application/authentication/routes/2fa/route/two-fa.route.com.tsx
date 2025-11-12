@@ -134,12 +134,12 @@ interface ViewProps {
     mfaToken: string;
 }
 
-export const TwoFaRoute = () => {
+export function TwoFaRoute() {
     const { data } = useAuthContext();
 
     const [params] = useSearchParams();
 
-    if (!data.required2FA) {
+    if (!("required2FA" in data) || !data.required2FA) {
         return (
             <AppNavigate
                 to={{
@@ -157,4 +157,4 @@ export const TwoFaRoute = () => {
             mfaToken={data.mfaToken}
         />
     );
-};
+}

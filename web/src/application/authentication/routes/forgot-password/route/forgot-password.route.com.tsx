@@ -15,7 +15,7 @@ interface State {
     type: "initial" | "success";
 }
 
-export const ForgotPasswordRoute = () => {
+export function ForgotPasswordRoute() {
     const [state, setState] = useState<State>({
         type: "initial",
     });
@@ -63,4 +63,4 @@ export const ForgotPasswordRoute = () => {
             <div>{child}</div>
         </AuthenticationLayout>
     );
-};
+}

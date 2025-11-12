@@ -68,7 +68,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
             <Card>
                 <CardHeader>
                     <CardTitle>Login to your account</CardTitle>
-                    <CardDescription>Enter your email below to login to your account</CardDescription>
+                    <CardDescription>Enter your account details below to login</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form
@@ -80,7 +80,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                     >
                         <FieldGroup>
                             <Field>
-                                <FieldLabel htmlFor="email">Email</FieldLabel>
+                                <FieldLabel htmlFor="email">Username or Email</FieldLabel>
                                 <Input
                                     id="email"
                                     value={email.value}
@@ -119,7 +119,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                         checked={isTrustDevice.value}
                                         onCheckedChange={isTrustDevice.onChange}
                                     />
-                                    <FieldLabel htmlFor="isTrustDevice">Trust Device</FieldLabel>
+                                    <FieldLabel htmlFor="isTrustDevice">Trust this device</FieldLabel>
                                 </div>
                             </Field>
                             <Field>

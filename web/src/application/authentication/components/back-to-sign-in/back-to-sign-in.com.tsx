@@ -23,7 +23,7 @@ export function BackToSignIn() {
             className="flex items-center gap-2 text-sm text-primary hover:text-gray-700"
         >
             <ArrowBackIcon />
-            Back to Sign In
+            Back to Login
         </AppLink>
     );
 }

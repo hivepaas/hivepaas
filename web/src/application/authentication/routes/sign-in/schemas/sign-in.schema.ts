@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const SignInSchema = z.object({
-    email: z.string().trim().min(1, "Email Address is required").email(),
+    email: z.string().trim().min(1, "Email Address is required"),
     password: z.string().trim().min(1, "Password is required"),
     isTrustDevice: z.boolean(),
 });

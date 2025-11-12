@@ -55,6 +55,9 @@ import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 /**
  * Get profile 2FA setup
  */
+export type Profile_GetProfile2FASetup_Req = ApiRequestBase<{
+    passcode?: string;
+}>;
 
 export type Profile_GetProfile2FASetup_Res = ApiResponseBase<{
     totpToken: string;

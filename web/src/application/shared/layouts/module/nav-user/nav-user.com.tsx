@@ -4,7 +4,9 @@ import invariant from "tiny-invariant";
 
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
+import { useF2aSetupDialog } from "@application/shared/dialogs";
 import type { Profile } from "@application/shared/entities";
+import { ESecuritySettings } from "@application/shared/enums";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -19,14 +21,19 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
 export function NavUser({ user }: { user: Profile }) {
-    const [, , deleteToken] = useCookie("access_token");
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
+
+    const dialog = useF2aSetupDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
 
     const { mutate: logout, isPending } = SessionCommands.useLogout({
         onSuccess: () => {
             clearProfile();
-            deleteToken();
+            // deleteToken();
         },
         onSessionInvalid: clearProfile,
     });
@@ -48,7 +55,7 @@ export function NavUser({ user }: { user: Profile }) {
                         >
                             <Avatar
                                 className="h-8 w-8"
-                                name={user.fullName}
+                                name={user.fullName ?? ""}
                                 src={user.photo ?? undefined}
                             />
                             <div className="grid flex-1 text-left text-sm leading-tight">
@@ -68,7 +75,7 @@ export function NavUser({ user }: { user: Profile }) {
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                 <Avatar
                                     className="h-8 w-8"
-                                    name={user.fullName}
+                                    name={user.fullName ?? ""}
                                     src={user.photo ?? undefined}
                                 />
                                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -77,13 +84,21 @@ export function NavUser({ user }: { user: Profile }) {
                                 </div>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles />
-                                Upgrade to Pro
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
+                        {user.securityOption === ESecuritySettings.Password2FA && user.mfaSecret !== "" && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            dialog.actions.openChange();
+                                        }}
+                                    >
+                                        <Sparkles />
+                                        Change 2FA Setup
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem>

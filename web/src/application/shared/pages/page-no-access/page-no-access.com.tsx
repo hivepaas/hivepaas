@@ -14,34 +14,43 @@ function View({ withBackButton = true }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
-        <div className="page-no-access">
-            <div className="body">
-                <div className="image-wrapper">
-                    <NoAccessImage />
+        <div className="min-h-svh w-full bg-muted/20 flex items-center justify-center px-6">
+            <div className="flex flex-col items-center text-center gap-6">
+                <div className="w-full max-w-[640px]">
+                    <NoAccessImage className="w-full h-auto" />
                 </div>
-                <h1 className="title">You don’t have the permission to view this page</h1>
-                <div className="description">Ask for access, or switch to an account with access</div>
+
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+                    You don&apos;t have the permission to view this page
+                </h1>
+
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    Ask for access, or switch to an account with access
+                </p>
+
+                {withBackButton && (
+                    <div className="pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (profile === null) {
+                                    navigate(ROUTE.auth.signIn.$route, {
+                                        replace: true,
+                                    });
+
+                                    return;
+                                }
+
+                                navigate("/", {
+                                    replace: true,
+                                });
+                            }}
+                        >
+                            Back to application
+                        </Button>
+                    </div>
+                )}
             </div>
-
-            {withBackButton && (
-                <Button
-                    onClick={() => {
-                        if (profile === null) {
-                            navigate(ROUTE.auth.signIn.$route, {
-                                replace: true,
-                            });
-
-                            return;
-                        }
-
-                        navigate("/", {
-                            replace: true,
-                        });
-                    }}
-                >
-                    Back to application
-                </Button>
-            )}
         </div>
     );
 }

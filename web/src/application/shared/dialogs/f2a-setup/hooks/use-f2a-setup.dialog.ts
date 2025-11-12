@@ -12,6 +12,9 @@ function createHook() {
                 open: () => {
                     actions.open({ props });
                 },
+                openChange: () => {
+                    actions.openChange({ props });
+                },
                 close: () => {
                     actions.close();
                 },

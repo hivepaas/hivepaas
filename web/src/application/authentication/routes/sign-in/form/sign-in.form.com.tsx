@@ -85,7 +85,6 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                     id="email"
                                     value={email.value}
                                     onChange={email.onChange}
-                                    type="email"
                                     placeholder="m@example.com"
                                     aria-invalid={isEmailInvalid}
                                     required

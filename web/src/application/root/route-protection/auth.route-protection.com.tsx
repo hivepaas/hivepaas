@@ -14,8 +14,6 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
     const [token, , deleteToken] = useCookie("access_token");
 
-    console.log("token", token);
-
     const { setProfile } = useProfileContext();
 
     const { mutate: signInSSO } = AuthCommands.useSignInSSO({

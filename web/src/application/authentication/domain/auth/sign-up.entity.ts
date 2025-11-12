@@ -5,6 +5,7 @@ interface Photo {
 
 interface Data {
     email: string;
+    username: string;
     fullName: string;
     password: string;
     photo: Photo | null;

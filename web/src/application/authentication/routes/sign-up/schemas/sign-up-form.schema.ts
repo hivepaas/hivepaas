@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ESecuritySettings } from "@application/shared/enums";
 
 const BaseSchema = z.object({
+    username: z.string().trim().min(1, "Username is required"),
     fullName: z.string().trim().min(1, "Full Name is required"),
     email: z.string().trim().min(1, "Email Address is required").email(),
     password: z.string().trim().min(1, "Password is required"),

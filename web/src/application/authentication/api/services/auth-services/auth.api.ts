@@ -44,6 +44,7 @@ export class AuthApi extends BaseApi {
             from(
                 this.client.v1.post("/users/signup-complete", {
                     inviteToken,
+                    username: data.username,
                     password: data.password,
                     fullName: data.fullName,
                     photo: data.photo ?? {

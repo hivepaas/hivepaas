@@ -12,8 +12,6 @@ function ErrorMessage({ message }: { message: string }) {
 export function SsoRoute() {
     const [token, , deleteToken] = useCookie("access_token");
 
-    console.log("token", token);
-
     const { setProfile } = useProfileContext();
 
     const {

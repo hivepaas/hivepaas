@@ -8,7 +8,7 @@ export function initLangInterceptors(client: AxiosInstance): void {
         const lang = localStorage.getItem("lang");
 
         if (lang !== null) {
-            config.headers["Accept-Language"] = lang;
+            config.headers["Accept-Language"] = lang; // eslint-disable-line no-param-reassign
         }
 
         return config;

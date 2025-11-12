@@ -28,8 +28,7 @@ export function ModuleLayout({ children }: PropsWithChildren) {
     const { data } = useAuthContext();
 
     useUpdateEffect(() => {
-        if (data && "mfaSetupRequired" in data && data.mfaSetupRequired) {
-            console.log("open f2a setup dialog");
+        if ("mfaSetupRequired" in data && data.mfaSetupRequired) {
             f2aSetupDialog.actions.open();
         }
     }, [data]);

@@ -29,7 +29,6 @@ interface PhotoUploadDialogProps {
     onOpenChange: (open: boolean) => void;
     onConfirm: (result: CroppedImageResult) => void;
     initialImage?: string | null;
-    aspectRatio?: number;
 }
 
 export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage = null }: PhotoUploadDialogProps) {
@@ -169,7 +168,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
         }
     }
 
-    async function handleConfirm() {
+    function handleConfirm() {
         if (cropperRef.current == null) {
             return;
         }
@@ -196,7 +195,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
         <Dialog
             open={open}
             onOpenChange={onOpenChange}
-            modal={true}
+            modal
         >
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
@@ -298,7 +297,9 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
                             type="button"
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => handleZoomTo(Math.max(0.1, zoom - 0.1))}
+                            onClick={() => {
+                                handleZoomTo(Math.max(0.1, zoom - 0.1));
+                            }}
                             disabled={!imageSrc}
                         >
                             <ZoomOut />
@@ -308,14 +309,18 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
                             max={3}
                             step={0.01}
                             value={[zoom]}
-                            onValueChange={vals => handleZoomTo(vals[0] ?? 1)}
+                            onValueChange={vals => {
+                                handleZoomTo(vals[0] ?? 1);
+                            }}
                             className="w-full"
                         />
                         <Button
                             type="button"
                             variant="outline"
                             size="icon-sm"
-                            onClick={() => handleZoomTo(Math.min(3, zoom + 0.1))}
+                            onClick={() => {
+                                handleZoomTo(Math.min(3, zoom + 0.1));
+                            }}
                             disabled={!imageSrc}
                         >
                             <ZoomIn />
@@ -347,7 +352,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
                         disabled={!imageSrc || isCropping}
                         isLoading={isCropping}
                         onClick={() => {
-                            void handleConfirm();
+                            handleConfirm();
                         }}
                     >
                         Save

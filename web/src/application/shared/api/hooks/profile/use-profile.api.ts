@@ -6,7 +6,7 @@ import { ApplicationApiContext } from "@application/shared/api/api-context";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import type { Profile_Complete2FASetup_Req } from "../../services";
+import type { Profile_Complete2FASetup_Req, Profile_GetProfile2FASetup_Req } from "../../services";
 
 function createHook() {
     return function useProfileApi() {
@@ -110,8 +110,10 @@ function createHook() {
                 /**
                  * Get profile 2FA setup
                  */
-                getProfile2FASetup: async () => {
-                    const result = await api.profile.getProfile2FASetup();
+                getProfile2FASetup: async (request: Profile_GetProfile2FASetup_Req["data"]) => {
+                    const result = await api.profile.getProfile2FASetup({
+                        data: request,
+                    });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

@@ -5,7 +5,7 @@ import { isTokenExpired, isTokenExpiredException, refreshToken, session } from "
 import { RefreshQueue } from "@infrastructure/api/queues";
 
 function setAuthorizationHeader(request: InternalAxiosRequestConfig, token: string) {
-    request.headers.Authorization = `Bearer ${token}`;
+    request.headers.Authorization = `Bearer ${token}`; // eslint-disable-line no-param-reassign
 }
 
 const attempts = new WeakMap<object, boolean>();

@@ -44,6 +44,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
         formState: { errors },
     } = useForm<SighUpFormSchemaInput, unknown, SighUpFormSchemaOutput>({
         defaultValues: {
+            username: "",
             fullName: "",
             email: method.candidate.email,
             password: "",
@@ -56,6 +57,14 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
         },
         resolver: zodResolver(SignUpFormSchema),
         mode: "onSubmit",
+    });
+
+    const {
+        field: username,
+        fieldState: { invalid: isUsernameInvalid },
+    } = useController({
+        name: "username",
+        control,
     });
 
     const {
@@ -120,7 +129,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
 
         const dataBase64 = p.dataBase64.split(",")[1];
 
-        if (dataBase64 === undefined) {
+        if (!dataBase64) {
             console.error("Invalid base64 data");
 
             return;
@@ -188,6 +197,24 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                         aria-invalid={isEmailInvalid}
                                         disabled
                                     />
+                                </Field>
+                                <Field>
+                                    <FieldLabel
+                                        htmlFor="username"
+                                        isRequired
+                                    >
+                                        Username
+                                    </FieldLabel>
+                                    <Input
+                                        id="username"
+                                        value={username.value}
+                                        onChange={username.onChange}
+                                        type="text"
+                                        placeholder="Enter your username"
+                                        aria-invalid={isUsernameInvalid}
+                                        required
+                                    />
+                                    <FieldError errors={[errors.username]} />
                                 </Field>
                                 <Field>
                                     <FieldLabel
@@ -305,285 +332,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                 onConfirm={result => {
                     photo.onChange(result);
                 }}
-                aspectRatio={1}
             />
-            {/* <div className={cx("sign-up-form")}>
-                <form
-                    onSubmit={event => {
-                        event.preventDefault();
-
-                        void handleSubmit(onValid, onInvalid)(event);
-                    }}
-                >
-                    <div className={cx("details")}>
-                        <div className={cx("input")}>
-                            <Input.Text
-                                size="large"
-                                label="First Name"
-                                placeholder="Enter first name"
-                                status={isFirstNameInvalid ? "error" : ""}
-                                {...firstName}
-                            />
-                            <InputErrorMessage
-                                name={firstName.name}
-                                errors={errors}
-                            />
-                        </div>
-
-                        <div className={cx("input")}>
-                            <Input.Text
-                                size="large"
-                                label="Last Name"
-                                placeholder="Enter last name"
-                                status={isLastNameInvalid ? "error" : ""}
-                                {...lastName}
-                            />
-                            <InputErrorMessage
-                                name={lastName.name}
-                                errors={errors}
-                            />
-                        </div>
-
-                        <div className={cx("block")}>
-                            <div className={cx("input")}>
-                                <Input.Text
-                                    size="large"
-                                    label="Position"
-                                    placeholder="Enter position"
-                                    status={isPositionInvalid ? "error" : ""}
-                                    {...position}
-                                />
-                                <InputErrorMessage
-                                    name={position.name}
-                                    errors={errors}
-                                />
-                            </div>
-
-                            {method.candidate.isInternal && (
-                                <div className={cx("input")}>
-                                    <Select.Single
-                                        ref={entity.ref}
-                                        size="large"
-                                        className={cx("select")}
-                                        value={entity.value?.id ?? null}
-                                        options={entityOptions}
-                                        allowClear
-                                        showSearch
-                                        optionFilterProp="name"
-                                        fieldNames={{
-                                            value: "id",
-                                            label: "name",
-                                        }}
-                                        onChange={(_, option) => {
-                                            entity.onChange(option ?? null);
-                                        }}
-                                        onSearch={setEntitySearch}
-                                        loading={isFetching}
-                                        label="Entity"
-                                        placeholder="Select entity"
-                                        status={isEntityInvalid ? "error" : ""}
-                                    />
-                                    <InputErrorMessage
-                                        name={entity.name}
-                                        errors={errors}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        <div className={cx("input")}>
-                            <Input.Text
-                                size="large"
-                                className={cx("email-input")}
-                                label="Email Address"
-                                placeholder="Please enter your email"
-                                disabled={method.type === ESignUpType.Email}
-                                status={isEmailInvalid ? "error" : ""}
-                                {...email}
-                            />
-                            <InputErrorMessage
-                                name={email.name}
-                                errors={errors}
-                            />
-                        </div>
-
-                        <div className={cx("input")}>
-                            <Select.Single
-                                {...timezone}
-                                className={cx("select")}
-                                size="large"
-                                options={timezones.map(t => {
-                                    return {
-                                        label: t.name,
-                                        value: t.id,
-                                    };
-                                })}
-                                allowClear
-                                showSearch
-                                onChange={id => {
-                                    timezone.onChange(id ?? null);
-                                }}
-                                optionFilterProp="label"
-                                label="Timezone"
-                                placeholder="Select your timezone"
-                                status={isTimezoneInvalid ? "error" : ""}
-                            />
-                            <InputErrorMessage
-                                name={timezone.name}
-                                errors={errors}
-                            />
-                        </div>
-
-                        <div className={cx("input")}>
-                            <Input.Phone
-                                label="Mobile Phone"
-                                size="large"
-                                status={isMobilePhoneInvalid ? "error" : ""}
-                                {...mobilePhone}
-                            />
-                            <InputErrorMessage
-                                name={mobilePhone.name}
-                                errors={errors}
-                            />
-                        </div>
-
-                        <div className={cx("input")}>
-                            <Input.Phone
-                                label="Office Phone"
-                                size="large"
-                                status={isOfficePhoneInvalid ? "error" : ""}
-                                {...officePhone}
-                            />
-                            <InputErrorMessage
-                                name={officePhone.name}
-                                errors={errors}
-                            />
-                        </div>
-                    </div>
-
-                    <div className={cx("input")}>
-                        <Input.Password
-                            size="large"
-                            label="Password"
-                            placeholder="Please enter your password"
-                            status={isPasswordInvalid || isNotStrongEnough ? "error" : ""}
-                            {...password}
-                        />
-                        <InputErrorMessage
-                            name={isNotStrongEnough ? isStrongPassword.name : password.name}
-                            errors={errors}
-                        />
-                    </div>
-
-                    <div className={cx("input")}>
-                        <PasswordStrengthMeter
-                            password={password.value}
-                            onStrengthChange={strength => {
-                                isStrongPassword.onChange(strength === "max");
-                            }}
-                        />
-                    </div>
-
-                    <div className={cx("input")}>
-                        <InputLabel>Profile Photo</InputLabel>
-
-                        <div className={cx("profile-photo")}>
-                            <Avatar.Basic
-                                className={cx("avatar")}
-                                borderless
-                                name={`${firstName.value} ${lastName.value}`.trim() || "??"}
-                                src={photo.value?.dataBase64 ?? null}
-                            />
-
-                            <Button
-                                className={cx("upload-button")}
-                                icon={<UploadIcon className={cx("upload-icon")} />}
-                                onClick={() => {
-                                    setOpenCandidatePhoto(true);
-                                }}
-                            >
-                                {photo.value === null ? "Choose Photo" : "Change Photo"}
-                            </Button>
-
-                            <Button
-                                className={cx("delete-button")}
-                                icon={<TrashIcon className={cx("trash-icon")} />}
-                                disabled={photo.value === null}
-                                onClick={() => {
-                                    photo.onChange(null);
-                                }}
-                            />
-                        </div>
-
-                        <InputErrorMessage
-                            name={photo.name}
-                            errors={errors}
-                        />
-                    </div>
-
-                    <div className={cx("terms-and-conditions-input-wrapper")}>
-                        <div className={cx("checkbox")}>
-                            <Checkbox
-                                ref={agreeTermsAndConditions.ref}
-                                checked={agreeTermsAndConditions.value}
-                                onChange={e => {
-                                    agreeTermsAndConditions.onChange(e.target.checked);
-                                }}
-                            />
-                            <div className={cx("title")}>
-                                Agree to{" "}
-                                <Button
-                                    className={cx("terms-and-conditions-button")}
-                                    type="link"
-                                    onClick={() => {
-                                        notify.warning({
-                                            message: "Terms and Conditions",
-                                            description: "Not implemented yet!",
-                                        });
-                                    }}
-                                >
-                                    Terms and Conditions
-                                </Button>
-                            </div>
-                        </div>
-
-                        <InputErrorMessage
-                            name={agreeTermsAndConditions.name}
-                            errors={errors}
-                        />
-                    </div>
-
-                    <div className={cx("submit-button-input-wrapper")}>
-                        <Button
-                            size="large"
-                            type="primary"
-                            htmlType="submit"
-                            loading={isPending}
-                        >
-                            Sign Up
-                        </Button>
-                    </div>
-
-                    <div className={cx("to-sign-in-input-wrapper")}>
-                        <span>Already have an account?</span>
-                        <AppLink.Basic
-                            className={cx("sign-in-link")}
-                            to={ROUTE.auth.signIn.$route}
-                        >
-                            Sign In
-                        </AppLink.Basic>
-                    </div>
-                </form>
-            </div>
-
-            <CandidatePhotoModal
-                photo={photo.value ? photo.value.dataBase64 : null}
-                open={openCandidatePhoto}
-                onClose={() => {
-                    setOpenCandidatePhoto(false);
-                }}
-                onChange={photo.onChange}
-            /> */}
         </>
     );
 }

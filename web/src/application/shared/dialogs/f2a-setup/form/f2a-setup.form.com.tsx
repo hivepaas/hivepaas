@@ -38,11 +38,11 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken }: Props) 
     });
 
     function onValid(values: F2aSetupSchemaOutput) {
-        onSubmit(values);
+        void onSubmit(values);
     }
 
-    function onInvalid(errors: FieldErrors<F2aSetupSchemaOutput>) {
-        console.log(errors);
+    function onInvalid(_errors: FieldErrors<F2aSetupSchemaOutput>) {
+        console.log(_errors);
     }
 
     return (

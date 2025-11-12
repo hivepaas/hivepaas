@@ -23,7 +23,7 @@ class JSONStorage {
         }
 
         try {
-            const json = JSON.parse(value);
+            const json = JSON.parse(value) as State["data"];
 
             // Try to parse as required2FA schema
             const parsed2FA = Schema.safeParse(json);

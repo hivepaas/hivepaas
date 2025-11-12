@@ -5,8 +5,10 @@ module.exports = {
         es2020: true,
     },
     parserOptions: {
-        project: true,
+        project: ["./tsconfig.json"],
         tsconfigRootDir: __dirname,
+        ecmaVersion: "latest",
+        sourceType: "module",
     },
     parser: "@typescript-eslint/parser",
     plugins: [

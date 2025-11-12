@@ -12,7 +12,7 @@ function createHook() {
 
         const navigateLocalized = useCallback(
             (to: To, options?: NavigateOptions) => {
-                navigate(linkTo(to), options);
+                void navigate(linkTo(to), options);
             },
             [linkTo, navigate],
         );

@@ -4,15 +4,20 @@ import { useProfileApi } from "@application/shared/api";
 import {
     type Profile_Complete2FASetup_Req,
     type Profile_Complete2FASetup_Res,
+    type Profile_GetProfile2FASetup_Req,
     type Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
 
 /**
  * Update profile
  */
+type GetProfile2FASetupReq = Profile_GetProfile2FASetup_Req["data"];
 type GetProfile2FASetupRes = Profile_GetProfile2FASetup_Res;
 
-type GetProfile2FASetupOptions = Omit<UseMutationOptions<GetProfile2FASetupRes, Error, undefined>, "mutationFn">;
+type GetProfile2FASetupOptions = Omit<
+    UseMutationOptions<GetProfile2FASetupRes, Error, GetProfile2FASetupReq>,
+    "mutationFn"
+>;
 
 function useGetProfile2FASetup({ onSuccess, ...options }: GetProfile2FASetupOptions = {}) {
     const {
@@ -21,7 +26,11 @@ function useGetProfile2FASetup({ onSuccess, ...options }: GetProfile2FASetupOpti
 
     return useMutation({
         mutationFn: getProfile2FASetup,
-        onSuccess,
+        onSuccess: (response, request, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
         ...options,
     });
 }

@@ -3,7 +3,6 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import {
-    type AuthApiMapper,
     type AuthApiValidator,
     type Auth_ForgotPassword_Req,
     type Auth_ForgotPassword_Res,
@@ -29,7 +28,6 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 export class AuthApi extends BaseApi {
     public constructor(
         private readonly validator: AuthApiValidator,
-        private readonly mapper: AuthApiMapper,
         private readonly device: DeviceInfo,
     ) {
         super();
@@ -46,6 +44,7 @@ export class AuthApi extends BaseApi {
             from(
                 this.client.v1.post("/users/signup-complete", {
                     inviteToken,
+                    username: data.username,
                     password: data.password,
                     fullName: data.fullName,
                     photo: data.photo ?? {

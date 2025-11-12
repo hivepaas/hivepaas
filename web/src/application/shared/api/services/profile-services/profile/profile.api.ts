@@ -5,6 +5,7 @@ import {
     type ProfileApiValidator,
     type Profile_Complete2FASetup_Req,
     type Profile_Complete2FASetup_Res,
+    type Profile_GetProfile2FASetup_Req,
     type Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
 
@@ -156,9 +157,16 @@ export class ProfileApi extends BaseApi {
     /**
      * Get profile 2FA setup
      */
-    async getProfile2FASetup(): Promise<Result<Profile_GetProfile2FASetup_Res, Error>> {
+    async getProfile2FASetup(
+        request: Profile_GetProfile2FASetup_Req,
+    ): Promise<Result<Profile_GetProfile2FASetup_Res, Error>> {
+        const { data } = request;
         return lastValueFrom(
-            from(this.client.v1.post("/users/current/mfa/totp-begin-setup")).pipe(
+            from(
+                this.client.v1.post("/users/current/mfa/totp-begin-setup", {
+                    passcode: data.passcode,
+                }),
+            ).pipe(
                 map(this.validator.getProfile2FASetup),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

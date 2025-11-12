@@ -2,10 +2,10 @@ import { StrictMode } from "react";
 
 import { createRoot } from "react-dom/client";
 
-import { Toaster } from "@components/ui/sonner.tsx";
+import { Toaster } from "@components/ui/sonner";
 import { DeviceInfo } from "@infrastructure/device";
 
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 
 DeviceInfo.init();

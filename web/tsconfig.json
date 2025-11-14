@@ -33,6 +33,7 @@
     "paths": {
       "@*": ["src/*"],
       "@application/*": ["src/application/*"],
+      "~/*": ["src/application/modules/*"],
       "@assets/*": ["src/assets/*"],
       "@ui-kit": ["src/components/ui"],
       "@ui-kit/*": ["src/components/ui/*"]

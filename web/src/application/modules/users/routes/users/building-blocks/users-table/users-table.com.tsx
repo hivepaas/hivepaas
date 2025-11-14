@@ -1,96 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { User } from "@application/shared/entities";
-import { ESecuritySettings, EUserRole } from "@application/shared/enums";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
+
+import { UsersQueries } from "@application/modules/users/data/queries";
+import type { UserBase } from "@application/modules/users/domain";
 
 import { DataTable } from "@/components/ui";
-
-const mockUsers: User[] = [
-    {
-        id: "1",
-        email: "test@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User",
-        photo: null,
-        position: "Test Position",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-    {
-        id: "2",
-        email: "test2@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User 2",
-        photo: null,
-        position: "Test Position 2",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-    {
-        id: "3",
-        email: "test3@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User 3",
-        photo: null,
-        position: "Test Position 3",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-    {
-        id: "4",
-        email: "test4@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User 4",
-        photo: null,
-        position: "Test Position 4",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-    {
-        id: "5",
-        email: "test5@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User 5",
-        photo: null,
-        position: "Test Position 5",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-    {
-        id: "6",
-        email: "test6@test.com",
-        role: EUserRole.Admin,
-        status: "active",
-        fullName: "Test User 6",
-        photo: null,
-        position: "Test Position 6",
-        securityOption: ESecuritySettings.PasswordOnly,
-        createdAt: new Date(),
-        updatedAt: null,
-        accessExpireAt: null,
-        lastAccess: null,
-    },
-];
 
 const formatRole = (role: EUserRole): string => {
     const roleMap: Record<EUserRole, string> = {
@@ -101,11 +17,11 @@ const formatRole = (role: EUserRole): string => {
     return roleMap[role] || role;
 };
 
-const formatStatus = (status: User["status"]): string => {
-    const statusMap: Record<User["status"], string> = {
-        active: "Active",
-        pending: "Pending",
-        disabled: "Disabled",
+const formatStatus = (status: EUserStatus): string => {
+    const statusMap: Record<EUserStatus, string> = {
+        [EUserStatus.Active]: "Active",
+        [EUserStatus.Pending]: "Pending",
+        [EUserStatus.Disabled]: "Disabled",
     };
     return statusMap[status] || status;
 };
@@ -130,7 +46,7 @@ const formatDate = (date: Date | null): string => {
     }).format(date);
 };
 
-const columns: ColumnDef<User>[] = [
+const columns: ColumnDef<UserBase>[] = [
     {
         accessorKey: "fullName",
         header: "Full Name",
@@ -171,10 +87,12 @@ const columns: ColumnDef<User>[] = [
 ];
 
 export function UsersTable() {
+    const { data: { data: users } = DEFAULT_PAGINATED_DATA, isLoading } = UsersQueries.useFindManyPaginated();
+
     return (
         <DataTable
             columns={columns}
-            data={mockUsers}
+            data={users}
             pageSize={10}
             enablePagination
             enableSorting

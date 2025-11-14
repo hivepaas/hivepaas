@@ -1,10 +1,10 @@
-import type { ESecuritySettings, EUserRole } from "@application/shared/enums";
+import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 
-export interface User {
+export interface UserBase {
     id: string;
     email: string;
     role: EUserRole;
-    status: "active" | "pending" | "disabled";
+    status: EUserStatus;
     fullName: string;
     photo: string | null;
     position: string;

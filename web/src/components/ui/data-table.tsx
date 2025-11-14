@@ -16,28 +16,71 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2 } from "lucide-react";
 
 import { Button } from "./button";
+import { Skeleton } from "./skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import { TablePagination } from "./table-pagination";
+
+export type ColumnAlign = "left" | "center" | "right";
+export type ColumnVerticalAlign = "top" | "middle" | "bottom";
+
+export interface ColumnAlignmentMeta {
+    align?: ColumnAlign;
+    verticalAlign?: ColumnVerticalAlign;
+    titleAlign?: ColumnAlign;
+}
+
+declare module "@tanstack/react-table" {
+    interface ColumnMeta<TData, TValue> extends ColumnAlignmentMeta {}
+}
 
 interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
     header: Header<TData, TValue>;
     title: string;
 }
 
+// Helper functions to convert alignment to Tailwind classes
+const getTextAlignClass = (align?: ColumnAlign): string => {
+    switch (align) {
+        case "center":
+            return "text-center";
+        case "right":
+            return "text-right";
+        case "left":
+        default:
+            return "text-left";
+    }
+};
+
+const getVerticalAlignClass = (verticalAlign?: ColumnVerticalAlign): string => {
+    switch (verticalAlign) {
+        case "top":
+            return "align-top";
+        case "bottom":
+            return "align-bottom";
+        case "middle":
+        default:
+            return "align-middle";
+    }
+};
+
 function DataTableColumnHeader<TData, TValue>({ header, title, className }: DataTableColumnHeaderProps<TData, TValue>) {
     const column = header.column;
     const canSort = column.getCanSort();
     const isSorted = column.getIsSorted();
+    const titleAlign = column.columnDef.meta?.titleAlign || column.columnDef.meta?.align;
 
     if (!canSort) {
-        return <div className={cn(className)}>{title}</div>;
+        return <div className={cn(getTextAlignClass(titleAlign), className)}>{title}</div>;
     }
 
+    const flexJustifyClass =
+        titleAlign === "center" ? "justify-center" : titleAlign === "right" ? "justify-end" : "justify-start";
+
     return (
-        <div className={cn("flex items-center space-x-2", className)}>
+        <div className={cn("flex items-center space-x-2", flexJustifyClass, className)}>
             <Button
                 variant="ghost"
                 size="sm"
@@ -92,6 +135,7 @@ export interface DataTableProps<TData, TValue> {
     manualPagination?: boolean;
     manualSorting?: boolean;
     manualFiltering?: boolean;
+    isLoading?: boolean;
 }
 
 function DataTable<TData, TValue>({
@@ -118,6 +162,7 @@ function DataTable<TData, TValue>({
     manualPagination = false,
     manualSorting = false,
     manualFiltering = false,
+    isLoading = false,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -203,8 +248,30 @@ function DataTable<TData, TValue>({
 
     return (
         <div className={cn("space-y-4", className)}>
-            <div className="rounded-md border">
-                <Table>
+            <div className="relative rounded-md border">
+                {/* Progress bar */}
+                {isLoading && (
+                    <div className="absolute top-0 left-0 right-0 z-10 h-1 overflow-hidden rounded-t-md bg-muted">
+                        <div
+                            className="h-full w-1/3 bg-primary"
+                            style={{
+                                animation: "progress 1.5s ease-in-out infinite",
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Loading overlay */}
+                {isLoading && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-transparent">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-primary" />
+                            <span className="text-sm text-muted-foreground">Loading...</span>
+                        </div>
+                    </div>
+                )}
+
+                <Table className={cn(isLoading && "opacity-50")}>
                     <TableHeader className={headerClassName}>
                         {table.getHeaderGroups().map(headerGroup => (
                             <TableRow key={headerGroup.id}>
@@ -214,11 +281,18 @@ function DataTable<TData, TValue>({
                                         typeof header.column.columnDef.header === "string"
                                             ? header.column.columnDef.header
                                             : header.column.id;
+                                    const meta = header.column.columnDef.meta;
+                                    const titleAlign = meta?.titleAlign || meta?.align;
+                                    const verticalAlign = meta?.verticalAlign;
 
                                     return (
                                         <TableHead
                                             key={header.id}
-                                            className={canSort && enableSorting ? "cursor-pointer select-none" : ""}
+                                            className={cn(
+                                                canSort && enableSorting ? "cursor-pointer select-none" : "",
+                                                getTextAlignClass(titleAlign),
+                                                getVerticalAlignClass(verticalAlign),
+                                            )}
                                         >
                                             {header.isPlaceholder ? null : canSort && enableSorting ? (
                                                 <DataTableColumnHeader
@@ -235,7 +309,18 @@ function DataTable<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody className={bodyClassName}>
-                        {table.getRowModel().rows?.length ? (
+                        {isLoading ? (
+                            // Show skeleton rows when loading
+                            Array.from({ length: table.getRowModel().rows?.length ?? pageSize }).map((_, index) => (
+                                <TableRow key={`skeleton-${index}`}>
+                                    {columns.map((_, colIndex) => (
+                                        <TableCell key={`skeleton-cell-${index}-${colIndex}`}>
+                                            <Skeleton className="h-4 w-full" />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map(row => (
                                 <TableRow
                                     key={row.id}
@@ -243,11 +328,23 @@ function DataTable<TData, TValue>({
                                     className={cn(onRowClick && "cursor-pointer", getRowClassName(row.original))}
                                     onClick={() => onRowClick?.(row.original)}
                                 >
-                                    {row.getVisibleCells().map(cell => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
+                                    {row.getVisibleCells().map(cell => {
+                                        const meta = cell.column.columnDef.meta;
+                                        const align = meta?.align;
+                                        const verticalAlign = meta?.verticalAlign;
+
+                                        return (
+                                            <TableCell
+                                                key={cell.id}
+                                                className={cn(
+                                                    getTextAlignClass(align),
+                                                    getVerticalAlignClass(verticalAlign),
+                                                )}
+                                            >
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        );
+                                    })}
                                 </TableRow>
                             ))
                         ) : (

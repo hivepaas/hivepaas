@@ -6,12 +6,17 @@ export const ROUTE = {
         /**
          * Users
          */
-        users: {
-            $pattern: "users",
+        userManagement: {
+            $pattern: "user-management",
 
             users: {
-                $pattern: "users",
-                $route: "/users/",
+                $pattern: "user-management/users",
+                $route: "/user-management/users/",
+
+                details: {
+                    $pattern: "user-management/users/:id",
+                    $route: (id: string) => `/user-management/users/${id}/`,
+                },
             },
         },
     },

@@ -34,14 +34,14 @@ function View({ withBackButton = true }: Props) {
                             variant="outline"
                             onClick={() => {
                                 if (profile === null) {
-                                    navigate(ROUTE.auth.signIn.$route, {
+                                    void navigate.basic(ROUTE.auth.signIn.$route, {
                                         replace: true,
                                     });
 
                                     return;
                                 }
 
-                                navigate("/", {
+                                void navigate.basic("/", {
                                     replace: true,
                                 });
                             }}

@@ -28,7 +28,7 @@ function View() {
                     <Button
                         variant="outline"
                         onClick={() => {
-                            navigate("/", { replace: true });
+                            void navigate.basic("/", { replace: true });
                         }}
                     >
                         Back to application

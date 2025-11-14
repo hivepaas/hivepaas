@@ -94,12 +94,12 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                             <Field>
                                 <div className="flex items-center justify-between">
                                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                                    <AppLink
+                                    <AppLink.Basic
                                         className="text-sm text-primary hover:text-gray-700"
                                         to={ROUTE.auth.forgotPassword.$route}
                                     >
                                         Forgot Password?
-                                    </AppLink>
+                                    </AppLink.Basic>
                                 </div>
                                 <Input
                                     id="password"

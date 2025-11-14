@@ -141,7 +141,7 @@ export function TwoFaRoute() {
 
     if (!("required2FA" in data) || !data.required2FA) {
         return (
-            <AppNavigate
+            <AppNavigate.Basic
                 to={{
                     pathname: ROUTE.auth.signIn.$route,
                     search: params.toString(),

@@ -1,7 +1,7 @@
 import { type FilterByState, type PaginationState, type SortingState } from "@infrastructure/data";
 
 interface Search {
-    "filter[search]": string;
+    search: string;
 }
 
 interface Context {
@@ -82,7 +82,7 @@ class Builder {
         }
 
         this.#search = {
-            "filter[search]": search,
+            search,
         };
 
         return this;

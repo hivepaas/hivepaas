@@ -1,7 +1,9 @@
+import { UsersTable } from "../building-blocks";
+
 function View() {
     return (
         <div className="bg-background rounded-lg p-4">
-            <h1>Users</h1>
+            <UsersTable />
         </div>
     );
 }

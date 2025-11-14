@@ -1,13 +1,7 @@
 import React from "react";
 
 import { Button } from "@components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { Check, Lock, MoreVertical } from "lucide-react";
 
 import { EUserStatus } from "@application/shared/enums";

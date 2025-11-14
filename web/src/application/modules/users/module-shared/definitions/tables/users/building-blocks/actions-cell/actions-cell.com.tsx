@@ -1,12 +1,20 @@
 import React from "react";
 
 import { EyeIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 import { AppLink } from "@application/shared/components/navigation";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { ROUTE } from "@application/shared/constants";
 
+import { UsersCommands } from "@application/modules/users/data/commands";
+
 function View({ id }: Props) {
+    const { mutate: deleteOne } = UsersCommands.useDeleteOne({
+        onSuccess: () => {
+            toast.success("User deleted successfully");
+        },
+    });
     return (
         <div className="flex items-center justify-center gap-4">
             <AppLink.Modules
@@ -23,7 +31,7 @@ function View({ id }: Props) {
                 cancelText="Cancel"
                 description="Are you sure you want to remove this user?"
                 onConfirm={() => {
-                    console.log("Remove user:", id);
+                    deleteOne({ id });
                 }}
             >
                 <Trash2Icon className="size-5 text-destructive hover:opacity-50 transition-opacity duration-200" />

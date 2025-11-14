@@ -2,7 +2,7 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { UsersApiContext } from "~/users/api/api-context";
-import { type Users_FindManyPaginated_Req } from "~/users/api/services";
+import { type Users_DeleteOne_Req, type Users_FindManyPaginated_Req } from "~/users/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
@@ -41,8 +41,35 @@ function createHook() {
             [api, notifyError],
         );
 
+        const mutations = useMemo(
+            () => ({
+                /**
+                 * Delete a user
+                 */
+                deleteOne: async (data: Users_DeleteOne_Req["data"]) => {
+                    const result = await api.users.$.deleteOne({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to delete user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api, notifyError],
+        );
+
         return {
             queries,
+            mutations,
         };
     };
 }

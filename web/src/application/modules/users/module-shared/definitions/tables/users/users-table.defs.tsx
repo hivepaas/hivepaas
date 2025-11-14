@@ -5,12 +5,12 @@ import { UserRoleBadge, UserSecurityBadge, UserStatusBadge } from "~/users/modul
 
 import type { UserBase } from "@application/modules/users/domain";
 
-import { ActionsCell } from "./building-blocks";
+import { ActionsCell, UserMenuCell } from "./building-blocks";
 
 const columns: ColumnDef<UserBase>[] = [
     {
         id: "actions",
-        header: "",
+        header: "Actions",
         enableResizing: false,
         enableHiding: false,
         minSize: 80,
@@ -72,6 +72,32 @@ const columns: ColumnDef<UserBase>[] = [
         accessorKey: "lastAccess",
         header: "Last Access",
         cell: ({ row }) => (row.original.lastAccess ? format(row.original.lastAccess, "dd/MM/yyyy HH:mm") : "-"),
+    },
+    {
+        id: "userMenu",
+        header: "",
+        enableResizing: false,
+        enableHiding: false,
+        minSize: 40,
+        size: 40,
+        cell: ({ row }) => (
+            <UserMenuCell
+                status={row.original.status}
+                onActivate={() => {
+                    // TODO: Implement activate user
+                    console.log("Activate user:", row.original.id);
+                }}
+                onDisable={() => {
+                    // TODO: Implement disable user
+                    console.log("Disable user:", row.original.id);
+                }}
+            />
+        ),
+        meta: {
+            align: "center",
+            titleAlign: "center",
+            sticky: "right",
+        },
     },
 ];
 

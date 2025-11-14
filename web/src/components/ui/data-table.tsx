@@ -30,6 +30,7 @@ export interface ColumnAlignmentMeta {
     align?: ColumnAlign;
     verticalAlign?: ColumnVerticalAlign;
     titleAlign?: ColumnAlign;
+    sticky?: "left" | "right";
 }
 
 declare module "@tanstack/react-table" {
@@ -64,6 +65,14 @@ const getVerticalAlignClass = (verticalAlign?: ColumnVerticalAlign): string => {
         default:
             return "align-middle";
     }
+};
+
+const getStickyClass = (sticky?: "left" | "right"): string => {
+    if (!sticky) return "";
+    if (sticky === "left") {
+        return "sticky left-0 z-10";
+    }
+    return "sticky right-0 z-10";
 };
 
 function DataTableColumnHeader<TData, TValue>({ header, title, className }: DataTableColumnHeaderProps<TData, TValue>) {
@@ -284,6 +293,7 @@ function DataTable<TData, TValue>({
                                     const meta = header.column.columnDef.meta;
                                     const titleAlign = meta?.titleAlign || meta?.align;
                                     const verticalAlign = meta?.verticalAlign;
+                                    const sticky = meta?.sticky;
 
                                     return (
                                         <TableHead
@@ -292,6 +302,7 @@ function DataTable<TData, TValue>({
                                                 canSort && enableSorting ? "cursor-pointer select-none" : "",
                                                 getTextAlignClass(titleAlign),
                                                 getVerticalAlignClass(verticalAlign),
+                                                getStickyClass(sticky),
                                             )}
                                         >
                                             {header.isPlaceholder ? null : canSort && enableSorting ? (
@@ -332,6 +343,7 @@ function DataTable<TData, TValue>({
                                         const meta = cell.column.columnDef.meta;
                                         const align = meta?.align;
                                         const verticalAlign = meta?.verticalAlign;
+                                        const sticky = meta?.sticky;
 
                                         return (
                                             <TableCell
@@ -339,6 +351,7 @@ function DataTable<TData, TValue>({
                                                 className={cn(
                                                     getTextAlignClass(align),
                                                     getVerticalAlignClass(verticalAlign),
+                                                    getStickyClass(sticky),
                                                 )}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}

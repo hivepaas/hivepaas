@@ -1,44 +1,46 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
-import { type To, matchPath } from "react-router-dom";
-
-// import { useI18n } from "@i18n/hooks";
+import { type Path, type To } from "react-router";
 
 function createHook() {
-    function isNotTranslatable(pathname?: string) {
-        if (!pathname) {
-            return false;
-        }
+    function isString(to: To): to is string {
+        return typeof to === "string";
+    }
 
-        return matchPath("auth/*", pathname) !== null;
+    function isPath(to: To): to is Partial<Path> & object {
+        return typeof to === "object";
     }
 
     return function useAppLink() {
-        // const { language } = useI18n();
+        /**
+         * Generate link to modules.
+         */
+        const modules = useCallback(<T extends To>(to: T): T => {
+            const prefix = "/modules";
 
-        const linkTo = useCallback((to: To): To => {
-            const prefix = "";
-
-            if (typeof to === "string") {
-                if (isNotTranslatable(to)) {
-                    return to;
-                }
-
-                return prefix + to;
+            if (isString(to)) {
+                return (prefix + to) as T;
             }
 
-            if (isNotTranslatable(to.pathname)) {
-                return to;
+            if (isPath(to)) {
+                return {
+                    ...to,
+                    pathname: prefix + (to.pathname ?? ""),
+                };
             }
 
-            return {
-                ...to,
-                pathname: prefix + (to.pathname ?? ""),
-            };
+            throw new Error("Invalid to argument");
         }, []);
 
+        const memoizedLink = useMemo(
+            () => ({
+                modules,
+            }),
+            [modules],
+        );
+
         return {
-            linkTo,
+            link: memoizedLink,
         };
     };
 }

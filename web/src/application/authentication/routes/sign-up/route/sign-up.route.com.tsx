@@ -27,7 +27,7 @@ function View({ method }: ViewProps) {
                 description: "You can now sign in to your account",
             });
 
-            navigate(ROUTE.auth.signIn.$route);
+            void navigate.basic(ROUTE.auth.signIn.$route);
         },
     });
 

@@ -13,7 +13,7 @@ export function BackToSignIn() {
     const [params] = useSearchParams();
 
     return (
-        <AppLink
+        <AppLink.Basic
             to={{
                 pathname: ROUTE.auth.signIn.$route,
                 search: params.toString(),
@@ -24,6 +24,6 @@ export function BackToSignIn() {
         >
             <ArrowBackIcon />
             Back to Login
-        </AppLink>
+        </AppLink.Basic>
     );
 }

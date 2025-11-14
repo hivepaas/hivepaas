@@ -1,5 +1,4 @@
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
-import { useCookie } from "react-use";
 import invariant from "tiny-invariant";
 
 import { useProfileContext } from "@application/shared/context";

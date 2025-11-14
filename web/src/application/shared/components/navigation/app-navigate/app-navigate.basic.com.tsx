@@ -1,6 +1,6 @@
 import { Navigate, type NavigateProps, useLocation } from "react-router";
 
-export function AppNavigate({ ignorePrevPath = false, ...props }: Props) {
+export function AppNavigateBasic({ ignorePrevPath = false, ...props }: Props) {
     const location = useLocation();
 
     return (

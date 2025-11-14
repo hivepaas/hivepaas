@@ -24,7 +24,7 @@ function View({ email, token }: ViewProps) {
     const { mutate: resetPassword, isPending } = AuthCommands.useResetPassword({
         onSuccess: () => {
             toast.success("Password updated successfully");
-            navigate(ROUTE.auth.signIn.$route, { replace: true });
+            void navigate.basic(ROUTE.auth.signIn.$route, { replace: true });
         },
     });
 

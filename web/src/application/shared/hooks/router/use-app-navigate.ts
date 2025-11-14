@@ -1,24 +1,56 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
-import { type NavigateOptions, type To, useNavigate } from "react-router-dom";
+import { type NavigateOptions, type To, useLocation, useNavigate } from "react-router";
 
-import { useAppLink } from "@application/shared/hooks/router";
+import { useAppLink } from "./use-app-link";
+
+type Options = NavigateOptions & {
+    ignorePrevPath?: boolean;
+};
 
 function createHook() {
     return function useAppNavigate() {
-        const { linkTo } = useAppLink();
+        const { link } = useAppLink();
 
+        const location = useLocation();
         const navigate = useNavigate();
 
-        const navigateLocalized = useCallback(
-            (to: To, options?: NavigateOptions) => {
-                void navigate(linkTo(to), options);
+        /**
+         * Navigate to a modules route.
+         */
+        const modules = useCallback(
+            (to: To, { ignorePrevPath, ...options }: Options = {}) => {
+                void navigate(link.modules(to), {
+                    ...options,
+                    state: ignorePrevPath
+                        ? (location.state as unknown)
+                        : {
+                              from: location.pathname + location.search,
+                          },
+                });
             },
-            [linkTo, navigate],
+            [link, navigate, location],
+        );
+
+        const memoizedNavigate = useMemo(
+            () => ({
+                basic: async (to: To, { ignorePrevPath, ...options }: Options = {}) => {
+                    return navigate(to, {
+                        ...options,
+                        state: ignorePrevPath
+                            ? (location.state as unknown)
+                            : {
+                                  from: location.pathname + location.search,
+                              },
+                    });
+                },
+                modules,
+            }),
+            [navigate, modules, location],
         );
 
         return {
-            navigate: navigateLocalized,
+            navigate: memoizedNavigate,
         };
     };
 }

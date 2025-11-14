@@ -56,7 +56,7 @@ export default tseslint.config(
                 ...globals.es2020,
             },
             parserOptions: {
-                project: ["./tsconfig.app.json"],
+                project: ["./tsconfig.json"],
                 tsconfigRootDir: import.meta.dirname,
             },
         },

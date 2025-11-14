@@ -4,14 +4,14 @@ export const ROUTE = {
      */
     modules: {
         /**
-         * Users & Roles
+         * Users
          */
-        usersAndRoles: {
-            $pattern: "users-and-roles",
+        users: {
+            $pattern: "users",
 
             users: {
-                $pattern: "users-and-roles/users",
-                $route: "/users-and-roles/users/",
+                $pattern: "users",
+                $route: "/users/",
             },
         },
     },

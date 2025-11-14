@@ -49,7 +49,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
         // TODO get page to redirect from query, "?next=/modules/projects/dashboard/" for example
 
         return (
-            <AppNavigate
+            <AppNavigate.Basic
                 to={params.get("next")!}
                 replace
             />
@@ -58,8 +58,8 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
 
     if (profile && (isMain || isAuthGroup)) {
         return (
-            <AppNavigate
-                to={ROUTE.modules.usersAndRoles.users.$route}
+            <AppNavigate.Basic
+                to={ROUTE.modules.users.users.$route}
                 replace
             />
         );
@@ -67,7 +67,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
 
     if (!profile && !isAuthGroup) {
         return (
-            <AppNavigate
+            <AppNavigate.Basic
                 to={{
                     pathname: ROUTE.auth.signIn.$route,
                     search: createSearchParams({ next: location.pathname }).toString(),

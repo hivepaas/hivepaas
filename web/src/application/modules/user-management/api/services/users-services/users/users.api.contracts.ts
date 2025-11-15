@@ -15,6 +15,15 @@ export type Users_FindManyPaginated_Req = ApiRequestBase<{
 export type Users_FindManyPaginated_Res = ApiResponsePaginated<UserBase>;
 
 /**
+ * Find one user by id
+ */
+export type Users_FindOneById_Req = ApiRequestBase<{
+    id: string;
+}>;
+
+export type Users_FindOneById_Res = ApiResponseBase<UserBase>;
+
+/**
  * Delete one user
  */
 export type Users_DeleteOne_Req = ApiRequestBase<{
@@ -24,3 +33,15 @@ export type Users_DeleteOne_Req = ApiRequestBase<{
 export type Users_DeleteOne_Res = ApiResponseBase<{
     id: string;
 }>;
+
+/**
+ * Update one user
+ */
+export type Users_UpdateOne_Req = ApiRequestBase<{
+    id: string;
+    data: {
+        status: UserBase["status"];
+    };
+}>;
+
+export type Users_UpdateOne_Res = ApiResponseBase<UserBase>;

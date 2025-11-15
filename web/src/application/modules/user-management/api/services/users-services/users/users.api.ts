@@ -6,6 +6,10 @@ import {
     type Users_DeleteOne_Res,
     type Users_FindManyPaginated_Req,
     type Users_FindManyPaginated_Res,
+    type Users_FindOneById_Req,
+    type Users_FindOneById_Res,
+    type Users_UpdateOne_Req,
+    type Users_UpdateOne_Res,
 } from "~/user-management/api/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -43,6 +47,28 @@ export class UsersApi extends BaseApi {
     }
 
     /**
+     * Find one user by id
+     */
+    async findOneById(
+        request: Users_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Users_FindOneById_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/users/${id}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
      * Delete a user
      */
     async deleteOne(request: Users_DeleteOne_Req): Promise<Result<Users_DeleteOne_Res, Error>> {
@@ -51,6 +77,31 @@ export class UsersApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/users/${id}`, {})).pipe(
                 map(() => Ok({ data: { id } })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update a user
+     */
+    async updateOne(request: Users_UpdateOne_Req, signal?: AbortSignal): Promise<Result<Users_UpdateOne_Res, Error>> {
+        const { id, data } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(
+                    `/users/${id}`,
+                    {
+                        status: data.status,
+                    },
+                    {
+                        signal,
+                    },
+                ),
+            ).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

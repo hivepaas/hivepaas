@@ -1,32 +1,46 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import { type Users_FindManyPaginated_Res } from "~/user-management/api/services/users-services/users/users.api.contracts";
+import {
+    type Users_FindManyPaginated_Res,
+    type Users_FindOneById_Res,
+    type Users_UpdateOne_Res,
+} from "~/user-management/api/services/users-services/users/users.api.contracts";
 
 import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
+ * User schema
+ */
+const UserSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    fullName: z.string(),
+    photo: z.string().nullable(),
+    position: z.string(),
+    securityOption: z.nativeEnum(ESecuritySettings),
+    status: z.nativeEnum(EUserStatus),
+    role: z.nativeEnum(EUserRole),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullable(),
+    accessExpireAt: z.coerce.date().nullable(),
+    lastAccess: z.coerce.date().nullable(),
+});
+
+/**
  * Find many users paginated API response schema
  */
 const FindManyPaginatedSchema = z.object({
-    data: z.array(
-        z.object({
-            id: z.string(),
-            email: z.string(),
-            fullName: z.string(),
-            photo: z.string().nullable(),
-            position: z.string(),
-            securityOption: z.nativeEnum(ESecuritySettings),
-            status: z.nativeEnum(EUserStatus),
-            role: z.nativeEnum(EUserRole),
-            createdAt: z.coerce.date(),
-            updatedAt: z.coerce.date().nullable(),
-            accessExpireAt: z.coerce.date().nullable(),
-            lastAccess: z.coerce.date().nullable(),
-        }),
-    ),
+    data: z.array(UserSchema),
     meta: PagingMetaApiSchema,
+});
+
+/**
+ * Find one user by id API response schema
+ */
+const FindOneByIdSchema = z.object({
+    data: UserSchema,
 });
 
 export class UsersApiValidator {
@@ -55,6 +69,60 @@ export class UsersApiValidator {
                 lastAccess: user.lastAccess,
             })),
             meta,
+        };
+    };
+
+    /**
+     * Validate and transform find one user by id API response
+     */
+    findOneById = (response: AxiosResponse): Users_FindOneById_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+                email: data.email,
+                role: data.role,
+                status: data.status,
+                fullName: data.fullName,
+                photo: data.photo,
+                position: data.position,
+                securityOption: data.securityOption,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                accessExpireAt: data.accessExpireAt,
+                lastAccess: data.lastAccess,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform update one user API response
+     */
+    updateOne = (response: AxiosResponse): Users_UpdateOne_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+                email: data.email,
+                role: data.role,
+                status: data.status,
+                fullName: data.fullName,
+                photo: data.photo,
+                position: data.position,
+                securityOption: data.securityOption,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                accessExpireAt: data.accessExpireAt,
+                lastAccess: data.lastAccess,
+            },
         };
     };
 }

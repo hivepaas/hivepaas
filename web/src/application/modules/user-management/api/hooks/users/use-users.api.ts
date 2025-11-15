@@ -2,7 +2,12 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { UsersApiContext } from "~/user-management/api/api-context";
-import { type Users_DeleteOne_Req, type Users_FindManyPaginated_Req } from "~/user-management/api/services";
+import {
+    type Users_DeleteOne_Req,
+    type Users_FindManyPaginated_Req,
+    type Users_FindOneById_Req,
+    type Users_UpdateOne_Req,
+} from "~/user-management/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
@@ -37,6 +42,29 @@ function createHook() {
                         },
                     });
                 },
+                /**
+                 * Find one user by id
+                 */
+                findOneById: async (data: Users_FindOneById_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.users.$.findOneById(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
             }),
             [api, notifyError],
         );
@@ -56,6 +84,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update a user
+                 */
+                updateOne: async (data: Users_UpdateOne_Req["data"]) => {
+                    const result = await api.users.$.updateOne({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update user",
                                 error,
                             });
 

@@ -8,7 +8,7 @@ import { ESecuritySettings } from "@application/shared/enums";
 function View({ securityOption }: Props) {
     const securityMap: Record<ESecuritySettings, string> = {
         [ESecuritySettings.PasswordOnly]: "Password Only",
-        [ESecuritySettings.Password2FA]: "Password + 2FA",
+        [ESecuritySettings.Password2FA]: "Password 2FA",
         [ESecuritySettings.EnforceSSO]: "Enforce SSO",
     };
 

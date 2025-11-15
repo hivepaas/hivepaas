@@ -16,16 +16,14 @@ function createHook() {
          * Generate link to modules.
          */
         const modules = useCallback(<T extends To>(to: T): T => {
-            const prefix = "/modules";
-
             if (isString(to)) {
-                return (prefix + to) as T;
+                return to as T;
             }
 
             if (isPath(to)) {
                 return {
                     ...to,
-                    pathname: prefix + (to.pathname ?? ""),
+                    pathname: to.pathname ?? "",
                 };
             }
 

@@ -23,7 +23,7 @@ export const usersAndRolesRouter: RouteObject = {
                  * Users
                  */
                 {
-                    path: ROUTE.modules.userManagement.users.$pattern,
+                    path: ROUTE.userManagement.users.$pattern,
                     lazy: async () => {
                         const { UsersRoute } = await getLazyComponents();
 

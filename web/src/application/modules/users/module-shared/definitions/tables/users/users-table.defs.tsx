@@ -66,12 +66,12 @@ const columns: ColumnDef<UserBase>[] = [
     {
         accessorKey: "createdAt",
         header: "Created At",
-        cell: ({ row }) => format(row.original.createdAt, "dd/MM/yyyy HH:mm"),
+        cell: ({ row }) => format(row.original.createdAt, "yyyy-MM-dd HH:mm:ss"),
     },
     {
         accessorKey: "lastAccess",
         header: "Last Access",
-        cell: ({ row }) => (row.original.lastAccess ? format(row.original.lastAccess, "dd/MM/yyyy HH:mm") : "-"),
+        cell: ({ row }) => (row.original.lastAccess ? format(row.original.lastAccess, "yyyy-MM-dd HH:mm:ss") : "-"),
     },
     {
         id: "userMenu",

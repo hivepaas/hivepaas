@@ -4,7 +4,7 @@ import { ROUTE } from "@application/shared/constants";
 export function MainHeader() {
     const links = [
         {
-            route: ROUTE.modules.userManagement.users.$route,
+            route: ROUTE.userManagement.users.$route,
             label: "Users",
         },
         {

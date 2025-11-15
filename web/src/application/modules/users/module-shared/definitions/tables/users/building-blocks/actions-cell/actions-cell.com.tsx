@@ -19,7 +19,7 @@ function View({ id }: Props) {
         <div className="flex items-center justify-center gap-4">
             <AppLink.Modules
                 className="flex items-center justify-center text-link hover:opacity-50 transition-opacity duration-200"
-                to={ROUTE.modules.userManagement.users.details.$route(id)}
+                to={ROUTE.userManagement.users.details.$route(id)}
             >
                 <EyeIcon className="size-5" />
             </AppLink.Modules>

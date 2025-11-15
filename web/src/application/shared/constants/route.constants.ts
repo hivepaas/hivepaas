@@ -44,7 +44,7 @@ export const ROUTE = {
             $pattern: "user-management/users",
             $route: "/user-management/users/",
 
-            details: {
+            single: {
                 $pattern: "user-management/users/:id",
                 $route: (id: string) => `/user-management/users/${id}/`,
             },

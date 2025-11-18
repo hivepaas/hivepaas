@@ -1,15 +1,18 @@
 import { memo } from "react";
 
+import { Avatar } from "@components/ui";
 import { Button } from "@components/ui";
-import { Check, Lock, Trash2 } from "lucide-react";
+import { BadgeCheck, Check, Lock, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
+import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
-import { EUserStatus } from "@application/shared/enums";
+import { EUserRole, EUserStatus } from "@application/shared/enums";
 
 import { UsersCommands } from "@application/modules/user-management/data/commands";
 import { UsersQueries } from "@application/modules/user-management/data/queries";
+import { UserStatusBadge } from "@application/modules/user-management/module-shared/components";
 
 import { UserBreadcrumbs } from "../building-blocks";
 
@@ -50,26 +53,21 @@ export function View({ userId }: Props) {
     const showActivate = user.status === EUserStatus.Disabled;
     const shouldShowToggleButtons = user.status !== EUserStatus.Pending;
 
+    const roleMap: Record<EUserRole, string> = {
+        [EUserRole.Admin]: "Admin",
+        [EUserRole.Member]: "Member",
+    };
+
     const handleDisable = () => {
-        updateOne({
-            id: user.id,
-            data: {
-                status: EUserStatus.Disabled,
-            },
-        });
+        console.log("disable");
     };
 
     const handleActivate = () => {
-        updateOne({
-            id: user.id,
-            data: {
-                status: EUserStatus.Active,
-            },
-        });
+        console.log("activate");
     };
 
     const handleRemove = () => {
-        deleteOne({ id: user.id });
+        console.log("remove");
     };
 
     return (
@@ -115,8 +113,32 @@ export function View({ userId }: Props) {
                     </PopConfirm>
                 </div>
             </div>
-            <div className="py-3 border-b border-border">
-                <h1 className="text-2xl font-bold">User</h1>
+            <div className="flex items-center gap-4 mt-4 pb-4">
+                <BackButton />
+                <div className="flex items-center gap-4">
+                    <Avatar
+                        name={user.fullName}
+                        src={user.photo}
+                        className="size-20"
+                    />
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-[20px] font-semibold text-foreground">{user.fullName}</h2>
+                            <UserStatusBadge status={user.status} />
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                                <User className="size-4 text-blue-500" />
+                                <span>{user.position}</span>
+                            </div>
+                            <span>•</span>
+                            <div className="flex items-center gap-1.5">
+                                <BadgeCheck className="size-4 text-blue-500" />
+                                <span>Role: {roleMap[user.role] || user.role}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

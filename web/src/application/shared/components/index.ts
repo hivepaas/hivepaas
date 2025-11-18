@@ -3,3 +3,8 @@ export * from "./navigation";
 export * from "./password-strength-meter";
 export * from "./pop-confirm";
 export * from "./table-actions";
+export * from "./back-button";
+export * from "./info-block";
+export * from "./label-with-info";
+export * from "./date-picker";
+export * from "./combobox";

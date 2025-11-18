@@ -55,11 +55,11 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             const { id } = response.data;
 
-            queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
                 queryKey: [QK["users.$.find-many-paginated"]],
             });
 
-            queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
                 queryKey: [QK["users.$.find-one-by-id"], { id }],
             });
 

@@ -6,6 +6,7 @@ export interface UserBase {
     role: EUserRole;
     status: EUserStatus;
     fullName: string;
+    username: string;
     photo: string | null;
     position: string;
     securityOption: ESecuritySettings;
@@ -13,4 +14,22 @@ export interface UserBase {
     updatedAt: Date | null;
     accessExpireAt: Date | null;
     lastAccess: Date | null;
+    projectAccess: {
+        id: string;
+        name: string;
+        access: {
+            read: boolean;
+            write: boolean;
+            delete: boolean;
+        };
+    }[];
+    moduleAccess: {
+        id: string;
+        name: string;
+        access: {
+            read: boolean;
+            write: boolean;
+            delete: boolean;
+        };
+    }[];
 }

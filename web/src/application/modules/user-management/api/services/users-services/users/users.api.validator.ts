@@ -16,6 +16,7 @@ import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 const UserSchema = z.object({
     id: z.string(),
     email: z.string(),
+    username: z.string().optional(),
     fullName: z.string(),
     photo: z.string().nullable(),
     position: z.string(),
@@ -67,6 +68,9 @@ export class UsersApiValidator {
                 updatedAt: user.updatedAt,
                 accessExpireAt: user.accessExpireAt,
                 lastAccess: user.lastAccess,
+                username: user.username ?? "",
+                projectAccess: [],
+                moduleAccess: [],
             })),
             meta,
         };
@@ -95,6 +99,9 @@ export class UsersApiValidator {
                 updatedAt: data.updatedAt,
                 accessExpireAt: data.accessExpireAt,
                 lastAccess: data.lastAccess,
+                username: data.username ?? "",
+                projectAccess: [],
+                moduleAccess: [],
             },
         };
     };
@@ -122,6 +129,9 @@ export class UsersApiValidator {
                 updatedAt: data.updatedAt,
                 accessExpireAt: data.accessExpireAt,
                 lastAccess: data.lastAccess,
+                username: data.username ?? "",
+                projectAccess: [],
+                moduleAccess: [],
             },
         };
     };

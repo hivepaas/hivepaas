@@ -7,13 +7,11 @@ import { EUserRole } from "@application/shared/enums";
 
 function View({ role }: Props) {
     const roleMap: Record<EUserRole, string> = {
-        [EUserRole.Owner]: "Owner",
         [EUserRole.Admin]: "Admin",
         [EUserRole.Member]: "Member",
     };
 
     const roleColorMap: Record<EUserRole, string> = {
-        [EUserRole.Owner]: "bg-primary text-white",
         [EUserRole.Admin]: "bg-primary text-white",
         [EUserRole.Member]: "bg-purple-500 text-white",
     };

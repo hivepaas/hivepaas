@@ -1,0 +1,29 @@
+.info-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+
+  .info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 270px;
+
+    .title {
+      color: var(--app-color-neutral-6);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .description {
+      color: var(--app-color-neutral-11);
+      font-size: 12px;
+    }
+  }
+
+  .children {
+    flex: 4;
+    min-width: 460px;
+  }
+}

@@ -6,7 +6,7 @@ import { NotFound404Image } from "@assets/images";
 
 import { useAppNavigate } from "@application/shared/hooks/router";
 
-function View() {
+function View({ withBackButton = true }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
@@ -24,19 +24,24 @@ function View() {
                     {"The link you followed probably broken\nor the page has been removed"}
                 </p>
 
-                <div className="pt-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            void navigate.basic("/", { replace: true });
-                        }}
-                    >
-                        Back to application
-                    </Button>
-                </div>
+                {withBackButton && (
+                    <div className="pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                void navigate.basic("/", { replace: true });
+                            }}
+                        >
+                            Back to application
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
+interface Props {
+    withBackButton?: boolean;
+}
 export const Page404NotFound = memo(View);

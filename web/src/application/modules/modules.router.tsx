@@ -4,7 +4,7 @@ import { CommonDialogsContainer } from "@application/shared/dialogs-container";
 import { ModuleLayout } from "@application/shared/layouts/module";
 import { Page404NotFound } from "@application/shared/pages";
 
-import { usersAndRolesRouter } from "./users/users.router";
+import { userManagementRouter } from "./user-management/user-management.router";
 
 export const modulesRouter: RouteObject = {
     errorElement: (
@@ -18,5 +18,5 @@ export const modulesRouter: RouteObject = {
             <CommonDialogsContainer />
         </ModuleLayout>
     ),
-    children: [usersAndRolesRouter],
+    children: [userManagementRouter],
 } as const;

@@ -1,5 +1,4 @@
 export const EUserRole = {
-    Owner: "owner",
     Admin: "admin",
     Member: "member",
 } as const;

@@ -1,0 +1,34 @@
+.label-with-info {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 0.5em;
+
+  .icon {
+    display: flex;
+    align-items: center;
+
+    color: var(--app-color-neutral-6);
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .label {
+    color: var(--app-color-neutral-6);
+    line-height: 1.5;
+  }
+
+  .required {
+    color: var(--app-color-danger-1);
+  }
+
+  .info-icon {
+    margin-bottom: 1px;
+
+    color: var(--app-color-neutral-11);
+  }
+}

@@ -59,7 +59,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     if (profile && (isMain || isAuthGroup)) {
         return (
             <AppNavigate.Basic
-                to={ROUTE.modules.userManagement.users.$route}
+                to={ROUTE.userManagement.users.$route}
                 replace
             />
         );

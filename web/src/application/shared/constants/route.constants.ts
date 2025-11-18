@@ -1,26 +1,5 @@
 export const ROUTE = {
     /**
-     * Modules
-     */
-    modules: {
-        /**
-         * Users
-         */
-        userManagement: {
-            $pattern: "user-management",
-
-            users: {
-                $pattern: "user-management/users",
-                $route: "/user-management/users/",
-
-                details: {
-                    $pattern: "user-management/users/:id",
-                    $route: (id: string) => `/user-management/users/${id}/`,
-                },
-            },
-        },
-    },
-    /**
      * Authentication
      */
     auth: {
@@ -52,6 +31,23 @@ export const ROUTE = {
         forgotPassword: {
             $pattern: "auth/forgot-password",
             $route: "/auth/forgot-password/",
+        },
+    },
+
+    /**
+     * Users
+     */
+    userManagement: {
+        $pattern: "user-management",
+
+        users: {
+            $pattern: "user-management/users",
+            $route: "/user-management/users/",
+
+            single: {
+                $pattern: "user-management/users/:id",
+                $route: (id: string) => `/user-management/users/${id}/`,
+            },
         },
     },
 } as const;

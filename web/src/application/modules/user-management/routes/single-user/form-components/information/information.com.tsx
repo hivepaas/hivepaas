@@ -57,7 +57,7 @@ export function Information() {
                     <Field>
                         <FieldLabel htmlFor="username">Username</FieldLabel>
                         <Input
-                            id="username"
+                            {...username}
                             value={username.value}
                             onChange={username.onChange}
                             type="text"
@@ -70,7 +70,7 @@ export function Information() {
                     <Field>
                         <FieldLabel htmlFor="email">Email</FieldLabel>
                         <Input
-                            id="email"
+                            {...email}
                             value={email.value}
                             onChange={email.onChange}
                             type="email"
@@ -83,7 +83,7 @@ export function Information() {
                     <Field>
                         <FieldLabel htmlFor="fullName">Full name</FieldLabel>
                         <Input
-                            id="fullName"
+                            {...fullName}
                             value={fullName.value}
                             onChange={fullName.onChange}
                             type="text"
@@ -96,7 +96,7 @@ export function Information() {
                     <Field>
                         <FieldLabel htmlFor="position">Position</FieldLabel>
                         <Input
-                            id="position"
+                            {...position}
                             value={position.value}
                             onChange={position.onChange}
                             type="text"
@@ -110,7 +110,7 @@ export function Information() {
                 <Field>
                     <FieldLabel htmlFor="notes">Notes</FieldLabel>
                     <Textarea
-                        id="notes"
+                        {...notes}
                         value={notes.value ?? ""}
                         onChange={notes.onChange}
                         rows={4}

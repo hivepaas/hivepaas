@@ -119,7 +119,7 @@ export function View({ userId }: Props) {
                     <Avatar
                         name={user.fullName}
                         src={user.photo}
-                        className="size-20"
+                        className="size-20 text-2xl"
                     />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">

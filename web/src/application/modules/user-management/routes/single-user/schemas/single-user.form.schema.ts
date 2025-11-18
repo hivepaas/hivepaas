@@ -7,15 +7,14 @@ export const SingleUserFormSchema = z.object({
     fullName: z
         .string()
         .trim()
-        .min(1, "First Name is required")
-        .max(255, "First Name should be at most 255 characters long"),
+        .min(1, "Full Name is required")
+        .max(255, "Full Name should be at most 255 characters long"),
     email: z.string(),
     username: z
         .string()
         .trim()
-        .min(1, "Username is required")
         .max(255, "Username should be at most 255 characters long")
-        .regex(/^[a-zA-Z0-9]+$/, "Username must contain only letters and numbers"),
+        .regex(/^[a-zA-Z0-9]*$/, "Username must contain only letters and numbers"),
     position: z
         .string()
         .trim()

@@ -257,7 +257,7 @@ function DataTable<TData, TValue>({
 
     return (
         <div className={cn("space-y-4", className)}>
-            <div className="relative rounded-md border">
+            <div className="relative rounded-md border overflow-hidden">
                 {/* Progress bar */}
                 {isLoading && (
                     <div className="absolute top-0 left-0 right-0 z-10 h-1 overflow-hidden rounded-t-md bg-muted">

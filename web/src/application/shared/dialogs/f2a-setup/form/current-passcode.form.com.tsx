@@ -67,11 +67,14 @@ export function CurrentPasscodeForm({ isPending, onSubmit }: Props) {
                                 <InputOTPGroup>
                                     <InputOTPSlot index={0} />
                                     <InputOTPSlot index={1} />
-                                    <InputOTPSlot index={2} />
                                 </InputOTPGroup>
                                 <InputOTPSeparator />
                                 <InputOTPGroup>
+                                    <InputOTPSlot index={2} />
                                     <InputOTPSlot index={3} />
+                                </InputOTPGroup>
+                                <InputOTPSeparator />
+                                <InputOTPGroup>
                                     <InputOTPSlot index={4} />
                                     <InputOTPSlot index={5} />
                                 </InputOTPGroup>
@@ -98,4 +101,3 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CurrentPasscodeSchemaOutput) => Promise<void> | void;
 }
-

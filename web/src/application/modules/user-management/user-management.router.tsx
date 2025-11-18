@@ -8,12 +8,13 @@ export const userManagementRouter: RouteObject = {
     children: [
         {
             lazy: async () => {
-                const { MainLayout } = await getLazyComponents();
+                const { MainLayout, UserManagementDialogsContainer } = await getLazyComponents();
 
                 return {
                     element: (
                         <MainLayout>
                             <Outlet />
+                            <UserManagementDialogsContainer />
                         </MainLayout>
                     ),
                 };

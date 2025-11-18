@@ -56,7 +56,7 @@ export function Avatar({ name, borderless = false, className, style, src, ...pro
                     className={cn("aspect-square size-full object-cover")}
                 />
             ) : name ? (
-                <span className="select-none text-xs font-medium text-white">{createAbbreviation(name)}</span>
+                <span className="select-none font-medium text-white">{createAbbreviation(name)}</span>
             ) : null}
         </div>
     );

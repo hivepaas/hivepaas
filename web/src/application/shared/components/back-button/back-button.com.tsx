@@ -55,7 +55,7 @@ export function BackButton() {
             }}
             disabled={disabled}
         >
-            <CircleArrowLeft className="size-4" />
+            <CircleArrowLeft className="size-6" />
         </Button>
     );
 }

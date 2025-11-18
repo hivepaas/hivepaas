@@ -17,7 +17,10 @@ export function AccessExpiration() {
     });
 
     return (
-        <InfoBlock title="Access Expiration">
+        <InfoBlock
+            titleWidth={150}
+            title="Access Expiration"
+        >
             <DatePicker
                 className="min-w-[400px] w-fit"
                 value={accessExpireAt.value}

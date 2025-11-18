@@ -24,7 +24,10 @@ export function SecurityOption() {
     });
 
     return (
-        <InfoBlock title="Security Option">
+        <InfoBlock
+            titleWidth={150}
+            title="Security Option"
+        >
             <Tabs
                 value={securityOption.value}
                 onValueChange={value => {

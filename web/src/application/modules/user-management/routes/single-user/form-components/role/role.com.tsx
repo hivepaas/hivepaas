@@ -23,7 +23,10 @@ export function Role() {
     });
 
     return (
-        <InfoBlock title="Role">
+        <InfoBlock
+            titleWidth={150}
+            title="Role"
+        >
             <Tabs
                 value={role.value}
                 onValueChange={value => {

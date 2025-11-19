@@ -2,11 +2,12 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { UsersApiContext } from "~/user-management/api/api-context";
-import {
-    type Users_DeleteOne_Req,
-    type Users_FindManyPaginated_Req,
-    type Users_FindOneById_Req,
-    type Users_UpdateOne_Req,
+import type {
+    Users_DeleteOne_Req,
+    Users_FindManyPaginated_Req,
+    Users_FindOneById_Req,
+    Users_InviteOne_Req,
+    Users_UpdateOne_Req,
 } from "~/user-management/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -104,6 +105,27 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Invite a user
+                 */
+                inviteOne: async (data: Users_InviteOne_Req["data"]) => {
+                    const result = await api.users.$.inviteOne({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to invite user",
                                 error,
                             });
 

@@ -3,8 +3,9 @@ import { z } from "zod";
 import {
     type Users_FindManyPaginated_Res,
     type Users_FindOneById_Res,
-    type Users_UpdateOne_Res,
+    type Users_InviteOne_Res,
 } from "~/user-management/api/services/users-services/users/users.api.contracts";
+import { AccessSchema } from "~/user-management/module-shared/schemas";
 
 import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 
@@ -41,7 +42,19 @@ const FindManyPaginatedSchema = z.object({
  * Find one user by id API response schema
  */
 const FindOneByIdSchema = z.object({
-    data: UserSchema,
+    data: UserSchema.extend({
+        projectAccesses: z.array(AccessSchema).nullable(),
+        moduleAccesses: z.array(AccessSchema).nullable(),
+    }),
+});
+
+/**
+ * Invite one user API response schema
+ */
+const InviteOneSchema = z.object({
+    data: z.object({
+        inviteLink: z.string(),
+    }),
 });
 
 export class UsersApiValidator {
@@ -69,8 +82,8 @@ export class UsersApiValidator {
                 accessExpireAt: user.accessExpireAt,
                 lastAccess: user.lastAccess,
                 username: user.username ?? "",
-                projectAccess: [],
-                moduleAccess: [],
+                projectAccesses: [],
+                moduleAccesses: [],
             })),
             meta,
         };
@@ -100,38 +113,24 @@ export class UsersApiValidator {
                 accessExpireAt: data.accessExpireAt,
                 lastAccess: data.lastAccess,
                 username: data.username ?? "",
-                projectAccess: [],
-                moduleAccess: [],
+                projectAccesses: data.projectAccesses ?? [],
+                moduleAccesses: data.moduleAccesses ?? [],
             },
         };
     };
 
     /**
-     * Validate and transform update one user API response
+     * Validate and transform invite one user API response
      */
-    updateOne = (response: AxiosResponse): Users_UpdateOne_Res => {
+    inviteOne = (response: AxiosResponse): Users_InviteOne_Res => {
         const { data } = parseApiResponse({
             response,
-            schema: FindOneByIdSchema,
+            schema: InviteOneSchema,
         });
 
         return {
             data: {
-                id: data.id,
-                email: data.email,
-                role: data.role,
-                status: data.status,
-                fullName: data.fullName,
-                photo: data.photo,
-                position: data.position,
-                securityOption: data.securityOption,
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt,
-                accessExpireAt: data.accessExpireAt,
-                lastAccess: data.lastAccess,
-                username: data.username ?? "",
-                projectAccess: [],
-                moduleAccess: [],
+                inviteLink: data.inviteLink,
             },
         };
     };

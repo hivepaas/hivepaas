@@ -8,8 +8,8 @@ export const InviteUserFormSchema = z.object({
     role: z.nativeEnum(EUserRole),
     securityOption: z.nativeEnum(ESecuritySettings),
     accessExpireAt: z.date().nullable(),
-    projectAccess: z.array(AccessSchema),
-    moduleAccess: z.array(AccessSchema),
+    projectAccesses: z.array(AccessSchema),
+    moduleAccesses: z.array(AccessSchema),
 });
 
 export type InviteUserFormInput = z.input<typeof InviteUserFormSchema>;

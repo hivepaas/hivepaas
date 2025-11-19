@@ -55,17 +55,12 @@ const columns: ColumnDef<UserBase>[] = [
     },
     {
         header: "Position",
-        cell: ({ row }) => <span>{row.original.position}</span>,
+        cell: ({ row }) => <span>{row.original.position || "Unknown position"}</span>,
     },
     {
         // accessorKey: "securityOption",
         header: "Security",
         cell: ({ row }) => <UserSecurityBadge securityOption={row.original.securityOption} />,
-    },
-    {
-        accessorKey: "createdAt",
-        header: "Created At",
-        cell: ({ row }) => format(row.original.createdAt, "yyyy-MM-dd HH:mm:ss"),
     },
     {
         accessorKey: "lastAccess",

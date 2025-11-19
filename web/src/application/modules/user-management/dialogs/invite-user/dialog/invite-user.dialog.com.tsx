@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { UsersCommands } from "~/user-management/data/commands";
 
 import { LabelWithInfo } from "@application/shared/components";
 
@@ -14,8 +15,9 @@ export function InviteUserDialog() {
     const { state, props, ...actions } = useInviteUserDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const [inviteLink, setInviteLink] = useState<string | null>(null);
-    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
+
+    const { mutate: inviteUser, isPending: isGeneratingLink } = UsersCommands.useInviteOne();
 
     const open = state.mode !== "closed";
 
@@ -28,33 +30,35 @@ export function InviteUserDialog() {
     }, [state.mode]);
 
     function onSubmit(values: InviteUserFormOutput) {
-        // TODO: Call Commands/Queries to invite user
-        // Example:
-        // inviteUser(values).then(() => {
-        //     actions.close();
-        //     props?.onSuccess?.();
-        // });
-        console.log("Invite user:", values);
-        // actions.close();
-        setIsGeneratingLink(true);
-        setTimeout(() => {
-            setInviteLink("https://example.com/invite/abc123xyz");
-            setIsGeneratingLink(false);
-        }, 1000);
+        inviteUser(
+            { user: values },
+            {
+                onSuccess: response => {
+                    setInviteLink(response.data.inviteLink);
+                },
+            },
+        );
     }
 
-    function handleSendEmail() {
-        // Trigger form submit
-        formRef.current?.requestSubmit();
+    function handleClose(): void {
+        if (hasChanges && !isGeneratingLink) {
+            const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+
+        setHasChanges(false);
+        actions.close();
     }
 
     return (
         <Dialog
             open={open}
             modal
-            onOpenChange={actions.close}
+            onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="lg:min-w-[800px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
                     <DialogDescription>
@@ -71,14 +75,7 @@ export function InviteUserDialog() {
                     <LinkGenerate inviteLink={inviteLink} />
 
                     {/* Footer Actions */}
-                    <div className="flex items-center justify-between gap-4 pt-4 border-t">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={actions.close}
-                        >
-                            Cancel
-                        </Button>
+                    <div className="flex items-center justify-end gap-4 pt-4 border-t">
                         <div className="flex items-center gap-4">
                             <LabelWithInfo
                                 className="mb-[0!important] gap-[16px!important]"
@@ -86,7 +83,7 @@ export function InviteUserDialog() {
                                     <Button
                                         type="button"
                                         // variant="outline"
-                                        onClick={handleSendEmail}
+                                        // onClick={handleSendEmail}
                                         disabled
                                     >
                                         Send Email
@@ -99,7 +96,7 @@ export function InviteUserDialog() {
                                 type="submit"
                                 variant="default"
                                 isLoading={isGeneratingLink}
-                                disabled={isGeneratingLink}
+                                disabled={inviteLink !== null}
                             >
                                 Generate Invite Link
                             </Button>

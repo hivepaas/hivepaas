@@ -32,17 +32,20 @@ function NavigationLink({ route, pattern, label, Icon }: NavigationLinkProps) {
         >
             {({ isPending }) => {
                 return (
-                    <div
+                    <SidebarMenuButton
+                        // asChild
+                        tooltip={label}
                         className={cx("link-content", {
                             "is-active": isActive,
                             "is-pending": isPending,
                         })}
                     >
+                        {Icon && <Icon className={cx("icon")} />}
+
                         <div className={cx("active-indicator")} />
 
-                        {Icon && <Icon className={cx("icon")} />}
                         <div className={cx("label")}>{label}</div>
-                    </div>
+                    </SidebarMenuButton>
                 );
             }}
         </AppNavLink.Modules>
@@ -114,17 +117,12 @@ export function NavMain({
                         </Collapsible>
                     ) : (
                         <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton
-                                asChild
-                                tooltip={item.title}
-                            >
-                                <NavigationLink
-                                    route={item.route}
-                                    pattern={item.pattern}
-                                    label={item.title}
-                                    Icon={item.icon}
-                                />
-                            </SidebarMenuButton>
+                            <NavigationLink
+                                route={item.route}
+                                pattern={item.pattern}
+                                label={item.title}
+                                Icon={item.icon}
+                            />
                         </SidebarMenuItem>
                     ),
                 )}

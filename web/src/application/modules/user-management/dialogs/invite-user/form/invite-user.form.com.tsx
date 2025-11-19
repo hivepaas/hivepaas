@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useController } from "react-hook-form";
 import { UserInput } from "~/user-management/module-shared/form/user-input";
-import { AccessExpiration, Role, SecurityOption } from "~/user-management/routes/single-user/form-components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { MODULES } from "@application/shared/constants";
@@ -18,8 +17,8 @@ const DEFAULTS: InviteUserFormInput = {
     role: EUserRole.Member,
     accessExpireAt: null,
     securityOption: ESecuritySettings.PasswordOnly,
-    projectAccess: [],
-    moduleAccess: [],
+    projectAccesses: [],
+    moduleAccesses: [],
 };
 
 const DEFAULT_ACCESS = {
@@ -29,8 +28,8 @@ const DEFAULT_ACCESS = {
 } as const;
 
 function mergeModuleAccess(
-    existingModuleAccess?: InviteUserFormInput["moduleAccess"],
-): InviteUserFormInput["moduleAccess"] {
+    existingModuleAccess?: InviteUserFormInput["moduleAccesses"],
+): InviteUserFormInput["moduleAccesses"] {
     return MODULES.map(module => {
         const existingModule = existingModuleAccess?.find(m => m.id === module.id);
         return (
@@ -49,7 +48,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
             defaultValues: {
                 ...DEFAULTS,
                 ...defaultValues,
-                moduleAccess: mergeModuleAccess(defaultValues.moduleAccess),
+                moduleAccesses: mergeModuleAccess(defaultValues.moduleAccesses),
             },
             resolver: zodResolver(InviteUserFormSchema),
             mode: "onSubmit",
@@ -67,6 +66,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
 
         function onValid(values: InviteUserFormOutput) {
             onSubmit(values);
+            methods.reset(values);
         }
 
         function onInvalid(_errors: FieldErrors<InviteUserFormInput>) {
@@ -80,6 +80,8 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
             control,
             name: "email",
         });
+
+        const isAdmin = methods.watch("role") === EUserRole.Admin;
 
         return (
             <div className="invite-user-form">
@@ -111,13 +113,31 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         </InfoBlock>
 
                         {/* Role */}
-                        <Role />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Role"
+                        >
+                            <UserInput.Role<InviteUserFormInput> name="role" />
+                        </InfoBlock>
 
                         {/* Access Expiration */}
-                        <AccessExpiration />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Access Expiration"
+                        >
+                            <UserInput.AccessExpiration<InviteUserFormInput>
+                                name="accessExpireAt"
+                                className="md:min-w-[400px] w-fit"
+                            />
+                        </InfoBlock>
 
                         {/* Security Option */}
-                        <SecurityOption />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Security Option"
+                        >
+                            <UserInput.SecurityOption<InviteUserFormInput> name="securityOption" />
+                        </InfoBlock>
 
                         {/* Project Access */}
                         <InfoBlock
@@ -129,7 +149,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             }
                             titleWidth={150}
                         >
-                            <UserInput.ProjectAccess<InviteUserFormInput> name="projectAccess" />
+                            <UserInput.ProjectAccess<InviteUserFormInput>
+                                name="projectAccesses"
+                                isAdmin={isAdmin}
+                            />
                         </InfoBlock>
 
                         {/* Module Access */}
@@ -142,7 +165,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             }
                             titleWidth={150}
                         >
-                            <UserInput.ModuleAccess<InviteUserFormInput> name="moduleAccess" />
+                            <UserInput.ModuleAccess<InviteUserFormInput>
+                                name="moduleAccesses"
+                                isAdmin={isAdmin}
+                            />
                         </InfoBlock>
 
                         {children}

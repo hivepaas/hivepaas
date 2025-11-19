@@ -14,7 +14,7 @@ export interface UserBase {
     updatedAt: Date | null;
     accessExpireAt: Date | null;
     lastAccess: Date | null;
-    projectAccess: {
+    projectAccesses: {
         id: string;
         name: string;
         access: {
@@ -23,7 +23,8 @@ export interface UserBase {
             delete: boolean;
         };
     }[];
-    moduleAccess: {
+    notes?: string;
+    moduleAccesses: {
         id: string;
         name: string;
         access: {

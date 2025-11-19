@@ -3,12 +3,11 @@ import { z } from "zod";
 import {
     type Users_FindManyPaginated_Res,
     type Users_FindOneById_Res,
-    type Users_UpdateOne_Res,
+    type Users_InviteOne_Res,
 } from "~/user-management/api/services/users-services/users/users.api.contracts";
+import { AccessSchema } from "~/user-management/module-shared/schemas";
 
 import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
-
-import { AccessSchema } from "@application/modules/user-management/module-shared/schemas";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -46,6 +45,15 @@ const FindOneByIdSchema = z.object({
     data: UserSchema.extend({
         projectAccesses: z.array(AccessSchema).nullable(),
         moduleAccesses: z.array(AccessSchema).nullable(),
+    }),
+});
+
+/**
+ * Invite one user API response schema
+ */
+const InviteOneSchema = z.object({
+    data: z.object({
+        inviteLink: z.string(),
     }),
 });
 
@@ -107,6 +115,22 @@ export class UsersApiValidator {
                 username: data.username ?? "",
                 projectAccesses: data.projectAccesses ?? [],
                 moduleAccesses: data.moduleAccesses ?? [],
+            },
+        };
+    };
+
+    /**
+     * Validate and transform invite one user API response
+     */
+    inviteOne = (response: AxiosResponse): Users_InviteOne_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: InviteOneSchema,
+        });
+
+        return {
+            data: {
+                inviteLink: data.inviteLink,
             },
         };
     };

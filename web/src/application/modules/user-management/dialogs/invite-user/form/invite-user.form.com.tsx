@@ -66,6 +66,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
 
         function onValid(values: InviteUserFormOutput) {
             onSubmit(values);
+            methods.reset(values);
         }
 
         function onInvalid(_errors: FieldErrors<InviteUserFormInput>) {
@@ -126,7 +127,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         >
                             <UserInput.AccessExpiration<InviteUserFormInput>
                                 name="accessExpireAt"
-                                className="min-w-[400px] w-fit"
+                                className="md:min-w-[400px] w-fit"
                             />
                         </InfoBlock>
 

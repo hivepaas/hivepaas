@@ -47,7 +47,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                 {modulesToDisplay.map((module, index) => (
                     <div
                         key={module.id}
-                        className="flex items-center gap-4 p-3"
+                        className="flex items-center flex-wrap gap-4 p-3"
                     >
                         <div className="flex-1 font-semibold">{module.name}</div>
                         <div className="flex items-center gap-4">

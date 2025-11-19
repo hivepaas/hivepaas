@@ -108,7 +108,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                         searchable
                         closeOnSelect={false}
                         emptyText="No projects available"
-                        className="flex-1 max-w-[400px]"
+                        className="flex-1 md:max-w-[400px]"
                         valueKey="id"
                         aria-invalid={!!formState.errors[name as string]}
                         loading={isFetching}
@@ -133,7 +133,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                         {projectsToDisplay.map((project, index) => (
                             <div
                                 key={project.id}
-                                className="flex items-center gap-4 p-3"
+                                className="flex items-center flex-wrap gap-4 p-3"
                             >
                                 <div className="flex-1 font-semibold">{project.name}</div>
                                 <div className="flex items-center gap-4">

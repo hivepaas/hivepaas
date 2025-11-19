@@ -1,15 +1,17 @@
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
-import {
-    type UsersApiValidator,
-    type Users_DeleteOne_Req,
-    type Users_DeleteOne_Res,
-    type Users_FindManyPaginated_Req,
-    type Users_FindManyPaginated_Res,
-    type Users_FindOneById_Req,
-    type Users_FindOneById_Res,
-    type Users_UpdateOne_Req,
-    type Users_UpdateOne_Res,
+import type {
+    UsersApiValidator,
+    Users_DeleteOne_Req,
+    Users_DeleteOne_Res,
+    Users_FindManyPaginated_Req,
+    Users_FindManyPaginated_Res,
+    Users_FindOneById_Req,
+    Users_FindOneById_Res,
+    Users_InviteOne_Req,
+    Users_InviteOne_Res,
+    Users_UpdateOne_Req,
+    Users_UpdateOne_Res,
 } from "~/user-management/api/services";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
@@ -135,6 +137,21 @@ export class UsersApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } as const })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Invite a user
+     */
+    async inviteOne(request: Users_InviteOne_Req, signal?: AbortSignal): Promise<Result<Users_InviteOne_Res, Error>> {
+        const { user } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post("/users/invite", user, { signal })).pipe(
+                map(this.validator.inviteOne),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

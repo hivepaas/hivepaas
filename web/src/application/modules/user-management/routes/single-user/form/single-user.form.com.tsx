@@ -121,7 +121,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     <div className="h-px bg-border" />
                     <InfoBlock title="Access Expiration">
                         <UserInput.AccessExpiration<SingleUserFormSchemaInput>
-                            className="min-w-[400px] w-fit"
+                            className="md:min-w-[400px] w-fit"
                             name="accessExpireAt"
                         />
                     </InfoBlock>

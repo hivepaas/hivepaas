@@ -12,7 +12,7 @@ import { UserInput } from "@application/modules/user-management/module-shared/fo
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { AccessExpiration, Information, Role, SecurityOption } from "../form-components";
+import { Information } from "../form-components";
 import { SingleUserFormSchema, type SingleUserFormSchemaInput, type SingleUserFormSchemaOutput } from "../schemas";
 import { type SingleUserFormRef } from "../types";
 
@@ -104,7 +104,12 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
 
                     {/* Role */}
                     <div className="h-px bg-border" />
-                    <Role />
+                    <InfoBlock
+                        titleWidth={150}
+                        title="Role"
+                    >
+                        <UserInput.Role<SingleUserFormSchemaInput> name="role" />
+                    </InfoBlock>
 
                     {/* Joining date */}
                     <div className="h-px bg-border" />
@@ -114,11 +119,18 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
 
                     {/* Access Expiration */}
                     <div className="h-px bg-border" />
-                    <AccessExpiration />
+                    <InfoBlock title="Access Expiration">
+                        <UserInput.AccessExpiration<SingleUserFormSchemaInput>
+                            className="min-w-[400px] w-fit"
+                            name="accessExpireAt"
+                        />
+                    </InfoBlock>
 
                     {/* Security Option */}
                     <div className="h-px bg-border" />
-                    <SecurityOption />
+                    <InfoBlock title="Security Option">
+                        <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
+                    </InfoBlock>
 
                     {/* Project Access */}
                     <div className="h-px bg-border" />

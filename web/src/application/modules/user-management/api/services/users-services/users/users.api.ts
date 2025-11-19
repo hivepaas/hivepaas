@@ -109,6 +109,7 @@ export class UsersApi extends BaseApi {
             }),
             accessExpireAt: JsonTransformer.date({
                 data: user.accessExpireAt,
+                some: date => date.toISOString().replace(/\.\d{3}Z$/, "Z"),
             }),
             projectAccesses: JsonTransformer.array({
                 data: user.projectAccesses,

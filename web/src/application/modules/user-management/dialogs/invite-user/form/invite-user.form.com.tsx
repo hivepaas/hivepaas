@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useController } from "react-hook-form";
 import { UserInput } from "~/user-management/module-shared/form/user-input";
-import { AccessExpiration, Role, SecurityOption } from "~/user-management/routes/single-user/form-components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { MODULES } from "@application/shared/constants";
@@ -113,13 +112,31 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         </InfoBlock>
 
                         {/* Role */}
-                        <Role />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Role"
+                        >
+                            <UserInput.Role<InviteUserFormInput> name="role" />
+                        </InfoBlock>
 
                         {/* Access Expiration */}
-                        <AccessExpiration />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Access Expiration"
+                        >
+                            <UserInput.AccessExpiration<InviteUserFormInput>
+                                name="accessExpireAt"
+                                className="min-w-[400px] w-fit"
+                            />
+                        </InfoBlock>
 
                         {/* Security Option */}
-                        <SecurityOption />
+                        <InfoBlock
+                            titleWidth={150}
+                            title="Security Option"
+                        >
+                            <UserInput.SecurityOption<InviteUserFormInput> name="securityOption" />
+                        </InfoBlock>
 
                         {/* Project Access */}
                         <InfoBlock

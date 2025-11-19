@@ -33,13 +33,13 @@ export function DatePicker({
                     disabled={disabled}
                     aria-invalid={ariaInvalid}
                     className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-between text-left font-normal",
                         !value && "text-muted-foreground",
                         className,
                     )}
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
                     {value ? format(value, "yyyy-MM-dd") : <span>{placeholder}</span>}
+                    <CalendarIcon className="size-4" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent

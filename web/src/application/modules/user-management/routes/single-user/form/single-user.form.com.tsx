@@ -1,14 +1,18 @@
 import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { MODULES } from "@application/shared/constants";
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
+import { UserInput } from "@application/modules/user-management/module-shared/form/user-input";
+
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { AccessExpiration, Information, ModuleAccess, ProjectAccess, Role, SecurityOption } from "../form-components";
+import { AccessExpiration, Information, Role, SecurityOption } from "../form-components";
 import { SingleUserFormSchema, type SingleUserFormSchemaInput, type SingleUserFormSchemaOutput } from "../schemas";
 import { type SingleUserFormRef } from "../types";
 
@@ -17,11 +21,12 @@ const DEFAULTS: SingleUserFormSchemaInput = {
     email: "",
     username: "",
     position: "",
+    notes: "",
     role: EUserRole.Member,
     accessExpireAt: null,
     securityOption: ESecuritySettings.PasswordOnly,
-    projectAccess: [],
-    moduleAccess: [],
+    projectAccesses: [],
+    moduleAccesses: [],
 };
 
 const DEFAULT_ACCESS = {
@@ -33,7 +38,7 @@ const DEFAULT_ACCESS = {
 type SchemaInput = SingleUserFormSchemaInput;
 type SchemaOutput = SingleUserFormSchemaOutput;
 
-function mergeModuleAccess(existingModuleAccess?: SchemaInput["moduleAccess"]): SchemaInput["moduleAccess"] {
+function mergeModuleAccess(existingModuleAccess?: SchemaInput["moduleAccesses"]): SchemaInput["moduleAccesses"] {
     return MODULES.map(module => {
         const existingModule = existingModuleAccess?.find(m => m.id === module.id);
         return (
@@ -51,7 +56,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
         defaultValues: {
             ...DEFAULTS,
             ...defaultValues,
-            moduleAccess: mergeModuleAccess(defaultValues.moduleAccess),
+            moduleAccesses: mergeModuleAccess(defaultValues.moduleAccesses),
         },
         resolver: zodResolver(SingleUserFormSchema),
         mode: "onSubmit",
@@ -72,7 +77,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                 methods.reset({
                     ...DEFAULTS,
                     ...values,
-                    moduleAccess: mergeModuleAccess(values.moduleAccess),
+                    moduleAccesses: mergeModuleAccess(values.moduleAccesses),
                 });
             },
             onError(_error: ValidationException) {
@@ -81,6 +86,8 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
         }),
         [methods],
     );
+
+    const isAdmin = methods.watch("role") === EUserRole.Admin;
 
     return (
         <div className="single-user-form">
@@ -99,6 +106,12 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     <div className="h-px bg-border" />
                     <Role />
 
+                    {/* Joining date */}
+                    <div className="h-px bg-border" />
+                    <InfoBlock title={<LabelWithInfo label="Joining date" />}>
+                        <span>{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
+                    </InfoBlock>
+
                     {/* Access Expiration */}
                     <div className="h-px bg-border" />
                     <AccessExpiration />
@@ -109,11 +122,35 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
 
                     {/* Project Access */}
                     <div className="h-px bg-border" />
-                    <ProjectAccess />
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Project access"
+                                content="Project access description"
+                            />
+                        }
+                    >
+                        <UserInput.ProjectAccess<SingleUserFormSchemaInput>
+                            name="projectAccesses"
+                            isAdmin={isAdmin}
+                        />
+                    </InfoBlock>
 
                     {/* Module Access */}
                     <div className="h-px bg-border" />
-                    <ModuleAccess />
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Module access"
+                                content="Module access description"
+                            />
+                        }
+                    >
+                        <UserInput.ModuleAccess<SingleUserFormSchemaInput>
+                            name="moduleAccesses"
+                            isAdmin={isAdmin}
+                        />
+                    </InfoBlock>
                     {children}
                 </form>
             </FormProvider>
@@ -123,6 +160,6 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
 
 type Props = PropsWithChildren<{
     ref?: React.Ref<SingleUserFormRef>;
-    defaultValues: Partial<SchemaInput>;
+    defaultValues: Partial<SchemaInput> & { createdAt: Date };
     onSubmit: (values: SchemaOutput) => void;
 }>;

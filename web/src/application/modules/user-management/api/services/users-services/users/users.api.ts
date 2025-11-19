@@ -12,7 +12,7 @@ import {
     type Users_UpdateOne_Res,
 } from "~/user-management/api/services";
 
-import { BaseApi, parseApiError } from "@infrastructure/api";
+import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
 export class UsersApi extends BaseApi {
     public constructor(private readonly validator: UsersApiValidator) {
@@ -59,6 +59,9 @@ export class UsersApi extends BaseApi {
             from(
                 this.client.v1.get(`/users/${id}`, {
                     signal,
+                    params: {
+                        getAccesses: true,
+                    },
                 }),
             ).pipe(
                 map(this.validator.findOneById),
@@ -86,22 +89,51 @@ export class UsersApi extends BaseApi {
      * Update a user
      */
     async updateOne(request: Users_UpdateOne_Req, signal?: AbortSignal): Promise<Result<Users_UpdateOne_Res, Error>> {
-        const { id, data } = request.data;
+        const { user } = request.data;
+
+        const json = {
+            username: JsonTransformer.string({
+                data: user.username,
+            }),
+            email: JsonTransformer.string({
+                data: user.email,
+            }),
+            fullName: JsonTransformer.string({
+                data: user.fullName,
+            }),
+            position: JsonTransformer.string({
+                data: user.position,
+            }),
+            securityOption: JsonTransformer.string({
+                data: user.securityOption,
+            }),
+            accessExpireAt: JsonTransformer.date({
+                data: user.accessExpireAt,
+            }),
+            projectAccesses: JsonTransformer.array({
+                data: user.projectAccesses,
+            }),
+            moduleAccesses: JsonTransformer.array({
+                data: user.moduleAccesses,
+            }),
+            status: JsonTransformer.string({
+                data: user.status,
+            }),
+            role: JsonTransformer.string({
+                data: user.role,
+            }),
+            notes: JsonTransformer.string({
+                data: user.notes,
+            }),
+        };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(
-                    `/users/${id}`,
-                    {
-                        status: data.status,
-                    },
-                    {
-                        signal,
-                    },
-                ),
+                this.client.v1.put(`/users/${user.id}`, json, {
+                    signal,
+                }),
             ).pipe(
-                map(this.validator.updateOne),
-                map(res => Ok(res)),
+                map(() => Ok({ data: { type: "success" } as const })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

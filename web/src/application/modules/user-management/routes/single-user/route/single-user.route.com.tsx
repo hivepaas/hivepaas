@@ -32,12 +32,13 @@ export function SingleUserRoute() {
     function handleSubmit(values: SingleUserFormSchemaOutput) {
         invariant(userId, "userId must be defined");
 
-        console.log(values);
-
-        // update({
-        //     id: userId,
-        //     data: values,
-        // });
+        update({
+            user: {
+                ...values,
+                id: userId,
+                status: user.status,
+            },
+        });
     }
 
     useEffect(() => {
@@ -60,7 +61,7 @@ export function SingleUserRoute() {
 
     const { data: user } = data;
     return (
-        <div className="bg-background rounded-lg p-4">
+        <div className="bg-background rounded-lg p-4 container mx-auto">
             <SingleUserForm
                 ref={formRef}
                 defaultValues={user}
@@ -69,6 +70,7 @@ export function SingleUserRoute() {
                 <div className="flex justify-end">
                     <Button
                         type="submit"
+                        className="min-w-[100px]"
                         disabled={isPending}
                         isLoading={isPending}
                     >

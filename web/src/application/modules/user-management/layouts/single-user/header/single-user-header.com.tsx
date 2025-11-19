@@ -2,7 +2,8 @@ import { memo } from "react";
 
 import { Avatar } from "@components/ui";
 import { Button } from "@components/ui";
-import { BadgeCheck, Check, Lock, Trash2, User } from "lucide-react";
+import { format } from "date-fns";
+import { BadgeCheck, Check, Clock, Lock, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
@@ -129,13 +130,33 @@ export function View({ userId }: Props) {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
-                                <span>{user.position}</span>
+                                <div className="flex gap-1">
+                                    <span>Position :</span>
+                                    <span className="text-black">{user.position || "Unknown position"}</span>
+                                </div>
                             </div>
                             <span>•</span>
                             <div className="flex items-center gap-1.5">
                                 <BadgeCheck className="size-4 text-blue-500" />
-                                <span>Role: {roleMap[user.role] || user.role}</span>
+                                <div className="flex gap-1">
+                                    <span>Role :</span>
+                                    <span className="text-black">{roleMap[user.role] || user.role}</span>
+                                </div>
                             </div>
+                            {user.lastAccess && (
+                                <>
+                                    <span>•</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className="size-4 text-blue-500" />
+                                        <div className="flex gap-1">
+                                            <span>Last access :</span>
+                                            <span className="text-black">
+                                                {format(user.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

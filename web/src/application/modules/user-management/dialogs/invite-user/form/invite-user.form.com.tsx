@@ -18,8 +18,8 @@ const DEFAULTS: InviteUserFormInput = {
     role: EUserRole.Member,
     accessExpireAt: null,
     securityOption: ESecuritySettings.PasswordOnly,
-    projectAccess: [],
-    moduleAccess: [],
+    projectAccesses: [],
+    moduleAccesses: [],
 };
 
 const DEFAULT_ACCESS = {
@@ -29,8 +29,8 @@ const DEFAULT_ACCESS = {
 } as const;
 
 function mergeModuleAccess(
-    existingModuleAccess?: InviteUserFormInput["moduleAccess"],
-): InviteUserFormInput["moduleAccess"] {
+    existingModuleAccess?: InviteUserFormInput["moduleAccesses"],
+): InviteUserFormInput["moduleAccesses"] {
     return MODULES.map(module => {
         const existingModule = existingModuleAccess?.find(m => m.id === module.id);
         return (
@@ -49,7 +49,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
             defaultValues: {
                 ...DEFAULTS,
                 ...defaultValues,
-                moduleAccess: mergeModuleAccess(defaultValues.moduleAccess),
+                moduleAccesses: mergeModuleAccess(defaultValues.moduleAccesses),
             },
             resolver: zodResolver(InviteUserFormSchema),
             mode: "onSubmit",
@@ -80,6 +80,8 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
             control,
             name: "email",
         });
+
+        const isAdmin = methods.watch("role") === EUserRole.Admin;
 
         return (
             <div className="invite-user-form">
@@ -129,7 +131,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             }
                             titleWidth={150}
                         >
-                            <UserInput.ProjectAccess<InviteUserFormInput> name="projectAccess" />
+                            <UserInput.ProjectAccess<InviteUserFormInput>
+                                name="projectAccesses"
+                                isAdmin={isAdmin}
+                            />
                         </InfoBlock>
 
                         {/* Module Access */}
@@ -142,7 +147,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             }
                             titleWidth={150}
                         >
-                            <UserInput.ModuleAccess<InviteUserFormInput> name="moduleAccess" />
+                            <UserInput.ModuleAccess<InviteUserFormInput>
+                                name="moduleAccesses"
+                                isAdmin={isAdmin}
+                            />
                         </InfoBlock>
 
                         {children}

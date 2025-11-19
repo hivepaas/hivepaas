@@ -1,5 +1,18 @@
 export const MODULES = [
-    { id: "user-management", name: "User Management" },
-    { id: "project", name: "project" },
-    { id: "cluster", name: "cluster" },
+    {
+        name: "User Management",
+        id: "mod::user",
+    },
+    {
+        name: "Project Management",
+        id: "mod::project",
+    },
+    {
+        name: "Cluster Management",
+        id: "mod::cluster",
+    },
+    {
+        name: "Settings",
+        id: "mod::settings",
+    },
 ] as const;

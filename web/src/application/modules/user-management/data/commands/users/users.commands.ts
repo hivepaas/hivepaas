@@ -53,14 +53,12 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     return useMutation({
         mutationFn: mutations.updateOne,
         onSuccess: (response, ...rest) => {
-            const { id } = response.data;
-
             void queryClient.invalidateQueries({
                 queryKey: [QK["users.$.find-many-paginated"]],
             });
 
             void queryClient.invalidateQueries({
-                queryKey: [QK["users.$.find-one-by-id"], { id }],
+                queryKey: [QK["users.$.find-one-by-id"]],
             });
 
             if (onSuccess) {

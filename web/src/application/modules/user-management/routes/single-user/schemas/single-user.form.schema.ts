@@ -15,17 +15,13 @@ export const SingleUserFormSchema = z.object({
         .trim()
         .max(255, "Username should be at most 255 characters long")
         .regex(/^[a-zA-Z0-9]*$/, "Username must contain only letters and numbers"),
-    position: z
-        .string()
-        .trim()
-        .min(1, "Position is required")
-        .max(255, "Position should be at most 255 characters long"),
+    position: z.string(),
     notes: z.string().optional(),
     role: z.nativeEnum(EUserRole),
     accessExpireAt: z.date().nullable(),
     securityOption: z.nativeEnum(ESecuritySettings),
-    projectAccess: z.array(AccessSchema),
-    moduleAccess: z.array(AccessSchema),
+    projectAccesses: z.array(AccessSchema),
+    moduleAccesses: z.array(AccessSchema),
 });
 
 export type SingleUserFormSchemaInput = z.input<typeof SingleUserFormSchema>;

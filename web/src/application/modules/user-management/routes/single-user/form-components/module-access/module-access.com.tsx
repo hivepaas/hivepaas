@@ -14,7 +14,7 @@ export function ModuleAccess() {
                 />
             }
         >
-            <UserInput.ModuleAccess<SingleUserFormSchemaInput> name="moduleAccess" />
+            <UserInput.ModuleAccess<SingleUserFormSchemaInput> name="moduleAccesses" />
         </InfoBlock>
     );
 }

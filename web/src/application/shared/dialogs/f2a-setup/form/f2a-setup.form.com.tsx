@@ -60,6 +60,7 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken }: Props) 
                         <img
                             src={`data:image/png;base64,${qrCode}`}
                             alt="QR Code"
+                            className="w-[220px] h-[220px] object-contain"
                         />
                     </Field>
 

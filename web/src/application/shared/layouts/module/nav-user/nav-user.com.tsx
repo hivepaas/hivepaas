@@ -1,13 +1,11 @@
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
+import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut } from "lucide-react";
 import invariant from "tiny-invariant";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
-import { useF2aSetupDialog } from "@application/shared/dialogs";
 import type { Profile } from "@application/shared/entities";
-import { ESecuritySettings } from "@application/shared/enums";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -24,12 +22,6 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/c
 export function NavUser({ user }: { user: Profile }) {
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
-
-    const dialog = useF2aSetupDialog({
-        onClose: () => {
-            dialog.actions.close();
-        },
-    });
 
     const { mutate: logout, isPending } = SessionCommands.useLogout({
         onSuccess: () => {
@@ -85,21 +77,6 @@ export function NavUser({ user }: { user: Profile }) {
                                 </div>
                             </div>
                         </DropdownMenuLabel>
-                        {user.securityOption === ESecuritySettings.Password2FA && user.mfaSecret !== "" && (
-                            <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            dialog.actions.openChange();
-                                        }}
-                                    >
-                                        <Sparkles />
-                                        Change 2FA Setup
-                                    </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                            </>
-                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <AppLink.Modules to={ROUTE.userManagement.users.profile.$route}>

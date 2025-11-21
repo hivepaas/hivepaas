@@ -7,32 +7,14 @@ import invariant from "tiny-invariant";
 
 import { TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
-import { EUserRole } from "@application/shared/enums";
+import { useProfileContext } from "@application/shared/context";
 
-import { UsersQueries } from "@application/modules/user-management/data/queries";
-import { UserStatusBadge } from "@application/modules/user-management/module-shared/components";
+import { UserRoleBadge, UserStatusBadge } from "@application/modules/user-management/module-shared/components";
 
-import { ProfileHeaderSkeleton } from "./profile-header.skeleton.com";
+function View() {
+    const { profile } = useProfileContext();
 
-function View({ userId }: Props) {
-    const { data, isLoading, error } = UsersQueries.useFindOneById({ id: userId });
-
-    if (isLoading) {
-        return <ProfileHeaderSkeleton />;
-    }
-
-    if (error) {
-        return null;
-    }
-
-    invariant(data, "data must be defined");
-
-    const { data: user } = data;
-
-    const roleMap: Record<EUserRole, string> = {
-        [EUserRole.Admin]: "Admin",
-        [EUserRole.Member]: "Member",
-    };
+    invariant(profile, "profile must be defined");
 
     const links = [
         {
@@ -52,21 +34,21 @@ function View({ userId }: Props) {
             <div className="flex items-center gap-4 mt-4 pb-3 border-b border-border">
                 <div className="flex items-center gap-4">
                     <Avatar
-                        name={user.fullName}
-                        src={user.photo}
+                        name={profile.fullName ?? ""}
+                        src={profile.photo}
                         className="size-20 text-2xl"
                     />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">{user.fullName}</h2>
-                            <UserStatusBadge status={user.status} />
+                            <h2 className="text-[20px] font-semibold text-foreground">{profile.fullName}</h2>
+                            <UserStatusBadge status={profile.status} />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
                                     <span>Position :</span>
-                                    <span className="text-black">{user.position || "Unknown position"}</span>
+                                    <span className="text-black">{profile.position || "Unknown position"}</span>
                                 </div>
                             </div>
                             <span>•</span>
@@ -74,10 +56,10 @@ function View({ userId }: Props) {
                                 <BadgeCheck className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
                                     <span>Role :</span>
-                                    <span className="text-black">{roleMap[user.role] || user.role}</span>
+                                    <UserRoleBadge role={profile.role} />
                                 </div>
                             </div>
-                            {user.lastAccess && (
+                            {profile.lastAccess && (
                                 <>
                                     <span>•</span>
                                     <div className="flex items-center gap-1.5">
@@ -85,7 +67,7 @@ function View({ userId }: Props) {
                                         <div className="flex gap-1">
                                             <span>Last access :</span>
                                             <span className="text-black">
-                                                {format(user.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
+                                                {format(profile.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
                                             </span>
                                         </div>
                                     </div>
@@ -100,7 +82,4 @@ function View({ userId }: Props) {
     );
 }
 
-interface Props {
-    userId: string;
-}
 export const ProfileHeader = memo(View);

@@ -3,12 +3,12 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
-import type { UserBase } from "~/user-management/domain";
 import { UserRoleBadge, UserSecurityBadge } from "~/user-management/module-shared/components";
 import { UserInput } from "~/user-management/module-shared/form/user-input";
 import { mapModuleAccesses } from "~/user-management/module-shared/utils";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { type Profile } from "@application/shared/entities";
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
@@ -38,6 +38,8 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
         defaultValues: {
             ...DEFAULTS,
             ...defaultValues,
+            fullName: defaultValues.fullName ?? "",
+            email: defaultValues.email ?? "",
             moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
         },
         resolver: zodResolver(ProfileFormSchema),
@@ -158,6 +160,6 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
 
 type Props = PropsWithChildren<{
     ref?: React.Ref<ProfileFormRef>;
-    defaultValues: UserBase;
+    defaultValues: Profile;
     onSubmit: (values: SchemaOutput) => void;
 }>;

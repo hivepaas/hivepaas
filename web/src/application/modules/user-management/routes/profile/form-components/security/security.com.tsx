@@ -4,6 +4,7 @@ import type { UserBase } from "~/user-management/domain";
 
 import { InfoBlock } from "@application/shared/components";
 import { useProfileContext } from "@application/shared/context";
+import { useF2aSetupDialog } from "@application/shared/dialogs";
 import { ESecuritySettings, EUserStatus } from "@application/shared/enums";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,12 @@ interface Props {
 export function Security({ defaultValues }: Props) {
     const { profile } = useProfileContext();
     invariant(profile, "Profile not found");
+
+    const dialog = useF2aSetupDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
 
     // Logic: If Enforce SSO or status=pending, don't show Security section
     const shouldShowSecurity =
@@ -57,6 +64,9 @@ export function Security({ defaultValues }: Props) {
                                         variant="outline"
                                         size="default"
                                         type="button"
+                                        onClick={() => {
+                                            dialog.actions.openChange();
+                                        }}
                                     >
                                         <RefreshCw className="size-4" />
                                         Reset 2FA
@@ -81,6 +91,9 @@ export function Security({ defaultValues }: Props) {
                                 variant="outline"
                                 size="default"
                                 type="button"
+                                onClick={() => {
+                                    dialog.actions.open();
+                                }}
                             >
                                 <Shield className="size-4" />
                                 Activate 2FA

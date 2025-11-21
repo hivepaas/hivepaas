@@ -1,4 +1,4 @@
-import type { ESecuritySettings } from "@application/shared/enums";
+import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 
 export interface Profile {
     /**
@@ -11,23 +11,55 @@ export interface Profile {
      * Full name
      * @example "John Doe"
      */
-    fullName?: string | null;
+    fullName: string | null;
 
     /**
      * Photo
      * @example "https://example.com/photo.jpg"
      */
-    photo?: string | null;
+    photo: string | null;
 
     /**
      * Email
      * @example "john.dou@.example.com"
      */
-    email?: string | null;
+    email: string | null;
 
     securityOption: ESecuritySettings;
 
     mfaSecret: string;
 
     username: string;
+
+    position: string;
+
+    role: EUserRole;
+
+    status: EUserStatus;
+
+    lastAccess: Date | null;
+
+    accessExpireAt: Date | null;
+
+    createdAt: Date;
+
+    projectAccesses: {
+        id: string;
+        name: string;
+        access: {
+            read: boolean;
+            write: boolean;
+            delete: boolean;
+        };
+    }[];
+
+    moduleAccesses: {
+        id: string;
+        name: string;
+        access: {
+            read: boolean;
+            write: boolean;
+            delete: boolean;
+        };
+    }[];
 }

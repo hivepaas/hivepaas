@@ -4,9 +4,7 @@ import { Button } from "@components/ui";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { UsersCommands } from "~/user-management/data/commands";
-import { UsersQueries } from "~/user-management/data/queries";
 
-import { AppLoader } from "@application/shared/components";
 import { useProfileContext } from "@application/shared/context";
 
 import { ProfileForm } from "../form";
@@ -19,8 +17,6 @@ export function ProfileRoute() {
     invariant(profile, "profile must be defined");
 
     const formRef = useRef<ProfileFormRef>(null);
-
-    const { data, isLoading, error } = UsersQueries.useFindOneById({ id: profile.id });
 
     const { mutate: update, isPending } = UsersCommands.useUpdateOne({
         onSuccess: () => {
@@ -40,29 +36,18 @@ export function ProfileRoute() {
     }
 
     useEffect(() => {
-        if (!data) {
-            return;
-        }
+        formRef.current?.setValues({
+            ...profile,
+            fullName: profile.fullName ?? "",
+            email: profile.email ?? "",
+        });
+    }, [profile]);
 
-        formRef.current?.setValues(data.data);
-    }, [data]);
-
-    if (isLoading) {
-        return <AppLoader />;
-    }
-
-    if (error) {
-        return <div className="text-red-500">Error: {error.message}</div>;
-    }
-
-    invariant(data, "data must be defined");
-
-    const { data: user } = data;
     return (
         <div className="bg-background rounded-lg p-4 container mx-auto">
             <ProfileForm
                 ref={formRef}
-                defaultValues={user}
+                defaultValues={profile}
                 onSubmit={handleSubmit}
             >
                 <div className="flex justify-end">

@@ -20,6 +20,9 @@ export class SessionApi extends BaseApi {
             from(
                 this.client.v1.get("/sessions/me", {
                     signal,
+                    params: {
+                        getAccesses: true,
+                    },
                 }),
             ).pipe(
                 map(this.validator.getProfile),

@@ -35,6 +35,7 @@ export function F2aSetupDialog() {
         onSessionInvalid: clearProfile,
         enabled: false,
     });
+    console.log(isGetProfilePending);
 
     useUpdateEffect(() => {
         if (state.mode === "open") {
@@ -100,7 +101,7 @@ export function F2aSetupDialog() {
                 <DialogTitle />
                 <DialogDescription />
             </DialogHeader>
-            <DialogContent>
+            <DialogContent className="min-w-[400px] w-fit">
                 {showCurrentPasscodeForm && (
                     <CurrentPasscodeForm
                         isPending={isGetProfile2FASetupPending}
@@ -109,7 +110,7 @@ export function F2aSetupDialog() {
                 )}
                 {showSetupForm && (
                     <F2aSetupForm
-                        isPending={isGetProfile2FASetupPending || isComplete2FASetupPending || isGetProfilePending}
+                        isPending={isGetProfile2FASetupPending || isComplete2FASetupPending}
                         onSubmit={onSubmit}
                         qrCode={stateData.QRCode}
                         totpToken={stateData.totpToken}

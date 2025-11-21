@@ -41,13 +41,11 @@ type SchemaOutput = SingleUserFormSchemaOutput;
 function mergeModuleAccess(existingModuleAccess?: SchemaInput["moduleAccesses"]): SchemaInput["moduleAccesses"] {
     return MODULES.map(module => {
         const existingModule = existingModuleAccess?.find(m => m.id === module.id);
-        return (
-            existingModule ?? {
-                id: module.id,
-                name: module.name,
-                access: DEFAULT_ACCESS,
-            }
-        );
+        return {
+            id: module.id,
+            name: module.name,
+            access: existingModule?.access ?? DEFAULT_ACCESS,
+        };
     });
 }
 
@@ -114,7 +112,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     {/* Joining date */}
                     <div className="h-px bg-border" />
                     <InfoBlock title={<LabelWithInfo label="Joining date" />}>
-                        <span>{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
+                        <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                     </InfoBlock>
 
                     {/* Access Expiration */}

@@ -32,13 +32,11 @@ function mergeModuleAccess(
 ): InviteUserFormInput["moduleAccesses"] {
     return MODULES.map(module => {
         const existingModule = existingModuleAccess?.find(m => m.id === module.id);
-        return (
-            existingModule ?? {
-                id: module.id,
-                name: module.name,
-                access: DEFAULT_ACCESS,
-            }
-        );
+        return {
+            id: module.id,
+            name: module.name,
+            access: existingModule?.access ?? DEFAULT_ACCESS,
+        };
     });
 }
 

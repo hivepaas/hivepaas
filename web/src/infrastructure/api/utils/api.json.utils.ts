@@ -4,7 +4,7 @@ type Some<T, R = T> = (value: T) => R;
 type EmptyString = "";
 type EmptyNumber = 0;
 type EmptyBoolean = false;
-type EmptyDate = "0001-01-01";
+type EmptyDate = "0001-01-01T00:00:00Z";
 type EmptyObject = Record<string, never>;
 type EmptyArray = [];
 
@@ -79,7 +79,7 @@ const dateTransformer = <T extends Date, R = T>({
 }: DateTransformerParams<T, R>): R | EmptyDate | undefined => {
     if (data === undefined) return undefined;
 
-    if (data === null) return "0001-01-01";
+    if (data === null) return "0001-01-01T00:00:00Z";
 
     return some(data);
 };

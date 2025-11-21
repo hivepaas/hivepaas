@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import { Button, Checkbox } from "@components/ui";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCheck, Plus, Trash2 } from "lucide-react";
 import { type Path, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 import { Combobox, type ComboboxOption } from "@application/shared/components";
@@ -55,20 +55,23 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
         }));
     }, [projects, watchedFields, isAdmin]);
 
-    const allProjectsForAdmin = useMemo(() => {
-        if (!isAdmin) {
-            return [];
-        }
-        return projects.map(project => ({
-            id: project.id,
-            name: project.name,
+    const handleToggleAll = (index: number) => {
+        if (isAdmin) return;
+
+        const project = watchedFields[index];
+        if (!project) return;
+
+        const shouldCheckAll = !(project.access.write && project.access.delete);
+
+        update(index, {
+            ...project,
             access: {
-                read: true,
-                write: true,
-                delete: true,
+                ...project.access,
+                write: shouldCheckAll,
+                delete: shouldCheckAll,
             },
-        }));
-    }, [projects, isAdmin]);
+        });
+    };
 
     const handleAddProject = (project: ProjectPublic | null) => {
         if (!project) {
@@ -89,8 +92,6 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
         setSelectedProject(null);
         setSearchQuery("");
     };
-
-    const projectsToDisplay = isAdmin ? allProjectsForAdmin : fields;
 
     return (
         <div className="flex flex-col gap-4">
@@ -128,9 +129,55 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
 
             {/* Project List */}
             <div>
-                {projectsToDisplay.length > 0 && (
+                {isAdmin ? (
+                    /* Admin view - Single "All project" row */
                     <div className="space-y-0 divide-y">
-                        {projectsToDisplay.map((project, index) => (
+                        <div className="flex items-center flex-wrap gap-4 p-3">
+                            <div className="flex-1 font-semibold">All projects</div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked
+                                        disabled
+                                    />
+                                    <label
+                                        htmlFor="all-project-read"
+                                        className="text-sm"
+                                    >
+                                        Read
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked
+                                        disabled
+                                    />
+                                    <label
+                                        htmlFor="all-project-write"
+                                        className="text-sm"
+                                    >
+                                        Write
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked
+                                        disabled
+                                    />
+                                    <label
+                                        htmlFor="all-project-delete"
+                                        className="text-sm"
+                                    >
+                                        Delete
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : fields.length > 0 ? (
+                    /* Non-admin view - List of projects */
+                    <div className="space-y-0 divide-y">
+                        {fields.map((project, index) => (
                             <div
                                 key={project.id}
                                 className="flex items-center flex-wrap gap-4 p-3"
@@ -140,7 +187,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.read}
-                                            disabled={isAdmin}
+                                            disabled
                                         />
                                         <label
                                             htmlFor={`${project.id}-read`}
@@ -152,14 +199,11 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.write}
-                                            disabled={isAdmin}
                                             onCheckedChange={checked => {
-                                                if (!isAdmin) {
-                                                    update(index, {
-                                                        ...project,
-                                                        access: { ...project.access, write: checked === true },
-                                                    });
-                                                }
+                                                update(index, {
+                                                    ...project,
+                                                    access: { ...project.access, write: checked === true },
+                                                });
                                             }}
                                         />
                                         <label
@@ -172,14 +216,11 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.delete}
-                                            disabled={isAdmin}
                                             onCheckedChange={checked => {
-                                                if (!isAdmin) {
-                                                    update(index, {
-                                                        ...project,
-                                                        access: { ...project.access, delete: checked === true },
-                                                    });
-                                                }
+                                                update(index, {
+                                                    ...project,
+                                                    access: { ...project.access, delete: checked === true },
+                                                });
                                             }}
                                         />
                                         <label
@@ -189,24 +230,33 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                             Delete
                                         </label>
                                     </div>
-                                    {!isAdmin && (
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            className="text-destructive hover:opacity-80"
-                                            size="icon"
-                                            onClick={() => {
-                                                remove(index);
-                                            }}
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
-                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="hover:opacity-80"
+                                        size="icon"
+                                        onClick={() => {
+                                            handleToggleAll(index);
+                                        }}
+                                    >
+                                        <CheckCheck className="size-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="text-destructive hover:opacity-80"
+                                        size="icon"
+                                        onClick={() => {
+                                            remove(index);
+                                        }}
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
                                 </div>
                             </div>
                         ))}
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );

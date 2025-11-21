@@ -12,6 +12,8 @@ import type {
     Users_InviteOne_Res,
     Users_UpdateOne_Req,
     Users_UpdateOne_Res,
+    Users_UpdateProfile_Req,
+    Users_UpdateProfile_Res,
 } from "~/user-management/api/services";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
@@ -152,6 +154,46 @@ export class UsersApi extends BaseApi {
             from(this.client.v1.post("/users/invite", user, { signal })).pipe(
                 map(this.validator.inviteOne),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update profile
+     */
+    async updateProfile(
+        request: Users_UpdateProfile_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Users_UpdateProfile_Res, Error>> {
+        const { profile } = request.data;
+
+        const json = {
+            username: JsonTransformer.string({
+                data: profile.username,
+            }),
+            email: JsonTransformer.string({
+                data: profile.email,
+            }),
+            fullName: JsonTransformer.string({
+                data: profile.fullName,
+            }),
+            position: JsonTransformer.string({
+                data: profile.position,
+            }),
+            notes: JsonTransformer.string({
+                data: profile.notes,
+            }),
+            photo: JsonTransformer.object({
+                data: profile.photo,
+            }),
+        };
+
+        console.log(json);
+
+        return lastValueFrom(
+            from(this.client.v1.put("/users/current/profile", json, { signal })).pipe(
+                map(() => Ok({ data: { type: "success" } as const })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

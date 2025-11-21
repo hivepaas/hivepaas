@@ -7,8 +7,9 @@ import { useController } from "react-hook-form";
 import { UserInput } from "~/user-management/module-shared/form/user-input";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { MODULES } from "@application/shared/constants";
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
+
+import { mapModuleAccesses } from "@application/modules/user-management/module-shared/utils";
 
 import { type InviteUserFormInput, type InviteUserFormOutput, InviteUserFormSchema } from "../schemas";
 
@@ -21,34 +22,13 @@ const DEFAULTS: InviteUserFormInput = {
     moduleAccesses: [],
 };
 
-const DEFAULT_ACCESS = {
-    read: false,
-    write: false,
-    delete: false,
-} as const;
-
-function mergeModuleAccess(
-    existingModuleAccess?: InviteUserFormInput["moduleAccesses"],
-): InviteUserFormInput["moduleAccesses"] {
-    return MODULES.map(module => {
-        const existingModule = existingModuleAccess?.find(m => m.id === module.id);
-        return (
-            existingModule ?? {
-                id: module.id,
-                name: module.name,
-                access: DEFAULT_ACCESS,
-            }
-        );
-    });
-}
-
 export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
     ({ defaultValues = {}, onSubmit, onHasChanges, children }, ref) => {
         const methods = useForm<InviteUserFormInput, unknown, InviteUserFormOutput>({
             defaultValues: {
                 ...DEFAULTS,
                 ...defaultValues,
-                moduleAccesses: mergeModuleAccess(defaultValues.moduleAccesses),
+                moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
             },
             resolver: zodResolver(InviteUserFormSchema),
             mode: "onSubmit",

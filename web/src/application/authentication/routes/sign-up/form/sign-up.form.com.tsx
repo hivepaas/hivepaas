@@ -22,10 +22,10 @@ import { Pencil } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { PasswordStrengthMeter } from "@application/shared/components";
+import { PhotoUploadDialog } from "@application/shared/dialogs";
 import { ESecuritySettings } from "@application/shared/enums";
 
 import { BackToSignIn } from "@application/authentication/components";
-import { PhotoUploadDialog } from "@application/authentication/dialogs";
 import type { Candidate } from "@application/authentication/domain/user";
 import {
     type SighUpFormSchemaInput,
@@ -265,6 +265,8 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                         <img
                                             src={`data:image/png;base64,${method.candidate.qrCode}`}
                                             alt="QR Code"
+                                            className="w-[220px] h-[220px] object-contain"
+                                            title="QR Code"
                                         />
                                     </Field>
                                 )}

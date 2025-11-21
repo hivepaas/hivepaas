@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useSearchParams } from "react-router";
 
-import { ErrorAuthenticationIcon, SuccessAuthenticationIcon } from "@assets/icons";
+import { ErrorAuthenticationIcon } from "@assets/icons";
 
 import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -43,10 +43,7 @@ function View({ email, mfaToken }: ViewProps) {
 
     const { mutate: signIn2FA, isPending: isSignIn2FAPending } = AuthCommands.useSignIn2FA({
         onSuccess: profile => {
-            setState({
-                type: "success",
-                profile,
-            });
+            setProfile(profile);
         },
         onError: () => {
             setState({
@@ -71,29 +68,6 @@ function View({ email, mfaToken }: ViewProps) {
                 isPending={isSignIn2FAPending}
                 onSubmit={handleSignIn2FA}
             />
-        );
-    }
-
-    if (state.type === "success") {
-        child = (
-            <Card>
-                <CardContent className="flex flex-col items-center gap-4 text-center">
-                    <div className="rounded-full bg-emerald-50 p-3 text-emerald-600">
-                        <SuccessAuthenticationIcon className="h-6 w-6" />
-                    </div>
-                    <CardTitle className="text-base">Authentication successful</CardTitle>
-                    <CardDescription>You are now signed in.</CardDescription>
-                    <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => {
-                            setProfile(state.profile);
-                        }}
-                    >
-                        Continue
-                    </Button>
-                </CardContent>
-            </Card>
         );
     }
 

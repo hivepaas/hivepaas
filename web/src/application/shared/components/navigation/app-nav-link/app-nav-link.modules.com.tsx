@@ -7,8 +7,6 @@ export function AppNavLinkModules({ to, children, ignorePrevPath = false, ...pro
 
     const location = useLocation();
 
-    console.log(link.modules(to));
-
     return (
         <NavLink
             {...props}

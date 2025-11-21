@@ -48,6 +48,10 @@ export const ROUTE = {
                 $pattern: "user-management/users/:id",
                 $route: (id: string) => `/user-management/users/${id}/`,
             },
+            profile: {
+                $pattern: "user-management/users/profile",
+                $route: "/user-management/users/profile/",
+            },
         },
     },
 } as const;

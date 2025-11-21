@@ -3,9 +3,9 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { mapModuleAccesses } from "~/user-management/module-shared/utils/map-module-accesses";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { MODULES } from "@application/shared/constants";
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
 import { UserInput } from "@application/modules/user-management/module-shared/form/user-input";
@@ -29,34 +29,15 @@ const DEFAULTS: SingleUserFormSchemaInput = {
     moduleAccesses: [],
 };
 
-const DEFAULT_ACCESS = {
-    read: false,
-    write: false,
-    delete: false,
-} as const;
-
 type SchemaInput = SingleUserFormSchemaInput;
 type SchemaOutput = SingleUserFormSchemaOutput;
-
-function mergeModuleAccess(existingModuleAccess?: SchemaInput["moduleAccesses"]): SchemaInput["moduleAccesses"] {
-    return MODULES.map(module => {
-        const existingModule = existingModuleAccess?.find(m => m.id === module.id);
-        return (
-            existingModule ?? {
-                id: module.id,
-                name: module.name,
-                access: DEFAULT_ACCESS,
-            }
-        );
-    });
-}
 
 export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             ...DEFAULTS,
             ...defaultValues,
-            moduleAccesses: mergeModuleAccess(defaultValues.moduleAccesses),
+            moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
         },
         resolver: zodResolver(SingleUserFormSchema),
         mode: "onSubmit",
@@ -77,7 +58,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                 methods.reset({
                     ...DEFAULTS,
                     ...values,
-                    moduleAccesses: mergeModuleAccess(values.moduleAccesses),
+                    moduleAccesses: mapModuleAccesses(values.moduleAccesses),
                 });
             },
             onError(_error: ValidationException) {
@@ -114,7 +95,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     {/* Joining date */}
                     <div className="h-px bg-border" />
                     <InfoBlock title={<LabelWithInfo label="Joining date" />}>
-                        <span>{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
+                        <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                     </InfoBlock>
 
                     {/* Access Expiration */}

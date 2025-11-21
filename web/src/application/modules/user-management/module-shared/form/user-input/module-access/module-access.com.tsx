@@ -1,9 +1,8 @@
-import React, { useMemo } from "react";
+import React from "react";
 
-import { Checkbox } from "@components/ui";
-import { type Path, useFieldArray, useFormContext } from "react-hook-form";
-
-import { MODULES } from "@application/shared/constants";
+import { Button, Checkbox } from "@components/ui";
+import { CheckCheck } from "lucide-react";
+import { type Path, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 interface ModuleAccess {
     id: string;
@@ -15,7 +14,7 @@ interface ModuleAccess {
     };
 }
 
-function View<T>({ name, isAdmin = false }: Props<T>) {
+function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
     const { control } = useFormContext<Record<string, ModuleAccess[]>>();
 
     const { fields, update } = useFieldArray({
@@ -24,48 +23,45 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
         keyName: "_id",
     });
 
-    const allModulesForAdmin = useMemo(() => {
-        if (!isAdmin) {
-            return [];
-        }
-        return MODULES.map(module => ({
-            id: module.id,
-            name: module.name,
-            access: {
-                read: true,
-                write: true,
-                delete: true,
-            },
-        }));
-    }, [isAdmin]);
+    const watchedFields = useWatch({
+        control,
+        name: name as string,
+    });
 
-    const modulesToDisplay = isAdmin ? allModulesForAdmin : fields;
+    const handleToggleAll = (index: number) => {
+        if (isAdmin || disabled) return;
+
+        const module = watchedFields[index];
+        if (!module) return;
+
+        const allChecked = module.access.read && module.access.write && module.access.delete;
+        const shouldCheckAll = !allChecked;
+
+        update(index, {
+            ...module,
+            access: {
+                read: shouldCheckAll,
+                write: shouldCheckAll,
+                delete: shouldCheckAll,
+            },
+        });
+    };
 
     return (
         <div>
-            <div className="space-y-0 divide-y">
-                {modulesToDisplay.map((module, index) => (
-                    <div
-                        key={module.id}
-                        className="flex items-center flex-wrap gap-4 p-3"
-                    >
-                        <div className="flex-1 font-semibold">{module.name}</div>
+            {isAdmin ? (
+                /* Admin view - Single "All modules" row */
+                <div className="space-y-0 divide-y">
+                    <div className="flex items-center flex-wrap gap-4 pb-3">
+                        <div className="flex-1 font-semibold">All modules</div>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                                 <Checkbox
-                                    checked={module.access.read}
-                                    disabled={isAdmin}
-                                    onCheckedChange={checked => {
-                                        if (!isAdmin) {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, read: checked === true },
-                                            });
-                                        }
-                                    }}
+                                    checked
+                                    disabled
                                 />
                                 <label
-                                    htmlFor={`${module.id}-read`}
+                                    htmlFor="all-modules-read"
                                     className="text-sm"
                                 >
                                     Read
@@ -73,19 +69,11 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <Checkbox
-                                    checked={module.access.write}
-                                    disabled={isAdmin}
-                                    onCheckedChange={checked => {
-                                        if (!isAdmin) {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, write: checked === true },
-                                            });
-                                        }
-                                    }}
+                                    checked
+                                    disabled
                                 />
                                 <label
-                                    htmlFor={`${module.id}-write`}
+                                    htmlFor="all-modules-write"
                                     className="text-sm"
                                 >
                                     Write
@@ -93,29 +81,108 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <Checkbox
-                                    checked={module.access.delete}
-                                    disabled={isAdmin}
-                                    onCheckedChange={checked => {
-                                        if (!isAdmin) {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, delete: checked === true },
-                                            });
-                                        }
-                                    }}
+                                    checked
+                                    disabled
                                 />
                                 <label
-                                    htmlFor={`${module.id}-delete`}
+                                    htmlFor="all-modules-delete"
                                     className="text-sm"
                                 >
                                     Delete
                                 </label>
                             </div>
-                            {!isAdmin && <div className="size-9" />}
                         </div>
                     </div>
-                ))}
-            </div>
+                </div>
+            ) : fields.length > 0 ? (
+                /* Non-admin view - List of modules */
+                <div className="space-y-0 divide-y">
+                    {fields.map((module, index) => (
+                        <div
+                            key={module.id}
+                            className="flex items-center flex-wrap gap-4 pb-3"
+                        >
+                            <div className="flex-1 font-semibold">{module.name}</div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked={module.access.read}
+                                        disabled={disabled}
+                                        onCheckedChange={checked => {
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, read: checked === true },
+                                                });
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`${module.id}-read`}
+                                        className="text-sm"
+                                    >
+                                        Read
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked={module.access.write}
+                                        disabled={disabled}
+                                        onCheckedChange={checked => {
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, write: checked === true },
+                                                });
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`${module.id}-write`}
+                                        className="text-sm"
+                                    >
+                                        Write
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked={module.access.delete}
+                                        disabled={disabled}
+                                        onCheckedChange={checked => {
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, delete: checked === true },
+                                                });
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`${module.id}-delete`}
+                                        className="text-sm"
+                                    >
+                                        Delete
+                                    </label>
+                                </div>
+                                {!disabled && (
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="hover:opacity-80"
+                                        size="icon"
+                                        onClick={() => {
+                                            handleToggleAll(index);
+                                        }}
+                                    >
+                                        <CheckCheck className="size-4" />
+                                    </Button>
+                                )}
+                                <div className="size-9" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -123,6 +190,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
 interface Props<T> {
     name: Path<T>;
     isAdmin?: boolean;
+    disabled?: boolean;
 }
 
 export const ModuleAccess = React.memo(View) as typeof View;

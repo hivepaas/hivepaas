@@ -64,5 +64,34 @@ export const userManagementRouter: RouteObject = {
                 },
             ],
         },
+
+        /**
+         * Profile
+         */
+        {
+            lazy: async () => {
+                const { ProfileLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ProfileLayout>
+                            <Outlet />
+                        </ProfileLayout>
+                    ),
+                };
+            },
+            children: [
+                {
+                    path: ROUTE.userManagement.users.profile.$pattern,
+                    lazy: async () => {
+                        const { ProfileRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProfileRoute,
+                        };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

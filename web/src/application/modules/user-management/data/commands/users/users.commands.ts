@@ -7,8 +7,13 @@ import type {
     Users_InviteOne_Res,
     Users_UpdateOne_Req,
     Users_UpdateOne_Res,
+    Users_UpdateProfile_Req,
+    Users_UpdateProfile_Res,
 } from "~/user-management/api/services";
 import { QK } from "~/user-management/data/constants";
+
+import { useSessionApi } from "@application/shared/api";
+import { type Profile } from "@application/shared/entities";
 
 /**
  * Delete a user command
@@ -94,8 +99,45 @@ function useInviteOne({ onSuccess, ...options }: InviteOneOptions = {}) {
     });
 }
 
+/**
+ * Update profile command
+ */
+type UpdateProfileReq = Users_UpdateProfile_Req["data"];
+type UpdateProfileRes = Users_UpdateProfile_Res;
+type UpdateProfileOptions = Omit<
+    UseMutationOptions<UpdateProfileRes, Error, UpdateProfileReq>,
+    "mutationFn" | "onSuccess"
+> & {
+    onSuccess?: (profile: Profile) => void;
+};
+
+function useUpdateProfile({ onSuccess, ...options }: UpdateProfileOptions = {}) {
+    const { mutations } = useUsersApi();
+
+    const {
+        queries: { getProfile },
+    } = useSessionApi();
+
+    async function updateProfileFn(values: UpdateProfileReq) {
+        const res = await mutations.updateProfile(values);
+
+        const { data: profile } = await getProfile();
+
+        if (onSuccess) onSuccess(profile);
+
+        return res;
+    }
+
+    return useMutation({
+        mutationFn: updateProfileFn,
+
+        ...options,
+    });
+}
+
 export const UsersCommands = Object.freeze({
     useDeleteOne,
     useUpdateOne,
     useInviteOne,
+    useUpdateProfile,
 });

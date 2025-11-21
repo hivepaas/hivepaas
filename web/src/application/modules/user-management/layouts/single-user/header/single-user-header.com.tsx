@@ -13,7 +13,7 @@ import { EUserRole, EUserStatus } from "@application/shared/enums";
 
 import { UsersCommands } from "@application/modules/user-management/data/commands";
 import { UsersQueries } from "@application/modules/user-management/data/queries";
-import { UserStatusBadge } from "@application/modules/user-management/module-shared/components";
+import { UserRoleBadge, UserStatusBadge } from "@application/modules/user-management/module-shared/components";
 
 import { UserBreadcrumbs } from "../building-blocks";
 
@@ -53,11 +53,6 @@ export function View({ userId }: Props) {
     const showDisable = user.status === EUserStatus.Active || user.status === EUserStatus.Pending;
     const showActivate = user.status === EUserStatus.Disabled;
     const shouldShowToggleButtons = user.status !== EUserStatus.Pending;
-
-    const roleMap: Record<EUserRole, string> = {
-        [EUserRole.Admin]: "Admin",
-        [EUserRole.Member]: "Member",
-    };
 
     const handleDisable = () => {
         console.log("disable");
@@ -140,7 +135,7 @@ export function View({ userId }: Props) {
                                 <BadgeCheck className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
                                     <span>Role :</span>
-                                    <span className="text-black">{roleMap[user.role] || user.role}</span>
+                                    <UserRoleBadge role={user.role} />
                                 </div>
                             </div>
                             {user.lastAccess && (

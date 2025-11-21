@@ -19,7 +19,7 @@ interface ProjectAccess {
     };
 }
 
-function View<T>({ name, isAdmin = false }: Props<T>) {
+function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
     const { control, formState } = useFormContext<Record<string, ProjectAccess[]>>();
 
     const { fields, append, update, remove } = useFieldArray({
@@ -96,7 +96,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
     return (
         <div className="flex flex-col gap-4">
             {/* Project Selection */}
-            {!isAdmin && (
+            {!isAdmin && !disabled && (
                 <div className="flex items-center gap-2">
                     <Combobox
                         options={comboboxOptions}
@@ -132,7 +132,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                 {isAdmin ? (
                     /* Admin view - Single "All project" row */
                     <div className="space-y-0 divide-y">
-                        <div className="flex items-center flex-wrap gap-4 p-3">
+                        <div className="flex items-center flex-wrap gap-4 pb-3">
                             <div className="flex-1 font-semibold">All projects</div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
@@ -180,14 +180,14 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                         {fields.map((project, index) => (
                             <div
                                 key={project.id}
-                                className="flex items-center flex-wrap gap-4 p-3"
+                                className="flex items-center flex-wrap gap-4 pb-3"
                             >
                                 <div className="flex-1 font-semibold">{project.name}</div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.read}
-                                            disabled
+                                            disabled={disabled}
                                         />
                                         <label
                                             htmlFor={`${project.id}-read`}
@@ -199,11 +199,14 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.write}
+                                            disabled={disabled}
                                             onCheckedChange={checked => {
-                                                update(index, {
-                                                    ...project,
-                                                    access: { ...project.access, write: checked === true },
-                                                });
+                                                if (!disabled) {
+                                                    update(index, {
+                                                        ...project,
+                                                        access: { ...project.access, write: checked === true },
+                                                    });
+                                                }
                                             }}
                                         />
                                         <label
@@ -216,11 +219,14 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                     <div className="flex items-center gap-2">
                                         <Checkbox
                                             checked={project.access.delete}
+                                            disabled={disabled}
                                             onCheckedChange={checked => {
-                                                update(index, {
-                                                    ...project,
-                                                    access: { ...project.access, delete: checked === true },
-                                                });
+                                                if (!disabled) {
+                                                    update(index, {
+                                                        ...project,
+                                                        access: { ...project.access, delete: checked === true },
+                                                    });
+                                                }
                                             }}
                                         />
                                         <label
@@ -230,28 +236,34 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                             Delete
                                         </label>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        className="hover:opacity-80"
-                                        size="icon"
-                                        onClick={() => {
-                                            handleToggleAll(index);
-                                        }}
-                                    >
-                                        <CheckCheck className="size-4" />
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        className="text-destructive hover:opacity-80"
-                                        size="icon"
-                                        onClick={() => {
-                                            remove(index);
-                                        }}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
+                                    {!disabled ? (
+                                        <>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                className="hover:opacity-80"
+                                                size="icon"
+                                                onClick={() => {
+                                                    handleToggleAll(index);
+                                                }}
+                                            >
+                                                <CheckCheck className="size-4" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                className="text-destructive hover:opacity-80"
+                                                size="icon"
+                                                onClick={() => {
+                                                    remove(index);
+                                                }}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <div className="size-9" />
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -265,6 +277,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
 interface Props<T> {
     name: Path<T>;
     isAdmin?: boolean;
+    disabled?: boolean;
 }
 
 export const ProjectAccess = React.memo(View) as typeof View;

@@ -1,12 +1,12 @@
 /**
  * Users
  */
-export { UsersRoute, SingleUserRoute } from "./routes";
+export { UsersRoute, SingleUserRoute, ProfileRoute } from "./routes";
 
 /**
  * Layouts
  */
-export { MainLayout, SingleUserLayout } from "./layouts";
+export { MainLayout, SingleUserLayout, ProfileLayout } from "./layouts";
 
 /**
  * Dialogs

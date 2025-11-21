@@ -14,7 +14,7 @@ interface ModuleAccess {
     };
 }
 
-function View<T>({ name, isAdmin = false }: Props<T>) {
+function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
     const { control } = useFormContext<Record<string, ModuleAccess[]>>();
 
     const { fields, update } = useFieldArray({
@@ -29,7 +29,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
     });
 
     const handleToggleAll = (index: number) => {
-        if (isAdmin) return;
+        if (isAdmin || disabled) return;
 
         const module = watchedFields[index];
         if (!module) return;
@@ -52,7 +52,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
             {isAdmin ? (
                 /* Admin view - Single "All modules" row */
                 <div className="space-y-0 divide-y">
-                    <div className="flex items-center flex-wrap gap-4 p-3">
+                    <div className="flex items-center flex-wrap gap-4 pb-3">
                         <div className="flex-1 font-semibold">All modules</div>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
@@ -100,18 +100,21 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                     {fields.map((module, index) => (
                         <div
                             key={module.id}
-                            className="flex items-center flex-wrap gap-4 p-3"
+                            className="flex items-center flex-wrap gap-4 pb-3"
                         >
                             <div className="flex-1 font-semibold">{module.name}</div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         checked={module.access.read}
+                                        disabled={disabled}
                                         onCheckedChange={checked => {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, read: checked === true },
-                                            });
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, read: checked === true },
+                                                });
+                                            }
                                         }}
                                     />
                                     <label
@@ -124,11 +127,14 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         checked={module.access.write}
+                                        disabled={disabled}
                                         onCheckedChange={checked => {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, write: checked === true },
-                                            });
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, write: checked === true },
+                                                });
+                                            }
                                         }}
                                     />
                                     <label
@@ -141,11 +147,14 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         checked={module.access.delete}
+                                        disabled={disabled}
                                         onCheckedChange={checked => {
-                                            update(index, {
-                                                ...module,
-                                                access: { ...module.access, delete: checked === true },
-                                            });
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, delete: checked === true },
+                                                });
+                                            }
                                         }}
                                     />
                                     <label
@@ -155,17 +164,19 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
                                         Delete
                                     </label>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="hover:opacity-80"
-                                    size="icon"
-                                    onClick={() => {
-                                        handleToggleAll(index);
-                                    }}
-                                >
-                                    <CheckCheck className="size-4" />
-                                </Button>
+                                {!disabled && (
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="hover:opacity-80"
+                                        size="icon"
+                                        onClick={() => {
+                                            handleToggleAll(index);
+                                        }}
+                                    >
+                                        <CheckCheck className="size-4" />
+                                    </Button>
+                                )}
                                 <div className="size-9" />
                             </div>
                         </div>
@@ -179,6 +190,7 @@ function View<T>({ name, isAdmin = false }: Props<T>) {
 interface Props<T> {
     name: Path<T>;
     isAdmin?: boolean;
+    disabled?: boolean;
 }
 
 export const ModuleAccess = React.memo(View) as typeof View;

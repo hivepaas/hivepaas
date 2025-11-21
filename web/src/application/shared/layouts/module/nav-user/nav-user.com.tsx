@@ -1,6 +1,8 @@
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
 import invariant from "tiny-invariant";
 
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
 import { useF2aSetupDialog } from "@application/shared/dialogs";
@@ -100,10 +102,12 @@ export function NavUser({ user }: { user: Profile }) {
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <BadgeCheck />
-                                Account
-                            </DropdownMenuItem>
+                            <AppLink.Modules to={ROUTE.userManagement.users.profile.$route}>
+                                <DropdownMenuItem>
+                                    <BadgeCheck />
+                                    Account
+                                </DropdownMenuItem>
+                            </AppLink.Modules>
                             <DropdownMenuItem>
                                 <CreditCard />
                                 Billing

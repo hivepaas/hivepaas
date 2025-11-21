@@ -27,7 +27,7 @@ interface CroppedImageResult {
 interface PhotoUploadDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onConfirm: (result: CroppedImageResult) => void;
+    onConfirm: (result: CroppedImageResult | null) => void;
     initialImage?: string | null;
 }
 
@@ -144,6 +144,11 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
             cropperRef.current.cropper.clear();
             cropperRef.current.cropper.reset();
         }
+        // If there was an initial image, delete it by passing null
+        if (initialImage) {
+            onConfirm(null);
+            onOpenChange(false);
+        }
     }
 
     function handleRotateTo(deg: number) {
@@ -169,7 +174,10 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
     }
 
     function handleConfirm() {
-        if (cropperRef.current == null) {
+        // If no image is selected, pass null to delete the photo
+        if (!imageSrc || cropperRef.current == null) {
+            onConfirm(null);
+            onOpenChange(false);
             return;
         }
 
@@ -349,7 +357,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onConfirm, initialImage 
                         Cancel
                     </Button>
                     <Button
-                        disabled={!imageSrc || isCropping}
+                        disabled={isCropping}
                         isLoading={isCropping}
                         onClick={() => {
                             handleConfirm();

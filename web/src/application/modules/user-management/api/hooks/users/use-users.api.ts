@@ -8,6 +8,7 @@ import type {
     Users_FindOneById_Req,
     Users_InviteOne_Req,
     Users_UpdateOne_Req,
+    Users_UpdateProfile_Req,
 } from "~/user-management/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -126,6 +127,27 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to invite user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Update profile
+                 */
+                updateProfile: async (data: Users_UpdateProfile_Req["data"]) => {
+                    const result = await api.users.$.updateProfile({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update profile",
                                 error,
                             });
 

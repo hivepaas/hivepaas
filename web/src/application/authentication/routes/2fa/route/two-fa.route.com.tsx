@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useSearchParams } from "react-router";
 
-import { ErrorAuthenticationIcon, SuccessAuthenticationIcon } from "@assets/icons";
+import { ErrorAuthenticationIcon } from "@assets/icons";
 
 import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";

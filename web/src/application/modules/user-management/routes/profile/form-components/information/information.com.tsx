@@ -111,7 +111,7 @@ export function Information() {
                     <FieldLabel htmlFor="notes">Notes</FieldLabel>
                     <Textarea
                         {...notes}
-                        value={notes.value ?? ""}
+                        value={notes.value}
                         onChange={notes.onChange}
                         rows={4}
                         placeholder="Enter notes"

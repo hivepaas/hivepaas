@@ -12,27 +12,29 @@ import { type ProfileFormSchemaOutput } from "../schemas";
 import { type ProfileFormRef } from "../types";
 
 export function ProfileRoute() {
-    const { profile } = useProfileContext();
+    const { profile, setProfile } = useProfileContext();
 
     invariant(profile, "profile must be defined");
 
     const formRef = useRef<ProfileFormRef>(null);
 
-    const { mutate: update, isPending } = UsersCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("User base information updated");
+    const { mutate: updateProfile, isPending } = UsersCommands.useUpdateProfile({
+        onSuccess: newProfile => {
+            toast.success("Profile updated");
+            setProfile(newProfile);
         },
     });
 
     function handleSubmit(values: ProfileFormSchemaOutput) {
         console.log(values);
-        // update({
-        //     user: {
-        //         ...values,
-        //         id: profile.id,
-        //         status: user.status,
-        //     },
-        // });
+        updateProfile({
+            profile: {
+                ...values,
+                photo: values.photoUpload
+                    ? { fileName: values.photoUpload.fileName, dataBase64: values.photoUpload.dataBase64 }
+                    : undefined,
+            },
+        });
     }
 
     useEffect(() => {
@@ -40,6 +42,7 @@ export function ProfileRoute() {
             ...profile,
             fullName: profile.fullName ?? "",
             email: profile.email ?? "",
+            photoUpload: null,
         });
     }, [profile]);
 

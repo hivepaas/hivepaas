@@ -28,14 +28,13 @@ export function F2aSetupDialog() {
     const { mutate: getProfile2FASetup, isPending: isGetProfile2FASetupPending } =
         ProfileCommands.useGetProfile2FASetup();
 
-    const { isPending: isGetProfilePending, refetch } = SessionQueries.useGetProfile({
+    const { refetch } = SessionQueries.useGetProfile({
         onSuccess: ({ data }) => {
             setProfile(data);
         },
         onSessionInvalid: clearProfile,
         enabled: false,
     });
-    console.log(isGetProfilePending);
 
     useUpdateEffect(() => {
         if (state.mode === "open") {

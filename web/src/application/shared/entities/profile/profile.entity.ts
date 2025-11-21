@@ -33,6 +33,8 @@ export interface Profile {
 
     position: string;
 
+    notes: string;
+
     role: EUserRole;
 
     status: EUserStatus;

@@ -85,14 +85,6 @@ export function NavUser({ user }: { user: Profile }) {
                                     Account
                                 </DropdownMenuItem>
                             </AppLink.Modules>
-                            <DropdownMenuItem>
-                                <CreditCard />
-                                Billing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bell />
-                                Notifications
-                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

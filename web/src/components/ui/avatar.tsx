@@ -23,7 +23,7 @@ function createAbbreviation(name: string) {
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
-    name: string;
+    name: string | null;
     src?: string | null;
     borderless?: boolean;
 }
@@ -51,12 +51,12 @@ export function Avatar({ name, borderless = false, className, style, src, ...pro
                 <img
                     data-slot="avatar-image"
                     src={safeSource ?? undefined}
-                    alt={name}
+                    alt={name ?? ""}
                     onError={() => setImageError(true)}
                     className={cn("aspect-square size-full object-cover")}
                 />
             ) : name ? (
-                <span className="select-none font-medium text-white">{createAbbreviation(name)}</span>
+                <span className="select-none font-medium text-white">{createAbbreviation(name ?? "")}</span>
             ) : null}
         </div>
     );

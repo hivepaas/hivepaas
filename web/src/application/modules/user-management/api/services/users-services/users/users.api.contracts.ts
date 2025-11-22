@@ -1,8 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type UserBase } from "~/user-management/domain";
 
-import { type Profile } from "@application/shared/entities";
-
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
 /**
@@ -53,14 +51,3 @@ export type Users_InviteOne_Req = ApiRequestBase<{
 }>;
 
 export type Users_InviteOne_Res = ApiResponseBase<{ inviteLink: string }>;
-
-/**
- * Update profile
- */
-export type Users_UpdateProfile_Req = ApiRequestBase<{
-    profile: Pick<Profile, "fullName" | "email" | "username" | "position" | "notes"> & {
-        photo?: { fileName: string; dataBase64: string } | { delete: true };
-    };
-}>;
-
-export type Users_UpdateProfile_Res = ApiResponseBase<{ type: "success" }>;

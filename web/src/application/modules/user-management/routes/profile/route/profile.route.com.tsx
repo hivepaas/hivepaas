@@ -3,9 +3,9 @@ import { useEffect, useRef } from "react";
 import { Button } from "@components/ui";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { UsersCommands } from "~/user-management/data/commands";
 
 import { useProfileContext } from "@application/shared/context";
+import { ProfileCommands } from "@application/shared/data/commands";
 
 import { ProfileForm } from "../form";
 import { type ProfileFormSchemaOutput } from "../schemas";
@@ -18,7 +18,7 @@ export function ProfileRoute() {
 
     const formRef = useRef<ProfileFormRef>(null);
 
-    const { mutate: updateProfile, isPending } = UsersCommands.useUpdateProfile({
+    const { mutate: updateProfile, isPending } = ProfileCommands.useUpdate({
         onSuccess: newProfile => {
             toast.success("Profile updated");
             setProfile(newProfile);

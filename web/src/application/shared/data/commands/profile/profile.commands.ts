@@ -1,12 +1,15 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
-import { useProfileApi } from "@application/shared/api";
+import { useProfileApi, useSessionApi } from "@application/shared/api";
 import {
     type Profile_Complete2FASetup_Req,
     type Profile_Complete2FASetup_Res,
     type Profile_GetProfile2FASetup_Req,
     type Profile_GetProfile2FASetup_Res,
+    type Profile_UpdateProfile_Req,
+    type Profile_UpdateProfile_Res,
 } from "@application/shared/api/services";
+import { type Profile } from "@application/shared/entities";
 
 /**
  * Update profile
@@ -60,7 +63,44 @@ function useComplete2FASetup({ onSuccess, ...options }: Complete2FASetupOptions 
     });
 }
 
+/**
+ * Update profile command
+ */
+type UpdateProfileReq = Profile_UpdateProfile_Req["data"];
+type UpdateProfileRes = Profile_UpdateProfile_Res;
+type UpdateProfileOptions = Omit<
+    UseMutationOptions<UpdateProfileRes, Error, UpdateProfileReq>,
+    "mutationFn" | "onSuccess"
+> & {
+    onSuccess?: (profile: Profile) => void;
+};
+
+function useUpdate({ onSuccess, ...options }: UpdateProfileOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const {
+        queries: { getProfile },
+    } = useSessionApi();
+
+    async function updateProfileFn(values: UpdateProfileReq) {
+        const res = await mutations.update(values);
+
+        const { data: profile } = await getProfile();
+
+        if (onSuccess) onSuccess(profile);
+
+        return res;
+    }
+
+    return useMutation({
+        mutationFn: updateProfileFn,
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
+    useUpdate,
 });

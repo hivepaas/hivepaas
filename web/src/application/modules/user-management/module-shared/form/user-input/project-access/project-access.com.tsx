@@ -237,12 +237,11 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                         </label>
                                     </div>
                                     {!disabled ? (
-                                        <>
+                                        <div className="flex items-center gap-1">
                                             <Button
                                                 type="button"
                                                 variant="link"
-                                                className="hover:opacity-80"
-                                                size="icon"
+                                                className="hover:opacity-80 size-6"
                                                 onClick={() => {
                                                     handleToggleAll(index);
                                                 }}
@@ -252,17 +251,16 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                             <Button
                                                 type="button"
                                                 variant="link"
-                                                className="text-destructive hover:opacity-80"
-                                                size="icon"
+                                                className="text-destructive hover:opacity-80 size-6"
                                                 onClick={() => {
                                                     remove(index);
                                                 }}
                                             >
                                                 <Trash2 className="size-4" />
                                             </Button>
-                                        </>
+                                        </div>
                                     ) : (
-                                        <div className="size-9" />
+                                        <div className="size-6" />
                                     )}
                                 </div>
                             </div>

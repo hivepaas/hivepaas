@@ -58,7 +58,7 @@ export function InviteUserDialog() {
             modal
             onOpenChange={handleClose}
         >
-            <DialogContent className="lg:min-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="lg:min-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
                     <DialogDescription>

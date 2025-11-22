@@ -85,6 +85,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                                         id="email"
                                         {...email}
                                         placeholder="abc@domain.com"
+                                        className="max-w-[400px]"
                                         aria-invalid={isEmailInvalid}
                                     />
                                     <FieldError errors={[errors.email]} />

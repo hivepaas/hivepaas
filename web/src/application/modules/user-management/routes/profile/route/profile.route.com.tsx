@@ -26,13 +26,13 @@ export function ProfileRoute() {
     });
 
     function handleSubmit(values: ProfileFormSchemaOutput) {
-        console.log(values);
         updateProfile({
             profile: {
                 ...values,
-                photo: values.photoUpload
-                    ? { fileName: values.photoUpload.fileName, dataBase64: values.photoUpload.dataBase64 }
-                    : undefined,
+                photo:
+                    values.photo && values.photoUpload
+                        ? { fileName: values.photoUpload.fileName, dataBase64: values.photoUpload.dataBase64 }
+                        : { delete: true },
             },
         });
     }

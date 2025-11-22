@@ -1,4 +1,4 @@
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut } from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
 import invariant from "tiny-invariant";
 
 import { AppLink } from "@application/shared/components";

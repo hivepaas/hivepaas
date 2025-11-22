@@ -22,6 +22,7 @@ import { parseApiResponse } from "@infrastructure/api";
 const GetProfile2FASetupSchema = z.object({
     data: z.object({
         totpToken: z.string(),
+        secret: z.string(),
         qrCode: z.object({
             dataBase64: z.string(),
         }),
@@ -95,6 +96,7 @@ export class ProfileApiValidator {
             data: {
                 totpToken: data.totpToken,
                 totpQRCode: data.qrCode.dataBase64,
+                secretKey: data.secret,
             },
         };
     };

@@ -1,0 +1,18 @@
+.photo-editor {
+  position: relative;
+
+  height: 100%;
+
+  .photo-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    gap: 12px;
+
+    padding: 16px;
+
+    // pointer-events: none;
+  }
+}

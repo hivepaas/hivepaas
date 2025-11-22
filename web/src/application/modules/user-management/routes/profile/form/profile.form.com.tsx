@@ -2,6 +2,7 @@ import React, { type PropsWithChildren, useImperativeHandle, useState } from "re
 
 import { Avatar, Button } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageService } from "@infrastructure/services";
 import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
@@ -93,6 +94,33 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
     const isAdmin = methods.watch("role") === EUserRole.Admin;
 
     const photoUrl = methods.watch("photo");
+
+    async function handlePhotoUpload(result: File | null) {
+        console.log(result);
+        if (!result) {
+            methods.setValue("photo", null, { shouldDirty: true });
+            methods.setValue("photoUpload", null, { shouldDirty: true });
+            return;
+        }
+
+        try {
+            const base64String = await ImageService.convertFileToBase64(result);
+
+            methods.setValue("photo", base64String, { shouldDirty: true });
+
+            methods.setValue(
+                "photoUpload",
+                {
+                    fileName: result.name,
+                    dataBase64: base64String,
+                },
+                { shouldDirty: true },
+            );
+        } catch (error) {
+            console.error("Error converting file to base64:", error);
+            toast.error("Failed to process image");
+        }
+    }
 
     return (
         <div className="single-user-form">
@@ -200,9 +228,8 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
             <PhotoUploadDialog
                 open={openPhotoUpload}
                 onOpenChange={setOpenPhotoUpload}
-                onConfirm={result => {
-                    methods.setValue("photoUpload", result, { shouldDirty: true });
-                    methods.setValue("photo", result?.dataBase64 ?? null, { shouldDirty: true });
+                onSubmit={result => {
+                    void handlePhotoUpload(result);
                 }}
                 initialImage={photoUrl}
             />

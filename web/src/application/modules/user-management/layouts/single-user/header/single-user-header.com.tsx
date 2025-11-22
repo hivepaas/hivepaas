@@ -9,7 +9,7 @@ import invariant from "tiny-invariant";
 
 import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
-import { EUserRole, EUserStatus } from "@application/shared/enums";
+import { EUserStatus } from "@application/shared/enums";
 
 import { UsersCommands } from "@application/modules/user-management/data/commands";
 import { UsersQueries } from "@application/modules/user-management/data/queries";

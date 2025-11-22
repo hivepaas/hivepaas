@@ -8,3 +8,4 @@ export * from "./info-block";
 export * from "./label-with-info";
 export * from "./date-picker";
 export * from "./combobox";
+export * from "./mfa-qr-code";

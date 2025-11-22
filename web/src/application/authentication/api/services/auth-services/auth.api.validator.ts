@@ -86,23 +86,24 @@ const ValidateInviteTokenSchema = z.object({
         z.object({
             email: z.string().trim().email(),
             role: z.nativeEnum(EUserRole),
-            accessExpiration: z.coerce.date(),
+            accessExpireAt: z.coerce.date(),
             securityOption: z.literal(ESecuritySettings.PasswordOnly),
         }),
         z.object({
             email: z.string().trim().email(),
             role: z.nativeEnum(EUserRole),
-            accessExpiration: z.coerce.date(),
+            accessExpireAt: z.coerce.date(),
             mfaTotpSecret: z.string(),
             qrCode: z.object({
                 dataBase64: z.string(),
             }),
+            secretKey: z.string(),
             securityOption: z.literal(ESecuritySettings.Password2FA),
         }),
         z.object({
             email: z.string().trim().email(),
             role: z.nativeEnum(EUserRole),
-            accessExpiration: z.coerce.date(),
+            accessExpireAt: z.coerce.date(),
             securityOption: z.literal(ESecuritySettings.EnforceSSO),
         }),
     ]),
@@ -254,7 +255,7 @@ export class AuthApiValidator {
                         email: data.email,
                         role: data.role,
                         securityOption: data.securityOption,
-                        accessExpiration: data.accessExpiration,
+                        accessExpiration: data.accessExpireAt,
                     },
                 },
             };
@@ -265,9 +266,10 @@ export class AuthApiValidator {
                     email: data.email,
                     role: data.role,
                     securityOption: data.securityOption,
-                    accessExpiration: data.accessExpiration,
+                    accessExpiration: data.accessExpireAt,
                     mfaTotpSecret: data.mfaTotpSecret,
                     qrCode: data.qrCode.dataBase64,
+                    secretKey: data.secretKey,
                 },
             },
         };

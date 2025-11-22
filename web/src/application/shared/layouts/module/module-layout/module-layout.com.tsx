@@ -15,6 +15,7 @@ export function ModuleLayout({ children }: PropsWithChildren) {
         onClose: () => {
             f2aSetupDialog.actions.close();
         },
+        isSetupRequired: true,
     });
     const { data } = useAuthContext();
 

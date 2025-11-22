@@ -21,7 +21,7 @@ export function F2aSetupDialog() {
     const [stateData, setStateData] = useState<State>(null);
     const { setProfile, clearProfile } = useProfileContext();
 
-    const { state, props, ...actions } = useF2aSetupDialogState();
+    const { state, props: { isSetupRequired = false } = {}, ...actions } = useF2aSetupDialogState();
 
     const { mutate: complete2FASetup, isPending: isComplete2FASetupPending } = ProfileCommands.useComplete2FASetup();
 
@@ -96,7 +96,12 @@ export function F2aSetupDialog() {
     return (
         <Dialog
             open={state.mode !== "closed"}
-            onOpenChange={actions.close}
+            onOpenChange={open => {
+                if (!open && isSetupRequired) {
+                    return;
+                }
+                actions.close();
+            }}
         >
             <DialogHeader>
                 <DialogTitle />

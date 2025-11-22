@@ -1,14 +1,16 @@
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
-import {
-    type ProfileApiValidator,
-    type Profile_Complete2FASetup_Req,
-    type Profile_Complete2FASetup_Res,
-    type Profile_GetProfile2FASetup_Req,
-    type Profile_GetProfile2FASetup_Res,
-    type Profile_UpdateProfile_Req,
-    type Profile_UpdateProfile_Res,
+import type {
+    ProfileApiValidator,
+    Profile_Complete2FASetup_Req,
+    Profile_Complete2FASetup_Res,
+    Profile_GetProfile2FASetup_Req,
+    Profile_GetProfile2FASetup_Res,
+    Profile_UpdateProfilePassword_Req,
+    Profile_UpdateProfilePassword_Res,
+    Profile_UpdateProfile_Req,
+    Profile_UpdateProfile_Res,
 } from "@application/shared/api/services";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
@@ -56,49 +58,26 @@ export class ProfileApi extends BaseApi {
         );
     }
 
-    // /**
-    //  * Update profile password
-    //  */
-    // async updatePassword(
-    //     request: Profile_UpdateProfilePassword_Req,
-    // ): Promise<Result<Profile_UpdateProfilePassword_Res, Error>> {
-    //     const { data } = request;
+    /**
+     * Update profile password
+     */
+    async updatePassword(
+        request: Profile_UpdateProfilePassword_Req,
+    ): Promise<Result<Profile_UpdateProfilePassword_Res, Error>> {
+        const { data } = request;
 
-    //     return lastValueFrom(
-    //         from(
-    //             this.client.v1.patch("/users/current/password", {
-    //                 currentPassword: data.currentPassword,
-    //                 newPassword: data.newPassword,
-    //             }),
-    //         ).pipe(
-    //             map(this.validator.updatePassword),
-    //             map(res => Ok(res)),
-    //             catchError(error => of(Err(parseApiError(error)))),
-    //         ),
-    //     );
-    // }
-
-    // /**
-    //  * Update profile locale
-    //  */
-    // async updateLocale(
-    //     request: Profile_UpdateProfileLocale_Req,
-    // ): Promise<Result<Profile_UpdateProfileLocale_Res, Error>> {
-    //     const { data } = request;
-
-    //     return lastValueFrom(
-    //         from(
-    //             this.client.v1.patch("/users/current/locale", {
-    //                 language: data.language,
-    //                 timezone: data.timezone,
-    //             }),
-    //         ).pipe(
-    //             map(this.validator.updateLocale),
-    //             map(res => Ok(res)),
-    //             catchError(error => of(Err(parseApiError(error)))),
-    //         ),
-    //     );
-    // }
+        return lastValueFrom(
+            from(
+                this.client.v1.put("/users/current/password", {
+                    currentPassword: data.currentPassword,
+                    newPassword: data.newPassword,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } as const })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
 
     /**
      * Get profile 2FA setup

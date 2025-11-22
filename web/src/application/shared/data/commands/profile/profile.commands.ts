@@ -1,13 +1,15 @@
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
 import { useProfileApi, useSessionApi } from "@application/shared/api";
-import {
-    type Profile_Complete2FASetup_Req,
-    type Profile_Complete2FASetup_Res,
-    type Profile_GetProfile2FASetup_Req,
-    type Profile_GetProfile2FASetup_Res,
-    type Profile_UpdateProfile_Req,
-    type Profile_UpdateProfile_Res,
+import type {
+    Profile_Complete2FASetup_Req,
+    Profile_Complete2FASetup_Res,
+    Profile_GetProfile2FASetup_Req,
+    Profile_GetProfile2FASetup_Res,
+    Profile_UpdateProfilePassword_Req,
+    Profile_UpdateProfilePassword_Res,
+    Profile_UpdateProfile_Req,
+    Profile_UpdateProfile_Res,
 } from "@application/shared/api/services";
 import { type Profile } from "@application/shared/entities";
 
@@ -99,8 +101,29 @@ function useUpdate({ onSuccess, ...options }: UpdateProfileOptions = {}) {
     });
 }
 
+/**
+ * Update profile password
+ */
+type UpdatePasswordReq = Profile_UpdateProfilePassword_Req["data"];
+type UpdatePasswordRes = Profile_UpdateProfilePassword_Res;
+
+type UpdatePasswordOptions = Omit<UseMutationOptions<UpdatePasswordRes, Error, UpdatePasswordReq>, "mutationFn">;
+
+function useUpdatePassword(options: UpdatePasswordOptions = {}) {
+    const {
+        mutations: { updatePassword },
+    } = useProfileApi();
+
+    return useMutation({
+        mutationFn: updatePassword,
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
     useUpdate,
+    useUpdatePassword,
 });

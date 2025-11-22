@@ -9,6 +9,7 @@ import { useApiErrorNotifications } from "@infrastructure/api";
 import type {
     Profile_Complete2FASetup_Req,
     Profile_GetProfile2FASetup_Req,
+    Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfile_Req,
 } from "../../services";
 
@@ -40,24 +41,24 @@ function createHook() {
                         },
                     });
                 },
-                // /**
-                //  * Update profile password
-                //  */
-                // updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
-                //     const result = await api.profile.updatePassword({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile password",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
+                /**
+                 * Update profile password
+                 */
+                updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
+                    const result = await api.profile.updatePassword({
+                        data,
+                    });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update profile password",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
 
                 /**
                  * Get profile 2FA setup

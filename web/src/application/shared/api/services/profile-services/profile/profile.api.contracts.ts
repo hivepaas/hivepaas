@@ -15,14 +15,17 @@ export type Profile_UpdateProfile_Res = ApiResponseBase<{
     type: "success";
 }>;
 
-// /**
-//  * Update profile password
-//  */
-// export type Profile_UpdateProfilePassword_Req = ApiRequestBase<UpdateProfilePassword>;
+/**
+ * Update profile password
+ */
+export type Profile_UpdateProfilePassword_Req = ApiRequestBase<{
+    currentPassword: string;
+    newPassword: string;
+}>;
 
-// export type Profile_UpdateProfilePassword_Res = ApiResponseBase<{
-//     type: "success";
-// }>;
+export type Profile_UpdateProfilePassword_Res = ApiResponseBase<{
+    type: "success";
+}>;
 
 /**
  * Get profile 2FA setup

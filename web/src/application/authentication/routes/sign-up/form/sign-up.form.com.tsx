@@ -18,10 +18,11 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@components/ui/input-otp";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageService } from "@infrastructure/services";
 import { Pencil } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
-import { PasswordStrengthMeter } from "@application/shared/components";
+import { MfaQrCode, PasswordStrengthMeter } from "@application/shared/components";
 import { PhotoUploadDialog } from "@application/shared/dialogs";
 import { ESecuritySettings } from "@application/shared/enums";
 
@@ -40,6 +41,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
 
     const {
         handleSubmit,
+        setValue,
         control,
         formState: { errors },
     } = useForm<SighUpFormSchemaInput, unknown, SighUpFormSchemaOutput>({
@@ -127,17 +129,9 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
             return;
         }
 
-        const dataBase64 = p.dataBase64.split(",")[1];
-
-        if (!dataBase64) {
-            console.error("Invalid base64 data");
-
-            return;
-        }
-
         onSubmit({
             ...values,
-            photo: { ...p, dataBase64 },
+            photo: p,
         });
     }
 
@@ -145,6 +139,19 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
         console.error(fieldErrors);
     }
 
+    async function handlePhotoUpload(result: File | null) {
+        if (!result) {
+            photo.onChange(null);
+            return;
+        }
+
+        const base64String = await ImageService.convertFileToBase64(result);
+
+        setValue("photo", {
+            fileName: result.name,
+            dataBase64: base64String,
+        });
+    }
     return (
         <>
             <div className="flex flex-col gap-6">
@@ -261,12 +268,10 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                 </Field>
                                 {method.candidate.securityOption === ESecuritySettings.Password2FA && (
                                     <Field>
-                                        <FieldLabel htmlFor="qrCode">QR Code</FieldLabel>
-                                        <img
-                                            src={`data:image/png;base64,${method.candidate.qrCode}`}
-                                            alt="QR Code"
-                                            className="w-[220px] h-[220px] object-contain"
-                                            title="QR Code"
+                                        <FieldLabel>QR Code</FieldLabel>
+                                        <MfaQrCode
+                                            qrCode={method.candidate.qrCode}
+                                            secretKey={method.candidate.secretKey}
                                         />
                                     </Field>
                                 )}
@@ -334,8 +339,8 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                 open={openCandidatePhoto}
                 onOpenChange={setOpenCandidatePhoto}
                 initialImage={photo.value?.dataBase64 ?? null}
-                onConfirm={result => {
-                    photo.onChange(result);
+                onSubmit={result => {
+                    void handlePhotoUpload(result);
                 }}
             />
         </>

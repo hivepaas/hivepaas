@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import z from "zod";
 
+import { MfaQrCode } from "@application/shared/components";
+
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
@@ -15,7 +17,7 @@ export const F2aSetupSchema = z.object({
 export type F2aSetupSchemaInput = z.input<typeof F2aSetupSchema>;
 export type F2aSetupSchemaOutput = z.output<typeof F2aSetupSchema>;
 
-export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken }: Props) {
+export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey }: Props) {
     void totpToken;
     const {
         handleSubmit,
@@ -56,11 +58,10 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken }: Props) 
             >
                 <FieldGroup>
                     <Field>
-                        <FieldLabel htmlFor="qrCode">QR Code</FieldLabel>
-                        <img
-                            src={`data:image/png;base64,${qrCode}`}
-                            alt="QR Code"
-                            className="w-[220px] h-[220px] object-contain"
+                        <FieldLabel>QR Code</FieldLabel>
+                        <MfaQrCode
+                            qrCode={qrCode}
+                            secretKey={secretKey}
                         />
                     </Field>
 
@@ -98,7 +99,7 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken }: Props) 
                             type="submit"
                             isLoading={isPending}
                         >
-                            Verify
+                            Activate
                         </Button>
                     </Field>
                 </FieldGroup>
@@ -112,4 +113,5 @@ interface Props {
     onSubmit: (values: F2aSetupSchemaOutput) => Promise<void> | void;
     qrCode: string;
     totpToken: string;
+    secretKey: string;
 }

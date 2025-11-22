@@ -62,6 +62,7 @@ export type Profile_GetProfile2FASetup_Req = ApiRequestBase<{
 export type Profile_GetProfile2FASetup_Res = ApiResponseBase<{
     totpToken: string;
     totpQRCode: string;
+    secretKey: string;
 }>;
 
 /**

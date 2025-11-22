@@ -59,7 +59,7 @@ export type Users_InviteOne_Res = ApiResponseBase<{ inviteLink: string }>;
  */
 export type Users_UpdateProfile_Req = ApiRequestBase<{
     profile: Pick<Profile, "fullName" | "email" | "username" | "position" | "notes"> & {
-        photo?: { fileName: string; dataBase64: string };
+        photo?: { fileName: string; dataBase64: string } | { delete: true };
     };
 }>;
 

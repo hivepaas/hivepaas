@@ -15,7 +15,7 @@ import {
 } from "../form";
 import { useF2aSetupDialogState } from "../hooks";
 
-type State = { QRCode: string; totpToken: string } | null;
+type State = { qrCode: string; totpToken: string; secretKey: string } | null;
 
 export function F2aSetupDialog() {
     const [stateData, setStateData] = useState<State>(null);
@@ -43,7 +43,8 @@ export function F2aSetupDialog() {
                 {
                     onSuccess: data => {
                         setStateData({
-                            QRCode: data.data.totpQRCode,
+                            qrCode: data.data.totpQRCode,
+                            secretKey: data.data.secretKey,
                             totpToken: data.data.totpToken,
                         });
                     },
@@ -60,7 +61,8 @@ export function F2aSetupDialog() {
             {
                 onSuccess: data => {
                     setStateData({
-                        QRCode: data.data.totpQRCode,
+                        qrCode: data.data.totpQRCode,
+                        secretKey: data.data.secretKey,
                         totpToken: data.data.totpToken,
                     });
                 },
@@ -111,7 +113,8 @@ export function F2aSetupDialog() {
                     <F2aSetupForm
                         isPending={isGetProfile2FASetupPending || isComplete2FASetupPending}
                         onSubmit={onSubmit}
-                        qrCode={stateData.QRCode}
+                        qrCode={stateData.qrCode}
+                        secretKey={stateData.secretKey}
                         totpToken={stateData.totpToken}
                     />
                 )}

@@ -268,7 +268,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                 </Field>
                                 {method.candidate.securityOption === ESecuritySettings.Password2FA && (
                                     <Field>
-                                        <FieldLabel>QR Code</FieldLabel>
+                                        <FieldLabel>Please scan the QR code</FieldLabel>
                                         <MfaQrCode
                                             qrCode={method.candidate.qrCode}
                                             secretKey={method.candidate.secretKey}
@@ -278,7 +278,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
 
                                 {method.candidate.securityOption === ESecuritySettings.Password2FA && (
                                     <Field>
-                                        <FieldLabel htmlFor="passcode">Passcode</FieldLabel>
+                                        <FieldLabel htmlFor="passcode">Enter the generated passcode</FieldLabel>
                                         <div className="flex justify-center">
                                             <InputOTP
                                                 id="passcode"

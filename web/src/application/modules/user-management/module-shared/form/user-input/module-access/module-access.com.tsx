@@ -164,20 +164,21 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                         Delete
                                     </label>
                                 </div>
-                                {!disabled && (
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        className="hover:opacity-80"
-                                        size="icon"
-                                        onClick={() => {
-                                            handleToggleAll(index);
-                                        }}
-                                    >
-                                        <CheckCheck className="size-4" />
-                                    </Button>
-                                )}
-                                <div className="size-9" />
+                                <div className="flex items-center gap-1">
+                                    {!disabled && (
+                                        <Button
+                                            type="button"
+                                            variant="link"
+                                            className="hover:opacity-80 size-6"
+                                            onClick={() => {
+                                                handleToggleAll(index);
+                                            }}
+                                        >
+                                            <CheckCheck className="size-4" />
+                                        </Button>
+                                    )}
+                                    <div className="size-6" />
+                                </div>
                             </div>
                         </div>
                     ))}

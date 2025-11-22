@@ -18,7 +18,6 @@ interface PhotoUploadDialogProps {
 }
 
 export function PhotoUploadDialog({ open, onOpenChange, onSubmit, initialImage = null }: PhotoUploadDialogProps) {
-    console.log(open);
     return (
         <Dialog
             open={open}

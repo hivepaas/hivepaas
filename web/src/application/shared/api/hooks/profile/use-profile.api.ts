@@ -6,7 +6,12 @@ import { ApplicationApiContext } from "@application/shared/api/api-context";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import type { Profile_Complete2FASetup_Req, Profile_GetProfile2FASetup_Req } from "../../services";
+import type {
+    Profile_Complete2FASetup_Req,
+    Profile_GetProfile2FASetup_Req,
+    Profile_UpdateProfilePassword_Req,
+    Profile_UpdateProfile_Req,
+} from "../../services";
 
 function createHook() {
     return function useProfileApi() {
@@ -16,96 +21,44 @@ function createHook() {
 
         const mutations = useMemo(
             () => ({
-                // /**
-                //  * Update profile
-                //  */
-                // update: async (data: Profile_UpdateProfile_Req["data"]) => {
-                //     const result = await api.profile.update({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
-                // /**
-                //  * Update profile photo
-                //  */
-                // updatePhoto: async (data: Profile_UpdateProfilePhoto_Req["data"]) => {
-                //     const result = await api.profile.updatePhoto({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile photo",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
-                // /**
-                //  * Update profile email
-                //  */
-                // updateEmail: async (data: Profile_UpdateProfileEmail_Req["data"]) => {
-                //     const result = await api.profile.updateEmail({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile email",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
-                // /**
-                //  * Update profile password
-                //  */
-                // updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
-                //     const result = await api.profile.updatePassword({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile password",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
-                // /**
-                //  * Update profile locale
-                //  */
-                // updateLocale: async (data: Profile_UpdateProfileLocale_Req["data"]) => {
-                //     const result = await api.profile.updateLocale({
-                //         data,
-                //     });
-                //     return match(result, {
-                //         Ok: _ => _,
-                //         Err: error => {
-                //             notifyError({
-                //                 message: "Failed to update profile locale",
-                //                 error,
-                //             });
-                //             throw error;
-                //         },
-                //     });
-                // },
+                /**
+                 * Update profile
+                 */
+                update: async (data: Profile_UpdateProfile_Req["data"]) => {
+                    const result = await api.profile.update({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update profile",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update profile password
+                 */
+                updatePassword: async (data: Profile_UpdateProfilePassword_Req["data"]) => {
+                    const result = await api.profile.updatePassword({
+                        data,
+                    });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update profile password",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
 
                 /**
                  * Get profile 2FA setup

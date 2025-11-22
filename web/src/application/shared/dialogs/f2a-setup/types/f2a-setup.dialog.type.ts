@@ -16,5 +16,6 @@ export interface F2aSetupDialogOptions {
         onClose?: () => void;
         onSuccess?: () => void;
         onError?: (error: Error) => void;
+        isSetupRequired?: boolean;
     };
 }

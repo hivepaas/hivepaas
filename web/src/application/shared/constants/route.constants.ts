@@ -52,6 +52,10 @@ export const ROUTE = {
                 $pattern: "user-management/users/profile",
                 $route: "/user-management/users/profile/",
             },
+            profileApiKeys: {
+                $pattern: "user-management/users/profile/api-keys",
+                $route: "/user-management/users/profile/api-keys/",
+            },
         },
     },
 } as const;

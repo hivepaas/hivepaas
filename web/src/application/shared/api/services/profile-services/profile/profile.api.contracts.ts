@@ -1,6 +1,9 @@
-import { type Profile } from "@application/shared/entities";
+import type { PaginationState, SortingState } from "@infrastructure/data";
 
-import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
+import { type Profile } from "@application/shared/entities";
+import type { ProfileApiKey } from "@application/shared/entities/profile";
+
+import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
 /**
  * Update profile
@@ -50,4 +53,41 @@ export type Profile_Complete2FASetup_Req = ApiRequestBase<{
 
 export type Profile_Complete2FASetup_Res = ApiResponseBase<{
     type: "success";
+}>;
+
+/**
+ * Find many profile API keys paginated
+ */
+export type Profile_FindManyApiKeysPaginated_Req = ApiRequestBase<{
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type Profile_FindManyApiKeysPaginated_Res = ApiResponsePaginated<ProfileApiKey>;
+
+/**
+ * Create one profile API key
+ */
+export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
+    name: string;
+    accessAction: {
+        read: boolean;
+        write: boolean;
+        delete: boolean;
+    };
+    expireAt?: Date;
+}>;
+
+export type Profile_CreateOneApiKey_Res = ApiResponseBase<ProfileApiKey>;
+
+/**
+ * Delete one profile API key
+ */
+export type Profile_DeleteOneApiKey_Req = ApiRequestBase<{
+    id: string;
+}>;
+
+export type Profile_DeleteOneApiKey_Res = ApiResponseBase<{
+    id: string;
 }>;

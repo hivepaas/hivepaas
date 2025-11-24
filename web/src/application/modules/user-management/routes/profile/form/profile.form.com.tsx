@@ -84,8 +84,18 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
                     moduleAccesses: mapModuleAccesses(values.moduleAccesses),
                 });
             },
-            onError(_error: ValidationException) {
-                // TODO handle validation error
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as keyof SchemaInput,
+                        { message, type: "manual" },
+                        { shouldFocus: index === 0 },
+                    );
+                });
             },
         }),
         [methods],

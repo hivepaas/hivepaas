@@ -1,19 +1,25 @@
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
+import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
+
 import type {
-    ProfileApiValidator,
     Profile_Complete2FASetup_Req,
     Profile_Complete2FASetup_Res,
+    Profile_CreateOneApiKey_Req,
+    Profile_CreateOneApiKey_Res,
+    Profile_DeleteOneApiKey_Req,
+    Profile_DeleteOneApiKey_Res,
+    Profile_FindManyApiKeysPaginated_Req,
+    Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfilePassword_Res,
     Profile_UpdateProfile_Req,
     Profile_UpdateProfile_Res,
-} from "@application/shared/api/services";
-
-import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
+} from "./profile.api.contracts";
+import type { ProfileApiValidator } from "./profile.api.validator";
 
 export class ProfileApi extends BaseApi {
     public constructor(private readonly validator: ProfileApiValidator) {
@@ -114,6 +120,75 @@ export class ProfileApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" as const } })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Find many profile API keys paginated
+     */
+    async findManyApiKeysPaginated(
+        request: Profile_FindManyApiKeysPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Profile_FindManyApiKeysPaginated_Res, Error>> {
+        const { search, pagination, sorting } = request.data;
+
+        const query = this.queryBuilder.getInstance();
+
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get("/users/current/settings/api-keys", {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findManyApiKeysPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Create one profile API key
+     */
+    async createOneApiKey(
+        request: Profile_CreateOneApiKey_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Profile_CreateOneApiKey_Res, Error>> {
+        const { name, accessAction, expireAt } = request.data;
+
+        const json = {
+            name,
+            accessAction,
+            expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : undefined,
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/users/current/api-keys", json, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createOneApiKey),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Delete one profile API key
+     */
+    async deleteOneApiKey(request: Profile_DeleteOneApiKey_Req): Promise<Result<Profile_DeleteOneApiKey_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`/users/current/api-keys/${id}`, {})).pipe(
+                map(() => Ok({ data: { id } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

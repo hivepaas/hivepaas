@@ -1,9 +1,13 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { type Profile_GetProfile2FASetup_Res } from "@application/shared/api/services";
+import type {
+    Profile_CreateOneApiKey_Res,
+    Profile_FindManyApiKeysPaginated_Res,
+    Profile_GetProfile2FASetup_Res,
+} from "@application/shared/api/services";
 
-import { parseApiResponse } from "@infrastructure/api";
+import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 // /**
 //  * Update profile photo schema
@@ -97,6 +101,80 @@ export class ProfileApiValidator {
                 totpToken: data.totpToken,
                 totpQRCode: data.qrCode.dataBase64,
                 secretKey: data.secret,
+            },
+        };
+    };
+
+    /**
+     * Profile API Key schema
+     */
+    #ProfileApiKeySchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        key: z.string(),
+        accessAction: z.object({
+            read: z.boolean(),
+            write: z.boolean(),
+            delete: z.boolean(),
+        }),
+        expireAt: z.coerce.date(),
+        status: z.string(),
+    });
+
+    /**
+     * Find many profile API keys paginated API response schema
+     */
+    #FindManyApiKeysPaginatedSchema = z.object({
+        data: z.array(this.#ProfileApiKeySchema),
+        meta: PagingMetaApiSchema,
+    });
+
+    /**
+     * Create one profile API key API response schema
+     */
+    #CreateOneApiKeySchema = z.object({
+        data: this.#ProfileApiKeySchema,
+    });
+
+    /**
+     * Validate and transform find many profile API keys paginated API response
+     */
+    findManyApiKeysPaginated = (response: AxiosResponse): Profile_FindManyApiKeysPaginated_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: this.#FindManyApiKeysPaginatedSchema,
+        });
+
+        return {
+            data: data.map(apiKey => ({
+                id: apiKey.id,
+                name: apiKey.name,
+                key: apiKey.key,
+                accessAction: apiKey.accessAction,
+                expireAt: apiKey.expireAt,
+                status: apiKey.status,
+            })),
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform create one profile API key API response
+     */
+    createOneApiKey = (response: AxiosResponse): Profile_CreateOneApiKey_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: this.#CreateOneApiKeySchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+                name: data.name,
+                key: data.key,
+                accessAction: data.accessAction,
+                expireAt: data.expireAt,
+                status: data.status,
             },
         };
     };

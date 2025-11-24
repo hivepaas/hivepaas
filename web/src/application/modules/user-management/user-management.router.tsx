@@ -91,6 +91,16 @@ export const userManagementRouter: RouteObject = {
                         };
                     },
                 },
+                {
+                    path: ROUTE.userManagement.users.profileApiKeys.$pattern,
+                    lazy: async () => {
+                        const { ProfileApiKeysRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProfileApiKeysRoute,
+                        };
+                    },
+                },
             ],
         },
     ],

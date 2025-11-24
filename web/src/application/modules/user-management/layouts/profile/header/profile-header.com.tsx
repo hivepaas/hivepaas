@@ -22,7 +22,7 @@ function View() {
             label: "General",
         },
         {
-            route: "#",
+            route: ROUTE.userManagement.users.profileApiKeys.$route,
             label: "API Keys",
         },
     ];

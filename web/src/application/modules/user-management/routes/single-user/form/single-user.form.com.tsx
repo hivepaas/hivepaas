@@ -61,8 +61,18 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     moduleAccesses: mapModuleAccesses(values.moduleAccesses),
                 });
             },
-            onError(_error: ValidationException) {
-                // TODO handle validation error
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as keyof SchemaInput,
+                        { message, type: "manual" },
+                        { shouldFocus: index === 0 },
+                    );
+                });
             },
         }),
         [methods],
@@ -85,10 +95,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
 
                     {/* Role */}
                     <div className="h-px bg-border" />
-                    <InfoBlock
-                        titleWidth={150}
-                        title="Role"
-                    >
+                    <InfoBlock title="Role">
                         <UserInput.Role<SingleUserFormSchemaInput> name="role" />
                     </InfoBlock>
 

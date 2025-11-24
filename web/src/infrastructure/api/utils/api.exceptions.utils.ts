@@ -2,6 +2,7 @@ import { type AxiosError } from "axios";
 
 import { CancelException } from "@infrastructure/exceptions/cancel";
 import {
+    Http400Exception,
     Http401Exception,
     Http403Exception,
     Http404Exception,
@@ -86,4 +87,11 @@ export function isToManyLoginAttemptsException(error: Error): boolean {
  */
 export function isPasswordResetTokenInvalidException(error: Error): boolean {
     return error instanceof Http406Exception && error.code === "ERR_PASSWORD_RESET_TOKEN_INVALID";
+}
+
+/**
+ * Check if the error is a validation error
+ */
+export function isValidationException(error: Error): error is Http400Exception {
+    return error instanceof Http400Exception && error.hasErrors;
 }

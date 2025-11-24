@@ -159,10 +159,7 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
 
                     {/* Role */}
                     <div className="h-px bg-border" />
-                    <InfoBlock
-                        titleWidth={150}
-                        title="Role"
-                    >
+                    <InfoBlock title="Role">
                         <UserRoleBadge role={defaultValues.role} />
                     </InfoBlock>
 

@@ -17,7 +17,7 @@ function View({ role }: Props) {
     };
 
     return (
-        <Badge className={cn(roleColorMap[role] || "bg-primary text-primary-foreground")}>
+        <Badge className={cn(roleColorMap[role] || "bg-primary text-primary-foreground", "h-5")}>
             {roleMap[role] || role}
         </Badge>
     );

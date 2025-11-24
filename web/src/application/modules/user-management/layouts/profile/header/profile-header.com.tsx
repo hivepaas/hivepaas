@@ -52,7 +52,7 @@ function View() {
                                 </div>
                             </div>
                             <span>•</span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex gap-1.5">
                                 <BadgeCheck className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
                                     <span>Role :</span>

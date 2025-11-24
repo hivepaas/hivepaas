@@ -15,12 +15,12 @@ export const ProfileFormSchema = z.object({
         .string()
         .trim()
         .min(1, "Full Name is required")
-        .max(255, "Full Name should be at most 255 characters long"),
+        .max(100, "Full Name should be at most 100 characters long"),
     email: z.string(),
     username: z
         .string()
         .trim()
-        .max(255, "Username should be at most 255 characters long")
+        .max(100, "Username should be at most 100 characters long")
         .regex(/^[a-zA-Z0-9]*$/, "Username must contain only letters and numbers"),
     position: z.string(),
     notes: z.string(),

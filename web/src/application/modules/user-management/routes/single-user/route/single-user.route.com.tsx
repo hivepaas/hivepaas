@@ -10,6 +10,11 @@ import { AppLoader } from "@application/shared/components";
 import { UsersCommands } from "@application/modules/user-management/data/commands";
 import { UsersQueries } from "@application/modules/user-management/data/queries";
 
+import { isValidationException } from "@infrastructure/api/utils/api.exceptions.utils";
+
+import { HttpException } from "@infrastructure/exceptions/http";
+import { ValidationException } from "@infrastructure/exceptions/validation";
+
 import { SingleUserForm } from "../form";
 import { type SingleUserFormSchemaOutput } from "../schemas";
 import { type SingleUserFormRef } from "../types";
@@ -26,6 +31,11 @@ export function SingleUserRoute() {
     const { mutate: update, isPending } = UsersCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("User base information updated");
+        },
+        onError: err => {
+            if (isValidationException(err)) {
+                formRef.current?.onError(ValidationException.fromHttp(err));
+            }
         },
     });
 
@@ -61,7 +71,7 @@ export function SingleUserRoute() {
 
     const { data: user } = data;
     return (
-        <div className="bg-background rounded-lg p-4 container mx-auto">
+        <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
             <SingleUserForm
                 ref={formRef}
                 defaultValues={user}

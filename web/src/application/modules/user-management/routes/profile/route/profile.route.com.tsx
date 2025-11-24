@@ -47,7 +47,7 @@ export function ProfileRoute() {
     }, [profile]);
 
     return (
-        <div className="bg-background rounded-lg p-4 container mx-auto">
+        <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
             <ProfileForm
                 ref={formRef}
                 defaultValues={profile}

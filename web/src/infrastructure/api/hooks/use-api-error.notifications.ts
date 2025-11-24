@@ -3,7 +3,7 @@ import { useCallback } from "react";
 
 import { type ExternalToast, toast } from "sonner";
 
-import { isCancelException, isUnauthorizedException } from "@infrastructure/api/utils";
+import { isCancelException, isUnauthorizedException, isValidationException } from "@infrastructure/api/utils";
 
 interface Params {
     message: React.ReactNode;
@@ -21,7 +21,7 @@ function createHook() {
 
             switch (true) {
                 case import.meta.env.MODE === "development":
-                    console.error(error.stack);
+                    console.error(error);
 
                     break;
 
@@ -39,6 +39,20 @@ function createHook() {
 
                 return;
             }
+
+            if (isValidationException(error)) {
+                const firstError = error.errors[0];
+                if (firstError) {
+                    const validationMessage = `Param '${firstError.path}': ${firstError.message}`;
+                    toast.error(message, {
+                        description: validationMessage,
+                        ...options,
+                    });
+
+                    return;
+                }
+            }
+
             if (status === "warning") {
                 toast.warning(message, {
                     description: error.message,

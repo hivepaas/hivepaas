@@ -8,6 +8,9 @@ import { useApiErrorNotifications } from "@infrastructure/api";
 
 import type {
     Profile_Complete2FASetup_Req,
+    Profile_CreateOneApiKey_Req,
+    Profile_DeleteOneApiKey_Req,
+    Profile_FindManyApiKeysPaginated_Req,
     Profile_GetProfile2FASetup_Req,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfile_Req,
@@ -18,6 +21,38 @@ function createHook() {
         const { api } = use(ApplicationApiContext);
 
         const { notifyError } = useApiErrorNotifications();
+
+        const queries = useMemo(
+            () => ({
+                /**
+                 * Find many profile API keys paginated
+                 */
+                findManyApiKeysPaginated: async (
+                    data: Profile_FindManyApiKeysPaginated_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.profile.findManyApiKeysPaginated(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get profile API keys",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api, notifyError],
+        );
 
         const mutations = useMemo(
             () => ({
@@ -97,11 +132,82 @@ function createHook() {
                         },
                     });
                 },
+
+                /**
+                 * Find many profile API keys paginated
+                 */
+                findManyApiKeysPaginated: async (
+                    data: Profile_FindManyApiKeysPaginated_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.profile.findManyApiKeysPaginated(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to find many profile API keys",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Create one profile API key
+                 */
+                createOneApiKey: async (data: Profile_CreateOneApiKey_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.profile.createOneApiKey(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to create profile API key",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Delete one profile API key
+                 */
+                deleteOneApiKey: async (data: Profile_DeleteOneApiKey_Req["data"]) => {
+                    const result = await api.profile.deleteOneApiKey({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to delete profile API key",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
             }),
             [api, notifyError],
         );
 
         return {
+            queries,
             mutations,
         };
     };

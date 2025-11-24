@@ -2,7 +2,7 @@ import { RefreshCw, Shield, ShieldOff } from "lucide-react";
 import invariant from "tiny-invariant";
 import type { UserBase } from "~/user-management/domain";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, PopConfirm } from "@application/shared/components";
 import { useProfileContext } from "@application/shared/context";
 import { useChangePasswordDialog, useF2aSetupDialog } from "@application/shared/dialogs";
 import { ESecuritySettings, EUserStatus } from "@application/shared/enums";
@@ -82,14 +82,25 @@ export function Security({ defaultValues }: Props) {
                                     </Button>
                                 )}
                                 {isPasswordOnly && (
-                                    <Button
-                                        variant="outline"
-                                        size="default"
-                                        type="button"
+                                    <PopConfirm
+                                        title="Deactivate 2-Factor Authentication"
+                                        variant="destructive"
+                                        confirmText="Deactivate"
+                                        cancelText="Cancel"
+                                        description="For security reason, please provide your current 2FA authentication code in order to deactivate it"
+                                        onConfirm={() => {
+                                            console.log("deactivate 2fa");
+                                        }}
                                     >
-                                        <ShieldOff className="size-4" />
-                                        Deactivate 2FA
-                                    </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="default"
+                                            type="button"
+                                        >
+                                            <ShieldOff className="size-4" />
+                                            Deactivate 2FA
+                                        </Button>
+                                    </PopConfirm>
                                 )}
                             </div>
                         </div>

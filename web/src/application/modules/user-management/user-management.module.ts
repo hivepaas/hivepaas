@@ -1,7 +1,7 @@
 /**
  * Users
  */
-export { UsersRoute, SingleUserRoute, ProfileRoute } from "./routes";
+export { UsersRoute, SingleUserRoute, ProfileRoute, ProfileApiKeysRoute } from "./routes";
 
 /**
  * Layouts

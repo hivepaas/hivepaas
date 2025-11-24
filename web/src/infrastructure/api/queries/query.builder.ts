@@ -9,7 +9,7 @@ interface Context {
 }
 
 interface Sorting {
-    sort: string[];
+    sort: string[] | string;
 }
 
 interface Pagination {
@@ -93,6 +93,15 @@ class Builder {
      */
     sorting(sorting?: SortingState): this {
         if (!sorting) {
+            return this;
+        }
+
+        if (sorting.length === 1) {
+            const [sort] = sorting;
+            this.#sorting = {
+                ...this.#sorting,
+                sort: `${sort?.desc ? "-" : ""}${sort?.id}`,
+            };
             return this;
         }
 

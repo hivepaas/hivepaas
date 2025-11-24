@@ -6,6 +6,7 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
+import { EProfileApiKeyAction, EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -111,14 +112,10 @@ export class ProfileApiValidator {
     #ProfileApiKeySchema = z.object({
         id: z.string(),
         name: z.string(),
-        key: z.string(),
-        accessAction: z.object({
-            read: z.boolean(),
-            write: z.boolean(),
-            delete: z.boolean(),
-        }),
-        expireAt: z.coerce.date(),
-        status: z.string(),
+        keyId: z.string(),
+        accessAction: z.nativeEnum(EProfileApiKeyAction).optional(),
+        expireAt: z.coerce.date().optional(),
+        status: z.nativeEnum(EProfileApiKeyStatus),
     });
 
     /**
@@ -149,7 +146,7 @@ export class ProfileApiValidator {
             data: data.map(apiKey => ({
                 id: apiKey.id,
                 name: apiKey.name,
-                key: apiKey.key,
+                keyId: apiKey.keyId,
                 accessAction: apiKey.accessAction,
                 expireAt: apiKey.expireAt,
                 status: apiKey.status,
@@ -171,7 +168,7 @@ export class ProfileApiValidator {
             data: {
                 id: data.id,
                 name: data.name,
-                key: data.key,
+                keyId: data.keyId,
                 accessAction: data.accessAction,
                 expireAt: data.expireAt,
                 status: data.status,

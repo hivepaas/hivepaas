@@ -6,6 +6,8 @@ import type {
     Profile_Complete2FASetup_Res,
     Profile_CreateOneApiKey_Req,
     Profile_CreateOneApiKey_Res,
+    Profile_DeleteOneApiKey_Req,
+    Profile_DeleteOneApiKey_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
     Profile_UpdateProfilePassword_Req,
@@ -155,10 +157,40 @@ function useCreateOneApiKey({ onSuccess, ...options }: CreateOneApiKeyOptions = 
     });
 }
 
+/**
+ * Delete one profile API key
+ */
+type DeleteOneApiKeyReq = Profile_DeleteOneApiKey_Req["data"];
+type DeleteOneApiKeyRes = Profile_DeleteOneApiKey_Res;
+
+type DeleteOneApiKeyOptions = Omit<UseMutationOptions<DeleteOneApiKeyRes, Error, DeleteOneApiKeyReq>, "mutationFn">;
+
+function useDeleteOneApiKey({ onSuccess, ...options }: DeleteOneApiKeyOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deleteOneApiKey,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["profile-api-keys.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
     useUpdate,
     useUpdatePassword,
     useCreateOneApiKey,
+    useDeleteOneApiKey,
 });

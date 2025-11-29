@@ -1,21 +1,29 @@
 import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { MoreVertical, Settings2, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 import { PopConfirm } from "@application/shared/components";
+import { ProfileCommands } from "@application/shared/data/commands";
 
 function View({ id }: Props) {
     const [open, setOpen] = useState(false);
+
+    const { mutate: deleteOneApiKey, isPending: isDeleting } = ProfileCommands.useDeleteOneApiKey({
+        onSuccess: () => {
+            toast.success("API key deleted successfully");
+            setOpen(false);
+        },
+    });
 
     const onChangeStatus = () => {
         console.log("onChangeStatus");
         setOpen(false);
     };
     const onDelete = () => {
-        console.log("onDelete");
-        setOpen(false);
+        deleteOneApiKey({ id });
     };
     return (
         <DropdownMenu
@@ -58,6 +66,7 @@ function View({ id }: Props) {
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"
+                            disabled={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
                             Delete

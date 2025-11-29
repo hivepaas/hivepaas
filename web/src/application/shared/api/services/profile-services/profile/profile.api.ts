@@ -187,7 +187,7 @@ export class ProfileApi extends BaseApi {
         const { id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/users/current/api-keys/${id}`, {})).pipe(
+            from(this.client.v1.delete(`/users/current/settings/api-keys/${id}`, {})).pipe(
                 map(() => Ok({ data: { id } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

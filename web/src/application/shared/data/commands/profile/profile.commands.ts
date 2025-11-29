@@ -1,9 +1,11 @@
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useProfileApi, useSessionApi } from "@application/shared/api";
 import type {
     Profile_Complete2FASetup_Req,
     Profile_Complete2FASetup_Res,
+    Profile_CreateOneApiKey_Req,
+    Profile_CreateOneApiKey_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
     Profile_UpdateProfilePassword_Req,
@@ -11,6 +13,7 @@ import type {
     Profile_UpdateProfile_Req,
     Profile_UpdateProfile_Res,
 } from "@application/shared/api/services";
+import { QK } from "@application/shared/data/constants";
 import { type Profile } from "@application/shared/entities";
 
 /**
@@ -121,9 +124,41 @@ function useUpdatePassword(options: UpdatePasswordOptions = {}) {
     });
 }
 
+/**
+ * Create one profile API key
+ */
+type CreateOneApiKeyReq = Profile_CreateOneApiKey_Req["data"];
+type CreateOneApiKeyRes = Profile_CreateOneApiKey_Res;
+
+type CreateOneApiKeyOptions = Omit<UseMutationOptions<CreateOneApiKeyRes, Error, CreateOneApiKeyReq>, "mutationFn">;
+
+function useCreateOneApiKey({ onSuccess, ...options }: CreateOneApiKeyOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createOneApiKey,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["profile-api-keys.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+
+            return response;
+        },
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
     useUpdate,
     useUpdatePassword,
+    useCreateOneApiKey,
 });

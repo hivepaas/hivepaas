@@ -7,7 +7,7 @@ interface ValidationError {
 }
 
 interface ConstructorParams {
-    type: string;
+    type?: string;
     title: string;
     status: number;
     code: string;
@@ -18,7 +18,7 @@ interface ConstructorParams {
 export class ValidationProblemApiResponse extends ProblemApiResponse {
     constructor(params: ConstructorParams) {
         super({
-            type: params.type,
+            type: params.type ?? "",
             title: params.title,
             status: params.status,
             code: params.code,

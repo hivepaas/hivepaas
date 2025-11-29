@@ -79,7 +79,11 @@ export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
     expireAt?: Date;
 }>;
 
-export type Profile_CreateOneApiKey_Res = ApiResponseBase<ProfileApiKey>;
+export type Profile_CreateOneApiKey_Res = ApiResponseBase<{
+    id: string;
+    keyId: string;
+    secretKey: string;
+}>;
 
 /**
  * Delete one profile API key

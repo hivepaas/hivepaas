@@ -161,13 +161,10 @@ function createHook() {
                 /**
                  * Create one profile API key
                  */
-                createOneApiKey: async (data: Profile_CreateOneApiKey_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.profile.createOneApiKey(
-                        {
-                            data,
-                        },
-                        signal,
-                    );
+                createOneApiKey: async (data: Profile_CreateOneApiKey_Req["data"]) => {
+                    const result = await api.profile.createOneApiKey({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,

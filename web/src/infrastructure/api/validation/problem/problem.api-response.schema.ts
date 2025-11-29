@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ProblemApiResponseSchema = z.object({
-    type: z.string(),
+    type: z.string().optional(),
     title: z.string(),
     status: z.number(),
     code: z.string(),

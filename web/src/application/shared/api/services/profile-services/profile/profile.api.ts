@@ -164,12 +164,12 @@ export class ProfileApi extends BaseApi {
         const json = {
             name,
             accessAction,
-            expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : undefined,
+            expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : null,
         };
 
         return lastValueFrom(
             from(
-                this.client.v1.post("/users/current/api-keys", json, {
+                this.client.v1.post("/users/current/settings/api-keys", json, {
                     signal,
                 }),
             ).pipe(

@@ -3,7 +3,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { ProfileApiKey } from "@application/shared/entities/profile";
-import { EProfileApiKeyAction, EProfileApiKeyStatus } from "@application/shared/enums";
+import { EProfileApiKeyStatus } from "@application/shared/enums";
+
+import { ActionsCell } from "./building-blocks";
 
 const columns: ColumnDef<ProfileApiKey>[] = [
     {
@@ -23,18 +25,32 @@ const columns: ColumnDef<ProfileApiKey>[] = [
             const { accessAction } = original;
             if (!accessAction) return "-";
             return (
-                <Badge
-                    variant="default"
-                    className={
-                        accessAction === EProfileApiKeyAction.Read
-                            ? "bg-blue-500"
-                            : accessAction === EProfileApiKeyAction.Write
-                              ? "bg-orange-500"
-                              : "bg-red-500"
-                    }
-                >
-                    {accessAction.charAt(0).toUpperCase() + accessAction.slice(1)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                    {accessAction.read && (
+                        <Badge
+                            variant="default"
+                            className="bg-blue-500"
+                        >
+                            Read
+                        </Badge>
+                    )}
+                    {accessAction.write && (
+                        <Badge
+                            variant="default"
+                            className="bg-orange-500"
+                        >
+                            Write
+                        </Badge>
+                    )}
+                    {accessAction.delete && (
+                        <Badge
+                            variant="default"
+                            className="bg-red-500"
+                        >
+                            Delete
+                        </Badge>
+                    )}
+                </div>
             );
         },
     },
@@ -67,6 +83,13 @@ const columns: ColumnDef<ProfileApiKey>[] = [
             } catch {
                 return "-";
             }
+        },
+    },
+    {
+        header: "Actions",
+        cell: ({ row: { original } }) => {
+            const { id } = original;
+            return <ActionsCell id={id} />;
         },
     },
 ];

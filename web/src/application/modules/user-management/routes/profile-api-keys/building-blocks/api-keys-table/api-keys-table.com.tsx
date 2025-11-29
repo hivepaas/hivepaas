@@ -4,11 +4,17 @@ import { ProfileApiKeysTableDefs } from "~/user-management/module-shared/definit
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { ProfileQueries } from "@application/shared/data/queries";
+import { useCreateProfileApiKeyDialog } from "@application/shared/dialogs";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
 
 export function ApiKeysTable() {
+    const dialog = useCreateProfileApiKeyDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
     const { data: { data: apiKeys } = DEFAULT_PAGINATED_DATA, isFetching } = ProfileQueries.useFindManyApiKeysPaginated(
         {
@@ -23,7 +29,11 @@ export function ApiKeysTable() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button>
+                    <Button
+                        onClick={() => {
+                            dialog.actions.open();
+                        }}
+                    >
                         <Plus /> Create API Key
                     </Button>
                 }

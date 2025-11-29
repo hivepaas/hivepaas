@@ -6,20 +6,9 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
-import { EProfileApiKeyAction, EProfileApiKeyStatus } from "@application/shared/enums";
+import { EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
-
-// /**
-//  * Update profile photo schema
-//  */
-// const UpdatePhotoSchema = z.object({
-//     data: z.tuple([
-//         z.object({
-//             url: z.string(),
-//         }),
-//     ]),
-// });
 
 /**
  * Get profile 2FA setup API response schema
@@ -34,60 +23,44 @@ const GetProfile2FASetupSchema = z.object({
     }),
 });
 
-export class ProfileApiValidator {
-    // /**
-    //  * Validate and transform update profile API response
-    //  */
-    // // update = (_: AxiosResponse): Profile_UpdateProfile_Res => {
-    // //     return {
-    // //         data: {
-    // //             type: "success",
-    // //         },
-    // //     };
-    // // };
-    // // /**
-    // //  * Validate and transform update profile photo API response
-    // //  */
-    // // updatePhoto = (response: AxiosResponse): Profile_UpdateProfilePhoto_Res => {
-    // //     const { data } = parseApiResponse({
-    // //         response,
-    // //         schema: UpdatePhotoSchema,
-    // //     });
-    // //     return {
-    // //         data: data[0],
-    // //     };
-    // // };
-    // // /**
-    // //  * Validate and transform update profile email API response
-    // //  */
-    // // updateEmail = (_: AxiosResponse): Profile_UpdateProfile_Res => {
-    // //     return {
-    // //         data: {
-    // //             type: "success",
-    // //         },
-    // //     };
-    // // };
-    // // /**
-    // //  * Validate and transform update profile password API response
-    // //  */
-    // // updatePassword = (_: AxiosResponse): Profile_UpdateProfile_Res => {
-    // //     return {
-    // //         data: {
-    // //             type: "success",
-    // //         },
-    // //     };
-    // // };
-    // // /**
-    // //  * Validate and transform update profile locale API response
-    // //  */
-    // // updateLocale = (_: AxiosResponse): Profile_UpdateProfileLocale_Res => {
-    // //     return {
-    // //         data: {
-    // //             type: "success",
-    // //         },
-    // //     };
-    // // };
+/**
+ * Profile API Key schema
+ */
+const ProfileApiKeySchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    keyId: z.string(),
+    accessAction: z
+        .object({
+            read: z.boolean(),
+            write: z.boolean(),
+            delete: z.boolean(),
+        })
+        .optional(),
+    expireAt: z.coerce.date().optional(),
+    status: z.nativeEnum(EProfileApiKeyStatus),
+});
 
+/**
+ * Find many profile API keys paginated API response schema
+ */
+const FindManyApiKeysPaginatedSchema = z.object({
+    data: z.array(ProfileApiKeySchema),
+    meta: PagingMetaApiSchema,
+});
+
+/**
+ * Create one profile API key API response schema
+ */
+const CreateOneApiKeySchema = z.object({
+    data: z.object({
+        id: z.string(),
+        keyId: z.string(),
+        secretKey: z.string(),
+    }),
+});
+
+export class ProfileApiValidator {
     /**
      * Validate and transform get profile 2FA setup API response
      */
@@ -107,39 +80,12 @@ export class ProfileApiValidator {
     };
 
     /**
-     * Profile API Key schema
-     */
-    #ProfileApiKeySchema = z.object({
-        id: z.string(),
-        name: z.string(),
-        keyId: z.string(),
-        accessAction: z.nativeEnum(EProfileApiKeyAction).optional(),
-        expireAt: z.coerce.date().optional(),
-        status: z.nativeEnum(EProfileApiKeyStatus),
-    });
-
-    /**
-     * Find many profile API keys paginated API response schema
-     */
-    #FindManyApiKeysPaginatedSchema = z.object({
-        data: z.array(this.#ProfileApiKeySchema),
-        meta: PagingMetaApiSchema,
-    });
-
-    /**
-     * Create one profile API key API response schema
-     */
-    #CreateOneApiKeySchema = z.object({
-        data: this.#ProfileApiKeySchema,
-    });
-
-    /**
      * Validate and transform find many profile API keys paginated API response
      */
     findManyApiKeysPaginated = (response: AxiosResponse): Profile_FindManyApiKeysPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
-            schema: this.#FindManyApiKeysPaginatedSchema,
+            schema: FindManyApiKeysPaginatedSchema,
         });
 
         return {
@@ -147,7 +93,7 @@ export class ProfileApiValidator {
                 id: apiKey.id,
                 name: apiKey.name,
                 keyId: apiKey.keyId,
-                accessAction: apiKey.accessAction,
+                accessAction: apiKey.accessAction ?? null,
                 expireAt: apiKey.expireAt,
                 status: apiKey.status,
             })),
@@ -161,17 +107,14 @@ export class ProfileApiValidator {
     createOneApiKey = (response: AxiosResponse): Profile_CreateOneApiKey_Res => {
         const { data } = parseApiResponse({
             response,
-            schema: this.#CreateOneApiKeySchema,
+            schema: CreateOneApiKeySchema,
         });
 
         return {
             data: {
                 id: data.id,
-                name: data.name,
                 keyId: data.keyId,
-                accessAction: data.accessAction,
-                expireAt: data.expireAt,
-                status: data.status,
+                secretKey: data.secretKey,
             },
         };
     };

@@ -4,7 +4,7 @@ import { useImperativeHandle, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { add, format } from "date-fns";
 import { type Locale, enUS } from "date-fns/locale";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Clock } from "lucide-react";
 import { DayPicker, DayPickerProps } from "react-day-picker";
 
@@ -643,6 +643,9 @@ type DateTimePickerProps = {
     "value"?: Date;
     "onChange"?: (date: Date | undefined) => void;
     "onMonthChange"?: (date: Date | undefined) => void;
+    /**
+     * Disables the entire DateTimePicker button/input. When true, the picker cannot be opened.
+     **/
     "disabled"?: boolean;
     /** showing `AM/PM` or not. */
     "hourCycle"?: 12 | 24;
@@ -673,6 +676,37 @@ type DateTimePickerProps = {
      * Indicates that the input is invalid. When true, shows red border similar to other shadcn inputs.
      **/
     "aria-invalid"?: boolean | "false" | "true" | "grammar" | "spelling";
+    /**
+     * Show a clear button to reset the selected date. Default is false.
+     **/
+    "showClearButton"?: boolean;
+    /**
+     * The earliest date that can be selected. Dates before this will be disabled.
+     * @example fromDate={new Date()} // Disable past dates
+     **/
+    "fromDate"?: Date;
+    /**
+     * The latest date that can be selected. Dates after this will be disabled.
+     * @example toDate={new Date()} // Disable future dates
+     **/
+    "toDate"?: Date;
+    /**
+     * Disable specific dates. Can be a single Date, array of Dates, a range, or a matcher function.
+     * This will be combined with fromDate and toDate restrictions.
+     * @example
+     * // Single date:
+     * disabledDates={new Date(2024, 0, 15)}
+     *
+     * // Array of dates:
+     * disabledDates={[new Date(2024, 0, 15), new Date(2024, 0, 20)]}
+     *
+     * // Disable weekends:
+     * disabledDates={(date) => date.getDay() === 0 || date.getDay() === 6}
+     *
+     * // Disable before/after:
+     * disabledDates={{ before: new Date(2024, 0, 1), after: new Date(2024, 11, 31) }}
+     **/
+    "disabledDates"?: DayPickerProps["disabled"];
 } & Pick<DayPickerProps, "locale" | "weekStartsOn" | "showWeekNumber" | "showOutsideDays">;
 
 type DateTimePickerRef = {
@@ -695,6 +729,10 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
             placeholder = "Pick a date",
             className,
             "aria-invalid": ariaInvalid,
+            showClearButton = false,
+            fromDate,
+            toDate,
+            disabledDates,
             ...props
         },
         ref,
@@ -711,6 +749,27 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         React.useEffect(() => {
             setDisplayDate(value);
         }, [value]);
+
+        /**
+         * Combine fromDate, toDate, and disabledDates into a single disabled matcher
+         */
+        const combinedDisabled = React.useMemo(() => {
+            const matchers: any[] = [];
+
+            if (fromDate) {
+                matchers.push({ before: fromDate });
+            }
+            if (toDate) {
+                matchers.push({ after: toDate });
+            }
+            if (disabledDates) {
+                matchers.push(disabledDates);
+            }
+
+            if (matchers.length === 0) return undefined;
+            if (matchers.length === 1) return matchers[0];
+            return matchers;
+        }, [fromDate, toDate, disabledDates]);
 
         /**
          * carry over the current time when a user clicks a new day
@@ -743,6 +802,12 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
             setDisplayDate(newDay);
         };
 
+        const handleClear = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            onChange?.(undefined);
+            setDisplayDate(undefined);
+        };
+
         useImperativeHandle(
             ref,
             () => ({
@@ -769,69 +834,87 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         }
 
         return (
-            <Popover>
-                <PopoverTrigger
-                    asChild
-                    disabled={disabled}
-                >
-                    <Button
-                        variant="outline"
-                        className={cn(
-                            "w-full justify-between text-left font-normal",
-                            !displayDate && "text-muted-foreground",
-                            className,
-                        )}
-                        ref={buttonRef}
-                        aria-invalid={ariaInvalid}
+            <div className="relative w-full">
+                <Popover>
+                    <PopoverTrigger
+                        asChild
+                        disabled={disabled}
                     >
-                        {displayDate ? (
-                            format(displayDate, hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12, {
-                                locale: loc,
-                            })
-                        ) : (
-                            <span>{placeholder}</span>
+                        <Button
+                            variant="outline"
+                            className={cn(
+                                "w-full justify-between text-left font-normal",
+                                !displayDate && "text-muted-foreground",
+                                className,
+                            )}
+                            ref={buttonRef}
+                            aria-invalid={ariaInvalid}
+                        >
+                            <span className="truncate flex-1">
+                                {displayDate
+                                    ? format(
+                                          displayDate,
+                                          hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
+                                          {
+                                              locale: loc,
+                                          },
+                                      )
+                                    : placeholder}
+                            </span>
+                            <div className="flex items-center gap-1 ml-2">
+                                <CalendarIcon className="h-4 w-4 shrink-0" />
+                            </div>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={displayDate}
+                            month={month}
+                            onSelect={newDate => {
+                                if (newDate) {
+                                    newDate.setHours(
+                                        month?.getHours() ?? 0,
+                                        month?.getMinutes() ?? 0,
+                                        month?.getSeconds() ?? 0,
+                                    );
+                                    onSelect(newDate);
+                                }
+                            }}
+                            onMonthChange={handleMonthChange}
+                            yearRange={yearRange}
+                            locale={locale}
+                            disabled={combinedDisabled}
+                            {...props}
+                        />
+                        {granularity !== "day" && (
+                            <div className="border-border border-t p-3">
+                                <TimePicker
+                                    onChange={value => {
+                                        onChange?.(value);
+                                        setDisplayDate(value);
+                                        if (value) {
+                                            setMonth(value);
+                                        }
+                                    }}
+                                    date={month}
+                                    hourCycle={hourCycle}
+                                    granularity={granularity}
+                                />
+                            </div>
                         )}
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={displayDate}
-                        month={month}
-                        onSelect={newDate => {
-                            if (newDate) {
-                                newDate.setHours(
-                                    month?.getHours() ?? 0,
-                                    month?.getMinutes() ?? 0,
-                                    month?.getSeconds() ?? 0,
-                                );
-                                onSelect(newDate);
-                            }
-                        }}
-                        onMonthChange={handleMonthChange}
-                        yearRange={yearRange}
-                        locale={locale}
-                        {...props}
-                    />
-                    {granularity !== "day" && (
-                        <div className="border-border border-t p-3">
-                            <TimePicker
-                                onChange={value => {
-                                    onChange?.(value);
-                                    setDisplayDate(value);
-                                    if (value) {
-                                        setMonth(value);
-                                    }
-                                }}
-                                date={month}
-                                hourCycle={hourCycle}
-                                granularity={granularity}
-                            />
-                        </div>
-                    )}
-                </PopoverContent>
-            </Popover>
+                    </PopoverContent>
+                </Popover>
+                {showClearButton && displayDate && (
+                    <button
+                        type="button"
+                        onClick={handleClear}
+                        className="absolute right-8 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-sm opacity-50 hover:opacity-100 transition-opacity z-10"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
         );
     },
 );

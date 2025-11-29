@@ -7,9 +7,17 @@ import { toast } from "sonner";
 
 import { PopConfirm } from "@application/shared/components";
 import { ProfileCommands } from "@application/shared/data/commands";
+import { useUpdateApiKeyStatusDialog } from "@application/shared/dialogs";
+import type { ProfileApiKey } from "@application/shared/entities";
 
-function View({ id }: Props) {
+function View({ apiKey }: Props) {
     const [open, setOpen] = useState(false);
+
+    const updateStatusDialog = useUpdateApiKeyStatusDialog({
+        onClose: () => {
+            updateStatusDialog.actions.close();
+        },
+    });
 
     const { mutate: deleteOneApiKey, isPending: isDeleting } = ProfileCommands.useDeleteOneApiKey({
         onSuccess: () => {
@@ -18,12 +26,8 @@ function View({ id }: Props) {
         },
     });
 
-    const onChangeStatus = () => {
-        console.log("onChangeStatus");
-        setOpen(false);
-    };
     const onDelete = () => {
-        deleteOneApiKey({ id });
+        deleteOneApiKey({ id: apiKey.id });
     };
     return (
         <DropdownMenu
@@ -40,7 +44,7 @@ function View({ id }: Props) {
                     className="h-8 w-8"
                 >
                     <MoreVertical className="size-4" />
-                    <span className="sr-only">User menu</span>
+                    <span className="sr-only">Actions menu</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -48,7 +52,9 @@ function View({ id }: Props) {
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"
-                        onClick={onChangeStatus}
+                        onClick={() => {
+                            updateStatusDialog.actions.open(apiKey);
+                        }}
                     >
                         <Settings2 className="mr-2 size-4" />
                         Change status
@@ -79,7 +85,7 @@ function View({ id }: Props) {
 }
 
 interface Props {
-    id: string;
+    apiKey: ProfileApiKey;
 }
 
 export const ActionsCell = React.memo(View);

@@ -27,7 +27,7 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             // const { id } = response.data;
 
-            queryClient.removeQueries({
+            void queryClient.invalidateQueries({
                 queryKey: [QK["users.$.find-many-paginated"]],
             });
 
@@ -82,9 +82,14 @@ type InviteOneOptions = Omit<UseMutationOptions<InviteOneRes, Error, InviteOneRe
 function useInviteOne({ onSuccess, ...options }: InviteOneOptions = {}) {
     const { mutations } = useUsersApi();
 
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: mutations.inviteOne,
         onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["users.$.find-many-paginated"]],
+            });
+
             if (onSuccess) {
                 onSuccess(response, ...rest);
             }

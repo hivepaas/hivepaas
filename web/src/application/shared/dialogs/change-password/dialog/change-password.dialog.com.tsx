@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { type AccountPasswordFormSchemaOutput } from "../schemas";
 const fnPlaceholder = () => null;
 
 export function ChangePasswordDialog() {
+    const [hasChanges, setHasChanges] = useState(false);
     const { state, props: { onClose = fnPlaceholder } = {}, ...actions } = useChangePasswordDialogState();
 
     const { mutate: updatePassword, isPending } = ProfileCommands.useUpdatePassword();
@@ -31,12 +32,20 @@ export function ChangePasswordDialog() {
         );
     }
 
+    function handleClose() {
+        if (hasChanges) {
+            const canClose = window.confirm("Are you sure you want to close modal without saving changes?");
+
+            if (!canClose) return;
+        }
+        actions.close();
+    }
     const open = state.mode !== "closed";
 
     return (
         <Dialog
             open={open}
-            onOpenChange={actions.close}
+            onOpenChange={handleClose}
         >
             <DialogContent className="min-w-[400px] w-fit">
                 <DialogHeader>
@@ -46,6 +55,7 @@ export function ChangePasswordDialog() {
                 <ChangePasswordForm
                     isPending={isPending}
                     onSubmit={onSubmit}
+                    onHasChanges={setHasChanges}
                 />
             </DialogContent>
         </Dialog>

@@ -77,14 +77,7 @@ const columns: ColumnDef<UserBase>[] = [
         cell: ({ row }) => (
             <UserMenuCell
                 status={row.original.status}
-                onActivate={() => {
-                    // TODO: Implement activate user
-                    console.log("Activate user:", row.original.id);
-                }}
-                onDisable={() => {
-                    // TODO: Implement disable user
-                    console.log("Disable user:", row.original.id);
-                }}
+                id={row.original.id}
             />
         ),
         meta: {

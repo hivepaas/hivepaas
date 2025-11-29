@@ -14,6 +14,8 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
+    Profile_UpdateOneApiKeyStatus_Req,
+    Profile_UpdateOneApiKeyStatus_Res,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfilePassword_Res,
     Profile_UpdateProfile_Req,
@@ -189,6 +191,22 @@ export class ProfileApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/users/current/settings/api-keys/${id}`, {})).pipe(
                 map(() => Ok({ data: { id } })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update one profile API key status
+     */
+    async updateOneApiKeyStatus(
+        request: Profile_UpdateOneApiKeyStatus_Req,
+    ): Promise<Result<Profile_UpdateOneApiKeyStatus_Res, Error>> {
+        const { id, status, expireAt } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.put(`/users/current/settings/api-keys/${id}/meta`, { status, expireAt })).pipe(
+                map(() => Ok({ data: { type: "success" as const } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

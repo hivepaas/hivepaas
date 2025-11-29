@@ -16,13 +16,12 @@ export function ApiKeysTable() {
         },
     });
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const { data: { data: apiKeys } = DEFAULT_PAGINATED_DATA, isFetching } = ProfileQueries.useFindManyApiKeysPaginated(
-        {
+    const { data: { data: apiKeys, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
+        ProfileQueries.useFindManyApiKeysPaginated({
             pagination,
             sorting,
             search,
-        },
-    );
+        });
 
     return (
         <div className="flex flex-col gap-4">
@@ -43,8 +42,10 @@ export function ApiKeysTable() {
                 data={apiKeys}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
                 manualSorting
                 enableSorting
+                totalCount={meta.page.total}
                 isLoading={isFetching}
                 onPaginationChange={value => {
                     setPagination(value);

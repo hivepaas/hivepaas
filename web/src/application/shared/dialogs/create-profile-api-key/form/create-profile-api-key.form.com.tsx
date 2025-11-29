@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -14,7 +15,7 @@ import {
     type CreateProfileApiKeyFormSchemaOutput,
 } from "../schemas";
 
-export function CreateProfileApiKeyForm({ onSubmit }: Props) {
+export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
     const {
         handleSubmit,
         control,
@@ -28,6 +29,12 @@ export function CreateProfileApiKeyForm({ onSubmit }: Props) {
         resolver: zodResolver(CreateProfileApiKeyFormSchema),
         mode: "onSubmit",
     });
+
+    const { isDirty } = useFormState({ control });
+
+    useUpdateEffect(() => {
+        onHasChanges?.(isDirty);
+    }, [isDirty]);
 
     const {
         field: name,
@@ -171,4 +178,5 @@ export function CreateProfileApiKeyForm({ onSubmit }: Props) {
 
 interface Props {
     onSubmit: (values: CreateProfileApiKeyFormSchemaOutput) => Promise<void> | void;
+    onHasChanges?: (dirty: boolean) => void;
 }

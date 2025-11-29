@@ -12,6 +12,7 @@ import type {
     Profile_DeleteOneApiKey_Req,
     Profile_FindManyApiKeysPaginated_Req,
     Profile_GetProfile2FASetup_Req,
+    Profile_UpdateOneApiKeyStatus_Req,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfile_Req,
 } from "../../services";
@@ -195,6 +196,25 @@ function createHook() {
                                 error,
                             });
 
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Update one profile API key status
+                 */
+                updateOneApiKeyStatus: async (data: Profile_UpdateOneApiKeyStatus_Req["data"]) => {
+                    const result = await api.profile.updateOneApiKeyStatus({
+                        data,
+                    });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update profile API key status",
+                                error,
+                            });
                             throw error;
                         },
                     });

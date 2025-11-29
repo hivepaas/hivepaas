@@ -209,6 +209,7 @@ function DataTable<TData, TValue>({
         manualPagination,
         manualSorting,
         manualFiltering,
+        pageCount: manualPagination && totalCount ? Math.ceil(totalCount / pageSize) : undefined,
         state: {
             sorting,
             columnFilters,
@@ -378,7 +379,7 @@ function DataTable<TData, TValue>({
                     pageIndex={table.getState().pagination.pageIndex}
                     pageSize={table.getState().pagination.pageSize}
                     pageCount={table.getPageCount()}
-                    totalCount={totalCount ?? data.length}
+                    totalCount={totalCount}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                     pageSizeOptions={pageSizeOptions}

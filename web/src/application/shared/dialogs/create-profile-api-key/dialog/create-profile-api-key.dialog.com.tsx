@@ -19,6 +19,7 @@ interface CreatedApiKey {
 }
 
 export function CreateProfileApiKeyDialog() {
+    const [hasChanges, setHasChanges] = useState(false);
     const { state, props: { onClose = fnPlaceholder } = {}, ...actions } = useCreateProfileApiKeyDialogState();
 
     const { mutate: createApiKey, isPending } = ProfileCommands.useCreateOneApiKey();
@@ -40,11 +41,10 @@ export function CreateProfileApiKeyDialog() {
                         keyId: apiKey.keyId,
                         secretKey: apiKey.secretKey,
                     });
+                    setHasChanges(false);
 
                     toast.success("API key created successfully");
-                },
-                onError: error => {
-                    toast.error("Failed to create API key");
+                    onClose();
                 },
             },
         );
@@ -81,9 +81,13 @@ export function CreateProfileApiKeyDialog() {
     }
 
     function handleClose() {
+        if (hasChanges) {
+            const canClose = window.confirm("Are you sure you want to close modal without saving changes?");
+
+            if (!canClose) return;
+        }
         setCreatedKey(null);
         actions.close();
-        onClose();
     }
 
     const open = state.mode !== "closed";
@@ -99,16 +103,19 @@ export function CreateProfileApiKeyDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[600px] w-fit">
+            <DialogContent className="min-w-[600px] w-fit gap-6">
                 <DialogHeader>
                     <DialogTitle>Create a new API key</DialogTitle>
                     <DialogDescription />
                 </DialogHeader>
 
                 <>
-                    <CreateProfileApiKeyForm onSubmit={onSubmit} />
+                    <CreateProfileApiKeyForm
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                    />
                     {showGeneratedKey ? (
-                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-4">
+                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6">
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1">
                                     <p className="text-sm font-medium mb-1">Key ID:</p>
@@ -151,7 +158,7 @@ export function CreateProfileApiKeyDialog() {
                             )}
                         </div>
                     ) : (
-                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-4 text-center flex items-center justify-center min-h-[66px]">
+                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6 text-center flex items-center justify-center min-h-[66px]">
                             Press the below button to generate an API key
                         </div>
                     )}

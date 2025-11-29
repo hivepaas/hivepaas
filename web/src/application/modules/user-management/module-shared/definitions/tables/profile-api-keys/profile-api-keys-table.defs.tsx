@@ -58,12 +58,22 @@ const columns: ColumnDef<ProfileApiKey>[] = [
         header: "Status",
         cell: ({ row: { original } }) => {
             const { status } = original;
+            const statusColorMap: Record<EProfileApiKeyStatus, string> = {
+                [EProfileApiKeyStatus.Active]: "bg-green-500",
+                [EProfileApiKeyStatus.Disabled]: "bg-red-500",
+                [EProfileApiKeyStatus.Expired]: "bg-yellow-500",
+            };
+            const statusMap: Record<EProfileApiKeyStatus, string> = {
+                [EProfileApiKeyStatus.Active]: "Active",
+                [EProfileApiKeyStatus.Disabled]: "Disabled",
+                [EProfileApiKeyStatus.Expired]: "Expired",
+            };
             return (
                 <Badge
                     variant="default"
-                    className={status === EProfileApiKeyStatus.Active ? "bg-green-500" : "bg-red-500"}
+                    className={statusColorMap[status]}
                 >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {statusMap[status]}
                 </Badge>
             );
         },
@@ -88,8 +98,7 @@ const columns: ColumnDef<ProfileApiKey>[] = [
     {
         header: "Actions",
         cell: ({ row: { original } }) => {
-            const { id } = original;
-            return <ActionsCell id={id} />;
+            return <ActionsCell apiKey={original} />;
         },
     },
 ];

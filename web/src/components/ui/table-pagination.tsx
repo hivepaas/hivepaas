@@ -1,9 +1,16 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
-import { Button } from "./button";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "./pagination";
 
 export interface TablePaginationProps {
     pageIndex: number;
@@ -16,6 +23,45 @@ export interface TablePaginationProps {
     className?: string;
     showPageSizeSelector?: boolean;
     showTotalCount?: boolean;
+    maxPageButtons?: number;
+}
+
+// Helper function to generate page numbers with ellipsis
+function generatePageNumbers(currentPage: number, totalPages: number, maxButtons: number = 7): (number | "ellipsis")[] {
+    if (totalPages <= maxButtons) {
+        return Array.from({ length: totalPages }, (_, i) => i);
+    }
+
+    const pages: (number | "ellipsis")[] = [];
+    const sideButtons = Math.floor((maxButtons - 3) / 2); // 3 for first, last, and one ellipsis
+
+    // Always show first page
+    pages.push(0);
+
+    if (currentPage <= sideButtons + 1) {
+        // Near the start
+        for (let i = 1; i < maxButtons - 2; i++) {
+            pages.push(i);
+        }
+        pages.push("ellipsis");
+        pages.push(totalPages - 1);
+    } else if (currentPage >= totalPages - sideButtons - 2) {
+        // Near the end
+        pages.push("ellipsis");
+        for (let i = totalPages - maxButtons + 2; i < totalPages; i++) {
+            pages.push(i);
+        }
+    } else {
+        // In the middle
+        pages.push("ellipsis");
+        for (let i = currentPage - sideButtons; i <= currentPage + sideButtons; i++) {
+            pages.push(i);
+        }
+        pages.push("ellipsis");
+        pages.push(totalPages - 1);
+    }
+
+    return pages;
 }
 
 function TablePagination({
@@ -29,16 +75,22 @@ function TablePagination({
     className,
     showPageSizeSelector = true,
     showTotalCount = true,
+    maxPageButtons = 7,
 }: TablePaginationProps) {
     const canPreviousPage = pageIndex > 0;
     const canNextPage = pageIndex < pageCount - 1;
 
-    const startRow = pageIndex * pageSize + 1;
+    const startRow = totalCount && totalCount > 0 ? pageIndex * pageSize + 1 : 0;
     const endRow = Math.min((pageIndex + 1) * pageSize, totalCount ?? (pageIndex + 1) * pageSize);
+
+    const pageNumbers = React.useMemo(
+        () => generatePageNumbers(pageIndex, pageCount, maxPageButtons),
+        [pageIndex, pageCount, maxPageButtons],
+    );
 
     return (
         <div className={cn("flex items-center justify-between px-2 py-4", className)}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
                 {showPageSizeSelector && onPageSizeChange && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Rows per page:</span>
@@ -67,51 +119,54 @@ function TablePagination({
                 )}
             </div>
 
-            <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(0)}
-                        disabled={!canPreviousPage}
-                        aria-label="Go to first page"
-                    >
-                        <ChevronsLeft className="size-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(pageIndex - 1)}
-                        disabled={!canPreviousPage}
-                        aria-label="Go to previous page"
-                    >
-                        <ChevronLeft className="size-4" />
-                    </Button>
-                    <div className="flex items-center gap-1 px-2">
-                        <span className="text-sm font-medium">
-                            Page {pageIndex + 1} of {pageCount || 1}
-                        </span>
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(pageIndex + 1)}
-                        disabled={!canNextPage}
-                        aria-label="Go to next page"
-                    >
-                        <ChevronRight className="size-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(pageCount - 1)}
-                        disabled={!canNextPage}
-                        aria-label="Go to last page"
-                    >
-                        <ChevronsRight className="size-4" />
-                    </Button>
-                </div>
-            </div>
+            <Pagination>
+                <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious
+                            href="#"
+                            onClick={e => {
+                                e.preventDefault();
+                                if (canPreviousPage) {
+                                    onPageChange(pageIndex - 1);
+                                }
+                            }}
+                            className={cn(!canPreviousPage && "pointer-events-none opacity-50")}
+                        />
+                    </PaginationItem>
+
+                    {pageNumbers.map((page, index) => (
+                        <PaginationItem key={`page-${index}`}>
+                            {page === "ellipsis" ? (
+                                <PaginationEllipsis />
+                            ) : (
+                                <PaginationLink
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        onPageChange(page);
+                                    }}
+                                    isActive={pageIndex === page}
+                                >
+                                    {page + 1}
+                                </PaginationLink>
+                            )}
+                        </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                        <PaginationNext
+                            href="#"
+                            onClick={e => {
+                                e.preventDefault();
+                                if (canNextPage) {
+                                    onPageChange(pageIndex + 1);
+                                }
+                            }}
+                            className={cn(!canNextPage && "pointer-events-none opacity-50")}
+                        />
+                    </PaginationItem>
+                </PaginationContent>
+            </Pagination>
         </div>
     );
 }

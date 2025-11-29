@@ -13,8 +13,8 @@ interface Sorting {
 }
 
 interface Pagination {
-    "page[limit]": number;
-    "page[offset]": number;
+    pageLimit: number;
+    pageOffset: number;
 }
 
 type QueryObject = Record<string, string | number | (string | number)[]>;
@@ -133,8 +133,8 @@ class Builder {
         }
 
         this.#pagination = {
-            "page[limit]": size,
-            "page[offset]": (page - 1) * size,
+            pageLimit: size,
+            pageOffset: (page - 1) * size,
         };
 
         return this;

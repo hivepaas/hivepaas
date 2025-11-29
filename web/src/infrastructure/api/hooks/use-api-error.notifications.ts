@@ -19,6 +19,8 @@ function createHook() {
                 return;
             }
 
+            console.log(isValidationException(error));
+
             switch (true) {
                 case import.meta.env.MODE === "development":
                     console.error(error);
@@ -41,6 +43,7 @@ function createHook() {
             }
 
             if (isValidationException(error)) {
+                console.log(error.errors);
                 const firstError = error.errors[0];
                 if (firstError) {
                     const validationMessage = `Param '${firstError.path}': ${firstError.message}`;

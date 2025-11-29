@@ -1,16 +1,23 @@
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useProfileApi, useSessionApi } from "@application/shared/api";
 import type {
     Profile_Complete2FASetup_Req,
     Profile_Complete2FASetup_Res,
+    Profile_CreateOneApiKey_Req,
+    Profile_CreateOneApiKey_Res,
+    Profile_DeleteOneApiKey_Req,
+    Profile_DeleteOneApiKey_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
+    Profile_UpdateOneApiKeyStatus_Req,
+    Profile_UpdateOneApiKeyStatus_Res,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfilePassword_Res,
     Profile_UpdateProfile_Req,
     Profile_UpdateProfile_Res,
 } from "@application/shared/api/services";
+import { QK } from "@application/shared/data/constants";
 import { type Profile } from "@application/shared/entities";
 
 /**
@@ -121,9 +128,104 @@ function useUpdatePassword(options: UpdatePasswordOptions = {}) {
     });
 }
 
+/**
+ * Create one profile API key
+ */
+type CreateOneApiKeyReq = Profile_CreateOneApiKey_Req["data"];
+type CreateOneApiKeyRes = Profile_CreateOneApiKey_Res;
+
+type CreateOneApiKeyOptions = Omit<UseMutationOptions<CreateOneApiKeyRes, Error, CreateOneApiKeyReq>, "mutationFn">;
+
+function useCreateOneApiKey({ onSuccess, ...options }: CreateOneApiKeyOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createOneApiKey,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["profile-api-keys.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+
+            return response;
+        },
+
+        ...options,
+    });
+}
+
+/**
+ * Delete one profile API key
+ */
+type DeleteOneApiKeyReq = Profile_DeleteOneApiKey_Req["data"];
+type DeleteOneApiKeyRes = Profile_DeleteOneApiKey_Res;
+
+type DeleteOneApiKeyOptions = Omit<UseMutationOptions<DeleteOneApiKeyRes, Error, DeleteOneApiKeyReq>, "mutationFn">;
+
+function useDeleteOneApiKey({ onSuccess, ...options }: DeleteOneApiKeyOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deleteOneApiKey,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["profile-api-keys.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
+/**
+ * Update one profile API key status
+ */
+type UpdateOneApiKeyStatusReq = Profile_UpdateOneApiKeyStatus_Req["data"];
+type UpdateOneApiKeyStatusRes = Profile_UpdateOneApiKeyStatus_Res;
+
+type UpdateOneApiKeyStatusOptions = Omit<
+    UseMutationOptions<UpdateOneApiKeyStatusRes, Error, UpdateOneApiKeyStatusReq>,
+    "mutationFn"
+>;
+
+function useUpdateOneApiKeyStatus({ onSuccess, ...options }: UpdateOneApiKeyStatusOptions = {}) {
+    const { mutations } = useProfileApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateOneApiKeyStatus,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["profile-api-keys.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
     useUpdate,
     useUpdatePassword,
+    useCreateOneApiKey,
+    useDeleteOneApiKey,
+    useUpdateOneApiKeyStatus,
 });

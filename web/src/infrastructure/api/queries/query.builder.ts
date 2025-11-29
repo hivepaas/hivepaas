@@ -9,12 +9,12 @@ interface Context {
 }
 
 interface Sorting {
-    sort: string[];
+    sort: string[] | string;
 }
 
 interface Pagination {
-    "page[limit]": number;
-    "page[offset]": number;
+    pageLimit: number;
+    pageOffset: number;
 }
 
 type QueryObject = Record<string, string | number | (string | number)[]>;
@@ -96,6 +96,15 @@ class Builder {
             return this;
         }
 
+        if (sorting.length === 1) {
+            const [sort] = sorting;
+            this.#sorting = {
+                ...this.#sorting,
+                sort: `${sort?.desc ? "-" : ""}${sort?.id}`,
+            };
+            return this;
+        }
+
         this.#sorting = {
             ...this.#sorting,
 
@@ -124,8 +133,8 @@ class Builder {
         }
 
         this.#pagination = {
-            "page[limit]": size,
-            "page[offset]": (page - 1) * size,
+            pageLimit: size,
+            pageOffset: (page - 1) * size,
         };
 
         return this;

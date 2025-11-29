@@ -1,6 +1,7 @@
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
 
 import { PasswordStrengthMeter } from "@application/shared/components";
 
@@ -13,7 +14,7 @@ import {
     type AccountPasswordFormSchemaOutput,
 } from "../schemas";
 
-export function ChangePasswordForm({ isPending, onSubmit }: Props) {
+export function ChangePasswordForm({ isPending, onSubmit, onHasChanges }: Props) {
     const {
         handleSubmit,
         control,
@@ -28,6 +29,12 @@ export function ChangePasswordForm({ isPending, onSubmit }: Props) {
         resolver: zodResolver(AccountPasswordFormSchema),
         mode: "onSubmit",
     });
+
+    const { isDirty } = useFormState({ control });
+
+    useUpdateEffect(() => {
+        onHasChanges?.(isDirty);
+    }, [isDirty]);
 
     const {
         field: currentPassword,
@@ -134,4 +141,5 @@ export function ChangePasswordForm({ isPending, onSubmit }: Props) {
 interface Props {
     isPending: boolean;
     onSubmit: (values: AccountPasswordFormSchemaOutput) => Promise<void> | void;
+    onHasChanges?: (dirty: boolean) => void;
 }

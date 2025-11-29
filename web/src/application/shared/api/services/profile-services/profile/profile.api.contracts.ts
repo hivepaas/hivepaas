@@ -2,6 +2,7 @@ import type { PaginationState, SortingState } from "@infrastructure/data";
 
 import { type Profile } from "@application/shared/entities";
 import type { ProfileApiKey } from "@application/shared/entities/profile";
+import type { EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -79,7 +80,11 @@ export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
     expireAt?: Date;
 }>;
 
-export type Profile_CreateOneApiKey_Res = ApiResponseBase<ProfileApiKey>;
+export type Profile_CreateOneApiKey_Res = ApiResponseBase<{
+    id: string;
+    keyId: string;
+    secretKey: string;
+}>;
 
 /**
  * Delete one profile API key
@@ -90,4 +95,17 @@ export type Profile_DeleteOneApiKey_Req = ApiRequestBase<{
 
 export type Profile_DeleteOneApiKey_Res = ApiResponseBase<{
     id: string;
+}>;
+
+/**
+ * update one profile API key status
+ */
+export type Profile_UpdateOneApiKeyStatus_Req = ApiRequestBase<{
+    id: string;
+    status: EProfileApiKeyStatus;
+    expireAt?: Date;
+}>;
+
+export type Profile_UpdateOneApiKeyStatus_Res = ApiResponseBase<{
+    type: "success";
 }>;

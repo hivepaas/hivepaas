@@ -14,6 +14,8 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
+    Profile_UpdateOneApiKeyStatus_Req,
+    Profile_UpdateOneApiKeyStatus_Res,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfilePassword_Res,
     Profile_UpdateProfile_Req,
@@ -164,12 +166,12 @@ export class ProfileApi extends BaseApi {
         const json = {
             name,
             accessAction,
-            expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : undefined,
+            expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : null,
         };
 
         return lastValueFrom(
             from(
-                this.client.v1.post("/users/current/api-keys", json, {
+                this.client.v1.post("/users/current/settings/api-keys", json, {
                     signal,
                 }),
             ).pipe(
@@ -187,8 +189,24 @@ export class ProfileApi extends BaseApi {
         const { id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/users/current/api-keys/${id}`, {})).pipe(
+            from(this.client.v1.delete(`/users/current/settings/api-keys/${id}`, {})).pipe(
                 map(() => Ok({ data: { id } })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update one profile API key status
+     */
+    async updateOneApiKeyStatus(
+        request: Profile_UpdateOneApiKeyStatus_Req,
+    ): Promise<Result<Profile_UpdateOneApiKeyStatus_Res, Error>> {
+        const { id, status, expireAt } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.put(`/users/current/settings/api-keys/${id}/meta`, { status, expireAt })).pipe(
+                map(() => Ok({ data: { type: "success" as const } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

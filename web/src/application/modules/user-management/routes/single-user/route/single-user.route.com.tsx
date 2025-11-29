@@ -12,7 +12,6 @@ import { UsersQueries } from "@application/modules/user-management/data/queries"
 
 import { isValidationException } from "@infrastructure/api/utils/api.exceptions.utils";
 
-import { HttpException } from "@infrastructure/exceptions/http";
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { SingleUserForm } from "../form";

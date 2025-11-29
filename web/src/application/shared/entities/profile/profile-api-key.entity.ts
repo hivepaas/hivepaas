@@ -1,12 +1,14 @@
+import type { EProfileApiKeyStatus } from "@application/shared/enums";
+
 export interface ProfileApiKey {
     id: string;
     name: string;
-    key: string;
+    keyId: string;
     accessAction: {
         read: boolean;
         write: boolean;
         delete: boolean;
-    };
-    expireAt: Date;
-    status: string;
+    } | null;
+    expireAt?: Date;
+    status: EProfileApiKeyStatus;
 }

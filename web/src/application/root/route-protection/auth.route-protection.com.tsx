@@ -1,6 +1,6 @@
 import { type PropsWithChildren } from "react";
 
-import { createSearchParams, useLocation, useMatch, useSearchParams } from "react-router";
+import { useLocation, useMatch, useSearchParams } from "react-router";
 import { useCookie } from "react-use";
 
 import { AppNavigate } from "@application/shared/components";
@@ -57,20 +57,43 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     }
 
     if (profile && (isMain || isAuthGroup)) {
-        return (
-            <AppNavigate.Basic
-                to={ROUTE.userManagement.users.$route}
-                replace
-            />
-        );
+        if (params.has("next")) {
+            return (
+                <AppNavigate.Basic
+                    to={params.get("next")!}
+                    replace
+                />
+            );
+        } else {
+            return (
+                <AppNavigate.Basic
+                    to={ROUTE.userManagement.users.$route}
+                    replace
+                />
+            );
+        }
     }
 
     if (!profile && !isAuthGroup) {
+        const currentFullPath = nextPath ?? `${location.pathname}${location.search}`;
+        const [pathPart = "", searchPart = ""] = currentFullPath.split("?");
+
+        // Map route patterns to their destinations
+        const authRouteMap: Record<string, string> = {
+            "sign-up": ROUTE.auth.signUp.$route,
+            "reset-password": ROUTE.auth.resetPassword.$route,
+            "forgot-password": ROUTE.auth.forgotPassword.$route,
+        };
+
+        const redirectTo =
+            Object.entries(authRouteMap).find(([pattern]) => pathPart.includes(pattern))?.[1] ??
+            ROUTE.auth.signIn.$route;
+
         return (
             <AppNavigate.Basic
                 to={{
-                    pathname: ROUTE.auth.signIn.$route,
-                    search: createSearchParams({ next: location.pathname }).toString(),
+                    pathname: redirectTo,
+                    search: searchPart,
                 }}
                 replace
             />

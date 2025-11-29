@@ -75,6 +75,7 @@ type State =
 
 export function SignUpRoute() {
     const [state, setState] = useState<State>({ type: "pending" });
+    console.log("SignUpRoute");
 
     const { mutate: validate } = AuthCommands.useValidateInviteToken({
         onSuccess: ({ data }, request) => {

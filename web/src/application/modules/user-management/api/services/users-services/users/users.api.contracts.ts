@@ -38,7 +38,7 @@ export type Users_DeleteOne_Res = ApiResponseBase<{
  * Update one user
  */
 export type Users_UpdateOne_Req = ApiRequestBase<{
-    user: Omit<UserBase, "createdAt" | "updatedAt" | "lastAccess" | "photo">;
+    user: Partial<Omit<UserBase, "createdAt" | "updatedAt" | "lastAccess" | "photo">>;
 }>;
 
 export type Users_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;

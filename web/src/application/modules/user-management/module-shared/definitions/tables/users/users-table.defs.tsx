@@ -74,12 +74,7 @@ const columns: ColumnDef<UserBase>[] = [
         enableHiding: false,
         minSize: 40,
         size: 40,
-        cell: ({ row }) => (
-            <UserMenuCell
-                status={row.original.status}
-                id={row.original.id}
-            />
-        ),
+        cell: ({ row }) => <UserMenuCell user={row.original} />,
         meta: {
             align: "center",
             titleAlign: "center",

@@ -63,7 +63,7 @@ function View() {
 
     if (state.type === "lockout") {
         child = (
-            <Card>
+            <Card className="w-full max-w-sm mx-auto">
                 <CardContent className="flex flex-col items-center gap-4 text-center">
                     <div className="rounded-full bg-yellow-50 p-3 text-yellow-600">
                         <WarningAuthenticationIcon className="h-6 w-6" />
@@ -91,7 +91,7 @@ function View() {
 
     return (
         <AuthenticationLayout>
-            <div>{child}</div>
+            <div className="w-full max-w-sm mx-auto">{child}</div>
         </AuthenticationLayout>
     );
 }

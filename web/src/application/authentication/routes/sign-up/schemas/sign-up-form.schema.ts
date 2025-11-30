@@ -7,6 +7,8 @@ const BaseSchema = z.object({
     fullName: z.string().trim().min(1, "Full Name is required"),
     email: z.string().trim().min(1, "Email Address is required").email(),
     password: z.string().trim().min(1, "Password is required"),
+    confirmPassword: z.string().trim().min(1, "Confirm Password is required"),
+    position: z.string(),
     photo: z
         .object({
             fileName: z.string(),
@@ -36,6 +38,14 @@ export const SignUpFormSchema = BaseSchema.superRefine((arg, ctx) => {
             code: z.ZodIssueCode.custom,
             message: "Passcode is required",
             path: ["passcode"],
+        });
+    }
+
+    if (arg.password !== arg.confirmPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Passwords do not match",
+            path: ["confirmPassword"],
         });
     }
 

@@ -20,5 +20,4 @@ export type Candidate =
           accessExpiration: Date | null;
           mfaTotpSecret: string;
           qrCode: string;
-          secretKey: string;
       };

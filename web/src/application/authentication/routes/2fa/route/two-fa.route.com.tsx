@@ -73,7 +73,7 @@ function View({ email, mfaToken }: ViewProps) {
 
     if (state.type === "error") {
         child = (
-            <Card>
+            <Card className="w-full max-w-sm mx-auto">
                 <CardContent className="flex flex-col items-center gap-4 text-center">
                     <div className="rounded-full bg-red-50 p-3 text-red-600">
                         <ErrorAuthenticationIcon className="h-6 w-6" />
@@ -98,7 +98,7 @@ function View({ email, mfaToken }: ViewProps) {
 
     return (
         <AuthenticationLayout>
-            <div>{child}</div>
+            <div className="w-full max-w-sm mx-auto">{child}</div>
         </AuthenticationLayout>
     );
 }

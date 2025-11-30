@@ -39,16 +39,18 @@ function View({ method }: ViewProps) {
 
     return (
         <AuthenticationLayout>
-            <SignUpForm
-                method={method}
-                isPending={isPending}
-                onSubmit={data => {
-                    handleSubmit({
-                        inviteToken: method.inviteToken,
-                        data,
-                    });
-                }}
-            />
+            <div className="w-full max-w-2xl mx-auto">
+                <SignUpForm
+                    method={method}
+                    isPending={isPending}
+                    onSubmit={data => {
+                        handleSubmit({
+                            inviteToken: method.inviteToken,
+                            data,
+                        });
+                    }}
+                />
+            </div>
         </AuthenticationLayout>
     );
 }

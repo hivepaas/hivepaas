@@ -47,6 +47,7 @@ export class AuthApi extends BaseApi {
                     username: data.username,
                     password: data.password,
                     fullName: data.fullName,
+                    position: data.position,
                     photo: data.photo ?? {
                         fileName: "",
                         dataBase64: "",

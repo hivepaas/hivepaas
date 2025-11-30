@@ -97,7 +97,6 @@ const ValidateInviteTokenSchema = z.object({
             qrCode: z.object({
                 dataBase64: z.string(),
             }),
-            secretKey: z.string(),
             securityOption: z.literal(ESecuritySettings.Password2FA),
         }),
         z.object({
@@ -269,7 +268,6 @@ export class AuthApiValidator {
                     accessExpiration: data.accessExpireAt,
                     mfaTotpSecret: data.mfaTotpSecret,
                     qrCode: data.qrCode.dataBase64,
-                    secretKey: data.secretKey,
                 },
             },
         };

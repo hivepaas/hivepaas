@@ -6,14 +6,15 @@ import { format } from "date-fns";
 import { BadgeCheck, Check, Clock, Lock, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
+import { UsersCommands } from "~/user-management/data/commands";
+import { UsersQueries } from "~/user-management/data/queries";
+import { UserRoleBadge, UserStatusBadge } from "~/user-management/module-shared/components";
 
 import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
+import { ROUTE } from "@application/shared/constants";
 import { EUserStatus } from "@application/shared/enums";
-
-import { UsersCommands } from "@application/modules/user-management/data/commands";
-import { UsersQueries } from "@application/modules/user-management/data/queries";
-import { UserRoleBadge, UserStatusBadge } from "@application/modules/user-management/module-shared/components";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 import { UserBreadcrumbs } from "../building-blocks";
 
@@ -21,18 +22,14 @@ import { SingleUserHeaderSkeleton } from "./single-user-header.skeleton.com";
 
 export function View({ userId }: Props) {
     const { data, isLoading, error } = UsersQueries.useFindOneById({ id: userId });
-
+    const { navigate } = useAppNavigate();
     const { mutate: updateOne, isPending: isUpdating } = UsersCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("User status updated successfully");
         },
     });
 
-    const { mutate: deleteOne, isPending: isDeleting } = UsersCommands.useDeleteOne({
-        onSuccess: () => {
-            toast.success("User removed successfully");
-        },
-    });
+    const { mutate: deleteOne, isPending: isDeleting } = UsersCommands.useDeleteOne({});
 
     if (isLoading) {
         return <SingleUserHeaderSkeleton />;
@@ -55,15 +52,23 @@ export function View({ userId }: Props) {
     const shouldShowToggleButtons = user.status !== EUserStatus.Pending;
 
     const handleDisable = () => {
-        console.log("disable");
+        updateOne({ user: { status: EUserStatus.Disabled, id: user.id } });
     };
 
     const handleActivate = () => {
-        console.log("activate");
+        updateOne({ user: { status: EUserStatus.Active, id: user.id } });
     };
 
     const handleRemove = () => {
-        console.log("remove");
+        deleteOne(
+            { id: user.id },
+            {
+                onSuccess: () => {
+                    toast.success("User removed successfully");
+                    navigate.modules(ROUTE.userManagement.users.$route);
+                },
+            },
+        );
     };
 
     return (

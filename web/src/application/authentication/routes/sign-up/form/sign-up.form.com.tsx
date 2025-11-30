@@ -19,7 +19,7 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@compo
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageService } from "@infrastructure/services";
-import { Link, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { MfaQrCode, PasswordStrengthMeter } from "@application/shared/components";

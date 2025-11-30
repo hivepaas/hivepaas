@@ -7,6 +7,7 @@ interface Data {
     email: string;
     username: string;
     fullName: string;
+    position: string;
     password: string;
     photo: Photo | null;
     mfaTotpSecret?: string;

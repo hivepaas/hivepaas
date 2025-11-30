@@ -45,7 +45,7 @@ export function ForgotPasswordRoute() {
 
     if (state.type === "success") {
         child = (
-            <Card>
+            <Card className="w-full max-w-sm mx-auto">
                 <CardContent className="flex flex-col items-center gap-4 text-center">
                     <div className="rounded-full bg-emerald-50 p-3 text-emerald-600">
                         <SuccessAuthenticationIcon className="h-6 w-6" />
@@ -60,7 +60,7 @@ export function ForgotPasswordRoute() {
 
     return (
         <AuthenticationLayout>
-            <div>{child}</div>
+            <div className="w-full max-w-sm mx-auto">{child}</div>
         </AuthenticationLayout>
     );
 }

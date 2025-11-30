@@ -38,10 +38,12 @@ function View({ email, token }: ViewProps) {
 
     return (
         <AuthenticationLayout>
-            <ResetPasswordForm
-                isPending={isPending}
-                onSubmit={handleSubmit}
-            />
+            <div className="w-full max-w-sm mx-auto">
+                <ResetPasswordForm
+                    isPending={isPending}
+                    onSubmit={handleSubmit}
+                />
+            </div>
         </AuthenticationLayout>
     );
 }

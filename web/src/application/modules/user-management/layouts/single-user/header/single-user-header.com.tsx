@@ -131,7 +131,7 @@ export function View({ userId }: Props) {
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
-                                    <span>Position :</span>
+                                    <span>Position:</span>
                                     <span className="text-black">{user.position || "Unknown position"}</span>
                                 </div>
                             </div>
@@ -139,7 +139,7 @@ export function View({ userId }: Props) {
                             <div className="flex gap-1.5 items-center">
                                 <BadgeCheck className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
-                                    <span>Role :</span>
+                                    <span>Role:</span>
                                     <UserRoleBadge role={user.role} />
                                 </div>
                             </div>
@@ -149,7 +149,7 @@ export function View({ userId }: Props) {
                                     <div className="flex items-center gap-1.5">
                                         <Clock className="size-4 text-blue-500" />
                                         <div className="flex gap-1">
-                                            <span>Last access :</span>
+                                            <span>Last access:</span>
                                             <span className="text-black">
                                                 {format(user.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
                                             </span>

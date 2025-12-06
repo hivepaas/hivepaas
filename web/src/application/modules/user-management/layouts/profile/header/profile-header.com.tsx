@@ -47,7 +47,7 @@ function View() {
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
-                                    <span>Position :</span>
+                                    <span>Position:</span>
                                     <span className="text-black">{profile.position || "Unknown position"}</span>
                                 </div>
                             </div>
@@ -55,7 +55,7 @@ function View() {
                             <div className="flex gap-1.5 items-center">
                                 <BadgeCheck className="size-4 text-blue-500" />
                                 <div className="flex gap-1">
-                                    <span>Role :</span>
+                                    <span>Role:</span>
                                     <UserRoleBadge role={profile.role} />
                                 </div>
                             </div>
@@ -65,7 +65,7 @@ function View() {
                                     <div className="flex items-center gap-1.5">
                                         <Clock className="size-4 text-blue-500" />
                                         <div className="flex gap-1">
-                                            <span>Last access :</span>
+                                            <span>Last access:</span>
                                             <span className="text-black">
                                                 {format(profile.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
                                             </span>

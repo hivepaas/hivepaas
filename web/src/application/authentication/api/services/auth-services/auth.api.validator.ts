@@ -74,6 +74,7 @@ const GetLoginOptionsSchema = z.object({
             authURL: z.string(),
             name: z.string(),
             type: z.string(),
+            icon: z.string(),
         }),
     ),
 });

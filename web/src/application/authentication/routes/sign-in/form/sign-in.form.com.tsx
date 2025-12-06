@@ -139,10 +139,10 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                             handleLoginWithProvider(option);
                                         }}
                                     >
-                                        {option.type.toLowerCase().includes("github") && <GithubIcon />}
-                                        {option.type.toLowerCase().includes("gitlab") && <GitlabIcon />}
-                                        {option.type.toLowerCase().includes("google") && <GoogleIcon />}
-                                        Login with {option.name}
+                                        {option.icon === "github" && <GithubIcon />}
+                                        {option.icon === "gitlab" && <GitlabIcon />}
+                                        {option.icon === "google" && <GoogleIcon />}
+                                        Continue with {option.name}
                                     </Button>
                                 ))}
                             </Field>

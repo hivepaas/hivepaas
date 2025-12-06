@@ -1,4 +1,4 @@
-import { GithubIcon, GitlabIcon, GoogleIcon } from "@/assets/icons";
+import { GithubIcon, GitlabIcon, GiteaIcon, GoogleIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
@@ -141,6 +141,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                     >
                                         {option.icon === "github" && <GithubIcon />}
                                         {option.icon === "gitlab" && <GitlabIcon />}
+                                        {option.icon === "gitea" && <GiteaIcon />}
                                         {option.icon === "google" && <GoogleIcon />}
                                         Continue with {option.name}
                                     </Button>

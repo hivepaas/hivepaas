@@ -26,7 +26,7 @@ function createHook() {
         const queries = useMemo(
             () => ({
                 /**
-                 * Find many profile API keys paginated
+                 * Find many account API keys paginated
                  */
                 findManyApiKeysPaginated: async (
                     data: Profile_FindManyApiKeysPaginated_Req["data"],
@@ -43,7 +43,7 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
-                                message: "Failed to get profile API keys",
+                                message: "Failed to get API keys",
                                 error,
                             });
 
@@ -135,7 +135,7 @@ function createHook() {
                 },
 
                 /**
-                 * Find many profile API keys paginated
+                 * Find many account API keys paginated
                  */
                 findManyApiKeysPaginated: async (
                     data: Profile_FindManyApiKeysPaginated_Req["data"],
@@ -151,7 +151,7 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
-                                message: "Failed to find many profile API keys",
+                                message: "Failed to find many API keys",
                                 error,
                             });
                             throw error;
@@ -160,7 +160,7 @@ function createHook() {
                 },
 
                 /**
-                 * Create one profile API key
+                 * Create one account API key
                  */
                 createOneApiKey: async (data: Profile_CreateOneApiKey_Req["data"]) => {
                     const result = await api.profile.createOneApiKey({
@@ -171,7 +171,7 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
-                                message: "Failed to create profile API key",
+                                message: "Failed to create API key",
                                 error,
                             });
 
@@ -181,7 +181,7 @@ function createHook() {
                 },
 
                 /**
-                 * Delete one profile API key
+                 * Delete one account API key
                  */
                 deleteOneApiKey: async (data: Profile_DeleteOneApiKey_Req["data"]) => {
                     const result = await api.profile.deleteOneApiKey({
@@ -192,7 +192,7 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
-                                message: "Failed to delete profile API key",
+                                message: "Failed to delete API key",
                                 error,
                             });
 
@@ -202,7 +202,7 @@ function createHook() {
                 },
 
                 /**
-                 * Update one profile API key status
+                 * Update one account API key status
                  */
                 updateOneApiKeyStatus: async (data: Profile_UpdateOneApiKeyStatus_Req["data"]) => {
                     const result = await api.profile.updateOneApiKeyStatus({
@@ -212,7 +212,7 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
-                                message: "Failed to update profile API key status",
+                                message: "Failed to update API key status",
                                 error,
                             });
                             throw error;

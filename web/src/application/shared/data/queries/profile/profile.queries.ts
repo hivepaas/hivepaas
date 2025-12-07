@@ -8,7 +8,7 @@ import {
 import { QK } from "@application/shared/data/constants";
 
 /**
- * Find many profile API keys paginated query
+ * Find many account API keys paginated query
  */
 type FindManyApiKeysPaginatedReq = Profile_FindManyApiKeysPaginated_Req["data"];
 type FindManyApiKeysPaginatedRes = Profile_FindManyApiKeysPaginated_Res;

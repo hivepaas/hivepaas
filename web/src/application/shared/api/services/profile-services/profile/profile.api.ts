@@ -128,7 +128,7 @@ export class ProfileApi extends BaseApi {
     }
 
     /**
-     * Find many profile API keys paginated
+     * Find many account API keys paginated
      */
     async findManyApiKeysPaginated(
         request: Profile_FindManyApiKeysPaginated_Req,
@@ -155,7 +155,7 @@ export class ProfileApi extends BaseApi {
     }
 
     /**
-     * Create one profile API key
+     * Create one account API key
      */
     async createOneApiKey(
         request: Profile_CreateOneApiKey_Req,
@@ -183,7 +183,7 @@ export class ProfileApi extends BaseApi {
     }
 
     /**
-     * Delete one profile API key
+     * Delete one account API key
      */
     async deleteOneApiKey(request: Profile_DeleteOneApiKey_Req): Promise<Result<Profile_DeleteOneApiKey_Res, Error>> {
         const { id } = request.data;
@@ -197,7 +197,7 @@ export class ProfileApi extends BaseApi {
     }
 
     /**
-     * Update one profile API key status
+     * Update one account API key status
      */
     async updateOneApiKeyStatus(
         request: Profile_UpdateOneApiKeyStatus_Req,

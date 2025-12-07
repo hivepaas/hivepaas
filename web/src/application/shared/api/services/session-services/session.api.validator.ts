@@ -8,7 +8,7 @@ import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/e
 import { parseApiResponse } from "@infrastructure/api";
 
 /**
- * Get profile API response schema
+ * Get account API response schema
  */
 const GetProfileSchema = z.object({
     data: z.object({
@@ -36,7 +36,7 @@ const GetProfileSchema = z.object({
 
 export class SessionApiValidator {
     /**
-     * Validate and transform the get profile API response
+     * Validate and transform the get account API response
      */
     getProfile = (response: AxiosResponse): Session_GetProfile_Res => {
         const {

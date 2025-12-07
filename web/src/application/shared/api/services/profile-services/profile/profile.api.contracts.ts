@@ -57,7 +57,7 @@ export type Profile_Complete2FASetup_Res = ApiResponseBase<{
 }>;
 
 /**
- * Find many profile API keys paginated
+ * Find many account API keys paginated
  */
 export type Profile_FindManyApiKeysPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
@@ -68,7 +68,7 @@ export type Profile_FindManyApiKeysPaginated_Req = ApiRequestBase<{
 export type Profile_FindManyApiKeysPaginated_Res = ApiResponsePaginated<ProfileApiKey>;
 
 /**
- * Create one profile API key
+ * Create one account API key
  */
 export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
     name: string;
@@ -87,7 +87,7 @@ export type Profile_CreateOneApiKey_Res = ApiResponseBase<{
 }>;
 
 /**
- * Delete one profile API key
+ * Delete one account API key
  */
 export type Profile_DeleteOneApiKey_Req = ApiRequestBase<{
     id: string;
@@ -98,7 +98,7 @@ export type Profile_DeleteOneApiKey_Res = ApiResponseBase<{
 }>;
 
 /**
- * update one profile API key status
+ * update one account API key status
  */
 export type Profile_UpdateOneApiKeyStatus_Req = ApiRequestBase<{
     id: string;

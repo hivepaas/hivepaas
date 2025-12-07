@@ -24,7 +24,7 @@ const GetProfile2FASetupSchema = z.object({
 });
 
 /**
- * Profile API Key schema
+ * Account API Key schema
  */
 const ProfileApiKeySchema = z.object({
     id: z.string(),
@@ -42,7 +42,7 @@ const ProfileApiKeySchema = z.object({
 });
 
 /**
- * Find many profile API keys paginated API response schema
+ * Find many account API keys paginated API response schema
  */
 const FindManyApiKeysPaginatedSchema = z.object({
     data: z.array(ProfileApiKeySchema),
@@ -50,7 +50,7 @@ const FindManyApiKeysPaginatedSchema = z.object({
 });
 
 /**
- * Create one profile API key API response schema
+ * Create one account API key API response schema
  */
 const CreateOneApiKeySchema = z.object({
     data: z.object({
@@ -80,7 +80,7 @@ export class ProfileApiValidator {
     };
 
     /**
-     * Validate and transform find many profile API keys paginated API response
+     * Validate and transform find many account API keys paginated API response
      */
     findManyApiKeysPaginated = (response: AxiosResponse): Profile_FindManyApiKeysPaginated_Res => {
         const { data, meta } = parseApiResponse({
@@ -102,7 +102,7 @@ export class ProfileApiValidator {
     };
 
     /**
-     * Validate and transform create one profile API key API response
+     * Validate and transform create one account API key API response
      */
     createOneApiKey = (response: AxiosResponse): Profile_CreateOneApiKey_Res => {
         const { data } = parseApiResponse({

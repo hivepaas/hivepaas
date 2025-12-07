@@ -129,7 +129,7 @@ function useUpdatePassword(options: UpdatePasswordOptions = {}) {
 }
 
 /**
- * Create one profile API key
+ * Create one account API key
  */
 type CreateOneApiKeyReq = Profile_CreateOneApiKey_Req["data"];
 type CreateOneApiKeyRes = Profile_CreateOneApiKey_Res;
@@ -160,7 +160,7 @@ function useCreateOneApiKey({ onSuccess, ...options }: CreateOneApiKeyOptions = 
 }
 
 /**
- * Delete one profile API key
+ * Delete one account API key
  */
 type DeleteOneApiKeyReq = Profile_DeleteOneApiKey_Req["data"];
 type DeleteOneApiKeyRes = Profile_DeleteOneApiKey_Res;
@@ -189,7 +189,7 @@ function useDeleteOneApiKey({ onSuccess, ...options }: DeleteOneApiKeyOptions = 
 }
 
 /**
- * Update one profile API key status
+ * Update one account API key status
  */
 type UpdateOneApiKeyStatusReq = Profile_UpdateOneApiKeyStatus_Req["data"];
 type UpdateOneApiKeyStatusRes = Profile_UpdateOneApiKeyStatus_Res;

@@ -4,6 +4,7 @@ export interface ProfileApiKey {
     id: string;
     name: string;
     keyId: string;
+    updateVer: number;
     accessAction: {
         read: boolean;
         write: boolean;

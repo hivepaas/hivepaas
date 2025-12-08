@@ -132,7 +132,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                 {isAdmin ? (
                     /* Admin view - Single "All project" row */
                     <div className="space-y-0 divide-y">
-                        <div className="flex items-center flex-wrap gap-4 pb-3">
+                        <div className="flex items-center flex-wrap gap-4 py-2">
                             <div className="flex-1 font-semibold">All projects</div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                         {fields.map((project, index) => (
                             <div
                                 key={project.id}
-                                className="flex items-center flex-wrap gap-4 pb-3"
+                                className="flex items-center flex-wrap gap-4 py-2"
                             >
                                 <div className="flex-1 font-semibold">{project.name}</div>
                                 <div className="flex items-center gap-4">

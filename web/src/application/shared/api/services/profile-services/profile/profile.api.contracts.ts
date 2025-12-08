@@ -104,6 +104,7 @@ export type Profile_UpdateOneApiKeyStatus_Req = ApiRequestBase<{
     id: string;
     status: EProfileApiKeyStatus;
     expireAt?: Date;
+    updateVer: number;
 }>;
 
 export type Profile_UpdateOneApiKeyStatus_Res = ApiResponseBase<{

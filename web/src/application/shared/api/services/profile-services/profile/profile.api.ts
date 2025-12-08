@@ -202,10 +202,12 @@ export class ProfileApi extends BaseApi {
     async updateOneApiKeyStatus(
         request: Profile_UpdateOneApiKeyStatus_Req,
     ): Promise<Result<Profile_UpdateOneApiKeyStatus_Res, Error>> {
-        const { id, status, expireAt } = request.data;
+        const { id, status, expireAt, updateVer } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.put(`/users/current/settings/api-keys/${id}/meta`, { status, expireAt })).pipe(
+            from(
+                this.client.v1.put(`/users/current/settings/api-keys/${id}/meta`, { status, expireAt, updateVer }),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" as const } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

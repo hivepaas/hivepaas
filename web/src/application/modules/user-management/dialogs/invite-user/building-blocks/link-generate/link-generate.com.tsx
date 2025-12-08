@@ -21,7 +21,7 @@ function View({ inviteLink }: Props) {
     }
 
     return (
-        <div className="border border-dashed border-purple-500 rounded-lg p-6 bg-purple-50/50 dark:bg-purple-950/20">
+        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20">
             <div className="flex items-center justify-center gap-4">
                 <div className="text-sm text-foreground text-center">
                     {inviteLink ? (

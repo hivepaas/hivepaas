@@ -34,7 +34,7 @@ export function Security({ defaultValues }: Props) {
         defaultValues.securityOption !== ESecuritySettings.EnforceSSO && defaultValues.status !== EUserStatus.Pending;
 
     // Logic for MFA buttons
-    const hasMfaSecret = profile.mfaSecret !== "";
+    const hasMfaTotpActivated = profile.mfaTotpActivated === true;
     const isPassword2FA = defaultValues.securityOption === ESecuritySettings.Password2FA;
     const isPasswordOnly = defaultValues.securityOption === ESecuritySettings.PasswordOnly;
 
@@ -64,7 +64,7 @@ export function Security({ defaultValues }: Props) {
                     </div>
 
                     {/* 2FA Row */}
-                    {hasMfaSecret ? (
+                    {hasMfaTotpActivated ? (
                         <div className="flex items-center flex-wrap gap-4">
                             <div className="w-[250px]">2-Factor Authentication Activated</div>
                             <div className="flex gap-2">

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { useUpdateEffect } from "react-use";
+import { toast } from "sonner";
 
 import { useProfileContext } from "@application/shared/context";
 import { ProfileCommands } from "@application/shared/data/commands";
@@ -82,6 +83,7 @@ export function F2aSetupDialog() {
             },
             {
                 onSuccess: () => {
+                    toast.success("2FA setup completed successfully");
                     void refetch();
                     actions.close();
                     setStateData(null);

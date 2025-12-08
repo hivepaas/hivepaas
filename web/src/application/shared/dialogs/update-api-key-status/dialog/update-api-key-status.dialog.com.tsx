@@ -34,6 +34,7 @@ export function UpdateApiKeyStatusDialog() {
                 id: state.apiKey.id,
                 status: values.status,
                 expireAt: values.expireAt,
+                updateVer: state.apiKey.updateVer,
             },
             {
                 onSuccess: () => {

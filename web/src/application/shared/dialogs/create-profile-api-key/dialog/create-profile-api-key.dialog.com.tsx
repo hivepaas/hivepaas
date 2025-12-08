@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { Copy } from "lucide-react";
+import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
 import { ProfileCommands } from "@application/shared/data/commands";
@@ -11,8 +12,6 @@ import { CreateProfileApiKeyForm } from "../form";
 import { useCreateProfileApiKeyDialogState } from "../hooks";
 import { type CreateProfileApiKeyFormSchemaOutput } from "../schemas";
 
-const fnPlaceholder = () => null;
-
 interface CreatedApiKey {
     keyId: string;
     secretKey?: string;
@@ -20,7 +19,7 @@ interface CreatedApiKey {
 
 export function CreateProfileApiKeyDialog() {
     const [hasChanges, setHasChanges] = useState(false);
-    const { state, props: { onClose = fnPlaceholder } = {}, ...actions } = useCreateProfileApiKeyDialogState();
+    const { state, ...actions } = useCreateProfileApiKeyDialogState();
 
     const { mutate: createApiKey, isPending } = ProfileCommands.useCreateOneApiKey();
 
@@ -44,7 +43,6 @@ export function CreateProfileApiKeyDialog() {
                     setHasChanges(false);
 
                     toast.success("API key created successfully");
-                    onClose();
                 },
             },
         );
@@ -89,6 +87,13 @@ export function CreateProfileApiKeyDialog() {
         setCreatedKey(null);
         actions.close();
     }
+
+    useUpdateEffect(() => {
+        if (state.mode === "closed") {
+            setCreatedKey(null);
+            setHasChanges(false);
+        }
+    }, [state.mode]);
 
     const open = state.mode !== "closed";
     const showForm = !createdKey;

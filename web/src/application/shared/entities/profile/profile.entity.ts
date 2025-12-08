@@ -64,4 +64,6 @@ export interface Profile {
             delete: boolean;
         };
     }[];
+
+    mfaTotpActivated?: boolean;
 }

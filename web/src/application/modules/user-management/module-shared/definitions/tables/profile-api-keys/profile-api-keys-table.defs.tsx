@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import type { ProfileApiKey } from "@application/shared/entities/profile";
 import { EProfileApiKeyStatus } from "@application/shared/enums";
 
-import { ActionsCell } from "./building-blocks";
+import { ActionsCell, KeyIdCell } from "./building-blocks";
 
 const columns: ColumnDef<ProfileApiKey>[] = [
     {
@@ -16,7 +16,7 @@ const columns: ColumnDef<ProfileApiKey>[] = [
         header: "Key ID",
         cell: ({ row: { original } }) => {
             const { keyId } = original;
-            return <span className="font-mono">{keyId}</span>;
+            return <KeyIdCell keyId={keyId} />;
         },
     },
     {

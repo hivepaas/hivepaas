@@ -30,6 +30,7 @@ const GetProfileSchema = z.object({
             mfaSecret: z.string().optional(),
             projectAccesses: z.array(AccessSchema).nullable(),
             moduleAccesses: z.array(AccessSchema).nullable(),
+            mfaTotpActivated: z.boolean().optional(),
         }),
     }),
 });
@@ -65,6 +66,7 @@ export class SessionApiValidator {
                 status: user.status,
                 projectAccesses: user.projectAccesses ?? [],
                 moduleAccesses: user.moduleAccesses ?? [],
+                mfaTotpActivated: user.mfaTotpActivated,
             },
         };
     };

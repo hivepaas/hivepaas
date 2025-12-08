@@ -38,6 +38,7 @@ const CODE_LENGTH = 6;
 
 export function SignUpForm({ method, isPending, onSubmit }: Props) {
     const [openCandidatePhoto, setOpenCandidatePhoto] = useState(false);
+    const [showQrCode, setShowQrCode] = useState(false);
 
     const {
         handleSubmit,
@@ -319,37 +320,52 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                 {method.candidate.securityOption === ESecuritySettings.Password2FA && (
                                     <Field className="col-span-full md:col-span-1">
                                         <FieldLabel>Setup 2-Factor Authentication</FieldLabel>
-                                        <MfaQrCode
-                                            qrCode={method.candidate.qrCode}
-                                            secretKey={method.candidate.mfaTotpSecret}
-                                        />
-                                        <FieldLabel htmlFor="passcode">Enter the generated passcode</FieldLabel>
 
-                                        <div className="flex justify-center">
-                                            <InputOTP
-                                                id="passcode"
-                                                value={passcode.value}
-                                                onChange={passcode.onChange}
-                                                maxLength={CODE_LENGTH}
-                                                aria-invalid={isPasscodeInvalid}
+                                        {!showQrCode ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setShowQrCode(true);
+                                                }}
                                             >
-                                                <InputOTPGroup>
-                                                    <InputOTPSlot index={0} />
-                                                    <InputOTPSlot index={1} />
-                                                </InputOTPGroup>
-                                                <InputOTPSeparator />
-                                                <InputOTPGroup>
-                                                    <InputOTPSlot index={2} />
-                                                    <InputOTPSlot index={3} />
-                                                </InputOTPGroup>
-                                                <InputOTPSeparator />
-                                                <InputOTPGroup>
-                                                    <InputOTPSlot index={4} />
-                                                    <InputOTPSlot index={5} />
-                                                </InputOTPGroup>
-                                            </InputOTP>
-                                        </div>
-                                        <FieldError errors={[errors.passcode]} />
+                                                Show QR Code
+                                            </Button>
+                                        ) : (
+                                            <>
+                                                <MfaQrCode
+                                                    qrCode={method.candidate.qrCode}
+                                                    secretKey={method.candidate.mfaTotpSecret}
+                                                />
+                                                <FieldLabel htmlFor="passcode">Enter the generated passcode</FieldLabel>
+
+                                                <div className="flex justify-center">
+                                                    <InputOTP
+                                                        id="passcode"
+                                                        value={passcode.value}
+                                                        onChange={passcode.onChange}
+                                                        maxLength={CODE_LENGTH}
+                                                        aria-invalid={isPasscodeInvalid}
+                                                    >
+                                                        <InputOTPGroup>
+                                                            <InputOTPSlot index={0} />
+                                                            <InputOTPSlot index={1} />
+                                                        </InputOTPGroup>
+                                                        <InputOTPSeparator />
+                                                        <InputOTPGroup>
+                                                            <InputOTPSlot index={2} />
+                                                            <InputOTPSlot index={3} />
+                                                        </InputOTPGroup>
+                                                        <InputOTPSeparator />
+                                                        <InputOTPGroup>
+                                                            <InputOTPSlot index={4} />
+                                                            <InputOTPSlot index={5} />
+                                                        </InputOTPGroup>
+                                                    </InputOTP>
+                                                </div>
+                                                <FieldError errors={[errors.passcode]} />
+                                            </>
+                                        )}
                                     </Field>
                                 )}
                                 <Field className="col-span-full">

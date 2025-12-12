@@ -1,5 +1,5 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
-import { type NodeBase } from "~/cluster/domain";
+import { type NodeBase, type NodeDetails } from "~/cluster/domain";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -12,7 +12,7 @@ export type Nodes_FindManyPaginated_Req = ApiRequestBase<{
     search?: string;
 }>;
 
-export type Nodes_FindManyPaginated_Res = ApiResponsePaginated<NodeBase>;
+export type Nodes_FindManyPaginated_Res = ApiResponsePaginated<NodeDetails>;
 
 /**
  * Find one node by id
@@ -21,7 +21,7 @@ export type Nodes_FindOneById_Req = ApiRequestBase<{
     id: string;
 }>;
 
-export type Nodes_FindOneById_Res = ApiResponseBase<NodeBase>;
+export type Nodes_FindOneById_Res = ApiResponseBase<NodeDetails>;
 
 /**
  * Delete one node
@@ -51,4 +51,6 @@ export type Nodes_CreateOne_Req = ApiRequestBase<{
     node: Omit<NodeBase, "id" | "createdAt" | "updatedAt">;
 }>;
 
-export type Nodes_CreateOne_Res = ApiResponseBase<NodeBase>;
+export type Nodes_CreateOne_Res = ApiResponseBase<{
+    id: string;
+}>;

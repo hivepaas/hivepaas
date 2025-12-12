@@ -1,7 +1,8 @@
 export const ENodeStatus = {
+    Unknown: "unknown",
+    Down: "down",
     Ready: "ready",
-    Pending: "pending",
-    Disabled: "disabled",
+    Disconnected: "disconnected",
 } as const;
 
 export type ENodeStatus = (typeof ENodeStatus)[keyof typeof ENodeStatus];

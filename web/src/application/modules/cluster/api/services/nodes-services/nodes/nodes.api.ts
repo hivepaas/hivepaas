@@ -36,7 +36,7 @@ export class NodesApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get("/nodes", {
+                this.client.v1.get("/cluster/nodes", {
                     params: query.build(),
                     signal,
                 }),
@@ -59,7 +59,7 @@ export class NodesApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/nodes/${id}`, {
+                this.client.v1.get(`/cluster/nodes/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -77,7 +77,7 @@ export class NodesApi extends BaseApi {
         const { id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/nodes/${id}`, {})).pipe(
+            from(this.client.v1.delete(`/cluster/nodes/${id}`, {})).pipe(
                 map(() => Ok({ data: { id } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -94,26 +94,11 @@ export class NodesApi extends BaseApi {
             name: JsonTransformer.string({
                 data: node.name,
             }),
-            description: JsonTransformer.string({
-                data: node.description,
-            }),
-            status: JsonTransformer.string({
-                data: node.status,
-            }),
-            nodeCount: JsonTransformer.number({
-                data: node.nodeCount,
-            }),
-            region: JsonTransformer.string({
-                data: node.region,
-            }),
-            version: JsonTransformer.string({
-                data: node.version,
-            }),
         };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/nodes/${id}`, json, {
+                this.client.v1.put(`/cluster/nodes/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -133,25 +118,10 @@ export class NodesApi extends BaseApi {
             name: JsonTransformer.string({
                 data: node.name,
             }),
-            description: JsonTransformer.string({
-                data: node.description,
-            }),
-            status: JsonTransformer.string({
-                data: node.status,
-            }),
-            nodeCount: JsonTransformer.number({
-                data: node.nodeCount,
-            }),
-            region: JsonTransformer.string({
-                data: node.region,
-            }),
-            version: JsonTransformer.string({
-                data: node.version,
-            }),
         };
 
         return lastValueFrom(
-            from(this.client.v1.post("/nodes", json, { signal })).pipe(
+            from(this.client.v1.post("/cluster/nodes", json, { signal })).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

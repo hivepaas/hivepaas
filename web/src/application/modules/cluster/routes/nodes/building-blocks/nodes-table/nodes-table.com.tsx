@@ -1,4 +1,5 @@
 import { NodesQueries } from "~/cluster/data/queries";
+import { NodesTableDefs } from "~/cluster/module-shared/definitions/tables/nodes/nodes-table.defs";
 
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
@@ -16,7 +17,7 @@ export function NodesTable() {
     return (
         <div className="flex flex-col gap-4">
             <DataTable
-                columns={[]}
+                columns={NodesTableDefs.columns}
                 data={nodes}
                 pageSize={pagination.size}
                 enablePagination

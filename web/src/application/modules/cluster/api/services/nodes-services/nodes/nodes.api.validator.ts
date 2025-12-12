@@ -5,6 +5,7 @@ import {
     type Nodes_FindManyPaginated_Res,
     type Nodes_FindOneById_Res,
 } from "~/cluster/api/services/nodes-services/nodes/nodes.api.contracts";
+import { ENodeAvailability, ENodeRole, ENodeStatus } from "~/cluster/module-shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -14,13 +15,35 @@ import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 const NodeSchema = z.object({
     id: z.string(),
     name: z.string(),
-    description: z.string().nullable(),
-    status: z.enum(["active", "inactive", "maintenance"]),
+    labels: z.record(z.string(), z.string()).nullable(),
+    hostname: z.string(),
+    addr: z.string(),
+    status: z.nativeEnum(ENodeStatus),
+    availability: z.nativeEnum(ENodeAvailability),
+    role: z.nativeEnum(ENodeRole),
+    isLeader: z.boolean(),
+    platform: z
+        .object({
+            architecture: z.string(),
+            os: z.string(),
+        })
+        .nullable(),
+    resources: z
+        .object({
+            cpus: z.number(),
+            memoryMB: z.number(),
+        })
+        .nullable(),
+    engineDesc: z
+        .object({
+            engineVersion: z.string(),
+            labels: z.record(z.string(), z.string()).nullable(),
+            plugins: z.array(z.object({ name: z.string(), type: z.string() })).optional(),
+        })
+        .nullable(),
+    updateVer: z.number(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
-    nodeCount: z.number(),
-    region: z.string(),
-    version: z.string(),
 });
 
 /**
@@ -59,13 +82,19 @@ export class NodesApiValidator {
             data: data.map(node => ({
                 id: node.id,
                 name: node.name,
-                description: node.description,
+                labels: node.labels,
+                hostname: node.hostname,
+                addr: node.addr,
+                availability: node.availability,
                 status: node.status,
+                role: node.role,
+                isLeader: node.isLeader,
+                platform: node.platform,
+                resources: node.resources,
+                engineDesc: node.engineDesc,
+                updateVer: node.updateVer,
                 createdAt: node.createdAt,
                 updatedAt: node.updatedAt,
-                nodeCount: node.nodeCount,
-                region: node.region,
-                version: node.version,
             })),
             meta,
         };
@@ -84,13 +113,19 @@ export class NodesApiValidator {
             data: {
                 id: data.id,
                 name: data.name,
-                description: data.description,
+                labels: data.labels,
+                hostname: data.hostname,
+                addr: data.addr,
+                availability: data.availability,
                 status: data.status,
+                role: data.role,
+                isLeader: data.isLeader,
+                platform: data.platform,
+                resources: data.resources,
+                engineDesc: data.engineDesc,
+                updateVer: data.updateVer,
                 createdAt: data.createdAt,
                 updatedAt: data.updatedAt,
-                nodeCount: data.nodeCount,
-                region: data.region,
-                version: data.version,
             },
         };
     };
@@ -107,14 +142,6 @@ export class NodesApiValidator {
         return {
             data: {
                 id: data.id,
-                name: data.name,
-                description: data.description,
-                status: data.status,
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt,
-                nodeCount: data.nodeCount,
-                region: data.region,
-                version: data.version,
             },
         };
     };

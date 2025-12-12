@@ -5,10 +5,6 @@ import type {
     BeginMfaTotpSetupData,
     BeginMfaTotpSetupErrors,
     BeginMfaTotpSetupResponses,
-    BeginOAuth2Data,
-    BeginOAuth2Errors,
-    BeginOAuthData,
-    BeginOAuthErrors,
     BeginUserSignupData,
     BeginUserSignupErrors,
     BeginUserSignupResponses,
@@ -30,9 +26,27 @@ import type {
     CreateAppTagData,
     CreateAppTagErrors,
     CreateAppTagResponses,
-    CreateOAuthSettingData,
-    CreateOAuthSettingErrors,
-    CreateOAuthSettingResponses,
+    CreateBasicAuthProviderData,
+    CreateBasicAuthProviderErrors,
+    CreateBasicAuthProviderResponses,
+    CreateCronJobProviderData,
+    CreateCronJobProviderErrors,
+    CreateCronJobProviderResponses,
+    CreateDiscordProviderData,
+    CreateDiscordProviderErrors,
+    CreateDiscordProviderResponses,
+    CreateGitTokenProviderData,
+    CreateGitTokenProviderErrors,
+    CreateGitTokenProviderResponses,
+    CreateGithubAppProviderData,
+    CreateGithubAppProviderErrors,
+    CreateGithubAppProviderResponses,
+    CreateImageData,
+    CreateImageErrors,
+    CreateImageResponses,
+    CreateOAuthProviderData,
+    CreateOAuthProviderErrors,
+    CreateOAuthProviderResponses,
     CreateProjectData,
     CreateProjectErrors,
     CreateProjectResponses,
@@ -42,18 +56,27 @@ import type {
     CreateProjectTagData,
     CreateProjectTagErrors,
     CreateProjectTagResponses,
-    CreateS3StorageSettingData,
-    CreateS3StorageSettingErrors,
-    CreateS3StorageSettingResponses,
+    CreateRegistryAuthProviderData,
+    CreateRegistryAuthProviderErrors,
+    CreateRegistryAuthProviderResponses,
+    CreateS3StorageProviderData,
+    CreateS3StorageProviderErrors,
+    CreateS3StorageProviderResponses,
     CreateSecretData,
     CreateSecretErrors,
     CreateSecretResponses,
-    CreateSlackSettingData,
-    CreateSlackSettingErrors,
-    CreateSlackSettingResponses,
-    CreateSshKeySettingData,
-    CreateSshKeySettingErrors,
-    CreateSshKeySettingResponses,
+    CreateSlackProviderData,
+    CreateSlackProviderErrors,
+    CreateSlackProviderResponses,
+    CreateSshKeyProviderData,
+    CreateSshKeyProviderErrors,
+    CreateSshKeyProviderResponses,
+    CreateSslProviderData,
+    CreateSslProviderErrors,
+    CreateSslProviderResponses,
+    CreateVolumeData,
+    CreateVolumeErrors,
+    CreateVolumeResponses,
     DeleteAllSessionsData,
     DeleteAllSessionsErrors,
     DeleteAllSessionsResponses,
@@ -69,12 +92,30 @@ import type {
     DeleteAppTagsData,
     DeleteAppTagsErrors,
     DeleteAppTagsResponses,
+    DeleteBasicAuthProviderData,
+    DeleteBasicAuthProviderErrors,
+    DeleteBasicAuthProviderResponses,
+    DeleteCronJobProviderData,
+    DeleteCronJobProviderErrors,
+    DeleteCronJobProviderResponses,
+    DeleteDiscordProviderData,
+    DeleteDiscordProviderErrors,
+    DeleteDiscordProviderResponses,
+    DeleteGitTokenProviderData,
+    DeleteGitTokenProviderErrors,
+    DeleteGitTokenProviderResponses,
+    DeleteGithubAppProviderData,
+    DeleteGithubAppProviderErrors,
+    DeleteGithubAppProviderResponses,
+    DeleteImageData,
+    DeleteImageErrors,
+    DeleteImageResponses,
     DeleteNodeData,
     DeleteNodeErrors,
     DeleteNodeResponses,
-    DeleteOAuthSettingData,
-    DeleteOAuthSettingErrors,
-    DeleteOAuthSettingResponses,
+    DeleteOAuthProviderData,
+    DeleteOAuthProviderErrors,
+    DeleteOAuthProviderResponses,
     DeleteProjectData,
     DeleteProjectErrors,
     DeleteProjectResponses,
@@ -84,21 +125,36 @@ import type {
     DeleteProjectTagsData,
     DeleteProjectTagsErrors,
     DeleteProjectTagsResponses,
-    DeleteS3StorageSettingData,
-    DeleteS3StorageSettingErrors,
-    DeleteS3StorageSettingResponses,
+    DeleteRegistryAuthProviderData,
+    DeleteRegistryAuthProviderErrors,
+    DeleteRegistryAuthProviderResponses,
+    DeleteS3StorageProviderData,
+    DeleteS3StorageProviderErrors,
+    DeleteS3StorageProviderResponses,
     DeleteSecretData,
     DeleteSecretErrors,
     DeleteSecretResponses,
     DeleteSessionData,
     DeleteSessionErrors,
     DeleteSessionResponses,
-    DeleteSlackSettingData,
-    DeleteSlackSettingErrors,
-    DeleteSlackSettingResponses,
-    DeleteSshKeySettingData,
-    DeleteSshKeySettingErrors,
-    DeleteSshKeySettingResponses,
+    DeleteSlackProviderData,
+    DeleteSlackProviderErrors,
+    DeleteSlackProviderResponses,
+    DeleteSshKeyProviderData,
+    DeleteSshKeyProviderErrors,
+    DeleteSshKeyProviderResponses,
+    DeleteSslProviderData,
+    DeleteSslProviderErrors,
+    DeleteSslProviderResponses,
+    DeleteSysErrorData,
+    DeleteSysErrorErrors,
+    DeleteSysErrorResponses,
+    DeleteUserData,
+    DeleteUserErrors,
+    DeleteUserResponses,
+    DeleteVolumeData,
+    DeleteVolumeErrors,
+    DeleteVolumeResponses,
     DevModeLoginData,
     DevModeLoginErrors,
     DevModeLoginResponses,
@@ -108,9 +164,33 @@ import type {
     GetAppData,
     GetAppErrors,
     GetAppResponses,
+    GetAppRuntimeLogsData,
+    GetAppRuntimeLogsErrors,
+    GetAppRuntimeLogsResponses,
     GetAppSettingsData,
     GetAppSettingsErrors,
     GetAppSettingsResponses,
+    GetBasicAuthProviderData,
+    GetBasicAuthProviderErrors,
+    GetBasicAuthProviderResponses,
+    GetCronJobProviderData,
+    GetCronJobProviderErrors,
+    GetCronJobProviderResponses,
+    GetDiscordProviderData,
+    GetDiscordProviderErrors,
+    GetDiscordProviderResponses,
+    GetGitTokenProviderData,
+    GetGitTokenProviderErrors,
+    GetGitTokenProviderResponses,
+    GetGithubAppProviderData,
+    GetGithubAppProviderErrors,
+    GetGithubAppProviderResponses,
+    GetImageData,
+    GetImageErrors,
+    GetImageInspectionData,
+    GetImageInspectionErrors,
+    GetImageInspectionResponses,
+    GetImageResponses,
     GetLoginOptionsData,
     GetLoginOptionsErrors,
     GetLoginOptionsResponses,
@@ -119,31 +199,55 @@ import type {
     GetMeResponses,
     GetNodeData,
     GetNodeErrors,
+    GetNodeInspectionData,
+    GetNodeInspectionErrors,
+    GetNodeInspectionResponses,
+    GetNodeJoinCommandData,
+    GetNodeJoinCommandErrors,
+    GetNodeJoinCommandResponses,
     GetNodeResponses,
-    GetOAuthSettingData,
-    GetOAuthSettingErrors,
-    GetOAuthSettingResponses,
+    GetOAuthProviderData,
+    GetOAuthProviderErrors,
+    GetOAuthProviderResponses,
     GetProjectData,
     GetProjectErrors,
     GetProjectResponses,
     GetProjectSettingsData,
     GetProjectSettingsErrors,
     GetProjectSettingsResponses,
-    GetS3StorageSettingData,
-    GetS3StorageSettingErrors,
-    GetS3StorageSettingResponses,
-    GetSlackSettingData,
-    GetSlackSettingErrors,
-    GetSlackSettingResponses,
-    GetSshKeySettingData,
-    GetSshKeySettingErrors,
-    GetSshKeySettingResponses,
+    GetRegistryAuthProviderData,
+    GetRegistryAuthProviderErrors,
+    GetRegistryAuthProviderResponses,
+    GetS3StorageProviderData,
+    GetS3StorageProviderErrors,
+    GetS3StorageProviderResponses,
+    GetSlackProviderData,
+    GetSlackProviderErrors,
+    GetSlackProviderResponses,
+    GetSshKeyProviderData,
+    GetSshKeyProviderErrors,
+    GetSshKeyProviderResponses,
+    GetSslProviderData,
+    GetSslProviderErrors,
+    GetSslProviderResponses,
+    GetSysErrorData,
+    GetSysErrorErrors,
+    GetSysErrorResponses,
     GetUserData,
     GetUserErrors,
     GetUserResponses,
+    GetVolumeData,
+    GetVolumeErrors,
+    GetVolumeInspectionData,
+    GetVolumeInspectionErrors,
+    GetVolumeInspectionResponses,
+    GetVolumeResponses,
     InviteUserData,
     InviteUserErrors,
     InviteUserResponses,
+    JoinNodeData,
+    JoinNodeErrors,
+    JoinNodeResponses,
     ListApiKeySettingsData,
     ListApiKeySettingsErrors,
     ListApiKeySettingsResponses,
@@ -152,16 +256,40 @@ import type {
     ListAppBaseResponses,
     ListAppData,
     ListAppErrors,
+    ListAppInstallationData,
+    ListAppInstallationErrors,
+    ListAppInstallationResponses,
     ListAppResponses,
     ListAppSecretsData,
     ListAppSecretsErrors,
     ListAppSecretsResponses,
+    ListBasicAuthProvidersData,
+    ListBasicAuthProvidersErrors,
+    ListBasicAuthProvidersResponses,
+    ListCronJobProvidersData,
+    ListCronJobProvidersErrors,
+    ListCronJobProvidersResponses,
+    ListDiscordProvidersData,
+    ListDiscordProvidersErrors,
+    ListDiscordProvidersResponses,
+    ListGitRepoData,
+    ListGitRepoErrors,
+    ListGitRepoResponses,
+    ListGitTokenProvidersData,
+    ListGitTokenProvidersErrors,
+    ListGitTokenProvidersResponses,
+    ListGithubAppProvidersData,
+    ListGithubAppProvidersErrors,
+    ListGithubAppProvidersResponses,
+    ListImageData,
+    ListImageErrors,
+    ListImageResponses,
     ListNodeData,
     ListNodeErrors,
     ListNodeResponses,
-    ListOAuthSettingsData,
-    ListOAuthSettingsErrors,
-    ListOAuthSettingsResponses,
+    ListOAuthProvidersData,
+    ListOAuthProvidersErrors,
+    ListOAuthProvidersResponses,
     ListProjectBaseData,
     ListProjectBaseErrors,
     ListProjectBaseResponses,
@@ -171,24 +299,36 @@ import type {
     ListProjectSecretsData,
     ListProjectSecretsErrors,
     ListProjectSecretsResponses,
-    ListS3StorageSettingsData,
-    ListS3StorageSettingsErrors,
-    ListS3StorageSettingsResponses,
+    ListRegistryAuthProvidersData,
+    ListRegistryAuthProvidersErrors,
+    ListRegistryAuthProvidersResponses,
+    ListS3StorageProvidersData,
+    ListS3StorageProvidersErrors,
+    ListS3StorageProvidersResponses,
     ListSecretsData,
     ListSecretsErrors,
     ListSecretsResponses,
-    ListSlackSettingsData,
-    ListSlackSettingsErrors,
-    ListSlackSettingsResponses,
-    ListSshKeySettingsData,
-    ListSshKeySettingsErrors,
-    ListSshKeySettingsResponses,
+    ListSlackProvidersData,
+    ListSlackProvidersErrors,
+    ListSlackProvidersResponses,
+    ListSshKeyProvidersData,
+    ListSshKeyProvidersErrors,
+    ListSshKeyProvidersResponses,
+    ListSslProvidersData,
+    ListSslProvidersErrors,
+    ListSslProvidersResponses,
+    ListSysErrorData,
+    ListSysErrorErrors,
+    ListSysErrorResponses,
     ListUserBaseData,
     ListUserBaseErrors,
     ListUserBaseResponses,
     ListUserData,
     ListUserErrors,
     ListUserResponses,
+    ListVolumeData,
+    ListVolumeErrors,
+    ListVolumeResponses,
     LoginWithApiKeyData,
     LoginWithApiKeyErrors,
     LoginWithApiKeyResponses,
@@ -198,32 +338,141 @@ import type {
     LoginWithPasswordData,
     LoginWithPasswordErrors,
     LoginWithPasswordResponses,
+    ObtainDomainSslData,
+    ObtainDomainSslErrors,
+    ObtainDomainSslResponses,
     RefreshSessionData,
     RefreshSessionErrors,
     RefreshSessionResponses,
+    ReloadLocalPaasAppConfigData,
+    ReloadLocalPaasAppConfigErrors,
+    ReloadLocalPaasAppConfigResponses,
+    ReloadNginxConfigData,
+    ReloadNginxConfigErrors,
+    ReloadNginxConfigResponses,
     RemoveMfaTotpData,
     RemoveMfaTotpErrors,
     RemoveMfaTotpResponses,
+    RequestResetPasswordData,
+    RequestResetPasswordErrors,
+    RequestResetPasswordResponses,
+    ResetNginxConfigData,
+    ResetNginxConfigErrors,
+    ResetNginxConfigResponses,
+    ResetPasswordData,
+    ResetPasswordErrors,
+    ResetPasswordResponses,
+    RestartLocalPaasAppData,
+    RestartLocalPaasAppErrors,
+    RestartLocalPaasAppResponses,
+    RestartNginxData,
+    RestartNginxErrors,
+    RestartNginxResponses,
     SsoOAuthBeginData,
     SsoOAuthBeginErrors,
+    SsoOAuthCallback2Data,
+    SsoOAuthCallback2Errors,
+    SsoOAuthCallbackData,
+    SsoOAuthCallbackErrors,
+    TestGitTokenConnData,
+    TestGitTokenConnErrors,
+    TestGitTokenConnResponses,
+    TestGithubAppConnData,
+    TestGithubAppConnErrors,
+    TestGithubAppConnResponses,
+    TestRegistryAuthConnData,
+    TestRegistryAuthConnErrors,
+    TestRegistryAuthConnResponses,
+    TestS3StorageConnData,
+    TestS3StorageConnErrors,
+    TestS3StorageConnResponses,
+    TestSendDiscordMsgData,
+    TestSendDiscordMsgErrors,
+    TestSendDiscordMsgResponses,
+    TestSendSlackMsgData,
+    TestSendSlackMsgErrors,
+    TestSendSlackMsgResponses,
+    UpdateApiKeySettingMetaData,
+    UpdateApiKeySettingMetaErrors,
+    UpdateApiKeySettingMetaResponses,
     UpdateAppSettingsData,
     UpdateAppSettingsErrors,
     UpdateAppSettingsResponses,
-    UpdateOAuthSettingData,
-    UpdateOAuthSettingErrors,
-    UpdateOAuthSettingResponses,
+    UpdateBasicAuthProviderData,
+    UpdateBasicAuthProviderErrors,
+    UpdateBasicAuthProviderMetaData,
+    UpdateBasicAuthProviderMetaErrors,
+    UpdateBasicAuthProviderMetaResponses,
+    UpdateBasicAuthProviderResponses,
+    UpdateCronJobProviderData,
+    UpdateCronJobProviderErrors,
+    UpdateCronJobProviderMetaData,
+    UpdateCronJobProviderMetaErrors,
+    UpdateCronJobProviderMetaResponses,
+    UpdateCronJobProviderResponses,
+    UpdateDiscordProviderData,
+    UpdateDiscordProviderErrors,
+    UpdateDiscordProviderMetaData,
+    UpdateDiscordProviderMetaErrors,
+    UpdateDiscordProviderMetaResponses,
+    UpdateDiscordProviderResponses,
+    UpdateGitTokenProviderData,
+    UpdateGitTokenProviderErrors,
+    UpdateGitTokenProviderMetaData,
+    UpdateGitTokenProviderMetaErrors,
+    UpdateGitTokenProviderMetaResponses,
+    UpdateGitTokenProviderResponses,
+    UpdateGithubAppProviderData,
+    UpdateGithubAppProviderErrors,
+    UpdateGithubAppProviderMetaData,
+    UpdateGithubAppProviderMetaErrors,
+    UpdateGithubAppProviderMetaResponses,
+    UpdateGithubAppProviderResponses,
+    UpdateNodeData,
+    UpdateNodeErrors,
+    UpdateNodeResponses,
+    UpdateOAuthProviderData,
+    UpdateOAuthProviderErrors,
+    UpdateOAuthProviderMetaData,
+    UpdateOAuthProviderMetaErrors,
+    UpdateOAuthProviderMetaResponses,
+    UpdateOAuthProviderResponses,
     UpdateProjectSettingsData,
     UpdateProjectSettingsErrors,
     UpdateProjectSettingsResponses,
-    UpdateS3StorageSettingData,
-    UpdateS3StorageSettingErrors,
-    UpdateS3StorageSettingResponses,
-    UpdateSlackSettingData,
-    UpdateSlackSettingErrors,
-    UpdateSlackSettingResponses,
-    UpdateSshKeySettingData,
-    UpdateSshKeySettingErrors,
-    UpdateSshKeySettingResponses,
+    UpdateRegistryAuthProviderData,
+    UpdateRegistryAuthProviderErrors,
+    UpdateRegistryAuthProviderMetaData,
+    UpdateRegistryAuthProviderMetaErrors,
+    UpdateRegistryAuthProviderMetaResponses,
+    UpdateRegistryAuthProviderResponses,
+    UpdateS3StorageProviderData,
+    UpdateS3StorageProviderErrors,
+    UpdateS3StorageProviderMetaData,
+    UpdateS3StorageProviderMetaErrors,
+    UpdateS3StorageProviderMetaResponses,
+    UpdateS3StorageProviderResponses,
+    UpdateSecretMetaData,
+    UpdateSecretMetaErrors,
+    UpdateSecretMetaResponses,
+    UpdateSlackProviderData,
+    UpdateSlackProviderErrors,
+    UpdateSlackProviderMetaData,
+    UpdateSlackProviderMetaErrors,
+    UpdateSlackProviderMetaResponses,
+    UpdateSlackProviderResponses,
+    UpdateSshKeyProviderData,
+    UpdateSshKeyProviderErrors,
+    UpdateSshKeyProviderMetaData,
+    UpdateSshKeyProviderMetaErrors,
+    UpdateSshKeyProviderMetaResponses,
+    UpdateSshKeyProviderResponses,
+    UpdateSslProviderData,
+    UpdateSslProviderErrors,
+    UpdateSslProviderMetaData,
+    UpdateSslProviderMetaErrors,
+    UpdateSslProviderMetaResponses,
+    UpdateSslProviderResponses,
     UpdateUserData,
     UpdateUserErrors,
     UpdateUserPasswordData,
@@ -330,8 +579,10 @@ export const loginWithPassword = <ThrowOnError extends boolean = false>(
  *
  * Begins SSO flow
  */
-export const beginOAuth = <ThrowOnError extends boolean = false>(options: Options<BeginOAuthData, ThrowOnError>) => {
-    return (options.client ?? client).get<unknown, BeginOAuthErrors, ThrowOnError>({
+export const ssoOAuthCallback = <ThrowOnError extends boolean = false>(
+    options: Options<SsoOAuthCallbackData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<unknown, SsoOAuthCallbackErrors, ThrowOnError>({
         url: "/auth/sso/callback/{provider}",
         ...options,
     });
@@ -342,8 +593,10 @@ export const beginOAuth = <ThrowOnError extends boolean = false>(options: Option
  *
  * Begins SSO flow
  */
-export const beginOAuth2 = <ThrowOnError extends boolean = false>(options: Options<BeginOAuth2Data, ThrowOnError>) => {
-    return (options.client ?? client).post<unknown, BeginOAuth2Errors, ThrowOnError>({
+export const ssoOAuthCallback2 = <ThrowOnError extends boolean = false>(
+    options: Options<SsoOAuthCallback2Data, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<unknown, SsoOAuthCallback2Errors, ThrowOnError>({
         url: "/auth/sso/callback/{provider}",
         ...options,
     });
@@ -364,6 +617,77 @@ export const ssoOAuthBegin = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Lists cluster images
+ *
+ * Lists cluster images
+ */
+export const listImage = <ThrowOnError extends boolean = false>(options?: Options<ListImageData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListImageResponses, ListImageErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/images",
+        ...options,
+    });
+};
+
+/**
+ * Creates an image
+ *
+ * Creates an image
+ */
+export const createImage = <ThrowOnError extends boolean = false>(options: Options<CreateImageData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateImageResponses, CreateImageErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/images",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes an image
+ *
+ * Deletes an image
+ */
+export const deleteImage = <ThrowOnError extends boolean = false>(options: Options<DeleteImageData, ThrowOnError>) => {
+    return (options.client ?? client).delete<DeleteImageResponses, DeleteImageErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/images/{imageID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets image details
+ *
+ * Gets image details
+ */
+export const getImage = <ThrowOnError extends boolean = false>(options: Options<GetImageData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetImageResponses, GetImageErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/images/{imageID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets image details
+ *
+ * Gets image details
+ */
+export const getImageInspection = <ThrowOnError extends boolean = false>(
+    options: Options<GetImageInspectionData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetImageInspectionResponses, GetImageInspectionErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/images/{imageID}/inspect",
+        ...options,
+    });
+};
+
+/**
  * Lists cluster nodes
  *
  * Lists cluster nodes
@@ -372,6 +696,38 @@ export const listNode = <ThrowOnError extends boolean = false>(options?: Options
     return (options?.client ?? client).get<ListNodeResponses, ListNodeErrors, ThrowOnError>({
         responseType: "json",
         url: "/cluster/nodes",
+        ...options,
+    });
+};
+
+/**
+ * Joins a node to the swarm
+ *
+ * Joins a node to the swarm
+ */
+export const joinNode = <ThrowOnError extends boolean = false>(options: Options<JoinNodeData, ThrowOnError>) => {
+    return (options.client ?? client).post<JoinNodeResponses, JoinNodeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/nodes/join",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Gets node join command
+ *
+ * Gets node join command
+ */
+export const getNodeJoinCommand = <ThrowOnError extends boolean = false>(
+    options?: Options<GetNodeJoinCommandData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetNodeJoinCommandResponses, GetNodeJoinCommandErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/nodes/join-command",
         ...options,
     });
 };
@@ -398,6 +754,126 @@ export const getNode = <ThrowOnError extends boolean = false>(options: Options<G
     return (options.client ?? client).get<GetNodeResponses, GetNodeErrors, ThrowOnError>({
         responseType: "json",
         url: "/cluster/nodes/{nodeID}",
+        ...options,
+    });
+};
+
+/**
+ * Updates a node
+ *
+ * Updates a node
+ */
+export const updateNode = <ThrowOnError extends boolean = false>(options: Options<UpdateNodeData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpdateNodeResponses, UpdateNodeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/nodes/{nodeID}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Gets node details
+ *
+ * Gets node details
+ */
+export const getNodeInspection = <ThrowOnError extends boolean = false>(
+    options: Options<GetNodeInspectionData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetNodeInspectionResponses, GetNodeInspectionErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/nodes/{nodeID}/inspect",
+        ...options,
+    });
+};
+
+/**
+ * Lists cluster volumes
+ *
+ * Lists cluster volumes
+ */
+export const listVolume = <ThrowOnError extends boolean = false>(options?: Options<ListVolumeData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListVolumeResponses, ListVolumeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/volumes",
+        ...options,
+    });
+};
+
+/**
+ * Creates a volume
+ *
+ * Creates a volume
+ */
+export const createVolume = <ThrowOnError extends boolean = false>(
+    options: Options<CreateVolumeData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateVolumeResponses, CreateVolumeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/volumes",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes a volume
+ *
+ * Deletes a volume
+ */
+export const deleteVolume = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteVolumeData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteVolumeResponses, DeleteVolumeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/volumes/{volumeID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets volume details
+ *
+ * Gets volume details
+ */
+export const getVolume = <ThrowOnError extends boolean = false>(options: Options<GetVolumeData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetVolumeResponses, GetVolumeErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/volumes/{volumeID}",
+        ...options,
+    });
+};
+
+/**
+ * Gets volume details
+ *
+ * Gets volume details
+ */
+export const getVolumeInspection = <ThrowOnError extends boolean = false>(
+    options: Options<GetVolumeInspectionData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetVolumeInspectionResponses, GetVolumeInspectionErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/cluster/volumes/{volumeID}/inspect",
+        ...options,
+    });
+};
+
+/**
+ * Lists repo
+ *
+ * Lists repo
+ */
+export const listGitRepo = <ThrowOnError extends boolean = false>(options: Options<ListGitRepoData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListGitRepoResponses, ListGitRepoErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/git-source/{settingID}/repositories",
         ...options,
     });
 };
@@ -566,6 +1042,21 @@ export const getApp = <ThrowOnError extends boolean = false>(options: Options<Ge
 };
 
 /**
+ * Stream app logs via websocket
+ *
+ * Stream app logs via websocket
+ */
+export const getAppRuntimeLogs = <ThrowOnError extends boolean = false>(
+    options: Options<GetAppRuntimeLogsData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetAppRuntimeLogsResponses, GetAppRuntimeLogsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/runtime-logs",
+        ...options,
+    });
+};
+
+/**
  * Lists app secrets
  *
  * Lists app secrets
@@ -640,6 +1131,25 @@ export const updateAppSettings = <ThrowOnError extends boolean = false>(
     return (options.client ?? client).put<UpdateAppSettingsResponses, UpdateAppSettingsErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/apps/{appID}/settings",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Obtains domain SSL
+ *
+ * Obtains domain SSL
+ */
+export const obtainDomainSsl = <ThrowOnError extends boolean = false>(
+    options: Options<ObtainDomainSslData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<ObtainDomainSslResponses, ObtainDomainSslErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/ssl/obtain",
         ...options,
         headers: {
             "Content-Type": "*/*",
@@ -808,6 +1318,1439 @@ export const deleteProjectTags = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Lists basic auth providers
+ *
+ * Lists basic auth providers
+ */
+export const listBasicAuthProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListBasicAuthProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListBasicAuthProvidersResponses, ListBasicAuthProvidersErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/basic-auth",
+            ...options,
+        },
+    );
+};
+
+/**
+ * Creates a new basic auth provider
+ *
+ * Creates a new basic auth provider
+ */
+export const createBasicAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateBasicAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<
+        CreateBasicAuthProviderResponses,
+        CreateBasicAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/basic-auth",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes basic auth provider
+ *
+ * Deletes basic auth provider
+ */
+export const deleteBasicAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteBasicAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteBasicAuthProviderResponses,
+        DeleteBasicAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/basic-auth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets basic auth provider details
+ *
+ * Gets basic auth provider details
+ */
+export const getBasicAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetBasicAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetBasicAuthProviderResponses, GetBasicAuthProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/basic-auth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates basic auth
+ *
+ * Updates basic auth
+ */
+export const updateBasicAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateBasicAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateBasicAuthProviderResponses,
+        UpdateBasicAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/basic-auth/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates basic auth meta
+ *
+ * Updates basic auth meta
+ */
+export const updateBasicAuthProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateBasicAuthProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateBasicAuthProviderMetaResponses,
+        UpdateBasicAuthProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/basic-auth/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists cron-job providers
+ *
+ * Lists cron-job providers
+ */
+export const listCronJobProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListCronJobProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListCronJobProvidersResponses, ListCronJobProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/cron-jobs",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new cron-job provider
+ *
+ * Creates a new cron-job provider
+ */
+export const createCronJobProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateCronJobProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateCronJobProviderResponses, CreateCronJobProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/cron-jobs",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes cron-job provider
+ *
+ * Deletes cron-job provider
+ */
+export const deleteCronJobProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteCronJobProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteCronJobProviderResponses, DeleteCronJobProviderErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/cron-jobs/{id}",
+            ...options,
+        },
+    );
+};
+
+/**
+ * Gets cron-job provider details
+ *
+ * Gets cron-job provider details
+ */
+export const getCronJobProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetCronJobProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetCronJobProviderResponses, GetCronJobProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/cron-jobs/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates cron-job
+ *
+ * Updates cron-job
+ */
+export const updateCronJobProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateCronJobProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateCronJobProviderResponses, UpdateCronJobProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/cron-jobs/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates cron-job meta
+ *
+ * Updates cron-job meta
+ */
+export const updateCronJobProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateCronJobProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateCronJobProviderMetaResponses,
+        UpdateCronJobProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/cron-jobs/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists Discord providers
+ *
+ * Lists Discord providers
+ */
+export const listDiscordProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListDiscordProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListDiscordProvidersResponses, ListDiscordProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/discord",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new Discord provider
+ *
+ * Creates a new Discord provider
+ */
+export const createDiscordProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateDiscordProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateDiscordProviderResponses, CreateDiscordProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/discord",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Tests sending a msg
+ *
+ * Tests sending a msg
+ */
+export const testSendDiscordMsg = <ThrowOnError extends boolean = false>(
+    options: Options<TestSendDiscordMsgData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestSendDiscordMsgResponses, TestSendDiscordMsgErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/discord/test-send-msg",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes Discord provider
+ *
+ * Deletes Discord provider
+ */
+export const deleteDiscordProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteDiscordProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteDiscordProviderResponses, DeleteDiscordProviderErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/discord/{id}",
+            ...options,
+        },
+    );
+};
+
+/**
+ * Gets Discord provider details
+ *
+ * Gets Discord provider details
+ */
+export const getDiscordProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetDiscordProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetDiscordProviderResponses, GetDiscordProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/discord/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates Discord provider
+ *
+ * Updates Discord provider
+ */
+export const updateDiscordProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateDiscordProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateDiscordProviderResponses, UpdateDiscordProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/discord/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates Discord meta provider
+ *
+ * Updates Discord meta provider
+ */
+export const updateDiscordProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateDiscordProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateDiscordProviderMetaResponses,
+        UpdateDiscordProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/discord/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists git-token providers
+ *
+ * Lists git-token providers
+ */
+export const listGitTokenProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListGitTokenProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListGitTokenProvidersResponses, ListGitTokenProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/git-tokens",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new git-token provider
+ *
+ * Creates a new git-token provider
+ */
+export const createGitTokenProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateGitTokenProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateGitTokenProviderResponses, CreateGitTokenProviderErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/git-tokens",
+            ...options,
+            headers: {
+                "Content-Type": "*/*",
+                ...options.headers,
+            },
+        },
+    );
+};
+
+/**
+ * Test git-token connection
+ *
+ * Test git-token connection
+ */
+export const testGitTokenConn = <ThrowOnError extends boolean = false>(
+    options: Options<TestGitTokenConnData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestGitTokenConnResponses, TestGitTokenConnErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/git-tokens/test-conn",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes git-token provider
+ *
+ * Deletes git-token provider
+ */
+export const deleteGitTokenProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteGitTokenProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteGitTokenProviderResponses,
+        DeleteGitTokenProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/git-tokens/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets git-token provider details
+ *
+ * Gets git-token provider details
+ */
+export const getGitTokenProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetGitTokenProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetGitTokenProviderResponses, GetGitTokenProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/git-tokens/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates git-token
+ *
+ * Updates git-token
+ */
+export const updateGitTokenProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGitTokenProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateGitTokenProviderResponses, UpdateGitTokenProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/git-tokens/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates git-token meta
+ *
+ * Updates git-token meta
+ */
+export const updateGitTokenProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGitTokenProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateGitTokenProviderMetaResponses,
+        UpdateGitTokenProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/git-tokens/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists github-app providers
+ *
+ * Lists github-app providers
+ */
+export const listGithubAppProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListGithubAppProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListGithubAppProvidersResponses, ListGithubAppProvidersErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/github-apps",
+            ...options,
+        },
+    );
+};
+
+/**
+ * Creates a new github-app provider
+ *
+ * Creates a new github-app provider
+ */
+export const createGithubAppProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateGithubAppProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<
+        CreateGithubAppProviderResponses,
+        CreateGithubAppProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/github-apps",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * List github app installation
+ *
+ * List github app installation
+ */
+export const listAppInstallation = <ThrowOnError extends boolean = false>(
+    options: Options<ListAppInstallationData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<ListAppInstallationResponses, ListAppInstallationErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/github-apps/installations/list",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Test github app connection
+ *
+ * Test github app connection
+ */
+export const testGithubAppConn = <ThrowOnError extends boolean = false>(
+    options: Options<TestGithubAppConnData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestGithubAppConnResponses, TestGithubAppConnErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/github-apps/test-conn",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes github-app provider
+ *
+ * Deletes github-app provider
+ */
+export const deleteGithubAppProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteGithubAppProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteGithubAppProviderResponses,
+        DeleteGithubAppProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/github-apps/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets github-app provider details
+ *
+ * Gets github-app provider details
+ */
+export const getGithubAppProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetGithubAppProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetGithubAppProviderResponses, GetGithubAppProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/github-apps/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates github-app
+ *
+ * Updates github-app
+ */
+export const updateGithubAppProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGithubAppProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateGithubAppProviderResponses,
+        UpdateGithubAppProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/github-apps/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates github-app meta
+ *
+ * Updates github-app meta
+ */
+export const updateGithubAppProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGithubAppProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateGithubAppProviderMetaResponses,
+        UpdateGithubAppProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/github-apps/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists oauth providers
+ *
+ * Lists oauth providers
+ */
+export const listOAuthProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListOAuthProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListOAuthProvidersResponses, ListOAuthProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/oauth",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new oauth provider
+ *
+ * Creates a new oauth provider
+ */
+export const createOAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateOAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateOAuthProviderResponses, CreateOAuthProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/oauth",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes oauth provider
+ *
+ * Deletes oauth provider
+ */
+export const deleteOAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteOAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteOAuthProviderResponses, DeleteOAuthProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/oauth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets oauth provider details
+ *
+ * Gets oauth provider details
+ */
+export const getOAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetOAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetOAuthProviderResponses, GetOAuthProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/oauth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates oauth
+ *
+ * Updates oauth
+ */
+export const updateOAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateOAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateOAuthProviderResponses, UpdateOAuthProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/oauth/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates oauth meta
+ *
+ * Updates oauth meta
+ */
+export const updateOAuthProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateOAuthProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateOAuthProviderMetaResponses,
+        UpdateOAuthProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/oauth/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists registry auth providers
+ *
+ * Lists registry auth providers
+ */
+export const listRegistryAuthProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListRegistryAuthProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        ListRegistryAuthProvidersResponses,
+        ListRegistryAuthProvidersErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new registry auth provider
+ *
+ * Creates a new registry auth provider
+ */
+export const createRegistryAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateRegistryAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<
+        CreateRegistryAuthProviderResponses,
+        CreateRegistryAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Tests registry auth connection
+ *
+ * Tests registry auth connection
+ */
+export const testRegistryAuthConn = <ThrowOnError extends boolean = false>(
+    options: Options<TestRegistryAuthConnData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestRegistryAuthConnResponses, TestRegistryAuthConnErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/registry-auth/test-conn",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes registry auth provider
+ *
+ * Deletes registry auth provider
+ */
+export const deleteRegistryAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteRegistryAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteRegistryAuthProviderResponses,
+        DeleteRegistryAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets registry auth provider details
+ *
+ * Gets registry auth provider details
+ */
+export const getRegistryAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetRegistryAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<
+        GetRegistryAuthProviderResponses,
+        GetRegistryAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates registry auth
+ *
+ * Updates registry auth
+ */
+export const updateRegistryAuthProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateRegistryAuthProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateRegistryAuthProviderResponses,
+        UpdateRegistryAuthProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates registry auth meta
+ *
+ * Updates registry auth meta
+ */
+export const updateRegistryAuthProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateRegistryAuthProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateRegistryAuthProviderMetaResponses,
+        UpdateRegistryAuthProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/registry-auth/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists S3 storage providers
+ *
+ * Lists S3 storage providers
+ */
+export const listS3StorageProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListS3StorageProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListS3StorageProvidersResponses, ListS3StorageProvidersErrors, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/providers/s3-storages",
+            ...options,
+        },
+    );
+};
+
+/**
+ * Creates a new S3 storage provider
+ *
+ * Creates a new S3 storage provider
+ */
+export const createS3StorageProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateS3StorageProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<
+        CreateS3StorageProviderResponses,
+        CreateS3StorageProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/s3-storages",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Test S3 storage connection
+ *
+ * Test S3 storage connection
+ */
+export const testS3StorageConn = <ThrowOnError extends boolean = false>(
+    options: Options<TestS3StorageConnData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestS3StorageConnResponses, TestS3StorageConnErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/s3-storages/test-conn",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes S3 storage provider
+ *
+ * Deletes S3 storage provider
+ */
+export const deleteS3StorageProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteS3StorageProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<
+        DeleteS3StorageProviderResponses,
+        DeleteS3StorageProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/s3-storages/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets S3 storage provider details
+ *
+ * Gets S3 storage provider details
+ */
+export const getS3StorageProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetS3StorageProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetS3StorageProviderResponses, GetS3StorageProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/s3-storages/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates S3 storage
+ *
+ * Updates S3 storage
+ */
+export const updateS3StorageProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateS3StorageProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateS3StorageProviderResponses,
+        UpdateS3StorageProviderErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/s3-storages/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates S3 storage meta
+ *
+ * Updates S3 storage meta
+ */
+export const updateS3StorageProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateS3StorageProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateS3StorageProviderMetaResponses,
+        UpdateS3StorageProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/s3-storages/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists secrets
+ *
+ * Lists secrets
+ */
+export const listSecrets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListSecretsResponses, ListSecretsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/secrets",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new secret
+ *
+ * Creates a new secret
+ */
+export const createSecret = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSecretResponses, CreateSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/secrets",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes a secret
+ *
+ * Deletes a secret
+ */
+export const deleteSecret = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSecretData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSecretResponses, DeleteSecretErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/secrets/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates secret meta
+ *
+ * Updates secret meta
+ */
+export const updateSecretMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSecretMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSecretMetaResponses, UpdateSecretMetaErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/secrets/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists Slack providers
+ *
+ * Lists Slack providers
+ */
+export const listSlackProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSlackProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListSlackProvidersResponses, ListSlackProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new Slack provider
+ *
+ * Creates a new Slack provider
+ */
+export const createSlackProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSlackProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSlackProviderResponses, CreateSlackProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Tests sending a msg
+ *
+ * Tests sending a msg
+ */
+export const testSendSlackMsg = <ThrowOnError extends boolean = false>(
+    options: Options<TestSendSlackMsgData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<TestSendSlackMsgResponses, TestSendSlackMsgErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack/test-send-msg",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes Slack provider
+ *
+ * Deletes Slack provider
+ */
+export const deleteSlackProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSlackProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSlackProviderResponses, DeleteSlackProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets Slack provider details
+ *
+ * Gets Slack provider details
+ */
+export const getSlackProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetSlackProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSlackProviderResponses, GetSlackProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates Slack provider
+ *
+ * Updates Slack provider
+ */
+export const updateSlackProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSlackProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSlackProviderResponses, UpdateSlackProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/slack/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates Slack meta provider
+ *
+ * Updates Slack meta provider
+ */
+export const updateSlackProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSlackProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateSlackProviderMetaResponses,
+        UpdateSlackProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/slack/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists ssh-key providers
+ *
+ * Lists ssh-key providers
+ */
+export const listSshKeyProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSshKeyProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListSshKeyProvidersResponses, ListSshKeyProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssh-keys",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new ssh-key provider
+ *
+ * Creates a new ssh-key provider
+ */
+export const createSshKeyProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSshKeyProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSshKeyProviderResponses, CreateSshKeyProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssh-keys",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes sshkey provider
+ *
+ * Deletes sshkey provider
+ */
+export const deleteSshKeyProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSshKeyProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSshKeyProviderResponses, DeleteSshKeyProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssh-keys/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets ssh-key provider details
+ *
+ * Gets ssh-key provider details
+ */
+export const getSshKeyProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetSshKeyProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSshKeyProviderResponses, GetSshKeyProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssh-keys/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates ssh-key
+ *
+ * Updates ssh-key
+ */
+export const updateSshKeyProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSshKeyProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSshKeyProviderResponses, UpdateSshKeyProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssh-keys/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates ssh-key meta
+ *
+ * Updates ssh-key meta
+ */
+export const updateSshKeyProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSshKeyProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateSshKeyProviderMetaResponses,
+        UpdateSshKeyProviderMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/providers/ssh-keys/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Lists SSL providers
+ *
+ * Lists SSL providers
+ */
+export const listSslProviders = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSslProvidersData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<ListSslProvidersResponses, ListSslProvidersErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls",
+        ...options,
+    });
+};
+
+/**
+ * Creates a new SSL provider
+ *
+ * Creates a new SSL provider
+ */
+export const createSslProvider = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSslProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CreateSslProviderResponses, CreateSslProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Deletes SSL provider
+ *
+ * Deletes SSL provider
+ */
+export const deleteSslProvider = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSslProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).delete<DeleteSslProviderResponses, DeleteSslProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Gets SSL provider details
+ *
+ * Gets SSL provider details
+ */
+export const getSslProvider = <ThrowOnError extends boolean = false>(
+    options: Options<GetSslProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetSslProviderResponses, GetSslProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls/{id}",
+        ...options,
+    });
+};
+
+/**
+ * Updates SSL
+ *
+ * Updates SSL
+ */
+export const updateSslProvider = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSslProviderData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSslProviderResponses, UpdateSslProviderErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls/{id}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates SSL meta
+ *
+ * Updates SSL meta
+ */
+export const updateSslProviderMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSslProviderMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateSslProviderMetaResponses, UpdateSslProviderMetaErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/providers/ssls/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
  * Deletes the current user session
  *
  * Deletes the current user session
@@ -867,193 +2810,63 @@ export const refreshSession = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Lists oauth settings
+ * Lists sys errors
  *
- * Lists oauth settings
+ * Lists sys errors
  */
-export const listOAuthSettings = <ThrowOnError extends boolean = false>(
-    options?: Options<ListOAuthSettingsData, ThrowOnError>,
+export const listSysError = <ThrowOnError extends boolean = false>(
+    options?: Options<ListSysErrorData, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<ListOAuthSettingsResponses, ListOAuthSettingsErrors, ThrowOnError>({
+    return (options?.client ?? client).get<ListSysErrorResponses, ListSysErrorErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/oauth",
+        url: "/system/errors",
         ...options,
     });
 };
 
 /**
- * Creates a new oauth setting
+ * Deletes sys error
  *
- * Creates a new oauth setting
+ * Deletes sys error
  */
-export const createOAuthSetting = <ThrowOnError extends boolean = false>(
-    options: Options<CreateOAuthSettingData, ThrowOnError>,
+export const deleteSysError = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSysErrorData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).post<CreateOAuthSettingResponses, CreateOAuthSettingErrors, ThrowOnError>({
+    return (options.client ?? client).delete<DeleteSysErrorResponses, DeleteSysErrorErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/oauth",
-        ...options,
-        headers: {
-            "Content-Type": "*/*",
-            ...options.headers,
-        },
-    });
-};
-
-/**
- * Deletes oauth setting
- *
- * Deletes oauth setting
- */
-export const deleteOAuthSetting = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteOAuthSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).delete<DeleteOAuthSettingResponses, DeleteOAuthSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/oauth/{ID}",
+        url: "/system/errors/{id}",
         ...options,
     });
 };
 
 /**
- * Gets oauth setting details
+ * Gets sys error
  *
- * Gets oauth setting details
+ * Gets sys error
  */
-export const getOAuthSetting = <ThrowOnError extends boolean = false>(
-    options: Options<GetOAuthSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetOAuthSettingResponses, GetOAuthSettingErrors, ThrowOnError>({
+export const getSysError = <ThrowOnError extends boolean = false>(options: Options<GetSysErrorData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetSysErrorResponses, GetSysErrorErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/oauth/{ID}",
+        url: "/system/errors/{id}",
         ...options,
     });
 };
 
 /**
- * Updates oauth
+ * Reloads LocalPaas config files
  *
- * Updates oauth
+ * Reloads LocalPaas config files
  */
-export const updateOAuthSetting = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateOAuthSettingData, ThrowOnError>,
+export const reloadLocalPaasAppConfig = <ThrowOnError extends boolean = false>(
+    options: Options<ReloadLocalPaasAppConfigData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).put<UpdateOAuthSettingResponses, UpdateOAuthSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/oauth/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Lists S3 storage settings
- *
- * Lists S3 storage settings
- */
-export const listS3StorageSettings = <ThrowOnError extends boolean = false>(
-    options?: Options<ListS3StorageSettingsData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListS3StorageSettingsResponses, ListS3StorageSettingsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/s3-storages",
-        ...options,
-    });
-};
-
-/**
- * Creates a new S3 storage setting
- *
- * Creates a new S3 storage setting
- */
-export const createS3StorageSetting = <ThrowOnError extends boolean = false>(
-    options: Options<CreateS3StorageSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateS3StorageSettingResponses, CreateS3StorageSettingErrors, ThrowOnError>(
-        {
-            responseType: "json",
-            url: "/settings/s3-storages",
-            ...options,
-            headers: {
-                "Content-Type": "*/*",
-                ...options.headers,
-            },
-        },
-    );
-};
-
-/**
- * Deletes S3 storage setting
- *
- * Deletes S3 storage setting
- */
-export const deleteS3StorageSetting = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteS3StorageSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).delete<
-        DeleteS3StorageSettingResponses,
-        DeleteS3StorageSettingErrors,
+    return (options.client ?? client).post<
+        ReloadLocalPaasAppConfigResponses,
+        ReloadLocalPaasAppConfigErrors,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/settings/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Gets S3 storage setting details
- *
- * Gets S3 storage setting details
- */
-export const getS3StorageSetting = <ThrowOnError extends boolean = false>(
-    options: Options<GetS3StorageSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetS3StorageSettingResponses, GetS3StorageSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Updates S3 storage
- *
- * Updates S3 storage
- */
-export const updateS3StorageSetting = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateS3StorageSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).put<UpdateS3StorageSettingResponses, UpdateS3StorageSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/s3-storages/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Lists secrets
- *
- * Lists secrets
- */
-export const listSecrets = <ThrowOnError extends boolean = false>(options?: Options<ListSecretsData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListSecretsResponses, ListSecretsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/secrets",
-        ...options,
-    });
-};
-
-/**
- * Creates a new secret
- *
- * Creates a new secret
- */
-export const createSecret = <ThrowOnError extends boolean = false>(
-    options: Options<CreateSecretData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateSecretResponses, CreateSecretErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/secrets",
+        url: "/system/localpaas/config/reload",
         ...options,
         headers: {
             "Content-Type": "*/*",
@@ -1063,46 +2876,16 @@ export const createSecret = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Deletes a secret
+ * Restarts localpaas app containers
  *
- * Deletes a secret
+ * Restarts localpaas app containers
  */
-export const deleteSecret = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteSecretData, ThrowOnError>,
+export const restartLocalPaasApp = <ThrowOnError extends boolean = false>(
+    options: Options<RestartLocalPaasAppData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).delete<DeleteSecretResponses, DeleteSecretErrors, ThrowOnError>({
+    return (options.client ?? client).post<RestartLocalPaasAppResponses, RestartLocalPaasAppErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/secrets/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Lists Slack settings
- *
- * Lists Slack settings
- */
-export const listSlackSettings = <ThrowOnError extends boolean = false>(
-    options?: Options<ListSlackSettingsData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListSlackSettingsResponses, ListSlackSettingsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/slack",
-        ...options,
-    });
-};
-
-/**
- * Creates a new Slack setting
- *
- * Creates a new Slack setting
- */
-export const createSlackSetting = <ThrowOnError extends boolean = false>(
-    options: Options<CreateSlackSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateSlackSettingResponses, CreateSlackSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/slack",
+        url: "/system/localpaas/restart",
         ...options,
         headers: {
             "Content-Type": "*/*",
@@ -1112,76 +2895,16 @@ export const createSlackSetting = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Deletes Slack setting
+ * Reloads nginx config files
  *
- * Deletes Slack setting
+ * Reloads nginx config files
  */
-export const deleteSlackSetting = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteSlackSettingData, ThrowOnError>,
+export const reloadNginxConfig = <ThrowOnError extends boolean = false>(
+    options: Options<ReloadNginxConfigData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).delete<DeleteSlackSettingResponses, DeleteSlackSettingErrors, ThrowOnError>({
+    return (options.client ?? client).post<ReloadNginxConfigResponses, ReloadNginxConfigErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/slack/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Gets Slack setting details
- *
- * Gets Slack setting details
- */
-export const getSlackSetting = <ThrowOnError extends boolean = false>(
-    options: Options<GetSlackSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).get<GetSlackSettingResponses, GetSlackSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/slack/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Updates Slack setting
- *
- * Updates Slack setting
- */
-export const updateSlackSetting = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateSlackSettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).put<UpdateSlackSettingResponses, UpdateSlackSettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/slack/{ID}",
-        ...options,
-    });
-};
-
-/**
- * Lists ssh-key settings
- *
- * Lists ssh-key settings
- */
-export const listSshKeySettings = <ThrowOnError extends boolean = false>(
-    options?: Options<ListSshKeySettingsData, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<ListSshKeySettingsResponses, ListSshKeySettingsErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/ssh-keys",
-        ...options,
-    });
-};
-
-/**
- * Creates a new ssh-key setting
- *
- * Creates a new ssh-key setting
- */
-export const createSshKeySetting = <ThrowOnError extends boolean = false>(
-    options: Options<CreateSshKeySettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).post<CreateSshKeySettingResponses, CreateSshKeySettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/ssh-keys",
+        url: "/system/nginx/config/reload",
         ...options,
         headers: {
             "Content-Type": "*/*",
@@ -1191,47 +2914,40 @@ export const createSshKeySetting = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Deletes sshkey setting
+ * Resets nginx config files
  *
- * Deletes sshkey setting
+ * Resets nginx config files
  */
-export const deleteSshKeySetting = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteSshKeySettingData, ThrowOnError>,
+export const resetNginxConfig = <ThrowOnError extends boolean = false>(
+    options: Options<ResetNginxConfigData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).delete<DeleteSshKeySettingResponses, DeleteSshKeySettingErrors, ThrowOnError>({
+    return (options.client ?? client).post<ResetNginxConfigResponses, ResetNginxConfigErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/ssh-keys/{ID}",
+        url: "/system/nginx/config/reset",
         ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
     });
 };
 
 /**
- * Gets ssh-key setting details
+ * Restarts nginx containers
  *
- * Gets ssh-key setting details
+ * Restarts nginx containers
  */
-export const getSshKeySetting = <ThrowOnError extends boolean = false>(
-    options: Options<GetSshKeySettingData, ThrowOnError>,
+export const restartNginx = <ThrowOnError extends boolean = false>(
+    options: Options<RestartNginxData, ThrowOnError>,
 ) => {
-    return (options.client ?? client).get<GetSshKeySettingResponses, GetSshKeySettingErrors, ThrowOnError>({
+    return (options.client ?? client).post<RestartNginxResponses, RestartNginxErrors, ThrowOnError>({
         responseType: "json",
-        url: "/settings/ssh-keys/{ID}",
+        url: "/system/nginx/restart",
         ...options,
-    });
-};
-
-/**
- * Updates ssh-key
- *
- * Updates ssh-key
- */
-export const updateSshKeySetting = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateSshKeySettingData, ThrowOnError>,
-) => {
-    return (options.client ?? client).put<UpdateSshKeySettingResponses, UpdateSshKeySettingErrors, ThrowOnError>({
-        responseType: "json",
-        url: "/settings/ssh-keys/{ID}",
-        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
     });
 };
 
@@ -1402,7 +3118,7 @@ export const deleteApiKeySetting = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).delete<DeleteApiKeySettingResponses, DeleteApiKeySettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/users/current/settings/api-keys/{ID}",
+        url: "/users/current/settings/api-keys/{id}",
         ...options,
     });
 };
@@ -1417,8 +3133,31 @@ export const getApiKeySetting = <ThrowOnError extends boolean = false>(
 ) => {
     return (options.client ?? client).get<GetApiKeySettingResponses, GetApiKeySettingErrors, ThrowOnError>({
         responseType: "json",
-        url: "/users/current/settings/api-keys/{ID}",
+        url: "/users/current/settings/api-keys/{id}",
         ...options,
+    });
+};
+
+/**
+ * Updates API key meta
+ *
+ * Updates API key meta
+ */
+export const updateApiKeySettingMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateApiKeySettingMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<
+        UpdateApiKeySettingMetaResponses,
+        UpdateApiKeySettingMetaErrors,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/users/current/settings/api-keys/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
     });
 };
 
@@ -1478,6 +3217,19 @@ export const completeUserSignup = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Deletes a user (admin API)
+ *
+ * Deletes a user (admin API)
+ */
+export const deleteUser = <ThrowOnError extends boolean = false>(options: Options<DeleteUserData, ThrowOnError>) => {
+    return (options.client ?? client).delete<DeleteUserResponses, DeleteUserErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/{userID}",
+        ...options,
+    });
+};
+
+/**
  * Gets user details
  *
  * Gets user details
@@ -1499,6 +3251,44 @@ export const updateUser = <ThrowOnError extends boolean = false>(options: Option
     return (options.client ?? client).put<UpdateUserResponses, UpdateUserErrors, ThrowOnError>({
         responseType: "json",
         url: "/users/{userID}",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Requests password reset
+ *
+ * Requests password reset
+ */
+export const requestResetPassword = <ThrowOnError extends boolean = false>(
+    options: Options<RequestResetPasswordData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<RequestResetPasswordResponses, RequestResetPasswordErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/{userID}/password/request-reset",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Resets password
+ *
+ * Resets password
+ */
+export const resetPassword = <ThrowOnError extends boolean = false>(
+    options: Options<ResetPasswordData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<ResetPasswordResponses, ResetPasswordErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/users/{userID}/password/reset",
         ...options,
         headers: {
             "Content-Type": "*/*",

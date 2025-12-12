@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Container, PawPrint, Users } from "lucide-react";
+import { Container, type LucideIcon, PawPrint, Users } from "lucide-react";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -10,23 +10,40 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } fr
 import { NavMain } from "../nav-main";
 import { NavUser } from "../nav-user";
 
-// This is sample data.
-const data = {
-    navMain: [
-        {
-            title: "User Management",
-            route: ROUTE.userManagement.users.$route,
-            pattern: ROUTE.userManagement.users.$pattern,
-            icon: Users,
-        },
-        {
-            title: "Clusters",
-            route: "#",
-            pattern: "#",
-            icon: Container,
-        },
-    ],
-};
+interface SidebarItem {
+    title: string;
+    route: string;
+    pattern: string;
+    icon?: LucideIcon;
+    items?: {
+        title: string;
+        route: string;
+        pattern: string;
+        icon?: LucideIcon;
+    }[];
+}
+
+const navMain: SidebarItem[] = [
+    {
+        title: "User Management",
+        route: ROUTE.userManagement.users.$route,
+        pattern: ROUTE.userManagement.users.$pattern,
+        icon: Users,
+    },
+    {
+        title: "Clusters",
+        route: "#",
+        pattern: "#",
+        icon: Container,
+        items: [
+            {
+                title: "Nodes",
+                route: ROUTE.cluster.nodes.$route,
+                pattern: ROUTE.cluster.nodes.$pattern,
+            },
+        ],
+    },
+];
 
 export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { profile } = useProfileContext();
@@ -43,7 +60,7 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
                 <PawPrint size={36} />
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} />
+                <NavMain items={navMain} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={profile} />

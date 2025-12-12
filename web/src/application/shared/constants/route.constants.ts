@@ -58,4 +58,16 @@ export const ROUTE = {
             },
         },
     },
+
+    /**
+     * Clusters
+     */
+    cluster: {
+        $pattern: "cluster",
+
+        nodes: {
+            $pattern: "cluster/nodes",
+            $route: "/cluster/nodes/",
+        },
+    },
 } as const;

@@ -7,6 +7,7 @@ import type {
     Nodes_DeleteOne_Req,
     Nodes_FindManyPaginated_Req,
     Nodes_FindOneById_Req,
+    Nodes_GetJoinNode_Req,
     Nodes_UpdateOne_Req,
 } from "~/cluster/api/services";
 
@@ -59,6 +60,29 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get node",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Get join node command
+                 */
+                getJoinNode: async (data: Nodes_GetJoinNode_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.nodes.$.getJoinNode(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get join node command",
                                 error,
                             });
 

@@ -10,6 +10,8 @@ import type {
     Nodes_FindManyPaginated_Res,
     Nodes_FindOneById_Req,
     Nodes_FindOneById_Res,
+    Nodes_GetJoinNode_Req,
+    Nodes_GetJoinNode_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services/nodes-services";
@@ -123,6 +125,35 @@ export class NodesApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.post("/cluster/nodes", json, { signal })).pipe(
                 map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Get join node command
+     */
+    async getJoinNode(
+        request: Nodes_GetJoinNode_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Nodes_GetJoinNode_Res, Error>> {
+        const { joinAsManager } = request.data;
+
+        const query = this.queryBuilder.getInstance();
+
+        query.filterBy({
+            joinAsManager: [joinAsManager],
+        });
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get("/cluster/nodes/join-command", {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getJoinNode),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

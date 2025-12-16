@@ -54,3 +54,14 @@ export type Nodes_CreateOne_Req = ApiRequestBase<{
 export type Nodes_CreateOne_Res = ApiResponseBase<{
     id: string;
 }>;
+
+/**
+ * Get join node command
+ */
+export type Nodes_GetJoinNode_Req = ApiRequestBase<{
+    joinAsManager: boolean;
+}>;
+
+export type Nodes_GetJoinNode_Res = ApiResponseBase<{
+    command: string;
+}>;

@@ -1,21 +1,39 @@
+import { Plus } from "lucide-react";
 import { NodesQueries } from "~/cluster/data/queries";
 import { NodesTableDefs } from "~/cluster/module-shared/definitions/tables/nodes/nodes-table.defs";
 
+import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { DataTable } from "@/components/ui";
+import { useJoinNewNodeDialog } from "@application/modules/cluster/dialogs";
+
+import { Button, DataTable } from "@/components/ui";
 
 export function NodesTable() {
-    const { pagination, setPagination, sorting, setSorting, search } = useTableState();
+    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
     const { data: { data: nodes } = DEFAULT_PAGINATED_DATA, isFetching } = NodesQueries.useFindManyPaginated({
         pagination,
         sorting,
         search,
     });
 
+    const dialog = useJoinNewNodeDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
+
     return (
         <div className="flex flex-col gap-4">
+            <TableActions
+                search={{ value: search, onChange: setSearch }}
+                renderActions={
+                    <Button onClick={dialog.actions.open}>
+                        <Plus /> Join Node
+                    </Button>
+                }
+            />
             <DataTable
                 columns={NodesTableDefs.columns}
                 data={nodes}

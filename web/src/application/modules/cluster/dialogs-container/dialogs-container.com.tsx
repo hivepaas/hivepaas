@@ -2,14 +2,22 @@ import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 
+import { JoinNewNodeDialog, useJoinNewNodeDialogState } from "../dialogs";
+
 function View() {
     const location = useLocation();
+    const joinNewNodeDialog = useJoinNewNodeDialogState();
 
     useUpdateEffect(() => {
-        // Cleanup dialogs on location change
+        joinNewNodeDialog.destroy();
     }, [location]);
 
-    return null;
+    return (
+        <>
+            <JoinNewNodeDialog />
+            {"/* TODO: Add other dialogs here */"}
+        </>
+    );
 }
 
 export const ClusterDialogsContainer = React.memo(View);

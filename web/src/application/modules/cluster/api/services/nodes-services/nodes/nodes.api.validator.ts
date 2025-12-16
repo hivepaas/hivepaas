@@ -4,6 +4,7 @@ import {
     type Nodes_CreateOne_Res,
     type Nodes_FindManyPaginated_Res,
     type Nodes_FindOneById_Res,
+    type Nodes_GetJoinNode_Res,
 } from "~/cluster/api/services/nodes-services/nodes/nodes.api.contracts";
 import { ENodeAvailability, ENodeRole, ENodeStatus } from "~/cluster/module-shared/enums";
 
@@ -66,6 +67,15 @@ const FindOneByIdSchema = z.object({
  */
 const CreateOneSchema = z.object({
     data: NodeSchema,
+});
+
+/**
+ * Get join node API response schema
+ */
+const GetJoinNodeSchema = z.object({
+    data: z.object({
+        command: z.string(),
+    }),
 });
 
 export class NodesApiValidator {
@@ -142,6 +152,22 @@ export class NodesApiValidator {
         return {
             data: {
                 id: data.id,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform get join node API response
+     */
+    getJoinNode = (response: AxiosResponse): Nodes_GetJoinNode_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: GetJoinNodeSchema,
+        });
+
+        return {
+            data: {
+                command: data.command,
             },
         };
     };

@@ -5,6 +5,8 @@ import type {
     Nodes_CreateOne_Res,
     Nodes_DeleteOne_Req,
     Nodes_DeleteOne_Res,
+    Nodes_GetJoinNode_Req,
+    Nodes_GetJoinNode_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services";
@@ -97,8 +99,31 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
     });
 }
 
+/**
+ * Get join node command
+ */
+type GetJoinNodeReq = Nodes_GetJoinNode_Req["data"];
+type GetJoinNodeRes = Nodes_GetJoinNode_Res;
+type GetJoinNodeOptions = Omit<UseMutationOptions<GetJoinNodeRes, Error, GetJoinNodeReq>, "mutationFn">;
+
+function useGetJoinNode({ onSuccess, ...options }: GetJoinNodeOptions = {}) {
+    const { queries } = useNodesApi();
+
+    return useMutation({
+        mutationFn: (data: GetJoinNodeReq) => queries.getJoinNode(data),
+        onSuccess: (response, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const NodesCommands = Object.freeze({
     useDeleteOne,
     useUpdateOne,
     useCreateOne,
+    useGetJoinNode,
 });

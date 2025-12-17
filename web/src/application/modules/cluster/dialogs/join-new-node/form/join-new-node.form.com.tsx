@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManualMethod, SshMethod } from "../building-blocks";
 import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput, JoinNewNodeFormSchema } from "../schemas";
 
-export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
+export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, children }: Props) {
     const [manualCompleted, setManualCompleted] = useState<boolean>(false);
     const methods = useForm<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>({
         defaultValues: {
@@ -24,8 +24,12 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
     const {
         handleSubmit,
         control,
-        formState: { errors },
+        formState: { errors, isDirty },
     } = methods;
+
+    useEffect(() => {
+        onHasChanges?.(isDirty);
+    }, [isDirty, onHasChanges]);
 
     const method = useWatch({ control, name: "method" });
     const joinAsManager = useWatch({ control, name: "joinAsManager" });
@@ -51,6 +55,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
     }
 
     function onInvalid(_errors: FieldErrors<JoinNewNodeFormOutput>) {
+        console.log("Invalid", _errors);
         // Optional: log errors or show notification
     }
 
@@ -111,6 +116,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
                                         value="manager"
                                         className="flex-1"
                                         aria-invalid={isJoinAsManagerInvalid}
+                                        disabled={manualCompleted}
                                     >
                                         Manager
                                     </TabsTrigger>
@@ -118,6 +124,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
                                         value="worker"
                                         className="flex-1"
                                         aria-invalid={isJoinAsManagerInvalid}
+                                        disabled={manualCompleted}
                                     >
                                         Worker
                                     </TabsTrigger>
@@ -136,23 +143,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
                         )}
 
                         {/* SSH Method: SSH Fields */}
-                        {method === EJoinNodeMethod.RunCommandViaSSH && (
-                            <>
-                                <SshMethod />
-                                {/* Warning Message */}
-                                <Field>
-                                    <div className="border border-dashed border-orange-500 dark:border-orange-400 rounded-lg p-4 bg-orange-50/50 dark:bg-orange-950/20">
-                                        <p className="text-sm">
-                                            <span className="text-orange-600 dark:text-orange-400 font-semibold">
-                                                Warning:
-                                            </span>{" "}
-                                            if the target server has a Swarm cluster already, the cluster will be
-                                            removed. Hence, its data will also be deleted.
-                                        </p>
-                                    </div>
-                                </Field>
-                            </>
-                        )}
+                        {method === EJoinNodeMethod.RunCommandViaSSH && <SshMethod />}
                     </FieldGroup>
                     {children}
                 </form>
@@ -164,4 +155,5 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, children }: Props) {
 interface Props extends PropsWithChildren {
     onSubmit: (values: JoinNewNodeFormOutput) => Promise<void> | void;
     onMethodChange?: (method: EJoinNodeMethod) => void;
+    onHasChanges?: (dirty: boolean) => void;
 }

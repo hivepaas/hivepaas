@@ -12,6 +12,8 @@ import type {
     Nodes_FindOneById_Res,
     Nodes_GetJoinNode_Req,
     Nodes_GetJoinNode_Res,
+    Nodes_JoinNode_Req,
+    Nodes_JoinNode_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services/nodes-services";
@@ -155,6 +157,26 @@ export class NodesApi extends BaseApi {
             ).pipe(
                 map(this.validator.getJoinNode),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+    /**
+     * Join node
+     */
+    async joinNode(request: Nodes_JoinNode_Req, signal?: AbortSignal): Promise<Result<Nodes_JoinNode_Res, Error>> {
+        const { sshKey, host, port, user, joinAsManager } = request.data;
+        const json = {
+            sshKey,
+            host,
+            port,
+            user,
+            joinAsManager,
+        };
+
+        return lastValueFrom(
+            from(this.client.v1.post("/cluster/nodes/join", json, { signal })).pipe(
+                map(() => Ok({ data: { type: "success" } as const })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

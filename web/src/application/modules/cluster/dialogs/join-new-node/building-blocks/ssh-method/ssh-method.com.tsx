@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 
+import { Button } from "@components/ui";
+import { InputNumber } from "@components/ui/input-number";
 import { useController, useFormContext } from "react-hook-form";
 
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Combobox, InfoBlock } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { SshKeysPublicQueries } from "@application/shared/data/queries";
+
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput } from "../../schemas";
 
 function View() {
     const { control } = useFormContext<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>();
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const { data: { data: sshKeys } = DEFAULT_PAGINATED_DATA, isFetching } = SshKeysPublicQueries.useFindManyPaginated({
+        search: searchQuery,
+    });
+
     const {
         field: hostField,
         fieldState: { invalid: isHostInvalid, error: hostError },
@@ -42,78 +53,109 @@ function View() {
         control,
     });
 
+    const comboboxOptions = useMemo(() => {
+        return sshKeys.map(key => ({
+            value: {
+                id: key.id,
+                name: key.name,
+            },
+            label: key.name,
+        }));
+    }, [sshKeys]);
+
     return (
         <>
-            <Field>
-                <FieldLabel htmlFor="host">Host</FieldLabel>
-                <Input
-                    id="host"
-                    {...hostField}
-                    placeholder="11.22.33.44"
-                    aria-invalid={isHostInvalid}
-                />
-                <FieldError errors={[hostError]} />
-            </Field>
+            <InfoBlock
+                titleWidth={150}
+                title="Host"
+            >
+                <FieldGroup>
+                    <Field>
+                        <Input
+                            id="host"
+                            {...hostField}
+                            placeholder="11.22.33.44"
+                            aria-invalid={isHostInvalid}
+                        />
+                        <FieldError errors={[hostError]} />
+                    </Field>
+                </FieldGroup>
+            </InfoBlock>
 
-            <Field>
-                <FieldLabel htmlFor="port">Port</FieldLabel>
-                <Input
-                    id="port"
-                    {...portField}
-                    placeholder="22"
-                    aria-invalid={isPortInvalid}
-                />
-                <FieldError errors={[portError]} />
-            </Field>
+            <InfoBlock
+                titleWidth={150}
+                title="Port"
+            >
+                <FieldGroup>
+                    <Field>
+                        <InputNumber
+                            id="port"
+                            value={portField.value}
+                            onValueChange={portField.onChange}
+                            placeholder="22"
+                            aria-invalid={isPortInvalid}
+                        />
+                        <FieldError errors={[portError]} />
+                    </Field>
+                </FieldGroup>
+            </InfoBlock>
 
-            <Field>
-                <FieldLabel htmlFor="user">User</FieldLabel>
-                <Input
-                    id="user"
-                    {...userField}
-                    placeholder="root"
-                    aria-invalid={isUserInvalid}
-                />
-                <FieldError errors={[userError]} />
-            </Field>
+            <InfoBlock
+                titleWidth={150}
+                title="User"
+            >
+                <FieldGroup>
+                    <Field>
+                        <Input
+                            id="user"
+                            {...userField}
+                            placeholder="root"
+                            aria-invalid={isUserInvalid}
+                        />
+                        <FieldError errors={[userError]} />
+                    </Field>
+                </FieldGroup>
+            </InfoBlock>
 
+            <InfoBlock
+                titleWidth={150}
+                title="SSH key"
+            >
+                <FieldGroup>
+                    <Field>
+                        <Combobox
+                            options={comboboxOptions}
+                            value={sshKeyField.value?.id ?? null}
+                            onChange={(value, option) => {
+                                sshKeyField.onChange(option ?? null);
+                            }}
+                            onSearch={setSearchQuery}
+                            placeholder="Select SSH key"
+                            searchable
+                            closeOnSelect
+                            emptyText="No SSH keys available"
+                            className="w-full"
+                            valueKey="id"
+                            aria-invalid={isSshKeyInvalid}
+                            loading={isFetching}
+                        />
+                        <FieldError errors={[sshKeyError]} />
+                    </Field>
+                </FieldGroup>
+            </InfoBlock>
             <Field>
-                <FieldLabel htmlFor="sshKeyId">SSH key</FieldLabel>
-                <Select
-                    value={sshKeyField.value?.id ?? ""}
-                    onValueChange={value => {
-                        sshKeyField.onChange({
-                            id: value,
-                            name:
-                                [
-                                    { id: "1", name: "SSH Key 1" },
-                                    { id: "2", name: "SSH Key 2" },
-                                ].find(key => key.id === value)?.name ?? "",
-                        });
-                    }}
-                >
-                    <SelectTrigger
-                        id="sshKeyId"
-                        className="w-full"
-                        aria-invalid={isSshKeyInvalid}
-                    >
-                        <SelectValue placeholder="select ssh key" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {[
-                            { id: "1", name: "SSH Key 1" },
-                            { id: "2", name: "SSH Key 2" },
-                        ].map(key => (
-                            <SelectItem
-                                key={key.id}
-                                value={key.id}
-                            >
-                                {key.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <FieldError errors={[sshKeyError]} />
+                <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6">
+                    <p className="text-sm">
+                        <span className="text-orange-600 dark:text-orange-400 font-semibold">Warning:</span> if the
+                        target server has a Swarm cluster already, the cluster will be removed. Hence, its data will
+                        also be deleted.
+                    </p>
+                </div>
+            </Field>
+            <Field>
+                <div className="flex justify-end">
+                    <Button type="submit">Join Node</Button>
+                </div>
             </Field>
         </>
     );

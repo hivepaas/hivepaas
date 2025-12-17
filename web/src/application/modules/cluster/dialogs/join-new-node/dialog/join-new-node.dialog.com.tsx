@@ -1,33 +1,65 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { Button } from "@components/ui";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
-import { EJoinNodeMethod } from "~/cluster/module-shared/enums";
+import { toast } from "sonner";
+
+import { NodesCommands } from "@application/modules/cluster/data";
+import { EJoinNodeMethod } from "@application/modules/cluster/module-shared/enums";
 
 import { JoinNewNodeForm } from "../form";
 import { useJoinNewNodeDialogState } from "../hooks";
 import { type JoinNewNodeFormOutput } from "../schemas";
 
 export function JoinNewNodeDialog() {
-    const [method, setMethod] = useState<EJoinNodeMethod>(EJoinNodeMethod.RunCommandManually);
     const { state, props, ...actions } = useJoinNewNodeDialogState();
-
-    function onSubmit(values: JoinNewNodeFormOutput) {
-        // TODO: Implement SSH join node command when API is available
-        console.log("Join node via SSH:", values);
-        actions.close();
-    }
-
-    function handleMethodChange(newMethod: EJoinNodeMethod) {
-        setMethod(newMethod);
-    }
+    const [hasChanges, setHasChanges] = useState(false);
 
     const open = state.mode !== "closed";
+
+    const { mutate: joinNode } = NodesCommands.useJoinNode({
+        onSuccess: () => {
+            toast.success("Node joined successfully");
+            actions.close();
+        },
+    });
+
+    // Reset hasChanges when dialog closes
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+        }
+    }, [state.mode]);
+
+    function onSubmit(values: JoinNewNodeFormOutput) {
+        if (values.method === EJoinNodeMethod.RunCommandViaSSH && values.sshKey) {
+            joinNode({
+                sshKey: {
+                    id: values.sshKey.id,
+                },
+                host: values.host,
+                port: values.port,
+                user: values.user,
+                joinAsManager: values.joinAsManager,
+            });
+        }
+    }
+
+    function handleClose(): void {
+        if (hasChanges) {
+            const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+
+        setHasChanges(false);
+        actions.close();
+    }
 
     return (
         <Dialog
             open={open}
-            onOpenChange={actions.close}
+            onOpenChange={handleClose}
         >
             <DialogContent className="min-w-[500px] max-w-[600px]">
                 <DialogHeader>
@@ -35,14 +67,8 @@ export function JoinNewNodeDialog() {
                 </DialogHeader>
                 <JoinNewNodeForm
                     onSubmit={onSubmit}
-                    onMethodChange={handleMethodChange}
-                >
-                    {method === EJoinNodeMethod.RunCommandViaSSH && (
-                        <div className="flex justify-end mt-4">
-                            <Button type="submit">Join Node</Button>
-                        </div>
-                    )}
-                </JoinNewNodeForm>
+                    onHasChanges={setHasChanges}
+                />
             </DialogContent>
         </Dialog>
     );

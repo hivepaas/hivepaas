@@ -7,6 +7,8 @@ import type {
     Nodes_DeleteOne_Res,
     Nodes_GetJoinNode_Req,
     Nodes_GetJoinNode_Res,
+    Nodes_JoinNode_Req,
+    Nodes_JoinNode_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services";
@@ -121,9 +123,38 @@ function useGetJoinNode({ onSuccess, ...options }: GetJoinNodeOptions = {}) {
     });
 }
 
+/**
+ * Join node command
+ */
+type JoinNodeReq = Nodes_JoinNode_Req["data"];
+type JoinNodeRes = Nodes_JoinNode_Res;
+type JoinNodeOptions = Omit<UseMutationOptions<JoinNodeRes, Error, JoinNodeReq>, "mutationFn">;
+
+function useJoinNode({ onSuccess, ...options }: JoinNodeOptions = {}) {
+    const { mutations } = useNodesApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.joinNode,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["nodes.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const NodesCommands = Object.freeze({
     useDeleteOne,
     useUpdateOne,
     useCreateOne,
     useGetJoinNode,
+    useJoinNode,
 });

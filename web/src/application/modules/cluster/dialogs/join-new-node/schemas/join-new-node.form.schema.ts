@@ -10,9 +10,21 @@ export const JoinNewNodeFormSchema = z
         z.object({
             method: z.literal(EJoinNodeMethod.RunCommandViaSSH),
             joinAsManager: z.boolean(),
-            host: z.string().trim().min(1, "Host is required"),
-            port: z.string().trim().min(1, "Port is required"),
-            user: z.string().trim().min(1, "User is required"),
+            host: z
+                .string({
+                    required_error: "Host is required",
+                })
+                .min(1, "Host is required"),
+            port: z
+                .number({
+                    required_error: "Port is required",
+                })
+                .min(1, "Port is required"),
+            user: z
+                .string({
+                    required_error: "User is required",
+                })
+                .min(1, "User is required"),
             sshKey: z
                 .object({
                     id: z.string(),

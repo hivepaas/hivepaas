@@ -65,3 +65,18 @@ export type Nodes_GetJoinNode_Req = ApiRequestBase<{
 export type Nodes_GetJoinNode_Res = ApiResponseBase<{
     command: string;
 }>;
+
+/**
+ * Join node
+ */
+export type Nodes_JoinNode_Req = ApiRequestBase<{
+    sshKey: { id: string };
+    host: string;
+    port: number;
+    user: string;
+    joinAsManager: boolean;
+}>;
+
+export type Nodes_JoinNode_Res = ApiResponseBase<{
+    type: "success";
+}>;

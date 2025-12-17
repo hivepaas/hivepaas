@@ -8,6 +8,7 @@ import type {
     Nodes_FindManyPaginated_Req,
     Nodes_FindOneById_Req,
     Nodes_GetJoinNode_Req,
+    Nodes_JoinNode_Req,
     Nodes_UpdateOne_Req,
 } from "~/cluster/api/services";
 
@@ -157,6 +158,27 @@ function createHook() {
                         },
                     });
                 },
+                /**
+                 * Join node
+                 */
+                joinNode: async (data: Nodes_JoinNode_Req["data"]) => {
+                    const result = await api.nodes.$.joinNode({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to join node",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
             }),
             [api, notifyError],
         );

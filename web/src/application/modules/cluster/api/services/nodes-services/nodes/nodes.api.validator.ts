@@ -92,7 +92,7 @@ export class NodesApiValidator {
             data: data.map(node => ({
                 id: node.id,
                 name: node.name,
-                labels: node.labels,
+                labels: node.labels ?? {},
                 hostname: node.hostname,
                 addr: node.addr,
                 availability: node.availability,
@@ -123,7 +123,7 @@ export class NodesApiValidator {
             data: {
                 id: data.id,
                 name: data.name,
-                labels: data.labels,
+                labels: data.labels ?? {},
                 hostname: data.hostname,
                 addr: data.addr,
                 availability: data.availability,

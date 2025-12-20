@@ -3,7 +3,12 @@ import { useCallback } from "react";
 
 import { type ExternalToast, toast } from "sonner";
 
-import { isCancelException, isUnauthorizedException, isValidationException } from "@infrastructure/api/utils";
+import {
+    isCancelException,
+    isHighLevelException,
+    isUnauthorizedException,
+    isValidationException,
+} from "@infrastructure/api/utils";
 
 interface Params {
     message: React.ReactNode;
@@ -19,8 +24,6 @@ function createHook() {
                 return;
             }
 
-            console.log(isValidationException(error));
-
             switch (true) {
                 case import.meta.env.MODE === "development":
                     console.error(error);
@@ -33,23 +36,30 @@ function createHook() {
                     break;
             }
 
+            const toastOptions: ExternalToast = { ...options };
+            console.log("xxxx");
+
+            if (isHighLevelException(error)) {
+                console.error("xxxx");
+                toastOptions.duration = 60_000;
+            }
+
             if (isUnauthorizedException(error)) {
                 toast.error(message, {
                     description: "You don't have the appropriate permissions to perform this operation.",
-                    ...options,
+                    ...toastOptions,
                 });
 
                 return;
             }
 
             if (isValidationException(error)) {
-                console.log(error.errors);
                 const firstError = error.errors[0];
                 if (firstError) {
                     const validationMessage = `Param '${firstError.path}': ${firstError.message}`;
                     toast.error(message, {
                         description: validationMessage,
-                        ...options,
+                        ...toastOptions,
                     });
 
                     return;
@@ -59,7 +69,7 @@ function createHook() {
             if (status === "warning") {
                 toast.warning(message, {
                     description: error.message,
-                    ...options,
+                    ...toastOptions,
                 });
 
                 return;
@@ -67,7 +77,7 @@ function createHook() {
 
             toast.error(message, {
                 description: error.message,
-                ...options,
+                ...toastOptions,
             });
         }, []);
 

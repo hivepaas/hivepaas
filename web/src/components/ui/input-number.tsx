@@ -50,23 +50,23 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
             setValue(prev => (prev === undefined ? -(stepper ?? 1) : Math.max(prev - (stepper ?? 1), min)));
         }, [stepper, min]);
 
-        useEffect(() => {
-            const handleKeyDown = (e: KeyboardEvent) => {
-                if (document.activeElement === (ref as React.RefObject<HTMLInputElement>).current) {
-                    if (e.key === "ArrowUp") {
-                        handleIncrement();
-                    } else if (e.key === "ArrowDown") {
-                        handleDecrement();
-                    }
-                }
-            };
+        // useEffect(() => {
+        //     const handleKeyDown = (e: KeyboardEvent) => {
+        //         if (document.activeElement === (ref as React.RefObject<HTMLInputElement>).current) {
+        //             if (e.key === "ArrowUp") {
+        //                 handleIncrement();
+        //             } else if (e.key === "ArrowDown") {
+        //                 handleDecrement();
+        //             }
+        //         }
+        //     };
 
-            window.addEventListener("keydown", handleKeyDown);
+        //     window.addEventListener("keydown", handleKeyDown);
 
-            return () => {
-                window.removeEventListener("keydown", handleKeyDown);
-            };
-        }, [handleIncrement, handleDecrement, ref]);
+        //     return () => {
+        //         window.removeEventListener("keydown", handleKeyDown);
+        //     };
+        // }, [handleIncrement, handleDecrement, ref]);
 
         useEffect(() => {
             if (controlledValue !== undefined) {

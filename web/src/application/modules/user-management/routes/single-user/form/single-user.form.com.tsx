@@ -81,7 +81,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
     const isAdmin = methods.watch("role") === EUserRole.Admin;
 
     return (
-        <div className="single-user-form">
+        <div className="pt-2">
             <FormProvider {...methods}>
                 <form
                     onSubmit={event => {

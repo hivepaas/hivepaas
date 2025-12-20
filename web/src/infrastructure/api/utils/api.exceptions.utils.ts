@@ -95,3 +95,10 @@ export function isPasswordResetTokenInvalidException(error: Error): boolean {
 export function isValidationException(error: Error): error is Http400Exception {
     return error instanceof Http400Exception && error.hasErrors;
 }
+
+/**
+ * Check if the error is a high level exception
+ */
+export function isHighLevelException(error: Error): boolean {
+    return isHttpException(error) && error.problem.displayLevel === "high";
+}

@@ -47,5 +47,33 @@ export const clusterRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { SingleNodeLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <SingleNodeLayout>
+                            <Outlet />
+                        </SingleNodeLayout>
+                    ),
+                };
+            },
+            children: [
+                /**
+                 * Single Node
+                 */
+                {
+                    path: ROUTE.cluster.nodes.single.$pattern,
+                    lazy: async () => {
+                        const { SingleNodeRoute } = await getLazyComponents();
+
+                        return {
+                            Component: SingleNodeRoute,
+                        };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

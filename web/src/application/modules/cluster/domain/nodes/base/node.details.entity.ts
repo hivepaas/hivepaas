@@ -4,7 +4,7 @@ import type { NodeBase } from "./node.base.entity";
 
 export interface NodeDetails extends NodeBase {
     isLeader: boolean;
-    labels: Record<string, string> | null;
+    labels: Record<string, string>;
     availability: ENodeAvailability;
     status: ENodeStatus;
     platform: {

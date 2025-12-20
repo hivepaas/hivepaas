@@ -1,12 +1,12 @@
 /**
  * Nodes
  */
-export { NodesRoute } from "./routes";
+export { NodesRoute, SingleNodeRoute } from "./routes";
 
 /**
  * Layouts
  */
-export { NodesLayout } from "./layouts";
+export { NodesLayout, SingleNodeLayout } from "./layouts";
 
 /**
  * Dialogs

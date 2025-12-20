@@ -15,7 +15,7 @@ function View() {
     return (
         <>
             <JoinNewNodeDialog />
-            {"/* TODO: Add other dialogs here */"}
+            {/* TODO: Add other dialogs here */}
         </>
     );
 }

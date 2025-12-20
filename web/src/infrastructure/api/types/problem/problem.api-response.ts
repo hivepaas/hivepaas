@@ -4,6 +4,7 @@ interface ConstructorParams {
     status: number;
     code: string;
     detail: string;
+    displayLevel?: "high" | "medium" | "low";
 }
 
 export class ProblemApiResponse {
@@ -13,6 +14,7 @@ export class ProblemApiResponse {
         this.status = params.status;
         this.code = params.code;
         this.detail = params.detail;
+        this.displayLevel = params.displayLevel;
     }
 
     readonly type?: string;
@@ -20,4 +22,5 @@ export class ProblemApiResponse {
     readonly status: number;
     readonly code: string;
     readonly detail: string;
+    readonly displayLevel?: "high" | "medium" | "low";
 }

@@ -6,4 +6,5 @@ export const ProblemApiResponseSchema = z.object({
     status: z.number(),
     code: z.string(),
     detail: z.string(),
+    displayLevel: z.enum(["high", "medium", "low"]).optional(),
 });

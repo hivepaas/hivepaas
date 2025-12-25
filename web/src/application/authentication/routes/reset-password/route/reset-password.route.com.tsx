@@ -18,7 +18,7 @@ import { isPasswordResetTokenInvalidException } from "@infrastructure/api";
 
 import { ResetPasswordForm } from "../form/reset-password.form.com";
 
-function View({ email, token }: ViewProps) {
+function View({ userId, token }: ViewProps) {
     const { navigate } = useAppNavigate();
 
     const { mutate: resetPassword, isPending } = AuthCommands.useResetPassword({
@@ -30,7 +30,7 @@ function View({ email, token }: ViewProps) {
 
     function handleSubmit(values: Pick<ResetPassword, "newPassword">) {
         resetPassword({
-            email,
+            userId,
             token,
             newPassword: values.newPassword,
         });
@@ -49,12 +49,12 @@ function View({ email, token }: ViewProps) {
 }
 
 interface ViewProps {
-    email: string;
+    userId: string;
     token: string;
 }
 
 const Schema = z.object({
-    email: z.string().trim().email(),
+    userId: z.string().trim().nonempty(),
     token: z.string().trim().nonempty(),
 });
 
@@ -67,7 +67,7 @@ type State =
       }
     | {
           type: "success";
-          email: string;
+          userId: string;
           token: string;
       }
     | {
@@ -80,27 +80,13 @@ export function ResetPasswordRoute() {
 
     const [params] = useSearchParams();
 
-    const { mutate, reset } = AuthCommands.useValidateResetToken({
-        onSuccess: (_, request) => {
-            setState({
-                type: "success",
-                email: request.email,
-                token: request.token,
-            });
-        },
-        onError: error => {
-            setState({
-                type: "error",
-                error,
-            });
-        },
-    });
-
     function validate() {
         const parsed = Schema.safeParse({
-            email: params.get("email"),
+            userId: params.get("userId"),
             token: params.get("token"),
         });
+
+        console.log("parsed", parsed);
 
         if (!parsed.success) {
             setState({
@@ -110,8 +96,9 @@ export function ResetPasswordRoute() {
             return;
         }
 
-        mutate({
-            email: parsed.data.email,
+        setState({
+            type: "success",
+            userId: parsed.data.userId,
             token: parsed.data.token,
         });
     }
@@ -135,8 +122,6 @@ export function ResetPasswordRoute() {
             <PageError
                 error={state.error}
                 onRetry={() => {
-                    reset();
-
                     validate();
                 }}
             />
@@ -144,7 +129,7 @@ export function ResetPasswordRoute() {
     }
     return (
         <View
-            email={state.email}
+            userId={state.userId}
             token={state.token}
         />
     );

@@ -59,7 +59,7 @@ function View({ node }: Props) {
                             disabled={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Delete
+                            Remove Node
                         </Button>
                     </PopConfirm>
                 </div>

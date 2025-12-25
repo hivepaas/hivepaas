@@ -5,6 +5,8 @@ import type {
     Users_DeleteOne_Res,
     Users_InviteOne_Req,
     Users_InviteOne_Res,
+    Users_ResetPassword_Req,
+    Users_ResetPassword_Res,
     Users_UpdateOne_Req,
     Users_UpdateOne_Res,
 } from "~/user-management/api/services";
@@ -99,8 +101,35 @@ function useInviteOne({ onSuccess, ...options }: InviteOneOptions = {}) {
     });
 }
 
+/**
+ * Reset user password command
+ */
+type ResetPasswordReq = Users_ResetPassword_Req["data"];
+type ResetPasswordRes = Users_ResetPassword_Res;
+type ResetPasswordOptions = Omit<UseMutationOptions<ResetPasswordRes, Error, ResetPasswordReq>, "mutationFn">;
+function useResetPassword({ onSuccess, ...options }: ResetPasswordOptions = {}) {
+    const { mutations } = useUsersApi();
+
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: mutations.resetPassword,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["users.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const UsersCommands = Object.freeze({
     useDeleteOne,
     useUpdateOne,
     useInviteOne,
+    useResetPassword,
 });

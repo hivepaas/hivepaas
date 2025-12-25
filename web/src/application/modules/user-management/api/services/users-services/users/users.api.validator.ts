@@ -4,6 +4,7 @@ import {
     type Users_FindManyPaginated_Res,
     type Users_FindOneById_Res,
     type Users_InviteOne_Res,
+    type Users_ResetPassword_Res,
 } from "~/user-management/api/services/users-services/users/users.api.contracts";
 import { AccessSchema } from "~/user-management/module-shared/schemas";
 
@@ -54,6 +55,15 @@ const FindOneByIdSchema = z.object({
 const InviteOneSchema = z.object({
     data: z.object({
         inviteLink: z.string(),
+    }),
+});
+
+/**
+ * Reset password API response schema
+ */
+const ResetPasswordSchema = z.object({
+    data: z.object({
+        resetPasswordLink: z.string(),
     }),
 });
 
@@ -131,6 +141,22 @@ export class UsersApiValidator {
         return {
             data: {
                 inviteLink: data.inviteLink,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform reset password API response
+     */
+    resetPassword = (response: AxiosResponse): Users_ResetPassword_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: ResetPasswordSchema,
+        });
+
+        return {
+            data: {
+                resetPasswordLink: data.resetPasswordLink,
             },
         };
     };

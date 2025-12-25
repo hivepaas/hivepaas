@@ -172,10 +172,9 @@ export class AuthApi extends BaseApi {
     async resetPassword(request: Auth_ResetPassword_Req): Promise<Result<Auth_ResetPassword_Res, Error>> {
         return lastValueFrom(
             from(
-                this.client.v1.post("/users/password-reset", {
-                    email: request.data.email,
+                this.client.v1.post(`/users/${request.data.userId}/password/reset`, {
                     token: request.data.token,
-                    newPassword: request.data.newPassword,
+                    password: request.data.newPassword,
                 }),
             ).pipe(
                 map(this.validator.resetPassword),

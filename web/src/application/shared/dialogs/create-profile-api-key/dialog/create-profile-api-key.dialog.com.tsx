@@ -2,6 +2,8 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
@@ -120,7 +122,7 @@ export function CreateProfileApiKeyDialog() {
                         onHasChanges={setHasChanges}
                     />
                     {showGeneratedKey ? (
-                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6">
+                        <div className={cn(dashedBorderBox, "space-y-6")}>
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1">
                                     <p className="text-sm font-medium mb-1">Key ID:</p>
@@ -163,7 +165,12 @@ export function CreateProfileApiKeyDialog() {
                             )}
                         </div>
                     ) : (
-                        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6 text-center flex items-center justify-center min-h-[66px]">
+                        <div
+                            className={cn(
+                                dashedBorderBox,
+                                "space-y-6 text-center flex items-center justify-center min-h-[66px]",
+                            )}
+                        >
                             Press the below button to generate an API key
                         </div>
                     )}

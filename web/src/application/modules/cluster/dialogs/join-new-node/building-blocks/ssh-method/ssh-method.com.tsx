@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 
 import { Button } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { useController, useFormContext } from "react-hook-form";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
@@ -144,7 +146,7 @@ function View() {
                 </FieldGroup>
             </InfoBlock>
             <Field>
-                <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20 space-y-6">
+                <div className={cn(dashedBorderBox, "space-y-6")}>
                     <p className="text-sm">
                         <span className="text-orange-600 dark:text-orange-400 font-semibold">Warning:</span> if the
                         target server has a Swarm cluster already, the cluster will be removed. Hence, its data will

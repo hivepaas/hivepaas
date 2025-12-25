@@ -1,6 +1,8 @@
 import { memo } from "react";
 
 import { Button } from "@components/ui/button";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,7 +23,7 @@ function View({ inviteLink }: Props) {
     }
 
     return (
-        <div className="border border-dashed border-primary dark:border-primary rounded-lg p-4 bg-gray-50/50 dark:bg-gray-950/20">
+        <div className={cn(dashedBorderBox)}>
             <div className="flex items-center justify-center gap-4">
                 <div className="text-sm text-foreground text-center">
                     {inviteLink ? (

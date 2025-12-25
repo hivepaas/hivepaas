@@ -36,6 +36,7 @@ export const JoinNewNodeFormSchema = z
     .superRefine((arg, ctx) => {
         if (arg.method === EJoinNodeMethod.RunCommandViaSSH && !arg.sshKey) {
             ctx.addIssue({
+                path: ["sshKey"],
                 code: z.ZodIssueCode.custom,
                 message: "SSH key is required",
             });

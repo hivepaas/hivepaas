@@ -152,16 +152,12 @@ export class NodesApi extends BaseApi {
     ): Promise<Result<Nodes_GetJoinNode_Res, Error>> {
         const { joinAsManager } = request.data;
 
-        const query = this.queryBuilder.getInstance();
-
-        query.filterBy({
-            joinAsManager: [joinAsManager],
-        });
-
         return lastValueFrom(
             from(
                 this.client.v1.get("/cluster/nodes/join-command", {
-                    params: query.build(),
+                    params: {
+                        joinAsManager,
+                    },
                     signal,
                 }),
             ).pipe(

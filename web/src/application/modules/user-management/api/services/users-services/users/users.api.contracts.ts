@@ -51,3 +51,10 @@ export type Users_InviteOne_Req = ApiRequestBase<{
 }>;
 
 export type Users_InviteOne_Res = ApiResponseBase<{ inviteLink: string }>;
+
+/**
+ * Reset user password
+ */
+export type Users_ResetPassword_Req = ApiRequestBase<{ id: string }>;
+
+export type Users_ResetPassword_Res = ApiResponseBase<{ resetPasswordLink: string }>;

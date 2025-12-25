@@ -5,16 +5,28 @@ async function getLazyComponents() {
     return await import("./user-management.module");
 }
 export const userManagementRouter: RouteObject = {
+    lazy: async () => {
+        const { UserManagementDialogsContainer } = await getLazyComponents();
+
+        return {
+            element: (
+                <>
+                    <Outlet />
+
+                    <UserManagementDialogsContainer />
+                </>
+            ),
+        };
+    },
     children: [
         {
             lazy: async () => {
-                const { MainLayout, UserManagementDialogsContainer } = await getLazyComponents();
+                const { MainLayout } = await getLazyComponents();
 
                 return {
                     element: (
                         <MainLayout>
                             <Outlet />
-                            <UserManagementDialogsContainer />
                         </MainLayout>
                     ),
                 };

@@ -10,6 +10,8 @@ import type {
     Users_FindOneById_Res,
     Users_InviteOne_Req,
     Users_InviteOne_Res,
+    Users_ResetPassword_Req,
+    Users_ResetPassword_Res,
     Users_UpdateOne_Req,
     Users_UpdateOne_Res,
 } from "~/user-management/api/services";
@@ -151,6 +153,21 @@ export class UsersApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.post("/users/invite", user, { signal })).pipe(
                 map(this.validator.inviteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Reset user password
+     */
+    async resetPassword(request: Users_ResetPassword_Req): Promise<Result<Users_ResetPassword_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/users/${id}/password/request-reset`, {})).pipe(
+                map(this.validator.resetPassword),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

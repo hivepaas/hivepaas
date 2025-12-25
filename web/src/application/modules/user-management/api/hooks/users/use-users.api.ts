@@ -7,6 +7,7 @@ import type {
     Users_FindManyPaginated_Req,
     Users_FindOneById_Req,
     Users_InviteOne_Req,
+    Users_ResetPassword_Req,
     Users_UpdateOne_Req,
 } from "~/user-management/api/services";
 
@@ -126,6 +127,27 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to invite user",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Reset user password
+                 */
+                resetPassword: async (data: Users_ResetPassword_Req["data"]) => {
+                    const result = await api.users.$.resetPassword({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to reset user password",
                                 error,
                             });
 

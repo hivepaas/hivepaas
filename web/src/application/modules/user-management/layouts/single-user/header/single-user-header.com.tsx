@@ -3,7 +3,7 @@ import { memo } from "react";
 import { Avatar } from "@components/ui";
 import { Button } from "@components/ui";
 import { format } from "date-fns";
-import { BadgeCheck, Check, Clock, Lock, Trash2, User } from "lucide-react";
+import { BadgeCheck, Check, Clock, KeyRound, Lock, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { UsersCommands } from "~/user-management/data/commands";
@@ -15,6 +15,8 @@ import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { ROUTE } from "@application/shared/constants";
 import { EUserStatus } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
+
+import { useResetUserPasswordDialog } from "@application/modules/user-management/dialogs";
 
 import { UserBreadcrumbs } from "../building-blocks";
 
@@ -30,6 +32,8 @@ export function View({ userId }: Props) {
     });
 
     const { mutate: deleteOne, isPending: isDeleting } = UsersCommands.useDeleteOne({});
+
+    const resetUserPasswordDialog = useResetUserPasswordDialog({});
 
     if (isLoading) {
         return <SingleUserHeaderSkeleton />;
@@ -96,6 +100,17 @@ export function View({ userId }: Props) {
                             Activate
                         </Button>
                     )}
+                    <Button
+                        className=""
+                        variant="outline"
+                        onClick={() => {
+                            console.log("user", user);
+                            resetUserPasswordDialog.actions.open(user);
+                        }}
+                    >
+                        <KeyRound className="mr-2 size-4" />
+                        Reset password
+                    </Button>
                     <PopConfirm
                         title="Remove user"
                         variant="destructive"

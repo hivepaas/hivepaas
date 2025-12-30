@@ -37,7 +37,7 @@ function View({ nodeId }: Props) {
 
     const handleRemove = () => {
         deleteOne(
-            { id: node.id },
+            { id: node.id, force: false },
             {
                 onSuccess: () => {
                     toast.success("Node removed successfully");

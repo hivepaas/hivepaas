@@ -83,4 +83,21 @@ export const ROUTE = {
             },
         },
     },
+
+    /**
+     * Projects
+     */
+    projects: {
+        $pattern: "projects",
+
+        list: {
+            $pattern: "projects",
+            $route: "/projects/",
+
+            single: {
+                $pattern: "projects/:id",
+                $route: (id: string) => `/projects/${id}/`,
+            },
+        },
+    },
 } as const;

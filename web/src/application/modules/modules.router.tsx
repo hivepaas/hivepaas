@@ -5,6 +5,7 @@ import { ModuleLayout } from "@application/shared/layouts/module";
 import { Page404NotFound } from "@application/shared/pages";
 
 import { clusterRouter } from "./cluster/cluster.router";
+import { projectsRouter } from "./projects/projects.router";
 import { userManagementRouter } from "./user-management/user-management.router";
 
 export const modulesRouter: RouteObject = {
@@ -19,5 +20,5 @@ export const modulesRouter: RouteObject = {
             <CommonDialogsContainer />
         </ModuleLayout>
     ),
-    children: [userManagementRouter, clusterRouter],
+    children: [userManagementRouter, clusterRouter, projectsRouter],
 } as const;

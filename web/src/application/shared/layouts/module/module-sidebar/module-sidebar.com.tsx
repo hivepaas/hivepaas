@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Container, type LucideIcon, PawPrint, Users } from "lucide-react";
+import { Container, LayoutGrid, type LucideIcon, PawPrint, Users } from "lucide-react";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -29,6 +29,12 @@ const navMain: SidebarItem[] = [
         route: ROUTE.userManagement.users.$route,
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
+    },
+    {
+        title: "Projects",
+        route: ROUTE.projects.list.$route,
+        pattern: ROUTE.projects.list.$pattern,
+        icon: LayoutGrid,
     },
     {
         title: "Clusters",

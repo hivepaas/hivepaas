@@ -78,10 +78,16 @@ export class NodesApi extends BaseApi {
      * Delete a node
      */
     async deleteOne(request: Nodes_DeleteOne_Req): Promise<Result<Nodes_DeleteOne_Res, Error>> {
-        const { id } = request.data;
+        const { id, force } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/cluster/nodes/${id}`, {})).pipe(
+            from(
+                this.client.v1.delete(`/cluster/nodes/${id}`, {
+                    params: {
+                        force,
+                    },
+                }),
+            ).pipe(
                 map(() => Ok({ data: { id } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

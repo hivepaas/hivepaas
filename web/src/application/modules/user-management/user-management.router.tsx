@@ -94,7 +94,7 @@ export const userManagementRouter: RouteObject = {
             },
             children: [
                 {
-                    path: ROUTE.userManagement.users.profile.$pattern,
+                    path: ROUTE.currentUser.profile.$pattern,
                     lazy: async () => {
                         const { ProfileRoute } = await getLazyComponents();
 
@@ -104,7 +104,7 @@ export const userManagementRouter: RouteObject = {
                     },
                 },
                 {
-                    path: ROUTE.userManagement.users.profileApiKeys.$pattern,
+                    path: ROUTE.currentUser.profileApiKeys.$pattern,
                     lazy: async () => {
                         const { ProfileApiKeysRoute } = await getLazyComponents();
 

@@ -48,14 +48,22 @@ export const ROUTE = {
                 $pattern: "user-management/users/:id",
                 $route: (id: string) => `/user-management/users/${id}/`,
             },
-            profile: {
-                $pattern: "user-management/users/profile",
-                $route: "/user-management/users/profile/",
-            },
-            profileApiKeys: {
-                $pattern: "user-management/users/profile/api-keys",
-                $route: "/user-management/users/profile/api-keys/",
-            },
+        },
+    },
+
+    /**
+     * Current User
+     */
+    currentUser: {
+        $pattern: "current-user",
+
+        profile: {
+            $pattern: "current-user/profile",
+            $route: "/current-user/profile/",
+        },
+        profileApiKeys: {
+            $pattern: "current-user/profile/api-keys",
+            $route: "/current-user/profile/api-keys/",
         },
     },
 
@@ -72,6 +80,23 @@ export const ROUTE = {
             single: {
                 $pattern: "cluster/nodes/:id",
                 $route: (id: string) => `/cluster/nodes/${id}/`,
+            },
+        },
+    },
+
+    /**
+     * Projects
+     */
+    projects: {
+        $pattern: "projects",
+
+        list: {
+            $pattern: "projects",
+            $route: "/projects/",
+
+            single: {
+                $pattern: "projects/:id",
+                $route: (id: string) => `/projects/${id}/`,
             },
         },
     },

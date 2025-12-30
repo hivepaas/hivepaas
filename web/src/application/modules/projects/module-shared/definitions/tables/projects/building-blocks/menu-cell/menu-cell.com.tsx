@@ -3,10 +3,10 @@ import React, { useState } from "react";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
-
 import type { ProjectBaseEntity } from "~/projects/domain";
 
 function View({ project }: Props) {
+    void project;
     const [open, setOpen] = useState(false);
 
     return (
@@ -28,9 +28,7 @@ function View({ project }: Props) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <div className="flex flex-col gap-0">
-                    {/* TODO: Add menu items here */}
-                </div>
+                <div className="flex flex-col gap-0">{/* TODO: Add menu items here */}</div>
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -41,4 +39,3 @@ interface Props {
 }
 
 export const MenuCell = React.memo(View);
-

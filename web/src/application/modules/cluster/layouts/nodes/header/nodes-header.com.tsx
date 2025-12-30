@@ -1,22 +1,13 @@
 import { memo } from "react";
 
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@components/ui";
+import { moduleHeaderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 
 function View() {
     return (
-        <div className="bg-background py-4 px-5 rounded-lg">
+        <div className={cn(moduleHeaderBox)}>
             <div className="py-2">
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Cluster</BreadcrumbPage>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Nodes</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
+                <h1 className="text-lg font-bold">Nodes</h1>
             </div>
         </div>
     );

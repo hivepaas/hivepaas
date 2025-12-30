@@ -1,6 +1,8 @@
 import { memo } from "react";
 
 import { Avatar } from "@components/ui";
+import { moduleHeaderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { format } from "date-fns";
 import { BadgeCheck, Clock, User } from "lucide-react";
 import invariant from "tiny-invariant";
@@ -18,18 +20,18 @@ function View() {
 
     const links = [
         {
-            route: ROUTE.userManagement.users.profile.$route,
+            route: ROUTE.currentUser.profile.$route,
             label: "General",
         },
         {
-            route: ROUTE.userManagement.users.profileApiKeys.$route,
+            route: ROUTE.currentUser.profileApiKeys.$route,
             label: "API Keys",
         },
     ];
 
     return (
-        <div className="bg-background pt-4 px-5 rounded-lg">
-            <h3 className="text-2xl font-semibold">Your account</h3>
+        <div className={cn(moduleHeaderBox)}>
+            <h3 className="text-lg font-semibold">Your account</h3>
 
             <div className="flex items-center gap-4 mt-4 pb-3 border-b border-border">
                 <div className="flex items-center gap-4">
@@ -40,7 +42,7 @@ function View() {
                     />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">{profile.fullName}</h2>
+                            <h2 className="text-lg font-semibold text-foreground">{profile.fullName}</h2>
                             <UserStatusBadge status={profile.status} />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

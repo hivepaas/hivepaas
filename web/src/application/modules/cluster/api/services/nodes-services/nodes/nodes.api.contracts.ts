@@ -29,6 +29,7 @@ export type Nodes_FindOneById_Res = ApiResponseBase<NodeDetails>;
  */
 export type Nodes_DeleteOne_Req = ApiRequestBase<{
     id: string;
+    force: boolean;
 }>;
 
 export type Nodes_DeleteOne_Res = ApiResponseBase<{

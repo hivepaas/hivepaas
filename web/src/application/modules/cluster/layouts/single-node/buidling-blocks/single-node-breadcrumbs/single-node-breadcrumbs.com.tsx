@@ -14,7 +14,7 @@ function View({ node }: Props) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbPage>{node.name}</BreadcrumbPage>
+                    <BreadcrumbPage>{node.name === "" ? "<unset>" : node.name}</BreadcrumbPage>
                 </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>

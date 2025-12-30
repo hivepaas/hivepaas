@@ -91,7 +91,7 @@ export class NodesApiValidator {
         return {
             data: data.map(node => ({
                 id: node.id,
-                name: node.name,
+                name: node.name === "<unset>" ? "" : node.name,
                 labels: node.labels ?? {},
                 hostname: node.hostname,
                 addr: node.addr,
@@ -122,7 +122,7 @@ export class NodesApiValidator {
         return {
             data: {
                 id: data.id,
-                name: data.name,
+                name: data.name === "<unset>" ? "" : data.name,
                 labels: data.labels ?? {},
                 hostname: data.hostname,
                 addr: data.addr,

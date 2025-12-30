@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, Trash2Icon } from "lucide-react";
+import { AlertTriangle, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { NodesCommands } from "~/cluster/data/commands";
 import type { NodeDetails } from "~/cluster/domain";
@@ -20,7 +20,11 @@ function View({ node }: Props) {
     });
 
     const onDelete = () => {
-        deleteOneNode({ id: node.id });
+        deleteOneNode({ id: node.id, force: false });
+    };
+
+    const onForceDelete = () => {
+        deleteOneNode({ id: node.id, force: true });
     };
 
     return (
@@ -60,6 +64,25 @@ function View({ node }: Props) {
                         >
                             <Trash2Icon className="mr-2 size-4" />
                             Remove Node
+                        </Button>
+                    </PopConfirm>
+                    <PopConfirm
+                        title="Force Delete Node"
+                        variant="destructive"
+                        confirmText="Force Delete"
+                        cancelText="Cancel"
+                        description="Are you sure you want to force delete this node? This action cannot be undone."
+                        onConfirm={() => {
+                            onForceDelete();
+                        }}
+                    >
+                        <Button
+                            className="justify-start py-1.5"
+                            variant="ghost"
+                            disabled={isDeleting}
+                        >
+                            <AlertTriangle className="mr-2 size-4" />
+                            Force Remove Node
                         </Button>
                     </PopConfirm>
                 </div>

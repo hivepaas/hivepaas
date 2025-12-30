@@ -79,7 +79,7 @@ export function NavUser({ user }: { user: Profile }) {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <AppLink.Modules to={ROUTE.userManagement.users.profile.$route}>
+                            <AppLink.Modules to={ROUTE.currentUser.profile.$route}>
                                 <DropdownMenuItem>
                                     <BadgeCheck />
                                     Account

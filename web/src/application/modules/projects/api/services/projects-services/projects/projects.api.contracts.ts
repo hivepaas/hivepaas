@@ -1,7 +1,7 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type ProjectBaseEntity } from "~/projects/domain";
 
-import { type ApiRequestBase, type ApiResponsePaginated } from "@infrastructure/api";
+import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
 /**
  * Find many projects paginated
@@ -13,3 +13,12 @@ export type Projects_FindManyPaginated_Req = ApiRequestBase<{
 }>;
 
 export type Projects_FindManyPaginated_Res = ApiResponsePaginated<ProjectBaseEntity>;
+
+/**
+ * Create project
+ */
+export type Projects_CreateOne_Req = ApiRequestBase<Pick<ProjectBaseEntity, "name" | "note" | "tags">>;
+
+export type Projects_CreateOne_Res = ApiResponseBase<{
+    id: string;
+}>;

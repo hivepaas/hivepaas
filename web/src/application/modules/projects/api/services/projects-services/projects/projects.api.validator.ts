@@ -1,9 +1,12 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import { type Projects_FindManyPaginated_Res } from "~/projects/api/services/projects-services/projects/projects.api.contracts";
+import {
+    type Projects_CreateOne_Res,
+    type Projects_FindManyPaginated_Res,
+} from "~/projects/api/services/projects-services/projects/projects.api.contracts";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project schema
@@ -29,6 +32,16 @@ const FindManyPaginatedSchema = z.object({
     meta: PagingMetaApiSchema,
 });
 
+/**
+ * Create project API response schema
+ */
+const CreateOneSchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+    meta: BaseMetaApiSchema,
+});
+
 export class ProjectsApiValidator {
     /**
      * Validate and transform find many projects paginated API response
@@ -43,5 +56,15 @@ export class ProjectsApiValidator {
             data,
             meta,
         };
+    };
+
+    /**
+     * Validate and transform create project API response
+     */
+    createOne = (response: AxiosResponse): Projects_CreateOne_Res => {
+        return parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
     };
 }

@@ -39,7 +39,7 @@ const CreateOneSchema = z.object({
     data: z.object({
         id: z.string(),
     }),
-    meta: BaseMetaApiSchema,
+    meta: BaseMetaApiSchema.nullable(),
 });
 
 export class ProjectsApiValidator {

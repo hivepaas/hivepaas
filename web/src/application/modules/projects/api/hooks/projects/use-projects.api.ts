@@ -46,12 +46,11 @@ function createHook() {
                 /**
                  * Create a project
                  */
-                createOne: async (data: Projects_CreateOne_Req["data"], signal?: AbortSignal) => {
+                createOne: async (data: Projects_CreateOne_Req["data"]) => {
                     const result = await api.projects.$.createOne(
                         {
                             data,
                         },
-                        signal,
                     );
 
                     return match(result, {

@@ -16,4 +16,5 @@ export * from "./sidebar";
 export * from "./skeleton";
 export * from "./table";
 export * from "./table-pagination";
+export * from "./tag-input";
 export * from "./tooltip";

@@ -1,23 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, X } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { type CreateProjectFormInput, type CreateProjectFormOutput, CreateProjectFormSchema } from "../schemas";
 
-export function CreateProjectForm({ isPending, onSubmit }: Props) {
-    const [newTag, setNewTag] = useState("");
-
+export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) {
     const {
         handleSubmit,
         control,
-        formState: { errors },
+        formState: { errors, isDirty },
         watch,
         setValue,
     } = useForm<CreateProjectFormInput, unknown, CreateProjectFormOutput>({
@@ -29,6 +29,10 @@ export function CreateProjectForm({ isPending, onSubmit }: Props) {
         resolver: zodResolver(CreateProjectFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        onHasChanges?.(isDirty);
+    }, [isDirty, onHasChanges]);
 
     const tags = watch("tags");
 
@@ -48,17 +52,13 @@ export function CreateProjectForm({ isPending, onSubmit }: Props) {
         control,
     });
 
-    function handleAddTag() {
-        if (newTag.trim()) {
-            const trimmedTag = newTag.trim();
-            if (!tags.includes(trimmedTag)) {
-                setValue("tags", [...tags, trimmedTag]);
-                setNewTag("");
-            }
+    function handleCreateTag(tag: string) {
+        if (!tags.includes(tag)) {
+            setValue("tags", [...tags, tag]);
         }
     }
 
-    function handleRemoveTag(tagToRemove: string) {
+    function handleDeleteTag(tagToRemove: string) {
         setValue(
             "tags",
             tags.filter(tag => tag !== tagToRemove),
@@ -80,93 +80,85 @@ export function CreateProjectForm({ isPending, onSubmit }: Props) {
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
+                className="flex flex-col gap-6"
             >
-                <FieldGroup>
-                    <Field>
-                        <FieldLabel htmlFor="name">Name *</FieldLabel>
-                        <Input
-                            id="name"
-                            {...name}
-                            placeholder="Enter project name"
-                            aria-invalid={isNameInvalid}
+                <InfoBlock
+                    titleWidth={150}
+                    title={
+                        <LabelWithInfo
+                            label="Name"
+                            isRequired
                         />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                id="name"
+                                {...name}
+                                placeholder="Enter project name"
+                                aria-invalid={isNameInvalid}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
 
-                    <Field>
-                        <FieldLabel htmlFor="note">Note</FieldLabel>
-                        <Textarea
-                            id="note"
-                            {...note}
-                            placeholder="Enter project note"
-                            rows={4}
-                            aria-invalid={isNoteInvalid}
+                <InfoBlock
+                    titleWidth={150}
+                    title={
+                        <LabelWithInfo
+                            label="Note"
+                            isRequired
                         />
-                        <FieldError errors={[errors.note]} />
-                    </Field>
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Textarea
+                                id="note"
+                                {...note}
+                                placeholder="Enter project note"
+                                rows={4}
+                                aria-invalid={isNoteInvalid}
+                            />
+                            <FieldError errors={[errors.note]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
 
-                    <Field>
-                        <FieldLabel htmlFor="tags">Tags</FieldLabel>
-                        <div className="flex flex-col gap-4">
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="Enter tag"
-                                    value={newTag}
-                                    onChange={e => {
-                                        setNewTag(e.target.value);
-                                    }}
-                                    onKeyDown={e => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleAddTag();
-                                        }
-                                    }}
-                                    className="flex-1"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleAddTag}
-                                    disabled={!newTag.trim()}
-                                >
-                                    <Plus className="size-4 mr-2" /> Add
-                                </Button>
-                            </div>
+                <InfoBlock
+                    titleWidth={150}
+                    title={
+                        <LabelWithInfo
+                            label="Tags"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <TagInput
+                                tags={tags}
+                                onCreate={handleCreateTag}
+                                onDelete={handleDeleteTag}
+                                placeholder="Enter tag"
+                            />
+                            <FieldError errors={[errors.tags]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
 
-                            {tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {tags.map(tag => (
-                                        <div
-                                            key={tag}
-                                            className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-md text-sm"
-                                        >
-                                            <span>{tag}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    handleRemoveTag(tag);
-                                                }}
-                                                className="hover:bg-destructive/20 rounded p-0.5"
-                                            >
-                                                <X className="size-3" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <FieldError errors={[errors.tags]} />
-                    </Field>
-
-                    <Field>
+                <Field>
+                    <div className="flex justify-end">
                         <Button
                             type="submit"
                             isLoading={isPending}
                         >
                             Create Project
                         </Button>
-                    </Field>
-                </FieldGroup>
+                    </div>
+                </Field>
             </form>
         </div>
     );
@@ -175,4 +167,5 @@ export function CreateProjectForm({ isPending, onSubmit }: Props) {
 interface Props {
     isPending: boolean;
     onSubmit: (values: CreateProjectFormOutput) => Promise<void> | void;
+    onHasChanges?: (dirty: boolean) => void;
 }

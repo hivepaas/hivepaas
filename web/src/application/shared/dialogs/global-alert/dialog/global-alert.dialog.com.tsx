@@ -51,9 +51,9 @@ function View() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription
-                        className={cn("text-", type === "error" ? "text-red-500" : "text-gray-500")}
+                        className={cn("text-", dashedBorderBox, type === "error" ? "text-red-500" : "text-gray-500")}
                     >
-                        <div className={cn(dashedBorderBox)}>{description}</div>
+                        {description}
                     </AlertDialogDescription>
                     <Button
                         variant="ghost"

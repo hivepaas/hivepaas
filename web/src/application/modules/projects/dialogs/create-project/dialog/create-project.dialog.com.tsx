@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectsCommands } from "~/projects/data/commands";
-import { EProjectStatus } from "~/projects/module-shared/enums";
 
 import { CreateProjectForm } from "../form";
 import { useCreateProjectDialogState } from "../hooks";
@@ -11,6 +10,7 @@ import { type CreateProjectFormOutput } from "../schemas";
 
 export function CreateProjectDialog() {
     const { state, props, ...actions } = useCreateProjectDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
 
     const open = state.mode !== "closed";
 
@@ -21,6 +21,13 @@ export function CreateProjectDialog() {
         },
     });
 
+    // Reset hasChanges when dialog closes
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+        }
+    }, [state.mode]);
+
     function onSubmit(values: CreateProjectFormOutput) {
         createProject({
             name: values.name,
@@ -30,6 +37,14 @@ export function CreateProjectDialog() {
     }
 
     function handleClose(): void {
+        if (hasChanges) {
+            const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+
+        setHasChanges(false);
         actions.close();
     }
 
@@ -45,6 +60,7 @@ export function CreateProjectDialog() {
                 <CreateProjectForm
                     isPending={isPending}
                     onSubmit={onSubmit}
+                    onHasChanges={setHasChanges}
                 />
             </DialogContent>
         </Dialog>

@@ -18,8 +18,8 @@ export function ProjectsTable() {
     });
 
     const { actions } = useCreateProjectDialog({
-        onSuccess: () => {
-            // Query will be invalidated automatically by the command
+        onClose: () => {
+            actions.close();
         },
     });
 

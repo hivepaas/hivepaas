@@ -6,6 +6,7 @@ import type {
     Projects_CreateOne_Req,
     Projects_DeleteOne_Req,
     Projects_FindManyPaginated_Req,
+    Projects_FindOneById_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -34,6 +35,29 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get projects",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Find one project by id
+                 */
+                findOneById: async (data: Projects_FindOneById_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.$.findOneById(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get project",
                                 error,
                             });
 

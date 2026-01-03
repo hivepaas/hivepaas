@@ -16,12 +16,7 @@ export function SingleProjectLayout({ children }: PropsWithChildren) {
 
     invariant(id, "Project id must be defined");
 
-    // TODO: Implement useFindOneById when API is available
-    // const { error, refetch } = ProjectsQueries.useFindOneById({ id });
-
-    // For now, we'll use a placeholder that doesn't break
-    const error: Error | null = null;
-    const refetch = () => {};
+    const { error, refetch } = ProjectsQueries.useFindOneById({ projectID: id });
 
     if (error) {
         if (isHttp404Exception(error)) {
@@ -43,4 +38,3 @@ export function SingleProjectLayout({ children }: PropsWithChildren) {
         </div>
     );
 }
-

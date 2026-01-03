@@ -8,6 +8,8 @@ import type {
     Projects_DeleteOne_Res,
     Projects_FindManyPaginated_Req,
     Projects_FindManyPaginated_Res,
+    Projects_FindOneById_Req,
+    Projects_FindOneById_Res,
 } from "~/projects/api/services/projects-services/projects";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
@@ -39,6 +41,28 @@ export class ProjectsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Find one project by id
+     */
+    async findOneById(
+        request: Projects_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Projects_FindOneById_Res, Error>> {
+        const { projectID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

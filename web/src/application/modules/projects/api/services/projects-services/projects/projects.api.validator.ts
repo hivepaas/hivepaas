@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
     type Projects_CreateOne_Res,
     type Projects_FindManyPaginated_Res,
+    type Projects_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
@@ -42,6 +43,33 @@ const CreateOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+/**
+ * Project user access schema
+ */
+const ProjectUserAccessSchema = z.object({
+    id: z.string(),
+    fullName: z.string(),
+    access: z.object({
+        read: z.boolean(),
+        write: z.boolean(),
+        delete: z.boolean(),
+    }),
+});
+
+/**
+ * Project details schema (includes userAccesses)
+ */
+const ProjectDetailsSchema = ProjectSchema.extend({
+    userAccesses: z.array(ProjectUserAccessSchema),
+});
+
+/**
+ * Find one project by id API response schema
+ */
+const FindOneByIdSchema = z.object({
+    data: ProjectDetailsSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
 
 export class ProjectsApiValidator {
     /**
@@ -69,4 +97,18 @@ export class ProjectsApiValidator {
         });
     };
 
+    /**
+     * Validate and transform find one project by id API response
+     */
+    findOneById = (response: AxiosResponse): Projects_FindOneById_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data,
+            meta,
+        };
+    };
 }

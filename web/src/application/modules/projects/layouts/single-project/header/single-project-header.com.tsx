@@ -3,31 +3,38 @@ import { memo } from "react";
 import { Button } from "@components/ui";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { ProjectsQueries } from "~/projects/data";
 import { ProjectsCommands } from "~/projects/data/commands";
-
-// TODO: Import ProjectsQueries.useFindOneById when available
-// import { ProjectsQueries } from "~/projects/data/queries";
-// TODO: Import ProjectStatusBadge when needed
-// import { ProjectStatusBadge } from "~/projects/module-shared/components";
 
 import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
+
+import { SingleProjectBreadcrumbs } from "../buidling-blocks";
+
+import { SingleProjectHeaderSkeleton } from "./single-project-header.skeleton.com";
+
 function View({ projectId }: Props) {
-    // TODO: Implement useFindOneById when API is available
-    // const { data, isLoading, error } = ProjectsQueries.useFindOneById({ id: projectId });
-    // const isLoading = false;
-    // const error: Error | null = null;
+    const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
     const { navigate } = useAppNavigate();
 
     const { mutate: deleteOne, isPending: isDeleting } = ProjectsCommands.useDeleteOne({});
 
-    // TODO: Uncomment when API is available
-    // invariant(data, "data must be defined");
-    // const { data: project } = data;
+    if (isLoading) {
+        return <SingleProjectHeaderSkeleton />;
+    }
+
+    if (error) {
+        return null;
+    }
+
+    invariant(data, "data must be defined");
+    const { data: project } = data;
 
     const handleRemove = () => {
         deleteOne(
@@ -41,13 +48,10 @@ function View({ projectId }: Props) {
         );
     };
 
-    // TODO: Replace with actual project data when API is available
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Project: {projectId}</span>
-                </div>
+                <SingleProjectBreadcrumbs project={project} />
                 <div className="flex items-center gap-2">
                     <PopConfirm
                         title="Remove project"
@@ -72,10 +76,9 @@ function View({ projectId }: Props) {
                 <BackButton />
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col gap-3">
-                        {/* TODO: Replace with actual project data when API is available */}
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">Project {projectId}</h2>
-                            {/* <ProjectStatusBadge status={project.status} /> */}
+                            <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>
+                            <ProjectStatusBadge status={project.status} />
                         </div>
                     </div>
                 </div>

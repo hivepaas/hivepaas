@@ -1,5 +1,5 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
-import { type ProjectBaseEntity } from "~/projects/domain";
+import { type ProjectDetailsEntity, type ProjectBaseEntity } from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -22,6 +22,15 @@ export type Projects_CreateOne_Req = ApiRequestBase<Pick<ProjectBaseEntity, "nam
 export type Projects_CreateOne_Res = ApiResponseBase<{
     id: string;
 }>;
+
+/**
+ * Find one project by id
+ */
+export type Projects_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+}>;
+
+export type Projects_FindOneById_Res = ApiResponseBase<ProjectDetailsEntity>;
 
 /**
  * Delete project

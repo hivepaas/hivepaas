@@ -4,7 +4,7 @@ export interface ProjectDetailsEntity extends ProjectBaseEntity {
     photo: string;
     userAccesses: {
         id: string;
-        name: string;
+        fullName: string;
         access: {
             read: boolean;
             write: boolean;

@@ -1,15 +1,22 @@
 import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
+import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 
 function View() {
     const location = useLocation();
+    const createProjectDialog = useCreateProjectDialogState();
 
     useUpdateEffect(() => {
-        // TODO: Destroy dialogs on location change
+        createProjectDialog.destroy();
     }, [location]);
 
-    return null;
+    return (
+        <>
+            <CreateProjectDialog />
+            {/* TODO: Add other dialogs here */}
+        </>
+    );
 }
 
 export const ProjectsDialogsContainer = React.memo(View);

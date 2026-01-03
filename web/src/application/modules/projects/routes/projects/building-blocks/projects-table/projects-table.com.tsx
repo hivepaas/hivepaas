@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { ProjectsQueries } from "~/projects/data/queries";
+import { useCreateProjectDialog } from "~/projects/dialogs/create-project";
 import { ProjectsTableDefs } from "~/projects/module-shared/definitions/tables/projects/projects-table.defs";
 
 import { TableActions } from "@application/shared/components";
@@ -16,12 +17,22 @@ export function ProjectsTable() {
         search,
     });
 
+    const { actions } = useCreateProjectDialog({
+        onClose: () => {
+            actions.close();
+        },
+    });
+
     return (
         <div className="flex flex-col gap-4">
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button>
+                    <Button
+                        onClick={() => {
+                            actions.open();
+                        }}
+                    >
                         <Plus /> Create Project
                     </Button>
                 }
@@ -44,4 +55,3 @@ export function ProjectsTable() {
         </div>
     );
 }
-

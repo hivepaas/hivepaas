@@ -64,7 +64,7 @@ function View({ user }: Props) {
                             isLoading={isUpdating}
                         >
                             <Check className="mr-2 size-4" />
-                            Activate user
+                            Activate User
                         </Button>
                     )}
                     {showDisableUser && (
@@ -77,7 +77,7 @@ function View({ user }: Props) {
                             isLoading={isUpdating}
                         >
                             <Lock className="mr-2 size-4" />
-                            Disable user
+                            Disable User
                         </Button>
                     )}
                     <PopConfirm

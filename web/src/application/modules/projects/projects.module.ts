@@ -1,12 +1,12 @@
 /**
  * Projects
  */
-export { ProjectsRoute } from "./routes";
+export { ProjectsRoute, ProjectGeneralRoute, ProjectAppsRoute, ProjectConfigurationRoute } from "./routes";
 
 /**
  * Layouts
  */
-export { ProjectsLayout } from "./layouts";
+export { ProjectsLayout, SingleProjectLayout } from "./layouts";
 
 /**
  * Dialogs

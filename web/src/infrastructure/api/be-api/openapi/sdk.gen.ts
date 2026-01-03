@@ -8,6 +8,12 @@ import type {
     BeginUserSignupData,
     BeginUserSignupErrors,
     BeginUserSignupResponses,
+    CancelAppDeploymentData,
+    CancelAppDeploymentErrors,
+    CancelAppDeploymentResponses,
+    CancelTaskData,
+    CancelTaskErrors,
+    CancelTaskResponses,
     CompleteMfaTotpSetupData,
     CompleteMfaTotpSetupErrors,
     CompleteMfaTotpSetupResponses,
@@ -162,6 +168,12 @@ import type {
     GetApiKeySettingErrors,
     GetApiKeySettingResponses,
     GetAppData,
+    GetAppDeploymentData,
+    GetAppDeploymentErrors,
+    GetAppDeploymentLogsData,
+    GetAppDeploymentLogsErrors,
+    GetAppDeploymentLogsResponses,
+    GetAppDeploymentResponses,
     GetAppErrors,
     GetAppResponses,
     GetAppRuntimeLogsData,
@@ -233,6 +245,9 @@ import type {
     GetSysErrorData,
     GetSysErrorErrors,
     GetSysErrorResponses,
+    GetTaskData,
+    GetTaskErrors,
+    GetTaskResponses,
     GetUserData,
     GetUserErrors,
     GetUserResponses,
@@ -255,6 +270,9 @@ import type {
     ListAppBaseErrors,
     ListAppBaseResponses,
     ListAppData,
+    ListAppDeploymentData,
+    ListAppDeploymentErrors,
+    ListAppDeploymentResponses,
     ListAppErrors,
     ListAppInstallationData,
     ListAppInstallationErrors,
@@ -320,6 +338,9 @@ import type {
     ListSysErrorData,
     ListSysErrorErrors,
     ListSysErrorResponses,
+    ListTaskData,
+    ListTaskErrors,
+    ListTaskResponses,
     ListUserBaseData,
     ListUserBaseErrors,
     ListUserBaseResponses,
@@ -473,6 +494,9 @@ import type {
     UpdateSslProviderMetaErrors,
     UpdateSslProviderMetaResponses,
     UpdateSslProviderResponses,
+    UpdateTaskMetaData,
+    UpdateTaskMetaErrors,
+    UpdateTaskMetaResponses,
     UpdateUserData,
     UpdateUserErrors,
     UpdateUserPasswordData,
@@ -1037,6 +1061,70 @@ export const getApp = <ThrowOnError extends boolean = false>(options: Options<Ge
     return (options.client ?? client).get<GetAppResponses, GetAppErrors, ThrowOnError>({
         responseType: "json",
         url: "/projects/{projectID}/apps/{appID}",
+        ...options,
+    });
+};
+
+/**
+ * Lists app deployments
+ *
+ * Lists app deployments
+ */
+export const listAppDeployment = <ThrowOnError extends boolean = false>(
+    options: Options<ListAppDeploymentData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<ListAppDeploymentResponses, ListAppDeploymentErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/deployments",
+        ...options,
+    });
+};
+
+/**
+ * Gets app deployment
+ *
+ * Gets app deployment
+ */
+export const getAppDeployment = <ThrowOnError extends boolean = false>(
+    options: Options<GetAppDeploymentData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetAppDeploymentResponses, GetAppDeploymentErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}",
+        ...options,
+    });
+};
+
+/**
+ * Cancels app deployment
+ *
+ * Cancels app deployment
+ */
+export const cancelAppDeployment = <ThrowOnError extends boolean = false>(
+    options: Options<CancelAppDeploymentData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<CancelAppDeploymentResponses, CancelAppDeploymentErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}/cancel",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Stream app deployment logs via websocket
+ *
+ * Stream deployment app logs via websocket
+ */
+export const getAppDeploymentLogs = <ThrowOnError extends boolean = false>(
+    options: Options<GetAppDeploymentLogsData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<GetAppDeploymentLogsResponses, GetAppDeploymentLogsErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs",
         ...options,
     });
 };
@@ -2948,6 +3036,68 @@ export const restartNginx = <ThrowOnError extends boolean = false>(
             "Content-Type": "*/*",
             ...options.headers,
         },
+    });
+};
+
+/**
+ * Lists task
+ *
+ * Lists task
+ */
+export const listTask = <ThrowOnError extends boolean = false>(options?: Options<ListTaskData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListTaskResponses, ListTaskErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/system/tasks",
+        ...options,
+    });
+};
+
+/**
+ * Cancels a task
+ *
+ * Cancels a task
+ */
+export const cancelTask = <ThrowOnError extends boolean = false>(options: Options<CancelTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<CancelTaskResponses, CancelTaskErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/system/tasks/{id}/cancel",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Updates task meta
+ *
+ * Updates task meta
+ */
+export const updateTaskMeta = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateTaskMetaData, ThrowOnError>,
+) => {
+    return (options.client ?? client).put<UpdateTaskMetaResponses, UpdateTaskMetaErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/system/tasks/{id}/meta",
+        ...options,
+        headers: {
+            "Content-Type": "*/*",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Gets task
+ *
+ * Gets task
+ */
+export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetTaskResponses, GetTaskErrors, ThrowOnError>({
+        responseType: "json",
+        url: "/tasks/{id}",
+        ...options,
     });
 };
 

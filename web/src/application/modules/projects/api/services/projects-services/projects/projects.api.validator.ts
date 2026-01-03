@@ -2,6 +2,7 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type Projects_CreateOne_Res,
+    type Projects_DeleteOne_Res,
     type Projects_FindManyPaginated_Res,
 } from "~/projects/api/services/projects-services/projects/projects.api.contracts";
 import { EProjectStatus } from "~/projects/module-shared/enums";
@@ -42,6 +43,7 @@ const CreateOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+
 export class ProjectsApiValidator {
     /**
      * Validate and transform find many projects paginated API response
@@ -67,4 +69,5 @@ export class ProjectsApiValidator {
             schema: CreateOneSchema,
         });
     };
+
 }

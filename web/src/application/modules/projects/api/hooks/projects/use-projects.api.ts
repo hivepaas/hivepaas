@@ -2,7 +2,11 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
-import type { Projects_CreateOne_Req, Projects_FindManyPaginated_Req } from "~/projects/api/services";
+import type {
+    Projects_CreateOne_Req,
+    Projects_DeleteOne_Req,
+    Projects_FindManyPaginated_Req,
+} from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
@@ -58,6 +62,28 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create project",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Delete a project
+                 */
+                deleteOne: async (data: Projects_DeleteOne_Req["data"]) => {
+                    const result = await api.projects.$.deleteOne(
+                        {
+                            data,
+                        },
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to delete project",
                                 error,
                             });
 

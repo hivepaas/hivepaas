@@ -4,6 +4,8 @@ import type {
     ProjectsApiValidator,
     Projects_CreateOne_Req,
     Projects_CreateOne_Res,
+    Projects_DeleteOne_Req,
+    Projects_DeleteOne_Res,
     Projects_FindManyPaginated_Req,
     Projects_FindManyPaginated_Res,
 } from "~/projects/api/services/projects-services/projects";
@@ -65,6 +67,20 @@ export class ProjectsApi extends BaseApi {
             from(this.client.v1.post("/projects", json, { signal })).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Delete a project
+     */
+    async deleteOne(request: Projects_DeleteOne_Req): Promise<Result<Projects_DeleteOne_Res, Error>> {
+        return lastValueFrom(
+            from(
+                this.client.v1.delete(`/projects/${request.data.projectID}`),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

@@ -10,6 +10,8 @@ import type {
     Projects_FindManyPaginated_Res,
     Projects_FindOneById_Req,
     Projects_FindOneById_Res,
+    Projects_UpdateOne_Req,
+    Projects_UpdateOne_Res,
 } from "~/projects/api/services/projects-services/projects";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
@@ -103,6 +105,40 @@ export class ProjectsApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.delete(`/projects/${request.data.projectID}`),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update a project
+     */
+    async updateOne(request: Projects_UpdateOne_Req, signal?: AbortSignal): Promise<Result<Projects_UpdateOne_Res, Error>> {
+        const { projectID, updateVer, name, note, tags, status } = request.data;
+
+        const json: Record<string, unknown> = {
+            updateVer,
+            name: JsonTransformer.string({
+                data: name,
+            }),
+            note: JsonTransformer.string({
+                data: note,
+            }),
+            tags: JsonTransformer.array({
+                data: tags,
+            }),
+            status: JsonTransformer.string({
+                data: status,
+            }),
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}`, json, {
+                    signal,
+                }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),

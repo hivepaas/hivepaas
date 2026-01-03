@@ -4,16 +4,16 @@ import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-// TODO: Import ProjectsCommands.useUpdateOne when API is available
-// import { ProjectsCommands } from "~/projects/data/commands";
 import { ProjectsQueries } from "~/projects/data";
 
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
 
-// TODO: Import when API is available
-// import { isValidationException } from "@infrastructure/api";
-// import { ValidationException } from "@infrastructure/exceptions/validation";
+import { ProjectsCommands } from "@application/modules/projects/data/commands";
+
+import { isValidationException } from "@infrastructure/api";
+
+import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { ProjectGeneralForm } from "../form";
 import { type ProjectGeneralFormSchemaOutput } from "../schemas";
@@ -27,30 +27,26 @@ export function ProjectGeneralRoute() {
 
     const { data, isLoading, error, refetch } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
-    // TODO: Implement when API is available
-    // const { mutate: update, isPending } = ProjectsCommands.useUpdateOne({
-    //     onSuccess: () => {
-    //         toast.success("Project information updated");
-    //     },
-    //     onError: err => {
-    //         if (isValidationException(err)) {
-    //             formRef.current?.onError(ValidationException.fromHttp(err));
-    //         }
-    //     },
-    // });
+    const { mutate: update, isPending } = ProjectsCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Project information updated");
+        },
+        onError: err => {
+            if (isValidationException(err)) {
+                formRef.current?.onError(ValidationException.fromHttp(err));
+            }
+        },
+    });
 
-    function handleSubmit(_values: ProjectGeneralFormSchemaOutput) {
+    function handleSubmit(values: ProjectGeneralFormSchemaOutput) {
         invariant(projectId, "projectId must be defined");
         invariant(data, "data must be defined");
 
-        // TODO: Implement when API is available
-        // update({
-        //     projectID: projectId,
-        //     ..._values,
-        //     updateVer: data.data.updateVer,
-        // });
-
-        toast.info("Update functionality will be available soon");
+        update({
+            projectID: projectId,
+            ...values,
+            updateVer: data.data.updateVer,
+        });
     }
 
     if (isLoading) {
@@ -81,9 +77,8 @@ export function ProjectGeneralRoute() {
                     <Button
                         type="submit"
                         className="min-w-[100px]"
-                        // TODO: Enable when API is available
-                        // disabled={isPending}
-                        // isLoading={isPending}
+                        disabled={isPending}
+                        isLoading={isPending}
                     >
                         Save
                     </Button>

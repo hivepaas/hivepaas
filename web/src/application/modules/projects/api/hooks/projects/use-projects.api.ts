@@ -7,6 +7,7 @@ import type {
     Projects_DeleteOne_Req,
     Projects_FindManyPaginated_Req,
     Projects_FindOneById_Req,
+    Projects_UpdateOne_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -108,6 +109,28 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete project",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update a project
+                 */
+                updateOne: async (data: Projects_UpdateOne_Req["data"]) => {
+                    const result = await api.projects.$.updateOne(
+                        {
+                            data,
+                        },
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project",
                                 error,
                             });
 

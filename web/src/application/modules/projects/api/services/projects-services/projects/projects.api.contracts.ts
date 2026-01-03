@@ -42,3 +42,15 @@ export type Projects_DeleteOne_Req = ApiRequestBase<{
 export type Projects_DeleteOne_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Update project
+ */
+export type Projects_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    updateVer: number;
+} & Partial<Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "userAccesses">>>;
+
+export type Projects_UpdateOne_Res = ApiResponseBase<{
+    type: "success";
+}>;

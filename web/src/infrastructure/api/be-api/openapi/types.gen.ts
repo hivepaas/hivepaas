@@ -48,6 +48,15 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBaseAccessActions = {
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseAppStatus = "active" | "locked" | "disabled" | "deleting";
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseBuildTool = "docker" | "nixpacks";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseDeploymentStatus =
+    | "not-started"
+    | "in-progress"
+    | "canceled"
+    | "done"
+    | "failed";
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseGitSource = "github" | "gitlab" | "gitlab-custom" | "gitea";
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseMfaType = "totp" | "email";
@@ -70,7 +79,39 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBaseProjectStatus = "active" 
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseSettingStatus = "active" | "pending" | "disabled" | "expired";
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseSettingType =
+    | "project"
+    | "app"
+    | "service-spec"
+    | "app-deployment"
+    | "app-http"
+    | "env-var"
+    | "secret"
+    | "s3-storage"
+    | "oauth"
+    | "ssh-key"
+    | "api-key"
+    | "slack"
+    | "discord"
+    | "registry-auth"
+    | "basic-auth"
+    | "ssl"
+    | "github-app"
+    | "git-token"
+    | "cron-job";
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseSslProvider = "letsencrypt" | "custom";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskPriority = "low" | "default" | "critical";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskStatus =
+    | "not-started"
+    | "in-progress"
+    | "canceled"
+    | "done"
+    | "failed";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskType = "task:test" | "task:app-deploy";
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppBaseUserRole = "admin" | "member";
 
@@ -106,6 +147,11 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoModuleAccessReq = {
     id: string;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoNamedObjectResp = {
+    id: string;
+    name: string;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectAccessReq = {
     access: GithubComLocalpaasLocalpaasLocalpaasAppBaseAccessActions;
     id: string;
@@ -139,6 +185,108 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppBasedtoUserBaseResp = {
     username: string;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityAppDeploymentOutput = {
+    commitHash?: string;
+    commitMessage?: string;
+    imageTags?: Array<string>;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityAppDeploymentSettings = {
+    imageSource: GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentImageSource;
+    repoSource: GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentRepoSource;
+    tarballSource: GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentTarballSource;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentImageSource = {
+    enabled: boolean;
+    image: string;
+    registryAuth: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentRepoSource = {
+    buildTool: GithubComLocalpaasLocalpaasLocalpaasAppBaseBuildTool;
+    /**
+     * contains setting id of github app/git token/ssh key
+     */
+    credentials: GithubComLocalpaasLocalpaasLocalpaasAppEntityRepoCredentials;
+    /**
+     * for BuildToolDockerfile only
+     */
+    dockerfilePath: string;
+    enabled: boolean;
+    imageTags: Array<string>;
+    registryAuth: string;
+    /**
+     * can be branch name, tag...
+     */
+    repoRef: string;
+    repoUrl: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityDeploymentTarballSource = {
+    enabled: boolean;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityRepoCredentials = {
+    id: string;
+    type: GithubComLocalpaasLocalpaasLocalpaasAppBaseSettingType;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppEntityTaskConfig = {
+    maxRetry?: number;
+    priority: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskPriority;
+    retry?: number;
+    retryDelayMs?: number;
+    timeoutMs?: number;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppPkgRealtimelogLogFrame = {
+    data: string;
+    ts: string;
+    type: GithubComLocalpaasLocalpaasLocalpaasAppPkgRealtimelogLogType;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppPkgRealtimelogLogType = "in" | "out" | "err" | "warn";
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoCancelDeploymentReq = {
+    [key: string]: unknown;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoCancelDeploymentResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoDeploymentLogsDataResp = {
+    logs: Array<GithubComLocalpaasLocalpaasLocalpaasAppPkgRealtimelogLogFrame>;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoDeploymentResp = {
+    createdAt: string;
+    endedAt: string;
+    id: string;
+    output: GithubComLocalpaasLocalpaasLocalpaasAppEntityAppDeploymentOutput;
+    settings: GithubComLocalpaasLocalpaasLocalpaasAppEntityAppDeploymentSettings;
+    startedAt: string;
+    status: GithubComLocalpaasLocalpaasLocalpaasAppBaseDeploymentStatus;
+    updateVer: number;
+    updatedAt: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoGetDeploymentLogsResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoDeploymentLogsDataResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoGetDeploymentResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoDeploymentResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoListDeploymentResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoDeploymentResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppBaseResp = {
     id: string;
     key: string;
@@ -169,7 +317,7 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppResp = {
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppRuntimeLogsDataResp = {
-    logs: Array<GithubComLocalpaasLocalpaasServicesDockerLogFrame>;
+    logs: Array<GithubComLocalpaasLocalpaasLocalpaasAppPkgRealtimelogLogFrame>;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoAppSettingsResp = {
@@ -229,36 +377,72 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeleteAppTa
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentCodeSourceReq = {
-    enabled: boolean;
-};
-
-export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentCodeSourceResp = {
-    enabled: boolean;
-};
-
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentImageSourceReq = {
     enabled: boolean;
-    name: string;
+    image: string;
     registryAuth: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdReq;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentImageSourceResp = {
     enabled: boolean;
-    name: string;
+    image: string;
+    registryAuth: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoNamedObjectResp;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentRepoSourceReq = {
+    buildTool: GithubComLocalpaasLocalpaasLocalpaasAppBaseBuildTool;
+    credentials: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdReq;
+    /**
+     * for BuildToolDockerfile only
+     */
+    dockerfilePath: string;
+    enabled: boolean;
+    imageTags: Array<string>;
     registryAuth: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoObjectIdReq;
+    /**
+     * can be branch name, tag...
+     */
+    repoRef: string;
+    repoUrl: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentRepoSourceResp = {
+    buildTool: GithubComLocalpaasLocalpaasLocalpaasAppBaseBuildTool;
+    credentials: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoRepoCredentialsResp;
+    /**
+     * for BuildToolDockerfile only
+     */
+    dockerfilePath: string;
+    enabled: boolean;
+    imageTags: Array<string>;
+    registryAuth: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoNamedObjectResp;
+    /**
+     * can be branch name, tag...
+     */
+    repoRef: string;
+    repoUrl: string;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsReq = {
-    codeSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentCodeSourceReq;
     imageSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentImageSourceReq;
+    repoSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentRepoSourceReq;
+    tarballSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentTarballSourceReq;
     updateVer: number;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentSettingsResp = {
-    codeSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentCodeSourceResp;
     imageSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentImageSourceResp;
+    repoSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentRepoSourceResp;
+    tarballSource: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentTarballSourceResp;
     updateVer: number;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentTarballSourceReq = {
+    enabled: boolean;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDeploymentTarballSourceResp = {
+    enabled: boolean;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoDomainReq = {
@@ -408,6 +592,11 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoObtainDomai
     meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoRepoCredentialsResp = {
+    id: string;
+    type: GithubComLocalpaasLocalpaasLocalpaasAppBaseSettingType;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppucAppdtoUpdateAppSettingsDataResp = {
     errors?: Array<string>;
     warnings?: Array<string>;
@@ -489,8 +678,6 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterNodeucNodedtoGe
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterNodeucNodedtoJoinNodeDataResp = {
     commandOutput: string;
-    errorMessage: string;
-    success: boolean;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseClusterNodeucNodedtoJoinNodeReq = {
@@ -854,7 +1041,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersBasicauthucBa
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersCronjobucCronjobdtoCreateCronJobReq = {
     command: string;
     cron: string;
+    kind: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskType;
+    maxRetry: number;
     name: string;
+    priority: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskPriority;
+    retryDelayMs: number;
+    timeoutMs: number;
 };
 
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersCronjobucCronjobdtoCreateCronJobResp = {
@@ -870,8 +1062,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersCronjobucCron
     id: string;
     initialTime: string;
     kind: string;
+    maxRetry: number;
     name: string;
+    priority: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskPriority;
+    retryDelayMs: number;
     status: GithubComLocalpaasLocalpaasLocalpaasAppBaseSettingStatus;
+    timeoutMs: number;
     updateVer: number;
     updatedAt: string;
 };
@@ -903,7 +1099,12 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersCronjobucCron
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseProvidersCronjobucCronjobdtoUpdateCronJobReq = {
     command: string;
     cron: string;
+    kind: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskType;
+    maxRetry: number;
     name: string;
+    priority: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskPriority;
+    retryDelayMs: number;
+    timeoutMs: number;
     updateVer: number;
 };
 
@@ -1908,6 +2109,47 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseSystemSyserrorucSyserr
     status: number;
 };
 
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoCancelTaskReq = {
+    [key: string]: unknown;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoCancelTaskResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoGetTaskResp = {
+    data: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoTaskResp;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoListTaskResp = {
+    data: Array<GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoTaskResp>;
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoMeta;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoTaskResp = {
+    config: GithubComLocalpaasLocalpaasLocalpaasAppEntityTaskConfig;
+    createdAt: string;
+    endedAt: string;
+    id: string;
+    retryAt: string;
+    runAt: string;
+    startedAt: string;
+    status: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskStatus;
+    type: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskType;
+    updateVer: number;
+    updatedAt: string;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoUpdateTaskMetaReq = {
+    status: GithubComLocalpaasLocalpaasLocalpaasAppBaseTaskStatus;
+    updateVer: number;
+};
+
+export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoUpdateTaskMetaResp = {
+    meta: GithubComLocalpaasLocalpaasLocalpaasAppBasedtoBaseMeta;
+};
+
 export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUsersettingsApikeyucApikeydtoApiKeyDataResp = {
     id: string;
     keyId: string;
@@ -2181,13 +2423,6 @@ export type GithubComLocalpaasLocalpaasLocalpaasAppUsecaseUserucUserdtoUserResp 
     updatedAt: string;
     username: string;
 };
-
-export type GithubComLocalpaasLocalpaasServicesDockerLogFrame = {
-    data: string;
-    type: GithubComLocalpaasLocalpaasServicesDockerLogType;
-};
-
-export type GithubComLocalpaasLocalpaasServicesDockerLogType = "out" | "in" | "err";
 
 export type GetLoginOptionsData = {
     body?: never;
@@ -3527,6 +3762,211 @@ export type GetAppResponses = {
 };
 
 export type GetAppResponse = GetAppResponses[keyof GetAppResponses];
+
+export type ListAppDeploymentData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+    };
+    query?: {
+        /**
+         * `status=<target>`
+         */
+        status?: string;
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/projects/{projectID}/apps/{appID}/deployments";
+};
+
+export type ListAppDeploymentErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListAppDeploymentError = ListAppDeploymentErrors[keyof ListAppDeploymentErrors];
+
+export type ListAppDeploymentResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoListDeploymentResp;
+};
+
+export type ListAppDeploymentResponse = ListAppDeploymentResponses[keyof ListAppDeploymentResponses];
+
+export type GetAppDeploymentData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+        /**
+         * deployment ID
+         */
+        deploymentID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}";
+};
+
+export type GetAppDeploymentErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetAppDeploymentError = GetAppDeploymentErrors[keyof GetAppDeploymentErrors];
+
+export type GetAppDeploymentResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoGetDeploymentResp;
+};
+
+export type GetAppDeploymentResponse = GetAppDeploymentResponses[keyof GetAppDeploymentResponses];
+
+export type CancelAppDeploymentData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoCancelDeploymentReq;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+        /**
+         * deployment ID
+         */
+        deploymentID: string;
+    };
+    query?: never;
+    url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}/cancel";
+};
+
+export type CancelAppDeploymentErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CancelAppDeploymentError = CancelAppDeploymentErrors[keyof CancelAppDeploymentErrors];
+
+export type CancelAppDeploymentResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoCancelDeploymentResp;
+};
+
+export type CancelAppDeploymentResponse = CancelAppDeploymentResponses[keyof CancelAppDeploymentResponses];
+
+export type GetAppDeploymentLogsData = {
+    body?: never;
+    path: {
+        /**
+         * project ID
+         */
+        projectID: string;
+        /**
+         * app ID
+         */
+        appID: string;
+        /**
+         * deployment ID
+         */
+        deploymentID: string;
+    };
+    query?: {
+        /**
+         * `follow=true/false`
+         */
+        follow?: string;
+        /**
+         * `since=YYYY-MM-DDTHH:mm:SSZ`
+         */
+        since?: string;
+        /**
+         * `duration=` logs within the period
+         */
+        duration?: number;
+        /**
+         * `tail=1000` to get last 1000 lines of logs
+         */
+        tail?: number;
+    };
+    url: "/projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs";
+};
+
+export type GetAppDeploymentLogsErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetAppDeploymentLogsError = GetAppDeploymentLogsErrors[keyof GetAppDeploymentLogsErrors];
+
+export type GetAppDeploymentLogsResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseAppdeploymentucAppdeploymentdtoGetDeploymentLogsResp;
+};
+
+export type GetAppDeploymentLogsResponse = GetAppDeploymentLogsResponses[keyof GetAppDeploymentLogsResponses];
 
 export type GetAppRuntimeLogsData = {
     body?: never;
@@ -7392,6 +7832,168 @@ export type RestartNginxResponses = {
 };
 
 export type RestartNginxResponse = RestartNginxResponses[keyof RestartNginxResponses];
+
+export type ListTaskData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `jobId=<target>`
+         */
+        jobId?: string;
+        /**
+         * `status=<target>`
+         */
+        status?: string;
+        /**
+         * `search=<target> (support *)`
+         */
+        search?: string;
+        /**
+         * `pageOffset=offset`
+         */
+        pageOffset?: number;
+        /**
+         * `pageLimit=limit`
+         */
+        pageLimit?: number;
+        /**
+         * `sort=[-]field1|field2...`
+         */
+        sort?: string;
+    };
+    url: "/system/tasks";
+};
+
+export type ListTaskErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type ListTaskError = ListTaskErrors[keyof ListTaskErrors];
+
+export type ListTaskResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoListTaskResp;
+};
+
+export type ListTaskResponse = ListTaskResponses[keyof ListTaskResponses];
+
+export type CancelTaskData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoCancelTaskReq;
+    path: {
+        /**
+         * task ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: "/system/tasks/{id}/cancel";
+};
+
+export type CancelTaskErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type CancelTaskError = CancelTaskErrors[keyof CancelTaskErrors];
+
+export type CancelTaskResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoCancelTaskResp;
+};
+
+export type CancelTaskResponse = CancelTaskResponses[keyof CancelTaskResponses];
+
+export type UpdateTaskMetaData = {
+    /**
+     * request data
+     */
+    body: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoUpdateTaskMetaReq;
+    path: {
+        /**
+         * task ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: "/system/tasks/{id}/meta";
+};
+
+export type UpdateTaskMetaErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type UpdateTaskMetaError = UpdateTaskMetaErrors[keyof UpdateTaskMetaErrors];
+
+export type UpdateTaskMetaResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoUpdateTaskMetaResp;
+};
+
+export type UpdateTaskMetaResponse = UpdateTaskMetaResponses[keyof UpdateTaskMetaResponses];
+
+export type GetTaskData = {
+    body?: never;
+    path: {
+        /**
+         * task ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: "/tasks/{id}";
+};
+
+export type GetTaskErrors = {
+    /**
+     * Bad Request
+     */
+    400: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+    /**
+     * Internal Server Error
+     */
+    500: GithubComLocalpaasLocalpaasLocalpaasAppApperrorsErrorInfo;
+};
+
+export type GetTaskError = GetTaskErrors[keyof GetTaskErrors];
+
+export type GetTaskResponses = {
+    /**
+     * OK
+     */
+    200: GithubComLocalpaasLocalpaasLocalpaasAppUsecaseTaskucTaskdtoGetTaskResp;
+};
+
+export type GetTaskResponse = GetTaskResponses[keyof GetTaskResponses];
 
 export type ListUserData = {
     body?: never;

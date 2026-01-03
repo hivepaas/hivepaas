@@ -7,7 +7,7 @@ import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
 import { ProjectsCommands } from "~/projects/data/commands";
 
-import { BackButton } from "@application/shared/components";
+import { BackButton, TabNavigation } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
@@ -48,6 +48,20 @@ function View({ projectId }: Props) {
         );
     };
 
+    const links = [
+        {
+            route: ROUTE.projects.single.general.$route(projectId),
+            label: "General",
+        },
+        {
+            route: ROUTE.projects.single.apps.$route(projectId),
+            label: "Apps",
+        },
+        {
+            route: ROUTE.projects.single.configuration.$route(projectId),
+            label: "Configuration",
+        },
+    ];
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
             <div className="flex items-center justify-between">
@@ -83,6 +97,10 @@ function View({ projectId }: Props) {
                     </div>
                 </div>
             </div>
+
+            <div className="border-b border-border" />
+
+            <TabNavigation links={links} />
         </div>
     );
 }

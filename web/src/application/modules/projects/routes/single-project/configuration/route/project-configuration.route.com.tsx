@@ -1,25 +1,17 @@
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-// TODO: Import when API is available
-// import { ProjectsCommands, ProjectsQueries } from "~/projects/data";
 
 import { AppLoader } from "@application/shared/components";
+import { PageError } from "@application/shared/pages";
 
-// TODO: Import when form is created
-// import { SingleProjectForm } from "../form";
-// import { type SingleProjectFormSchemaOutput } from "../schemas";
-// import { type SingleProjectFormRef } from "../types";
+import { ProjectsQueries } from "@application/modules/projects/data";
 
-export function SingleProjectRoute() {
+export function ProjectConfigurationRoute() {
     const { id: projectId } = useParams<{ id: string }>();
 
     invariant(projectId, "projectId must be defined");
 
-    // TODO: Implement when API is available
-    // const { data, isLoading, error } = ProjectsQueries.useFindOneById({ id: projectId });
-    const data = null;
-    const isLoading = false;
-    const error: Error | null = null;
+    const { data, isLoading, error, refetch } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
     // TODO: Implement when API is available
     // const { mutate: update, isPending } = ProjectsCommands.useUpdateOne({
@@ -38,21 +30,25 @@ export function SingleProjectRoute() {
     }
 
     if (error) {
-        return <div className="text-red-500">Error: {error.message}</div>;
+        return (
+            <PageError
+                error={error}
+                onRetry={refetch}
+            />
+        );
     }
 
     // TODO: Uncomment when API is available
     // invariant(data, "data must be defined");
-    // const { data: project } = data;
+    invariant(data, "data must be defined");
+    const { data: project } = data;
 
     return (
         <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
             <div className="text-muted-foreground">
                 {/* TODO: Implement SingleProjectForm when ready */}
-                <p>Single Project Route - Project ID: {projectId}</p>
-                <p className="mt-2 text-sm">This component needs to be implemented with the project form.</p>
+                <p>Project Configuration Route - Project ID: {project.name}</p>
             </div>
         </div>
     );
 }
-

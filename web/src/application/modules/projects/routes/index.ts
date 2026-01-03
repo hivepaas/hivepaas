@@ -1,2 +1,2 @@
 export { ProjectsRoute } from "./projects";
-export { SingleProjectRoute } from "./single-project";
+export { ProjectGeneralRoute, ProjectAppsRoute, ProjectConfigurationRoute } from "./single-project";

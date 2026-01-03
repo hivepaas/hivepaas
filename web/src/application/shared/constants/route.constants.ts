@@ -94,9 +94,24 @@ export const ROUTE = {
             $pattern: "projects",
             $route: "/projects/",
 
-            single: {
-                $pattern: "projects/:id",
-                $route: (id: string) => `/projects/${id}/`,
+        },
+
+        single: {
+            $pattern: "projects/:id",
+
+            general: {
+                $pattern: "projects/:id/general",
+                $route: (id: string) => `/projects/${id}/general/`,
+            },
+
+            apps: {
+                $pattern: "projects/:id/apps",
+                $route: (id: string) => `/projects/${id}/apps/`,
+            },
+
+            configuration: {
+                $pattern: "projects/:id/configuration",
+                $route: (id: string) => `/projects/${id}/configuration/`,
             },
         },
     },

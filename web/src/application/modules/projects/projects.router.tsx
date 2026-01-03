@@ -64,12 +64,32 @@ export const projectsRouter: RouteObject = {
                  * Single Project
                  */
                 {
-                    path: ROUTE.projects.list.single.$pattern,
+                    path: ROUTE.projects.single.general.$pattern,
                     lazy: async () => {
-                        const { SingleProjectRoute } = await getLazyComponents();
+                        const { ProjectGeneralRoute } = await getLazyComponents();
 
                         return {
-                            Component: SingleProjectRoute,
+                            Component: ProjectGeneralRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.apps.$pattern,
+                    lazy: async () => {
+                        const { ProjectAppsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectAppsRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.$pattern,
+                    lazy: async () => {
+                        const { ProjectConfigurationRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectConfigurationRoute,
                         };
                     },
                 },

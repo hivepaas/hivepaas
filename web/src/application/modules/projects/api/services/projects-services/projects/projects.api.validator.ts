@@ -2,9 +2,8 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type Projects_CreateOne_Res,
-    type Projects_DeleteOne_Res,
     type Projects_FindManyPaginated_Res,
-} from "~/projects/api/services/projects-services/projects/projects.api.contracts";
+} from "~/projects/api/services/projects-services";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";

@@ -47,5 +47,33 @@ export const projectsRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { SingleProjectLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <SingleProjectLayout>
+                            <Outlet />
+                        </SingleProjectLayout>
+                    ),
+                };
+            },
+            children: [
+                /**
+                 * Single Project
+                 */
+                {
+                    path: ROUTE.projects.list.single.$pattern,
+                    lazy: async () => {
+                        const { SingleProjectRoute } = await getLazyComponents();
+
+                        return {
+                            Component: SingleProjectRoute,
+                        };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

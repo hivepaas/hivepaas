@@ -17,5 +17,5 @@ export interface ProjectAppDetails extends ProjectAppBase {
         runningTasks: number;
         desiredTasks: number;
         completedTasks: number;
-    };
+    } | null;
 }

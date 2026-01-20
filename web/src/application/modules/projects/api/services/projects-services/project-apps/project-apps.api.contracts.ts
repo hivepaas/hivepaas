@@ -13,7 +13,7 @@ export type ProjectApps_FindManyPaginated_Req = ApiRequestBase<{
     search?: string;
 }>;
 
-export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppBase>;
+export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;
 
 /**
  * Create project app
@@ -53,11 +53,15 @@ export type ProjectApps_DeleteOne_Res = ApiResponseBase<{
 /**
  * Update project app
  */
-export type ProjectApps_UpdateOne_Req = ApiRequestBase<{
-    projectID: string;
-    appID: string;
-    updateVer: number;
-} & Partial<Omit<ProjectAppDetails, "id" | "key" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "updateVer">>>;
+export type ProjectApps_UpdateOne_Req = ApiRequestBase<
+    {
+        projectID: string;
+        appID: string;
+        updateVer: number;
+    } & Partial<
+        Omit<ProjectAppDetails, "id" | "key" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "updateVer">
+    >
+>;
 
 export type ProjectApps_UpdateOne_Res = ApiResponseBase<{
     type: "success";

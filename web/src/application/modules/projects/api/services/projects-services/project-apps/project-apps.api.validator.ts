@@ -18,6 +18,27 @@ const ProjectAppSchema = z.object({
     status: z.nativeEnum(EProjectAppStatus),
     note: z.string(),
     tags: z.array(z.string()),
+    key: z.string(),
+    photo: z.string().nullable(),
+    userAccesses: z.array(
+        z.object({
+            id: z.string(),
+            fullName: z.string(),
+            access: z.object({
+                read: z.boolean(),
+                write: z.boolean(),
+                delete: z.boolean(),
+            }),
+        }),
+    ),
+    updateVer: z.number(),
+    stats: z
+        .object({
+            runningTasks: z.number(),
+            desiredTasks: z.number(),
+            completedTasks: z.number(),
+        })
+        .nullable(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
 });
@@ -70,7 +91,7 @@ const ProjectAppDetailsSchema = ProjectAppSchema.extend({
     photo: z.string().nullable(),
     userAccesses: z.array(ProjectAppUserAccessSchema),
     updateVer: z.number(),
-    stats: ProjectAppStatsSchema,
+    stats: ProjectAppStatsSchema.nullable(),
 });
 
 /**

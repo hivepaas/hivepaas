@@ -1,8 +1,6 @@
 import { memo } from "react";
 
 import { Avatar } from "@components/ui";
-import { moduleHeaderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
 import { format } from "date-fns";
 import { BadgeCheck, Clock, User } from "lucide-react";
 import invariant from "tiny-invariant";
@@ -30,7 +28,7 @@ function View() {
     ];
 
     return (
-        <div className={cn(moduleHeaderBox)}>
+        <div className="bg-background pt-4 px-5 rounded-lg">
             <h3 className="text-lg font-semibold">Your account</h3>
 
             <div className="flex items-center gap-4 mt-4 pb-3 border-b border-border">

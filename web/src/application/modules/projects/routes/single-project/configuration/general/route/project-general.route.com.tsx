@@ -9,7 +9,7 @@ import { ProjectsQueries } from "~/projects/data";
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
 
-import { ProjectsCommands } from "@application/modules/projects/data/commands";
+import { ProjectsCommands } from "~/projects/data/commands";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -18,6 +18,7 @@ import { ValidationException } from "@infrastructure/exceptions/validation";
 import { ProjectGeneralForm } from "../form";
 import { type ProjectGeneralFormSchemaOutput } from "../schemas";
 import { type ProjectGeneralFormRef } from "../types";
+import { ProjectWithSidebar } from "~/projects/module-shared/components";
 
 export function ProjectGeneralRoute() {
     const { id: projectId } = useParams<{ id: string }>();
@@ -67,7 +68,7 @@ export function ProjectGeneralRoute() {
     const { data: project } = data;
 
     return (
-        <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
+        <ProjectWithSidebar projectId={projectId}>
             <ProjectGeneralForm
                 ref={formRef}
                 defaultValues={project}
@@ -84,6 +85,6 @@ export function ProjectGeneralRoute() {
                     </Button>
                 </div>
             </ProjectGeneralForm>
-        </div>
+        </ProjectWithSidebar >
     );
 }

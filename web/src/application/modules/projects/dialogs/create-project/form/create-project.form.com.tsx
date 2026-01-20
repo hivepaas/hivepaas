@@ -109,7 +109,6 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
                     title={
                         <LabelWithInfo
                             label="Note"
-                            isRequired
                         />
                     }
                 >

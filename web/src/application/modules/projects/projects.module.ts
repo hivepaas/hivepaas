@@ -1,7 +1,13 @@
 /**
  * Projects
  */
-export { ProjectsRoute, ProjectGeneralRoute, ProjectAppsRoute, ProjectConfigurationRoute } from "./routes";
+export {
+    ProjectsRoute,
+    ProjectGeneralRoute,
+    ProjectAppsRoute,
+    ProjectEnvVariablesRoute,
+    ProjectSecretsRoute,
+} from "./routes";
 
 /**
  * Layouts

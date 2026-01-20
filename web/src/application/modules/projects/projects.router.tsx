@@ -64,12 +64,32 @@ export const projectsRouter: RouteObject = {
                  * Single Project
                  */
                 {
-                    path: ROUTE.projects.single.general.$pattern,
+                    path: ROUTE.projects.single.configuration.general.$pattern,
                     lazy: async () => {
                         const { ProjectGeneralRoute } = await getLazyComponents();
 
                         return {
                             Component: ProjectGeneralRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.envVariables.$pattern,
+                    lazy: async () => {
+                        const { ProjectEnvVariablesRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectEnvVariablesRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.secrets.$pattern,
+                    lazy: async () => {
+                        const { ProjectSecretsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectSecretsRoute,
                         };
                     },
                 },
@@ -80,16 +100,6 @@ export const projectsRouter: RouteObject = {
 
                         return {
                             Component: ProjectAppsRoute,
-                        };
-                    },
-                },
-                {
-                    path: ROUTE.projects.single.configuration.$pattern,
-                    lazy: async () => {
-                        const { ProjectConfigurationRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectConfigurationRoute,
                         };
                     },
                 },

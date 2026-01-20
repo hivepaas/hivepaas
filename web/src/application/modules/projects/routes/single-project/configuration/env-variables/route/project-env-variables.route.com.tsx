@@ -4,9 +4,10 @@ import invariant from "tiny-invariant";
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
 
-import { ProjectsQueries } from "@application/modules/projects/data";
+import { ProjectsQueries } from "~/projects/data";
+import { ProjectWithSidebar } from "~/projects/module-shared/components";
 
-export function ProjectConfigurationRoute() {
+export function ProjectEnvVariablesRoute() {
     const { id: projectId } = useParams<{ id: string }>();
 
     invariant(projectId, "projectId must be defined");
@@ -44,11 +45,9 @@ export function ProjectConfigurationRoute() {
     const { data: project } = data;
 
     return (
-        <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
-            <div className="text-muted-foreground">
-                {/* TODO: Implement SingleProjectForm when ready */}
-                <p>Project Configuration Route - Project ID: {project.name}</p>
-            </div>
-        </div>
+        <ProjectWithSidebar projectId={projectId}>
+            {/* TODO: Implement SingleProjectForm when ready */}
+            <p>Project Env Variables Route - Project ID: {project.name}</p>
+        </ProjectWithSidebar>
     );
 }

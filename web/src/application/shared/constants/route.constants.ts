@@ -93,16 +93,10 @@ export const ROUTE = {
         list: {
             $pattern: "projects",
             $route: "/projects/",
-
         },
 
         single: {
             $pattern: "projects/:id",
-
-            general: {
-                $pattern: "projects/:id/general",
-                $route: (id: string) => `/projects/${id}/general/`,
-            },
 
             apps: {
                 $pattern: "projects/:id/apps",
@@ -111,7 +105,21 @@ export const ROUTE = {
 
             configuration: {
                 $pattern: "projects/:id/configuration",
-                $route: (id: string) => `/projects/${id}/configuration/`,
+
+                general: {
+                    $pattern: "projects/:id/configuration/general",
+                    $route: (id: string) => `/projects/${id}/configuration/general/`,
+                },
+
+                envVariables: {
+                    $pattern: "projects/:id/configuration/env-variables",
+                    $route: (id: string) => `/projects/${id}/configuration/env-variables/`,
+                },
+
+                secrets: {
+                    $pattern: "projects/:id/configuration/secrets",
+                    $route: (id: string) => `/projects/${id}/configuration/secrets/`,
+                },
             },
         },
     },

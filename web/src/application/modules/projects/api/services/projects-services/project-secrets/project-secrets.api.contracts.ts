@@ -18,11 +18,11 @@ export type ProjectSecrets_FindManyPaginated_Res = ApiResponsePaginated<ProjectS
 /**
  * Create project secret
  */
-export type ProjectSecrets_CreateOne_Req = ApiRequestBase<
-    {
-        projectID: string;
-    } & Pick<ProjectSecret, "name" | "key">
->;
+export type ProjectSecrets_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    name: string;
+    value: string;
+}>;
 
 export type ProjectSecrets_CreateOne_Res = ApiResponseBase<{
     id: string;
@@ -58,7 +58,9 @@ export type ProjectSecrets_UpdateOne_Req = ApiRequestBase<
         projectID: string;
         secretID: string;
         updateVer: number;
-    } & Partial<Omit<ProjectSecret, "id" | "key" | "createdAt" | "updatedAt" | "updateVer">>
+    } & Partial<Omit<ProjectSecret, "id" | "key" | "createdAt" | "updatedAt" | "updateVer">> & {
+            value?: string;
+        }
 >;
 
 export type ProjectSecrets_UpdateOne_Res = ApiResponseBase<{

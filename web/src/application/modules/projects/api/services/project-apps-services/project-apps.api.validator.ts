@@ -4,7 +4,7 @@ import type {
     ProjectApps_CreateOne_Res,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Res,
-} from "~/projects/api/services/projects-services";
+} from "~/projects/api/services";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";

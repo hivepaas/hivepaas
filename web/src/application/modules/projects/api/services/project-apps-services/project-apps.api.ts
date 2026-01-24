@@ -12,7 +12,7 @@ import type {
     ProjectApps_FindOneById_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
-} from "~/projects/api/services/projects-services";
+} from "~/projects/api/services";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";

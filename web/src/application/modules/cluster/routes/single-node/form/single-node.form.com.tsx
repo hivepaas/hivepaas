@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { type NodeDetails } from "~/cluster/domain";
 import { ENodeAvailability, ENodeRole } from "~/cluster/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
 
 import { NodeStatusBadge } from "@application/modules/cluster/module-shared/components";
 
@@ -201,23 +201,23 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                             />
                         }
                     >
-                        <div className="flex flex-col gap-4 max-w-[400px]">
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="label"
+                        <div className="flex flex-col gap-4 max-w-[660px]">
+                            <div className="flex gap-4">
+                                <InputWithAddOn
+                                    addonLeft="Label"
                                     value={newLabelKey}
                                     onChange={e => {
                                         setNewLabelKey(e.target.value);
                                     }}
-                                    className="bg-white border-zinc-200"
+                                // className="bg-white border-zinc-200"
                                 />
-                                <Input
-                                    placeholder="value"
+                                <InputWithAddOn
+                                    addonLeft="Value"
                                     value={newLabelValue}
                                     onChange={e => {
                                         setNewLabelValue(e.target.value);
                                     }}
-                                    className="bg-white border-zinc-200"
+                                // className="bg-white border-zinc-200"
                                 />
                                 <Button
                                     type="button"
@@ -230,27 +230,30 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                                 </Button>
                             </div>
 
-                            <div className="flex flex-col mt-2 divide-y divide-zinc-200">
+                            <div className="mt-2 divide-y divide-zinc-200">
                                 {fields.map((field, index) => (
                                     <div
                                         key={field.id}
-                                        className="flex items-center group h-10"
+                                        className="flex items-center group gap-4 py-2"
                                     >
-                                        <div className="grid grid-cols-2 flex-1">
-                                            <span className="text-sm font-normal">{field.key}</span>
-                                            <span className="text-sm font-normal">{field.value}</span>
+                                        <div className="grid grid-cols-2 flex-1 gap-4">
+                                            <div className="text-sm break-words">{field.key}</div>
+                                            <div className="text-sm break-words">{field.value}</div>
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                remove(index);
-                                            }}
-                                            className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
+                                        <div className="w-[84px]">
+
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    remove(index);
+                                                }}
+                                                className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

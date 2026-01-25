@@ -10,6 +10,8 @@ import type {
     Profile_DeleteOneApiKey_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
+    Profile_RemoveMfaTotp_Req,
+    Profile_RemoveMfaTotp_Res,
     Profile_UpdateOneApiKeyStatus_Req,
     Profile_UpdateOneApiKeyStatus_Res,
     Profile_UpdateProfilePassword_Req,
@@ -62,6 +64,31 @@ function useComplete2FASetup({ onSuccess, ...options }: Complete2FASetupOptions 
 
     return useMutation({
         mutationFn: complete2FASetup,
+        onSuccess: (response, request, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
+/**
+ * Remove MFA TOTP
+ */
+type RemoveMfaTotpReq = Profile_RemoveMfaTotp_Req["data"];
+type RemoveMfaTotpRes = Profile_RemoveMfaTotp_Res;
+
+type RemoveMfaTotpOptions = Omit<UseMutationOptions<RemoveMfaTotpRes, Error, RemoveMfaTotpReq>, "mutationFn">;
+
+function useRemoveMfaTotp({ onSuccess, ...options }: RemoveMfaTotpOptions = {}) {
+    const {
+        mutations: { removeMfaTotp },
+    } = useProfileApi();
+
+    return useMutation({
+        mutationFn: removeMfaTotp,
         onSuccess: (response, request, ...rest) => {
             if (onSuccess) {
                 onSuccess(response, request, ...rest);
@@ -223,6 +250,7 @@ function useUpdateOneApiKeyStatus({ onSuccess, ...options }: UpdateOneApiKeyStat
 export const ProfileCommands = Object.freeze({
     useGetProfile2FASetup,
     useComplete2FASetup,
+    useRemoveMfaTotp,
     useUpdate,
     useUpdatePassword,
     useCreateOneApiKey,

@@ -7,6 +7,7 @@ type State = F2aSetupDialogState & F2aSetupDialogOptions;
 interface Actions {
     open: (options: F2aSetupDialogOptions) => void;
     openChange: (options: F2aSetupDialogOptions) => void;
+    openDeactivate: (options: F2aSetupDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -32,6 +33,15 @@ export const useF2aSetupDialogState = create<State & Actions>()(set => ({
         set({
             state: {
                 mode: "change",
+            },
+            ...options,
+        });
+    },
+
+    openDeactivate: options => {
+        set({
+            state: {
+                mode: "deactivate",
             },
             ...options,
         });

@@ -9,3 +9,4 @@ export * from "./label-with-info";
 export * from "./date-picker";
 export * from "./combobox";
 export * from "./mfa-qr-code";
+export * from "./input";

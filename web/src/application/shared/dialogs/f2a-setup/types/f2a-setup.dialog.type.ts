@@ -7,6 +7,9 @@ export interface F2aSetupDialogState {
               mode: "change";
           }
         | {
+              mode: "deactivate";
+          }
+        | {
               mode: "closed";
           };
 }

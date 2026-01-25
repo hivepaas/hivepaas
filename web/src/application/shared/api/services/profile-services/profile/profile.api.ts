@@ -14,6 +14,8 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Req,
     Profile_GetProfile2FASetup_Res,
+    Profile_RemoveMfaTotp_Req,
+    Profile_RemoveMfaTotp_Res,
     Profile_UpdateOneApiKeyStatus_Req,
     Profile_UpdateOneApiKeyStatus_Res,
     Profile_UpdateProfilePassword_Req,
@@ -118,6 +120,23 @@ export class ProfileApi extends BaseApi {
             from(
                 this.client.v1.post("/users/current/mfa/totp-complete-setup", {
                     totpToken: data.totpToken,
+                    passcode: data.passcode,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" as const } })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Remove MFA TOTP
+     */
+    async removeMfaTotp(request: Profile_RemoveMfaTotp_Req): Promise<Result<Profile_RemoveMfaTotp_Res, Error>> {
+        const { data } = request;
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/users/current/mfa/totp-remove", {
                     passcode: data.passcode,
                 }),
             ).pipe(

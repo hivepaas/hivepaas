@@ -92,10 +92,10 @@ export function CreateOrEditProjectSecretDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[500px] max-w-[600px]">
+            <DialogContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit Secret" : "Create Secret"}</DialogTitle>
-                </DialogHeader>
+                </DialogHeader >
                 <CreateOrEditProjectSecretForm
                     isPending={isPending}
                     onSubmit={onSubmit}
@@ -103,7 +103,7 @@ export function CreateOrEditProjectSecretDialog() {
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                 />
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     );
 }

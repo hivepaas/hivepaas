@@ -12,6 +12,7 @@ import type {
     Profile_DeleteOneApiKey_Req,
     Profile_FindManyApiKeysPaginated_Req,
     Profile_GetProfile2FASetup_Req,
+    Profile_RemoveMfaTotp_Req,
     Profile_UpdateOneApiKeyStatus_Req,
     Profile_UpdateProfilePassword_Req,
     Profile_UpdateProfile_Req,
@@ -127,6 +128,25 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to verify profile 2FA setup",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
+
+                /**
+                 * Remove MFA TOTP
+                 */
+                removeMfaTotp: async (request: Profile_RemoveMfaTotp_Req["data"]) => {
+                    const result = await api.profile.removeMfaTotp({
+                        data: request,
+                    });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to remove MFA TOTP",
                                 error,
                             });
                             throw error;

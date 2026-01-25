@@ -29,6 +29,8 @@ export function F2aSetupDialog() {
     const { mutate: getProfile2FASetup, isPending: isGetProfile2FASetupPending } =
         ProfileCommands.useGetProfile2FASetup();
 
+    const { mutate: removeMfaTotp, isPending: isRemoveMfaTotpPending } = ProfileCommands.useRemoveMfaTotp();
+
     const { refetch } = SessionQueries.useGetProfile({
         onSuccess: ({ data }) => {
             setProfile(data);
@@ -55,6 +57,23 @@ export function F2aSetupDialog() {
     }, [state.mode]);
 
     function onCurrentPasscodeSubmit(values: CurrentPasscodeSchemaOutput) {
+        if (state.mode === "deactivate") {
+            removeMfaTotp(
+                {
+                    passcode: (values as { currentPasscode: string }).currentPasscode,
+                },
+                {
+                    onSuccess: () => {
+                        toast.success("2FA deactivated successfully");
+                        void refetch();
+                        actions.close();
+                        setStateData(null);
+                    },
+                },
+            );
+            return;
+        }
+
         getProfile2FASetup(
             {
                 passcode: (values as { currentPasscode: string }).currentPasscode,
@@ -92,8 +111,9 @@ export function F2aSetupDialog() {
         );
     }
 
-    const showCurrentPasscodeForm = state.mode === "change" && !stateData;
-    const showSetupForm = stateData !== null;
+    const showCurrentPasscodeForm =
+        (state.mode === "change" && !stateData) || state.mode === "deactivate";
+    const showSetupForm = stateData !== null && state.mode !== "deactivate";
 
     return (
         <Dialog
@@ -112,7 +132,11 @@ export function F2aSetupDialog() {
             <DialogContent className="min-w-[400px] w-fit">
                 {showCurrentPasscodeForm && (
                     <CurrentPasscodeForm
-                        isPending={isGetProfile2FASetupPending}
+                        isPending={
+                            state.mode === "deactivate"
+                                ? isRemoveMfaTotpPending
+                                : isGetProfile2FASetupPending
+                        }
                         onSubmit={onCurrentPasscodeSubmit}
                     />
                 )}

@@ -61,7 +61,7 @@ export function JoinNewNodeDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[500px] max-w-[600px]">
+            <DialogContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Join new node to the swarm cluster</DialogTitle>
                 </DialogHeader>

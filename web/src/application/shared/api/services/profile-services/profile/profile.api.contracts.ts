@@ -57,6 +57,17 @@ export type Profile_Complete2FASetup_Res = ApiResponseBase<{
 }>;
 
 /**
+ * Remove MFA TOTP
+ */
+export type Profile_RemoveMfaTotp_Req = ApiRequestBase<{
+    passcode: string;
+}>;
+
+export type Profile_RemoveMfaTotp_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
  * Find many account API keys paginated
  */
 export type Profile_FindManyApiKeysPaginated_Req = ApiRequestBase<{

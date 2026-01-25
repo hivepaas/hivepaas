@@ -53,7 +53,7 @@ export function CreateProjectDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[500px] max-w-[600px]">
+            <DialogContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Create Project</DialogTitle>
                 </DialogHeader>

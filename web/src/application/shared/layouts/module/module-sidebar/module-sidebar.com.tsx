@@ -24,12 +24,7 @@ interface SidebarItem {
 }
 
 const navMain: SidebarItem[] = [
-    {
-        title: "User Management",
-        route: ROUTE.userManagement.users.$route,
-        pattern: ROUTE.userManagement.users.$pattern,
-        icon: Users,
-    },
+
     {
         title: "Projects",
         route: ROUTE.projects.list.$route,
@@ -48,6 +43,12 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.cluster.nodes.$pattern,
             },
         ],
+    },
+    {
+        title: "User Management",
+        route: ROUTE.userManagement.users.$route,
+        pattern: ROUTE.userManagement.users.$pattern,
+        icon: Users,
     },
 ];
 

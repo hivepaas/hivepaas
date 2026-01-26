@@ -14,4 +14,8 @@ export const QK = {
      */
     "projects.secrets.$.find-many-paginated": "projects.secrets.$.find-many-paginated",
     "projects.secrets.$.find-one-by-id": "projects.secrets.$.find-one-by-id",
+    /*
+     * Project Env Vars
+     */
+    "projects.env-vars.$.find-one": "projects.env-vars.$.find-one",
 } as const;

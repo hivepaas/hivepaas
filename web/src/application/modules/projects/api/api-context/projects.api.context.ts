@@ -3,6 +3,8 @@ import { createContext } from "react";
 import {
     ProjectAppsApi,
     ProjectAppsApiValidator,
+    ProjectEnvVarsApi,
+    ProjectEnvVarsApiValidator,
     ProjectSecretsApi,
     ProjectSecretsApiValidator,
     ProjectsApi,
@@ -16,6 +18,7 @@ function createApi() {
     const projectsApiValidator = new ProjectsApiValidator();
     const projectAppsApiValidator = new ProjectAppsApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
+    const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
 
     return {
         projects: {
@@ -25,6 +28,9 @@ function createApi() {
             },
             secrets: {
                 $: new ProjectSecretsApi(projectSecretsApiValidator),
+            },
+            envVars: {
+                $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),
             },
         },
     };

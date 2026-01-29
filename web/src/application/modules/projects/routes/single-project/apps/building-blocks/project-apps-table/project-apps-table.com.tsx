@@ -37,7 +37,7 @@ export function ProjectAppsTable({ projectId }: Props) {
                             actions.open(projectId);
                         }}
                     >
-                        <Plus /> Create App
+                        <Plus /> New App
                     </Button>
                 }
             />

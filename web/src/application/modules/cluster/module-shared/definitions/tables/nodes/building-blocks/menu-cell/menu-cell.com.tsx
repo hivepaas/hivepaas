@@ -63,7 +63,7 @@ function View({ node }: Props) {
                             disabled={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Remove Node
+                            Remove
                         </Button>
                     </PopConfirm>
                     <PopConfirm
@@ -82,7 +82,7 @@ function View({ node }: Props) {
                             disabled={isDeleting}
                         >
                             <AlertTriangle className="mr-2 size-4" />
-                            Force Remove Node
+                            Force Remove
                         </Button>
                     </PopConfirm>
                 </div>

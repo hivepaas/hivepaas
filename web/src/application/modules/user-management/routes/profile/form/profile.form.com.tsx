@@ -175,7 +175,7 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
 
                     {/* Joining date */}
                     <div className="h-px bg-border" />
-                    <InfoBlock title={<LabelWithInfo label="Joining date" />}>
+                    <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
                         <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                     </InfoBlock>
 
@@ -201,7 +201,7 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
                     <InfoBlock
                         title={
                             <LabelWithInfo
-                                label="Project access"
+                                label="Project Access"
                                 content="Project access description"
                             />
                         }
@@ -218,7 +218,7 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
                     <InfoBlock
                         title={
                             <LabelWithInfo
-                                label="Module access"
+                                label="Module Access"
                                 content="Module access description"
                             />
                         }

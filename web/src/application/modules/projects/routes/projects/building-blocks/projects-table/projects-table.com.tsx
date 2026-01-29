@@ -33,7 +33,7 @@ export function ProjectsTable() {
                             actions.open();
                         }}
                     >
-                        <Plus /> Create Project
+                        <Plus /> New Project
                     </Button>
                 }
             />

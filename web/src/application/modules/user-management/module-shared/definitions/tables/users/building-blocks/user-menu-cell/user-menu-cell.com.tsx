@@ -13,10 +13,10 @@ import { EUserStatus } from "@application/shared/enums";
 function View({ user }: Props) {
     const [open, setOpen] = useState(false);
 
-    // Logic: If status = 'active' or 'pending': show 'Disable user'
-    //        If status = 'disabled': show 'Activate user'
-    //        If status = 'pending': do not show toggle button (Disable user)
-    //        Always show: 'Remove user'
+    // Logic: If status = 'active' or 'pending': show 'Disable User'
+    //        If status = 'disabled': show 'Activate User'
+    //        If status = 'pending': do not show toggle button (Disable User)
+    //        Always show: 'Remove User'
     const showDisableUser = user.status === EUserStatus.Active;
     const showActivateUser = user.status === EUserStatus.Disabled;
 
@@ -96,7 +96,7 @@ function View({ user }: Props) {
                             isLoading={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Remove user
+                            Remove User
                         </Button>
                     </PopConfirm>
                 </div>

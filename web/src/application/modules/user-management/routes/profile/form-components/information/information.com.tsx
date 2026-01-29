@@ -81,7 +81,7 @@ export function Information() {
                     </Field>
 
                     <Field>
-                        <FieldLabel htmlFor="fullName">Full name</FieldLabel>
+                        <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
                         <Input
                             {...fullName}
                             value={fullName.value}

@@ -128,7 +128,7 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
 
                     <Field>
                         <InfoBlock
-                            title="Access expiration"
+                            title="Access Expiration"
                             titleWidth={120}
                         >
                             <DateTimePicker

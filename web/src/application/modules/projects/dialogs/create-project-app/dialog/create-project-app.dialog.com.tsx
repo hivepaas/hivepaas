@@ -65,7 +65,7 @@ export function CreateProjectAppDialog() {
         >
             <DialogContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
-                    <DialogTitle>Create Project App</DialogTitle>
+                    <DialogTitle>Create App</DialogTitle>
                 </DialogHeader>
                 <CreateProjectAppForm
                     isPending={isPending}

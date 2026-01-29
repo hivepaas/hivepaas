@@ -112,7 +112,7 @@ export function View({ userId }: Props) {
                         Reset password
                     </Button>
                     <PopConfirm
-                        title="Remove user"
+                        title="Remove User"
                         variant="destructive"
                         confirmText="Remove"
                         cancelText="Cancel"

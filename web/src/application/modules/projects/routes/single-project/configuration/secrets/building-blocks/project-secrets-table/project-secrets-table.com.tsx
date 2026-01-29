@@ -38,7 +38,7 @@ export function ProjectSecretsTable({ projectId }: Props) {
                             actions.open(projectId);
                         }}
                     >
-                        <Plus /> Create Secret
+                        <Plus /> New Secret
                     </Button>
                 }
             />

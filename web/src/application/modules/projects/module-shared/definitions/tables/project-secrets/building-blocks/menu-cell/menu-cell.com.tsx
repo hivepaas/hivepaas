@@ -56,7 +56,7 @@ function View({ projectId, secret }: Props) {
                             disabled={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Remove Project Secret
+                            Remove
                         </Button>
                     </PopConfirm>
                 </div>

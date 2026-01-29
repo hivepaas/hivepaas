@@ -56,7 +56,7 @@ function View({ projectId, app }: Props) {
                             disabled={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Remove Project App
+                            Remove
                         </Button>
                     </PopConfirm>
                 </div>

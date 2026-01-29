@@ -33,7 +33,7 @@ export function ApiKeysTable() {
                             dialog.actions.open();
                         }}
                     >
-                        <Plus /> Create API Key
+                        <Plus /> New API Key
                     </Button>
                 }
             />

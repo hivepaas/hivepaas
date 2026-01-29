@@ -91,7 +91,7 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
                     </InfoBlock>
 
                     <InfoBlock
-                        title={<LabelWithInfo label="Access limit" />}
+                        title={<LabelWithInfo label="Access Limit" />}
                         titleWidth={120}
                     >
                         <div className="flex gap-3 mt-2">
@@ -154,7 +154,7 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
                     </InfoBlock>
 
                     <InfoBlock
-                        title={<LabelWithInfo label="Access expiration" />}
+                        title={<LabelWithInfo label="Access Expiration" />}
                         titleWidth={120}
                     >
                         <DateTimePicker

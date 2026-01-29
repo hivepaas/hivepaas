@@ -4,8 +4,6 @@ import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { UsersCommands } from "~/user-management/data/commands";
 
-import { LabelWithInfo } from "@application/shared/components";
-
 import { LinkGenerate } from "../building-blocks";
 import { InviteUserForm } from "../form";
 import { useInviteUserDialogState } from "../hooks";
@@ -77,21 +75,6 @@ export function InviteUserDialog() {
                     {/* Footer Actions */}
                     <div className="flex items-center justify-end gap-4 pt-4 border-t">
                         <div className="flex items-center gap-4">
-                            <LabelWithInfo
-                                className="mb-[0!important] gap-[16px!important]"
-                                label={
-                                    <Button
-                                        type="button"
-                                        // variant="outline"
-                                        // onClick={handleSendEmail}
-                                        disabled
-                                    >
-                                        Send Email
-                                    </Button>
-                                }
-                                content="Send an email to the user with the invite link"
-                            />
-
                             <Button
                                 type="submit"
                                 variant="default"
@@ -99,6 +82,13 @@ export function InviteUserDialog() {
                                 disabled={inviteLink !== null}
                             >
                                 Generate Invite Link
+                            </Button>
+                            <Button
+                                type="button"
+                                // variant="outline"
+                                // onClick={handleSendEmail}
+                            >
+                                Invite via Email
                             </Button>
                         </div>
                     </div>

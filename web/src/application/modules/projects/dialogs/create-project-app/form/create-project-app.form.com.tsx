@@ -100,7 +100,7 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
                             <Input
                                 id="name"
                                 {...name}
-                                placeholder="Enter app name"
+                                placeholder="E.g. My App"
                                 aria-invalid={isNameInvalid}
                             />
                             <FieldError errors={[errors.name]} />
@@ -120,8 +120,9 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
                         <Field>
                             <Textarea
                                 id="note"
+                                className="min-h-[120px]"
                                 {...note}
-                                placeholder="Enter app note"
+                                placeholder=""
                                 rows={4}
                                 aria-invalid={isNoteInvalid}
                             />

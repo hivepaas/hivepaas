@@ -96,7 +96,7 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
                             <Input
                                 id="name"
                                 {...name}
-                                placeholder="Enter project name"
+                                placeholder="E.g. My Project"
                                 aria-invalid={isNameInvalid}
                             />
                             <FieldError errors={[errors.name]} />
@@ -115,10 +115,11 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
                     <FieldGroup>
                         <Field>
                             <Textarea
-                                id="note"
+                                className="min-h-[120px]"
+                                id="notes"
                                 {...note}
-                                placeholder="Enter project note"
-                                rows={4}
+                                placeholder=""
+                                rows={6}
                                 aria-invalid={isNoteInvalid}
                             />
                             <FieldError errors={[errors.note]} />

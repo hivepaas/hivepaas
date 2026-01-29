@@ -30,9 +30,9 @@ function View({ inviteLink }: Props) {
                         <p className="break-all">{inviteLink}</p>
                     ) : (
                         <>
-                            Press the below button to get the invitation link and
+                            Use the button below to generate an invitation link,
                             <br />
-                            give it to the user you want to invite
+                            or send an email invitation directly (requires email setup).
                         </>
                     )}
                 </div>

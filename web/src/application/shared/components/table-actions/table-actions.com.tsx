@@ -32,7 +32,7 @@ export function TableActions({ children, search, renderActions = null }: Props) 
                                 setInternalSearch(e.target.value);
                             }}
                             type="search"
-                            placeholder="Search..."
+                            placeholder="Search"
                             className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
                         />
                     </div>

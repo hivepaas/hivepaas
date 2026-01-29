@@ -143,7 +143,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                             {...note}
                             value={note.value}
                             onChange={note.onChange}
-                            className="max-w-[400px]"
+                            className="w-[100%] min-h-[120px]"
                             placeholder="Enter project notes"
                             rows={4}
                             aria-invalid={isNoteInvalid}

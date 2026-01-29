@@ -112,7 +112,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                 <Command shouldFilter={!onSearch}>
                     {searchable && (
                         <CommandInput
-                            placeholder="Search..."
+                            placeholder="Search"
                             value={searchValue}
                             onValueChange={setSearch}
                         />

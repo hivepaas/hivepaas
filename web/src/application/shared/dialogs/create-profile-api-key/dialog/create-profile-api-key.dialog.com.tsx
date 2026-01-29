@@ -110,7 +110,7 @@ export function CreateProfileApiKeyDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[600px] w-fit gap-6">
+            <DialogContent className="min-w-[600px] max-w-[660px] w-fit gap-6">
                 <DialogHeader>
                     <DialogTitle>Create a new API key</DialogTitle>
                     <DialogDescription />
@@ -142,7 +142,7 @@ export function CreateProfileApiKeyDialog() {
                             {createdKey.secretKey && (
                                 <>
                                     <p className="text-sm text-orange-500 dark:text-orange-400">
-                                        IMPORTANT: The secret key will not be stored on the server.
+                                        IMPORTANT:<br/>The secret key will not be stored on the server.
                                         Once this dialog is closed, you will not be able to view it again.
                                     </p>
                                     <div className="flex items-center justify-between gap-2">

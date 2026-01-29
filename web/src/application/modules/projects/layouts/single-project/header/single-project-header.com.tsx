@@ -68,7 +68,7 @@ function View({ projectId }: Props) {
                         variant="destructive"
                         confirmText="Remove"
                         cancelText="Cancel"
-                        description="Are you sure you want to remove this project?"
+                        description="Confirm deletion of this item?"
                         onConfirm={handleRemove}
                     >
                         <Button

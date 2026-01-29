@@ -116,7 +116,7 @@ export function View({ userId }: Props) {
                         variant="destructive"
                         confirmText="Remove"
                         cancelText="Cancel"
-                        description="Are you sure you want to remove this user?"
+                        description="Confirm deletion of this item?"
                         onConfirm={handleRemove}
                     >
                         <Button

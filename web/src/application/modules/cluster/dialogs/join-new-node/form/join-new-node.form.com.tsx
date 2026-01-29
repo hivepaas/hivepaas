@@ -71,7 +71,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                     <FieldGroup>
                         {/* Method Selection */}
                         <Field>
-                            <FieldLabel>Please choose the method to join a new node</FieldLabel>
+                            <FieldLabel>Choose the method to join a new node</FieldLabel>
                             <Tabs
                                 value={methodField.value}
                                 onValueChange={value => {

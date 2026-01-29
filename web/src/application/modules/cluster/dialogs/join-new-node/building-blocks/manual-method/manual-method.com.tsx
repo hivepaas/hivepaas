@@ -57,8 +57,8 @@ function View({ onComplete }: Props) {
                             <p className="break-all font-mono text-left">{command}</p>
                         ) : (
                             <>
-                                Press the below button to get the join command and run it in the server you want to join
-                                it to the cluster
+                                Click the button below to get the command, then run it on the server
+                                you want to join the system
                             </>
                         )}
                     </div>

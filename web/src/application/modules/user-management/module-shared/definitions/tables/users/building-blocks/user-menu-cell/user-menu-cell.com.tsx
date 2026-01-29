@@ -81,11 +81,11 @@ function View({ user }: Props) {
                         </Button>
                     )}
                     <PopConfirm
-                        title="Delete User"
+                        title="Delete Item"
                         variant="destructive"
                         confirmText="Delete"
                         cancelText="Cancel"
-                        description="Are you sure you want to delete this user?"
+                        description="Confirm deletion of this item?"
                         onConfirm={() => {
                             deleteOne({ id: user.id });
                         }}

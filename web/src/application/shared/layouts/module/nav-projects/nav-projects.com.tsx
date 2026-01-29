@@ -65,7 +65,7 @@ export function NavProjects({
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
                                     <Trash2 className="text-muted-foreground" />
-                                    <span>Delete Project</span>
+                                    <span>Delete Item</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

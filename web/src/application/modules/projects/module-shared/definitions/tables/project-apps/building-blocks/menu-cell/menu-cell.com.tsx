@@ -41,11 +41,11 @@ function View({ projectId, app }: Props) {
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
                     <PopConfirm
-                        title="Delete Project App"
+                        title="Delete Item"
                         variant="destructive"
                         confirmText="Delete"
                         cancelText="Cancel"
-                        description="Are you sure you want to delete this project app?"
+                        description="Confirm deletion of this item?"
                         onConfirm={() => {
                             deleteOne({ projectID: projectId, appID: app.id });
                         }}

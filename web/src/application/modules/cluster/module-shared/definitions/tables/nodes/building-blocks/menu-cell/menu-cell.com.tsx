@@ -48,11 +48,11 @@ function View({ node }: Props) {
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
                     <PopConfirm
-                        title="Delete Node"
+                        title="Delete Item"
                         variant="destructive"
                         confirmText="Delete"
                         cancelText="Cancel"
-                        description="Are you sure you want to delete this node?"
+                        description="Confirm deletion of this item?"
                         onConfirm={() => {
                             onDelete();
                         }}
@@ -67,11 +67,11 @@ function View({ node }: Props) {
                         </Button>
                     </PopConfirm>
                     <PopConfirm
-                        title="Force Delete Node"
+                        title="Force Delete Item"
                         variant="destructive"
                         confirmText="Force Delete"
                         cancelText="Cancel"
-                        description="Are you sure you want to force delete this node? This action cannot be undone."
+                        description="Confirm deletion of this item?"
                         onConfirm={() => {
                             onForceDelete();
                         }}

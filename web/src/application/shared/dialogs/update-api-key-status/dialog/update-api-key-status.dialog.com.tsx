@@ -75,7 +75,7 @@ export function UpdateApiKeyStatusDialog() {
         >
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Change status</DialogTitle>
+                    <DialogTitle>Change Status</DialogTitle>
                     <DialogDescription />
                 </DialogHeader>
                 {isOpen && (

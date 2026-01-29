@@ -60,7 +60,7 @@ export function InviteUserDialog() {
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
                     <DialogDescription>
-                        Please enter the below information to invite a new user to the system
+                        Enter the required details to invite a user
                     </DialogDescription>
                 </DialogHeader>
                 <div className="h-px bg-border" />

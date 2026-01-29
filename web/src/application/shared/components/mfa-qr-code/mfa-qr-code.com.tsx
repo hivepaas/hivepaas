@@ -17,7 +17,7 @@ function View({ qrCode, secretKey }: Props) {
                 alt="QR Code"
                 className="w-[300px] h-[300px] object-contain"
             />
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center">
                 <p className="text-sm text-gray-500 text-center">{secretKey}</p>
                 <Button
                     variant="link"
@@ -25,7 +25,7 @@ function View({ qrCode, secretKey }: Props) {
                     onClick={e => {
                         e.preventDefault();
                         void navigator.clipboard.writeText(secretKey);
-                        toast.success("Secret key copied to clipboard");
+                        toast.success("Secret copied to clipboard");
                     }}
                 >
                     <Copy className="size-4" />

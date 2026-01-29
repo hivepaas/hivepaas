@@ -57,14 +57,14 @@ function View({ apiKey }: Props) {
                         }}
                     >
                         <Settings2 className="mr-2 size-4" />
-                        Change status
+                        Change Status
                     </Button>
                     <PopConfirm
-                        title="Delete API Key"
+                        title="Delete Item"
                         variant="destructive"
                         confirmText="Delete"
                         cancelText="Cancel"
-                        description="Are you sure you want to delete this API key?"
+                        description="Confirm deletion of this item?"
                         onConfirm={() => {
                             onDelete();
                         }}

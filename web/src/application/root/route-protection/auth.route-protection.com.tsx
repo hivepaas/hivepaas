@@ -75,7 +75,11 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     }
 
     if (!profile && !isAuthGroup) {
-        const currentFullPath = nextPath ?? `${location.pathname}${location.search}`;
+        const { search } = location;
+
+        const raw = search.replace(/^\?/, "");
+
+        const currentFullPath = raw.replace(/^next=/, "");
 
         let pathPart = "";
         let searchPart = "";

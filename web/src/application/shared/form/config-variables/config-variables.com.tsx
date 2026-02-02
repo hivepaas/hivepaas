@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Checkbox } from "@components/ui/checkbox";
@@ -38,7 +38,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
     }, [fieldValuesWatch]);
 
     const previousViewModeRef = useRef<"merge" | "individual">(viewMode);
-    const mergeTextRef = useRef<string>("");
+    const [mergeText, setMergeText] = useState<string | null>(null);
 
     // Filter records based on search query
     const filteredFields = useMemo(() => {
@@ -64,38 +64,40 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
         // When switching from individual to merge
         if (previousViewModeRef.current === "individual" && viewMode === "merge") {
             const text = stringifyEnvVars(fieldValues);
-            mergeTextRef.current = text;
+            setMergeText(text);
         }
 
         // When switching from merge to individual
         if (previousViewModeRef.current === "merge" && viewMode === "individual") {
-            const text = mergeTextRef.current;
-            if (text) {
-                const parsedArray = parseEnvVars(text);
-                replace(parsedArray);
-            }
+            const text = mergeText ?? stringifyEnvVars(fieldValues);
+            const parsedArray = parseEnvVars(text);
+            replace(parsedArray);
         }
 
         previousViewModeRef.current = viewMode;
-    }, [viewMode, fieldValues, replace]);
+    }, [viewMode, fieldValues, replace, mergeText]);
 
     // Handle merge textarea changes
     const handleMergeTextChange = (value: string) => {
-        mergeTextRef.current = value;
-        const parsedArray = parseEnvVars(value);
+        setMergeText(value);
+    };
+
+    const syncMergeTextToFields = () => {
+        const text = mergeText ?? "";
+        const parsedArray = parseEnvVars(text);
         replace(parsedArray);
     };
 
     // Get merge text value
     const mergeTextValue = useMemo(() => {
         if (viewMode === "merge") {
-            if (mergeTextRef.current) {
-                return mergeTextRef.current;
+            if (mergeText !== null) {
+                return mergeText;
             }
             return stringifyEnvVars(fieldValues);
         }
         return "";
-    }, [viewMode, fieldValues]);
+    }, [viewMode, fieldValues, mergeText]);
 
     const handleAdd = () => {
         append({ key: "", value: "", isLiteral: false });
@@ -202,6 +204,9 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 value={mergeTextValue}
                 onChange={e => {
                     handleMergeTextChange(e.target.value);
+                }}
+                onBlur={() => {
+                    syncMergeTextToFields();
                 }}
                 placeholder="KEY_1=VALUE_1&#10;KEY_2=VALUE_2"
                 rows={10}

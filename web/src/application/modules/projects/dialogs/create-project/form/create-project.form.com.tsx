@@ -106,11 +106,7 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
 
                 <InfoBlock
                     titleWidth={150}
-                    title={
-                        <LabelWithInfo
-                            label="Note"
-                        />
-                    }
+                    title={<LabelWithInfo label="Note" />}
                 >
                     <FieldGroup>
                         <Field>
@@ -129,12 +125,7 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
 
                 <InfoBlock
                     titleWidth={150}
-                    title={
-                        <LabelWithInfo
-                            label="Tags"
-                            isRequired
-                        />
-                    }
+                    title={<LabelWithInfo label="Tags" />}
                 >
                     <FieldGroup>
                         <Field>

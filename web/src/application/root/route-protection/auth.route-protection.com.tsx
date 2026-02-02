@@ -76,7 +76,19 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
 
     if (!profile && !isAuthGroup) {
         const currentFullPath = nextPath ?? `${location.pathname}${location.search}`;
-        const [pathPart = "", searchPart = ""] = currentFullPath.split("?");
+
+        let pathPart = "";
+        let searchPart = "";
+
+        try {
+            const url = new URL(currentFullPath, window.location.origin);
+            pathPart = url.pathname;
+            searchPart = url.searchParams.toString();
+        } catch {
+            const [fallbackPath = "", fallbackSearch = ""] = currentFullPath.split("?");
+            pathPart = fallbackPath;
+            searchPart = fallbackSearch;
+        }
 
         // Map route patterns to their destinations
         const authRouteMap: Record<string, string> = {

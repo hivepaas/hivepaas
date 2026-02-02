@@ -5,6 +5,7 @@ import { InputNumber } from "@components/ui/input-number";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useController, useFormContext } from "react-hook-form";
+import { Link } from "react-router";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -142,6 +143,17 @@ function View() {
                             loading={isFetching}
                         />
                         <FieldError errors={[sshKeyError]} />
+                        <div className="text-xs">
+                            <p>
+                                Need to add a new SSH key?{" "}
+                                <Link
+                                    to="#"
+                                    className="text-blue-500"
+                                >
+                                    Click here
+                                </Link>
+                            </p>
+                        </div>
                     </Field>
                 </FieldGroup>
             </InfoBlock>
@@ -149,8 +161,8 @@ function View() {
                 <div className={cn(dashedBorderBox, "space-y-6")}>
                     <p className="text-sm">
                         <span className="text-orange-600 dark:text-orange-400 font-semibold">WARNING:</span> If the
-                        server above is already part of another Swarm cluster, it will be removed from that cluster.
-                        Any associated data will also be deleted.
+                        server above is already part of another Swarm cluster, it will be removed from that cluster. Any
+                        associated data will also be deleted.
                     </p>
                 </div>
             </Field>

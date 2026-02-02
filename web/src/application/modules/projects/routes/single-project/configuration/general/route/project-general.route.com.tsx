@@ -5,11 +5,11 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
+import { ProjectsCommands } from "~/projects/data/commands";
+import { ProjectWithSidebar } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
-
-import { ProjectsCommands } from "~/projects/data/commands";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -18,7 +18,6 @@ import { ValidationException } from "@infrastructure/exceptions/validation";
 import { ProjectGeneralForm } from "../form";
 import { type ProjectGeneralFormSchemaOutput } from "../schemas";
 import { type ProjectGeneralFormRef } from "../types";
-import { ProjectWithSidebar } from "~/projects/module-shared/components";
 
 export function ProjectGeneralRoute() {
     const { id: projectId } = useParams<{ id: string }>();
@@ -47,6 +46,7 @@ export function ProjectGeneralRoute() {
             projectID: projectId,
             ...values,
             updateVer: data.data.updateVer,
+            status: data.data.status,
         });
     }
 
@@ -85,6 +85,6 @@ export function ProjectGeneralRoute() {
                     </Button>
                 </div>
             </ProjectGeneralForm>
-        </ProjectWithSidebar >
+        </ProjectWithSidebar>
     );
 }

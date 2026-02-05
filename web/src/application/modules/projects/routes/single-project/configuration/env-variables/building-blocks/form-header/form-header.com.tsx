@@ -19,7 +19,7 @@ function View({ search, onRevealToggle, isRevealed, viewMode, onViewModeChange }
     return (
         <div className="flex items-center justify-between gap-4">
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative">
                 <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
                     <SearchIcon className="size-4" />
                     <span className="sr-only">Search</span>

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
+import { CircleHelp } from "lucide-react";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { LinkGenerate } from "../building-blocks";
@@ -19,20 +21,24 @@ export function InviteUserDialog() {
 
     const open = state.mode !== "closed";
 
+    const [sendInviteEmail, setSendInviteEmail] = useState(false);
+
     // Reset invite link when dialog closes
     useEffect(() => {
         if (state.mode === "closed") {
             setInviteLink(null);
             setHasChanges(false);
+            setSendInviteEmail(false);
         }
     }, [state.mode]);
 
     function onSubmit(values: InviteUserFormOutput) {
         inviteUser(
-            { user: values },
+            { user: values, sendInviteEmail },
             {
                 onSuccess: response => {
                     setInviteLink(response.data.inviteLink);
+                    setSendInviteEmail(false); // Reset after submission
                 },
             },
         );
@@ -59,9 +65,7 @@ export function InviteUserDialog() {
             <DialogContent className="lg:min-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
-                    <DialogDescription>
-                        Enter the required details to invite a user
-                    </DialogDescription>
+                    <DialogDescription>Enter the required details to invite a user</DialogDescription>
                 </DialogHeader>
                 <div className="h-px bg-border" />
                 <InviteUserForm
@@ -73,24 +77,46 @@ export function InviteUserDialog() {
                     <LinkGenerate inviteLink={inviteLink} />
 
                     {/* Footer Actions */}
-                    <div className="flex items-center justify-end gap-4 pt-4 border-t">
-                        <div className="flex items-center gap-4">
-                            <Button
-                                type="submit"
-                                variant="default"
-                                isLoading={isGeneratingLink}
-                                disabled={inviteLink !== null}
-                            >
-                                Generate Invite Link
-                            </Button>
-                            <Button
-                                type="button"
-                                // variant="outline"
-                                // onClick={handleSendEmail}
-                            >
-                                Invite via Email
-                            </Button>
-                        </div>
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                        <Button
+                            type="submit"
+                            variant="default"
+                            isLoading={isGeneratingLink}
+                            disabled={inviteLink !== null}
+                            onClick={() => {
+                                setSendInviteEmail(true);
+                            }}
+                        >
+                            Send Email
+                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <CircleHelp className="size-5" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                                <p className="max-w-xs">
+                                    <strong>Send Email:</strong> Automatically sends an invitation email to the user
+                                    <br />
+                                    <strong>Generate Link:</strong> Creates an invite link you can share manually
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Button
+                            type="submit"
+                            variant="default"
+                            isLoading={isGeneratingLink}
+                            disabled={inviteLink !== null}
+                            onClick={() => {
+                                setSendInviteEmail(false);
+                            }}
+                        >
+                            Generate Invite Link
+                        </Button>
                     </div>
                 </InviteUserForm>
             </DialogContent>

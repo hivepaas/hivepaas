@@ -11,6 +11,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "./pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 
 export interface TablePaginationProps {
     pageIndex: number;
@@ -94,22 +95,29 @@ function TablePagination({
                 {showPageSizeSelector && onPageSizeChange && (
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Rows per page:</span>
-                        <select
-                            value={pageSize}
-                            onChange={e => {
-                                onPageSizeChange(Number(e.target.value));
+                        <Select
+                            value={pageSize.toString()}
+                            onValueChange={value => {
+                                onPageSizeChange(Number(value));
                             }}
-                            className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                            {pageSizeOptions.map(size => (
-                                <option
-                                    key={size}
-                                    value={size}
-                                >
-                                    {size}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger
+                                size="sm"
+                                className="h-8 w-[70px]"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {pageSizeOptions.map(size => (
+                                    <SelectItem
+                                        key={size}
+                                        value={size.toString()}
+                                    >
+                                        {size}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 )}
                 {showTotalCount && totalCount !== undefined && (

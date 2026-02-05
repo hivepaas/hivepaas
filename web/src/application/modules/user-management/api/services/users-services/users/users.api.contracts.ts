@@ -48,6 +48,7 @@ export type Users_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
  */
 export type Users_InviteOne_Req = ApiRequestBase<{
     user: Pick<UserBase, "email" | "role" | "securityOption" | "accessExpireAt" | "projectAccesses" | "moduleAccesses">;
+    sendInviteEmail?: boolean;
 }>;
 
 export type Users_InviteOne_Res = ApiResponseBase<{ inviteLink: string }>;

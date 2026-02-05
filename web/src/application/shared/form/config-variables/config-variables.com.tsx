@@ -193,7 +193,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 onClick={handleAdd}
                 className="w-fit"
             >
-                <Plus className="size-4 mr-2" />
+                <Plus className="size-4" />
                 Add
             </Button>
         </div>

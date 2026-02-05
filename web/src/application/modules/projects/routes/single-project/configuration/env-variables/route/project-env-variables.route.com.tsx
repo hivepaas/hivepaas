@@ -10,7 +10,9 @@ import { ProjectWithSidebar } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
+
 import { isValidationException } from "@infrastructure/api";
+
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { ProjectEnvVarsForm } from "../form";
@@ -82,6 +84,7 @@ export function ProjectEnvVariablesRoute() {
                 <div className="flex justify-end gap-2">
                     <Button
                         type="submit"
+                        className="min-w-[100px]"
                         disabled={isPending}
                         isLoading={isPending}
                     >

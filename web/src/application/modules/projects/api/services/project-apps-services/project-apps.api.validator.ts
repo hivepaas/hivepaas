@@ -19,18 +19,6 @@ const ProjectAppSchema = z.object({
     note: z.string(),
     tags: z.array(z.string()),
     key: z.string(),
-    photo: z.string().nullable(),
-    userAccesses: z.array(
-        z.object({
-            id: z.string(),
-            fullName: z.string(),
-            access: z.object({
-                read: z.boolean(),
-                write: z.boolean(),
-                delete: z.boolean(),
-            }),
-        }),
-    ),
     updateVer: z.number(),
     stats: z
         .object({
@@ -62,19 +50,6 @@ const CreateOneSchema = z.object({
 });
 
 /**
- * Project app user access schema
- */
-const ProjectAppUserAccessSchema = z.object({
-    id: z.string(),
-    fullName: z.string(),
-    access: z.object({
-        read: z.boolean(),
-        write: z.boolean(),
-        delete: z.boolean(),
-    }),
-});
-
-/**
  * Project app stats schema
  */
 const ProjectAppStatsSchema = z.object({
@@ -88,8 +63,6 @@ const ProjectAppStatsSchema = z.object({
  */
 const ProjectAppDetailsSchema = ProjectAppSchema.extend({
     key: z.string(),
-    photo: z.string().nullable(),
-    userAccesses: z.array(ProjectAppUserAccessSchema),
     updateVer: z.number(),
     stats: ProjectAppStatsSchema.nullable(),
 });

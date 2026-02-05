@@ -148,10 +148,19 @@ export class UsersApi extends BaseApi {
      * Invite a user
      */
     async inviteOne(request: Users_InviteOne_Req, signal?: AbortSignal): Promise<Result<Users_InviteOne_Res, Error>> {
-        const { user } = request.data;
+        const { user, sendInviteEmail } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post("/users/invite", user, { signal })).pipe(
+            from(
+                this.client.v1.post(
+                    "/users/invite",
+                    {
+                        ...user,
+                        sendInviteEmail,
+                    },
+                    { signal },
+                ),
+            ).pipe(
                 map(this.validator.inviteOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

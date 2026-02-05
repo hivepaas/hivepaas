@@ -1,6 +1,8 @@
 import { useRef } from "react";
 
 import { Button } from "@components/ui";
+import { listBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -59,7 +61,7 @@ export function SingleNodeRoute() {
     const { data: node } = data;
 
     return (
-        <div className="bg-background rounded-lg p-4 max-w-7xl w-full mx-auto">
+        <div className={cn(listBox)}>
             <SingleNodeForm
                 ref={formRef}
                 defaultValues={node}

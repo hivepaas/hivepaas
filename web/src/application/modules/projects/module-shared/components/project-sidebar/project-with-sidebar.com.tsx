@@ -1,11 +1,13 @@
-import { memo, type PropsWithChildren } from "react";
+import { type PropsWithChildren, memo } from "react";
+
+import { listBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { useLocation } from "react-router";
+
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ROUTE } from "@application/shared/constants";
-import { useLocation } from "react-router";
-import { AppLink } from "@application/shared/components";
-
-
 
 interface TabItem {
     route: string;
@@ -32,8 +34,7 @@ function View({ projectId, children }: Props) {
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;
     return (
-        <div className="flex flex-col gap-5 md:flex-row max-w-7xl w-full mx-auto">
-
+        <div className="flex flex-col gap-5 md:flex-row w-fit mx-auto">
             <aside className="md:w-56 md:shrink-0">
                 <div className="sticky top-4">
                     <div className="bg-background rounded-lg py-4">
@@ -46,6 +47,7 @@ function View({ projectId, children }: Props) {
                                     <TabsTrigger
                                         key={tab.route}
                                         value={tab.route}
+                                        asChild
                                         className="py-3 cursor-pointer bg-background data-[state=active]:border-primary data-[state=active]:bg-primary/10 dark:data-[state=active]:border-primary h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
                                     >
                                         <AppLink.Basic
@@ -61,11 +63,8 @@ function View({ projectId, children }: Props) {
                         </Tabs>
                     </div>
                 </div>
-            </aside >
-            <div className="flex-1 min-w-0 bg-background rounded-lg p-4 max-w-7xl w-full">
-
-                {children}
-            </div>
+            </aside>
+            <div className={cn(listBox, "w-7xl")}>{children}</div>
         </div>
     );
 }

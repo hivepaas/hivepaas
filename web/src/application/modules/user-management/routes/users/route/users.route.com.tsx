@@ -1,8 +1,11 @@
+import { listBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+
 import { UsersTable } from "../building-blocks";
 
 function View() {
     return (
-        <div className="bg-background rounded-lg p-4">
+        <div className={cn(listBox)}>
             <UsersTable />
         </div>
     );

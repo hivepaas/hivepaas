@@ -24,13 +24,14 @@ function View({ links }: Props) {
                             value={link.route}
                             className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none disabled:pointer-events-none disabled:opacity-50 p-3 text-md"
                             disabled={link.disabled}
+                            asChild
                         >
-                            <AppLink.Basic
+                            <AppLink.Modules
                                 to={link.route}
                                 ignorePrevPath
                             >
                                 {link.label}
-                            </AppLink.Basic>
+                            </AppLink.Modules>
                         </TabsTrigger>
                     ))}
                 </TabsList>

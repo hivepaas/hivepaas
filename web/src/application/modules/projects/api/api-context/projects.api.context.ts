@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    ProjectAppEnvVarsApi,
+    ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
     ProjectEnvVarsApi,
@@ -17,6 +19,7 @@ function createApi() {
      */
     const projectsApiValidator = new ProjectsApiValidator();
     const projectAppsApiValidator = new ProjectAppsApiValidator();
+    const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
 
@@ -25,6 +28,9 @@ function createApi() {
             $: new ProjectsApi(projectsApiValidator),
             apps: {
                 $: new ProjectAppsApi(projectAppsApiValidator),
+                envVars: {
+                    $: new ProjectAppEnvVarsApi(projectAppEnvVarsApiValidator),
+                },
             },
             secrets: {
                 $: new ProjectSecretsApi(projectSecretsApiValidator),

@@ -3,11 +3,12 @@ import React, { type PropsWithChildren, useImperativeHandle, useState } from "re
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { EnvVarsFormHeader } from "~/projects/module-shared/components";
+
+import { EnvVarsBaseForm } from "@application/modules/projects/module-shared/form/env-vars/env-vars.form.com";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { FormHeader } from "../building-blocks";
-import { BuildTimeEnvVars, RuntimeEnvVars } from "../content-blocks";
 import {
     ProjectEnvVarsFormSchema,
     type ProjectEnvVarsFormSchemaInput,
@@ -23,7 +24,10 @@ const DEFAULTS: ProjectEnvVarsFormSchemaInput = {
 type SchemaInput = ProjectEnvVarsFormSchemaInput;
 type SchemaOutput = ProjectEnvVarsFormSchemaOutput;
 
-export function ProjectEnvVarsForm({ ref, defaultValues, onSubmit, children }: Props) {
+export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>(function ProjectEnvVarsForm(
+    { defaultValues, onSubmit, children }: Props,
+    ref: React.ForwardedRef<ProjectEnvVarsFormRef>,
+) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             ...DEFAULTS,
@@ -91,7 +95,7 @@ export function ProjectEnvVarsForm({ ref, defaultValues, onSubmit, children }: P
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <FormHeader
+                    <EnvVarsFormHeader
                         search={{ value: search, onChange: setSearch }}
                         isRevealed={isRevealed}
                         onRevealToggle={() => {
@@ -101,16 +105,20 @@ export function ProjectEnvVarsForm({ ref, defaultValues, onSubmit, children }: P
                         onViewModeChange={setViewMode}
                     />
 
-                    <BuildTimeEnvVars
+                    <EnvVarsBaseForm
                         search={search}
                         viewMode={viewMode}
                         isRevealed={isRevealed}
+                        name="buildtime"
+                        title="Build Time Env Vars"
                     />
                     <div className="h-px bg-border" />
-                    <RuntimeEnvVars
+                    <EnvVarsBaseForm
                         search={search}
                         viewMode={viewMode}
                         isRevealed={isRevealed}
+                        name="runtime"
+                        title="Runtime Env Vars"
                     />
 
                     {children}
@@ -118,7 +126,7 @@ export function ProjectEnvVarsForm({ ref, defaultValues, onSubmit, children }: P
             </FormProvider>
         </div>
     );
-}
+});
 
 type Props = PropsWithChildren<{
     ref?: React.Ref<ProjectEnvVarsFormRef>;

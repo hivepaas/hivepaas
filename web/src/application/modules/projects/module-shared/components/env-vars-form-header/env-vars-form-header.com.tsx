@@ -94,4 +94,4 @@ type Props = {
     onViewModeChange?: (mode: "merge" | "individual") => void;
 };
 
-export const FormHeader = React.memo(View);
+export const EnvVarsFormHeader = React.memo(View);

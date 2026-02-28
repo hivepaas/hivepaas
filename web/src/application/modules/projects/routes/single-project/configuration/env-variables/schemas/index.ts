@@ -1,1 +1,1 @@
-export * from "./project-env-vars.form.schema";
+export * from "./project-env-vars.schema";

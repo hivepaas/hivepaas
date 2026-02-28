@@ -101,6 +101,85 @@ export const ROUTE = {
             apps: {
                 $pattern: "projects/:id/apps",
                 $route: (id: string) => `/projects/${id}/apps/`,
+
+                single: {
+                    $pattern: "projects/:id/apps/:appId",
+
+                    configuration: {
+                        $pattern: "projects/:id/apps/:appId/configuration",
+
+                        general: {
+                            $pattern: "projects/:id/apps/:appId/general",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/general/`,
+                        },
+
+                        deploymentSettings: {
+                            $pattern: "projects/:id/apps/:appId/deployment-settings",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/deployment-settings/`,
+                        },
+
+                        containerSettings: {
+                            $pattern: "projects/:id/apps/:appId/container-settings",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/container-settings/`,
+                        },
+
+                        httpSettings: {
+                            $pattern: "projects/:id/apps/:appId/http-settings",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/http-settings/`,
+                        },
+
+                        envVariables: {
+                            $pattern: "projects/:id/apps/:appId/env-variables",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/env-variables/`,
+                        },
+
+                        secrets: {
+                            $pattern: "projects/:id/apps/:appId/secrets",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/`,
+                        },
+
+                        availabilityAndScaling: {
+                            $pattern: "projects/:id/apps/:appId/availability-and-scaling",
+                            $route: (id: string, appId: string) =>
+                                `/projects/${id}/apps/${appId}/availability-and-scaling/`,
+                        },
+
+                        presistentStorage: {
+                            $pattern: "projects/:id/apps/:appId/presistent-storage",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/presistent-storage/`,
+                        },
+
+                        networks: {
+                            $pattern: "projects/:id/apps/:appId/networks",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/networks/`,
+                        },
+
+                        resources: {
+                            $pattern: "projects/:id/apps/:appId/resources",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/resources/`,
+                        },
+
+                        dangerZone: {
+                            $pattern: "projects/:id/apps/:appId/danger-zone",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/danger-zone/`,
+                        },
+                    },
+
+                    deployments: {
+                        $pattern: "projects/:id/apps/:appId/deployments",
+                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/deployments/`,
+                    },
+
+                    logs: {
+                        $pattern: "projects/:id/apps/:appId/logs",
+                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/logs/`,
+                    },
+
+                    previewDeployments: {
+                        $pattern: "projects/:id/apps/:appId/preview-deployments",
+                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/preview-deployments/`,
+                    },
+                },
             },
 
             configuration: {

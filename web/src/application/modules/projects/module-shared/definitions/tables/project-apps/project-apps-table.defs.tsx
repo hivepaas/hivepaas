@@ -3,10 +3,28 @@ import { format } from "date-fns";
 import type { ProjectAppDetails } from "~/projects/domain";
 import { ProjectAppStatusBadge } from "~/projects/module-shared/components";
 
-import { MenuCell } from "./building-blocks";
+import { ActionsCell, MenuCell } from "./building-blocks";
 
 function createColumns(projectId: string): ColumnDef<ProjectAppDetails>[] {
     return [
+        {
+            id: "actions",
+            header: "",
+            minSize: 80,
+            size: 80,
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+            cell: ({ row: { original } }) => {
+                return (
+                    <ActionsCell
+                        projectId={projectId}
+                        appId={original.id}
+                    />
+                );
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",

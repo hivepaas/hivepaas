@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ProjectEnvVarsFormSchema = z.object({
+export const EnvVarsFormBaseSchema = z.object({
     buildtime: z.array(
         z.object({
             key: z.string().min(1, "Key is required"),
@@ -17,5 +17,5 @@ export const ProjectEnvVarsFormSchema = z.object({
     ),
 });
 
-export type ProjectEnvVarsFormSchemaInput = z.input<typeof ProjectEnvVarsFormSchema>;
-export type ProjectEnvVarsFormSchemaOutput = z.output<typeof ProjectEnvVarsFormSchema>;
+export type EnvVarsFormBaseSchemaInput = z.input<typeof EnvVarsFormBaseSchema>;
+export type EnvVarsFormBaseSchemaOutput = z.output<typeof EnvVarsFormBaseSchema>;

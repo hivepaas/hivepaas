@@ -6,10 +6,9 @@ import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
 import { type ProjectAppDetails } from "~/projects/domain";
+import { ProjectAppStatusBadge } from "~/projects/module-shared/components";
 
 import { InfoBlock } from "@application/shared/components";
-
-import { ProjectAppStatusBadge } from "@application/modules/projects/module-shared/components";
 
 import {
     AppConfigGeneralFormSchema,

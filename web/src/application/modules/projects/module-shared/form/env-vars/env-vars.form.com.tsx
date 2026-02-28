@@ -4,26 +4,26 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@c
 
 import { ConfigVariables } from "@application/shared/form";
 
-import { type ProjectEnvVarsFormSchemaInput } from "../../schemas";
+import { type EnvVarsFormBaseSchemaInput } from "../../schemas";
 
-function View({ search, viewMode, isRevealed }: Props) {
+function View({ search, viewMode, isRevealed, title, name }: Props) {
     return (
         <Accordion
             type="single"
             collapsible
             className="w-full"
-            defaultValue="runtime-env-vars"
+            defaultValue="build-time-env-vars"
         >
             <AccordionItem
-                value="runtime-env-vars"
+                value="build-time-env-vars"
                 className=""
             >
                 <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
-                    Runtime Env Vars
+                    {title}
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-0">
-                    <ConfigVariables<ProjectEnvVarsFormSchemaInput>
-                        name="runtime"
+                    <ConfigVariables<EnvVarsFormBaseSchemaInput>
+                        name={name}
                         search={search}
                         viewMode={viewMode}
                         isRevealed={isRevealed}
@@ -38,6 +38,8 @@ type Props = {
     search: string;
     viewMode: "merge" | "individual";
     isRevealed: boolean;
+    title: React.ReactNode;
+    name: keyof EnvVarsFormBaseSchemaInput;
 };
 
-export const RuntimeEnvVars = React.memo(View);
+export const EnvVarsBaseForm = React.memo(View);

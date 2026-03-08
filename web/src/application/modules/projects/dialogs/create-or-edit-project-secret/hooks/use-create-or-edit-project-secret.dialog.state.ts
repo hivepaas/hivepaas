@@ -1,13 +1,28 @@
 import { create } from "zustand";
-import type { ProjectSecret } from "~/projects/domain";
+import type { AppSecret, ProjectSecret } from "~/projects/domain";
 
-import type { CreateOrEditProjectSecretDialogOptions, CreateOrEditProjectSecretDialogState } from "../types";
+import type {
+    CreateOrEditProjectSecretDialogOptions,
+    CreateOrEditProjectSecretDialogScope,
+    CreateOrEditProjectSecretDialogState,
+} from "../types";
 
 type State = CreateOrEditProjectSecretDialogState & CreateOrEditProjectSecretDialogOptions;
 
 interface Actions {
-    open: (projectId: string, options?: CreateOrEditProjectSecretDialogOptions) => void;
-    openEdit: (projectId: string, secret: ProjectSecret, options?: CreateOrEditProjectSecretDialogOptions) => void;
+    open: (
+        projectId: string,
+        scope: CreateOrEditProjectSecretDialogScope,
+        appId?: string,
+        options?: CreateOrEditProjectSecretDialogOptions,
+    ) => void;
+    openEdit: (
+        projectId: string,
+        scope: CreateOrEditProjectSecretDialogScope,
+        secret: ProjectSecret | AppSecret,
+        appId?: string,
+        options?: CreateOrEditProjectSecretDialogOptions,
+    ) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -17,26 +32,32 @@ export const useCreateOrEditProjectSecretDialogState = create<State & Actions>()
     state: {
         mode: "closed",
         projectId: null,
+        appId: null,
+        scope: null,
     },
 
     props: {},
 
-    open: (projectId, options = {}) => {
+    open: (projectId, scope, appId, options = {}) => {
         set({
             state: {
                 mode: "open",
                 projectId,
+                scope,
+                appId,
             },
             ...options,
         });
     },
 
-    openEdit: (projectId, secret, options = {}) => {
+    openEdit: (projectId, scope, secret, appId, options = {}) => {
         set({
             state: {
                 mode: "edit",
                 projectId,
+                scope,
                 secret,
+                appId,
             },
             ...options,
         });
@@ -47,6 +68,8 @@ export const useCreateOrEditProjectSecretDialogState = create<State & Actions>()
             state: {
                 mode: "closed",
                 projectId: null,
+                appId: null,
+                scope: null,
             },
         });
     },
@@ -67,6 +90,8 @@ export const useCreateOrEditProjectSecretDialogState = create<State & Actions>()
                 state: {
                     mode: "closed",
                     projectId: null,
+                    appId: null,
+                    scope: null,
                 },
                 props: {},
             };

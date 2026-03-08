@@ -28,6 +28,8 @@ const ProjectRuntimeEnvVarSchema = z.object({
 const ProjectEnvVarSchema = z.object({
     buildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema),
     runtimeEnvVars: z.array(ProjectRuntimeEnvVarSchema),
+    inheritedBuildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema).nullish(),
+    inheritedRuntimeEnvVars: z.array(ProjectRuntimeEnvVarSchema).nullish(),
     updateVer: z.number(),
 });
 
@@ -60,6 +62,20 @@ export class ProjectAppEnvVarsApiValidator {
                     : [],
                 runtime: data
                     ? data.runtimeEnvVars.map(envVar => ({
+                          key: envVar.key,
+                          value: envVar.value,
+                          isLiteral: envVar.isLiteral ?? false,
+                      }))
+                    : [],
+                inheritedBuildtimeEnvVars: data?.inheritedBuildtimeEnvVars
+                    ? data.inheritedBuildtimeEnvVars.map(envVar => ({
+                          key: envVar.key,
+                          value: envVar.value,
+                          isLiteral: envVar.isLiteral ?? false,
+                      }))
+                    : [],
+                inheritedRuntimeEnvVars: data?.inheritedRuntimeEnvVars
+                    ? data.inheritedRuntimeEnvVars.map(envVar => ({
                           key: envVar.key,
                           value: envVar.value,
                           isLiteral: envVar.isLiteral ?? false,

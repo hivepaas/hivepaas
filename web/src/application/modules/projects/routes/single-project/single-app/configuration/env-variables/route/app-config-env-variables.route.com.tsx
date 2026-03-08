@@ -80,6 +80,10 @@ export function AppConfigEnvVariablesRoute() {
                 buildtime: envVars.buildtime,
                 runtime: envVars.runtime,
             }}
+            inheritedValues={{
+                buildtime: envVars.inheritedBuildtimeEnvVars,
+                runtime: envVars.inheritedRuntimeEnvVars,
+            }}
             onSubmit={handleSubmit}
         >
             <div className="flex justify-end gap-2 mt-4">

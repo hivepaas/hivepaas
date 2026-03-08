@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EnvVarsFormHeader } from "~/projects/module-shared/components";
-import { EnvVarsBaseForm } from "~/projects/module-shared/form";
+import { EnvVarsBaseForm, InheritedEnvVarsAccordion } from "~/projects/module-shared/form";
+import { type EnvVarsFormBaseSchemaInput } from "~/projects/module-shared/schemas";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -24,7 +25,7 @@ type SchemaInput = AppConfigEnvVarsFormSchemaInput;
 type SchemaOutput = AppConfigEnvVarsFormSchemaOutput;
 
 export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Props>(function AppConfigEnvVarsForm(
-    { defaultValues, onSubmit, children }: Props,
+    { defaultValues, inheritedValues, onSubmit, children }: Props,
     ref: React.ForwardedRef<AppConfigEnvVarsFormRef>,
 ) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -104,6 +105,14 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                         onViewModeChange={setViewMode}
                     />
 
+                    {inheritedValues && (
+                        <InheritedEnvVarsAccordion
+                            title="Inherited Build Time Env Variables"
+                            items={inheritedValues.buildtime}
+                            search={search}
+                            isRevealed={isRevealed}
+                        />
+                    )}
                     <EnvVarsBaseForm
                         search={search}
                         viewMode={viewMode}
@@ -112,6 +121,14 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                         title="Buildtime Env Vars"
                     />
                     <div className="h-px bg-border" />
+                    {inheritedValues && (
+                        <InheritedEnvVarsAccordion
+                            title="Inherited Runtime Env Variables"
+                            items={inheritedValues.runtime}
+                            search={search}
+                            isRevealed={isRevealed}
+                        />
+                    )}
                     <EnvVarsBaseForm
                         search={search}
                         viewMode={viewMode}
@@ -127,7 +144,10 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
     );
 });
 
+type EnvVarRecord = EnvVarsFormBaseSchemaInput["buildtime"][number];
+
 type Props = PropsWithChildren<{
     defaultValues: Partial<AppConfigEnvVarsFormSchemaInput>;
+    inheritedValues?: { buildtime: EnvVarRecord[]; runtime: EnvVarRecord[] };
     onSubmit: (values: AppConfigEnvVarsFormSchemaOutput) => void;
 }>;

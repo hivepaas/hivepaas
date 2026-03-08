@@ -2,61 +2,103 @@ import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
-import { ProjectSecretsCommands } from "~/projects/data/commands";
+import { ProjectAppSecretsCommands, ProjectSecretsCommands } from "~/projects/data/commands";
 
 import { CreateOrEditProjectSecretForm } from "../form";
 import { useCreateOrEditProjectSecretDialogState } from "../hooks";
 import type { CreateOrEditProjectSecretFormOutput } from "../schemas";
 
 export function CreateOrEditProjectSecretDialog() {
-    const { state, props, ...actions } = useCreateOrEditProjectSecretDialogState();
+    const { state, props: dialogOptions, ...actions } = useCreateOrEditProjectSecretDialogState();
     const [hasChanges, setHasChanges] = useState(false);
 
-    const open = state.mode !== "closed";
-    const isEditMode = state.mode === "edit";
-    const projectId = state.mode !== "closed" ? state.projectId : null;
+    const { mode } = state;
+    const open = mode !== "closed";
+    const isEditMode = mode === "edit";
+    const projectId = mode !== "closed" ? state.projectId : null;
+    const appId = mode !== "closed" ? state.appId : null;
+    const scope = mode !== "closed" ? state.scope : null;
 
-    const { mutate: createSecret, isPending: isCreating } = ProjectSecretsCommands.useCreateOne({
+    // Project mutations
+    const { mutate: createProjectSecret, isPending: isCreatingProject } = ProjectSecretsCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project secret created successfully");
             actions.close();
+            dialogOptions?.onSuccess?.();
         },
     });
 
-    const { mutate: updateSecret, isPending: isUpdating } = ProjectSecretsCommands.useUpdateOne({
+    const { mutate: updateProjectSecret, isPending: isUpdatingProject } = ProjectSecretsCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project secret updated successfully");
             actions.close();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    // App mutations
+    const { mutate: createAppSecret, isPending: isCreatingApp } = ProjectAppSecretsCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("App secret created successfully");
+            actions.close();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    const { mutate: updateAppSecret, isPending: isUpdatingApp } = ProjectAppSecretsCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("App secret updated successfully");
+            actions.close();
+            dialogOptions?.onSuccess?.();
         },
     });
 
     // Reset hasChanges when dialog closes
     useEffect(() => {
-        if (state.mode === "closed") {
+        if (mode === "closed") {
             setHasChanges(false);
         }
-    }, [state.mode]);
+    }, [mode]);
 
     function onSubmit(values: CreateOrEditProjectSecretFormOutput) {
         if (!projectId) {
             return;
         }
 
-        if (isEditMode) {
-            updateSecret({
-                projectID: projectId,
-                secretID: state.secret.id,
-                updateVer: state.secret.updateVer,
-                name: values.name,
-                value: values.value,
-            });
-        } else {
-            // Generate key from name (you may want to adjust this logic)
-            createSecret({
-                projectID: projectId,
-                name: values.name,
-                value: values.value,
-            });
+        if (scope === "project") {
+            if (state.mode === "edit") {
+                updateProjectSecret({
+                    projectID: projectId,
+                    secretID: state.secret.id,
+                    updateVer: state.secret.updateVer,
+                    name: values.name,
+                    value: values.value,
+                });
+            } else if (state.mode === "open") {
+                createProjectSecret({
+                    projectID: projectId,
+                    name: values.name,
+                    value: values.value,
+                });
+            }
+        } else if (scope === "app" && appId) {
+            if (state.mode === "edit") {
+                updateAppSecret({
+                    projectID: projectId,
+                    appID: appId,
+                    secretID: state.secret.id,
+                    updateVer: state.secret.updateVer,
+                    name: values.name,
+                    value: values.value,
+                });
+            } else if (state.mode === "open") {
+                createAppSecret({
+                    projectID: projectId,
+                    appID: appId,
+                    name: values.name,
+                    value: values.value,
+                });
+            }
         }
     }
 
@@ -76,16 +118,18 @@ export function CreateOrEditProjectSecretDialog() {
         return null;
     }
 
-    const isPending = isCreating || isUpdating;
+    const isPending = isCreatingProject || isUpdatingProject || isCreatingApp || isUpdatingApp;
 
     // Prepare initial values for edit mode
     const initialValues =
-        isEditMode
+        state.mode === "edit"
             ? {
-                name: state.secret.name,
-                value: "", // Value is not returned for security reasons
-            }
+                  name: state.secret.name,
+                  value: "", // Value is not returned for security reasons
+              }
             : undefined;
+
+    const titlePrefix = scope === "app" ? "App" : "Project";
 
     return (
         <Dialog
@@ -94,8 +138,10 @@ export function CreateOrEditProjectSecretDialog() {
         >
             <DialogContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Edit Secret" : "Create Secret"}</DialogTitle>
-                </DialogHeader >
+                    <DialogTitle>
+                        {isEditMode ? "Edit" : "Create"} {titlePrefix} Secret
+                    </DialogTitle>
+                </DialogHeader>
                 <CreateOrEditProjectSecretForm
                     isPending={isPending}
                     onSubmit={onSubmit}
@@ -103,7 +149,7 @@ export function CreateOrEditProjectSecretDialog() {
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                 />
-            </DialogContent >
-        </Dialog >
+            </DialogContent>
+        </Dialog>
     );
 }

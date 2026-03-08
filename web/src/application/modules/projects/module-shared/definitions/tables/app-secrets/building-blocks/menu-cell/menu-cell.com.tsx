@@ -2,15 +2,17 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, Trash2Icon } from "lucide-react";
+import { Edit2Icon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
+import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret/hooks";
 import type { AppSecret } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
 
 function View({ projectId, appId, secret }: Props) {
     const [open, setOpen] = useState(false);
+    const { actions: secretDialogActions } = useCreateOrEditProjectSecretDialog();
 
     const { mutate: deleteOne, isPending: isDeleting } = ProjectAppSecretsCommands.useDeleteOne({
         onSuccess: () => {
@@ -39,6 +41,17 @@ function View({ projectId, appId, secret }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <Button
+                        className="justify-start py-1.5"
+                        variant="ghost"
+                        onClick={() => {
+                            secretDialogActions.openEditForApp(projectId, appId, secret);
+                            setOpen(false);
+                        }}
+                    >
+                        <Edit2Icon className="mr-2 size-4" />
+                        Edit
+                    </Button>
                     <PopConfirm
                         title="Delete Item"
                         variant="destructive"

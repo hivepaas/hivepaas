@@ -18,7 +18,7 @@ const AppSecretSchema = z.object({
     updateVer: z.number(),
     key: z.string(),
     status: z.nativeEnum(EProjectSecretStatus),
-    inherited: z.boolean(),
+    inherited: z.boolean().optional().default(false),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
 });

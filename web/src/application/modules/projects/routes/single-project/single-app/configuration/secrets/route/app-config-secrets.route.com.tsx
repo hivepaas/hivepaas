@@ -85,7 +85,14 @@ export function AppConfigSecretsRoute() {
                             columns={columns}
                             data={ownSecrets}
                             isLoading={isFetching}
-                            enablePagination={false}
+                            pageSize={pagination.size}
+                            manualPagination
+                            totalCount={meta.page.total}
+                            onPaginationChange={setPagination}
+                            manualSorting
+                            onSortingChange={setSorting}
+                            enablePagination
+                            showPageSizeSelector={false}
                         />
                     </AccordionContent>
                 </AccordionItem>

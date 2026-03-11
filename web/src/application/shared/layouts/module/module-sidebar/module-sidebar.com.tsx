@@ -32,7 +32,7 @@ const navMain: SidebarItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: "Clusters",
+        title: "Cluster",
         route: "#",
         pattern: "#",
         icon: Container,

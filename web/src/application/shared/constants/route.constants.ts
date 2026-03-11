@@ -68,7 +68,7 @@ export const ROUTE = {
     },
 
     /**
-     * Clusters
+     * Cluster
      */
     cluster: {
         $pattern: "cluster",

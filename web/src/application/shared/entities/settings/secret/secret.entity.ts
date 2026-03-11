@@ -1,6 +1,7 @@
-import { SettingsBaseEntity, SettingType } from '../settings.base.entity';
+import { type ESettingType } from "../../../enums";
+import { type SettingsBaseEntity } from '../settings.base.entity';
 
 export interface SecretEntity extends SettingsBaseEntity {
-  type: SettingType.Secret;
+  type: ESettingType.Secret;
   key: string;
 }

@@ -11,6 +11,6 @@ export interface SettingsBaseEntity {
     default?: boolean;
     updateVer: number;
     createdAt: Date;
-    updatedAt?: Date;
-    expireAt?: Date;
+    updatedAt?: Date | null;
+    expireAt?: Date | null;
 }

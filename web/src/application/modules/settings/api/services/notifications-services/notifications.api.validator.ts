@@ -1,7 +1,8 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
+import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingStatus, ESettingType } from "@application/shared/enums";
+import { ESettingType } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -12,24 +13,6 @@ import {
     type Notifications_FindOneById_Res,
     type Notifications_UpdateOne_Res,
 } from "./notifications.api.contracts";
-
-/**
- * Notification entity schemas
- */
-const SettingsBaseEntitySchema = z.object({
-    id: z.string(),
-    type: z.nativeEnum(ESettingType),
-    name: z.string(),
-    kind: z.string().optional(),
-    status: z.nativeEnum(ESettingStatus),
-    inherited: z.boolean().optional(),
-    availableInProjects: z.boolean().optional(),
-    default: z.boolean().optional(),
-    updateVer: z.number(),
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date().nullish().transform(v => v ?? undefined),
-    expireAt: z.coerce.date().nullish().transform(v => v ?? undefined),
-});
 
 const NotificationViaEmailSchema = z.object({
     sender: SettingsBaseEntitySchema.optional(),

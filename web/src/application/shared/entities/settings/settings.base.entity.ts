@@ -10,7 +10,7 @@ export interface SettingsBaseEntity {
     availableInProjects?: boolean;
     default?: boolean;
     updateVer: number;
-    createdAt: string;
-    updatedAt: string;
-    expireAt?: string;
+    createdAt: Date;
+    updatedAt?: Date | null;
+    expireAt?: Date | null;
 }

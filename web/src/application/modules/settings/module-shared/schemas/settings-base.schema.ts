@@ -12,6 +12,6 @@ export const SettingsBaseEntitySchema = z.object({
     default: z.boolean().optional(),
     updateVer: z.number(),
     createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date().nullable(),
-    expireAt: z.coerce.date().nullable(),
+    updatedAt: z.coerce.date().nullish(),
+    expireAt: z.coerce.date().nullish(),
 });

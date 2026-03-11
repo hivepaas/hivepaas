@@ -1,0 +1,27 @@
+export const ESettingType = {
+    Project: "project",
+    App: "app",
+    AppDeployment: "app-deployment",
+    AppHttp: "app-http",
+    EnvVar: "env-var",
+    Secret: "secret",
+    AWS: "aws",
+    AWSS3: "aws-s3",
+    OAuth: "oauth",
+    SSHKey: "ssh-key",
+    APIKey: "api-key",
+    IMService: "im-service",
+    RegistryAuth: "registry-auth",
+    BasicAuth: "basic-auth",
+    SSL: "ssl",
+    GithubApp: "github-app",
+    AccessToken: "access-token",
+    CronJob: "cron-job",
+    Healthcheck: "healthcheck",
+    Email: "email",
+    RepoWebhook: "repo-webhook",
+    Notification: "notification",
+    ImageBuild: "image-build",
+} as const;
+
+export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

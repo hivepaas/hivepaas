@@ -46,7 +46,7 @@ func (uc *SystemCleanupUC) UpdateSystemCleanup(
 			data *settings.UpdateSettingData,
 		) error {
 			updateData.UpdateSettingData = data
-			return uc.loadSettingData(ctx, db, updateData)
+			return uc.loadSettingData(ctx, db, req, updateData)
 		},
 		PrepareUpdate: func(
 			ctx context.Context,
@@ -88,10 +88,10 @@ type persistingSettingData struct {
 func (uc *SystemCleanupUC) loadSettingData(
 	ctx context.Context,
 	db database.Tx,
+	req *systemcleanupdto.UpdateSystemCleanupReq,
 	data *updateSettingData,
 ) error {
-	cleanupSetting, err := uc.SettingRepo.GetSingle(ctx, db, base.NewSettingScopeGlobal(),
-		base.SettingTypeSystemCleanup, false,
+	cleanupSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSystemCleanup, false,
 		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil {
@@ -107,9 +107,9 @@ func (uc *SystemCleanupUC) loadSettingData(
 		cleanup.ScheduleFrom != data.NewCleanup.ScheduleFrom
 
 	// Load cron job of the cleanup
-	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, base.NewSettingScopeGlobal(),
-		base.SettingTypeCronJob, false,
+	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeCronJob, false,
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", cleanupSetting.ID),
+		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)

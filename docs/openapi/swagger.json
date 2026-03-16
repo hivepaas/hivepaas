@@ -17378,6 +17378,58 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/cleanup/exec" : {
+      "post" : {
+        "description" : "Executes the cleanup",
+        "operationId" : "executeSystemCleanup",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Executes the cleanup",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/tasks" : {
       "get" : {
         "description" : "Lists task",
@@ -19524,7 +19576,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "dayDuration" ]
@@ -26465,6 +26517,30 @@
           }
         },
         "required" : [ "deletedObjects", "deployments", "enabled", "sysErrors", "tasks" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupDataResp" : {
+        "properties" : {
+          "task" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDResp"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupReq" : {
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ExecuteSystemCleanupDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.GetSystemCleanupResp" : {

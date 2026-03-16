@@ -115,6 +115,9 @@ func (q *taskQueue) executeTask(
 
 		// Put task to in-progress state
 		task.StartedAt = timeutil.NowUTC()
+		if task.RunAt.IsZero() {
+			task.RunAt = task.StartedAt
+		}
 		if task.Status == base.TaskStatusFailed {
 			task.Config.Retry++
 		}

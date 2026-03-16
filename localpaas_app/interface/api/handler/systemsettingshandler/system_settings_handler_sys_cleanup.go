@@ -85,3 +85,41 @@ func (h *SystemSettingsHandler) UpdateCleanupSettings(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// ExecuteCleanup Executes the cleanup
+// @Summary Executes the cleanup
+// @Description Executes the cleanup
+// @Tags    system_settings
+// @Produce json
+// @Id      executeSystemCleanup
+// @Param   body body systemcleanupdto.ExecuteSystemCleanupReq true "request data"
+// @Success 200 {object} systemcleanupdto.ExecuteSystemCleanupResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /system/settings/cleanup/exec [post]
+func (h *SystemSettingsHandler) ExecuteCleanup(ctx *gin.Context) {
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSystem,
+		ResourceType:   base.ResourceTypeSystemCleanup,
+		Action:         base.ActionTypeWrite,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := systemcleanupdto.NewExecuteSystemCleanupReq()
+	req.Scope = base.NewSettingScopeGlobal()
+	if err = h.ParseJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.SystemCleanupUC.ExecuteSystemCleanup(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

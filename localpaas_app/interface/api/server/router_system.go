@@ -48,6 +48,7 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) (*gin.Route
 		cleanupGroup := systemSettingGroup.Group("/cleanup")
 		cleanupGroup.GET("", systemSettingsHandler.GetCleanupSettings)
 		cleanupGroup.PUT("", systemSettingsHandler.UpdateCleanupSettings)
+		cleanupGroup.POST("/exec", systemSettingsHandler.ExecuteCleanup)
 	}
 
 	return systemGroup, systemSettingGroup

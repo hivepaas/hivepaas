@@ -5,7 +5,11 @@ import (
 	"time"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto"
 )
@@ -16,12 +20,12 @@ func (uc *SystemCleanupUC) ExecuteSystemCleanup(
 	req *systemcleanupdto.ExecuteSystemCleanupReq,
 ) (*systemcleanupdto.ExecuteSystemCleanupResp, error) {
 	req.Type = currentSettingType
-	setting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.ID, true)
+	_, jobSetting, err := uc.getCleanupSettingAndJob(ctx, uc.DB, req.Scope, true, false)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	task, err := uc.cronJobService.CreateCronJobTask(setting, time.Time{}, timeutil.NowUTC())
+	task, err := uc.cronJobService.CreateCronJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -41,4 +45,27 @@ func (uc *SystemCleanupUC) ExecuteSystemCleanup(
 			Task: &basedto.ObjectIDResp{ID: task.ID},
 		},
 	}, nil
+}
+
+func (uc *SystemCleanupUC) getCleanupSettingAndJob(
+	ctx context.Context,
+	db database.IDB,
+	scope *base.SettingScope,
+	requireCleanupActive bool,
+	requireJobActive bool,
+) (cleanup *entity.Setting, job *entity.Setting, err error) {
+	cleanup, err = uc.SettingRepo.GetSingle(ctx, db, scope, currentSettingType, requireCleanupActive)
+	if err != nil {
+		return nil, nil, apperrors.Wrap(err)
+	}
+
+	// Load cron job of the cleanup
+	job, err = uc.SettingRepo.GetSingle(ctx, db, scope, base.SettingTypeCronJob, requireJobActive,
+		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", cleanup.ID),
+	)
+	if err != nil {
+		return nil, nil, apperrors.Wrap(err)
+	}
+
+	return cleanup, job, nil
 }

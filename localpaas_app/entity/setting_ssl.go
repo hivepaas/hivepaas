@@ -40,6 +40,18 @@ func (s *SSL) MustDecrypt() *SSL {
 	return s
 }
 
+func (s *SSL) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentSSLVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentSSLVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsSSL() (*SSL, error) {
 	return parseSettingAs[*SSL](s)
 }

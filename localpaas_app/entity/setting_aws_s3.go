@@ -42,6 +42,18 @@ func (s *AWSS3) MustDecrypt() *AWSS3 {
 	return s
 }
 
+func (s *AWSS3) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAWSS3Version == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAWSS3Version
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAWSS3() (*AWSS3, error) {
 	return parseSettingAs[*AWSS3](s)
 }

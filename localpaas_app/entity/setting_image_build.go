@@ -51,6 +51,18 @@ func (s *ImageBuild) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
+func (s *ImageBuild) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentImageBuildVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentImageBuildVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsImageBuild() (*ImageBuild, error) {
 	return parseSettingAs[*ImageBuild](s)
 }

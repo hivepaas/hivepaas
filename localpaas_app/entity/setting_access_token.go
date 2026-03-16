@@ -38,6 +38,18 @@ func (s *AccessToken) MustDecrypt() *AccessToken {
 	return s
 }
 
+func (s *AccessToken) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAccessTokenVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAccessTokenVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAccessToken() (*AccessToken, error) {
 	return parseSettingAs[*AccessToken](s)
 }

@@ -165,6 +165,18 @@ func (s *CronJob) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
+func (s *CronJob) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentCronJobVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentCronJobVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsCronJob() (*CronJob, error) {
 	return parseSettingAs[*CronJob](s)
 }

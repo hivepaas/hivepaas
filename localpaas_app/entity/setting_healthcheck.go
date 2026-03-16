@@ -61,6 +61,18 @@ func (s *Healthcheck) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
+func (s *Healthcheck) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentHealthcheckVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentHealthcheckVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsHealthcheck() (*Healthcheck, error) {
 	return parseSettingAs[*Healthcheck](s)
 }

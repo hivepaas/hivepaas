@@ -94,6 +94,18 @@ func (s *Notification) MustDecrypt() *Notification {
 	return s
 }
 
+func (s *Notification) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentNotificationVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentNotificationVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsNotification() (*Notification, error) {
 	return parseSettingAs[*Notification](s)
 }

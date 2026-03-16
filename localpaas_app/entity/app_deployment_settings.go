@@ -87,6 +87,18 @@ func (s *AppDeploymentSettings) GetGitCredentialIDs() (res []string) {
 	return
 }
 
+func (s *AppDeploymentSettings) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAppDeploymentSettingsVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAppDeploymentSettingsVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAppDeploymentSettings() (*AppDeploymentSettings, error) {
 	return parseSettingAs[*AppDeploymentSettings](s)
 }

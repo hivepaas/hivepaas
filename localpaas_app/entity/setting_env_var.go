@@ -38,6 +38,18 @@ func (s *EnvVars) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
+func (s *EnvVars) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentEnvVarsVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentEnvVarsVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsEnvVars() (*EnvVars, error) {
 	return parseSettingAs[*EnvVars](s)
 }

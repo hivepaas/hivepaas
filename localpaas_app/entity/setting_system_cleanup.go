@@ -59,6 +59,18 @@ func (s *SystemCleanup) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
+func (s *SystemCleanup) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentSystemCleanupVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentSystemCleanupVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsSystemCleanup() (*SystemCleanup, error) {
 	return parseSettingAs[*SystemCleanup](s)
 }

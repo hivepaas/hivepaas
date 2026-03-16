@@ -56,6 +56,18 @@ func (s *GithubApp) ConvertAsOAuth() *OAuth {
 	}
 }
 
+func (s *GithubApp) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentGithubAppVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentGithubAppVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsGithubApp() (*GithubApp, error) {
 	return parseSettingAs[*GithubApp](s)
 }

@@ -38,6 +38,18 @@ func (s *AWS) MustDecrypt() *AWS {
 	return s
 }
 
+func (s *AWS) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAWSVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAWSVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAWS() (*AWS, error) {
 	return parseSettingAs[*AWS](s)
 }

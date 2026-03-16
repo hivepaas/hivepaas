@@ -110,6 +110,18 @@ func (s *AppHttpSettings) GetBasicAuthIDs() (res []string) {
 	return
 }
 
+func (s *AppHttpSettings) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAppHttpSettingsVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAppHttpSettingsVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAppHttpSettings() (*AppHttpSettings, error) {
 	return parseSettingAs[*AppHttpSettings](s)
 }

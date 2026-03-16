@@ -57,6 +57,18 @@ func (s *RegistryAuth) GenerateAuthHeader() (string, error) {
 	return h, nil
 }
 
+func (s *RegistryAuth) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentRegistryAuthVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentRegistryAuthVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsRegistryAuth() (*RegistryAuth, error) {
 	return parseSettingAs[*RegistryAuth](s)
 }

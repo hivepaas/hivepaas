@@ -48,6 +48,18 @@ func (s *Secret) ValueAsBytes() []byte {
 	return []byte(plain)
 }
 
+func (s *Secret) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentSecretVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentSecretVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsSecret() (*Secret, error) {
 	return parseSettingAs[*Secret](s)
 }

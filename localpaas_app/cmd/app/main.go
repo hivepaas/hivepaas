@@ -20,6 +20,7 @@ func main() {
 		fx.Invoke(internal.InitLogger),
 		fx.Invoke(internal.InitConfig),
 		fx.Invoke(internal.InitDBConnection),
+		fx.Invoke(internal.MigrateData), // Migrate data structure of JSON columns
 		fx.Invoke(internal.InitCache),
 		fx.Invoke(internal.InitTaskQueue),
 		fx.Invoke(internal.InitDockerManager),

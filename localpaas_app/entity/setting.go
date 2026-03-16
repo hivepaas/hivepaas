@@ -63,6 +63,7 @@ type Setting struct {
 type SettingData interface {
 	GetType() base.SettingType
 	GetRefObjectIDs() *RefObjectIDs
+	Migrate(setting *Setting) (hasChange bool, err error)
 }
 
 // GetID implements IDEntity interface
@@ -162,4 +163,19 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 		}
 	}
 	return res, nil
+}
+
+func (s *Setting) Migrate() (hasChange bool, err error) {
+	settingData, err := s.Parse()
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+	if settingData == nil {
+		return false, nil
+	}
+	hasChange, err = settingData.Migrate(s)
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+	return hasChange, nil
 }

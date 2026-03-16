@@ -26,6 +26,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/dbservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/emailservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/lpappservice"
@@ -174,6 +175,7 @@ var Provides = []any{
 	notificationservice.NewNotificationService,
 	cronjobservice.NewCronJobService,
 	taskservice.NewTaskService,
+	dbservice.NewDBService,
 
 	// Repo: User
 	repository.NewUserRepo,
@@ -195,6 +197,8 @@ var Provides = []any{
 	repository.NewTaskRepo,
 	// Repo: Sys error
 	repository.NewSysErrorRepo,
+	// Migration
+	repository.NewDataMigrationRepo,
 	// Others
 	repository.NewLoginTrustedDeviceRepo,
 	repository.NewLockRepo,

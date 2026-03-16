@@ -37,6 +37,18 @@ func (s *BasicAuth) MustDecrypt() *BasicAuth {
 	return s
 }
 
+func (s *BasicAuth) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentBasicAuthVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentBasicAuthVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsBasicAuth() (*BasicAuth, error) {
 	return parseSettingAs[*BasicAuth](s)
 }

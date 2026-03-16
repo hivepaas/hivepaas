@@ -50,6 +50,18 @@ func (s *IMService) MustDecrypt() *IMService {
 	return s
 }
 
+func (s *IMService) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentIMServiceVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentIMServiceVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsIMService() (*IMService, error) {
 	return parseSettingAs[*IMService](s)
 }

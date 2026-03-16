@@ -31,6 +31,18 @@ func (s *ProjectSettings) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
+func (s *ProjectSettings) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentProjectSettingsVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentProjectSettingsVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsProjectSettings() (*ProjectSettings, error) {
 	return parseSettingAs[*ProjectSettings](s)
 }

@@ -33,6 +33,18 @@ func (s *APIKey) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
+func (s *APIKey) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentAPIKeyVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentAPIKeyVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsAPIKey() (*APIKey, error) {
 	return parseSettingAs[*APIKey](s)
 }

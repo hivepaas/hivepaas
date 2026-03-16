@@ -36,6 +36,18 @@ func (s *RepoWebhook) MustDecrypt() *RepoWebhook {
 	return s
 }
 
+func (s *RepoWebhook) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentRepoWebhookVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentRepoWebhookVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsRepoWebhook() (*RepoWebhook, error) {
 	return parseSettingAs[*RepoWebhook](s)
 }

@@ -72,6 +72,18 @@ func (s *Email) MustDecrypt() *Email {
 	return s
 }
 
+func (s *Email) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentEmailVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentEmailVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsEmail() (*Email, error) {
 	return parseSettingAs[*Email](s)
 }

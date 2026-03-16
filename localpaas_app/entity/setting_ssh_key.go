@@ -38,6 +38,18 @@ func (s *SSHKey) MustDecrypt() *SSHKey {
 	return s
 }
 
+func (s *SSHKey) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentSSHKeyVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentSSHKeyVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsSSHKey() (*SSHKey, error) {
 	return parseSettingAs[*SSHKey](s)
 }

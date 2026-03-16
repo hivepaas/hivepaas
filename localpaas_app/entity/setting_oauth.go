@@ -43,6 +43,18 @@ func (s *OAuth) MustDecrypt() *OAuth {
 	return s
 }
 
+func (s *OAuth) Migrate(setting *Setting) (hasChange bool, err error) {
+	if CurrentOAuthVersion == setting.Version {
+		return false, nil
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentOAuthVersion
+	setting.MustSetData(s)
+	return true, nil
+}
+
 func (s *Setting) AsOAuth() (*OAuth, error) {
 	// Github-app setting can be parsed as OAuth
 	if s.Type == base.SettingTypeGithubApp {

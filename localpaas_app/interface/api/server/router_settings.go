@@ -50,6 +50,11 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		accessTokenGroup.POST("/test-conn", settingHandler.TestAccessTokenConn)
 	}
 
+	{ // Git credentials group
+		gitCredentialGroup := settingGroup.Group("/git-credentials")
+		gitCredentialGroup.GET("", settingHandler.ListGitCredential)
+	}
+
 	{ // aws group
 		awsGroup := settingGroup.Group("/aws")
 		awsGroup.GET("/:itemID", settingHandler.GetAWS)

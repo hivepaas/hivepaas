@@ -57,6 +57,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc"
@@ -160,6 +161,7 @@ var Provides = []any{
 	notificationuc.NewNotificationUC,
 	imagebuilduc.NewImageBuildUC,
 	systemcleanupuc.NewSystemCleanupUC,
+	gitcredentialuc.NewGitCredentialUC,
 
 	// Service
 	clusterservice.NewClusterService,

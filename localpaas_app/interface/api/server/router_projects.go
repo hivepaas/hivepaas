@@ -76,6 +76,11 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		accessTokenGroup.DELETE("/:itemID", projectHandler.DeleteAccessToken)
 	}
 
+	{ // Git credentials group
+		gitCredentialGroup := projectGroup.Group("/:projectID/git-credentials")
+		gitCredentialGroup.GET("", projectHandler.ListGitCredential)
+	}
+
 	{ // AWS group
 		awsGroup := projectGroup.Group("/:projectID/aws")
 		awsGroup.GET("/:itemID", projectHandler.GetAWS)

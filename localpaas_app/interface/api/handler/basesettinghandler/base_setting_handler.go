@@ -9,6 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc"
@@ -46,6 +47,7 @@ type BaseSettingHandler struct {
 	NotificationUC  *notificationuc.NotificationUC
 	ImageBuildUC    *imagebuilduc.ImageBuildUC
 	SystemCleanupUC *systemcleanupuc.SystemCleanupUC
+	GitCredentialUC *gitcredentialuc.GitCredentialUC
 }
 
 func NewBaseSettingHandler(
@@ -70,6 +72,7 @@ func NewBaseSettingHandler(
 	notificationUC *notificationuc.NotificationUC,
 	imageBuildUC *imagebuilduc.ImageBuildUC,
 	systemCleanupUC *systemcleanupuc.SystemCleanupUC,
+	gitCredentialUC *gitcredentialuc.GitCredentialUC,
 ) *BaseSettingHandler {
 	return &BaseSettingHandler{
 		BaseHandler:     baseHandler,
@@ -93,5 +96,6 @@ func NewBaseSettingHandler(
 		NotificationUC:  notificationUC,
 		ImageBuildUC:    imageBuildUC,
 		SystemCleanupUC: systemCleanupUC,
+		GitCredentialUC: gitCredentialUC,
 	}
 }

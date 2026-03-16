@@ -1,12 +1,16 @@
 package ssldto
 
 import (
+	"time"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
@@ -35,12 +39,18 @@ type GetSSLResp struct {
 
 type SSLResp struct {
 	*settings.BaseSettingResp
-	Certificate  string `json:"certificate"`
-	PrivateKey   string `json:"privateKey"`
-	KeySize      int    `json:"keySize"`
-	Provider     string `json:"provider"`
-	Email        string `json:"email"`
-	SecretMasked bool   `json:"secretMasked,omitempty"`
+	Domain        string            `json:"domain"`
+	Certificate   string            `json:"certificate"`
+	PrivateKey    string            `json:"privateKey"`
+	KeySize       int               `json:"keySize"`
+	Provider      base.SSLProvider  `json:"provider"`
+	Email         string            `json:"email"`
+	AutoRenew     bool              `json:"autoRenew"`
+	RenewableFrom time.Time         `json:"renewableFrom"`
+	RenewableTo   time.Time         `json:"renewableTo"`
+	ExpireAt      time.Time         `json:"expireAt"`
+	NotifyWhen    timeutil.Duration `json:"notifyWhen,omitempty"`
+	SecretMasked  bool              `json:"secretMasked,omitempty"`
 }
 
 func (resp *SSLResp) CopyPrivateKey(field entity.EncryptedField) error {

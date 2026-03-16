@@ -94,7 +94,10 @@ func (client *Client) registerUser(_ context.Context) error {
 	return nil
 }
 
-func (client *Client) ObtainCertificate(ctx context.Context, domains []string) (*certificate.Resource, error) {
+func (client *Client) ObtainCertificate(
+	ctx context.Context,
+	domains []string,
+) (*certificate.Resource, error) {
 	// New users will need to register
 	err := client.registerUser(ctx)
 	if err != nil {
@@ -110,4 +113,46 @@ func (client *Client) ObtainCertificate(ctx context.Context, domains []string) (
 	}
 
 	return certificates, nil
+}
+
+func (client *Client) GetRenewalInfo(
+	ctx context.Context,
+	cert []byte,
+) (*certificate.RenewalInfoResponse, error) {
+	// New users will need to register
+	err := client.registerUser(ctx)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	x509Cert, err := certcrypto.ParsePEMCertificate(cert)
+	if err != nil {
+		return nil, apperrors.New(err).WithMsgLog("failed to parse certificate as x509")
+	}
+
+	renewalInfo, err := client.client.Certificate.GetRenewalInfo(certificate.RenewalInfoRequest{
+		Cert: x509Cert,
+	})
+	if err != nil {
+		return nil, apperrors.New(err).WithMsgLog("failed to query renewal info")
+	}
+
+	return renewalInfo, nil
+}
+
+func (client *Client) ObtainCertificateWithDetails(
+	ctx context.Context,
+	domains []string,
+) (*certificate.Resource, *certificate.RenewalInfoResponse, error) {
+	certificates, err := client.ObtainCertificate(ctx, domains)
+	if err != nil {
+		return nil, nil, apperrors.New(err).WithMsgLog("failed to obtain certificate")
+	}
+
+	renewalInfo, err := client.GetRenewalInfo(ctx, certificates.Certificate)
+	if err != nil {
+		return nil, nil, apperrors.New(err).WithMsgLog("failed to query renewal info")
+	}
+
+	return certificates, renewalInfo, nil
 }

@@ -19576,7 +19576,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "dayDuration" ]
@@ -26080,6 +26080,9 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.CreateSSLReq" : {
         "properties" : {
+          "autoRenew" : {
+            "type" : "boolean"
+          },
           "availableInProjects" : {
             "type" : "boolean"
           },
@@ -26088,6 +26091,9 @@
           },
           "default" : {
             "type" : "boolean"
+          },
+          "domain" : {
+            "type" : "string"
           },
           "email" : {
             "type" : "string"
@@ -26101,6 +26107,9 @@
           "name" : {
             "type" : "string"
           },
+          "notifyWhen" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
           "privateKey" : {
             "type" : "string"
           },
@@ -26108,7 +26117,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
           }
         },
-        "required" : [ "availableInProjects", "certificate", "default", "email", "expireAt", "keySize", "name", "privateKey", "provider" ],
+        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyWhen", "privateKey", "provider" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.CreateSSLResp" : {
@@ -26161,6 +26170,9 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.SSLResp" : {
         "properties" : {
+          "autoRenew" : {
+            "type" : "boolean"
+          },
           "availableInProjects" : {
             "type" : "boolean"
           },
@@ -26172,6 +26184,9 @@
           },
           "default" : {
             "type" : "boolean"
+          },
+          "domain" : {
+            "type" : "string"
           },
           "email" : {
             "type" : "string"
@@ -26194,10 +26209,19 @@
           "name" : {
             "type" : "string"
           },
+          "notifyWhen" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
           "privateKey" : {
             "type" : "string"
           },
           "provider" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
+          },
+          "renewableFrom" : {
+            "type" : "string"
+          },
+          "renewableTo" : {
             "type" : "string"
           },
           "secretMasked" : {
@@ -26216,7 +26240,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "certificate", "createdAt", "email", "id", "keySize", "name", "privateKey", "provider", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "autoRenew", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keySize", "name", "privateKey", "provider", "renewableFrom", "renewableTo", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.UpdateSSLMetaReq" : {
@@ -26251,6 +26275,9 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.UpdateSSLReq" : {
         "properties" : {
+          "autoRenew" : {
+            "type" : "boolean"
+          },
           "availableInProjects" : {
             "type" : "boolean"
           },
@@ -26259,6 +26286,9 @@
           },
           "default" : {
             "type" : "boolean"
+          },
+          "domain" : {
+            "type" : "string"
           },
           "email" : {
             "type" : "string"
@@ -26272,6 +26302,9 @@
           "name" : {
             "type" : "string"
           },
+          "notifyWhen" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
           "privateKey" : {
             "type" : "string"
           },
@@ -26282,7 +26315,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "certificate", "default", "email", "expireAt", "keySize", "name", "privateKey", "provider", "updateVer" ],
+        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyWhen", "privateKey", "provider", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.UpdateSSLResp" : {

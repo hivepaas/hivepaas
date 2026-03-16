@@ -22,6 +22,9 @@ func (s *appService) EnsureSSLConfigFiles(
 	forceRecreate bool,
 	refObjects *entity.RefObjects,
 ) error {
+	if len(sslIDs) == 0 {
+		return nil
+	}
 	certDir := config.Current.DataPathCerts()
 	err := os.MkdirAll(certDir, certDirFileMode)
 	if err != nil {
@@ -60,6 +63,9 @@ func (s *appService) EnsureBasicAuthConfigFiles(
 	forceRecreate bool,
 	refObjects *entity.RefObjects,
 ) error {
+	if len(basicAuthIDs) == 0 {
+		return nil
+	}
 	basicAuthDir := config.Current.DataPathNginxShareBasicAuth()
 	err := os.MkdirAll(basicAuthDir, basicAuthDirFileMode)
 	if err != nil {

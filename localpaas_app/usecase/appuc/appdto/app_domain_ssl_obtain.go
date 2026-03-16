@@ -4,13 +4,15 @@ import (
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 )
 
 const (
-	domainMaxLen = 100
+	domainMaxLen      = 100
+	defaultSslKeySize = 2048
 )
 
 var (
@@ -31,6 +33,7 @@ func NewObtainDomainSSLReq() *ObtainDomainSSLReq {
 
 func (req *ObtainDomainSSLReq) ModifyRequest() error {
 	req.Domain = strings.TrimSpace(strings.ToLower(req.Domain))
+	req.KeySize = gofn.Coalesce(req.KeySize, defaultSslKeySize)
 	return nil
 }
 

@@ -2,6 +2,7 @@ package appuc
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/tiendc/gofn"
@@ -32,17 +33,18 @@ func (uc *AppUC) ObtainDomainSSL(
 		return nil, apperrors.Wrap(err)
 	}
 
-	certificates, err := leClient.ObtainCertificate(ctx, []string{req.Domain})
+	certificates, renewalInfo, err := leClient.ObtainCertificateWithDetails(ctx, []string{req.Domain})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 	appData := &obtainSSLData{
 		ObtainedCerts: certificates,
+		RenewalInfo:   renewalInfo,
 		Email:         email,
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		err = uc.loadAppDataForObtainDomainSSL(ctx, uc.db, req, appData)
+		err = uc.loadAppDataForObtainDomainSSL(ctx, db, req, appData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -76,6 +78,7 @@ type obtainSSLData struct {
 	HttpSettings  *entity.Setting
 	SSLCert       *entity.Setting
 	ObtainedCerts *certificate.Resource
+	RenewalInfo   *certificate.RenewalInfoResponse
 	Email         string
 }
 
@@ -126,17 +129,29 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 		Status:    base.SettingStatusActive,
 		Name:      req.Domain,
 		Kind:      string(base.SSLProviderLetsEncrypt),
+		ObjectID:  data.App.ProjectID,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
 	data.SSLCert = dbSSL
 
 	ssl := &entity.SSL{
+		Domain:      req.Domain,
 		Certificate: string(data.ObtainedCerts.Certificate),
 		PrivateKey:  entity.NewEncryptedField(string(data.ObtainedCerts.PrivateKey)),
 		KeySize:     req.KeySize,
 		Provider:    base.SSLProviderLetsEncrypt,
 		Email:       data.Email,
+	}
+	if data.RenewalInfo != nil {
+		ssl.RenewableFrom = data.RenewalInfo.SuggestedWindow.Start.UTC()
+		ssl.RenewableTo = data.RenewalInfo.SuggestedWindow.End.UTC()
+		if ssl.Provider == base.SSLProviderLetsEncrypt && !ssl.RenewableFrom.IsZero() {
+			ssl.AutoRenew = true
+			// TODO: need a better method to have expiration date of SSLs from Let's encrypt.
+			// For now, just add 30 days from the the suggested renew date.
+			ssl.ExpireAt = ssl.RenewableFrom.Add(time.Hour * 24 * 30) //nolint:mnd
+		}
 	}
 
 	dbSSL.MustSetData(ssl)
@@ -178,12 +193,6 @@ func (uc *AppUC) applyDomainSSL(
 
 	allSSLIDs := appHttpSettings.GetSSLCertIDs()
 	err = uc.appService.EnsureSSLConfigFiles(allSSLIDs, false, refObjects)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	allBasicAuthIDs := appHttpSettings.GetBasicAuthIDs()
-	err = uc.appService.EnsureBasicAuthConfigFiles(allBasicAuthIDs, false, refObjects)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -4,7 +4,7 @@ import type {
     AppSecrets_CreateOne_Res,
     AppSecrets_FindManyPaginated_Res,
     AppSecrets_FindOneById_Res,
-} from "~/projects/api/services/project-apps-services/project-app-secrets";
+} from "~/projects/api/services/project-apps-services";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";

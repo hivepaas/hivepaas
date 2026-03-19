@@ -12,7 +12,7 @@ import type {
     AppSecrets_FindOneById_Res,
     AppSecrets_UpdateOne_Req,
     AppSecrets_UpdateOne_Res,
-} from "~/projects/api/services/project-apps-services/project-app-secrets";
+} from "~/projects/api/services/project-apps-services";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";

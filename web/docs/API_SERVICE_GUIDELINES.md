@@ -76,7 +76,6 @@ export class MyEntitiesApiValidator {
 
 - Create a service class extending `BaseApi` that:
     - Uses `this.client.v1` for HTTP
-    - Sets `WORKSPACE_HEADER` for requests
     - Builds query params via `this.queryBuilder.getInstance()`
     - Returns `Result` (`Ok`/`Err`) and transforms via validator
 
@@ -85,8 +84,6 @@ Example methods:
 ```ts
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
-
-import { WORKSPACE_HEADER } from "@config";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
@@ -108,7 +105,6 @@ export class MyEntitiesApi extends BaseApi {
                 this.client.v1.get("/my-entities", {
                     params: query.build(),
                     signal,
-                    headers: { [WORKSPACE_HEADER]: req.meta.workspaceId },
                 }),
             ).pipe(
                 map(this.validator.findMany),
@@ -299,7 +295,6 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 - **Validation**: Always use shared schemas like `PagingMetaApiSchema`. Avoid custom pagination schemas.
 - **Dates**: Use `z.coerce.date()` for incoming dates; optional/nullable per requirements.
 - **Result Pattern**: Services must return `Result` (`Ok`/`Err`); hooks unwrap with `match` and rethrow/notify.
-- **Workspace Meta**: Always pass `workspaceId` via `WORKSPACE_HEADER` and `ApiRequestBase` meta.
 - **Query Keys**: Centralize keys in `data/constants`. Never hardcode literals in hooks/queries/commands.
 - **No Data Conversion in Data Layer**: Do not map/transform inside queries/commands; handle conversion in UI/forms or dedicated mappers before calling the data layer.
 - **Module Isolation**: Keep module code within the module. Move shared code to `src/application/shared` or `src/ui-kit`.
@@ -324,7 +319,6 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 ## QA Checklist
 
 - Queries resolve with correct types; validators enforce shapes.
-- All services set `WORKSPACE_HEADER` and use QueryBuilder.
 - Lint/typecheck pass; no direct `antd` imports (use `@ui-kit`).
 - Query keys added and used consistently.
 - Commands invalidate or update caches appropriately.

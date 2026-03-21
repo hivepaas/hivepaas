@@ -1,4 +1,5 @@
-export * from "./projects";
 export * from "./project-apps";
-export * from "./project-secrets";
 export * from "./project-env-vars";
+export * from "./project-registry-auth";
+export * from "./project-secrets";
+export * from "./projects";

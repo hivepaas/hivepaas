@@ -11,6 +11,10 @@ import {
     ProjectAppsApiValidator,
     ProjectEnvVarsApi,
     ProjectEnvVarsApiValidator,
+    ProjectGitCredentialsApi,
+    ProjectGitCredentialsApiValidator,
+    ProjectRegistryAuthApi,
+    ProjectRegistryAuthApiValidator,
     ProjectSecretsApi,
     ProjectSecretsApiValidator,
     ProjectsApi,
@@ -28,6 +32,8 @@ function createApi() {
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
+    const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
+    const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
 
     return {
         projects: {
@@ -49,6 +55,12 @@ function createApi() {
             },
             envVars: {
                 $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),
+            },
+            gitCredentials: {
+                $: new ProjectGitCredentialsApi(projectGitCredentialsApiValidator),
+            },
+            registryAuth: {
+                $: new ProjectRegistryAuthApi(projectRegistryAuthApiValidator),
             },
         },
     };

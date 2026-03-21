@@ -41,13 +41,17 @@ export class AppDeploymentSettingsApi extends BaseApi {
         req: AppDeploymentSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDeploymentSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, appID, updateVer, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/deployment-settings`, payload, {
-                    signal,
-                }),
+                this.client.v1.put(
+                    `/projects/${projectID}/apps/${appID}/deployment-settings`,
+                    { ...payload, updateVer },
+                    {
+                        signal,
+                    },
+                ),
             ).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),

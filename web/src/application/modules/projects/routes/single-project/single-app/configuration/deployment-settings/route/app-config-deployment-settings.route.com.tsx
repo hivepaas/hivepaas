@@ -4,12 +4,11 @@ import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
+import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
 import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
-import { type AppDeploymentSettings } from "~/projects/domain";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
-import { PageError } from "@application/shared/pages";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -19,6 +18,60 @@ import { AppConfigDeploymentSettingsForm } from "../form";
 import { type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
 import { type AppConfigDeploymentSettingsFormRef } from "../types";
 
+type DeploymentSettingsUpdatePayload = AppDeploymentSettings_UpdateOne_Req["data"]["payload"];
+
+function buildNotificationPayload(
+    notification: AppConfigDeploymentSettingsFormSchemaOutput["notification"],
+): DeploymentSettingsUpdatePayload["notification"] {
+    if (!notification) {
+        return {
+            successUseDefault: false,
+            failureUseDefault: false,
+        };
+    }
+    return {
+        successUseDefault: notification.useDefaultOnSuccess,
+        ...(notification.success?.id ? { success: { id: notification.success.id } } : {}),
+        failureUseDefault: notification.useDefaultOnFailure,
+        ...(notification.failure?.id ? { failure: { id: notification.failure.id } } : {}),
+    };
+}
+
+function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOutput): DeploymentSettingsUpdatePayload {
+    const base = {
+        command: values.command ?? "",
+        workingDir: values.workingDir ?? "",
+        preDeploymentCommand: values.preDeploymentCommand ?? "",
+        postDeploymentCommand: values.postDeploymentCommand ?? "",
+        notification: buildNotificationPayload(values.notification),
+    };
+
+    if (values.activeMethod === EAppDeploymentMethod.Repo) {
+        return {
+            ...base,
+            activeMethod: values.activeMethod,
+            repoSource: {
+                buildTool: values.repoSource.buildTool,
+                repoType: values.repoSource.repoType,
+                repoUrl: values.repoSource.repoUrl,
+                repoRef: values.repoSource.repoRef,
+                credentials: { id: values.repoSource.credentials?.id ?? "" },
+                imageName: values.repoSource.imageName ?? "",
+            },
+        };
+    }
+
+    // Contract marks `repoSource` required on payload; Image flow only sends `imageSource`.
+    return {
+        ...base,
+        activeMethod: values.activeMethod,
+        imageSource: {
+            image: values.image,
+            registryAuth: { id: values.registryAuth?.id ?? "" },
+        },
+    } as DeploymentSettingsUpdatePayload;
+}
+
 export function AppConfigDeploymentSettingsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigDeploymentSettingsFormRef>(null);
@@ -26,7 +79,7 @@ export function AppConfigDeploymentSettingsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading, error, refetch } = AppDeploymentSettingsQueries.useFindOne({
+    const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne({
         projectID: projectId,
         appID: appId,
     });
@@ -51,81 +104,21 @@ export function AppConfigDeploymentSettingsRoute() {
         invariant(appId, "appId must be defined");
         invariant(data, "data must be defined");
 
-        const currentSettings = data.data;
-
-        const repoCredentials =
-            currentSettings.activeMethod === EAppDeploymentMethod.Repo
-                ? currentSettings.repoSource.credentials
-                : { id: "", name: "", type: "" as never, status: "" as never, updateVer: 0, createdAt: new Date() };
-
-        const repoPushToRegistry =
-            currentSettings.activeMethod === EAppDeploymentMethod.Repo
-                ? currentSettings.repoSource.pushToRegistry
-                : { id: "", name: "", type: "" as never, status: "" as never, updateVer: 0, createdAt: new Date() };
-
-        const imageRegistryAuth =
-            currentSettings.activeMethod === EAppDeploymentMethod.Image
-                ? currentSettings.registryAuth
-                : { id: "", name: "", type: "" as never, status: "" as never, updateVer: 0, createdAt: new Date() };
-
-        const payload: AppDeploymentSettings =
-            values.activeMethod === EAppDeploymentMethod.Repo
-                ? {
-                      activeMethod: values.activeMethod,
-                      command: values.command,
-                      workingDir: values.workingDir,
-                      preDeploymentCommand: values.preDeploymentCommand,
-                      postDeploymentCommand: values.postDeploymentCommand,
-                      updateVer: currentSettings.updateVer,
-                      notification: currentSettings.notification,
-                      repoSource: {
-                          buildTool: values.repoSource.buildTool,
-                          repoType: values.repoSource.repoType,
-                          repoUrl: values.repoSource.repoUrl,
-                          repoRef: values.repoSource.repoRef,
-                          dockerfilePath: values.repoSource.dockerfilePath ?? "",
-                          imageName: values.repoSource.imageName ?? "",
-                          imageTags: values.repoSource.imageTags ?? "",
-                          credentials: repoCredentials,
-                          pushToRegistry: repoPushToRegistry,
-                      },
-                  }
-                : {
-                      activeMethod: values.activeMethod,
-                      command: values.command,
-                      workingDir: values.workingDir,
-                      preDeploymentCommand: values.preDeploymentCommand,
-                      postDeploymentCommand: values.postDeploymentCommand,
-                      updateVer: currentSettings.updateVer,
-                      notification: currentSettings.notification,
-                      image: values.image,
-                      registryAuth: imageRegistryAuth,
-                  };
+        const {
+            data: { updateVer },
+        } = data;
 
         update({
             projectID: projectId,
             appID: appId,
-            payload,
-            updateVer: currentSettings.updateVer,
+            updateVer,
+            payload: mapFormValuesToPayload(values),
         });
     }
 
     if (isLoading) {
         return <AppLoader />;
     }
-
-    // if (error) {
-    //     return (
-    //         <PageError
-    //             error={error}
-    //             onRetry={refetch}
-    //         />
-    //     );
-    // }
-
-    // invariant(data, "data must be defined");
-
-    // const { data: settings } = data;
 
     return (
         <div className="flex flex-col gap-4">

@@ -18,8 +18,10 @@ export type RepoMethod = BaseDeploymentSettings & {
 
 export type ImageMethod = BaseDeploymentSettings & {
     activeMethod: typeof EAppDeploymentMethod.Image;
-    image: string;
-    registryAuth: SettingsBaseEntity;
+    imageSource: {
+        image: string;
+        registryAuth: SettingsBaseEntity;
+    };
 };
 
 export type BaseDeploymentSettings = {
@@ -29,8 +31,10 @@ export type BaseDeploymentSettings = {
     postDeploymentCommand?: string;
 
     notification?: {
-        success: SettingsBaseEntity;
-        failure: SettingsBaseEntity;
+        successUseDefault: boolean;
+        success?: { id: string; name: string } | null;
+        failureUseDefault: boolean;
+        failure?: { id: string; name: string } | null;
     };
 
     updateVer: number;

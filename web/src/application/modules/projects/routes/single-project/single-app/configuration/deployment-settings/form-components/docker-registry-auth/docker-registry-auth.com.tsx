@@ -39,7 +39,7 @@ export function DockerRegistryAuth() {
     const {
         field: registryAuth,
         fieldState: { invalid: isRegistryAuthInvalid, error: registryAuthError },
-    } = useController({ control, name: "registryAuth" });
+    } = useController({ control, name: "imageSource.registryAuth" });
 
     const comboboxOptions = useMemo(() => {
         return registryAuths.map(auth => {

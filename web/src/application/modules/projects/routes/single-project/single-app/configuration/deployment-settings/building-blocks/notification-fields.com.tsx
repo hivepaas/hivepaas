@@ -18,13 +18,13 @@ export function NotificationFields() {
 
     const { field: useDefaultOnSuccess } = useController({
         control,
-        name: "notification.useDefaultOnSuccess",
+        name: "notification.successUseDefault",
         defaultValue: false,
     });
 
     const { field: useDefaultOnFailure } = useController({
         control,
-        name: "notification.useDefaultOnFailure",
+        name: "notification.failureUseDefault",
         defaultValue: false,
     });
 

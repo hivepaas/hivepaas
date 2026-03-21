@@ -30,9 +30,9 @@ function buildNotificationPayload(
         };
     }
     return {
-        successUseDefault: notification.useDefaultOnSuccess,
+        successUseDefault: notification.successUseDefault,
         ...(notification.success?.id ? { success: { id: notification.success.id } } : {}),
-        failureUseDefault: notification.useDefaultOnFailure,
+        failureUseDefault: notification.failureUseDefault,
         ...(notification.failure?.id ? { failure: { id: notification.failure.id } } : {}),
     };
 }
@@ -66,8 +66,8 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
         ...base,
         activeMethod: values.activeMethod,
         imageSource: {
-            image: values.image,
-            registryAuth: { id: values.registryAuth?.id ?? "" },
+            image: values.imageSource.image,
+            registryAuth: { id: values.imageSource.registryAuth?.id ?? "" },
         },
     } as DeploymentSettingsUpdatePayload;
 }
@@ -102,16 +102,11 @@ export function AppConfigDeploymentSettingsRoute() {
     function handleSubmit(values: AppConfigDeploymentSettingsFormSchemaOutput) {
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
-        invariant(data, "data must be defined");
-
-        const {
-            data: { updateVer },
-        } = data;
 
         update({
             projectID: projectId,
             appID: appId,
-            updateVer,
+            updateVer: data?.data.updateVer ?? 0,
             payload: mapFormValuesToPayload(values),
         });
     }

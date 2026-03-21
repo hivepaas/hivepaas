@@ -31,11 +31,11 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
         preDeploymentCommand: data.preDeploymentCommand ?? "",
         postDeploymentCommand: data.postDeploymentCommand ?? "",
         notification: {
-            useDefaultOnSuccess: false,
+            successUseDefault: data.notification?.successUseDefault ?? false,
             success: data.notification?.success
                 ? { id: data.notification.success.id, name: data.notification.success.name }
                 : undefined,
-            useDefaultOnFailure: false,
+            failureUseDefault: data.notification?.failureUseDefault ?? false,
             failure: data.notification?.failure
                 ? { id: data.notification.failure.id, name: data.notification.failure.name }
                 : undefined,
@@ -63,8 +63,10 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
     return {
         ...base,
         activeMethod: EAppDeploymentMethod.Image,
-        image: data.image,
-        registryAuth: { id: data.registryAuth.id, name: data.registryAuth.name },
+        imageSource: {
+            image: data.imageSource.image,
+            registryAuth: { id: data.imageSource.registryAuth.id, name: data.imageSource.registryAuth.name },
+        },
     };
 }
 
@@ -74,15 +76,14 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
             ? mapDefaultValues(defaultValues)
             : {
                   activeMethod: EAppDeploymentMethod.Image,
-                  image: "",
-                  registryAuth: undefined,
+                  imageSource: { image: "", registryAuth: undefined },
                   command: "",
                   workingDir: "",
                   preDeploymentCommand: "",
                   postDeploymentCommand: "",
                   notification: {
-                      useDefaultOnSuccess: false,
-                      useDefaultOnFailure: false,
+                      successUseDefault: false,
+                      failureUseDefault: false,
                   },
               },
         resolver: zodResolver(AppConfigDeploymentSettingsFormSchema),

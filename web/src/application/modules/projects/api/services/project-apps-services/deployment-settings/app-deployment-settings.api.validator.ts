@@ -18,8 +18,20 @@ const BaseDeploymentSettingsSchema = z.object({
     postDeploymentCommand: z.string().optional(),
     notification: z
         .object({
-            success: SettingsBaseEntitySchema,
-            failure: SettingsBaseEntitySchema,
+            successUseDefault: z.boolean(),
+            success: z
+                .object({
+                    id: z.string(),
+                    name: z.string(),
+                })
+                .nullish(),
+            failureUseDefault: z.boolean(),
+            failure: z
+                .object({
+                    id: z.string(),
+                    name: z.string(),
+                })
+                .nullish(),
         })
         .optional(),
     updateVer: z.number(),
@@ -42,8 +54,10 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
 
 const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
     activeMethod: z.literal(EAppDeploymentMethod.Image),
-    image: z.string(),
-    registryAuth: SettingsBaseEntitySchema,
+    imageSource: z.object({
+        image: z.string(),
+        registryAuth: SettingsBaseEntitySchema,
+    }),
 });
 
 const AppDeploymentSettingsSchema = z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema]);

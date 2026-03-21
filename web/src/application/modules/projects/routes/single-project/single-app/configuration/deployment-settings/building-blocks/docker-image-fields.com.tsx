@@ -19,7 +19,7 @@ export function DockerImageFields() {
     const {
         field: image,
         fieldState: { invalid: isImageInvalid, error: imageError },
-    } = useController({ control, name: "image" });
+    } = useController({ control, name: "imageSource.image" });
 
     return (
         <>

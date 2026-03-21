@@ -1,17 +1,13 @@
-import { Checkbox, FieldError } from "@components/ui";
+import { Checkbox } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
-import { Combobox, InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
+import { NotificationSelect } from "../form-components";
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
-
-const MOCK_NOTIFICATIONS = [
-    { value: { id: "notif-1", name: "Email Notification" }, label: "Email Notification" },
-    { value: { id: "notif-2", name: "Slack Notification" }, label: "Slack Notification" },
-];
 
 export function NotificationFields() {
     const { control } = useFormContext<
@@ -22,37 +18,25 @@ export function NotificationFields() {
 
     const { field: useDefaultOnSuccess } = useController({
         control,
-        name: "notification.useDefaultOnSuccess",
+        name: "notification.successUseDefault",
         defaultValue: false,
-    });
-
-    const {
-        field: success,
-        fieldState: { invalid: isSuccessInvalid, error: successError },
-    } = useController({
-        control,
-        name: "notification.success",
     });
 
     const { field: useDefaultOnFailure } = useController({
         control,
-        name: "notification.useDefaultOnFailure",
+        name: "notification.failureUseDefault",
         defaultValue: false,
-    });
-
-    const {
-        field: failure,
-        fieldState: { invalid: isFailureInvalid, error: failureError },
-    } = useController({
-        control,
-        name: "notification.failure",
     });
 
     return (
         <>
             <InfoBlock
-                title="On Success Use Default"
-                description="Use the default notification settings on success"
+                title={
+                    <LabelWithInfo
+                        label="On Success Use Default"
+                        content="Use the default notification settings on success"
+                    />
+                }
             >
                 <Checkbox
                     checked={useDefaultOnSuccess.value}
@@ -60,27 +44,18 @@ export function NotificationFields() {
                 />
             </InfoBlock>
 
-            <InfoBlock title="On Success">
-                <Combobox
-                    options={MOCK_NOTIFICATIONS}
-                    value={success.value?.id ?? null}
-                    onChange={(_, option) => {
-                        success.onChange(option ?? undefined);
-                    }}
-                    placeholder="None"
-                    searchable={false}
-                    closeOnSelect
-                    emptyText="No notifications available"
-                    className="max-w-[400px]"
-                    valueKey="id"
-                    aria-invalid={isSuccessInvalid}
-                />
-                <FieldError errors={[successError]} />
-            </InfoBlock>
+            <NotificationSelect
+                name="notification.success"
+                title="On Success"
+            />
 
             <InfoBlock
-                title="On Failure Use Default"
-                description="Use the default notification settings on failure"
+                title={
+                    <LabelWithInfo
+                        label="On Failure Use Default"
+                        content="Use the default notification settings on failure"
+                    />
+                }
             >
                 <Checkbox
                     checked={useDefaultOnFailure.value}
@@ -88,23 +63,10 @@ export function NotificationFields() {
                 />
             </InfoBlock>
 
-            <InfoBlock title="On Failure">
-                <Combobox
-                    options={MOCK_NOTIFICATIONS}
-                    value={failure.value?.id ?? null}
-                    onChange={(_, option) => {
-                        failure.onChange(option ?? undefined);
-                    }}
-                    placeholder="None"
-                    searchable={false}
-                    closeOnSelect
-                    emptyText="No notifications available"
-                    className="max-w-[400px]"
-                    valueKey="id"
-                    aria-invalid={isFailureInvalid}
-                />
-                <FieldError errors={[failureError]} />
-            </InfoBlock>
+            <NotificationSelect
+                name="notification.failure"
+                title="On Failure"
+            />
         </>
     );
 }

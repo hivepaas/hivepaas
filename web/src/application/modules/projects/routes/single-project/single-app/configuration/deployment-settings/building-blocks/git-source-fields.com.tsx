@@ -5,19 +5,14 @@ import { EBuildTool, ERepoType } from "~/projects/module-shared/enums";
 import { Combobox, InfoBlock } from "@application/shared/components";
 
 import {
+    GitCredentialSelect,
+    GitRepositoryInput,
+    PushToRegistrySelect,
+} from "../form-components";
+import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
-
-const MOCK_GIT_CREDENTIALS = [
-    { value: { id: "cred-1", name: "GitHub Token" }, label: "GitHub Token" },
-    { value: { id: "cred-2", name: "GitLab Token" }, label: "GitLab Token" },
-];
-
-const MOCK_REGISTRY_CREDENTIALS = [
-    { value: { id: "reg-1", name: "Docker Hub" }, label: "Docker Hub" },
-    { value: { id: "reg-2", name: "GitHub Container Registry" }, label: "GitHub Container Registry" },
-];
 
 const BUILD_TOOL_OPTIONS = [
     { value: { id: EBuildTool.Docker as string }, label: "Docker" },
@@ -36,16 +31,6 @@ export function GitSourceFields() {
     >();
 
     const {
-        field: credentials,
-        fieldState: { invalid: isCredentialsInvalid, error: credentialsError },
-    } = useController({ control, name: "repoSource.credentials" });
-
-    const {
-        field: repoUrl,
-        fieldState: { invalid: isRepoUrlInvalid, error: repoUrlError },
-    } = useController({ control, name: "repoSource.repoUrl" });
-
-    const {
         field: repoRef,
         fieldState: { invalid: isRepoRefInvalid, error: repoRefError },
     } = useController({ control, name: "repoSource.repoRef" });
@@ -54,11 +39,6 @@ export function GitSourceFields() {
         field: dockerfilePath,
         fieldState: { invalid: isDockerfilePathInvalid, error: dockerfilePathError },
     } = useController({ control, name: "repoSource.dockerfilePath" });
-
-    const {
-        field: pushToRegistry,
-        fieldState: { invalid: isPushToRegistryInvalid, error: pushToRegistryError },
-    } = useController({ control, name: "repoSource.pushToRegistry" });
 
     const {
         field: imageName,
@@ -77,40 +57,9 @@ export function GitSourceFields() {
 
     return (
         <>
-            <InfoBlock title="Git Credential">
-                <Combobox
-                    options={MOCK_GIT_CREDENTIALS}
-                    value={credentials.value?.id ?? null}
-                    onChange={(_, option) => {
-                        credentials.onChange(option ?? null);
-                    }}
-                    placeholder="Select git credential"
-                    searchable={false}
-                    closeOnSelect
-                    className="max-w-[400px]"
-                    valueKey="id"
-                    aria-invalid={isCredentialsInvalid}
-                />
-                <FieldError errors={[credentialsError]} />
-            </InfoBlock>
+            <GitCredentialSelect />
 
-            <InfoBlock
-                title={
-                    <>
-                        Git Repository <span className="text-destructive">*</span>
-                    </>
-                }
-            >
-                <Input
-                    {...repoUrl}
-                    value={repoUrl.value}
-                    onChange={repoUrl.onChange}
-                    placeholder="https://domain/path/repo"
-                    aria-invalid={isRepoUrlInvalid}
-                    className="max-w-[400px]"
-                />
-                <FieldError errors={[repoUrlError]} />
-            </InfoBlock>
+            <GitRepositoryInput />
 
             <InfoBlock
                 title={
@@ -142,22 +91,7 @@ export function GitSourceFields() {
                 <FieldError errors={[dockerfilePathError]} />
             </InfoBlock>
 
-            <InfoBlock title="Registry Credentials">
-                <Combobox
-                    options={MOCK_REGISTRY_CREDENTIALS}
-                    value={pushToRegistry.value?.id ?? null}
-                    onChange={(_, option) => {
-                        pushToRegistry.onChange(option ?? null);
-                    }}
-                    placeholder="Select registry credentials"
-                    searchable={false}
-                    closeOnSelect
-                    className="max-w-[400px]"
-                    valueKey="id"
-                    aria-invalid={isPushToRegistryInvalid}
-                />
-                <FieldError errors={[pushToRegistryError]} />
-            </InfoBlock>
+            <PushToRegistrySelect />
 
             <InfoBlock title="Image Repository Name">
                 <Input

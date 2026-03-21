@@ -1,3 +1,5 @@
+import { type EAppDeploymentMethod, type EBuildTool, type ERepoType } from "~/projects/module-shared/enums";
+
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
 import { type AppDeploymentSettings } from "../../../../domain/apps/deployment-settings";
@@ -9,6 +11,39 @@ export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
     appID: string;
     updateVer: number;
-    payload: AppDeploymentSettings;
+    payload: {
+        activeMethod: EAppDeploymentMethod;
+
+        imageSource?: {
+            image: string;
+            registryAuth: {
+                id: string;
+            };
+        };
+        repoSource: {
+            buildTool: EBuildTool;
+            repoType: ERepoType;
+            repoUrl: string;
+            repoRef: string;
+            credentials: {
+                id: string;
+            };
+            imageName: string;
+        };
+        command: string;
+        workingDir: string;
+        preDeploymentCommand: string;
+        postDeploymentCommand: string;
+        notification: {
+            successUseDefault: boolean;
+            success?: {
+                id: string;
+            };
+            failureUseDefault: boolean;
+            failure?: {
+                id: string;
+            };
+        };
+    };
 }>;
 export type AppDeploymentSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;

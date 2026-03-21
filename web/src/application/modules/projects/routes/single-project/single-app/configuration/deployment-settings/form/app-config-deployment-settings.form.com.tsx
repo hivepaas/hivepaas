@@ -31,11 +31,11 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
         preDeploymentCommand: data.preDeploymentCommand ?? "",
         postDeploymentCommand: data.postDeploymentCommand ?? "",
         notification: {
-            useDefaultOnSuccess: false,
+            successUseDefault: data.notification?.successUseDefault ?? false,
             success: data.notification?.success
                 ? { id: data.notification.success.id, name: data.notification.success.name }
                 : undefined,
-            useDefaultOnFailure: false,
+            failureUseDefault: data.notification?.failureUseDefault ?? false,
             failure: data.notification?.failure
                 ? { id: data.notification.failure.id, name: data.notification.failure.name }
                 : undefined,
@@ -63,8 +63,10 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
     return {
         ...base,
         activeMethod: EAppDeploymentMethod.Image,
-        image: data.image,
-        registryAuth: { id: data.registryAuth.id, name: data.registryAuth.name },
+        imageSource: {
+            image: data.imageSource.image,
+            registryAuth: { id: data.imageSource.registryAuth.id, name: data.imageSource.registryAuth.name },
+        },
     };
 }
 
@@ -74,15 +76,14 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
             ? mapDefaultValues(defaultValues)
             : {
                   activeMethod: EAppDeploymentMethod.Image,
-                  image: "",
-                  registryAuth: undefined,
+                  imageSource: { image: "", registryAuth: undefined },
                   command: "",
                   workingDir: "",
                   preDeploymentCommand: "",
                   postDeploymentCommand: "",
                   notification: {
-                      useDefaultOnSuccess: false,
-                      useDefaultOnFailure: false,
+                      successUseDefault: false,
+                      failureUseDefault: false,
                   },
               },
         resolver: zodResolver(AppConfigDeploymentSettingsFormSchema),
@@ -127,28 +128,22 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <div className="rounded-lg border bg-card p-6">
-                        <h3 className="text-lg font-medium mb-4">Deployment Configuration</h3>
-                        <div className="flex flex-col gap-6">
-                            <MethodSelector />
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Deployment Configuration</h3>
+                    <div className="flex flex-col gap-6 px-2">
+                        <MethodSelector />
 
-                            {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields />}
-                            {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields />}
-                        </div>
+                        {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields />}
+                        {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields />}
                     </div>
 
-                    <div className="rounded-lg border bg-card p-6">
-                        <h3 className="text-lg font-medium mb-4">Run Configuration</h3>
-                        <div className="flex flex-col gap-6">
-                            <RunConfigurationFields />
-                        </div>
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Run Configuration</h3>
+                    <div className="flex flex-col gap-6 px-2">
+                        <RunConfigurationFields />
                     </div>
 
-                    <div className="rounded-lg border bg-card p-6">
-                        <h3 className="text-lg font-medium mb-4">Notification Configuration</h3>
-                        <div className="flex flex-col gap-6">
-                            <NotificationFields />
-                        </div>
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Notification Configuration</h3>
+                    <div className="flex flex-col gap-6 px-2">
+                        <NotificationFields />
                     </div>
 
                     {children}

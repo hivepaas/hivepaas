@@ -7,9 +7,9 @@ const SettingsRefSchema = z.object({
 });
 
 const NotificationSchema = z.object({
-    useDefaultOnSuccess: z.boolean(),
+    successUseDefault: z.boolean(),
     success: SettingsRefSchema.optional(),
-    useDefaultOnFailure: z.boolean(),
+    failureUseDefault: z.boolean(),
     failure: SettingsRefSchema.optional(),
 });
 
@@ -38,8 +38,10 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
 
 const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
     activeMethod: z.literal(EAppDeploymentMethod.Image),
-    image: z.string().min(1, "Docker Image is required"),
-    registryAuth: SettingsRefSchema.optional(),
+    imageSource: z.object({
+        image: z.string().min(1, "Docker Image is required"),
+        registryAuth: SettingsRefSchema.optional(),
+    }),
 });
 
 export const AppConfigDeploymentSettingsFormSchema = z.discriminatedUnion("activeMethod", [

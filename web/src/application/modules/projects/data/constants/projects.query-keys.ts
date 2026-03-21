@@ -28,4 +28,14 @@ export const QK = {
      * Project App Deployment Settings
      */
     "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",
+    /*
+     * Project Git Credentials
+     */
+    "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",
+    "projects.git-credentials.$.find-many-repos": "projects.git-credentials.$.find-many-repos",
+    /*
+     * Project Registry Auth
+     */
+    "projects.registry-auth.$.find-many-paginated": "projects.registry-auth.$.find-many-paginated",
+    "projects.registry-auth.$.find-one-by-id": "projects.registry-auth.$.find-one-by-id",
 } as const;

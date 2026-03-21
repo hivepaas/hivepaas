@@ -19,7 +19,10 @@ const NotificationViaEmailSchema = z.object({
     toProjectMembers: z.boolean(),
     toProjectOwners: z.boolean(),
     toAllAdmins: z.boolean(),
-    toAddresses: z.array(z.string()),
+    toAddresses: z
+        .array(z.string())
+        .nullish()
+        .transform(addresses => addresses ?? []),
 });
 
 const NotificationViaSlackSchema = z.object({

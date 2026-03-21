@@ -4,7 +4,7 @@ import { match } from "oxide.ts";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import { type AppDeploymentSettings } from "../../../domain/apps/deployment-settings";
+import { type AppDeploymentSettings_UpdateOne_Req } from "../../../api/services";
 import { ProjectsApiContext } from "../../api-context/projects.api.context";
 
 function createHook() {
@@ -30,12 +30,7 @@ function createHook() {
 
         const mutations = useMemo(
             () => ({
-                updateOne: async (request: {
-                    projectID: string;
-                    appID: string;
-                    updateVer: number;
-                    payload: AppDeploymentSettings;
-                }) => {
+                updateOne: async (request: AppDeploymentSettings_UpdateOne_Req["data"]) => {
                     const result = await api.projects.apps.deploymentSettings.$.updateOne({ data: request });
                     return match(result, {
                         Ok: _ => _,

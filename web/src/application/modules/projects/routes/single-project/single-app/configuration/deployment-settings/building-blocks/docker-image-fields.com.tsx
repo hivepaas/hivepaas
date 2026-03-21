@@ -1,17 +1,13 @@
 import { FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
-import { Combobox, InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
+import { DockerRegistryAuth } from "../form-components";
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
-
-const MOCK_REGISTRY_CREDENTIALS = [
-    { value: { id: "reg-1", name: "Docker Hub" }, label: "Docker Hub" },
-    { value: { id: "reg-2", name: "GitHub Container Registry" }, label: "GitHub Container Registry" },
-];
 
 export function DockerImageFields() {
     const { control } = useFormContext<
@@ -23,20 +19,16 @@ export function DockerImageFields() {
     const {
         field: image,
         fieldState: { invalid: isImageInvalid, error: imageError },
-    } = useController({ control, name: "image" });
-
-    const {
-        field: registryAuth,
-        fieldState: { invalid: isRegistryAuthInvalid, error: registryAuthError },
-    } = useController({ control, name: "registryAuth" });
+    } = useController({ control, name: "imageSource.image" });
 
     return (
         <>
             <InfoBlock
                 title={
-                    <>
-                        Docker Image <span className="text-destructive">*</span>
-                    </>
+                    <LabelWithInfo
+                        label="Docker Image"
+                        isRequired
+                    />
                 }
             >
                 <Input
@@ -50,22 +42,7 @@ export function DockerImageFields() {
                 <FieldError errors={[imageError]} />
             </InfoBlock>
 
-            <InfoBlock title="Registry Credential">
-                <Combobox
-                    options={MOCK_REGISTRY_CREDENTIALS}
-                    value={registryAuth.value?.id ?? null}
-                    onChange={(_, option) => {
-                        registryAuth.onChange(option ?? null);
-                    }}
-                    placeholder="Select registry credential"
-                    searchable={false}
-                    closeOnSelect
-                    className="max-w-[400px]"
-                    valueKey="id"
-                    aria-invalid={isRegistryAuthInvalid}
-                />
-                <FieldError errors={[registryAuthError]} />
-            </InfoBlock>
+            <DockerRegistryAuth />
         </>
     );
 }

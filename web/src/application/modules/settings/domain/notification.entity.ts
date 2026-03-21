@@ -18,7 +18,7 @@ export interface NotificationViaDiscord {
     webhook?: SettingsBaseEntity;
 }
 
-export interface NotificationEntity extends SettingsBaseEntity {
+export interface SettingNotification extends SettingsBaseEntity {
     type: typeof ESettingType.Notification;
     viaEmail?: NotificationViaEmail;
     viaSlack?: NotificationViaSlack;

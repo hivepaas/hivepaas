@@ -21,6 +21,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/ssluc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/usersettings/apikeyuc"
 )
@@ -48,6 +49,7 @@ type BaseSettingHandler struct {
 	ImageBuildUC    *imagebuilduc.ImageBuildUC
 	SystemCleanupUC *systemcleanupuc.SystemCleanupUC
 	GitCredentialUC *gitcredentialuc.GitCredentialUC
+	SSLRenewalUC    *sslrenewaluc.SSLRenewalUC
 }
 
 func NewBaseSettingHandler(
@@ -73,6 +75,7 @@ func NewBaseSettingHandler(
 	imageBuildUC *imagebuilduc.ImageBuildUC,
 	systemCleanupUC *systemcleanupuc.SystemCleanupUC,
 	gitCredentialUC *gitcredentialuc.GitCredentialUC,
+	sslRenewalUC *sslrenewaluc.SSLRenewalUC,
 ) *BaseSettingHandler {
 	return &BaseSettingHandler{
 		BaseHandler:     baseHandler,
@@ -97,5 +100,6 @@ func NewBaseSettingHandler(
 		ImageBuildUC:    imageBuildUC,
 		SystemCleanupUC: systemCleanupUC,
 		GitCredentialUC: gitCredentialUC,
+		SSLRenewalUC:    sslRenewalUC,
 	}
 }

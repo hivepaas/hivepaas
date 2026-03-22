@@ -14,7 +14,7 @@ type NginxService interface {
 	GetNginxSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartNginxSwarmService(ctx context.Context) error
 
-	ReloadNginxConfig(ctx context.Context) error
+	ReloadNginxConfig(ctx context.Context, restartServiceOnFailure bool) error
 	ResetNginxConfig(ctx context.Context) error
 
 	ApplyAppConfig(ctx context.Context, app *entity.App, data *AppConfigData) error

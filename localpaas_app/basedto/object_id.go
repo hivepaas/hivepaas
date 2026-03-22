@@ -1,6 +1,10 @@
 package basedto
 
-import "time"
+import (
+	"time"
+
+	"github.com/localpaas/localpaas/localpaas_app/entity"
+)
 
 // ObjectIDReq request input for an object id
 type ObjectIDReq struct {
@@ -14,12 +18,27 @@ func (req *ObjectIDReq) ToIDString() string {
 	return req.ID
 }
 
+func (req *ObjectIDReq) ToEntity() *entity.ObjectID {
+	if req == nil {
+		return nil
+	}
+	return &entity.ObjectID{ID: req.ID}
+}
+
 type ObjectIDSliceReq []*ObjectIDReq
 
 func (req ObjectIDSliceReq) ToIDStringSlice() []string {
 	result := make([]string, 0, len(req))
 	for _, obj := range req {
 		result = append(result, obj.ID)
+	}
+	return result
+}
+
+func (req ObjectIDSliceReq) ToEntity() entity.ObjectIDSlice {
+	result := make(entity.ObjectIDSlice, 0, len(req))
+	for _, obj := range req {
+		result = append(result, obj.ToEntity())
 	}
 	return result
 }

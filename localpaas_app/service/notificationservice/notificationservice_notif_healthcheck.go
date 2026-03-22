@@ -11,6 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/services/email"
 )
 
@@ -80,7 +81,7 @@ func (s *notificationService) SlackSendHealthcheckNotification(
 		return apperrors.Wrap(err)
 	}
 
-	err = s.slackSendMsg(ctx, data.Setting, buf.String())
+	err = s.slackSendMsg(ctx, data.Setting, strutil.RemoveEmptyLines(buf.String(), false))
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -108,7 +109,7 @@ func (s *notificationService) DiscordSendHealthcheckNotification(
 		return apperrors.Wrap(err)
 	}
 
-	err = s.discordSendMsg(ctx, data.Setting, buf.String())
+	err = s.discordSendMsg(ctx, data.Setting, strutil.RemoveEmptyLines(buf.String(), false))
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

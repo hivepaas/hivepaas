@@ -51,10 +51,10 @@ func (uc *SystemCleanupUC) getCleanupSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
 	scope *base.SettingScope,
-	requireCleanupActive bool,
+	requireSettingActive bool,
 	requireJobActive bool,
 ) (cleanup *entity.Setting, job *entity.Setting, err error) {
-	cleanup, err = uc.SettingRepo.GetSingle(ctx, db, scope, currentSettingType, requireCleanupActive)
+	cleanup, err = uc.SettingRepo.GetSingle(ctx, db, scope, currentSettingType, requireSettingActive)
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}

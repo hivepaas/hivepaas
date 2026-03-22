@@ -21,8 +21,8 @@ import (
 
 const (
 	currentSettingType   = base.SettingTypeSystemCleanup
-	cleanupSettingName   = "system cleanup setting"
-	cleanupJobName       = "system cleanup job"
+	cleanupSettingName   = "System cleanup setting"
+	cleanupJobName       = "System cleanup job"
 	cleanupJobMaxRetry   = 1
 	cleanupJobRetryDelay = timeutil.Duration(time.Second * 30)
 )

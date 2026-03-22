@@ -46,6 +46,7 @@ const (
 	ResourceTypeNotification  ResourceType = "notification"
 	ResourceTypeImageBuild    ResourceType = "image-build"
 	ResourceTypeSystemCleanup ResourceType = "system-cleanup"
+	ResourceTypeSSLRenewal    ResourceType = "ssl-renewal"
 )
 
 type ResourceModule string

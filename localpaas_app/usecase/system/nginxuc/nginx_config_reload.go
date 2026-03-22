@@ -13,7 +13,7 @@ func (uc *NginxUC) ReloadNginxConfig(
 	_ *basedto.Auth,
 	_ *nginxdto.ReloadNginxConfigReq,
 ) (*nginxdto.ReloadNginxConfigResp, error) {
-	err := uc.nginxService.ReloadNginxConfig(ctx)
+	err := uc.nginxService.ReloadNginxConfig(ctx, false)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

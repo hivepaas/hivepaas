@@ -10,7 +10,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
@@ -25,16 +24,16 @@ type CreateSSLReq struct {
 }
 
 type SSLBaseReq struct {
-	Name        string            `json:"name"`
-	Domain      string            `json:"domain"`
-	Certificate string            `json:"certificate"`
-	PrivateKey  string            `json:"privateKey"`
-	KeySize     int               `json:"keySize"`
-	Provider    base.SSLProvider  `json:"provider"`
-	Email       string            `json:"email"`
-	AutoRenew   bool              `json:"autoRenew"`
-	ExpireAt    time.Time         `json:"expireAt"`
-	NotifyWhen  timeutil.Duration `json:"notifyWhen"`
+	Name        string           `json:"name"`
+	Domain      string           `json:"domain"`
+	Certificate string           `json:"certificate"`
+	PrivateKey  string           `json:"privateKey"`
+	KeySize     int              `json:"keySize"`
+	Provider    base.SSLProvider `json:"provider"`
+	Email       string           `json:"email"`
+	AutoRenew   bool             `json:"autoRenew"`
+	ExpireAt    time.Time        `json:"expireAt"`
+	NotifyFrom  time.Time        `json:"notifyFrom"`
 }
 
 func (req *SSLBaseReq) ToEntity() *entity.SSL {
@@ -47,7 +46,7 @@ func (req *SSLBaseReq) ToEntity() *entity.SSL {
 		Email:       req.Email,
 		AutoRenew:   req.AutoRenew,
 		ExpireAt:    req.ExpireAt,
-		NotifyWhen:  req.NotifyWhen,
+		NotifyFrom:  req.NotifyFrom,
 	}
 }
 

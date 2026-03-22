@@ -17,6 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/nginxservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
@@ -48,6 +49,7 @@ type Executor struct {
 	settingService      settingservice.SettingService
 	userService         userservice.UserService
 	notificationService notificationservice.NotificationService
+	nginxService        nginxservice.NginxService
 	dockerManager       docker.Manager
 }
 
@@ -74,6 +76,7 @@ func NewExecutor(
 	settingService settingservice.SettingService,
 	userService userservice.UserService,
 	notificationService notificationservice.NotificationService,
+	nginxService nginxservice.NginxService,
 	dockerManager docker.Manager,
 ) *Executor {
 	e := &Executor{
@@ -98,6 +101,7 @@ func NewExecutor(
 		settingService:           settingService,
 		userService:              userService,
 		notificationService:      notificationService,
+		nginxService:             nginxService,
 		dockerManager:            dockerManager,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeCronJobExec, e.execute)
@@ -145,6 +149,8 @@ func (e *Executor) execute(
 		err = e.cronExecContainerCmd(ctx, db, data)
 	case base.CronJobTypeSystemCleanup:
 		err = e.cronExecSystemCleanup(ctx, db, data)
+	case base.CronJobTypeSSLRenewal:
+		err = e.cronExecSSLRenew(ctx, db, data)
 	}
 	if err != nil {
 		return apperrors.Wrap(err)

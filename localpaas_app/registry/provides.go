@@ -70,6 +70,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/nginxuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/usersettings/apikeyuc"
@@ -158,6 +159,7 @@ var Provides = []any{
 	imagebuilduc.NewImageBuildUC,
 	systemcleanupuc.NewSystemCleanupUC,
 	gitcredentialuc.NewGitCredentialUC,
+	sslrenewaluc.NewSSLRenewalUC,
 
 	// Service
 	clusterservice.NewClusterService,

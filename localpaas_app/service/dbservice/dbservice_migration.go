@@ -5,7 +5,6 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
@@ -56,15 +55,13 @@ func (s *dbService) migrateSettings(
 	ctx context.Context,
 	db database.IDB,
 ) error {
-	paging := &basedto.Paging{
-		Offset: 0,
-		Limit:  1000, //nolint:mnd
-	}
-
+	offset, limit := 0, 100 //nolint:mnd
 	for {
-		settings, _, err := s.settingRepo.List(ctx, db, nil, paging,
+		settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 			bunex.SelectFor("UPDATE"),
 			bunex.SelectWithDeleted(),
+			bunex.SelectOffset(offset),
+			bunex.SelectLimit(limit),
 		)
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -72,7 +69,7 @@ func (s *dbService) migrateSettings(
 		if len(settings) == 0 {
 			break
 		}
-		paging.Offset += paging.Limit
+		offset += limit
 
 		updatedSettings := make([]*entity.Setting, 0, len(settings))
 		for _, setting := range settings {

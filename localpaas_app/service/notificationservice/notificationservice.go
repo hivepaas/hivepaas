@@ -24,6 +24,20 @@ type NotificationService interface {
 	DiscordSendCronTaskNotification(ctx context.Context, db database.IDB,
 		data *DiscordMsgDataCronTaskNotification) error
 
+	// SSL renewal
+	EmailSendSSLExpiringNotification(ctx context.Context, db database.IDB,
+		data *EmailMsgDataSSLExpiringNotification) error
+	SlackSendSSLExpiringNotification(ctx context.Context, db database.IDB,
+		data *SlackMsgDataSSLExpiringNotification) error
+	DiscordSendSSLExpiringNotification(ctx context.Context, db database.IDB,
+		data *DiscordMsgDataSSLExpiringNotification) error
+	EmailSendSSLRenewalNotification(ctx context.Context, db database.IDB,
+		data *EmailMsgDataSSLRenewalNotification) error
+	SlackSendSSLRenewalNotification(ctx context.Context, db database.IDB,
+		data *SlackMsgDataSSLRenewalNotification) error
+	DiscordSendSSLRenewalNotification(ctx context.Context, db database.IDB,
+		data *DiscordMsgDataSSLRenewalNotification) error
+
 	// Healthcheck
 	EmailSendHealthcheckNotification(ctx context.Context, db database.IDB,
 		data *EmailMsgDataHealthcheckNotification) error

@@ -15,9 +15,11 @@ import (
 )
 
 const (
-	sysCleanupInterval   = timeutil.Duration(time.Hour * 24) // daily
-	sysCleanupMaxRetry   = 1
-	sysCleanupRetryDelay = timeutil.Duration(time.Second * 30)
+	sysCleanupSettingName = "System cleanup settings"
+	sysCleanupJobName     = "System cleanup job"
+	sysCleanupInterval    = timeutil.Duration(time.Hour * 24) // daily
+	sysCleanupMaxRetry    = 1
+	sysCleanupRetryDelay  = timeutil.Duration(time.Second * 30)
 
 	dbObjectRetentionOfTasks          = timeutil.Duration(time.Hour * 24 * 180) // 180 days
 	dbObjectRetentionOfSysErrors      = timeutil.Duration(time.Hour * 24 * 180)
@@ -35,7 +37,7 @@ func (s *settingService) initDefaultSystemCleanup(
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Type:      base.SettingTypeSystemCleanup,
 		Status:    base.SettingStatusActive,
-		Name:      "system cleanup settings",
+		Name:      sysCleanupSettingName,
 		Version:   entity.CurrentSystemCleanupVersion,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
@@ -64,7 +66,7 @@ func (s *settingService) initDefaultSystemCleanup(
 		Type:      base.SettingTypeCronJob,
 		Kind:      string(base.CronJobTypeSystemCleanup),
 		Status:    base.SettingStatusActive,
-		Name:      "system cleanup job",
+		Name:      sysCleanupJobName,
 		Version:   entity.CurrentCronJobVersion,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,

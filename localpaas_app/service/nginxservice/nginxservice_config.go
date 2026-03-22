@@ -9,7 +9,22 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/config"
 )
 
-func (s *nginxService) ReloadNginxConfig(ctx context.Context) error {
+func (s *nginxService) ReloadNginxConfig(ctx context.Context, restartServiceOnFailure bool) error {
+	err := s.reloadNginxConfig(ctx)
+	if err == nil {
+		return nil
+	}
+	if !restartServiceOnFailure {
+		return apperrors.Wrap(err)
+	}
+	err = s.RestartNginxSwarmService(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (s *nginxService) reloadNginxConfig(ctx context.Context) error {
 	service, err := s.dockerManager.ServiceGetByName(ctx, nginxServiceName)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -23,6 +38,9 @@ func (s *nginxService) ReloadNginxConfig(ctx context.Context) error {
 	containerIDs := make([]string, 0, len(containers))
 	for _, container := range containers {
 		containerIDs = append(containerIDs, container.ID)
+	}
+	if len(containerIDs) == 0 {
+		return apperrors.NewNotFound("Nginx service")
 	}
 
 	errMap := s.dockerManager.ContainerKillMulti(ctx, containerIDs, "SIGHUP")
@@ -44,7 +62,7 @@ func (s *nginxService) ResetNginxConfig(ctx context.Context) error {
 		return apperrors.Wrap(err)
 	}
 
-	err = s.ReloadNginxConfig(ctx)
+	err = s.ReloadNginxConfig(ctx, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

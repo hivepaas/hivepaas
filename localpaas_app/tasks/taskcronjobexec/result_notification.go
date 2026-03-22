@@ -16,6 +16,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
 
+const (
+	subjectPrefixSystem = "[System]"
+)
+
 func (e *Executor) sendNotification(
 	ctx context.Context,
 	db database.IDB,
@@ -112,6 +116,7 @@ func (e *Executor) getDefaultNotification(
 		return nil, apperrors.Wrap(err)
 	}
 	data.AddRefObjects(refObjects)
+	data.RefObjects.RefSettings[setting.ID] = setting
 
 	return notification, nil
 }
@@ -188,7 +193,7 @@ func (e *Executor) sendNotificationViaEmail(
 		return nil
 	}
 
-	subject := "[System]"
+	subject := subjectPrefixSystem
 	if data.Project != nil {
 		subject = fmt.Sprintf("[%s]", data.Project.Name)
 	}

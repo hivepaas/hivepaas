@@ -17584,6 +17584,148 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/ssl-renewal" : {
+      "get" : {
+        "description" : "Gets SSL renewal settings",
+        "operationId" : "getSSLRenewalSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.GetSSLRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets SSL renewal settings",
+        "tags" : [ "system_settings" ]
+      },
+      "put" : {
+        "description" : "Updates SSL renewal settings",
+        "operationId" : "updateSSLRenewalSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates SSL renewal settings",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/ssl-renewal/exec" : {
+      "post" : {
+        "description" : "Executes the renewal",
+        "operationId" : "executeSSLRenewal",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Executes the renewal",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/tasks" : {
       "get" : {
         "description" : "Lists task",
@@ -19187,9 +19329,9 @@
         "x-enum-varnames" : [ "BuildToolDocker", "BuildToolNixpacks" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.CronJobType" : {
-        "enum" : [ "container-command", "system-cleanup" ],
+        "enum" : [ "container-command", "system-cleanup", "ssl-renewal" ],
         "type" : "string",
-        "x-enum-varnames" : [ "CronJobTypeContainerCommand", "CronJobTypeSystemCleanup" ]
+        "x-enum-varnames" : [ "CronJobTypeContainerCommand", "CronJobTypeSystemCleanup", "CronJobTypeSSLRenewal" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.DeploymentMethod" : {
         "enum" : [ "image", "repo" ],
@@ -19273,9 +19415,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingType" : {
-        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "aws", "aws-s3", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "image-build", "system-cleanup" ],
+        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "aws", "aws-s3", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "image-build", "system-cleanup", "ssl-renewal" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeAWS", "SettingTypeAWSS3", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSL", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeImageBuild", "SettingTypeSystemCleanup" ]
+        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeAWS", "SettingTypeAWSS3", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSL", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeImageBuild", "SettingTypeSystemCleanup", "SettingTypeSSLRenewal" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.TaskPriority" : {
         "enum" : [ "low", "default", "critical" ],
@@ -26318,8 +26460,8 @@
           "name" : {
             "type" : "string"
           },
-          "notifyWhen" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "notifyFrom" : {
+            "type" : "string"
           },
           "privateKey" : {
             "type" : "string"
@@ -26328,7 +26470,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
           }
         },
-        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyWhen", "privateKey", "provider" ],
+        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyFrom", "privateKey", "provider" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.CreateSSLResp" : {
@@ -26420,8 +26562,11 @@
           "name" : {
             "type" : "string"
           },
-          "notifyWhen" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "notification" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationResp"
+          },
+          "notifyFrom" : {
+            "type" : "string"
           },
           "privateKey" : {
             "type" : "string"
@@ -26430,9 +26575,6 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
           },
           "renewableFrom" : {
-            "type" : "string"
-          },
-          "renewableTo" : {
             "type" : "string"
           },
           "secretMasked" : {
@@ -26451,7 +26593,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "autoRenew", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keySize", "name", "privateKey", "provider", "renewableFrom", "renewableTo", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "autoRenew", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keySize", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.UpdateSSLMetaReq" : {
@@ -26513,8 +26655,8 @@
           "name" : {
             "type" : "string"
           },
-          "notifyWhen" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "notifyFrom" : {
+            "type" : "string"
           },
           "privateKey" : {
             "type" : "string"
@@ -26526,7 +26668,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyWhen", "privateKey", "provider", "updateVer" ],
+        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyFrom", "privateKey", "provider", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_ssluc_ssldto.UpdateSSLResp" : {
@@ -26677,6 +26819,129 @@
           }
         },
         "required" : [ "cause", "code", "createdAt", "debugLog", "detail", "id", "requestId", "stackTrace", "status" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalDataResp" : {
+        "properties" : {
+          "task" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDResp"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalReq" : {
+        "properties" : {
+          "targetSSLs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "targetSSLs" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ExecuteSSLRenewalDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.GetSSLRenewalResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.SSLRenewalResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.SSLRenewalResp" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "scheduleFrom" : {
+            "type" : "string"
+          },
+          "scheduleInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "id", "name", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "scheduleFrom" : {
+            "type" : "string"
+          },
+          "scheduleInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "scheduleFrom", "scheduleInterval", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ClusterCleanupReq" : {

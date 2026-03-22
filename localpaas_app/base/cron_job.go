@@ -1,19 +1,14 @@
 package base
 
-import "time"
-
 type CronJobType string
 
 const (
 	CronJobTypeContainerCommand CronJobType = "container-command"
 	CronJobTypeSystemCleanup    CronJobType = "system-cleanup"
+	CronJobTypeSSLRenewal       CronJobType = "ssl-renewal"
 )
 
 var (
-	AllCronJobTypes = []CronJobType{CronJobTypeContainerCommand, CronJobTypeSystemCleanup}
-)
-
-const (
-	// TODO: make this configurable
-	CronTaskNotificationTimeoutDefault = 1 * time.Minute
+	AllCronJobTypes = []CronJobType{CronJobTypeContainerCommand, CronJobTypeSystemCleanup,
+		CronJobTypeSSLRenewal}
 )

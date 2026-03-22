@@ -31,6 +31,8 @@ const (
 	TemplateAppDeploymentNotification TemplateName = "app-deployment-notification"
 	TemplateCronTaskNotification      TemplateName = "cron-job-notification"
 	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
+	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
+	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
 )
 
 type Template interface {
@@ -62,7 +64,7 @@ func (s *notificationService) GetTemplate(
 		return tpl, nil
 	}
 
-	switch typ { //nolint
+	switch typ {
 	case TemplateTypeEmail:
 		tpl, err = s.loadEmailTemplate(ctx, db, name)
 	case TemplateTypeSlack:
@@ -83,13 +85,17 @@ func (s *notificationService) loadEmailTemplate(
 	_ database.IDB,
 	name TemplateName,
 ) (tpl Template, err error) {
-	switch name { //nolint
+	switch name {
 	case TemplateAppDeploymentNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "app_deployment_notification.html")
 	case TemplateCronTaskNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "cron_task_notification.html")
 	case TemplateHealthcheckNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "healthcheck_notification.html")
+	case TemplateSSLExpiringNotification:
+		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_expiring_notification.html")
+	case TemplateSSLRenewalNotification:
+		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_renewal_notification.html")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -103,13 +109,17 @@ func (s *notificationService) loadSlackTemplate(
 	_ database.IDB,
 	name TemplateName,
 ) (tpl Template, err error) {
-	switch name { //nolint
+	switch name {
 	case TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "app_deployment_notification.tpl")
 	case TemplateCronTaskNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "cron_task_notification.tpl")
 	case TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "healthcheck_notification.tpl")
+	case TemplateSSLExpiringNotification:
+		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_expiring_notification.tpl")
+	case TemplateSSLRenewalNotification:
+		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_renewal_notification.tpl")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -123,13 +133,17 @@ func (s *notificationService) loadDiscordTemplate(
 	_ database.IDB,
 	name TemplateName,
 ) (tpl Template, err error) {
-	switch name { //nolint
+	switch name {
 	case TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "app_deployment_notification.tpl")
 	case TemplateCronTaskNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "cron_task_notification.tpl")
 	case TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "healthcheck_notification.tpl")
+	case TemplateSSLExpiringNotification:
+		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_expiring_notification.tpl")
+	case TemplateSSLRenewalNotification:
+		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_renewal_notification.tpl")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

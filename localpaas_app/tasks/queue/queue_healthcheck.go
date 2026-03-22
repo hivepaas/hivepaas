@@ -220,7 +220,7 @@ func (q *taskQueue) loadHealthcheckDataFromDB(
 	for _, healthcheck := range dbSettings {
 		if healthcheck.BelongToApp != nil {
 			healthcheck.BelongToProject = healthcheck.BelongToApp.Project
-			healthcheck.BelongToApp.Project = nil
+			healthcheck.BelongToApp.Project = nil // NOTE: we do this only because the app may be stored in redis
 		}
 		project := healthcheck.BelongToProject
 		app := healthcheck.BelongToApp

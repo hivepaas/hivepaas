@@ -1,6 +1,8 @@
 package strutil
 
 import (
+	"strings"
+
 	"github.com/samber/lo"
 	"github.com/tiendc/gofn"
 )
@@ -22,4 +24,20 @@ func CutShort(s string, maxLen int, padding string) string {
 		return s
 	}
 	return string([]rune(s)[:maxLen]) + padding
+}
+
+func RemoveEmptyLines(str string, trimSpace bool) string {
+	lines := strings.Split(str, "\n")
+	cleanedLines := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		if trimSpace && strings.TrimSpace(line) != "" {
+			cleanedLines = append(cleanedLines, line)
+			continue
+		}
+		if line != "" {
+			cleanedLines = append(cleanedLines, line)
+		}
+	}
+	return strings.Join(cleanedLines, "\n")
 }

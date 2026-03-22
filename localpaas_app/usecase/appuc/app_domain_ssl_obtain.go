@@ -2,7 +2,6 @@ package appuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/tiendc/gofn"
@@ -145,12 +144,10 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 	}
 	if data.RenewalInfo != nil {
 		ssl.RenewableFrom = data.RenewalInfo.SuggestedWindow.Start.UTC()
-		ssl.RenewableTo = data.RenewalInfo.SuggestedWindow.End.UTC()
 		if ssl.Provider == base.SSLProviderLetsEncrypt && !ssl.RenewableFrom.IsZero() {
 			ssl.AutoRenew = true
 			// TODO: need a better method to have expiration date of SSLs from Let's encrypt.
-			// For now, just add 30 days from the the suggested renew date.
-			ssl.ExpireAt = ssl.RenewableFrom.Add(time.Hour * 24 * 30) //nolint:mnd
+			ssl.ExpireAt = ssl.RenewableFrom.Add(base.LetsEncryptExpirationFromFirstRenewableDate)
 		}
 	}
 
@@ -191,11 +188,13 @@ func (uc *AppUC) applyDomainSSL(
 		return apperrors.Wrap(err)
 	}
 
-	var sslSettings []*entity.Setting
+	sslSettings := map[string]*entity.Setting{}
 	for _, sslID := range appHttpSettings.GetSSLCertIDs() {
-		sslSettings = append(sslSettings, refObjects.RefSettings[sslID])
+		if s := refObjects.RefSettings[sslID]; s != nil {
+			sslSettings[s.ID] = s
+		}
 	}
-	err = uc.settingService.PersistSSLConfigFiles(false, sslSettings...)
+	err = uc.settingService.PersistSSLConfigFiles(false, gofn.MapValues(sslSettings)...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

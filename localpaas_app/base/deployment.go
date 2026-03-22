@@ -19,8 +19,7 @@ var (
 
 const (
 	// TODO: make this configurable
-	DeploymentTimeoutDefault             = 60 * time.Minute
-	DeploymentNotificationTimeoutDefault = 3 * time.Minute
+	DeploymentTimeoutDefault = 60 * time.Minute
 )
 
 type DeploymentTriggerSource string

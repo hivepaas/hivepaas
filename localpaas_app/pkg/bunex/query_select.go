@@ -161,6 +161,12 @@ func SelectLimit(limit int) SelectQueryOption {
 	}
 }
 
+func SelectOffset(offset int) SelectQueryOption {
+	return func(query *bun.SelectQuery) *bun.SelectQuery {
+		return query.Offset(offset)
+	}
+}
+
 func SelectDistinct() SelectQueryOption {
 	return func(query *bun.SelectQuery) *bun.SelectQuery {
 		return query.Distinct()

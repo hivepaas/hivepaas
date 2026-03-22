@@ -24,7 +24,7 @@ func (s *userService) LoadProjectUsers(
 	}
 	userIDs := make([]string, 0, 10) //nolint:mnd
 
-	if loadMembers {
+	if loadMembers && project != nil {
 		accesses, err := s.permissionManager.LoadObjectAccesses(ctx, db, &permission.AccessCheck{
 			SubjectType:  base.SubjectTypeUser,
 			ResourceType: base.ResourceTypeProject,
@@ -39,7 +39,7 @@ func (s *userService) LoadProjectUsers(
 		}
 	}
 
-	if loadOwners && project.OwnerID != "" {
+	if loadOwners && project != nil && project.OwnerID != "" {
 		userIDs = append(userIDs, project.OwnerID)
 	}
 

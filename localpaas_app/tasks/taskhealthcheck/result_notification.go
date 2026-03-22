@@ -154,6 +154,7 @@ func (e *Executor) getDefaultNotification(
 		return nil, apperrors.Wrap(err)
 	}
 	data.AddRefObjects(refObjects)
+	data.RefObjects.RefSettings[setting.ID] = setting
 
 	return notification, nil
 }

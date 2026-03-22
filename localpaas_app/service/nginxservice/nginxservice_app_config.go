@@ -217,7 +217,7 @@ func (s *nginxService) writeConfigFile(
 	// TODO: check config correctness with nginx -t
 
 	// Requests nginx to reload the config files
-	err = s.ReloadNginxConfig(ctx)
+	err = s.ReloadNginxConfig(ctx, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -559,7 +559,7 @@ func (s *nginxService) RemoveAppConfig(ctx context.Context, app *entity.App) err
 	}
 
 	// Requests nginx to reload the config files
-	err = s.ReloadNginxConfig(ctx)
+	err = s.ReloadNginxConfig(ctx, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -174,7 +174,7 @@ func parseTaskArgsAs[T any](t *Task, newFn func() T) (res T, error error) {
 		}
 		return res, nil
 	}
-	if len(t.Args) > 0 {
+	if t.Args != "" {
 		res = newFn()
 		if err := t.parseArgs(res); err != nil {
 			return res, apperrors.Wrap(err)

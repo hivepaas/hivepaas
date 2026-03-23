@@ -12,6 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 type GetAppContainerSettingsReq struct {
@@ -78,8 +79,8 @@ type Healthcheck struct {
 	// {"NONE"} : disable healthcheck
 	// {"CMD", args...} : exec arguments directly
 	// {"CMD-SHELL", command} : run command with system's default shell
-	Mode    string `json:"mode,omitempty"`
-	Command string `json:"command,omitempty"`
+	Mode    docker.HealthcheckMode `json:"mode,omitempty"`
+	Command string                 `json:"command,omitempty"`
 
 	// Zero means to inherit. Durations are expressed as integer nanoseconds.
 	Interval      timeutil.Duration `json:"interval,omitempty"`
@@ -191,9 +192,9 @@ func TransformContainerHealthcheck(config *container.HealthConfig) *Healthcheck 
 		return nil
 	}
 	cmd := config.Test
-	var mode string
+	var mode docker.HealthcheckMode
 	if len(cmd) > 0 {
-		mode = cmd[0]
+		mode = docker.HealthcheckMode(cmd[0])
 		cmd = cmd[1:]
 	}
 	res := &Healthcheck{

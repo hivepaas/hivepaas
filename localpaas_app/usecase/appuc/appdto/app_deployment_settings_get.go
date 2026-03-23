@@ -79,7 +79,7 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 
 	if input.ServiceSpec != nil && input.ServiceSpec.TaskTemplate.ContainerSpec != nil {
 		resp.WorkingDir = input.ServiceSpec.TaskTemplate.ContainerSpec.Dir
-		resp.Command = docker.ConvertFromServiceCommand(input.ServiceSpec.TaskTemplate.ContainerSpec.Command,
+		resp.Command = docker.ContainerCommandBuild(input.ServiceSpec.TaskTemplate.ContainerSpec.Command,
 			input.ServiceSpec.TaskTemplate.ContainerSpec.Args)
 	}
 

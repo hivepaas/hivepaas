@@ -137,7 +137,7 @@ func (uc *AppUC) prepareUpdatingAppContainerHealthcheck(
 		containerSpec.Healthcheck = &container.HealthConfig{}
 	}
 	cmd := gofn.Must(shellutil.CmdSplit(req.Healthcheck.Command))
-	containerSpec.Healthcheck.Test = gofn.Concat([]string{req.Healthcheck.Mode}, cmd)
+	containerSpec.Healthcheck.Test = gofn.Concat([]string{string(req.Healthcheck.Mode)}, cmd)
 	containerSpec.Healthcheck.Interval = time.Duration(req.Healthcheck.Interval)
 	containerSpec.Healthcheck.Timeout = time.Duration(req.Healthcheck.Timeout)
 	containerSpec.Healthcheck.StartPeriod = time.Duration(req.Healthcheck.StartPeriod)

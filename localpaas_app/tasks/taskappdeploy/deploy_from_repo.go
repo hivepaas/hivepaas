@@ -336,7 +336,7 @@ func (e *Executor) repoDeployStepServiceApply(
 	contSpec := spec.TaskTemplate.ContainerSpec
 	contSpec.Image = data.DeploymentOutput.ImageTags[0]
 	contSpec.Dir = deployment.Settings.WorkingDir
-	docker.ApplyServiceCommand(contSpec, deployment.Settings.Command)
+	docker.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
 	_, err = e.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 		func(options *swarm.ServiceUpdateOptions) {

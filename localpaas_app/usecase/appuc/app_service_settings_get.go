@@ -10,11 +10,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppServiceSpec(
+func (uc *AppUC) GetAppServiceSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appdto.GetAppServiceSpecReq,
-) (*appdto.GetAppServiceSpecResp, error) {
+	req *appdto.GetAppServiceSettingsReq,
+) (*appdto.GetAppServiceSettingsResp, error) {
 	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
@@ -27,12 +27,12 @@ func (uc *AppUC) GetAppServiceSpec(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp, err := appdto.TransformAppServiceSpec(service)
+	resp, err := appdto.TransformServiceSettings(service)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appdto.GetAppServiceSpecResp{
+	return &appdto.GetAppServiceSettingsResp{
 		Data: resp,
 	}, nil
 }

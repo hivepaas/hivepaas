@@ -62,6 +62,7 @@ ERR_SETTING_INACTIVE = "Setting '{{.Name}}' is inactive"
 ERR_GLOBAL_SETTING_REQUIRED = "Global setting is required"
 ERR_OWN_SETTING_REQUIRED = "Own setting is required"
 ERR_SETTING_MISSING = "Setting {{.Name}} is missing"
+ERR_SETTING_TYPE_INVALID = "Setting type is invalid"
 
 # Project errors
 ERR_PROJECT_INACTIVE = "Project '{{.Name}}' is inactive"

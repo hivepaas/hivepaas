@@ -34,14 +34,15 @@ type GetSystemBackupResp struct {
 
 type SystemBackupResp struct {
 	*settings.BaseSettingResp
-	ScheduleInterval     timeutil.Duration                  `json:"scheduleInterval"`
-	ScheduleFrom         time.Time                          `json:"scheduleFrom"`
-	DBBackupConfig       *DBBackupConfigResp                `json:"dbBackupConfig"`
-	Compression          bool                               `json:"compression"`
-	EncryptionSecret     string                             `json:"encryptionSecret"`
-	DestinationStorage   *settings.BaseSettingResp          `json:"destinationStorage"`
-	LocalBackupRetention timeutil.Duration                  `json:"localBackupRetention"`
-	Notification         *basedto.BaseEventNotificationResp `json:"notification"`
+	ScheduleInterval      timeutil.Duration                  `json:"scheduleInterval"`
+	ScheduleFrom          time.Time                          `json:"scheduleFrom"`
+	DBBackupConfig        *DBBackupConfigResp                `json:"dbBackupConfig"`
+	Compression           bool                               `json:"compression"`
+	EncryptionSecret      string                             `json:"encryptionSecret"`
+	DestinationStorage    *settings.BaseSettingResp          `json:"destinationStorage"`
+	DestinationStorageDir string                             `json:"destinationStorageDir"`
+	LocalBackupRetention  timeutil.Duration                  `json:"localBackupRetention"`
+	Notification          *basedto.BaseEventNotificationResp `json:"notification"`
 }
 
 type DBBackupConfigResp struct {

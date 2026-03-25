@@ -23,14 +23,15 @@ func (s *systemBackupParser) New() SettingData {
 }
 
 type SystemBackup struct {
-	ScheduleInterval     timeutil.Duration      `json:"scheduleInterval"`
-	ScheduleFrom         time.Time              `json:"scheduleFrom"`
-	DBBackupConfig       *DBBackupConfig        `json:"dbBackupConfig"`
-	Compression          bool                   `json:"compression,omitempty"`
-	EncryptionSecret     EncryptedField         `json:"encryptionSecret,omitzero"`
-	DestinationStorage   ObjectID               `json:"destinationStorage,omitzero"` // can be S3 setting ID
-	LocalBackupRetention timeutil.Duration      `json:"localBackupRetention,omitempty"`
-	Notification         *BaseEventNotification `json:"notification,omitempty"`
+	ScheduleInterval      timeutil.Duration      `json:"scheduleInterval"`
+	ScheduleFrom          time.Time              `json:"scheduleFrom"`
+	DBBackupConfig        *DBBackupConfig        `json:"dbBackupConfig"`
+	Compression           bool                   `json:"compression,omitempty"`
+	EncryptionSecret      EncryptedField         `json:"encryptionSecret,omitzero"`
+	DestinationStorage    ObjectID               `json:"destinationStorage,omitzero"` // can be S3 setting ID
+	DestinationStorageDir string                 `json:"destinationStorageDir,omitempty"`
+	LocalBackupRetention  timeutil.Duration      `json:"localBackupRetention,omitempty"`
+	Notification          *BaseEventNotification `json:"notification,omitempty"`
 }
 
 type DBBackupConfig struct {

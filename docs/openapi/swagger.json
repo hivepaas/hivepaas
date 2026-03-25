@@ -20073,7 +20073,7 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingType" : {
-        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "cloud-provider", "aws-s3", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "image-build", "system-cleanup", "system-backup", "ssl-renewal" ],
+        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "cloud-provider", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "image-build", "system-cleanup", "system-backup", "ssl-renewal" ],
         "type" : "string",
         "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeCloudProvider", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSL", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeImageBuild", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal" ]
       },
@@ -28410,6 +28410,9 @@
           "destinationStorage" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
           },
+          "destinationStorageDir" : {
+            "type" : "string"
+          },
           "encryptionSecret" : {
             "type" : "string"
           },
@@ -28453,7 +28456,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "compression", "createdAt", "dbBackupConfig", "destinationStorage", "encryptionSecret", "id", "localBackupRetention", "name", "notification", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "compression", "createdAt", "dbBackupConfig", "destinationStorage", "destinationStorageDir", "encryptionSecret", "id", "localBackupRetention", "name", "notification", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.UpdateSystemBackupReq" : {
@@ -28472,6 +28475,9 @@
           },
           "destinationStorage" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
+          },
+          "destinationStorageDir" : {
+            "type" : "string"
           },
           "encryptionSecret" : {
             "type" : "string"
@@ -28495,7 +28501,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "compression", "dbBackupConfig", "default", "destinationStorage", "encryptionSecret", "localBackupRetention", "notification", "scheduleFrom", "scheduleInterval", "status", "updateVer" ],
+        "required" : [ "availableInProjects", "compression", "dbBackupConfig", "default", "destinationStorage", "destinationStorageDir", "encryptionSecret", "localBackupRetention", "notification", "scheduleFrom", "scheduleInterval", "status", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.UpdateSystemBackupResp" : {

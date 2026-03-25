@@ -66,8 +66,14 @@ func (e *Executor) sysDBBackup(
 	_ = closer(false) // Flush data in writers, but not remove the temp file
 	closer = nil
 
-	// Save the result as file
-	err = e.sysDBBackupSaveResult(ctx, sysBackup, tmpFile, data)
+	// Save the result in a file
+	err = e.sysDBBackupSaveResultInFile(ctx, sysBackup, tmpFile, data)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	// Upload backup file to cloud storage if configured
+	err = e.sysDBBackupSaveResultInStorage(ctx, sysBackup, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -233,7 +239,7 @@ func (e *Executor) sysDBBackupProcess(
 	return nil
 }
 
-func (e *Executor) sysDBBackupSaveResult(
+func (e *Executor) sysDBBackupSaveResultInFile(
 	ctx context.Context,
 	sysBackup *entity.SystemBackup,
 	tmpFile *os.File,

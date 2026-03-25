@@ -77,6 +77,7 @@ var (
 	ErrGlobalSettingRequired = errors.New("ERR_GLOBAL_SETTING_REQUIRED")
 	ErrOwnSettingRequired    = errors.New("ERR_OWN_SETTING_REQUIRED")
 	ErrSettingMissing        = errors.New("ERR_SETTING_MISSING")
+	ErrSettingTypeInvalid    = errors.New("ERR_SETTING_TYPE_INVALID")
 )
 
 // Errors for projects
@@ -182,6 +183,7 @@ var errorStatusMap = map[error]int{
 	ErrGlobalSettingRequired: http.StatusUnprocessableEntity,
 	ErrOwnSettingRequired:    http.StatusUnprocessableEntity,
 	ErrSettingMissing:        http.StatusUnprocessableEntity,
+	ErrSettingTypeInvalid:    http.StatusNotAcceptable,
 
 	// Project errors
 	ErrProjectInactive: http.StatusNotAcceptable,

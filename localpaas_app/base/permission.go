@@ -26,7 +26,7 @@ const (
 	ResourceTypeProject       ResourceType = "project"
 	ResourceTypeApp           ResourceType = "app"
 	ResourceTypeCloudProvider ResourceType = "cloud-provider"
-	ResourceTypeCloudStorage  ResourceType = "aws-s3"
+	ResourceTypeCloudStorage  ResourceType = "cloud-storage"
 	ResourceTypeOAuth         ResourceType = "oauth"
 	ResourceTypeSSHKey        ResourceType = "ssh-key"
 	ResourceTypeAPIKey        ResourceType = "api-key"

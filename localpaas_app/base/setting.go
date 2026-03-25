@@ -16,7 +16,7 @@ const (
 	SettingTypeEnvVar        SettingType = "env-var"
 	SettingTypeSecret        SettingType = "secret"
 	SettingTypeCloudProvider SettingType = "cloud-provider"
-	SettingTypeCloudStorage  SettingType = "aws-s3"
+	SettingTypeCloudStorage  SettingType = "cloud-storage"
 	SettingTypeOAuth         SettingType = "oauth"
 	SettingTypeSSHKey        SettingType = "ssh-key"
 	SettingTypeAPIKey        SettingType = "api-key"

@@ -43,7 +43,7 @@ export function ResetUserPasswordDialog() {
             modal
             onOpenChange={handleClose}
         >
-            <DialogContent className="lg:min-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="lg:min-w-[500px] lg:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Reset Password</DialogTitle>
                 </DialogHeader>

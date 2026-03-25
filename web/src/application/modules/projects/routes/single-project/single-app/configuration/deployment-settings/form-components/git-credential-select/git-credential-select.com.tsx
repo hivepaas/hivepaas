@@ -45,7 +45,7 @@ export function GitCredentialSelect() {
         return credentials.map(cred => {
             return {
                 value: { id: cred.id, name: cred.name },
-                label: cred.name,
+                label: `${cred.type} ${cred.name}`,
             };
         });
     }, [credentials]);

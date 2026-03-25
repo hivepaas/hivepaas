@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { Checkbox } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
@@ -19,14 +21,36 @@ export function NotificationFields() {
     const { field: useDefaultOnSuccess } = useController({
         control,
         name: "notification.successUseDefault",
-        defaultValue: false,
+        defaultValue: true,
+    });
+
+    const { field: success } = useController({
+        control,
+        name: "notification.success",
     });
 
     const { field: useDefaultOnFailure } = useController({
         control,
         name: "notification.failureUseDefault",
-        defaultValue: false,
+        defaultValue: true,
     });
+
+    const { field: failure } = useController({
+        control,
+        name: "notification.failure",
+    });
+
+    useEffect(() => {
+        if (useDefaultOnSuccess.value) {
+            success.onChange(undefined);
+        }
+    }, [useDefaultOnSuccess.value, success]);
+
+    useEffect(() => {
+        if (useDefaultOnFailure.value) {
+            failure.onChange(undefined);
+        }
+    }, [useDefaultOnFailure.value, failure]);
 
     return (
         <>
@@ -47,6 +71,7 @@ export function NotificationFields() {
             <NotificationSelect
                 name="notification.success"
                 title="On Success"
+                disabled={useDefaultOnSuccess.value}
             />
 
             <InfoBlock
@@ -66,6 +91,7 @@ export function NotificationFields() {
             <NotificationSelect
                 name="notification.failure"
                 title="On Failure"
+                disabled={useDefaultOnFailure.value}
             />
         </>
     );

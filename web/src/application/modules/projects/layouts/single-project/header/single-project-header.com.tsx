@@ -50,12 +50,12 @@ function View({ projectId }: Props) {
 
     const links = [
         {
-            route: ROUTE.projects.single.configuration.general.$route(projectId),
-            label: "Configuration",
-        },
-        {
             route: ROUTE.projects.single.apps.$route(projectId),
             label: "Apps",
+        },
+        {
+            route: ROUTE.projects.single.configuration.general.$route(projectId),
+            label: "Configuration",
         },
     ];
     return (

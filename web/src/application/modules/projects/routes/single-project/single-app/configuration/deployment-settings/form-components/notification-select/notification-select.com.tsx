@@ -18,9 +18,10 @@ export type NotificationSelectFieldName = "notification.success" | "notification
 export interface NotificationSelectProps {
     name: NotificationSelectFieldName;
     title: string;
+    disabled?: boolean;
 }
 
-export function NotificationSelect({ name, title }: NotificationSelectProps) {
+export function NotificationSelect({ name, title, disabled = false }: NotificationSelectProps) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -70,9 +71,9 @@ export function NotificationSelect({ name, title }: NotificationSelectProps) {
                     valueKey="id"
                     aria-invalid={invalid}
                     loading={isFetching}
+                    disabled={disabled}
                     onRefresh={() => void refetch()}
                     isRefreshing={isRefetching}
-                    splitLabelBadge
                 />
                 <FieldError errors={[error]} />
                 <div className="text-xs">

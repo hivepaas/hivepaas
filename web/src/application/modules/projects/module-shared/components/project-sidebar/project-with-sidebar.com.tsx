@@ -48,7 +48,7 @@ function View({ projectId, children }: Props) {
                                         key={tab.route}
                                         value={tab.route}
                                         asChild
-                                        className="py-3 cursor-pointer bg-background data-[state=active]:border-primary data-[state=active]:bg-primary/10 dark:data-[state=active]:border-primary h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
+                                        className="py-3 pl-4 cursor-pointer bg-background data-[state=active]:border-primary data-[state=active]:bg-primary/10 dark:data-[state=active]:border-primary h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
                                     >
                                         <AppLink.Basic
                                             className="w-full text-left"

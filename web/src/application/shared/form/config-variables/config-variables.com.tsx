@@ -210,7 +210,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 }}
                 placeholder="KEY_1=VALUE_1&#10;KEY_2=VALUE_2"
                 rows={10}
-                className="font-mono text-sm"
+                className="font-mono text-sm min-h-[500px]"
             />
             <p className="text-xs text-muted-foreground">
                 Enter environment variables in key=value format, one per line

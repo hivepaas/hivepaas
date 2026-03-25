@@ -51,8 +51,8 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
             ...base,
             activeMethod: values.activeMethod,
             repoSource: {
-                buildTool: values.repoSource.buildTool,
-                repoType: values.repoSource.repoType,
+                buildTool: "docker", // hardcoded for now, we'll handle this in the future
+                repoType: "git", // hardcoded for now, we'll handle this in the future
                 repoUrl: values.repoSource.repoUrl,
                 repoRef: values.repoSource.repoRef,
                 credentials: { id: values.repoSource.credentials?.id ?? "" },

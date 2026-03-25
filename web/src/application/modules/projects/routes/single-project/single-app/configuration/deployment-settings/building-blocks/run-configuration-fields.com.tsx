@@ -43,6 +43,7 @@ export function RunConfigurationFields() {
                     value={command.value ?? ""}
                     onChange={command.onChange}
                     placeholder='my-app --arg1=123 --arg2="my data"'
+                    className="max-w-[400px]"
                 />
                 <FieldError errors={[commandError]} />
             </InfoBlock>
@@ -53,6 +54,7 @@ export function RunConfigurationFields() {
                     value={workingDir.value ?? ""}
                     onChange={workingDir.onChange}
                     placeholder="/path/in/container"
+                    className="max-w-[400px]"
                 />
                 <FieldError errors={[workingDirError]} />
             </InfoBlock>
@@ -62,6 +64,7 @@ export function RunConfigurationFields() {
                     {...preDeploymentCommand}
                     value={preDeploymentCommand.value ?? ""}
                     onChange={preDeploymentCommand.onChange}
+                    className="max-w-[400px]"
                     placeholder="make prepare-deployment"
                 />
                 <FieldError errors={[preDeploymentCommandError]} />
@@ -72,6 +75,7 @@ export function RunConfigurationFields() {
                     {...postDeploymentCommand}
                     value={postDeploymentCommand.value ?? ""}
                     onChange={postDeploymentCommand.onChange}
+                    className="max-w-[400px]"
                     placeholder="make db-migrate-up"
                 />
                 <FieldError errors={[postDeploymentCommandError]} />

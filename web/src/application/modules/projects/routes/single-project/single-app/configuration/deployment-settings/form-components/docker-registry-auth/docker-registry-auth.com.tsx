@@ -45,7 +45,7 @@ export function DockerRegistryAuth() {
         return registryAuths.map(auth => {
             return {
                 value: { id: auth.id, name: auth.name },
-                label: auth.name,
+                label: `${auth.kind} ${auth.name}`,
             };
         });
     }, [registryAuths]);

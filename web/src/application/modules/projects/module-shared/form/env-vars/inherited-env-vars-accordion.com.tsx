@@ -35,7 +35,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                 <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
                     {title}
                 </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-0">
+                <AccordionContent className="pt-4 pb-0 pl-3">
                     {filteredItems.length > 0 ? (
                         <div className="flex flex-col gap-4">
                             <div className="space-y-3">

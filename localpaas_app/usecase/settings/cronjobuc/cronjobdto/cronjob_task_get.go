@@ -21,8 +21,8 @@ func NewGetCronJobTaskReq() *GetCronJobTaskReq {
 
 func (req *GetCronJobTaskReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobId")...)
-	validators = append(validators, basedto.ValidateID(&req.TaskID, true, "taskId")...)
+	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobID")...)
+	validators = append(validators, basedto.ValidateID(&req.TaskID, true, "taskID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -24,7 +24,7 @@ type CloudProvider struct {
 }
 
 type CloudProviderAWS struct {
-	AccessKeyID string         `json:"accessKeyId"`
+	AccessKeyID string         `json:"accessKeyID"`
 	SecretKey   EncryptedField `json:"secretKey"`
 	Region      string         `json:"region,omitempty"`
 }

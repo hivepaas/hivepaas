@@ -25,7 +25,7 @@ func NewUpdateNodeReq() *UpdateNodeReq {
 func (req *UpdateNodeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	// NOTE: node id is docker id, it's not ULID
-	validators = append(validators, basedto.ValidateStr(&req.NodeID, true, 1, nodeIDMaxLen, "nodeId")...)
+	validators = append(validators, basedto.ValidateStr(&req.NodeID, true, 1, nodeIDMaxLen, "nodeID")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1, nodeNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Role, false, base.AllNodeRoles, "role")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Availability, false, base.AllNodeAvailabilities,

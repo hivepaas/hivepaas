@@ -11,7 +11,7 @@ import (
 )
 
 type ListTaskReq struct {
-	TargetID []string          `json:"-" mapstructure:"targetId"`
+	TargetID []string          `json:"-" mapstructure:"targetID"`
 	Status   []base.TaskStatus `json:"-" mapstructure:"status"`
 	Search   string            `json:"-" mapstructure:"search"`
 
@@ -29,7 +29,7 @@ func NewListTaskReq() *ListTaskReq {
 
 func (req *ListTaskReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateIDSlice(req.TargetID, true, 0, "targetId")...)
+	validators = append(validators, basedto.ValidateIDSlice(req.TargetID, true, 0, "targetID")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0, base.AllTaskStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

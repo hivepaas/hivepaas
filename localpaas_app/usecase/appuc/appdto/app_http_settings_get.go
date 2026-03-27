@@ -21,8 +21,8 @@ func NewGetAppHttpSettingsReq() *GetAppHttpSettingsReq {
 
 func (req *GetAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

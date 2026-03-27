@@ -32,8 +32,8 @@ type ListAppInstallationResp struct {
 
 type AppInstallationResp struct {
 	ID      int64  `json:"id"`
-	NodeID  string `json:"nodeId"`
-	AppID   int64  `json:"appId"`
+	NodeID  string `json:"nodeID"`
+	AppID   int64  `json:"appID"`
 	AppSlug string `json:"appSlug"`
 }
 

@@ -21,7 +21,7 @@ func (s *oauthParser) New() SettingData {
 }
 
 type OAuth struct {
-	ClientID     string         `json:"clientId"`
+	ClientID     string         `json:"clientID"`
 	ClientSecret EncryptedField `json:"clientSecret"`
 	Organization string         `json:"org,omitempty"`
 	AuthURL      string         `json:"authURL,omitempty"`

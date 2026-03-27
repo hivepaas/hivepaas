@@ -117,8 +117,8 @@ func NewUpdateAppHttpSettingsReq() *UpdateAppHttpSettingsReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appID")...)
 	// TODO: validate http settings input
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

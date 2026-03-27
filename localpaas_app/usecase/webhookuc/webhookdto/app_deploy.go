@@ -113,5 +113,5 @@ type DeployAppResp struct {
 }
 
 type DeployAppDataResp struct {
-	DeploymentID string `json:"deploymentId"`
+	DeploymentID string `json:"deploymentID"`
 }

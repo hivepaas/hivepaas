@@ -40,7 +40,7 @@ type CloudProviderResp struct {
 }
 
 type CloudProviderAWSResp struct {
-	AccessKeyID string `json:"accessKeyId"`
+	AccessKeyID string `json:"accessKeyID"`
 	SecretKey   string `json:"secretKey,omitempty"`
 	Region      string `json:"region"`
 }

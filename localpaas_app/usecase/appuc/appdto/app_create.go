@@ -38,7 +38,7 @@ func NewCreateAppReq() *CreateAppReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

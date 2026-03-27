@@ -18,7 +18,7 @@ func NewDeleteProjectReq() *DeleteProjectReq {
 // Validate implements interface basedto.ReqValidator
 func (req *DeleteProjectReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -32,7 +32,7 @@ type GetSysErrorResp struct {
 
 type SysErrorResp struct {
 	ID         string `json:"id"`
-	RequestID  string `json:"requestId"`
+	RequestID  string `json:"requestID"`
 	Status     int    `json:"status"`
 	Code       string `json:"code"`
 	Detail     string `json:"detail"`

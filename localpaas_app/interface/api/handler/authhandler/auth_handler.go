@@ -126,8 +126,8 @@ func (h *AuthHandler) getAuthToken(ctx *gin.Context) (token string, err error) {
 }
 
 func (h *AuthHandler) getAuthAPIKey(ctx *gin.Context) (keyID, secret string, err error) {
-	keyID = ctx.GetHeader("LOCALPAAS_API_KEY_ID")
-	secret = ctx.GetHeader("LOCALPAAS_API_SECRET_KEY")
+	keyID = ctx.GetHeader("LOCALPAAS-API-KEY-ID")
+	secret = ctx.GetHeader("LOCALPAAS-API-SECRET-KEY")
 	if keyID == "" && secret == "" {
 		return "", "", nil
 	}

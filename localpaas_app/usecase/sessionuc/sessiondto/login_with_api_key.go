@@ -13,7 +13,7 @@ const (
 )
 
 type LoginWithAPIKeyReq struct {
-	KeyID     string `json:"keyId"`
+	KeyID     string `json:"keyID"`
 	SecretKey string `json:"secretKey"`
 }
 
@@ -23,7 +23,7 @@ func NewLoginWithAPIKeyReq() *LoginWithAPIKeyReq {
 
 func (req *LoginWithAPIKeyReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateStr(&req.KeyID, true, minKeyLen, maxKeyLen, "keyId")...)
+	validators = append(validators, basedto.ValidateStr(&req.KeyID, true, minKeyLen, maxKeyLen, "keyID")...)
 	validators = append(validators, basedto.ValidateStr(&req.SecretKey, true, minKeyLen, maxKeyLen, "secretKey")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

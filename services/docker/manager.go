@@ -23,7 +23,7 @@ import (
 type Manager interface {
 	// Config
 	ConfigList(ctx context.Context, options ...ConfigListOption) ([]swarm.Config, error)
-	ConfigInspect(ctx context.Context, configId string) (*swarm.Config, error)
+	ConfigInspect(ctx context.Context, configID string) (*swarm.Config, error)
 	ConfigCreate(ctx context.Context, name string, data []byte, options ...ConfigSpecOption) (
 		*swarm.ConfigCreateResponse, error)
 

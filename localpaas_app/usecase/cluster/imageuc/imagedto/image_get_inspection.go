@@ -18,7 +18,7 @@ func NewGetImageInspectionReq() *GetImageInspectionReq {
 func (req *GetImageInspectionReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	// NOTE: node id is docker id, it's not ULID
-	validators = append(validators, basedto.ValidateStr(&req.ImageID, true, 1, imageIDMaxLen, "imageId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ImageID, true, 1, imageIDMaxLen, "imageID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -7,5 +7,5 @@ import (
 type UserInviteTokenClaims struct {
 	jwtsession.BaseClaims
 	Kind   string `json:"kind"`
-	UserID string `json:"userId"`
+	UserID string `json:"userID"`
 }

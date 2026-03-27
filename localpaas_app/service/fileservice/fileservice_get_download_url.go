@@ -86,12 +86,12 @@ func (s *fileService) GetDownloadURL(
 }
 
 func (s *fileService) generateFileDownloadToken(
-	userId string,
+	userID string,
 	req *GetDownloadURLReq,
 ) (string, error) {
 	fileToken, err := jwtsession.GenerateToken(&appentity.FileDownloadTokenClaims{
-		UserId:       userId,
-		FileId:       req.File.ID,
+		UserID:       userID,
+		FileID:       req.File.ID,
 		RequireLogin: req.RequireLogin,
 	}, req.Expiration)
 	if err != nil {

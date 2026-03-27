@@ -29,7 +29,7 @@ func (cfg *Config) DashboardUserSignupURL(token string) string {
 
 func (cfg *Config) DashboardPasswordResetURL(userID, token string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "auth/reset-password")) +
-		fmt.Sprintf("?userId=%s&token=%s", userID, token)
+		fmt.Sprintf("?userID=%s&token=%s", userID, token)
 }
 
 // Deployments

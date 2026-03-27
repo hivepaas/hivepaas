@@ -35,14 +35,14 @@ type GetGithubAppResp struct {
 
 type GithubAppResp struct {
 	*settings.BaseSettingResp
-	ClientID       string `json:"clientId"`
+	ClientID       string `json:"clientID"`
 	ClientSecret   string `json:"clientSecret"`
 	Organization   string `json:"organization"`
 	CallbackURL    string `json:"callbackURL"`
 	WebhookURL     string `json:"webhookURL"`
 	WebhookSecret  string `json:"webhookSecret"`
-	AppID          int64  `json:"appId"`
-	InstallationID int64  `json:"installationId"`
+	AppID          int64  `json:"appID"`
+	InstallationID int64  `json:"installationID"`
 	PrivateKey     string `json:"privateKey"`
 	SSOEnabled     bool   `json:"ssoEnabled"`
 	SecretMasked   bool   `json:"secretMasked,omitempty"`

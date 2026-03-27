@@ -9,7 +9,7 @@ import (
 type AuthClaims struct {
 	BaseClaims
 	UID          string              `json:"uid"`
-	UserID       string              `json:"userId"`
+	UserID       string              `json:"userID"`
 	IsRefresh    bool                `json:"isRefresh,omitempty"`
 	IsAPIKey     bool                `json:"isAPIKey,omitempty"`
 	AccessAction *base.AccessActions `json:"access,omitempty"`

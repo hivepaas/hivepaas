@@ -18,7 +18,7 @@ type CreateOAuthReq struct {
 type OAuthBaseReq struct {
 	Kind         base.OAuthKind `json:"kind"`
 	Name         string         `json:"name"`
-	ClientID     string         `json:"clientId"`
+	ClientID     string         `json:"clientID"`
 	ClientSecret string         `json:"clientSecret"`
 	Organization string         `json:"organization"`
 	AuthURL      string         `json:"authURL"`

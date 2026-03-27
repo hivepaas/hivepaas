@@ -32,8 +32,8 @@ func (req *ObtainDomainSSLReq) ModifyRequest() error {
 // Validate implements interface basedto.ReqValidator
 func (req *ObtainDomainSSLReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appID")...)
 	validators = append(validators, basedto.ValidateStr(&req.Domain, true, 1,
 		base.DomainNameMaxLen, "domain")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)

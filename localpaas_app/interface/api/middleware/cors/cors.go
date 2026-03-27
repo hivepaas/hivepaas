@@ -14,7 +14,8 @@ func CORS(cfg *config.Config) gin.HandlerFunc {
 		AllowOrigins: cfg.HTTPServer.CORSAllowOrigins,
 		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders: []string{"Content-Length", "Origin", "cookie", "access-control-allow-origin",
-			"authorization, origin, content-type, accept", "X-CSRF-Token", "Pragma", "LOCALPAAS-WORKSPACE-ID"},
+			"authorization, origin, content-type, accept", "X-CSRF-Token", "Pragma",
+			"LOCALPAAS-API-KEY-ID", "LOCALPAAS-API-SECRET-KEY"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Disposition"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour, //nolint:mnd

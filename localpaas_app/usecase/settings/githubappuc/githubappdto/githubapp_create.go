@@ -18,11 +18,11 @@ type CreateGithubAppReq struct {
 
 type GithubAppBaseReq struct {
 	Name             string `json:"name"`
-	ClientID         string `json:"clientId"`
+	ClientID         string `json:"clientID"`
 	ClientSecret     string `json:"clientSecret"`
 	Organization     string `json:"organization"`
-	GhAppID          int64  `json:"appId"`
-	GhInstallationID int64  `json:"installationId"`
+	GhAppID          int64  `json:"appID"`
+	GhInstallationID int64  `json:"installationID"`
 	PrivateKey       string `json:"privateKey"`
 	SSOEnabled       bool   `json:"ssoEnabled"`
 }

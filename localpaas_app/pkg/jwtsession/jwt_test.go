@@ -25,7 +25,7 @@ func initJWTSession(cfg *Config) error {
 
 type testClaims struct {
 	BaseClaims
-	UserID string `json:"userId"`
+	UserID string `json:"userID"`
 }
 
 func Test_GenerateToken(t *testing.T) {

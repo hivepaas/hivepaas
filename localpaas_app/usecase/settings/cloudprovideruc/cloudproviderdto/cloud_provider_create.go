@@ -34,7 +34,7 @@ func (req *CloudProviderBaseReq) ToEntity() *entity.CloudProvider {
 }
 
 type CloudProviderAWSReq struct {
-	AccessKeyID string `json:"accessKeyId"`
+	AccessKeyID string `json:"accessKeyID"`
 	SecretKey   string `json:"secretKey"`
 	Region      string `json:"region"`
 }
@@ -54,7 +54,7 @@ func (req *CloudProviderAWSReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&req.AccessKeyID, true, 1, maxKeyLen, field+"accessKeyId")...)
+	res = append(res, basedto.ValidateStr(&req.AccessKeyID, true, 1, maxKeyLen, field+"accessKeyID")...)
 	res = append(res, basedto.ValidateStr(&req.SecretKey, true, 1, maxKeyLen, field+"secretKey")...)
 	res = append(res, basedto.ValidateStr(&req.Region, false, 1, maxKeyLen, field+"region")...)
 	return res

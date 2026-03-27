@@ -17,7 +17,7 @@ import (
 // @Tags    system_tasks
 // @Produce json
 // @Id      listTask
-// @Param   jobId query string false "`jobId=<target>`"
+// @Param   jobID query string false "`jobID=<target>`"
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"

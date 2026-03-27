@@ -22,7 +22,7 @@ func NewGetVolumeReq() *GetVolumeReq {
 func (req *GetVolumeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	// NOTE: volume id is docker id, it's not ULID
-	validators = append(validators, basedto.ValidateStr(&req.VolumeID, true, 1, volumeIDMaxLen, "volumeId")...)
+	validators = append(validators, basedto.ValidateStr(&req.VolumeID, true, 1, volumeIDMaxLen, "volumeID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

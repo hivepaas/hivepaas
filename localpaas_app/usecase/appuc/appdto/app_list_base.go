@@ -29,7 +29,7 @@ func NewListAppBaseReq() *ListAppBaseReq {
 // Validate implements interface basedto.ReqValidator
 func (req *ListAppBaseReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllAppStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

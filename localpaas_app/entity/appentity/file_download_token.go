@@ -6,7 +6,7 @@ import (
 
 type FileDownloadTokenClaims struct {
 	jwtsession.BaseClaims
-	FileId       string `json:"fileId"`
-	UserId       string `json:"userId"`
+	FileID       string `json:"fileID"`
+	UserID       string `json:"userID"`
 	RequireLogin bool   `json:"requireLogin,omitempty"`
 }

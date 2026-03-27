@@ -134,8 +134,8 @@ func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppDeploymentSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appID")...)
 	validators = append(validators, req.ImageSource.validate("imageSource")...)
 	validators = append(validators, req.RepoSource.validate("repoSource")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.ActiveMethod, true,

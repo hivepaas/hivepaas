@@ -22,8 +22,8 @@ func (m *manager) ConfigList(ctx context.Context, options ...ConfigListOption) (
 	return resp, nil
 }
 
-func (m *manager) ConfigInspect(ctx context.Context, configId string) (*swarm.Config, error) {
-	resp, _, err := m.client.ConfigInspectWithRaw(ctx, configId)
+func (m *manager) ConfigInspect(ctx context.Context, configID string) (*swarm.Config, error) {
+	resp, _, err := m.client.ConfigInspectWithRaw(ctx, configID)
 	if err != nil {
 		return nil, apperrors.NewInfra(err)
 	}

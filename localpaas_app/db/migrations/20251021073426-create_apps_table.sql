@@ -25,7 +25,7 @@ CREATE UNIQUE INDEX idx_uq_apps_key ON apps(project_id, LOWER(key)) WHERE delete
 CREATE INDEX idx_apps_project_id ON apps(project_id);
 CREATE INDEX idx_apps_parent_id ON apps(parent_id);
 CREATE INDEX idx_apps_token ON apps(token);
-CREATE INDEX idx_apps_created_at ON apps(created_at);
+CREATE INDEX idx_apps_updated_at ON apps(updated_at);
 CREATE INDEX idx_apps_deleted_at ON apps(deleted_at);
 
 -- +migrate Down

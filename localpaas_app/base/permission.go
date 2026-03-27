@@ -48,6 +48,7 @@ const (
 	ResourceTypeSystemCleanup ResourceType = "system-cleanup"
 	ResourceTypeSystemBackup  ResourceType = "system-backup"
 	ResourceTypeSSLRenewal    ResourceType = "ssl-renewal"
+	ResourceTypeFile          ResourceType = "file"
 )
 
 type ResourceModule string

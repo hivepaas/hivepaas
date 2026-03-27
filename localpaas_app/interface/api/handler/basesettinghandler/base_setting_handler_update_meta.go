@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
@@ -54,7 +55,7 @@ func (h *BaseSettingHandler) UpdateSettingMeta(
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "itemID")
 	case base.SettingScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeNone:
+	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
@@ -156,6 +157,11 @@ func (h *BaseSettingHandler) UpdateSettingMeta(
 		r := imagebuilddto.NewUpdateImageBuildMetaReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuildMeta(reqCtx, auth, r) }
+
+	case base.ResourceTypeFile:
+		r := filedto.NewUpdateFileMetaReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.FileUC.UpdateFileMeta(reqCtx, auth, r) }
 	}
 
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {

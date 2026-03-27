@@ -28,6 +28,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/dbservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/emailservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/fileservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/lpappservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/nginxservice"
@@ -55,6 +56,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc"
@@ -162,6 +164,7 @@ var Provides = []any{
 	gitcredentialuc.NewGitCredentialUC,
 	sslrenewaluc.NewSSLRenewalUC,
 	systembackupuc.NewSystemBackupUC,
+	fileuc.NewFileUC,
 
 	// Service
 	clusterservice.NewClusterService,
@@ -178,6 +181,7 @@ var Provides = []any{
 	cronjobservice.NewCronJobService,
 	taskservice.NewTaskService,
 	dbservice.NewDBService,
+	fileservice.NewFileService,
 
 	// Repo: User
 	repository.NewUserRepo,

@@ -33,13 +33,7 @@ func (uc *SSLUC) CreateSSL(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			pData.Setting.Kind = string(req.Provider)
-			err := pData.Setting.SetData(&entity.SSL{
-				Certificate: req.Certificate,
-				PrivateKey:  entity.NewEncryptedField(req.PrivateKey),
-				KeySize:     req.KeySize,
-				Provider:    req.Provider,
-				Email:       req.Email,
-			})
+			err := pData.Setting.SetData(req.ToEntity())
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

@@ -10,13 +10,13 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 )
 
 type Client struct {
-	client *s3.Client
-	config *Config
+	config        *Config
+	client        *s3.Client
+	presignClient *s3.PresignClient
 }
 
 type Config struct {
@@ -44,27 +44,19 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		}
 	})
 
-	return &Client{client: s3Client, config: cfg}, nil
+	return &Client{
+		config:        cfg,
+		client:        s3Client,
+		presignClient: s3.NewPresignClient(s3Client),
+	}, nil
 }
 
-func NewFromSettings(ctx context.Context, storageStg, providerStg *entity.Setting) (*Client, error) {
-	if storageStg.Type != base.SettingTypeCloudStorage {
-		return nil, apperrors.New(apperrors.ErrSettingTypeInvalid).WithMsgLog(
-			"expect setting type: %v, got: %v", base.SettingTypeCloudStorage, storageStg.Type)
-	}
-	if providerStg.Type != base.SettingTypeCloudProvider {
-		return nil, apperrors.New(apperrors.ErrSettingTypeInvalid).WithMsgLog(
-			"expect setting type: %v, got: %v", base.SettingTypeCloudProvider, providerStg.Type)
-	}
-
-	storage := storageStg.MustAsCloudStorage()
-	provider := providerStg.MustAsCloudProvider()
-
+func NewClientFromStorage(ctx context.Context, storage *entity.CloudStorage) (*Client, error) {
 	return NewClient(ctx, &Config{
-		AccessKeyID:     provider.AWS.AccessKeyID,
-		SecretAccessKey: provider.AWS.SecretKey.MustGetPlain(),
+		AccessKeyID:     storage.RefProvider.AWS.AccessKeyID,
+		SecretAccessKey: storage.RefProvider.AWS.SecretKey.MustGetPlain(),
 		Endpoint:        storage.S3.Endpoint,
-		Region:          gofn.Coalesce(storage.S3.Region, provider.AWS.Region),
+		Region:          gofn.Coalesce(storage.S3.Region, storage.RefProvider.AWS.Region),
 		Bucket:          storage.S3.Bucket,
 	})
 }

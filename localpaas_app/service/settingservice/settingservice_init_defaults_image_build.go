@@ -32,6 +32,7 @@ func (s *settingService) initDefaultImageBuild(
 ) (err error) {
 	imageBuildSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
+		Scope:           base.SettingScopeGlobal,
 		Type:            base.SettingTypeImageBuild,
 		Status:          base.SettingStatusActive,
 		Name:            imageBuildSettingName,

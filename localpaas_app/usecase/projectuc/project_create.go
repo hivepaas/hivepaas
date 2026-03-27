@@ -177,10 +177,11 @@ func (uc *ProjectUC) preparePersistingProjectWebhook(
 ) {
 	setting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeProject,
+		ObjectID:  project.ID,
 		Type:      base.SettingTypeRepoWebhook,
 		Status:    base.SettingStatusActive,
 		Name:      projectWebhookName,
-		ObjectID:  project.ID,
 		Default:   true,
 		Version:   entity.CurrentRepoWebhookVersion,
 		CreatedAt: timeNow,

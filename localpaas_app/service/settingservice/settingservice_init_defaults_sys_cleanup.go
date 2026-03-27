@@ -36,6 +36,7 @@ func (s *settingService) initDefaultSystemCleanup(
 	// Cleanup settings
 	cleanupSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeSystemCleanup,
 		Status:    sysCleanupDefaultStatus,
 		Name:      sysCleanupSettingName,
@@ -70,6 +71,7 @@ func (s *settingService) initDefaultSystemCleanup(
 	// Cleanup job
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeCronJob,
 		Kind:      string(base.CronJobTypeSystemCleanup),
 		Status:    sysCleanupDefaultStatus,

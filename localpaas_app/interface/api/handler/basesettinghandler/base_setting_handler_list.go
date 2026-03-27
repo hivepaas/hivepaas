@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
@@ -65,7 +66,7 @@ func (h *BaseSettingHandler) ListSetting(
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "")
 	case base.SettingScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "")
-	case base.SettingScopeNone:
+	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
@@ -168,6 +169,11 @@ func (h *BaseSettingHandler) ListSetting(
 		r := imagebuilddto.NewListImageBuildReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.ListImageBuild(reqCtx, auth, r) }
+
+	case base.ResourceTypeFile:
+		r := filedto.NewListFileReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.FileUC.ListFile(reqCtx, auth, r) }
 	}
 
 	if err = h.ParseAndValidateRequest(ctx, req, paging); err != nil {

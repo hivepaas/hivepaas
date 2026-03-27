@@ -35,6 +35,7 @@ const (
 	SettingTypeSystemCleanup SettingType = "system-cleanup"
 	SettingTypeSystemBackup  SettingType = "system-backup"
 	SettingTypeSSLRenewal    SettingType = "ssl-renewal"
+	SettingTypeFile          SettingType = "file"
 )
 
 var (
@@ -59,14 +60,13 @@ var (
 	AllSettingSettableStatuses = gofn.Drop(AllSettingStatuses, SettingStatusExpired)
 )
 
-type SettingScopeType int8
+type SettingScopeType string
 
 const (
-	SettingScopeNone SettingScopeType = iota
-	SettingScopeGlobal
-	SettingScopeUser
-	SettingScopeProject
-	SettingScopeApp
+	SettingScopeGlobal  SettingScopeType = ""
+	SettingScopeUser    SettingScopeType = "user"
+	SettingScopeProject SettingScopeType = "project"
+	SettingScopeApp     SettingScopeType = "app"
 )
 
 type SettingScope struct {

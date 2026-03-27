@@ -108,6 +108,7 @@ func (uc *AppUC) prepareUpdatingAppHttpSettings(
 	if setting == nil {
 		setting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     base.SettingScopeApp,
 			ObjectID:  app.ID,
 			Type:      base.SettingTypeAppHttp,
 			CreatedAt: timeNow,

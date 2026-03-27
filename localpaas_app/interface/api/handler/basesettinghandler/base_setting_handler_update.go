@@ -65,7 +65,7 @@ func (h *BaseSettingHandler) UpdateSetting(
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "itemID")
 	case base.SettingScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeNone:
+	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
@@ -166,6 +166,10 @@ func (h *BaseSettingHandler) UpdateSetting(
 		r := imagebuilddto.NewUpdateImageBuildReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuild(reqCtx, auth, r) }
+
+	case base.ResourceTypeFile:
+		// NOTE: not implemented
+		err = apperrors.NewNotImplementedNT()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

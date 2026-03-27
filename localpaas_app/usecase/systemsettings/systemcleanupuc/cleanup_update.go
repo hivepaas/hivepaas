@@ -118,6 +118,7 @@ func (uc *SystemCleanupUC) loadSettingData(
 		timeNow := timeutil.NowUTC()
 		jobSetting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     req.Scope.ScopeType(),
 			Type:      base.SettingTypeCronJob,
 			Status:    base.SettingStatusActive,
 			Name:      cleanupJobName,

@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
@@ -65,7 +66,7 @@ func (h *BaseSettingHandler) GetSetting(
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	case base.SettingScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "itemID")
-	case base.SettingScopeNone:
+	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
@@ -166,6 +167,11 @@ func (h *BaseSettingHandler) GetSetting(
 		r := imagebuilddto.NewGetImageBuildReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.GetImageBuild(reqCtx, auth, r) }
+
+	case base.ResourceTypeFile:
+		r := filedto.NewGetFileReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.FileUC.GetFile(reqCtx, auth, r) }
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

@@ -40,7 +40,7 @@ func CreateSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) error) 
 	}
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func (h *BaseSettingHandler) CreateSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
@@ -65,7 +65,7 @@ func (h *BaseSettingHandler) CreateSetting(
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
 	case base.SettingScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "")
-	case base.SettingScopeNone:
+	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
@@ -167,6 +167,14 @@ func (h *BaseSettingHandler) CreateSetting(
 		r := imagebuilddto.NewCreateImageBuildReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.CreateImageBuild(reqCtx, auth, r) }
+
+	case base.ResourceTypeFile:
+		// NOTE: not implemented
+		err = apperrors.NewNotImplementedNT()
+	}
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
 	}
 
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {

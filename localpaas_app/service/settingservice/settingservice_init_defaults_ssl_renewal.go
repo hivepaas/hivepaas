@@ -31,6 +31,7 @@ func (s *settingService) initDefaultSSLRenewal(
 	// Renewal settings
 	renewalSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeSSLRenewal,
 		Status:    sslRenewalDefaultStatus,
 		Name:      sslRenewalSettingName,
@@ -47,6 +48,7 @@ func (s *settingService) initDefaultSSLRenewal(
 	// Renewal job
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeCronJob,
 		Kind:      string(base.CronJobTypeSSLRenewal),
 		Status:    sslRenewalDefaultStatus,

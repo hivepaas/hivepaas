@@ -133,6 +133,7 @@ func (uc *AppUC) prepareUpdatingAppDeploymentSettings(
 	if setting == nil {
 		setting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     base.SettingScopeApp,
 			ObjectID:  app.ID,
 			Type:      base.SettingTypeAppDeployment,
 			CreatedAt: timeNow,

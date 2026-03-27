@@ -53,6 +53,7 @@ func (uc *GithubAppUC) BeginGithubAppManifestFlow(
 
 	appSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
+		Scope:           req.Scope.ScopeType(),
 		ObjectID:        req.Scope.MainObjectID(),
 		Type:            base.SettingTypeGithubApp,
 		Kind:            string(base.SettingTypeGithubApp),

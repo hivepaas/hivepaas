@@ -13,7 +13,7 @@ import (
 
 var (
 	SettingUpsertingConflictCols = []string{"id"}
-	SettingUpsertingUpdateCols   = []string{"object_id", "type", "kind", "status", "name", "data",
+	SettingUpsertingUpdateCols   = []string{"scope", "object_id", "type", "kind", "status", "name", "data",
 		"avail_in_projects", "is_default", "version", "update_ver",
 		"updated_at", "expire_at", "deleted_at"}
 )
@@ -33,17 +33,18 @@ func registerSettingParser(typ base.SettingType, parser SettingParser) bool {
 }
 
 type Setting struct {
-	ID              string             `bun:",pk" json:"id"`
-	ObjectID        string             `bun:",nullzero" json:"objectID"`
-	Type            base.SettingType   `json:"type"`
-	Kind            string             `bun:",nullzero" json:"kind"`
-	Status          base.SettingStatus `json:"status"`
-	Name            string             `bun:",nullzero" json:"name"`
-	Data            string             `bun:",nullzero" json:"data"`
-	AvailInProjects bool               `json:"availInProjects"`
-	Default         bool               `bun:"is_default" json:"isDefault"`
-	Version         int                `json:"version"`
-	UpdateVer       int                `json:"updateVer"`
+	ID              string                `bun:",pk" json:"id"`
+	Scope           base.SettingScopeType `json:"scope"`
+	ObjectID        string                `bun:",nullzero" json:"objectID"`
+	Type            base.SettingType      `json:"type"`
+	Kind            string                `bun:",nullzero" json:"kind"`
+	Status          base.SettingStatus    `json:"status"`
+	Name            string                `bun:",nullzero" json:"name"`
+	Data            string                `bun:",nullzero" json:"data"`
+	AvailInProjects bool                  `json:"availInProjects"`
+	Default         bool                  `bun:"is_default" json:"isDefault"`
+	Version         int                   `json:"version"`
+	UpdateVer       int                   `json:"updateVer"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`

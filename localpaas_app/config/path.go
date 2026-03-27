@@ -120,6 +120,13 @@ func (cfg *Config) HttpPathPhoto() string {
 	return "/files/photo/"
 }
 
+func (cfg *Config) DataPathUserPhoto() string {
+	return filepath.Join(cfg.DataPathPhoto(), "user")
+}
+func (cfg *Config) DataPathProjectPhoto() string {
+	return filepath.Join(cfg.DataPathPhoto(), "project")
+}
+
 /// SSL CERTS
 
 func (cfg *Config) DataPathCerts() string {

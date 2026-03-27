@@ -9,6 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc"
@@ -52,6 +53,7 @@ type BaseSettingHandler struct {
 	SystemBackupUC  *systembackupuc.SystemBackupUC
 	GitCredentialUC *gitcredentialuc.GitCredentialUC
 	SSLRenewalUC    *sslrenewaluc.SSLRenewalUC
+	FileUC          *fileuc.FileUC
 }
 
 func NewBaseSettingHandler(
@@ -79,6 +81,7 @@ func NewBaseSettingHandler(
 	systemBackupUC *systembackupuc.SystemBackupUC,
 	gitCredentialUC *gitcredentialuc.GitCredentialUC,
 	sslRenewalUC *sslrenewaluc.SSLRenewalUC,
+	fileUC *fileuc.FileUC,
 ) *BaseSettingHandler {
 	return &BaseSettingHandler{
 		BaseHandler:     baseHandler,
@@ -105,5 +108,6 @@ func NewBaseSettingHandler(
 		SystemBackupUC:  systemBackupUC,
 		GitCredentialUC: gitCredentialUC,
 		SSLRenewalUC:    sslRenewalUC,
+		FileUC:          fileUC,
 	}
 }

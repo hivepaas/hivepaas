@@ -14,3 +14,7 @@ type TaskLog struct {
 	Data     string         `json:"data"`
 	Ts       time.Time      `bun:",nullzero" json:"ts"`
 }
+
+func (t *TaskLog) GetID() int64 {
+	return t.ID
+}

@@ -22,6 +22,9 @@ func (s *cloudStorageParser) New() SettingData {
 type CloudStorage struct {
 	Provider ObjectID        `json:"provider"`
 	S3       *CloudStorageS3 `json:"s3,omitempty"`
+
+	// NOTE: this is a temporary field
+	RefProvider *CloudProvider `json:"-"`
 }
 
 type CloudStorageS3 struct {

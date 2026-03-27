@@ -34,6 +34,7 @@ func (s *settingService) initDefaultSystemBackup(
 	// Backup settings
 	backupSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeSystemBackup,
 		Status:    sysBackupDefaultStatus,
 		Name:      sysBackupSettingName,
@@ -59,6 +60,7 @@ func (s *settingService) initDefaultSystemBackup(
 	// Backup job
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
 		Type:      base.SettingTypeCronJob,
 		Kind:      string(base.CronJobTypeSystemBackup),
 		Status:    sysBackupDefaultStatus,

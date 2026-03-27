@@ -10,13 +10,15 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 	"github.com/localpaas/localpaas/services/aws/s3"
 )
 
-func (e *Executor) sysDBBackupSaveResultInStorage(
+func (e *Executor) sysBackupSaveResultInStorage(
 	ctx context.Context,
 	sysBackup *entity.SystemBackup,
 	data *sysBackupTaskData,
@@ -34,19 +36,16 @@ func (e *Executor) sysDBBackupSaveResultInStorage(
 		return nil
 	}
 	provider := providerSttg.MustAsCloudProvider()
+	storage.RefProvider = provider
 
 	var s3Client *s3.Client
 	var storageName string
+	var storageBucket string
 	switch {
 	case storage.S3 != nil:
 		storageName = "AWS S3"
-		s3Client, err = s3.NewClient(ctx, &s3.Config{
-			AccessKeyID:     provider.AWS.AccessKeyID,
-			SecretAccessKey: provider.AWS.SecretKey.MustGetPlain(),
-			Endpoint:        storage.S3.Endpoint,
-			Region:          gofn.Coalesce(storage.S3.Region, provider.AWS.Region),
-			Bucket:          storage.S3.Bucket,
-		})
+		storageBucket = storage.S3.Bucket
+		s3Client, err = s3.NewClientFromStorage(ctx, storage)
 	default:
 		err = apperrors.NewUnsupported("Storage type")
 	}
@@ -54,10 +53,8 @@ func (e *Executor) sysDBBackupSaveResultInStorage(
 		return apperrors.Wrap(err)
 	}
 
-	backupFilePath := filepath.Join(data.BackupFileDir, data.BackupFileName)
-	targetFilePath := filepath.Join(sysBackup.DestinationStorageDir, data.BackupFileName)
-
-	backupFile, err := os.Open(backupFilePath)
+	targetFilePath := filepath.Join(sysBackup.DestinationStorageDir, data.OutFileName)
+	backupFile, err := os.Open(data.OutFilePath)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -66,11 +63,11 @@ func (e *Executor) sysDBBackupSaveResultInStorage(
 	start := timeutil.NowUTC()
 	_ = data.LogStore.Add(ctx, applog.NewOutFrame(fmt.Sprintf(
 		"Start uploading file '%v' to '%v' bucket '%v'...",
-		data.BackupFileName, storageName, storage.S3.Bucket), applog.TsNow))
+		data.OutFileName, storageName, storage.S3.Bucket), applog.TsNow))
 
 	switch {
 	case storage.S3 != nil:
-		err = s3Client.UploadEx(ctx, storage.S3.Bucket, targetFilePath, 0, 0, backupFile)
+		err = s3Client.UploadEx(ctx, storageBucket, targetFilePath, 0, 0, backupFile)
 	default:
 		err = apperrors.NewUnsupported("Storage type")
 	}
@@ -82,6 +79,32 @@ func (e *Executor) sysDBBackupSaveResultInStorage(
 	}
 	_ = data.LogStore.Add(ctx, applog.NewOutFrame("Backup file uploaded to "+storageName+
 		" in "+time.Since(start).String(), applog.TsNow))
+
+	localFile := data.LocalOutFile.MustAsFile()
+	remoteFileSetting := &entity.Setting{
+		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
+		Type:      base.SettingTypeFile,
+		Kind:      string(base.FileKindSystemBackup),
+		Status:    base.SettingStatusActive,
+		Name:      data.OutFileName,
+		Version:   entity.CurrentFileVersion,
+		CreatedAt: data.TimeNow,
+		UpdatedAt: data.TimeNow,
+	}
+
+	remoteFile := &entity.File{
+		FileKind:    base.FileKindSystemBackup,
+		StorageType: base.FileStorageCloud,
+		Storage:     entity.ObjectID{ID: sysBackup.DestinationStorage.ID},
+		Bucket:      storageBucket,
+		Mimetype:    localFile.Mimetype,
+		Size:        localFile.Size,
+		Path:        sysBackup.DestinationStorageDir,
+	}
+
+	remoteFileSetting.MustSetData(remoteFile)
+	data.RemoteOutFile = remoteFileSetting
 
 	return nil
 }

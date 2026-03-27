@@ -137,10 +137,11 @@ func (uc *BaseSettingUC) prepareSettingCreation(
 	timeNow := timeutil.NowUTC()
 	setting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
+		Scope:           req.Scope.ScopeType(),
+		ObjectID:        req.Scope.MainObjectID(),
 		Type:            req.Type,
 		Status:          base.SettingStatusActive,
 		Name:            data.VerifyingName,
-		ObjectID:        req.Scope.MainObjectID(),
 		AvailInProjects: gofn.If(!req.Scope.IsGlobalScope(), false, req.AvailInProjects),
 		Default:         req.Default,
 		Version:         data.Version,

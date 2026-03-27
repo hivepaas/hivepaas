@@ -359,7 +359,7 @@ func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scop
 			query = query.Where("setting.object_id = ?", scope.AppID)
 		case base.SettingScopeUser:
 			query = query.Where("setting.object_id = ?", scope.UserID)
-		case base.SettingScopeNone:
+		default:
 			// Do nothing
 		}
 	}

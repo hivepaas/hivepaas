@@ -25,6 +25,10 @@ export const QK = {
     "projects.apps.secrets.$.find-many-paginated": "projects.apps.secrets.$.find-many-paginated",
     "projects.apps.secrets.$.find-one-by-id": "projects.apps.secrets.$.find-one-by-id",
     /*
+     * Project App Container Settings
+     */
+    "projects.apps.container-settings.$.find-one": "projects.apps.container-settings.$.find-one",
+    /*
      * Project App Deployment Settings
      */
     "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",

@@ -11,6 +11,7 @@ This guideline documents the standard process to build a complete API surface fo
 - **Queries**: TanStack Query consumers for read operations with proper query keys and placeholder data.
 - **Commands**: TanStack Mutation consumers for write operations with cache invalidation.
 - **Exports**: Update all related `index.ts` barrels.
+- **Mappers** (optional): When request/response JSON differs from domain types, use `<entity>.api.mapper.ts` next to the service (see below).
 
 ---
 
@@ -72,6 +73,20 @@ export class MyEntitiesApiValidator {
 }
 ```
 
+### 2.5) Mappers (domain ↔ wire)
+
+Use when the HTTP payload or parsed response shape **differs** from your domain model (e.g. `null` vs empty array, date string formatting, flattened vs nested objects).
+
+- **Wire types** live in **contracts** (e.g. `MyEntityUpdateBody` for a `PUT` body).
+- **Mapping** lives in **`<entity>.api.mapper.ts`**, colocated with the service—not in TanStack queries/commands or generic “data” helpers.
+- **Pattern**: one small class per operation with explicit methods:
+    - **`toApi`**: domain → wire (request bodies, query serialization if needed).
+    - **`toDomain`**: validated API output → domain (when you normalize beyond what Zod already gives you).
+- **Facade**: export a single **`MyEntityApiMapper`** with `readonly` nested mappers (e.g. `readonly updateOne = new UpdateOneMapper()`), matching the Tasks module style.
+- **Service**: inject the mapper in the service constructor (alongside the validator) and call `this.mapper.updateOne.toApi(payload)` before `put`/`post`.
+
+This keeps the **data layer** free of business shaping: queries/commands call the API hook; the **service** owns HTTP + validation + domain/wire mapping at the boundary.
+
 ### 3) Implement Service (BaseApi + Result)
 
 - Create a service class extending `BaseApi` that:
@@ -124,18 +139,19 @@ export class MyEntitiesApi extends BaseApi {
 ### 5) Wire into API Context
 
 - Import your service and validator in the module API context factory (e.g., `projects.api.context.ts`).
-- Instantiate the validator and add your service into the returned `api` object under the appropriate subtree.
+- Instantiate the validator (and **mapper** if the service uses one) and add your service into the returned `api` object under the appropriate subtree.
 
 Example (excerpt):
 
 ```ts
-import { MyEntitiesApi, MyEntitiesApiValidator } from "~/module/api/services";
+import { MyEntitiesApi, MyEntitiesApiMapper, MyEntitiesApiValidator } from "~/module/api/services";
 
 const myEntitiesValidator = new MyEntitiesApiValidator();
+const myEntitiesMapper = new MyEntitiesApiMapper();
 
 return {
   module: {
-    myEntities: new MyEntitiesApi(myEntitiesValidator),
+    myEntities: new MyEntitiesApi(myEntitiesValidator, myEntitiesMapper),
   },
 };
 ```
@@ -296,7 +312,7 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 - **Dates**: Use `z.coerce.date()` for incoming dates; optional/nullable per requirements.
 - **Result Pattern**: Services must return `Result` (`Ok`/`Err`); hooks unwrap with `match` and rethrow/notify.
 - **Query Keys**: Centralize keys in `data/constants`. Never hardcode literals in hooks/queries/commands.
-- **No Data Conversion in Data Layer**: Do not map/transform inside queries/commands; handle conversion in UI/forms or dedicated mappers before calling the data layer.
+- **No Data Conversion in Data Layer**: Do not map/transform inside queries/commands; handle conversion in UI/forms, or in **API service mappers** (`*.api.mapper.ts`) invoked from the service. Keep TanStack layers thin.
 - **Module Isolation**: Keep module code within the module. Move shared code to `src/application/shared` or `src/ui-kit`.
 
 ---
@@ -305,6 +321,7 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 
 - `src/application/modules/<module>/api/services/<area>/<entity>/<entity>.api.contracts.ts`
 - `src/application/modules/<module>/api/services/<area>/<entity>/<entity>.api.validator.ts`
+- `src/application/modules/<module>/api/services/<area>/<entity>/<entity>.api.mapper.ts` (optional; domain ↔ wire)
 - `src/application/modules/<module>/api/services/<area>/<entity>/<entity>.api.ts`
 - `src/application/modules/<module>/api/services/<area>/<entity>/index.ts`
 - `src/application/modules/<module>/api/api-context/<module>.api.context.ts`

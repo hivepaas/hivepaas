@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    AppContainerSettingsApi,
+    AppContainerSettingsApiValidator,
     AppDeploymentSettingsApi,
     AppDeploymentSettingsApiValidator,
     AppSecretsApi,
@@ -30,6 +32,7 @@ function createApi() {
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
+    const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
@@ -45,6 +48,9 @@ function createApi() {
                 },
                 secrets: {
                     $: new AppSecretsApi(appSecretsApiValidator),
+                },
+                containerSettings: {
+                    $: new AppContainerSettingsApi(appContainerSettingsApiValidator),
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),

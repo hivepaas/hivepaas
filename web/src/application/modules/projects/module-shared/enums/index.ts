@@ -8,3 +8,5 @@ export * from "./e.project-status";
 export * from "./e.repo-type";
 export * from "./e.restart-policy-condition";
 export * from "./e.seccomp-mode";
+export * from "./e.service-mode";
+export * from "./e.app-service-placement";

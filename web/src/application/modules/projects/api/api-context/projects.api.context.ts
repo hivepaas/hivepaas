@@ -7,6 +7,8 @@ import {
     AppDeploymentSettingsApiValidator,
     AppSecretsApi,
     AppSecretsApiValidator,
+    AppServiceSettingsApi,
+    AppServiceSettingsApiValidator,
     ProjectAppEnvVarsApi,
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
@@ -34,6 +36,7 @@ function createApi() {
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
+    const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
@@ -54,6 +57,9 @@ function createApi() {
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),
+                },
+                serviceSettings: {
+                    $: new AppServiceSettingsApi(appServiceSettingsApiValidator),
                 },
             },
             secrets: {

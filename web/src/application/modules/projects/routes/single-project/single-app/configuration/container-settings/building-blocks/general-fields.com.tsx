@@ -179,7 +179,7 @@ export function GeneralFields() {
                     <FieldError errors={[stopSignalError]} />
                 </InfoBlock>
 
-                <InfoBlock title="Stop Grace Period (ms)">
+                <InfoBlock title="Stop Grace Period">
                     <Input
                         {...stopGracePeriod}
                         value={stopGracePeriod.value}

@@ -103,17 +103,20 @@ func (s *traefikService) collectDomainConfig(
 	data *AppConfigData,
 	hasCerts *bool,
 ) {
+	appKey := sanitizeRouterNameReplacer.Replace(app.Key)
 	domainKey := sanitizeRouterNameReplacer.Replace(domain.Domain)
 	if domainKey == "" {
 		return
 	}
 
-	serviceName := fmt.Sprintf("%s-%s-svc", app.Key, domainKey)
+	// Service
+	serviceName := fmt.Sprintf("%s-svc", appKey)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", serviceName)] =
 		strconv.Itoa(domain.ContainerPort)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.passhostheader", serviceName)] = labelValueTrue
 
-	routerName := fmt.Sprintf("%s-%s-router", app.Key, domainKey)
+	// Main router
+	routerName := fmt.Sprintf("%s-router", domainKey)
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] =
 		fmt.Sprintf("Host(`%s`)", domain.Domain)
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
@@ -122,8 +125,8 @@ func (s *traefikService) collectDomainConfig(
 
 	var middlewares []string
 
-	// Force Https config
-	s.createForceHttpsConfig(domain.ForceHttps, domainKey, labels, &middlewares)
+	// Force Https config (just listen to HTTP, then redirect to HTTPS)
+	s.createForceHttpsConfig(domain.ForceHttps, serviceName, domain.Domain, domainKey, labels)
 
 	// Redirect config
 	needRedirection := domain.DomainRedirect != "" && domain.Domain != domain.DomainRedirect
@@ -135,6 +138,9 @@ func (s *traefikService) collectDomainConfig(
 	// Client config
 	s.createClientConfig(domain.ClientConfig, domainKey, labels, &middlewares)
 
+	// Header config
+	s.createHeaderConfig(domain.HeaderConfig, domainKey, labels, &middlewares)
+
 	// Compression config
 	s.createCompressionConfig(domain.CompressionConfig, domainKey, labels, &middlewares)
 
@@ -144,18 +150,6 @@ func (s *traefikService) collectDomainConfig(
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
 			strings.Join(middlewares, ",")
-	}
-
-	if !domain.ForceHttps {
-		routerNameHttp := fmt.Sprintf("%s-%s-router-http", app.Key, domainKey)
-		labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerNameHttp)] =
-			fmt.Sprintf("Host(`%s`)", domain.Domain)
-		labels[fmt.Sprintf("traefik.http.routers.%s.service", routerNameHttp)] = serviceName
-		labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerNameHttp)] = "web"
-		if len(middlewares) > 0 {
-			labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerNameHttp)] =
-				strings.Join(middlewares, ",")
-		}
 	}
 
 	// Paths config
@@ -184,20 +178,6 @@ func (s *traefikService) collectPathConfig(
 		return
 	}
 
-	pathMiddlewares := make([]string, len(sharedMiddlewares))
-	copy(pathMiddlewares, sharedMiddlewares)
-	pathRouterName := fmt.Sprintf("%s-path-%d", domainRouterName, pathIdx)
-	pathMwPrefix := fmt.Sprintf("%s-path-%d", domainKey, pathIdx)
-
-	// Basic auth config for path
-	s.createBasicAuthConfig(pathCfg.BasicAuth, data.RefObjects, pathMwPrefix, labels, &pathMiddlewares)
-
-	// Client config for path
-	s.createClientConfig(pathCfg.ClientConfig, pathMwPrefix, labels, &pathMiddlewares)
-
-	// RateLimit config for path
-	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathMwPrefix, labels, &pathMiddlewares)
-
 	// Apply Path router labels
 	var pathRule string
 	if pathCfg.IsRegex {
@@ -206,40 +186,56 @@ func (s *traefikService) collectPathConfig(
 		pathRule = fmt.Sprintf("Host(`%s`) && PathPrefix(`%s`)", domain.Domain, pathCfg.Path)
 	}
 
+	pathRouterName := fmt.Sprintf("%s-path-%d", domainRouterName, pathIdx)
+	pathMwPrefix := fmt.Sprintf("%s-path-%d", domainKey, pathIdx)
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", pathRouterName)] = pathRule
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", pathRouterName)] = serviceName
 	labels[fmt.Sprintf("traefik.http.routers.%s.tls", pathRouterName)] = labelValueTrue
 	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", pathRouterName)] = "websecure"
+
+	pathMiddlewares := make([]string, len(sharedMiddlewares))
+	copy(pathMiddlewares, sharedMiddlewares)
+
+	// Basic auth config for path
+	s.createBasicAuthConfig(pathCfg.BasicAuth, data.RefObjects, pathMwPrefix, labels, &pathMiddlewares)
+
+	// Client config for path
+	s.createClientConfig(pathCfg.ClientConfig, pathMwPrefix, labels, &pathMiddlewares)
+
+	// Header config for path
+	s.createHeaderConfig(pathCfg.HeaderConfig, pathMwPrefix, labels, &pathMiddlewares)
+
+	// RateLimit config for path
+	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathMwPrefix, labels, &pathMiddlewares)
+
 	if len(pathMiddlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
 			strings.Join(pathMiddlewares, ",")
-	}
-
-	if !domain.ForceHttps {
-		pathRouterNameHttp := fmt.Sprintf("%s-http", pathRouterName)
-		labels[fmt.Sprintf("traefik.http.routers.%s.rule", pathRouterNameHttp)] = pathRule
-		labels[fmt.Sprintf("traefik.http.routers.%s.service", pathRouterNameHttp)] = serviceName
-		labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", pathRouterNameHttp)] = "web"
-		if len(pathMiddlewares) > 0 {
-			labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterNameHttp)] =
-				strings.Join(pathMiddlewares, ",")
-		}
 	}
 }
 
 func (s *traefikService) createForceHttpsConfig(
 	forceHttps bool,
+	serviceName string,
+	domain string,
 	domainKey string,
 	labels map[string]string,
-	middlewares *[]string,
 ) {
 	if !forceHttps {
 		return
 	}
+	// Add a new router for listening from HTTP port 80, then redirect the requests to HTTPS
+	routerName := fmt.Sprintf("%s-http-router", domainKey)
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] =
+		fmt.Sprintf("Host(`%s`)", domain)
+	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
+	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
+
 	mwName := fmt.Sprintf("%s-redirectscheme", domainKey)
 	labels[fmt.Sprintf("traefik.http.middlewares.%s.redirectscheme.scheme", mwName)] = "https"
 	labels[fmt.Sprintf("traefik.http.middlewares.%s.redirectscheme.permanent", mwName)] = labelValueTrue
-	*middlewares = append(*middlewares, mwName+middlewareProvider)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
+		mwName + middlewareProvider
 }
 
 func (s *traefikService) createRedirectionConfig(
@@ -290,6 +286,34 @@ func (s *traefikService) createClientConfig(
 			strings.Join(clientCfg.AllowedIPs, ",")
 		*middlewares = append(*middlewares, mwNameIp+middlewareProvider)
 	}
+}
+
+func (s *traefikService) createHeaderConfig(
+	headerCfg *entity.HTTPHeaderConfig,
+	domainKey string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if headerCfg == nil || (len(headerCfg.ToAddToRequests) == 0 && len(headerCfg.ToRemoveFromRequests) == 0) {
+		return
+	}
+	mwName := fmt.Sprintf("%s-headers", domainKey)
+
+	for k, v := range headerCfg.ToAddToRequests {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customrequestheaders.%s", mwName, k)] = v
+	}
+	for k, v := range headerCfg.ToAddToResponses {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customresponseheaders.%s", mwName, k)] = v
+	}
+
+	for _, k := range headerCfg.ToRemoveFromRequests {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customrequestheaders.%s", mwName, k)] = ""
+	}
+	for _, k := range headerCfg.ToRemoveFromResponses {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customresponseheaders.%s", mwName, k)] = ""
+	}
+
+	*middlewares = append(*middlewares, mwName+middlewareProvider)
 }
 
 func (s *traefikService) createBasicAuthConfig(

@@ -40,6 +40,7 @@ type AppDomain struct {
 	ClientConfig      *HTTPClientConfig      `json:"clientConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
+	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
 	Paths             []*HTTPPathConfig      `json:"paths,omitempty"`
 }
 
@@ -48,6 +49,13 @@ type HTTPClientConfig struct {
 	MaxRequestBodyBytes int      `json:"maxRequestBodyBytes,omitempty"`
 	MemRequestBodyBytes int      `json:"memRequestBodyBytes,omitempty"`
 	AllowedIPs          []string `json:"allowedIPs,omitempty"`
+}
+
+type HTTPHeaderConfig struct {
+	ToAddToRequests       map[string]string `json:"toAddToRequests,omitempty"`
+	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests,omitempty"`
+	ToAddToResponses      map[string]string `json:"toAddToResponses,omitempty"`
+	ToRemoveFromResponses []string          `json:"toRemoveFromResponses,omitempty"`
 }
 
 type HTTPCompressionConfig struct {
@@ -72,6 +80,7 @@ type HTTPPathConfig struct {
 	BasicAuth       ObjectID             `json:"basicAuth,omitzero"`
 	ClientConfig    *HTTPClientConfig    `json:"clientConfig,omitempty"`
 	RateLimitConfig *HTTPRateLimitConfig `json:"rateLimitConfig,omitempty"`
+	HeaderConfig    *HTTPHeaderConfig    `json:"headerConfig,omitempty"`
 }
 
 func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {

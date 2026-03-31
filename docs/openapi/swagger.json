@@ -20581,6 +20581,9 @@
           "forceHttps" : {
             "type" : "boolean"
           },
+          "headerConfig" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPHeaderConfigReq"
+          },
           "paths" : {
             "items" : {
               "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPPathConfigReq"
@@ -20594,7 +20597,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "paths", "rateLimitConfig", "sslCert" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.DomainResp" : {
@@ -20623,6 +20626,9 @@
           "forceHttps" : {
             "type" : "boolean"
           },
+          "headerConfig" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPHeaderConfigResp"
+          },
           "paths" : {
             "items" : {
               "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPPathConfigResp"
@@ -20636,7 +20642,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "containerPort", "domain", "enabled" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.EndpointSpec" : {
@@ -20912,6 +20918,66 @@
           }
         },
         "required" : [ "defaultEncoding", "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBodyBytes" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPHeaderConfigReq" : {
+        "properties" : {
+          "toAddToRequests" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "toAddToResponses" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "toRemoveFromRequests" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "toRemoveFromResponses" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "toAddToRequests", "toAddToResponses", "toRemoveFromRequests", "toRemoveFromResponses" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPHeaderConfigResp" : {
+        "properties" : {
+          "toAddToRequests" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "toAddToResponses" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "toRemoveFromRequests" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "toRemoveFromResponses" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "toAddToRequests", "toAddToResponses", "toRemoveFromRequests", "toRemoveFromResponses" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPPathConfigReq" : {

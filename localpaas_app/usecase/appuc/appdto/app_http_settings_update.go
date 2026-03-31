@@ -36,6 +36,7 @@ type DomainReq struct {
 	ForceHttps        bool                      `json:"forceHttps"`
 	BasicAuth         basedto.ObjectIDReq       `json:"basicAuth"`
 	ClientConfig      *HTTPClientConfigReq      `json:"clientConfig"`
+	HeaderConfig      *HTTPHeaderConfigReq      `json:"headerConfig"`
 	CompressionConfig *HTTPCompressionConfigReq `json:"compressionConfig"`
 	RateLimitConfig   *HTTPRateLimitConfigReq   `json:"rateLimitConfig"`
 	Paths             []*HTTPPathConfigReq      `json:"paths"`
@@ -51,6 +52,7 @@ func (req *DomainReq) ToEntity() *entity.AppDomain {
 		ForceHttps:        req.ForceHttps,
 		BasicAuth:         entity.ObjectID{ID: req.BasicAuth.ID},
 		ClientConfig:      req.ClientConfig.ToEntity(),
+		HeaderConfig:      req.HeaderConfig.ToEntity(),
 		CompressionConfig: req.CompressionConfig.ToEntity(),
 		RateLimitConfig:   req.RateLimitConfig.ToEntity(),
 		Paths: gofn.MapSlice(req.Paths, func(item *HTTPPathConfigReq) *entity.HTTPPathConfig {
@@ -87,6 +89,25 @@ func (r *HTTPClientConfigReq) ToEntity() *entity.HTTPClientConfig {
 		MaxRequestBodyBytes: r.MaxRequestBodyBytes,
 		MemRequestBodyBytes: r.MemRequestBodyBytes,
 		AllowedIPs:          r.AllowedIPs,
+	}
+}
+
+type HTTPHeaderConfigReq struct {
+	ToAddToRequests       map[string]string `json:"toAddToRequests"`
+	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests"`
+	ToAddToResponses      map[string]string `json:"toAddToResponses"`
+	ToRemoveFromResponses []string          `json:"toRemoveFromResponses"`
+}
+
+func (r *HTTPHeaderConfigReq) ToEntity() *entity.HTTPHeaderConfig {
+	if r == nil {
+		return nil
+	}
+	return &entity.HTTPHeaderConfig{
+		ToAddToRequests:       r.ToAddToRequests,
+		ToRemoveFromRequests:  r.ToRemoveFromRequests,
+		ToAddToResponses:      r.ToAddToResponses,
+		ToRemoveFromResponses: r.ToRemoveFromResponses,
 	}
 }
 

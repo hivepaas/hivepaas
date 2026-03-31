@@ -41,15 +41,16 @@ type HttpSettingsResp struct {
 type DomainResp struct {
 	Enabled           bool                       `json:"enabled"`
 	Domain            string                     `json:"domain"`
-	DomainRedirect    string                     `json:"domainRedirect"`
-	SSLCert           *settings.BaseSettingResp  `json:"sslCert"`
+	DomainRedirect    string                     `json:"domainRedirect,omitempty"`
+	SSLCert           *settings.BaseSettingResp  `json:"sslCert,omitempty"`
 	ContainerPort     int                        `json:"containerPort"`
-	ForceHttps        bool                       `json:"forceHttps"`
-	BasicAuth         *settings.BaseSettingResp  `json:"basicAuth"`
-	ClientConfig      *HTTPClientConfigResp      `json:"clientConfig"`
-	CompressionConfig *HTTPCompressionConfigResp `json:"compressionConfig"`
-	RateLimitConfig   *HTTPRateLimitConfigResp   `json:"rateLimitConfig"`
-	Paths             []*HTTPPathConfigResp      `json:"paths"`
+	ForceHttps        bool                       `json:"forceHttps,omitempty"`
+	BasicAuth         *settings.BaseSettingResp  `json:"basicAuth,omitempty"`
+	ClientConfig      *HTTPClientConfigResp      `json:"clientConfig,omitempty"`
+	HeaderConfig      *HTTPHeaderConfigResp      `json:"headerConfig,omitempty"`
+	CompressionConfig *HTTPCompressionConfigResp `json:"compressionConfig,omitempty"`
+	RateLimitConfig   *HTTPRateLimitConfigResp   `json:"rateLimitConfig,omitempty"`
+	Paths             []*HTTPPathConfigResp      `json:"paths,omitempty"`
 }
 
 type HTTPClientConfigResp struct {
@@ -57,6 +58,13 @@ type HTTPClientConfigResp struct {
 	MaxRequestBodyBytes int      `json:"maxRequestBodyBytes"`
 	MemRequestBodyBytes int      `json:"memRequestBodyBytes"`
 	AllowedIPs          []string `json:"allowedIPs"`
+}
+
+type HTTPHeaderConfigResp struct {
+	ToAddToRequests       map[string]string `json:"toAddToRequests"`
+	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests"`
+	ToAddToResponses      map[string]string `json:"toAddToResponses"`
+	ToRemoveFromResponses []string          `json:"toRemoveFromResponses"`
 }
 
 type HTTPRateLimitConfigResp struct {

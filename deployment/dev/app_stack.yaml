@@ -112,10 +112,11 @@ services:
         - "traefik.http.routers.app-router.rule=Host(`app.dev.localpaas.com`)"
         - "traefik.http.routers.app-router.entrypoints=websecure"
         - "traefik.http.routers.app-router.tls=true"
-        - "traefik.http.routers.app-router-http-acme.rule=Host(`*`) && PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.app-router-http-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
         - "traefik.http.routers.app-router-http-acme.entrypoints=web"
-        - "traefik.http.middlewares.addprefix-le-acme.addprefix.prefix=/letenscrypt"
-        - "traefik.http.routers.app-router-http-acme.middlewares=addprefix-le-acme"
+        - "traefik.http.routers.app-router-http-acme.tls=false"
+        - "traefik.http.middlewares.addprefix-le-acme.addprefix.prefix=/letsencrypt"
+        - "traefik.http.routers.app-router-http-acme.middlewares=addprefix-le-acme@swarm"
         - "traefik.docker.network=localpaas_net"
 
 networks:

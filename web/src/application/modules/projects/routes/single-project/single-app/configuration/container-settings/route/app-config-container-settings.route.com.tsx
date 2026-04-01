@@ -121,7 +121,6 @@ export function AppConfigContainerSettingsRoute() {
     function handleSubmit(values: AppConfigContainerSettingsFormSchemaOutput) {
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
-        console.log(values);
         update({
             projectID: projectId,
             appID: appId,

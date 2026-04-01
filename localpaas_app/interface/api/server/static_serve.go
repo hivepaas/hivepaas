@@ -18,6 +18,7 @@ const INDEX = "index.html"
 type ServeFileSystem interface {
 	http.FileSystem
 	Exists(prefix string, path string) bool
+	CacheControlHeader() string
 }
 
 // StaticServe returns a middleware handler that serves static files in the given directory.
@@ -28,6 +29,9 @@ func StaticServe(urlPrefix string, fs ServeFileSystem) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		if fs.Exists(urlPrefix, c.Request.URL.Path) {
+			if cacheHeader := fs.CacheControlHeader(); cacheHeader != "" {
+				c.Writer.Header().Set("Cache-Control", cacheHeader)
+			}
 			fileserver.ServeHTTP(c.Writer, c.Request)
 			c.Abort()
 		}
@@ -36,15 +40,17 @@ func StaticServe(urlPrefix string, fs ServeFileSystem) gin.HandlerFunc {
 
 type localFileSystem struct {
 	http.FileSystem
-	root    string
-	indexes bool
+	root         string
+	indexes      bool
+	cacheControl string
 }
 
-func localFile(root string, indexes bool) *localFileSystem {
+func localFile(root string, indexes bool, cacheControl string) *localFileSystem {
 	return &localFileSystem{
-		FileSystem: gin.Dir(root, indexes),
-		root:       root,
-		indexes:    indexes,
+		FileSystem:   gin.Dir(root, indexes),
+		root:         root,
+		indexes:      indexes,
+		cacheControl: cacheControl,
 	}
 }
 
@@ -73,6 +79,10 @@ func (l *localFileSystem) Exists(prefix string, filepath string) bool {
 		return true
 	}
 	return false
+}
+
+func (l *localFileSystem) CacheControlHeader() string {
+	return l.cacheControl
 }
 
 func StaticServeRedirect(urlPrefix string) gin.HandlerFunc {

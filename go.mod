@@ -33,6 +33,7 @@ require (
 	github.com/google/go-github/v79 v79.0.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgx/v5 v5.8.0
+	github.com/jaevor/go-nanoid v1.4.0
 	github.com/jinzhu/configor v1.2.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/markbates/goth v1.82.0

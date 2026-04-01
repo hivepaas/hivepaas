@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/userhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/usersettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/webhookhandler"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+)
+
+var (
+	defaultPhotoCacheHeader = fmt.Sprintf("public, max-age=%v", int(timeutil.Week.Seconds()))
 )
 
 type HandlerRegistry struct {
@@ -72,16 +78,19 @@ func (s *HTTPServer) registerRoutes() {
 
 	// Swagger server
 	if !s.config.IsProdEnv() {
-		s.engine.Use(StaticServe("/docs", localFile("./docs", false)))
+		s.engine.Use(StaticServe("/docs", localFile("./docs", false, "")))
 		s.engine.GET("/swagger/*any", swaggoGin.WrapHandler(swaggoFiles.Handler,
 			swaggoGin.URL("/docs/openapi/swagger.json")))
 	}
 
 	// STATIC FILES
-	s.engine.Use(StaticServe(s.config.HttpPathPhoto(), localFile(s.config.DataPathPhoto(), false)))
-	s.engine.Use(StaticServe(s.config.HttpPathSslLetsEncrypt(), localFile(s.config.DataPathSslLetsEncrypt(), false)))
+	s.engine.Use(StaticServe(s.config.HttpPathPhoto(),
+		localFile(s.config.DataPathPhoto(), false, defaultPhotoCacheHeader)))
+	s.engine.Use(StaticServe(s.config.HttpPathSslLetsEncrypt(),
+		localFile(s.config.DataPathSslLetsEncrypt(), false, "")))
 	// Serve the static files from the "dist-dashboard" directory at the root URL "/"
-	s.engine.Use(StaticServe("/", localFile("./dist-dashboard", true)))
+	s.engine.Use(StaticServe("/",
+		localFile("./dist-dashboard", true, "")))
 	// Final redirection to redirect any path to `/next=<path>` in case no matching static file found
 	s.engine.Use(StaticServeRedirect("/"))
 

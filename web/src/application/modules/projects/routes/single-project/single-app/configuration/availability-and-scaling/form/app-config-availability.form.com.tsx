@@ -3,7 +3,7 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldPath, FormProvider, useForm } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
-import { type AppServiceSettings, ServiceModeSpec } from "~/projects/domain";
+import { type AppServiceSettings } from "~/projects/domain";
 
 import { EServiceMode } from "@application/modules/projects/module-shared/enums";
 

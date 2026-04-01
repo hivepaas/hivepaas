@@ -37,6 +37,10 @@ export const QK = {
      */
     "projects.apps.service-settings.$.find-one": "projects.apps.service-settings.$.find-one",
     /*
+     * Project App Network Settings
+     */
+    "projects.apps.network-settings.$.find-one": "projects.apps.network-settings.$.find-one",
+    /*
      * Project Git Credentials
      */
     "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",

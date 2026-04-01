@@ -1,12 +1,14 @@
 import React, { useId } from "react";
 
+import { cn } from "@lib/utils";
+
 import { Input, type InputProps } from "@/components/ui/input";
 
-function View({ addonLeft, addonRight, ...inputProps }: InputWithAddOnProps) {
+function View({ addonLeft, addonRight, classNameContainer, ...inputProps }: InputWithAddOnProps) {
     const id = useId();
 
     return (
-        <div className="w-full max-w-xs space-y-2">
+        <div className={cn("w-full space-y-2", classNameContainer)}>
             <div className="flex rounded-md shadow-xs">
                 {addonLeft && (
                     <span className="border-input bg-background inline-flex items-center rounded-l-md border px-3 text-sm">
@@ -16,8 +18,13 @@ function View({ addonLeft, addonRight, ...inputProps }: InputWithAddOnProps) {
                 <Input
                     id={id}
                     type="text"
-                    className={`-mx-px rounded-none shadow-none ${addonLeft ? "rounded-l-none rounded-r-md" : ""} ${addonRight ? "rounded-r-none rounded-l-md" : ""}`}
                     {...inputProps}
+                    className={cn(
+                        "-mx-px rounded-none shadow-none",
+                        addonLeft ? "rounded-l-none rounded-r-md" : "",
+                        addonRight ? "rounded-r-none rounded-l-md" : "",
+                        inputProps.className,
+                    )}
                 />
             </div>
         </div>
@@ -27,6 +34,7 @@ function View({ addonLeft, addonRight, ...inputProps }: InputWithAddOnProps) {
 type InputWithAddOnProps = InputProps & {
     addonLeft?: string;
     addonRight?: string;
+    classNameContainer?: string;
 };
 
 export const InputWithAddOn = React.memo(View);

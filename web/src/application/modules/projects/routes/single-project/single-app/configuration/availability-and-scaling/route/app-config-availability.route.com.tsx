@@ -49,11 +49,12 @@ export function AppConfigAvailabilityRoute() {
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
+        console.log(data?.data.updateVer);
+
         update({
             projectID: projectId,
             appID: appId,
             payload: {
-                ...values,
                 updateVer: data?.data.updateVer ?? 0,
                 modeSpec: {
                     mode: values.mode,

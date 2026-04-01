@@ -37,9 +37,3 @@ export const AppConfigAvailabilitySchema = z.discriminatedUnion("mode", [
 
 export type AppConfigAvailabilitySchemaInput = z.input<typeof AppConfigAvailabilitySchema>;
 export type AppConfigAvailabilitySchemaOutput = z.output<typeof AppConfigAvailabilitySchema>;
-
-export const emptyAppConfigAvailabilityDefaults: AppConfigAvailabilitySchemaInput = {
-    mode: EServiceMode.Global,
-    constraints: [],
-    preferences: [],
-};

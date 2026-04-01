@@ -35,13 +35,13 @@ const PlacementPreferenceSchema = z.object({
 });
 
 const PlacementSchema = z.object({
-    constraints: z.array(PlacementConstraintSchema),
-    preferences: z.array(PlacementPreferenceSchema),
+    constraints: z.array(PlacementConstraintSchema).nullish(),
+    preferences: z.array(PlacementPreferenceSchema).nullish(),
 });
 
 const AppServiceSettingsSchema = z.object({
     modeSpec: ServiceModeSpecSchema,
-    placement: PlacementSchema.nullable(),
+    placement: PlacementSchema.nullish(),
     updateVer: z.number(),
 });
 
@@ -57,7 +57,20 @@ const UpdateOneSchema = z.object({
 
 export class AppServiceSettingsApiValidator {
     findOne = (response: AxiosResponse): AppServiceSettings_FindOne_Res => {
-        return parseApiResponse({ response, schema: FindOneSchema });
+        const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
+        return {
+            data: {
+                modeSpec: data.modeSpec,
+                placement: data.placement
+                    ? {
+                          constraints: data.placement.constraints ?? [],
+                          preferences: data.placement.preferences ?? [],
+                      }
+                    : null,
+                updateVer: data.updateVer,
+            },
+            meta,
+        };
     };
 
     updateOne = (response: AxiosResponse): AppServiceSettings_UpdateOne_Res => {

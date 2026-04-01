@@ -2,7 +2,10 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldPath, FormProvider, useForm } from "react-hook-form";
-import { type AppServiceSettings } from "~/projects/domain";
+import { useUpdateEffect } from "react-use";
+import { type AppServiceSettings, ServiceModeSpec } from "~/projects/domain";
+
+import { EServiceMode } from "@application/modules/projects/module-shared/enums";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -11,7 +14,6 @@ import {
     AppConfigAvailabilitySchema,
     type AppConfigAvailabilitySchemaInput,
     type AppConfigAvailabilitySchemaOutput,
-    emptyAppConfigAvailabilityDefaults,
 } from "../schemas";
 import { type AppConfigAvailabilityFormRef } from "../types";
 
@@ -21,12 +23,45 @@ type SchemaOutput = AppConfigAvailabilitySchemaOutput;
 export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
-            ...emptyAppConfigAvailabilityDefaults,
-            ...defaultValues,
+            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Global,
+            serviceReplicas:
+                defaultValues?.modeSpec.mode === EServiceMode.Replicated
+                    ? defaultValues.modeSpec.serviceReplicas
+                    : null,
+            jobMaxConcurrent:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobMaxConcurrent
+                    : null,
+            jobTotalCompletions:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobTotalCompletions
+                    : null,
+            constraints: defaultValues?.placement?.constraints ?? [],
+            preferences: defaultValues?.placement?.preferences ?? [],
         },
         resolver: zodResolver(AppConfigAvailabilitySchema),
         mode: "onSubmit",
     });
+
+    useUpdateEffect(() => {
+        methods.reset({
+            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Global,
+            serviceReplicas:
+                defaultValues?.modeSpec.mode === EServiceMode.Replicated
+                    ? defaultValues.modeSpec.serviceReplicas
+                    : null,
+            jobMaxConcurrent:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobMaxConcurrent
+                    : null,
+            jobTotalCompletions:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobTotalCompletions
+                    : null,
+            constraints: defaultValues?.placement?.constraints ?? [],
+            preferences: defaultValues?.placement?.preferences ?? [],
+        });
+    }, [defaultValues]);
 
     useImperativeHandle(
         ref,

@@ -18843,6 +18843,46 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/users/invite/info" : {
+      "get" : {
+        "description" : "Gets user invite info",
+        "operationId" : "getUserInviteInfo",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.GetUserInviteInfoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets user invite info",
+        "tags" : [ "users" ]
+      }
+    },
     "/users/signup-begin" : {
       "post" : {
         "description" : "Begins user signup process",
@@ -20010,10 +20050,10 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "dayDuration" ]
+        "x-enum-varnames" : [ "Day", "Week" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize" : {
         "enum" : [ 1, 1024, 1048576, 1073741824, 1099511627776, 1125899906842624, 1152921504606846976 ],
@@ -28664,6 +28704,18 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.GetUserInviteInfoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.UserInviteInfoResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.GetUserResp" : {
         "properties" : {
           "data" : {
@@ -29028,6 +29080,15 @@
           }
         },
         "required" : [ "accessExpireAt", "createdAt", "email", "fullName", "id", "lastAccess", "moduleAccesses", "photo", "position", "projectAccesses", "role", "securityOption", "status", "updatedAt", "username" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.UserInviteInfoResp" : {
+        "properties" : {
+          "canSendInviteEmails" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "canSendInviteEmails" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_useruc_userdto.UserPhotoReq" : {

@@ -23,7 +23,7 @@ func (s *emailService) GetDefaultSystemEmail(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	if len(settings) == 1 || (len(settings) > 1 && settings[0].Default) {
+	if (len(settings) == 1 || (len(settings) > 1 && settings[0].Default)) && settings[0].IsActive() {
 		return settings[0], nil
 	}
 	return nil, apperrors.NewNotFound("Email setting").

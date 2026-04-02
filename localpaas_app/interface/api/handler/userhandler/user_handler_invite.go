@@ -10,6 +10,38 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
+// GetUserInviteInfo Gets user invite info
+// @Summary Gets user invite info
+// @Description Gets user invite info
+// @Tags    users
+// @Produce json
+// @Id      getUserInviteInfo
+// @Success 200 {object} userdto.GetUserInviteInfoResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /users/invite/info [get]
+func (h *UserHandler) GetUserInviteInfo(ctx *gin.Context) {
+	auth, _, err := h.getAuth(ctx, "", base.ActionTypeWrite, false)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := userdto.NewGetUserInviteInfoReq()
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.userUC.GetUserInviteInfo(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // InviteUser Invites a user to system
 // @Summary Invites a user to system
 // @Description Invites a user to system

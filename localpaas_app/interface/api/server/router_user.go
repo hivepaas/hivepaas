@@ -27,6 +27,7 @@ func (s *HTTPServer) registerUserRoutes(apiGroup *gin.RouterGroup) (*gin.RouterG
 		userGroup.POST("/current/mfa/totp-complete-setup", userHandler.CompleteMFATotpSetup)
 		userGroup.POST("/current/mfa/totp-remove", userHandler.RemoveMFATotp)
 		// Invite & SignUp
+		userGroup.GET("/invite/info", userHandler.GetUserInviteInfo)
 		userGroup.POST("/invite", userHandler.InviteUser)
 		userGroup.POST("/signup-begin", userHandler.BeginUserSignup)
 		userGroup.POST("/signup-complete", userHandler.CompleteUserSignup)

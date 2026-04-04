@@ -74,7 +74,7 @@ export function EndpointPortConfigFields() {
                 }
             >
                 <div className="flex flex-col gap-2">
-                    <div className="flex gap-3 items-center max-w-[560px]">
+                    <div className="flex gap-3 items-center max-w-[800px]">
                         <InputWithAddOn
                             addonLeft="Host"
                             value={published}
@@ -135,7 +135,7 @@ export function EndpointPortConfigFields() {
                         <Button
                             type="button"
                             variant="outline"
-                            className="flex-1"
+                            className="w-[76px]"
                             onClick={() => {
                                 append({
                                     published: published.trim(),
@@ -157,30 +157,29 @@ export function EndpointPortConfigFields() {
                     {fields.map((field, index) => (
                         <div
                             key={field.id}
-                            className="flex items-center gap-3 py-2 max-w-[560px]"
+                            className="flex items-center gap-3 py-2 max-w-[800px]"
                         >
-                            <div className="grid grid-cols-[120px_120px_120px_120px] gap-3 flex-1">
-                                <Input
-                                    value={field.published}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.target}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.protocol}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.publishMode}
-                                    disabled
-                                />
-                            </div>
+                            <Input
+                                value={field.published}
+                                disabled
+                            />
+                            <Input
+                                value={field.target}
+                                disabled
+                            />
+                            <Input
+                                value={field.protocol}
+                                disabled
+                            />
+                            <Input
+                                value={field.publishMode}
+                                disabled
+                            />
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
+                                className="w-[76px]"
                                 onClick={() => {
                                     remove(index);
                                 }}

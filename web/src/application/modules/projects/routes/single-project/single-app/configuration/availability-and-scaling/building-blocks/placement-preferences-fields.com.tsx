@@ -94,7 +94,7 @@ export function PlacementPreferencesFields() {
                                     <div className="text-sm break-words pl-3">{field.name}</div>
                                     <div className="text-sm break-words pl-3">{field.value}</div>
                                 </div>
-                                <div className="w-[84px] flex justify-end">
+                                <div className="w-[76px] flex justify-end">
                                     <Button
                                         type="button"
                                         variant="ghost"

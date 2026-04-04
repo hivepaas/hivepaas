@@ -137,7 +137,7 @@ export function PlacementConstraintsFields() {
                                     <div className="text-sm font-mono text-center">{field.op}</div>
                                     <div className="text-sm break-words">{field.value}</div>
                                 </div>
-                                <div className="w-[84px] flex justify-end">
+                                <div className="w-[76px] flex justify-end">
                                     <Button
                                         type="button"
                                         variant="ghost"

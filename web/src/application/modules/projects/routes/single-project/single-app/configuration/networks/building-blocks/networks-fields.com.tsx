@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button, Input } from "@components/ui";
 import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { Combobox, InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
+
+/** Mock networks; replace with API-driven list when available. */
+const MOCK_PROJECT_NETWORKS = [
+    { id: "net_local_1", name: "local_net_1" },
+    { id: "net_local_2", name: "local_net_2" },
+    { id: "net_bridge", name: "bridge" },
+    { id: "net_overlay", name: "overlay_net" },
+] as const;
+
+type NetworkOptionValue = {
+    id: string;
+    name: string;
+};
 
 export function NetworksFields() {
     const { control } = useFormContext<AppConfigNetworksFormSchemaInput, unknown, AppConfigNetworksFormSchemaOutput>();
@@ -16,17 +29,32 @@ export function NetworksFields() {
         name: "networkAttachments",
     });
 
-    const [networkName, setNetworkName] = useState("");
+    const [search, setSearch] = useState("");
+    const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
     const [aliasesText, setAliasesText] = useState("");
 
+    const comboboxOptions = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return MOCK_PROJECT_NETWORKS.filter(
+            n => !q || n.id.toLowerCase().includes(q) || n.name.toLowerCase().includes(q),
+        ).map(n => ({
+            value: { id: n.id, name: n.name },
+            label: n.name,
+        }));
+    }, [search]);
+
     const handleAdd = () => {
-        const id = networkName.trim();
-        if (!id) {
-            toast.error("Network name is required");
+        if (!selectedNetworkId) {
+            toast.error("Please select a network");
             return;
         }
-        append({ id, aliasesText: aliasesText.trim() });
-        setNetworkName("");
+        const net = MOCK_PROJECT_NETWORKS.find(n => n.id === selectedNetworkId);
+        if (!net) {
+            toast.error("Invalid network selection");
+            return;
+        }
+        append({ id: net.id, name: net.name, aliasesText: aliasesText.trim() });
+        setSelectedNetworkId(null);
         setAliasesText("");
     };
 
@@ -40,14 +68,18 @@ export function NetworksFields() {
             }
         >
             <div className="flex flex-col gap-3 max-w-[560px]">
-                <div className="flex gap-3 items-center">
-                    <InputWithAddOn
-                        addonLeft="Name"
-                        value={networkName}
-                        onChange={e => {
-                            setNetworkName(e.target.value);
+                <div className="flex gap-3 items-end">
+                    <Combobox<NetworkOptionValue>
+                        options={comboboxOptions}
+                        value={selectedNetworkId}
+                        onChange={id => {
+                            setSelectedNetworkId(id);
                         }}
+                        onSearch={setSearch}
                         placeholder="local_net_1"
+                        searchable
+                        emptyText="No networks match your search"
+                        valueKey="id"
                     />
                     <InputWithAddOn
                         addonLeft="Alias"
@@ -73,7 +105,7 @@ export function NetworksFields() {
                             className="flex items-center gap-3 py-2"
                         >
                             <Input
-                                value={field.id}
+                                value={field.name || field.id}
                                 disabled
                                 className="max-w-[400px]"
                             />
@@ -85,7 +117,7 @@ export function NetworksFields() {
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="w-[84px]"
+                                className="w-[76px]"
                                 size="icon"
                                 onClick={() => {
                                     remove(index);

@@ -71,12 +71,12 @@ function DNSListFields({
                             <Input
                                 value={field.value}
                                 disabled
-                                className="max-w-[420px]"
                             />
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
+                                className="w-[76px]"
                                 onClick={() => {
                                     remove(index);
                                 }}

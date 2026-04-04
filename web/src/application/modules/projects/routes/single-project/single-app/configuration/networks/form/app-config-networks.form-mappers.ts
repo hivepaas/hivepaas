@@ -7,6 +7,7 @@ export function mapAppNetworkSettingsToFormInput(data: AppNetworkSettings): AppC
     return {
         networkAttachments: data.networkAttachments.map(item => ({
             id: item.id,
+            name: item.name ?? "",
             aliasesText: (item.aliases ?? []).join(" "),
         })),
         hostsFileEntries: data.hostsFileEntries.map(item => ({

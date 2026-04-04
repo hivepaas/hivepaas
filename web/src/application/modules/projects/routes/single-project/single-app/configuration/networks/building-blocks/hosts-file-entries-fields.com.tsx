@@ -86,7 +86,7 @@ export function HostsFileEntriesFields() {
                             />
                             <Button
                                 type="button"
-                                className="w-[84px]"
+                                className="w-[76px]"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {

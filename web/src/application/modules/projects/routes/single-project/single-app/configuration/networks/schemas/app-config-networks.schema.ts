@@ -3,6 +3,7 @@ import { EEndpointResolutionMode, EPortConfigProtocol, EPortConfigPublishMode } 
 
 export const NetworksFormAttachmentSchema = z.object({
     id: z.string(),
+    name: z.string(),
     aliasesText: z.string(),
 });
 

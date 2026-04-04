@@ -55,7 +55,7 @@ var (
 // ChangePassword updates user password with the new one.
 // Action is rejected if `currPassword` does not match.
 // Checking for current password is skipped if pass empty string.
-func (s *userService) ChangePassword(user *entity.User, newPassword, currPassword string) error {
+func (s *userService) ChangePassword(user *entity.User, newPassword, currPassword string) (err error) {
 	if currPassword != "" {
 		if err := s.VerifyPassword(user, currPassword); err != nil {
 			return err
@@ -67,18 +67,25 @@ func (s *userService) ChangePassword(user *entity.User, newPassword, currPasswor
 		return err
 	}
 
+	user.Password, err = s.createPasswordHash(newPassword)
+	if err != nil {
+		return fmt.Errorf("failed to generate password hash: %w", err)
+	}
+	return nil
+}
+
+func (s *userService) createPasswordHash(password string) (string, error) {
 	salt := make([]byte, saltLength)
 	if _, err := rand.Read(salt); err != nil {
-		return fmt.Errorf("failed to generate salt: %w", err)
+		return "", fmt.Errorf("failed to generate salt: %w", err)
 	}
 
 	// Hash the password using Argon2 with recommended configuration
-	hashedPass := argon2.IDKey([]byte(newPassword), salt, hashingIteration, hashingMemory,
+	hashedPass := argon2.IDKey([]byte(password), salt, hashingIteration, hashingMemory,
 		hashingThreads, hashingKeyLength)
 
-	user.Password = base64.StdEncoding.EncodeToString(salt) + " " +
-		base64.StdEncoding.EncodeToString(hashedPass)
-	return nil
+	return base64.StdEncoding.EncodeToString(salt) + " " +
+		base64.StdEncoding.EncodeToString(hashedPass), nil
 }
 
 // VerifyPassword verifies the password matching the user data

@@ -13,6 +13,8 @@ import (
 )
 
 type UserService interface {
+	InitAdminUser(ctx context.Context, db database.IDB) (cleanupFunc func(), err error)
+
 	LoadUser(ctx context.Context, db database.IDB, userID string) (*entity.User, error)
 	LoadUsers(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavail bool) (
 		userMap map[string]*entity.User, err error)

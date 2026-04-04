@@ -1,3 +1,6 @@
+-- System statuses
+UPDATE system_statuses SET installation_complete = TRUE;
+
 -- Users
 INSERT INTO users (id, username, email, role, status, full_name, position, security_option, totp_secret, password, created_at, updated_at)
 VALUES ('01JAB9XED0GTXBSQDFVYAJ8WA1', 'tiendc', 'tiendc@gmail.com', 'admin', 'active', 'Tien DC', 'manager', 'password-only', NULL,

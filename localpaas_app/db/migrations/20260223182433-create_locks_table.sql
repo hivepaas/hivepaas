@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS locks
 );
 
 INSERT INTO locks (id)
-VALUES ('lock:sys:init-default-settings')
-ON CONFLICT DO NOTHING;
+    VALUES ('lock:sys:init-default-settings')
+    ON CONFLICT DO NOTHING;
 
 -- +migrate Down
 DROP TABLE IF EXISTS locks;

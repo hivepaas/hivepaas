@@ -41,7 +41,7 @@ docker network create --driver overlay --attachable localpaas_net || true
 
 # Deploy localpaas stack
 echo "Deploy localpaas stack..."
-cp deployment/local/app_stack.yaml $LOCALPAAS_DIR/../localpaas.yaml
+cp deployment/local/localpaas.yaml $LOCALPAAS_DIR/../localpaas.yaml
 docker stack deploy -c $LOCALPAAS_DIR/../localpaas.yaml localpaas
 
 sleep 5

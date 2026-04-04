@@ -201,7 +201,8 @@ var Provides = []any{
 	repository.NewSettingRepo,
 	// Repo: Task
 	repository.NewTaskRepo,
-	// Repo: Sys error
+	// Repo: System
+	repository.NewSystemStatusRepo,
 	repository.NewSysErrorRepo,
 	// Migration
 	repository.NewDataMigrationRepo,

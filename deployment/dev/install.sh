@@ -35,9 +35,9 @@ fi
 echo "Create overlay network 'localpaas_net'..."
 docker network create --driver overlay --attachable localpaas_net || true
 
-# Download app_stack.yaml
-echo "Download app_stack.yaml..."
-curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/dev/app_stack.yaml" -o localpaas.yaml
+# Download localpaas.yaml
+echo "Download localpaas.yaml..."
+curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/dev/localpaas.yaml" -o localpaas.yaml
 
 # Deploy localpaas stack
 echo "Deploy localpaas stack..."

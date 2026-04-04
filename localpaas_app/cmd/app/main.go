@@ -24,7 +24,7 @@ func main() {
 		fx.Invoke(internal.InitCache),
 		fx.Invoke(internal.InitTaskQueue),
 		fx.Invoke(internal.InitDockerManager),
-		fx.Invoke(internal.InitDefaultSettings),
+		fx.Invoke(internal.InitSystemData),
 		fx.Invoke(internal.InitJWTSession),
 		fx.Invoke(internal.InitHTTPServer),
 	)

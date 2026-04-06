@@ -20936,7 +20936,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]
@@ -22984,7 +22984,7 @@
             "type" : "boolean"
           },
           "driver" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NetworkDriver"
+            "type" : "string"
           },
           "enableIPv4" : {
             "type" : "boolean"
@@ -23092,7 +23092,7 @@
             "type" : "string"
           },
           "driver" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NetworkDriver"
+            "type" : "string"
           },
           "enableIPv4" : {
             "type" : "boolean"
@@ -30298,11 +30298,6 @@
         "enum" : [ "", "NONE", "CMD", "CMD-SHELL" ],
         "type" : "string",
         "x-enum-varnames" : [ "HealthcheckModeInherit", "HealthcheckModeNone", "HealthcheckModeCmd", "HealthcheckModeCmdShell" ]
-      },
-      "github_com_localpaas_localpaas_services_docker.NetworkDriver" : {
-        "enum" : [ "overlay", "bridge" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "NetworkDriverOverlay", "NetworkDriverBridge" ]
       },
       "github_com_localpaas_localpaas_services_docker.ServiceMode" : {
         "enum" : [ "replicated", "replicated-job", "global", "global-job" ],

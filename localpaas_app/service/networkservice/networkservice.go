@@ -13,7 +13,6 @@ import (
 
 type NetworkService interface {
 	CreateProjectNetwork(ctx context.Context, project *entity.Project) (*network.CreateResponse, error)
-	ListProjectNetworks(ctx context.Context, project *entity.Project) ([]network.Summary, error)
 	RemoveProjectNetwork(ctx context.Context, project *entity.Project) error
 
 	UpdateAppGlobalRoutingNetwork(ctx context.Context, app *entity.App, service *swarm.Service,

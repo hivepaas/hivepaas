@@ -7,11 +7,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-)
-
-const (
-	swarmNetworkDriver = "overlay"
-	swarmNetworkScope  = "swarm"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 const (
@@ -49,8 +45,8 @@ func (s *networkService) FindGlobalRoutingNetworkID(ctx context.Context) (string
 
 func (s *networkService) createGlobalRoutingNetwork(ctx context.Context) error {
 	resp, err := s.dockerManager.NetworkCreate(ctx, GlobalRoutingNetwork, func(options *network.CreateOptions) {
-		options.Driver = swarmNetworkDriver
-		options.Scope = swarmNetworkScope
+		options.Driver = docker.NetworkDriverOverlay
+		options.Scope = docker.NetworkScopeSwarm
 		options.Attachable = true
 		options.Labels = map[string]string{
 			"localpaas.network.routing": "true",

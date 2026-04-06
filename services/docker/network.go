@@ -10,18 +10,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
-type NetworkDriver string
-
 const (
-	NetworkDriverOverlay NetworkDriver = "overlay"
-	NetworkDriverBridge  NetworkDriver = "bridge"
+	NetworkDriverOverlay = "overlay"
+	NetworkDriverBridge  = "bridge"
 )
 
-type NetworkScope string
-
 const (
-	NetworkScopeSwarm  NetworkScope = "swarm"
-	NetworkDriverLocal NetworkScope = "local"
+	NetworkScopeSwarm  = "swarm"
+	NetworkDriverLocal = "local"
 )
 
 type NetworkListOption func(*network.ListOptions)

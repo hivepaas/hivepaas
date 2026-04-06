@@ -38,18 +38,18 @@ type GetNetworkResp struct {
 }
 
 type NetworkResp struct {
-	ID              string               `json:"id"`
-	Name            string               `json:"name"`
-	AvailInProjects bool                 `json:"availableInProjects"`
-	Driver          docker.NetworkDriver `json:"driver"`
-	Internal        bool                 `json:"internal"`
-	Attachable      bool                 `json:"attachable"`
-	Ingress         bool                 `json:"ingress"`
-	EnableIPv4      bool                 `json:"enableIPv4"`
-	EnableIPv6      bool                 `json:"enableIPv6"`
-	Options         map[string]string    `json:"options"`
-	Labels          map[string]string    `json:"labels"`
-	CreatedAt       time.Time            `json:"createdAt"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	AvailInProjects bool              `json:"availableInProjects"`
+	Driver          string            `json:"driver"`
+	Internal        bool              `json:"internal"`
+	Attachable      bool              `json:"attachable"`
+	Ingress         bool              `json:"ingress"`
+	EnableIPv4      bool              `json:"enableIPv4"`
+	EnableIPv6      bool              `json:"enableIPv6"`
+	Options         map[string]string `json:"options"`
+	Labels          map[string]string `json:"labels"`
+	CreatedAt       time.Time         `json:"createdAt"`
 }
 
 func TransformNetworkInspection(net *network.Inspect) *NetworkResp {
@@ -57,7 +57,7 @@ func TransformNetworkInspection(net *network.Inspect) *NetworkResp {
 		ID:              net.ID,
 		Name:            net.Name,
 		AvailInProjects: net.Labels[docker.StackLabelNamespace] == "",
-		Driver:          docker.NetworkDriver(net.Driver),
+		Driver:          net.Driver,
 		Internal:        net.Internal,
 		Attachable:      net.Attachable,
 		Ingress:         net.Ingress,
@@ -74,7 +74,7 @@ func TransformNetwork(net *network.Summary) *NetworkResp {
 		ID:              net.ID,
 		Name:            net.Name,
 		AvailInProjects: net.Labels[docker.StackLabelNamespace] == "",
-		Driver:          docker.NetworkDriver(net.Driver),
+		Driver:          net.Driver,
 		Internal:        net.Internal,
 		Attachable:      net.Attachable,
 		Ingress:         net.Ingress,

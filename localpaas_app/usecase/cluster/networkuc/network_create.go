@@ -11,6 +11,10 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
+const (
+	namespaceGlobal = "global"
+)
+
 func (uc *NetworkUC) CreateNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -27,12 +31,12 @@ func (uc *NetworkUC) CreateNetwork(
 		}
 		req.Labels[docker.StackLabelNamespace] = project.Key
 	} else if !req.AvailInProjects {
-		req.Labels[docker.StackLabelNamespace] = "global"
+		req.Labels[docker.StackLabelNamespace] = namespaceGlobal
 	}
 
 	resp, err := uc.dockerManager.NetworkCreate(ctx, req.Name, func(opts *network.CreateOptions) {
-		opts.Driver = string(req.Driver)
-		opts.Scope = string(docker.NetworkScopeSwarm)
+		opts.Driver = req.Driver
+		opts.Scope = docker.NetworkScopeSwarm
 		opts.EnableIPv4 = &req.EnableIPv4
 		opts.EnableIPv6 = &req.EnableIPv6
 		opts.Internal = req.Internal

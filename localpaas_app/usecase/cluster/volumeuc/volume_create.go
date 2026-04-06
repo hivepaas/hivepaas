@@ -16,6 +16,10 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
+const (
+	namespaceGlobal = "global"
+)
+
 func (uc *VolumeUC) CreateVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -76,7 +80,7 @@ func (uc *VolumeUC) CreateVolume(
 		}
 		req.Labels[docker.StackLabelNamespace] = project.Key
 	} else if !req.AvailInProjects {
-		req.Labels[docker.StackLabelNamespace] = "global"
+		req.Labels[docker.StackLabelNamespace] = namespaceGlobal
 	}
 
 	options := &volume.CreateOptions{

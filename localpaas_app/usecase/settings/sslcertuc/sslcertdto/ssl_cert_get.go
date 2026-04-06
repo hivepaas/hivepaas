@@ -79,3 +79,17 @@ func TransformSSLCert(
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
 	return resp, nil
 }
+
+func TransformSSLCertNoCertData(
+	setting *entity.Setting,
+	refObjects *entity.RefObjects,
+) (*SSLCertResp, error) {
+	resp, err := TransformSSLCert(setting, refObjects)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	resp.Certificate = maskedSecret
+	resp.PrivateKey = maskedSecret
+	resp.SecretMasked = true
+	return resp, nil
+}

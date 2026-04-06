@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
 type GetAppHttpSettingsReq struct {
@@ -49,7 +50,7 @@ type DomainResp struct {
 	Enabled           bool                       `json:"enabled"`
 	Domain            string                     `json:"domain"`
 	DomainRedirect    string                     `json:"domainRedirect,omitempty"`
-	SSLCert           *settings.BaseSettingResp  `json:"sslCert,omitempty"`
+	SSLCert           *sslcertdto.SSLCertResp    `json:"sslCert,omitempty"`
 	ContainerPort     int                        `json:"containerPort"`
 	ForceHttps        bool                       `json:"forceHttps,omitempty"`
 	BasicAuth         *settings.BaseSettingResp  `json:"basicAuth,omitempty"`
@@ -125,7 +126,7 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {
 			setting := input.RefSettingMap[domain.SSLCert.ID]
-			domain.SSLCert, _ = settings.TransformSettingBase(setting)
+			domain.SSLCert, _ = sslcertdto.TransformSSLCertNoCertData(setting, &entity.RefObjects{})
 		} else {
 			domain.SSLCert = nil
 		}

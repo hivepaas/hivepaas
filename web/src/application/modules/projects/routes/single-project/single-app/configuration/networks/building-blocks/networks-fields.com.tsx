@@ -67,28 +67,30 @@ export function NetworksFields() {
                 />
             }
         >
-            <div className="flex flex-col gap-3 max-w-[560px]">
-                <div className="flex gap-3 items-end">
-                    <Combobox<NetworkOptionValue>
-                        options={comboboxOptions}
-                        value={selectedNetworkId}
-                        onChange={id => {
-                            setSelectedNetworkId(id);
-                        }}
-                        onSearch={setSearch}
-                        placeholder="local_net_1"
-                        searchable
-                        emptyText="No networks match your search"
-                        valueKey="id"
-                    />
-                    <InputWithAddOn
-                        addonLeft="Alias"
-                        value={aliasesText}
-                        onChange={e => {
-                            setAliasesText(e.target.value);
-                        }}
-                        placeholder="alias1 alias2"
-                    />
+            <div className="flex flex-col gap-3 ">
+                <div className="flex gap-3 items-center">
+                    <div className="grid flex-1 grid-cols-2 gap-3 max-w-[500px]">
+                        <Combobox<NetworkOptionValue>
+                            options={comboboxOptions}
+                            value={selectedNetworkId}
+                            onChange={id => {
+                                setSelectedNetworkId(id);
+                            }}
+                            onSearch={setSearch}
+                            placeholder="local_net_1"
+                            searchable
+                            emptyText="No networks match your search"
+                            valueKey="id"
+                        />
+                        <InputWithAddOn
+                            addonLeft="Alias"
+                            value={aliasesText}
+                            onChange={e => {
+                                setAliasesText(e.target.value);
+                            }}
+                            placeholder="alias1 alias2"
+                        />
+                    </div>
                     <Button
                         type="button"
                         variant="outline"
@@ -104,16 +106,18 @@ export function NetworksFields() {
                             key={field.id}
                             className="flex items-center gap-3 py-2"
                         >
-                            <Input
-                                value={field.name || field.id}
-                                disabled
-                                className="max-w-[400px]"
-                            />
-                            <Input
-                                value={field.aliasesText}
-                                disabled
-                                className="max-w-[400px]"
-                            />
+                            <div className="grid grid-cols-2 flex-1 gap-3 max-w-[500px]">
+                                <Input
+                                    value={field.name || field.id}
+                                    disabled
+                                    className="max-w-[400px]"
+                                />
+                                <Input
+                                    value={field.aliasesText}
+                                    disabled
+                                    className="max-w-[400px]"
+                                />
+                            </div>
                             <Button
                                 type="button"
                                 variant="ghost"

@@ -68,17 +68,25 @@ function View({ user }: Props) {
                         </Button>
                     )}
                     {showDisableUser && (
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
-                            onClick={() => {
+                        <PopConfirm
+                            title="Disable User"
+                            variant="destructive"
+                            confirmText="Disable"
+                            cancelText="Cancel"
+                            description="Confirm disabling of this user?"
+                            onConfirm={() => {
                                 updateOne({ user: { status: EUserStatus.Disabled, id: user.id } });
                             }}
-                            isLoading={isUpdating}
                         >
-                            <Lock className="mr-2 size-4" />
-                            Disable User
-                        </Button>
+                            <Button
+                                className="justify-start py-1.5"
+                                variant="ghost"
+                                isLoading={isUpdating}
+                            >
+                                <Lock className="mr-2 size-4" />
+                                Disable User
+                            </Button>
+                        </PopConfirm>
                     )}
                     <PopConfirm
                         title="Delete Item"

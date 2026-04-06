@@ -81,14 +81,22 @@ export function View({ userId }: Props) {
                 <UserBreadcrumbs user={user} />
                 <div className="flex items-center gap-2">
                     {shouldShowToggleButtons && showDisable && (
-                        <Button
-                            variant="outline"
-                            onClick={handleDisable}
-                            isLoading={isUpdating}
+                        <PopConfirm
+                            title="Disable User"
+                            variant="destructive"
+                            confirmText="Disable"
+                            cancelText="Cancel"
+                            description="Confirm disabling of this user?"
+                            onConfirm={handleDisable}
                         >
-                            <Lock className="mr-2 size-4" />
-                            Disable
-                        </Button>
+                            <Button
+                                variant="outline"
+                                isLoading={isUpdating}
+                            >
+                                <Lock className="mr-2 size-4" />
+                                Disable
+                            </Button>
+                        </PopConfirm>
                     )}
                     {shouldShowToggleButtons && showActivate && (
                         <Button

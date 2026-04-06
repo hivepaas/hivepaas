@@ -54,30 +54,32 @@ export function LabelsFields() {
                         />
                     }
                 >
-                    <div className="flex flex-col gap-4 max-w-[660px]">
-                        <div className="flex gap-4 flex-wrap">
-                            <InputWithAddOn
-                                addonLeft="Name"
-                                value={newLabelKey}
-                                onChange={e => {
-                                    setNewLabelKey(e.target.value);
-                                }}
-                            />
-                            <InputWithAddOn
-                                addonLeft="Value"
-                                value={newLabelValue}
-                                onChange={e => {
-                                    setNewLabelValue(e.target.value);
-                                }}
-                            />
+                    <div className="flex flex-col gap-4 ">
+                        <div className="flex gap-4">
+                            <div className="grid flex-1 grid-cols-2 gap-3 max-w-[600px]">
+                                <InputWithAddOn
+                                    addonLeft="Name"
+                                    value={newLabelKey}
+                                    onChange={e => {
+                                        setNewLabelKey(e.target.value);
+                                    }}
+                                />
+                                <InputWithAddOn
+                                    addonLeft="Value"
+                                    value={newLabelValue}
+                                    onChange={e => {
+                                        setNewLabelValue(e.target.value);
+                                    }}
+                                />
+                            </div>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleAddLabel}
                                 disabled={newLabelKey === "" || newLabelValue === ""}
-                                className="h-9 px-4"
+                                className="h-9 px-4 "
                             >
-                                <Plus className="size-4 mr-2" /> Add
+                                <Plus className="size-4" /> Add
                             </Button>
                         </div>
 
@@ -87,23 +89,21 @@ export function LabelsFields() {
                                     key={field.id}
                                     className="flex items-center group gap-4 py-2"
                                 >
-                                    <div className="grid grid-cols-2 flex-1 gap-4">
+                                    <div className="grid grid-cols-2 flex-1 gap-3 max-w-[600px]">
                                         <div className="text-sm break-words">{field.key}</div>
                                         <div className="text-sm break-words">{field.value}</div>
                                     </div>
-                                    <div className="w-[84px]">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                remove(index);
-                                            }}
-                                            className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            remove(index);
+                                        }}
+                                        className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
                                 </div>
                             ))}
                         </div>

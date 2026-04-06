@@ -41,24 +41,26 @@ export function HostsFileEntriesFields() {
                 />
             }
         >
-            <div className="flex flex-col gap-3 max-w-[560px]">
+            <div className="flex flex-col gap-3 ">
                 <div className="flex gap-3 items-center">
-                    <InputWithAddOn
-                        addonLeft="Addr"
-                        value={address}
-                        onChange={e => {
-                            setAddress(e.target.value);
-                        }}
-                        placeholder="11.22.33.44"
-                    />
-                    <InputWithAddOn
-                        addonLeft="Name"
-                        value={hostnamesText}
-                        onChange={e => {
-                            setHostnamesText(e.target.value);
-                        }}
-                        placeholder="hostname alias1 alias2"
-                    />
+                    <div className="grid flex-1 grid-cols-2 gap-3 max-w-[500px]">
+                        <InputWithAddOn
+                            addonLeft="Addr"
+                            value={address}
+                            onChange={e => {
+                                setAddress(e.target.value);
+                            }}
+                            placeholder="11.22.33.44"
+                        />
+                        <InputWithAddOn
+                            addonLeft="Name"
+                            value={hostnamesText}
+                            onChange={e => {
+                                setHostnamesText(e.target.value);
+                            }}
+                            placeholder="hostname alias1 alias2"
+                        />
+                    </div>
                     <Button
                         type="button"
                         variant="outline"
@@ -74,19 +76,20 @@ export function HostsFileEntriesFields() {
                             key={field.id}
                             className="flex items-center gap-3 py-2"
                         >
-                            <Input
-                                value={field.address}
-                                disabled
-                                className="max-w-[400px]"
-                            />
-                            <Input
-                                value={field.hostnamesText}
-                                disabled
-                                className="max-w-[400px]"
-                            />
+                            <div className="grid grid-cols-2 flex-1 gap-3 max-w-[500px]">
+                                <Input
+                                    value={field.address}
+                                    disabled
+                                    className="max-w-[400px]"
+                                />
+                                <Input
+                                    value={field.hostnamesText}
+                                    disabled
+                                    className="max-w-[400px]"
+                                />
+                            </div>
                             <Button
                                 type="button"
-                                className="w-[76px]"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {

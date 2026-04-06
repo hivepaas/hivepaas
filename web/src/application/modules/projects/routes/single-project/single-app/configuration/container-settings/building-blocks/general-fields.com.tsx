@@ -184,7 +184,7 @@ export function GeneralFields() {
                         {...stopGracePeriod}
                         value={stopGracePeriod.value}
                         onChange={stopGracePeriod.onChange}
-                        placeholder="5000"
+                        placeholder="5s"
                         className="max-w-[400px]"
                     />
                     <FieldError errors={[stopGracePeriodError]} />

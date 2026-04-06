@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { EJoinNodeMethod } from "~/cluster/module-shared/enums";
 
+import { InfoBlock } from "@application/shared/components";
+
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -104,33 +106,37 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
 
                         {/* Role Selection */}
                         <Field>
-                            <FieldLabel>Join node as</FieldLabel>
-                            <Tabs
-                                value={joinAsManager ? "manager" : "worker"}
-                                onValueChange={value => {
-                                    joinAsManagerField.onChange(value === "manager");
-                                }}
+                            <InfoBlock
+                                title="Join node as"
+                                titleWidth={150}
                             >
-                                <TabsList className="w-full">
-                                    <TabsTrigger
-                                        value="manager"
-                                        className="flex-1"
-                                        aria-invalid={isJoinAsManagerInvalid}
-                                        disabled={manualCompleted}
-                                    >
-                                        Manager
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="worker"
-                                        className="flex-1"
-                                        aria-invalid={isJoinAsManagerInvalid}
-                                        disabled={manualCompleted}
-                                    >
-                                        Worker
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                            <FieldError errors={[errors.joinAsManager]} />
+                                <Tabs
+                                    value={joinAsManager ? "manager" : "worker"}
+                                    onValueChange={value => {
+                                        joinAsManagerField.onChange(value === "manager");
+                                    }}
+                                >
+                                    <TabsList className="w-full">
+                                        <TabsTrigger
+                                            value="manager"
+                                            className="flex-1"
+                                            aria-invalid={isJoinAsManagerInvalid}
+                                            disabled={manualCompleted}
+                                        >
+                                            Manager
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="worker"
+                                            className="flex-1"
+                                            aria-invalid={isJoinAsManagerInvalid}
+                                            disabled={manualCompleted}
+                                        >
+                                            Worker
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                                <FieldError errors={[errors.joinAsManager]} />
+                            </InfoBlock>
                         </Field>
 
                         {/* Manual Method: Command Display */}

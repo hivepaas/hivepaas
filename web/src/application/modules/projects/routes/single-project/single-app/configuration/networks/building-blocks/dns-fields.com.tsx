@@ -38,7 +38,7 @@ function DNSListFields({
                 />
             }
         >
-            <div className="flex flex-col gap-3 max-w-[560px]">
+            <div className="flex flex-col gap-3 max-w-[590px]">
                 <div className="flex gap-3 items-center">
                     <InputWithAddOn
                         addonLeft="Value"

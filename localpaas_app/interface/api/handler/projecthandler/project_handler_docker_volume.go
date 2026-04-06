@@ -10,12 +10,12 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
 )
 
-// ListVolume Lists volumes
-// @Summary Lists volumes
-// @Description Lists volumes
+// ListDockerVolume Lists docker volumes
+// @Summary Lists docker volumes
+// @Description Lists docker volumes
 // @Tags    project_settings
 // @Produce json
-// @Id      listProjectVolume
+// @Id      listProjectDockerVolume
 // @Param   projectID path string true "project ID"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -24,8 +24,8 @@ import (
 // @Success 200 {object} volumedto.ListVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/volumes [get]
-func (h *ProjectHandler) ListVolume(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-volumes [get]
+func (h *ProjectHandler) ListDockerVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -39,7 +39,7 @@ func (h *ProjectHandler) ListVolume(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.volumeUC.ListVolume(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerVolumeUC.ListVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -48,19 +48,19 @@ func (h *ProjectHandler) ListVolume(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetVolume Gets volume details
-// @Summary Gets volume details
-// @Description Gets volume details
+// GetDockerVolume Gets docker volume details
+// @Summary Gets docker volume details
+// @Description Gets docker volume details
 // @Tags    project_settings
 // @Produce json
-// @Id      getProjectVolume
+// @Id      getProjectDockerVolume
 // @Param   projectID path string true "project ID"
 // @Param   volumeID path string true "volume ID"
 // @Success 200 {object} volumedto.GetVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/volumes/{volumeID} [get]
-func (h *ProjectHandler) GetVolume(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-volumes/{volumeID} [get]
+func (h *ProjectHandler) GetDockerVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -81,7 +81,7 @@ func (h *ProjectHandler) GetVolume(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.volumeUC.GetVolume(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerVolumeUC.GetVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -90,9 +90,9 @@ func (h *ProjectHandler) GetVolume(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetVolumeInspection Gets volume details
-// @Summary Gets volume details
-// @Description Gets volume details
+// GetDockerVolumeInspection Gets docker volume details
+// @Summary Gets docker volume details
+// @Description Gets docker volume details
 // @Tags    project_settings
 // @Produce json
 // @Id      getProjectVolumeInspection
@@ -101,8 +101,8 @@ func (h *ProjectHandler) GetVolume(ctx *gin.Context) {
 // @Success 200 {object} volumedto.GetVolumeInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/volumes/{volumeID}/inspect [get]
-func (h *ProjectHandler) GetVolumeInspection(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-volumes/{volumeID}/inspect [get]
+func (h *ProjectHandler) GetDockerVolumeInspection(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -123,7 +123,7 @@ func (h *ProjectHandler) GetVolumeInspection(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.volumeUC.GetVolumeInspection(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerVolumeUC.GetVolumeInspection(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -132,19 +132,19 @@ func (h *ProjectHandler) GetVolumeInspection(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CreateVolume Creates a new volume
-// @Summary Creates a new volume
-// @Description Creates a new volume
+// CreateDockerVolume Creates a new docker volume
+// @Summary Creates a new docker volume
+// @Description Creates a new docker volume
 // @Tags    project_settings
 // @Produce json
-// @Id      createProjectVolume
+// @Id      createProjectDockerVolume
 // @Param   projectID path string true "project ID"
 // @Param   body body volumedto.CreateVolumeReq true "request data"
 // @Success 201 {object} volumedto.CreateVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/volumes [post]
-func (h *ProjectHandler) CreateVolume(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-volumes [post]
+func (h *ProjectHandler) CreateDockerVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -158,7 +158,7 @@ func (h *ProjectHandler) CreateVolume(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.volumeUC.CreateVolume(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerVolumeUC.CreateVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -167,19 +167,19 @@ func (h *ProjectHandler) CreateVolume(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, resp)
 }
 
-// DeleteVolume Deletes a volume
-// @Summary Deletes a volume
-// @Description Deletes a volume
+// DeleteDockerVolume Deletes a docker volume
+// @Summary Deletes a docker volume
+// @Description Deletes a docker volume
 // @Tags    project_settings
 // @Produce json
-// @Id      deleteProjectVolume
+// @Id      deleteProjectDockerVolume
 // @Param   projectID path string true "project ID"
 // @Param   volumeID path string true "volume ID"
 // @Success 200 {object} volumedto.DeleteVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/volumes/{volumeID} [delete]
-func (h *ProjectHandler) DeleteVolume(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-volumes/{volumeID} [delete]
+func (h *ProjectHandler) DeleteDockerVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -200,7 +200,7 @@ func (h *ProjectHandler) DeleteVolume(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.volumeUC.DeleteVolume(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerVolumeUC.DeleteVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

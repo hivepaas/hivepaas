@@ -10,12 +10,12 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
 )
 
-// ListNetwork Lists networks
-// @Summary Lists networks
-// @Description Lists networks
+// ListDockerNetwork Lists docker networks
+// @Summary Lists docker networks
+// @Description Lists docker networks
 // @Tags    project_settings
 // @Produce json
-// @Id      listProjectNetwork
+// @Id      listProjectDockerNetwork
 // @Param   projectID path string true "project ID"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -24,8 +24,8 @@ import (
 // @Success 200 {object} networkdto.ListNetworkResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks [get]
-func (h *ProjectHandler) ListNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-networks [get]
+func (h *ProjectHandler) ListDockerNetwork(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -39,7 +39,7 @@ func (h *ProjectHandler) ListNetwork(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.networkUC.ListNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerNetworkUC.ListNetwork(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -48,19 +48,19 @@ func (h *ProjectHandler) ListNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetNetwork Gets network details
-// @Summary Gets network details
-// @Description Gets network details
+// GetDockerNetwork Gets docker network details
+// @Summary Gets docker network details
+// @Description Gets docker network details
 // @Tags    project_settings
 // @Produce json
-// @Id      getProjectNetwork
+// @Id      getProjectDockerNetwork
 // @Param   projectID path string true "project ID"
 // @Param   networkID path string true "network ID"
 // @Success 200 {object} networkdto.GetNetworkResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID} [get]
-func (h *ProjectHandler) GetNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-networks/{networkID} [get]
+func (h *ProjectHandler) GetDockerNetwork(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -81,7 +81,7 @@ func (h *ProjectHandler) GetNetwork(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.networkUC.GetNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerNetworkUC.GetNetwork(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -90,19 +90,19 @@ func (h *ProjectHandler) GetNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetNetworkInspection Gets network details
-// @Summary Gets network details
-// @Description Gets network details
+// GetDockerNetworkInspection Gets docker network details
+// @Summary Gets docker network details
+// @Description Gets docker network details
 // @Tags    project_settings
 // @Produce json
-// @Id      getProjectNetworkInspection
+// @Id      getProjectDockerNetworkInspection
 // @Param   projectID path string true "project ID"
 // @Param   networkID path string true "network ID"
 // @Success 200 {object} networkdto.GetNetworkInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID}/inspect [get]
-func (h *ProjectHandler) GetNetworkInspection(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-networks/{networkID}/inspect [get]
+func (h *ProjectHandler) GetDockerNetworkInspection(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -123,7 +123,7 @@ func (h *ProjectHandler) GetNetworkInspection(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.networkUC.GetNetworkInspection(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerNetworkUC.GetNetworkInspection(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -132,19 +132,19 @@ func (h *ProjectHandler) GetNetworkInspection(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CreateNetwork Creates a new network
-// @Summary Creates a new network
-// @Description Creates a new network
+// CreateDockerNetwork Creates a new docker network
+// @Summary Creates a new docker network
+// @Description Creates a new docker network
 // @Tags    project_settings
 // @Produce json
-// @Id      createProjectNetwork
+// @Id      createProjectDockerNetwork
 // @Param   projectID path string true "project ID"
 // @Param   body body networkdto.CreateNetworkReq true "request data"
 // @Success 201 {object} networkdto.CreateNetworkResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks [post]
-func (h *ProjectHandler) CreateNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-networks [post]
+func (h *ProjectHandler) CreateDockerNetwork(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -158,7 +158,7 @@ func (h *ProjectHandler) CreateNetwork(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.networkUC.CreateNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerNetworkUC.CreateNetwork(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -167,19 +167,19 @@ func (h *ProjectHandler) CreateNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, resp)
 }
 
-// DeleteNetwork Deletes a network
-// @Summary Deletes a network
-// @Description Deletes a network
+// DeleteDockerNetwork Deletes a docker network
+// @Summary Deletes a docker network
+// @Description Deletes a docker network
 // @Tags    project_settings
 // @Produce json
-// @Id      deleteProjectNetwork
+// @Id      deleteProjectDockerNetwork
 // @Param   projectID path string true "project ID"
 // @Param   networkID path string true "network ID"
 // @Success 200 {object} networkdto.DeleteNetworkResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID} [delete]
-func (h *ProjectHandler) DeleteNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/docker-networks/{networkID} [delete]
+func (h *ProjectHandler) DeleteDockerNetwork(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -200,7 +200,7 @@ func (h *ProjectHandler) DeleteNetwork(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.networkUC.DeleteNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.dockerNetworkUC.DeleteNetwork(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

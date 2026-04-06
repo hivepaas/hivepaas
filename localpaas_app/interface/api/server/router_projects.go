@@ -184,22 +184,22 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imageBuildGroup.DELETE("/:itemID", projectHandler.DeleteImageBuild)
 	}
 
-	{ // Network group
-		networkGroup := projectGroup.Group("/:projectID/networks")
-		networkGroup.GET("/:networkID", projectHandler.GetNetwork)
-		networkGroup.GET("/:networkID/inspect", projectHandler.GetNetworkInspection)
-		networkGroup.GET("", projectHandler.ListNetwork)
-		networkGroup.POST("", projectHandler.CreateNetwork)
-		networkGroup.DELETE("/:networkID", projectHandler.DeleteNetwork)
+	{ // Docker network group
+		networkGroup := projectGroup.Group("/:projectID/docker-networks")
+		networkGroup.GET("/:networkID", projectHandler.GetDockerNetwork)
+		networkGroup.GET("/:networkID/inspect", projectHandler.GetDockerNetworkInspection)
+		networkGroup.GET("", projectHandler.ListDockerNetwork)
+		networkGroup.POST("", projectHandler.CreateDockerNetwork)
+		networkGroup.DELETE("/:networkID", projectHandler.DeleteDockerNetwork)
 	}
 
-	{ // Volume group
-		volumeGroup := projectGroup.Group("/:projectID/volumes")
-		volumeGroup.GET("/:volumeID", projectHandler.GetVolume)
-		volumeGroup.GET("/:volumeID/inspect", projectHandler.GetVolumeInspection)
-		volumeGroup.GET("", projectHandler.ListVolume)
-		volumeGroup.POST("", projectHandler.CreateVolume)
-		volumeGroup.DELETE("/:volumeID", projectHandler.DeleteVolume)
+	{ // Docker volume group
+		volumeGroup := projectGroup.Group("/:projectID/docker-volumes")
+		volumeGroup.GET("/:volumeID", projectHandler.GetDockerVolume)
+		volumeGroup.GET("/:volumeID/inspect", projectHandler.GetDockerVolumeInspection)
+		volumeGroup.GET("", projectHandler.ListDockerVolume)
+		volumeGroup.POST("", projectHandler.CreateDockerVolume)
+		volumeGroup.DELETE("/:volumeID", projectHandler.DeleteDockerVolume)
 	}
 
 	return projectGroup

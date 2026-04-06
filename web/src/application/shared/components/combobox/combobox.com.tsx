@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, RefreshCw } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, RefreshCw, X } from "lucide-react";
 
 import { useDebouncedSearch } from "@application/shared/hooks";
 
@@ -66,6 +66,8 @@ export interface ComboboxProps<T extends Record<string, unknown> = Record<string
     "isRefreshing"?: boolean;
     /** If label contains a space, render first token as a colored badge and the rest as text */
     "splitLabelBadge"?: boolean;
+    /** Show a clear button on hover when a value is selected */
+    "allowClear"?: boolean;
 }
 
 export function Combobox<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -86,6 +88,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     onRefresh,
     isRefreshing = false,
     splitLabelBadge = false,
+    allowClear = false,
 }: ComboboxProps<T>) {
     const [open, setOpen] = React.useState(false);
     const [debouncedSearch, setSearch, searchValue] = useDebouncedSearch(debounceMs, "");
@@ -122,9 +125,17 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         }
     };
 
+    const showClear = allowClear && !disabled && !loading && value != null && value !== "";
+
+    const handleClear = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onChange?.(null, null);
+        setOpen(false);
+    };
+
     return (
         <div className={cn("flex w-full items-center gap-1.5", className)}>
-            <div className="min-w-0 flex-1">
+            <div className="group/clear min-w-0 flex-1">
                 <Popover
                     open={open}
                     onOpenChange={setOpen}
@@ -150,6 +161,22 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                             </span>
                             {loading ? (
                                 <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+                            ) : showClear ? (
+                                <>
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover/clear:hidden" />
+                                    <span
+                                        role="button"
+                                        tabIndex={-1}
+                                        aria-label="Clear"
+                                        className="ml-2 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
+                                        onPointerDown={e => {
+                                            e.preventDefault();
+                                        }}
+                                        onClick={handleClear}
+                                    >
+                                        <X className="size-3.5" />
+                                    </span>
+                                </>
                             ) : (
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             )}
@@ -174,31 +201,33 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                     </div>
                                 ) : (
                                     <>
-                                        <CommandEmpty>{emptyText}</CommandEmpty>
-                                        <CommandGroup>
-                                            {options.map(option => {
-                                                const optionValue = String(option.value[valueKey]);
-                                                return (
-                                                    <CommandItem
-                                                        key={optionValue}
-                                                        value={optionValue}
-                                                        disabled={option.disabled}
-                                                        onSelect={handleSelect}
-                                                    >
-                                                        <ComboboxLabelContent
-                                                            label={option.label}
-                                                            splitBadge={splitLabelBadge}
-                                                        />
-                                                        <Check
-                                                            className={cn(
-                                                                "ml-auto h-4 w-4 shrink-0",
-                                                                value === optionValue ? "opacity-100" : "opacity-0",
-                                                            )}
-                                                        />
-                                                    </CommandItem>
-                                                );
-                                            })}
-                                        </CommandGroup>
+                                        <CommandEmpty className="p-2 text-sm text-gray-500">{emptyText}</CommandEmpty>
+                                        {options.length > 0 && (
+                                            <CommandGroup>
+                                                {options.map(option => {
+                                                    const optionValue = String(option.value[valueKey]);
+                                                    return (
+                                                        <CommandItem
+                                                            key={optionValue}
+                                                            value={optionValue}
+                                                            disabled={option.disabled}
+                                                            onSelect={handleSelect}
+                                                        >
+                                                            <ComboboxLabelContent
+                                                                label={option.label}
+                                                                splitBadge={splitLabelBadge}
+                                                            />
+                                                            <Check
+                                                                className={cn(
+                                                                    "ml-auto h-4 w-4 shrink-0",
+                                                                    value === optionValue ? "opacity-100" : "opacity-0",
+                                                                )}
+                                                            />
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        )}
                                     </>
                                 )}
                             </CommandList>

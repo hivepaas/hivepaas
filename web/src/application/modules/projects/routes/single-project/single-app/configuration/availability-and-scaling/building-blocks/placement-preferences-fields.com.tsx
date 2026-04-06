@@ -42,35 +42,37 @@ export function PlacementPreferencesFields() {
             >
                 <div className="flex flex-col gap-4 max-w-[800px]">
                     <div className="flex gap-4 flex-wrap items-center">
-                        <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
-                            <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
-                                Strategy
-                            </span>
-                            <Select
-                                value={strategy}
-                                disabled
-                            >
-                                <SelectTrigger className="w-[180px] border-0 shadow-none focus:ring-0 rounded-l-none h-9 opacity-100 bg-muted/20">
-                                    <SelectValue placeholder="Select strategy" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="spread">spread</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <div className="grid grid-cols-2 gap-3 flex-1">
+                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
+                                    Strategy
+                                </span>
+                                <Select
+                                    value={strategy}
+                                    disabled
+                                >
+                                    <SelectTrigger className="flex-1 border-0 shadow-none focus:ring-0 rounded-l-none h-9 opacity-100 bg-muted/20">
+                                        <SelectValue placeholder="Select strategy" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="spread">spread</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <div className="flex items-center rounded-md shadow-xs bg-background border border-input flex-1">
-                            <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
-                                Value
-                            </span>
-                            <Input
-                                value={newValue}
-                                onChange={e => {
-                                    setNewValue(e.target.value);
-                                }}
-                                className="border-0 shadow-none focus-visible:ring-0 rounded-l-none h-9"
-                                placeholder="value"
-                            />
+                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input flex-1">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
+                                    Value
+                                </span>
+                                <Input
+                                    value={newValue}
+                                    onChange={e => {
+                                        setNewValue(e.target.value);
+                                    }}
+                                    className="border-0 shadow-none focus-visible:ring-0 rounded-l-none h-9"
+                                    placeholder="value"
+                                />
+                            </div>
                         </div>
 
                         <Button
@@ -80,7 +82,7 @@ export function PlacementPreferencesFields() {
                             disabled={!newValue}
                             className="h-9 px-4 shrink-0"
                         >
-                            <Plus className="size-4 mr-2" /> Add
+                            <Plus className="size-4" /> Add
                         </Button>
                     </div>
 
@@ -90,11 +92,11 @@ export function PlacementPreferencesFields() {
                                 key={field.id}
                                 className="flex items-center group gap-4 py-2"
                             >
-                                <div className="grid grid-cols-[180px_1fr] flex-1 gap-4 items-center">
+                                <div className="grid grid-cols-2 flex-1 gap-3">
                                     <div className="text-sm break-words pl-3">{field.name}</div>
                                     <div className="text-sm break-words pl-3">{field.value}</div>
                                 </div>
-                                <div className="w-[76px] flex justify-end">
+                                <div className="w-[76px] flex justify-start">
                                     <Button
                                         type="button"
                                         variant="ghost"

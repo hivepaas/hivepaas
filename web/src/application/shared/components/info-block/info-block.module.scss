@@ -14,6 +14,11 @@
       color: var(--app-color-neutral-6);
       font-weight: 500;
       font-size: 14px;
+      min-height: 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
       // margin-top: 8px;
     }
 
@@ -26,6 +31,9 @@
   .children {
     flex: 4;
     min-height: 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     min-width: 300px;
   }
 }

@@ -38,6 +38,15 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imageGroup.POST("", clusterHandler.CreateImage)
 		imageGroup.DELETE("/:imageID", clusterHandler.DeleteImage)
 	}
+	{ // network group
+		networkGroup := clusterGroup.Group("/networks")
+		// Networks
+		networkGroup.GET("", clusterHandler.ListNetwork)
+		networkGroup.GET("/:networkID", clusterHandler.GetNetwork)
+		networkGroup.GET("/:networkID/inspect", clusterHandler.GetNetworkInspection)
+		networkGroup.POST("", clusterHandler.CreateNetwork)
+		networkGroup.DELETE("/:networkID", clusterHandler.DeleteNetwork)
+	}
 
 	return clusterGroup
 }

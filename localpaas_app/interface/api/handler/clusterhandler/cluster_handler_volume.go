@@ -15,7 +15,7 @@ import (
 // @Description Lists cluster volumes
 // @Tags    cluster_volumes
 // @Produce json
-// @Id      listVolume
+// @Id      listClusterVolume
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -52,7 +52,7 @@ func (h *ClusterHandler) ListVolume(ctx *gin.Context) {
 // @Description Gets volume details
 // @Tags    cluster_volumes
 // @Produce json
-// @Id      getVolume
+// @Id      getClusterVolume
 // @Param   volumeID path string true "volume ID"
 // @Success 200 {object} volumedto.GetVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -86,7 +86,7 @@ func (h *ClusterHandler) GetVolume(ctx *gin.Context) {
 // @Description Gets volume details
 // @Tags    cluster_volumes
 // @Produce json
-// @Id      getVolumeInspection
+// @Id      getClusterVolumeInspection
 // @Param   volumeID path string true "volume ID"
 // @Success 200 {object} volumedto.GetVolumeInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -120,7 +120,7 @@ func (h *ClusterHandler) GetVolumeInspection(ctx *gin.Context) {
 // @Description Creates a volume
 // @Tags    cluster_volumes
 // @Produce json
-// @Id      createVolume
+// @Id      createClusterVolume
 // @Param   body body volumedto.CreateVolumeReq true "request data"
 // @Success 200 {object} volumedto.CreateVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -153,7 +153,7 @@ func (h *ClusterHandler) CreateVolume(ctx *gin.Context) {
 // @Description Deletes a volume
 // @Tags    cluster_volumes
 // @Produce json
-// @Id      deleteVolume
+// @Id      deleteClusterVolume
 // @Param   volumeID path string true "volume ID"
 // @Param   force query bool false "`force=true/false`"
 // @Success 200 {object} volumedto.DeleteVolumeResp

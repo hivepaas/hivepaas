@@ -388,7 +388,7 @@
     "/cluster/images" : {
       "get" : {
         "description" : "Lists cluster images",
-        "operationId" : "listImage",
+        "operationId" : "listClusterImage",
         "parameters" : [ {
           "description" : "`status=<target>`",
           "in" : "query",
@@ -462,7 +462,7 @@
       },
       "post" : {
         "description" : "Creates an image",
-        "operationId" : "createImage",
+        "operationId" : "createClusterImage",
         "requestBody" : {
           "content" : {
             "*/*" : {
@@ -514,7 +514,7 @@
     "/cluster/images/{imageID}" : {
       "delete" : {
         "description" : "Deletes an image",
-        "operationId" : "deleteImage",
+        "operationId" : "deleteClusterImage",
         "parameters" : [ {
           "description" : "image ID",
           "in" : "path",
@@ -561,7 +561,7 @@
       },
       "get" : {
         "description" : "Gets image details",
-        "operationId" : "getImage",
+        "operationId" : "getClusterImage",
         "parameters" : [ {
           "description" : "image ID",
           "in" : "path",
@@ -610,7 +610,7 @@
     "/cluster/images/{imageID}/inspect" : {
       "get" : {
         "description" : "Gets image details",
-        "operationId" : "getImageInspection",
+        "operationId" : "getClusterImageInspection",
         "parameters" : [ {
           "description" : "image ID",
           "in" : "path",
@@ -656,10 +656,281 @@
         "tags" : [ "cluster_images" ]
       }
     },
+    "/cluster/networks" : {
+      "get" : {
+        "description" : "Lists cluster networks",
+        "operationId" : "listClusterNetwork",
+        "parameters" : [ {
+          "description" : "`status=<target>`",
+          "in" : "query",
+          "name" : "status",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.ListNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists cluster networks",
+        "tags" : [ "cluster_networks" ]
+      },
+      "post" : {
+        "description" : "Creates a network",
+        "operationId" : "createClusterNetwork",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a network",
+        "tags" : [ "cluster_networks" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/cluster/networks/{networkID}" : {
+      "delete" : {
+        "description" : "Deletes a network",
+        "operationId" : "deleteClusterNetwork",
+        "parameters" : [ {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.DeleteNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes a network",
+        "tags" : [ "cluster_networks" ]
+      },
+      "get" : {
+        "description" : "Gets network details",
+        "operationId" : "getClusterNetwork",
+        "parameters" : [ {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets network details",
+        "tags" : [ "cluster_networks" ]
+      }
+    },
+    "/cluster/networks/{networkID}/inspect" : {
+      "get" : {
+        "description" : "Gets network details",
+        "operationId" : "getClusterNetworkInspection",
+        "parameters" : [ {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkInspectionResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets network details",
+        "tags" : [ "cluster_networks" ]
+      }
+    },
     "/cluster/nodes" : {
       "get" : {
         "description" : "Lists cluster nodes",
-        "operationId" : "listNode",
+        "operationId" : "listClusterNode",
         "parameters" : [ {
           "description" : "`status=<target>`",
           "in" : "query",
@@ -735,7 +1006,7 @@
     "/cluster/nodes/join" : {
       "post" : {
         "description" : "Joins a node to the swarm",
-        "operationId" : "joinNode",
+        "operationId" : "joinClusterNode",
         "requestBody" : {
           "content" : {
             "*/*" : {
@@ -787,7 +1058,7 @@
     "/cluster/nodes/join-command" : {
       "get" : {
         "description" : "Gets node join command",
-        "operationId" : "getNodeJoinCommand",
+        "operationId" : "getClusterNodeJoinCommand",
         "parameters" : [ {
           "description" : "joinAsManager=true/false",
           "in" : "query",
@@ -835,7 +1106,7 @@
     "/cluster/nodes/{nodeID}" : {
       "delete" : {
         "description" : "Deletes a node",
-        "operationId" : "deleteNode",
+        "operationId" : "deleteClusterNode",
         "parameters" : [ {
           "description" : "node ID",
           "in" : "path",
@@ -889,7 +1160,7 @@
       },
       "get" : {
         "description" : "Gets node details",
-        "operationId" : "getNode",
+        "operationId" : "getClusterNode",
         "parameters" : [ {
           "description" : "node ID",
           "in" : "path",
@@ -936,7 +1207,7 @@
       },
       "put" : {
         "description" : "Updates a node",
-        "operationId" : "updateNode",
+        "operationId" : "updateClusterNode",
         "parameters" : [ {
           "description" : "node ID",
           "in" : "path",
@@ -997,7 +1268,7 @@
     "/cluster/nodes/{nodeID}/inspect" : {
       "get" : {
         "description" : "Gets node details",
-        "operationId" : "getNodeInspection",
+        "operationId" : "getClusterNodeInspection",
         "parameters" : [ {
           "description" : "node ID",
           "in" : "path",
@@ -1046,7 +1317,7 @@
     "/cluster/volumes" : {
       "get" : {
         "description" : "Lists cluster volumes",
-        "operationId" : "listVolume",
+        "operationId" : "listClusterVolume",
         "parameters" : [ {
           "description" : "`status=<target>`",
           "in" : "query",
@@ -1120,7 +1391,7 @@
       },
       "post" : {
         "description" : "Creates a volume",
-        "operationId" : "createVolume",
+        "operationId" : "createClusterVolume",
         "requestBody" : {
           "content" : {
             "*/*" : {
@@ -1172,7 +1443,7 @@
     "/cluster/volumes/{volumeID}" : {
       "delete" : {
         "description" : "Deletes a volume",
-        "operationId" : "deleteVolume",
+        "operationId" : "deleteClusterVolume",
         "parameters" : [ {
           "description" : "volume ID",
           "in" : "path",
@@ -1226,7 +1497,7 @@
       },
       "get" : {
         "description" : "Gets volume details",
-        "operationId" : "getVolume",
+        "operationId" : "getClusterVolume",
         "parameters" : [ {
           "description" : "volume ID",
           "in" : "path",
@@ -1275,7 +1546,7 @@
     "/cluster/volumes/{volumeID}/inspect" : {
       "get" : {
         "description" : "Gets volume details",
-        "operationId" : "getVolumeInspection",
+        "operationId" : "getClusterVolumeInspection",
         "parameters" : [ {
           "description" : "volume ID",
           "in" : "path",
@@ -8975,6 +9246,311 @@
         "summary" : "Updates image build meta",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/networks" : {
+      "get" : {
+        "description" : "Lists networks",
+        "operationId" : "listProjectNetwork",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.ListNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists networks",
+        "tags" : [ "project_settings" ]
+      },
+      "post" : {
+        "description" : "Creates a new network setting",
+        "operationId" : "createProjectNetwork",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a new network setting",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/networks/{networkID}" : {
+      "delete" : {
+        "description" : "Deletes a network",
+        "operationId" : "deleteProjectNetwork",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.DeleteNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes a network",
+        "tags" : [ "project_settings" ]
+      },
+      "get" : {
+        "description" : "Gets network details",
+        "operationId" : "getProjectNetwork",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets network details",
+        "tags" : [ "project_settings" ]
+      }
+    },
+    "/projects/{projectID}/networks/{networkID}/inspect" : {
+      "get" : {
+        "description" : "Gets network details",
+        "operationId" : "getProjectNetworkInspection",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "network ID",
+          "in" : "path",
+          "name" : "networkID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkInspectionResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets network details",
+        "tags" : [ "project_settings" ]
       }
     },
     "/projects/{projectID}/notifications" : {
@@ -22094,6 +22670,159 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkReq" : {
+        "properties" : {
+          "attachable" : {
+            "type" : "boolean"
+          },
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "driver" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NetworkDriver"
+          },
+          "enableIPv4" : {
+            "type" : "boolean"
+          },
+          "enableIPv6" : {
+            "type" : "boolean"
+          },
+          "ingress" : {
+            "type" : "boolean"
+          },
+          "internal" : {
+            "type" : "boolean"
+          },
+          "labels" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "options" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "projectID" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "attachable", "availableInProjects", "driver", "enableIPv4", "enableIPv6", "ingress", "internal", "labels", "name", "options", "projectID" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.CreateNetworkResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.DeleteNetworkResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkInspectionResp" : {
+        "properties" : {
+          "data" : {
+            "type" : "string"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.GetNetworkResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.NetworkResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.ListNetworkResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.NetworkResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_networkuc_networkdto.NetworkResp" : {
+        "properties" : {
+          "attachable" : {
+            "type" : "boolean"
+          },
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "driver" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NetworkDriver"
+          },
+          "enableIPv4" : {
+            "type" : "boolean"
+          },
+          "enableIPv6" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "ingress" : {
+            "type" : "boolean"
+          },
+          "internal" : {
+            "type" : "boolean"
+          },
+          "labels" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "options" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          }
+        },
+        "required" : [ "attachable", "availableInProjects", "createdAt", "driver", "enableIPv4", "enableIPv6", "id", "ingress", "internal", "labels", "name", "options" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_nodeuc_nodedto.DeleteNodeResp" : {
         "properties" : {
           "meta" : {
@@ -29255,6 +29984,11 @@
         "enum" : [ "", "NONE", "CMD", "CMD-SHELL" ],
         "type" : "string",
         "x-enum-varnames" : [ "HealthcheckModeInherit", "HealthcheckModeNone", "HealthcheckModeCmd", "HealthcheckModeCmdShell" ]
+      },
+      "github_com_localpaas_localpaas_services_docker.NetworkDriver" : {
+        "enum" : [ "overlay", "bridge" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "NetworkDriverOverlay", "NetworkDriverBridge" ]
       },
       "github_com_localpaas_localpaas_services_docker.ServiceMode" : {
         "enum" : [ "replicated", "replicated-job", "global", "global-job" ],

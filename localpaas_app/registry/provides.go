@@ -46,6 +46,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc"
@@ -133,6 +134,7 @@ var Provides = []any{
 	nodeuc.NewNodeUC,
 	volumeuc.NewVolumeUC,
 	imageuc.NewImageUC,
+	networkuc.NewNetworkUC,
 	sessionuc.NewSessionUC,
 	useruc.NewUserUC,
 	projectuc.NewProjectUC,

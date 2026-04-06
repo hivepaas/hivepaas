@@ -6,6 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
@@ -14,6 +15,9 @@ import (
 )
 
 type ProjectService interface {
+	LoadProject(ctx context.Context, db database.IDB, projectID string, requireActive bool,
+		extraLoadOpts ...bunex.SelectQueryOption) (*entity.Project, error)
+
 	PersistProjectData(ctx context.Context, db database.IDB, data *PersistingProjectData) error
 	DeleteProject(ctx context.Context, project *entity.Project) error
 

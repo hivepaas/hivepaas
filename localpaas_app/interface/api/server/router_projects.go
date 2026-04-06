@@ -184,5 +184,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imageBuildGroup.DELETE("/:itemID", projectHandler.DeleteImageBuild)
 	}
 
+	{ // Network group
+		networkGroup := projectGroup.Group("/:projectID/networks")
+		networkGroup.GET("/:networkID", projectHandler.GetNetwork)
+		networkGroup.GET("/:networkID/inspect", projectHandler.GetNetworkInspection)
+		networkGroup.GET("", projectHandler.ListNetwork)
+		networkGroup.POST("", projectHandler.CreateNetwork)
+		networkGroup.DELETE("/:networkID", projectHandler.DeleteNetwork)
+	}
+
 	return projectGroup
 }

@@ -15,7 +15,7 @@ import (
 // @Description Lists cluster images
 // @Tags    cluster_images
 // @Produce json
-// @Id      listImage
+// @Id      listClusterImage
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -52,7 +52,7 @@ func (h *ClusterHandler) ListImage(ctx *gin.Context) {
 // @Description Gets image details
 // @Tags    cluster_images
 // @Produce json
-// @Id      getImage
+// @Id      getClusterImage
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.GetImageResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -86,7 +86,7 @@ func (h *ClusterHandler) GetImage(ctx *gin.Context) {
 // @Description Gets image details
 // @Tags    cluster_images
 // @Produce json
-// @Id      getImageInspection
+// @Id      getClusterImageInspection
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.GetImageInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -120,7 +120,7 @@ func (h *ClusterHandler) GetImageInspection(ctx *gin.Context) {
 // @Description Creates an image
 // @Tags    cluster_images
 // @Produce json
-// @Id      createImage
+// @Id      createClusterImage
 // @Param   body body imagedto.CreateImageReq true "request data"
 // @Success 200 {object} imagedto.CreateImageResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -153,7 +153,7 @@ func (h *ClusterHandler) CreateImage(ctx *gin.Context) {
 // @Description Deletes an image
 // @Tags    cluster_images
 // @Produce json
-// @Id      deleteImage
+// @Id      deleteClusterImage
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.DeleteImageResp
 // @Failure 400 {object} apperrors.ErrorInfo

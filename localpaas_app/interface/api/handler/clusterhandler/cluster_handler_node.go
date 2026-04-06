@@ -15,7 +15,7 @@ import (
 // @Description Lists cluster nodes
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      listNode
+// @Id      listClusterNode
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -52,7 +52,7 @@ func (h *ClusterHandler) ListNode(ctx *gin.Context) {
 // @Description Gets node details
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      getNode
+// @Id      getClusterNode
 // @Param   nodeID path string true "node ID"
 // @Success 200 {object} nodedto.GetNodeResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -86,7 +86,7 @@ func (h *ClusterHandler) GetNode(ctx *gin.Context) {
 // @Description Gets node details
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      getNodeInspection
+// @Id      getClusterNodeInspection
 // @Param   nodeID path string true "node ID"
 // @Success 200 {object} nodedto.GetNodeInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -120,7 +120,7 @@ func (h *ClusterHandler) GetNodeInspection(ctx *gin.Context) {
 // @Description Updates a node
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      updateNode
+// @Id      updateClusterNode
 // @Param   nodeID path string true "node ID"
 // @Param   body body nodedto.UpdateNodeReq true "request data"
 // @Success 200 {object} nodedto.UpdateNodeResp
@@ -155,7 +155,7 @@ func (h *ClusterHandler) UpdateNode(ctx *gin.Context) {
 // @Description Deletes a node
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      deleteNode
+// @Id      deleteClusterNode
 // @Param   nodeID path string true "node ID"
 // @Param   force query bool false "`force=true/false`"
 // @Success 200 {object} nodedto.DeleteNodeResp
@@ -190,7 +190,7 @@ func (h *ClusterHandler) DeleteNode(ctx *gin.Context) {
 // @Description Joins a node to the swarm
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      joinNode
+// @Id      joinClusterNode
 // @Param   body body nodedto.JoinNodeReq true "request data"
 // @Success 200 {object} nodedto.JoinNodeResp
 // @Failure 400 {object} apperrors.ErrorInfo
@@ -223,7 +223,7 @@ func (h *ClusterHandler) JoinNode(ctx *gin.Context) {
 // @Description Gets node join command
 // @Tags    cluster_nodes
 // @Produce json
-// @Id      getNodeJoinCommand
+// @Id      getClusterNodeJoinCommand
 // @Param   joinAsManager query string false "joinAsManager=true/false"
 // @Success 200 {object} nodedto.GetNodeJoinCommandResp
 // @Failure 400 {object} apperrors.ErrorInfo

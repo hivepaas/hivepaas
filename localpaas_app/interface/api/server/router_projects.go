@@ -193,5 +193,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		networkGroup.DELETE("/:networkID", projectHandler.DeleteNetwork)
 	}
 
+	{ // Volume group
+		volumeGroup := projectGroup.Group("/:projectID/volumes")
+		volumeGroup.GET("/:volumeID", projectHandler.GetVolume)
+		volumeGroup.GET("/:volumeID/inspect", projectHandler.GetVolumeInspection)
+		volumeGroup.GET("", projectHandler.ListVolume)
+		volumeGroup.POST("", projectHandler.CreateVolume)
+		volumeGroup.DELETE("/:volumeID", projectHandler.DeleteVolume)
+	}
+
 	return projectGroup
 }

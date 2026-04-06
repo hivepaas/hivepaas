@@ -10,7 +10,9 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 const (
@@ -21,7 +23,15 @@ func (uc *VolumeUC) ListVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.ListVolumeReq,
-) (*volumedto.ListVolumeResp, error) {
+) (_ *volumedto.ListVolumeResp, err error) {
+	var project *entity.Project
+	if req.ProjectID != "" {
+		project, err = uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
 	volumes, err := uc.dockerManager.VolumeList(ctx, func(opts *volume.ListOptions) {
 		if opts.Filters.Len() == 0 {
 			opts.Filters = filters.NewArgs()
@@ -35,6 +45,12 @@ func (uc *VolumeUC) ListVolume(
 	}
 
 	filterVolumes := volumes.Volumes
+	if req.ProjectID != "" {
+		filterVolumes = gofn.Filter(filterVolumes, func(vol *volume.Volume) bool {
+			label := vol.Labels[docker.StackLabelNamespace]
+			return label == "" || label == project.Key
+		})
+	}
 	if req.Search != "" {
 		keyword := strings.ToLower(req.Search)
 		filterVolumes = gofn.Filter(filterVolumes, func(vol *volume.Volume) bool {
@@ -55,7 +71,7 @@ func (uc *VolumeUC) ListVolume(
 		Meta: &basedto.ListMeta{Page: &basedto.PagingMeta{
 			Offset: 0,
 			Limit:  req.Paging.Limit,
-			Total:  len(volumes.Volumes),
+			Total:  len(filterVolumes),
 		}},
 		Data: volumedto.TransformVolumes(filterVolumes, false),
 	}, nil

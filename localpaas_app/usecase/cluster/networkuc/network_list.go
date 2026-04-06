@@ -10,6 +10,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/localpaas/localpaas/services/docker"
 )
@@ -18,7 +19,15 @@ func (uc *NetworkUC) ListNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.ListNetworkReq,
-) (*networkdto.ListNetworkResp, error) {
+) (_ *networkdto.ListNetworkResp, err error) {
+	var project *entity.Project
+	if req.ProjectID != "" {
+		project, err = uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
 	networks, err := uc.dockerManager.NetworkList(ctx, func(opts *network.ListOptions) {
 		if opts.Filters.Len() == 0 {
 			opts.Filters = filters.NewArgs()
@@ -32,7 +41,7 @@ func (uc *NetworkUC) ListNetwork(
 	if req.ProjectID != "" {
 		filterNetworks = gofn.FilterPtr(filterNetworks, func(net *network.Summary) bool {
 			label := net.Labels[docker.StackLabelNamespace]
-			return label == "" || label == req.ProjectID
+			return label == "" || label == project.Key
 		})
 	}
 	if req.Search != "" {

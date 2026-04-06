@@ -50,7 +50,7 @@ func (uc *NodeUC) ListNode(
 		Meta: &basedto.ListMeta{Page: &basedto.PagingMeta{
 			Offset: 0,
 			Limit:  req.Paging.Limit,
-			Total:  len(nodes),
+			Total:  len(filterNodes),
 		}},
 		Data: nodedto.TransformNodes(filterNodes, false),
 	}, nil

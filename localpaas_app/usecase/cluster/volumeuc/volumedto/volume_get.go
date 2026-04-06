@@ -9,10 +9,12 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 type GetVolumeReq struct {
-	VolumeID string `json:"-"`
+	VolumeID  string `json:"-"`
+	ProjectID string `json:"-"`
 }
 
 func NewGetVolumeReq() *GetVolumeReq {
@@ -23,6 +25,7 @@ func (req *GetVolumeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	// NOTE: volume id is docker id, it's not ULID
 	validators = append(validators, basedto.ValidateStr(&req.VolumeID, true, 1, volumeIDMaxLen, "volumeID")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, false, "projectID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
@@ -33,6 +36,7 @@ type GetVolumeResp struct {
 
 type VolumeResp struct {
 	ID                string                 `json:"id"`
+	AvailInProjects   bool                   `json:"availableInProjects"`
 	Labels            map[string]string      `json:"labels"`
 	Driver            string                 `json:"driver"`
 	Mountpoint        string                 `json:"mountpoint"`
@@ -52,14 +56,15 @@ type ClusterVolumeSpecResp struct {
 
 func TransformVolume(vol *volume.Volume, _ bool) *VolumeResp {
 	resp := &VolumeResp{
-		ID:         vol.Name,
-		Driver:     vol.Driver,
-		Mountpoint: vol.Mountpoint,
-		Options:    vol.Options,
-		Scope:      base.VolumeScope(vol.Scope),
-		Status:     vol.Status,
-		Labels:     vol.Labels,
-		CreatedAt:  transformVolumeCreatedAt(vol.CreatedAt),
+		ID:              vol.Name,
+		AvailInProjects: vol.Labels[docker.StackLabelNamespace] == "",
+		Driver:          vol.Driver,
+		Mountpoint:      vol.Mountpoint,
+		Options:         vol.Options,
+		Scope:           base.VolumeScope(vol.Scope),
+		Status:          vol.Status,
+		Labels:          vol.Labels,
+		CreatedAt:       transformVolumeCreatedAt(vol.CreatedAt),
 	}
 	if vol.ClusterVolume != nil {
 		resp.ID = vol.ClusterVolume.ID

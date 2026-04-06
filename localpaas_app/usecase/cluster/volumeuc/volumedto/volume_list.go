@@ -10,8 +10,9 @@ import (
 )
 
 type ListVolumeReq struct {
-	ListAll bool   `json:"-" mapstructure:"listAll"`
-	Search  string `json:"-" mapstructure:"search"`
+	ProjectID string `json:"-"`
+	ListAll   bool   `json:"-" mapstructure:"listAll"`
+	Search    string `json:"-" mapstructure:"search"`
 
 	Paging basedto.Paging `json:"-"`
 }
@@ -27,6 +28,7 @@ func NewListVolumeReq() *ListVolumeReq {
 
 func (req *ListVolumeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, false, "projectID")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

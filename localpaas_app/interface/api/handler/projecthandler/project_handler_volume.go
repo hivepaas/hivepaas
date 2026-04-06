@@ -7,39 +7,39 @@ import (
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
 )
 
-// ListNetwork Lists networks
-// @Summary Lists networks
-// @Description Lists networks
+// ListVolume Lists volumes
+// @Summary Lists volumes
+// @Description Lists volumes
 // @Tags    project_settings
 // @Produce json
-// @Id      listProjectNetwork
+// @Id      listProjectVolume
 // @Param   projectID path string true "project ID"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} networkdto.ListNetworkResp
+// @Success 200 {object} volumedto.ListVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks [get]
-func (h *ProjectHandler) ListNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/volumes [get]
+func (h *ProjectHandler) ListVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := networkdto.NewListNetworkReq()
+	req := volumedto.NewListVolumeReq()
 	req.ProjectID = projectID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.networkUC.ListNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.volumeUC.ListVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -48,40 +48,40 @@ func (h *ProjectHandler) ListNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetNetwork Gets network details
-// @Summary Gets network details
-// @Description Gets network details
+// GetVolume Gets volume details
+// @Summary Gets volume details
+// @Description Gets volume details
 // @Tags    project_settings
 // @Produce json
-// @Id      getProjectNetwork
+// @Id      getProjectVolume
 // @Param   projectID path string true "project ID"
-// @Param   networkID path string true "network ID"
-// @Success 200 {object} networkdto.GetNetworkResp
+// @Param   volumeID path string true "volume ID"
+// @Success 200 {object} volumedto.GetVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID} [get]
-func (h *ProjectHandler) GetNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/volumes/{volumeID} [get]
+func (h *ProjectHandler) GetVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	networkID, err := h.ParseStringParam(ctx, "networkID")
+	volumeID, err := h.ParseStringParam(ctx, "volumeID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := networkdto.NewGetNetworkReq()
-	req.NetworkID = networkID
+	req := volumedto.NewGetVolumeReq()
+	req.VolumeID = volumeID
 	req.ProjectID = projectID
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.networkUC.GetNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.volumeUC.GetVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -90,40 +90,40 @@ func (h *ProjectHandler) GetNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetNetworkInspection Gets network details
-// @Summary Gets network details
-// @Description Gets network details
+// GetVolumeInspection Gets volume details
+// @Summary Gets volume details
+// @Description Gets volume details
 // @Tags    project_settings
 // @Produce json
-// @Id      getProjectNetworkInspection
+// @Id      getProjectVolumeInspection
 // @Param   projectID path string true "project ID"
-// @Param   networkID path string true "network ID"
-// @Success 200 {object} networkdto.GetNetworkInspectionResp
+// @Param   volumeID path string true "volume ID"
+// @Success 200 {object} volumedto.GetVolumeInspectionResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID}/inspect [get]
-func (h *ProjectHandler) GetNetworkInspection(ctx *gin.Context) {
+// @Router  /projects/{projectID}/volumes/{volumeID}/inspect [get]
+func (h *ProjectHandler) GetVolumeInspection(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	networkID, err := h.ParseStringParam(ctx, "networkID")
+	volumeID, err := h.ParseStringParam(ctx, "volumeID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := networkdto.NewGetNetworkInspectionReq()
-	req.NetworkID = networkID
+	req := volumedto.NewGetVolumeInspectionReq()
+	req.VolumeID = volumeID
 	req.ProjectID = projectID
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.networkUC.GetNetworkInspection(h.RequestCtx(ctx), auth, req)
+	resp, err := h.volumeUC.GetVolumeInspection(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -132,33 +132,33 @@ func (h *ProjectHandler) GetNetworkInspection(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CreateNetwork Creates a new network
-// @Summary Creates a new network
-// @Description Creates a new network
+// CreateVolume Creates a new volume
+// @Summary Creates a new volume
+// @Description Creates a new volume
 // @Tags    project_settings
 // @Produce json
-// @Id      createProjectNetwork
+// @Id      createProjectVolume
 // @Param   projectID path string true "project ID"
-// @Param   body body networkdto.CreateNetworkReq true "request data"
-// @Success 201 {object} networkdto.CreateNetworkResp
+// @Param   body body volumedto.CreateVolumeReq true "request data"
+// @Success 201 {object} volumedto.CreateVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks [post]
-func (h *ProjectHandler) CreateNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/volumes [post]
+func (h *ProjectHandler) CreateVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := networkdto.NewCreateNetworkReq()
+	req := volumedto.NewCreateVolumeReq()
 	req.ProjectID = projectID
 	if err = h.ParseJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.networkUC.CreateNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.volumeUC.CreateVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -167,40 +167,40 @@ func (h *ProjectHandler) CreateNetwork(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, resp)
 }
 
-// DeleteNetwork Deletes a network
-// @Summary Deletes a network
-// @Description Deletes a network
+// DeleteVolume Deletes a volume
+// @Summary Deletes a volume
+// @Description Deletes a volume
 // @Tags    project_settings
 // @Produce json
-// @Id      deleteProjectNetwork
+// @Id      deleteProjectVolume
 // @Param   projectID path string true "project ID"
-// @Param   networkID path string true "network ID"
-// @Success 200 {object} networkdto.DeleteNetworkResp
+// @Param   volumeID path string true "volume ID"
+// @Success 200 {object} volumedto.DeleteVolumeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/networks/{networkID} [delete]
-func (h *ProjectHandler) DeleteNetwork(ctx *gin.Context) {
+// @Router  /projects/{projectID}/volumes/{volumeID} [delete]
+func (h *ProjectHandler) DeleteVolume(ctx *gin.Context) {
 	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	networkID, err := h.ParseStringParam(ctx, "networkID")
+	volumeID, err := h.ParseStringParam(ctx, "volumeID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := networkdto.NewDeleteNetworkReq()
-	req.NetworkID = networkID
+	req := volumedto.NewDeleteVolumeReq()
+	req.VolumeID = volumeID
 	req.ProjectID = projectID
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.networkUC.DeleteNetwork(h.RequestCtx(ctx), auth, req)
+	resp, err := h.volumeUC.DeleteVolume(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

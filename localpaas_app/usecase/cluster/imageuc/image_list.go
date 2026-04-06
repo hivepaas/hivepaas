@@ -39,7 +39,7 @@ func (uc *ImageUC) ListImage(
 		Meta: &basedto.ListMeta{Page: &basedto.PagingMeta{
 			Offset: 0,
 			Limit:  req.Paging.Limit,
-			Total:  len(images),
+			Total:  len(filterImages),
 		}},
 		Data: imagedto.TransformImages(filterImages, false),
 	}, nil

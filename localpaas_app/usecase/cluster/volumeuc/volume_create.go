@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 func (uc *VolumeUC) CreateVolume(
@@ -67,6 +68,16 @@ func (uc *VolumeUC) CreateVolume(
 		req.Labels = map[string]string{}
 	}
 	req.Labels[localpaasVolumeLabel] = ""
+
+	if req.ProjectID != "" {
+		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		req.Labels[docker.StackLabelNamespace] = project.Key
+	} else if !req.AvailInProjects {
+		req.Labels[docker.StackLabelNamespace] = "global"
+	}
 
 	options := &volume.CreateOptions{
 		Driver:     string(req.Driver),

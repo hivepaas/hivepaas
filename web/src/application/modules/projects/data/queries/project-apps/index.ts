@@ -5,3 +5,4 @@ export * from "./app-container-settings.queries";
 export * from "./app-deployment-settings.queries";
 export * from "./app-network-settings.queries";
 export * from "./app-service-settings.queries";
+export * from "./app-resource-settings.queries";

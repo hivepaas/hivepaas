@@ -4,3 +4,4 @@ export * from "./deployment-settings";
 export * from "./secret";
 export * from "./service-settings";
 export * from "./network-settings";
+export * from "./resource-settings";

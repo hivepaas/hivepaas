@@ -23,7 +23,7 @@ type SchemaOutput = AppConfigAvailabilitySchemaOutput;
 export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
-            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Global,
+            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Replicated,
             serviceReplicas:
                 defaultValues?.modeSpec.mode === EServiceMode.Replicated
                     ? defaultValues.modeSpec.serviceReplicas

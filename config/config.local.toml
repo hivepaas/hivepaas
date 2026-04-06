@@ -2,6 +2,10 @@ env = "development"
 platform = "local"
 name = "LocalPaaS"
 version = 1
+
+root_domain = "localhost"
+app_domain = "localhost"
+
 run_mode = "embedded-worker"
 base_url = "http://localhost:10000" # dashboard base URL
 secret = "abc123"

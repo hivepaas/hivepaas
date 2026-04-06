@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/htpasswd"
@@ -67,7 +68,7 @@ func (s *traefikService) ApplyAppConfig(
 
 	hasCerts := false
 
-	if httpSettings != nil && httpSettings.Enabled {
+	if httpSettings != nil && httpSettings.ExposePublicly {
 		labels["traefik.enable"] = labelValueTrue
 
 		for _, domain := range httpSettings.Domains {
@@ -180,10 +181,13 @@ func (s *traefikService) collectPathConfig(
 
 	// Apply Path router labels
 	var pathRule string
-	if pathCfg.IsRegex {
-		pathRule = fmt.Sprintf("Host(`%s`) && PathRegexp(`%s`)", domain.Domain, pathCfg.Path)
-	} else {
+	switch pathCfg.Mode { //nolint
+	case base.HTTPPathModePrefix:
 		pathRule = fmt.Sprintf("Host(`%s`) && PathPrefix(`%s`)", domain.Domain, pathCfg.Path)
+	case base.HTTPPathModeRegex:
+		pathRule = fmt.Sprintf("Host(`%s`) && PathRegexp(`%s`)", domain.Domain, pathCfg.Path)
+	default:
+		pathRule = fmt.Sprintf("Host(`%s`) && Path(`%s`)", domain.Domain, pathCfg.Path)
 	}
 
 	pathRouterName := fmt.Sprintf("%s-path-%d", domainRouterName, pathIdx)

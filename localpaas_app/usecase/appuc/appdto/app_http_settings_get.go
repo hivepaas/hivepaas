@@ -1,10 +1,14 @@
 package appdto
 
 import (
+	"fmt"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
@@ -34,9 +38,11 @@ type GetAppHttpSettingsResp struct {
 }
 
 type HttpSettingsResp struct {
-	Enabled   bool          `json:"enabled"`
-	Domains   []*DomainResp `json:"domains"`
-	UpdateVer int           `json:"updateVer"`
+	InternalEndpoints []string      `json:"internalEndpoints"`
+	DomainSuggestion  string        `json:"domainSuggestion"`
+	ExposePublicly    bool          `json:"exposePublicly"`
+	Domains           []*DomainResp `json:"domains"`
+	UpdateVer         int           `json:"updateVer"`
 }
 
 type DomainResp struct {
@@ -86,7 +92,7 @@ type HTTPCompressionConfigResp struct {
 
 type HTTPPathConfigResp struct {
 	Path            string                    `json:"path"`
-	IsRegex         bool                      `json:"isRegex"`
+	Mode            base.HTTPPathMode         `json:"mode"`
 	BasicAuth       *settings.BaseSettingResp `json:"basicAuth,omitzero"`
 	ClientConfig    *HTTPClientConfigResp     `json:"clientConfig"`
 	RateLimitConfig *HTTPRateLimitConfigResp  `json:"rateLimitConfig"`
@@ -110,6 +116,11 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	if err = copier.Copy(&resp, appHttpSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+
+	resp.InternalEndpoints = []string{
+		fmt.Sprintf("http://%s:<port>", input.App.Key),
+	}
+	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {

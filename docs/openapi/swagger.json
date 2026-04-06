@@ -19531,6 +19531,11 @@
         "type" : "string",
         "x-enum-varnames" : [ "HTTPMethodGet", "HTTPMethodPost", "HTTPMethodPut", "HTTPMethodPatch", "HTTPMethodDelete" ]
       },
+      "github_com_localpaas_localpaas_localpaas_app_base.HTTPPathMode" : {
+        "enum" : [ "exact", "prefix", "regex" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "HTTPPathModeExact", "HTTPPathModePrefix", "HTTPPathModeRegex" ]
+      },
       "github_com_localpaas_localpaas_localpaas_app_base.HealthcheckGRPCStatus" : {
         "enum" : [ 0, 1, 2, 3 ],
         "format" : "int32",
@@ -20050,7 +20055,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]
@@ -21034,8 +21039,8 @@
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPClientConfigReq"
           },
-          "isRegex" : {
-            "type" : "boolean"
+          "mode" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HTTPPathMode"
           },
           "path" : {
             "type" : "string"
@@ -21044,7 +21049,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPRateLimitConfigReq"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "isRegex", "path", "rateLimitConfig" ],
+        "required" : [ "basicAuth", "clientConfig", "mode", "path", "rateLimitConfig" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPPathConfigResp" : {
@@ -21055,8 +21060,8 @@
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPClientConfigResp"
           },
-          "isRegex" : {
-            "type" : "boolean"
+          "mode" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HTTPPathMode"
           },
           "path" : {
             "type" : "string"
@@ -21065,7 +21070,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPRateLimitConfigResp"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "isRegex", "path", "rateLimitConfig" ],
+        "required" : [ "basicAuth", "clientConfig", "mode", "path", "rateLimitConfig" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPRateLimitConfigReq" : {
@@ -21164,20 +21169,29 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HttpSettingsResp" : {
         "properties" : {
+          "domainSuggestion" : {
+            "type" : "string"
+          },
           "domains" : {
             "items" : {
               "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.DomainResp"
             },
             "type" : "array"
           },
-          "enabled" : {
+          "exposePublicly" : {
             "type" : "boolean"
+          },
+          "internalEndpoints" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "domains", "enabled", "updateVer" ],
+        "required" : [ "domainSuggestion", "domains", "exposePublicly", "internalEndpoints", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.ListAppBaseResp" : {
@@ -21761,14 +21775,14 @@
             },
             "type" : "array"
           },
-          "enabled" : {
+          "exposePublicly" : {
             "type" : "boolean"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "domains", "enabled", "updateVer" ],
+        "required" : [ "domains", "exposePublicly", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.UpdateAppHttpSettingsResp" : {

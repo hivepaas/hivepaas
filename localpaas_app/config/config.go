@@ -46,6 +46,9 @@ type Config struct {
 	Env      string `toml:"env" env:"LP_ENV"`
 	Platform string `toml:"platform" env:"LP_PLATFORM"`
 
+	RootDomain string `toml:"root_domain" env:"LP_ROOT_DOMAIN"`
+	AppDomain  string `toml:"app_domain" env:"LP_APP_DOMAIN"`
+
 	Name    string  `toml:"name" env:"LP_APP_NAME" default:"LocalPaaS"`
 	Version int     `toml:"version" env:"LP_APP_VERSION"`
 	RunMode RunMode `toml:"run_mode" env:"LP_APP_RUN_MODE" default:"app"`

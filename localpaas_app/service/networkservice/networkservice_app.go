@@ -24,15 +24,15 @@ func (s *networkService) UpdateAppGlobalRoutingNetwork(
 	spec := &service.Spec
 	networks := make([]swarm.NetworkAttachmentConfig, 0, len(spec.TaskTemplate.Networks)+1)
 	for _, net := range spec.TaskTemplate.Networks {
-		if httpSettings.Enabled && (net.Target == GlobalRoutingNetwork || net.Target == globalNetworkID) {
+		if httpSettings.ExposePublicly && (net.Target == GlobalRoutingNetwork || net.Target == globalNetworkID) {
 			return nil // app is attached to the external net already
 		}
-		if !httpSettings.Enabled && (net.Target == GlobalRoutingNetwork || net.Target == globalNetworkID) {
+		if !httpSettings.ExposePublicly && (net.Target == GlobalRoutingNetwork || net.Target == globalNetworkID) {
 			continue
 		}
 		networks = append(networks, net)
 	}
-	if httpSettings.Enabled {
+	if httpSettings.ExposePublicly {
 		networks = append(networks, swarm.NetworkAttachmentConfig{
 			Target: globalNetworkID,
 		})

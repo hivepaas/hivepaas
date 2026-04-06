@@ -167,7 +167,7 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 	domainSettings.SSLCert.ID = dbSSL.ID
 
 	// Enables the HTTP settings
-	httpSettings.Enabled = true
+	httpSettings.ExposePublicly = true
 	data.HttpSettings.MustSetData(httpSettings)
 
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, data.HttpSettings)

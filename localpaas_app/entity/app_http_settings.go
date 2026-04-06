@@ -25,9 +25,9 @@ func (s *appHttpSettingsParser) New() SettingData {
 }
 
 type AppHttpSettings struct {
-	Enabled bool         `json:"enabled"`
-	Domains []*AppDomain `json:"domains,omitempty"`
-	Reset   bool         `json:"reset,omitempty"`
+	ExposePublicly bool         `json:"exposePublicly"`
+	Domains        []*AppDomain `json:"domains,omitempty"`
+	Reset          bool         `json:"reset,omitempty"`
 }
 
 type AppDomain struct {
@@ -77,7 +77,7 @@ type HTTPRateLimitConfig struct {
 
 type HTTPPathConfig struct {
 	Path            string               `json:"path"`
-	IsRegex         bool                 `json:"isRegex"`
+	Mode            base.HTTPPathMode    `json:"mode"`
 	BasicAuth       ObjectID             `json:"basicAuth,omitzero"`
 	ClientConfig    *HTTPClientConfig    `json:"clientConfig,omitempty"`
 	RateLimitConfig *HTTPRateLimitConfig `json:"rateLimitConfig,omitempty"`

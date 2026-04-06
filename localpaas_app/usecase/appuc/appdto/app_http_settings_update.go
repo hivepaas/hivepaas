@@ -5,6 +5,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
@@ -12,16 +13,16 @@ import (
 )
 
 type UpdateAppHttpSettingsReq struct {
-	ProjectID string       `json:"-"`
-	AppID     string       `json:"-"`
-	Enabled   bool         `json:"enabled"`
-	Domains   []*DomainReq `json:"domains"`
-	UpdateVer int          `json:"updateVer"`
+	ProjectID      string       `json:"-"`
+	AppID          string       `json:"-"`
+	ExposePublicly bool         `json:"exposePublicly"`
+	Domains        []*DomainReq `json:"domains"`
+	UpdateVer      int          `json:"updateVer"`
 }
 
 func (req *UpdateAppHttpSettingsReq) ToEntity() *entity.AppHttpSettings {
 	return &entity.AppHttpSettings{
-		Enabled: req.Enabled,
+		ExposePublicly: req.ExposePublicly,
 		Domains: gofn.MapSlice(req.Domains, func(r *DomainReq) *entity.AppDomain {
 			return r.ToEntity()
 		}),
@@ -156,7 +157,7 @@ func (r *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
 
 type HTTPPathConfigReq struct {
 	Path            string                  `json:"path"`
-	IsRegex         bool                    `json:"isRegex"`
+	Mode            base.HTTPPathMode       `json:"mode"`
 	BasicAuth       basedto.ObjectIDReq     `json:"basicAuth"`
 	ClientConfig    *HTTPClientConfigReq    `json:"clientConfig"`
 	RateLimitConfig *HTTPRateLimitConfigReq `json:"rateLimitConfig"`
@@ -168,7 +169,7 @@ func (r *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
 	}
 	return &entity.HTTPPathConfig{
 		Path:            r.Path,
-		IsRegex:         r.IsRegex,
+		Mode:            r.Mode,
 		BasicAuth:       entity.ObjectID{ID: r.BasicAuth.ID},
 		ClientConfig:    r.ClientConfig.ToEntity(),
 		RateLimitConfig: r.RateLimitConfig.ToEntity(),

@@ -3,8 +3,6 @@ package appuc
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
@@ -13,10 +11,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
-)
-
-const (
-	tokenLen = 24
 )
 
 func (uc *AppUC) UpdateAppToken(
@@ -72,7 +66,7 @@ func (uc *AppUC) loadAppDataForUpdateToken(
 func (uc *AppUC) preparePersistingAppTokenUpdate(
 	data *updateAppTokenData,
 ) {
-	data.App.Token = gofn.RandTokenAsHex(tokenLen)
+	data.App.ResetToken()
 	data.App.UpdateVer++
 	data.App.UpdatedAt = timeutil.NowUTC()
 }

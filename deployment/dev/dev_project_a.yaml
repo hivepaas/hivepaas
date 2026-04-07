@@ -15,16 +15,19 @@ services:
   backend:
     image: crccheck/hello-world:latest
     networks:
+      - localpaas_net
       - internal_net
 
   redis:
     image: crccheck/hello-world:latest
     networks:
+      - localpaas_net
       - internal_net
 
   db:
     image: crccheck/hello-world:latest
     networks:
+      - localpaas_net
       - internal_net
 
 networks:

@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  frontend:
+    image: crccheck/hello-world:latest
+    networks:
+      - localpaas_net
+      - internal_net
+    ports:
+      - target: 80 # Container port
+        published: 8000 # Host port
+        protocol: tcp
+        mode: host
+
+  backend:
+    image: crccheck/hello-world:latest
+    networks:
+      - localpaas_net
+      - internal_net
+
+  redis:
+    image: crccheck/hello-world:latest
+    networks:
+      - localpaas_net
+      - internal_net
+
+  db:
+    image: crccheck/hello-world:latest
+    networks:
+      - localpaas_net
+      - internal_net
+
+networks:
+  localpaas_net:
+    external: true
+  internal_net:
+    driver: overlay
+    attachable: true

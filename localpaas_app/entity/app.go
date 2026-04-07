@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/localpaas/localpaas/localpaas_app/base"
 )
 
@@ -12,6 +14,10 @@ var (
 	AppUpsertingUpdateCols   = []string{"name", "key", "project_id", "parent_id", "service_id",
 		"status", "token", "note", "update_ver", "updated_at", "deleted_at"}
 	AppDefaultExcludeColumns = []string{"note"}
+)
+
+const (
+	appTokenLen = 24
 )
 
 type App struct {
@@ -78,4 +84,8 @@ func (app *App) GetAutoImageName() string {
 		name = name[:base.ImageNameMaxLen]
 	}
 	return name
+}
+
+func (app *App) ResetToken() {
+	app.Token = gofn.RandTokenAsHex(appTokenLen)
 }

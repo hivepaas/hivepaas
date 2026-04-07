@@ -1,9 +1,9 @@
 -- +migrate Up
 CREATE TABLE IF NOT EXISTS system_statuses
 (
-    id                      SMALLINT PRIMARY KEY,
-    installation_complete   BOOL NOT NULL DEFAULT FALSE,
-    update_ver              INT4 NOT NULL DEFAULT 1,
+    id          SMALLINT PRIMARY KEY,
+    next_step   VARCHAR NOT NULL DEFAULT 'localpaas/init-data',
+    update_ver  INT4 NOT NULL DEFAULT 1,
 
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

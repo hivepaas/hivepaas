@@ -18,8 +18,11 @@ type ProjectService interface {
 	LoadProject(ctx context.Context, db database.IDB, projectID string, requireActive bool,
 		extraLoadOpts ...bunex.SelectQueryOption) (*entity.Project, error)
 
+	InitRootProject(ctx context.Context, db database.IDB) error
+
 	PersistProjectData(ctx context.Context, db database.IDB, data *PersistingProjectData) error
 	DeleteProject(ctx context.Context, project *entity.Project) error
+	SyncProject(ctx context.Context, db database.IDB, project *entity.Project) error
 
 	SaveProjectPhoto(ctx context.Context, project *entity.Project, data []byte, fileExt string) error
 }
@@ -29,6 +32,7 @@ func NewProjectService(
 	appRepo repository.AppRepo,
 	projectTagRepo repository.ProjectTagRepo,
 	settingRepo repository.SettingRepo,
+	userRepo repository.UserRepo,
 	permissionManager permission.Manager,
 	userService userservice.UserService,
 	appService appservice.AppService,
@@ -40,6 +44,7 @@ func NewProjectService(
 		appRepo:           appRepo,
 		projectTagRepo:    projectTagRepo,
 		settingRepo:       settingRepo,
+		userRepo:          userRepo,
 		permissionManager: permissionManager,
 		userService:       userService,
 		appService:        appService,
@@ -53,6 +58,7 @@ type projectService struct {
 	appRepo           repository.AppRepo
 	projectTagRepo    repository.ProjectTagRepo
 	settingRepo       repository.SettingRepo
+	userRepo          repository.UserRepo
 	permissionManager permission.Manager
 	userService       userservice.UserService
 	appService        appservice.AppService

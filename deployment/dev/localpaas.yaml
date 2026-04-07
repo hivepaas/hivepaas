@@ -101,6 +101,9 @@ services:
       - internal_net
     environment:
       LP_CONFIG_FILE: config/config.development.toml
+      LP_ADMIN_USERNAME: admin
+      LP_ADMIN_EMAIL: admin@domain.name
+      LP_ADMIN_PASSWORD: abc123
       VITE_API_URL: http://localhost:10000
     volumes:
       - ./localpaas:/var/lib/localpaas

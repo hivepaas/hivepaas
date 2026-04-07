@@ -46,18 +46,29 @@ func (uc *ProjectUC) CreateProject(
 	persistingData := &persistingProjectData{}
 	uc.preparePersistingProject(req, projectData, persistingData)
 
+	createdProject := persistingData.UpsertingProjects[0]
+	networkCreated := false
+
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		return uc.persistData(ctx, db, persistingData)
+		err = uc.persistData(ctx, db, persistingData)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		// Create default network for the project
+		_, err = uc.networkService.CreateProjectNetwork(ctx, createdProject)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		networkCreated = true
+
+		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	createdProject := persistingData.UpsertingProjects[0]
-
-	// Create default network for the project
-	_, err = uc.networkService.CreateProjectNetwork(ctx, createdProject)
-	if err != nil {
+		// If network created, now need to remove it
+		if networkCreated {
+			_ = uc.networkService.RemoveProjectNetwork(ctx, createdProject)
+		}
 		return nil, apperrors.Wrap(err)
 	}
 

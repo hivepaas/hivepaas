@@ -97,7 +97,7 @@ func (uc *AppUC) loadAppData(
 	}
 	data.Project = project
 
-	data.AppKey = project.Key + "__" + slugify.SlugifyEx(req.Name, nil, appKeyMaxLen)
+	data.AppKey = project.Key + "_" + slugify.SlugifyEx(req.Name, nil, appKeyMaxLen)
 
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByKey(ctx, db, "", data.AppKey, bunex.SelectColumns("id"))
@@ -127,9 +127,9 @@ func (uc *AppUC) preparePersistingApp(
 		ID:        gofn.Must(ulid.NewStringULID()),
 		ProjectID: project.ID,
 		Key:       data.AppKey,
-		Token:     gofn.RandTokenAsHex(tokenLen),
 		CreatedAt: timeNow,
 	}
+	app.ResetToken()
 
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)

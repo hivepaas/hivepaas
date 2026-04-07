@@ -118,17 +118,18 @@ export function NetworksFields() {
                                     className="max-w-[400px]"
                                 />
                             </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                className="w-[76px]"
-                                size="icon"
-                                onClick={() => {
-                                    remove(index);
-                                }}
-                            >
-                                <Trash2 className="size-4" />
-                            </Button>
+                            <div className="w-[76px]">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        remove(index);
+                                    }}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
                         </div>
                     ))}
                 </div>

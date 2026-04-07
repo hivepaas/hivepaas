@@ -128,7 +128,7 @@ export function PlacementConstraintsFields() {
                             >
                                 <div className="grid grid-cols-[1fr_120px_1fr] flex-1 gap-3">
                                     <div className="text-sm break-words">{field.name}</div>
-                                    <div className="text-sm font-mono text-center">{field.op}</div>
+                                    <div className="text-sm font-mono">{field.op}</div>
                                     <div className="text-sm break-words">{field.value}</div>
                                 </div>
                                 <div className="w-[76px] flex justify-start">

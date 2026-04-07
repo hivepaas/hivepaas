@@ -5,3 +5,4 @@ export * from "./use-app-container-settings.api";
 export * from "./use-app-deployment-settings.api";
 export * from "./use-app-network-settings.api";
 export * from "./use-app-service-settings.api";
+export * from "./use-app-resource-settings.api";

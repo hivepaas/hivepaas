@@ -132,10 +132,10 @@ export function EndpointPortConfigFields() {
                                 </SelectContent>
                             </Select>
                         </div>
+
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-[76px]"
                             onClick={() => {
                                 append({
                                     published: published.trim(),
@@ -175,17 +175,18 @@ export function EndpointPortConfigFields() {
                                 value={field.publishMode}
                                 disabled
                             />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="w-[76px]"
-                                onClick={() => {
-                                    remove(index);
-                                }}
-                            >
-                                <Trash2 className="size-4" />
-                            </Button>
+                            <div className="w-[76px]">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        remove(index);
+                                    }}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
                         </div>
                     ))}
                 </div>

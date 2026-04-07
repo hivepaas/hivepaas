@@ -32,8 +32,8 @@ export const AppConfigResourcesFormSchema = z.object({
     ulimits: z.array(UlimitFormSchema),
 
     capabilities: z.object({
-        capabilityAdd: z.array(z.string()),
-        capabilityDrop: z.array(z.string()),
+        capabilityAdd: z.string(),
+        capabilityDrop: z.string(),
         enableGPU: z.boolean(),
         oomScoreAdj: z.number().optional(),
         sysctls: z.array(SysctlFormSchema),
@@ -59,8 +59,8 @@ export const emptyAppConfigResourcesFormDefaults: AppConfigResourcesFormSchemaIn
     ulimits: [],
 
     capabilities: {
-        capabilityAdd: [],
-        capabilityDrop: [],
+        capabilityAdd: "",
+        capabilityDrop: "",
         enableGPU: false,
         oomScoreAdj: undefined,
         sysctls: [],

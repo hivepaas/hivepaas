@@ -54,8 +54,8 @@ function mapFormValuesToPayload(
             soft: item.soft,
         })),
         capabilities: {
-            capabilityAdd: values.capabilities.capabilityAdd,
-            capabilityDrop: values.capabilities.capabilityDrop,
+            capabilityAdd: values.capabilities.capabilityAdd ? values.capabilities.capabilityAdd.split(" ") : [],
+            capabilityDrop: values.capabilities.capabilityDrop ? values.capabilities.capabilityDrop.split(" ") : [],
             enableGPU: values.capabilities.enableGPU,
             oomScoreAdj: values.capabilities.oomScoreAdj,
             sysctls,

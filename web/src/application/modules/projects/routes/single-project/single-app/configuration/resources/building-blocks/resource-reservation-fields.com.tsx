@@ -43,6 +43,7 @@ export function ResourceReservationFields() {
                         cpusField.onChange(val);
                     }}
                     className="max-w-[100px]"
+                    stepper={0.25}
                     min={0}
                     decimalScale={2}
                     fixedDecimalScale={false}
@@ -63,7 +64,10 @@ export function ResourceReservationFields() {
                         memoryField.onChange(val);
                     }}
                     className="max-w-[100px]"
+                    stepper={128}
                     min={0}
+                    decimalScale={0}
+                    fixedDecimalScale={false}
                 />
             </InfoBlock>
 

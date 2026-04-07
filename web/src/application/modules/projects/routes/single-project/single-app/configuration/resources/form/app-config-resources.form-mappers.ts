@@ -23,8 +23,8 @@ export function mapAppResourceSettingsToFormInput(data: AppResourceSettings): Ap
             soft: item.soft,
         })),
         capabilities: {
-            capabilityAdd: data.capabilities?.capabilityAdd ?? [],
-            capabilityDrop: data.capabilities?.capabilityDrop ?? [],
+            capabilityAdd: data.capabilities?.capabilityAdd ? data.capabilities.capabilityAdd.join(" ") : "",
+            capabilityDrop: data.capabilities?.capabilityDrop ? data.capabilities.capabilityDrop.join(" ") : "",
             enableGPU: data.capabilities?.enableGPU ?? false,
             oomScoreAdj: data.capabilities?.oomScoreAdj,
             sysctls: Object.entries(data.capabilities?.sysctls ?? {}).map(([name, value]) => ({ name, value })),

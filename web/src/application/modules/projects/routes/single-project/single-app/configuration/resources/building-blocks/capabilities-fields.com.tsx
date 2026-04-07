@@ -6,12 +6,12 @@ import { InputNumber } from "@components/ui/input-number";
 import { Plus, Trash2 } from "lucide-react";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, InputNumberWithAddon, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
 export function CapabilitiesFields() {
-    const { control, register } = useFormContext<
+    const { control } = useFormContext<
         AppConfigResourcesFormSchemaInput,
         unknown,
         AppConfigResourcesFormSchemaOutput
@@ -21,7 +21,6 @@ export function CapabilitiesFields() {
     const { field: capabilityDropField } = useController({ control, name: "capabilities.capabilityDrop" });
     const { field: enableGPUField } = useController({ control, name: "capabilities.enableGPU" });
     const { field: oomScoreAdjField } = useController({ control, name: "capabilities.oomScoreAdj" });
-    const { field: sysctlsField } = useController({ control, name: "capabilities.sysctls" });
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -42,7 +41,10 @@ export function CapabilitiesFields() {
                 }
             >
                 <Input
-                    {...register("capabilities.capabilityAdd")}
+                    value={capabilityAddField.value}
+                    onChange={e => {
+                        capabilityAddField.onChange(e.target.value);
+                    }}
                     placeholder="SYS_ADMIN ANOTHER"
                     className="max-w-[500px]"
                 />
@@ -57,7 +59,10 @@ export function CapabilitiesFields() {
                 }
             >
                 <Input
-                    {...register("capabilities.capabilityDrop")}
+                    value={capabilityDropField.value}
+                    onChange={e => {
+                        capabilityDropField.onChange(e.target.value);
+                    }}
                     placeholder="AUDIT_WRITE ANOTHER"
                     className="max-w-[500px]"
                 />
@@ -112,22 +117,24 @@ export function CapabilitiesFields() {
             >
                 <div className="flex flex-col gap-3 max-w-[590px]">
                     <div className="flex gap-3 items-center">
-                        <InputWithAddOn
-                            addonLeft="Name"
-                            value={newName}
-                            onChange={e => {
-                                setNewName(e.target.value);
-                            }}
-                            placeholder="net.core.somaxconn"
-                        />
-                        <InputWithAddOn
-                            addonLeft="Value"
-                            value={newValue}
-                            onChange={e => {
-                                setNewValue(e.target.value);
-                            }}
-                            placeholder="1024"
-                        />
+                        <div className="grid grid-cols-2 flex-1 gap-3">
+                            <InputWithAddOn
+                                addonLeft="Name"
+                                value={newName}
+                                onChange={e => {
+                                    setNewName(e.target.value);
+                                }}
+                                placeholder="net.core.somaxconn"
+                            />
+                            <InputNumberWithAddon
+                                addonLeft="Value"
+                                value={Number(newValue)}
+                                onChange={e => {
+                                    setNewValue(e.target.value);
+                                }}
+                                placeholder="1024"
+                            />
+                        </div>
                         <Button
                             type="button"
                             variant="outline"
@@ -159,16 +166,18 @@ export function CapabilitiesFields() {
                                         disabled
                                     />
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        remove(index);
-                                    }}
-                                >
-                                    <Trash2 className="size-4" />
-                                </Button>
+                                <div className="w-[76px]">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            remove(index);
+                                        }}
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </div>

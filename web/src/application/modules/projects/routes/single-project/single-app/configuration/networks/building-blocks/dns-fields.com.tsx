@@ -72,17 +72,18 @@ function DNSListFields({
                                 value={field.value}
                                 disabled
                             />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="w-[76px]"
-                                onClick={() => {
-                                    remove(index);
-                                }}
-                            >
-                                <Trash2 className="size-4" />
-                            </Button>
+                            <div className="w-[76px]">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        remove(index);
+                                    }}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
                         </div>
                     ))}
                 </div>

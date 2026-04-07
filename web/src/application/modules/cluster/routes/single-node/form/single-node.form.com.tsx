@@ -209,7 +209,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                                     onChange={e => {
                                         setNewLabelKey(e.target.value);
                                     }}
-                                // className="bg-white border-zinc-200"
+                                    // className="bg-white border-zinc-200"
                                 />
                                 <InputWithAddOn
                                     addonLeft="Value"
@@ -217,7 +217,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                                     onChange={e => {
                                         setNewLabelValue(e.target.value);
                                     }}
-                                // className="bg-white border-zinc-200"
+                                    // className="bg-white border-zinc-200"
                                 />
                                 <Button
                                     type="button"
@@ -226,7 +226,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                                     disabled={newLabelKey === "" || newLabelValue === ""}
                                     className=" border-zinc-20 h-9 px-4"
                                 >
-                                    <Plus className="size-4 mr-2" /> Add
+                                    <Plus className="size-4" /> Add
                                 </Button>
                             </div>
 
@@ -240,8 +240,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                                             <div className="text-sm break-words">{field.key}</div>
                                             <div className="text-sm break-words">{field.value}</div>
                                         </div>
-                                        <div className="w-[84px]">
-
+                                        <div className="w-[76px]">
                                             <Button
                                                 type="button"
                                                 variant="ghost"

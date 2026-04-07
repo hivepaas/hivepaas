@@ -32,9 +32,10 @@ export function ResourceLimitFields() {
                         cpusField.onChange(val);
                     }}
                     className="max-w-[100px]"
-                    min={0}
                     decimalScale={2}
                     fixedDecimalScale={false}
+                    stepper={0.25}
+                    min={0}
                 />
             </InfoBlock>
 
@@ -51,8 +52,9 @@ export function ResourceLimitFields() {
                     onValueChange={val => {
                         memoryField.onChange(val);
                     }}
-                    className="max-w-[100px]"
+                    stepper={128}
                     min={0}
+                    className="max-w-[100px]"
                 />
             </InfoBlock>
 

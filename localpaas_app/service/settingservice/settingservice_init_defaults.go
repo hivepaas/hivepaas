@@ -68,5 +68,11 @@ func (s *settingService) InitDefaults(
 		}
 	}
 
+	// Default self-signed SSL cert
+	err = s.initDefaultSSLSelfSigned(ctx, db, timeNow)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	return nil
 }

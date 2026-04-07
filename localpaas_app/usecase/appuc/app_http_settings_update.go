@@ -139,7 +139,7 @@ func (uc *AppUC) applyAppHttpSettings(
 			sslSettings[s.ID] = s
 		}
 	}
-	err = uc.settingService.PersistSSLConfigFiles(false, gofn.MapValues(sslSettings)...)
+	err = uc.settingService.PersistSSLCertFiles(false, gofn.MapValues(sslSettings)...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

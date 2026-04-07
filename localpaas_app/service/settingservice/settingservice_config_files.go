@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
@@ -13,11 +15,10 @@ import (
 )
 
 const (
-	certDirFileMode      = 0o755
-	basicAuthDirFileMode = 0o755
+	certDirFileMode = 0o755
 )
 
-func (s *settingService) PersistSSLConfigFiles(
+func (s *settingService) PersistSSLCertFiles(
 	forceRecreate bool,
 	settings ...*entity.Setting,
 ) error {
@@ -31,8 +32,11 @@ func (s *settingService) PersistSSLConfigFiles(
 	}
 
 	for _, setting := range settings {
-		certFile := setting.ID + ".crt"
-		keyFile := setting.ID + ".key"
+		ssl := setting.MustAsSSLCert()
+		baseFilename := gofn.Coalesce(ssl.BaseFilename, setting.ID)
+
+		certFile := baseFilename + ".crt"
+		keyFile := baseFilename + ".key"
 		certFileExists, _ := fileutil.FileExists(filepath.Join(certDir, certFile), true)
 		keyFileExists, _ := fileutil.FileExists(filepath.Join(certDir, keyFile), true)
 
@@ -40,7 +44,6 @@ func (s *settingService) PersistSSLConfigFiles(
 			continue
 		}
 
-		ssl := setting.MustAsSSLCert()
 		certBytes := reflectutil.UnsafeStrToBytes(ssl.Certificate)
 		keyBytes := reflectutil.UnsafeStrToBytes(ssl.PrivateKey.MustGetPlain())
 
@@ -53,7 +56,7 @@ func (s *settingService) PersistSSLConfigFiles(
 	return nil
 }
 
-func (s *settingService) DeleteSSLConfigFiles(
+func (s *settingService) DeleteSSLCertFiles(
 	settings ...*entity.Setting,
 ) error {
 	if len(settings) == 0 {
@@ -61,8 +64,11 @@ func (s *settingService) DeleteSSLConfigFiles(
 	}
 	certDir := config.Current.DataPathSslCerts()
 	for _, setting := range settings {
-		certFile := setting.ID + ".crt"
-		keyFile := setting.ID + ".key"
+		ssl := setting.MustAsSSLCert()
+		baseFilename := gofn.Coalesce(ssl.BaseFilename, setting.ID)
+
+		certFile := baseFilename + ".crt"
+		keyFile := baseFilename + ".key"
 
 		err := os.Remove(filepath.Join(certDir, certFile))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {

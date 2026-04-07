@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	keyMaxLen      = 10000
-	providerMaxLen = 100
+	keyMaxLen = 50000
 )
 
 type CreateSSLCertReq struct {
@@ -25,11 +24,11 @@ type CreateSSLCertReq struct {
 
 type SSLCertBaseReq struct {
 	Name        string           `json:"name"`
+	CertType    base.SSLCertType `json:"certType"`
 	Domain      string           `json:"domain"`
 	Certificate string           `json:"certificate"`
 	PrivateKey  string           `json:"privateKey"`
-	KeySize     int              `json:"keySize"`
-	Provider    base.SSLProvider `json:"provider"`
+	KeyType     base.SSLKeyType  `json:"keyType"`
 	Email       string           `json:"email"`
 	AutoRenew   bool             `json:"autoRenew"`
 	ExpireAt    time.Time        `json:"expireAt"`
@@ -38,11 +37,11 @@ type SSLCertBaseReq struct {
 
 func (req *SSLCertBaseReq) ToEntity() *entity.SSLCert {
 	return &entity.SSLCert{
+		CertType:    req.CertType,
 		Domain:      req.Domain,
 		Certificate: req.Certificate,
 		PrivateKey:  entity.NewEncryptedField(req.PrivateKey),
-		KeySize:     req.KeySize,
-		Provider:    req.Provider,
+		KeyType:     req.KeyType,
 		Email:       req.Email,
 		AutoRenew:   req.AutoRenew,
 		ExpireAt:    req.ExpireAt,
@@ -60,9 +59,9 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStrIn(&req.CertType, true, base.AllSSLCertTypes, field+"certType")...)
 	res = append(res, basedto.ValidateStr(&req.Certificate, true, 1, keyMaxLen, field+"certificate")...)
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, true, 1, keyMaxLen, field+"privateKey")...)
-	res = append(res, basedto.ValidateStr(&req.Provider, false, 1, providerMaxLen, field+"provider")...)
 	res = append(res, basedto.ValidateEmail(&req.Email, false, field+"email")...)
 	return res
 }

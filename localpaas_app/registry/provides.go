@@ -35,6 +35,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
@@ -184,6 +185,7 @@ var Provides = []any{
 	taskservice.NewTaskService,
 	dbservice.NewDBService,
 	fileservice.NewFileService,
+	sslservice.NewSSLService,
 
 	// Repo: User
 	repository.NewUserRepo,

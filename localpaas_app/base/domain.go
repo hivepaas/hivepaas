@@ -1,12 +1,13 @@
 package base
 
-type SSLProvider string
+type SSLCertType string
 
 const (
-	SSLProviderLetsEncrypt SSLProvider = "letsencrypt"
-	SSLProviderCustom      SSLProvider = "custom"
+	SSLCertTypeLetsEncrypt SSLCertType = "letsencrypt"
+	SSLCertTypeCustom      SSLCertType = "custom"
+	SSLCertTypeSelfSigned  SSLCertType = "self-signed"
 )
 
 var (
-	AllSSLProviders = []SSLProvider{SSLProviderLetsEncrypt, SSLProviderCustom}
+	AllSSLCertTypes = []SSLCertType{SSLCertTypeLetsEncrypt, SSLCertTypeCustom, SSLCertTypeSelfSigned}
 )

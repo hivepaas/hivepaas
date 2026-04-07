@@ -27,7 +27,7 @@ func (uc *AppUC) ObtainDomainSSL(
 	req *appdto.ObtainDomainSSLReq,
 ) (*appdto.ObtainDomainSSLResp, error) {
 	email := gofn.Coalesce(req.Email, config.Current.SSL.LeUserEmail)
-	leClient, err := letsencrypt.NewClient(email, req.KeySize, config.Current.DataPathSslLetsEncrypt())
+	leClient, err := letsencrypt.NewClient(email, req.KeyType, config.Current.DataPathSslLetsEncrypt())
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -129,7 +129,7 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 		Type:      base.SettingTypeSSLCert,
 		Status:    base.SettingStatusActive,
 		Name:      req.Domain,
-		Kind:      string(base.SSLProviderLetsEncrypt),
+		Kind:      string(base.SSLCertTypeLetsEncrypt),
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
@@ -139,13 +139,13 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 		Domain:      req.Domain,
 		Certificate: string(data.ObtainedCerts.Certificate),
 		PrivateKey:  entity.NewEncryptedField(string(data.ObtainedCerts.PrivateKey)),
-		KeySize:     req.KeySize,
-		Provider:    base.SSLProviderLetsEncrypt,
+		KeyType:     req.KeyType,
+		CertType:    base.SSLCertTypeLetsEncrypt,
 		Email:       data.Email,
 	}
 	if data.RenewalInfo != nil {
 		ssl.RenewableFrom = data.RenewalInfo.SuggestedWindow.Start.UTC()
-		if ssl.Provider == base.SSLProviderLetsEncrypt && !ssl.RenewableFrom.IsZero() {
+		if ssl.CertType == base.SSLCertTypeLetsEncrypt && !ssl.RenewableFrom.IsZero() {
 			ssl.AutoRenew = true
 			// TODO: need a better method to have expiration date of SSLs from Let's encrypt.
 			ssl.ExpireAt = ssl.RenewableFrom.Add(base.LetsEncryptExpirationFromFirstRenewableDate)
@@ -195,7 +195,7 @@ func (uc *AppUC) applyDomainSSL(
 			sslSettings[s.ID] = s
 		}
 	}
-	err = uc.settingService.PersistSSLConfigFiles(false, gofn.MapValues(sslSettings)...)
+	err = uc.settingService.PersistSSLCertFiles(false, gofn.MapValues(sslSettings)...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

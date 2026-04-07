@@ -24,14 +24,14 @@ func (e *Executor) sslGetLeClient(
 	defer data.Mu.Unlock()
 
 	email := gofn.Coalesce(ssl.Email, config.Current.SSL.LeUserEmail)
-	keySize := gofn.Coalesce(ssl.KeySize, base.SSLKeySizeDefault)
-	mapKey := fmt.Sprintf("email:%v:keysize:%v", email, keySize)
+	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
+	mapKey := fmt.Sprintf("email:%v:keysize:%v", email, keyType)
 
 	if client := data.LeClients[mapKey]; client != nil {
 		return client, nil
 	}
 
-	client, err := letsencrypt.NewClient(email, keySize, config.Current.DataPathSslLetsEncrypt())
+	client, err := letsencrypt.NewClient(email, keyType, config.Current.DataPathSslLetsEncrypt())
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

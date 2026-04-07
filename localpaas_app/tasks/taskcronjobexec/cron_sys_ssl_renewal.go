@@ -188,20 +188,20 @@ func (e *Executor) sslRenew(
 		if err != nil {
 			_ = data.LogStore.Add(ctx, applog.NewWarnFrame(fmt.Sprintf(
 				"Obtaining certificate from %v for SSL %v failed with error: %v",
-				ssl.Provider, setting.ID, err.Error()), applog.TsNow))
+				ssl.CertType, setting.ID, err.Error()), applog.TsNow))
 		} else {
 			duration := timeutil.NowUTC().Sub(startTime)
 			_ = data.LogStore.Add(ctx, applog.NewOutFrame(fmt.Sprintf(
 				"Obtaining certificate from %v for SSL %v finished in %v",
-				ssl.Provider, setting.ID, duration), applog.TsNow))
+				ssl.CertType, setting.ID, duration), applog.TsNow))
 		}
 	}()
 
-	if ssl.Provider == base.SSLProviderLetsEncrypt {
+	if ssl.CertType == base.SSLCertTypeLetsEncrypt {
 		return e.sslRenewByLetsEncrypt(ctx, ssl, data)
 	}
 
-	return apperrors.NewUnsupported(fmt.Sprintf("SSL provider '%v'", ssl.Provider))
+	return apperrors.NewUnsupported(fmt.Sprintf("SSL type '%v'", ssl.CertType))
 }
 
 func (e *Executor) sslShouldNotifyOfExpiration(
@@ -265,7 +265,7 @@ func (e *Executor) sslSaveUpdatedSettings(
 		return apperrors.Wrap(err)
 	}
 
-	err = e.settingService.PersistSSLConfigFiles(true, persistingSettings...)
+	err = e.settingService.PersistSSLCertFiles(true, persistingSettings...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

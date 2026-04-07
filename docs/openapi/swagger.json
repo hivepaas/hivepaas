@@ -20542,10 +20542,15 @@
         "type" : "string",
         "x-enum-varnames" : [ "RepoTypeGit" ]
       },
-      "github_com_localpaas_localpaas_localpaas_app_base.SSLProvider" : {
-        "enum" : [ "letsencrypt", "custom" ],
+      "github_com_localpaas_localpaas_localpaas_app_base.SSLCertType" : {
+        "enum" : [ "letsencrypt", "custom", "self-signed" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SSLProviderLetsEncrypt", "SSLProviderCustom" ]
+        "x-enum-varnames" : [ "SSLCertTypeLetsEncrypt", "SSLCertTypeCustom", "SSLCertTypeSelfSigned" ]
+      },
+      "github_com_localpaas_localpaas_localpaas_app_base.SSLKeyType" : {
+        "enum" : [ "ec-p256", "ec-p384", "ec-p521", "rsa-2048", "rsa-3072", "rsa-4096", "ec-p256" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "SSLKeyTypeECP256", "SSLKeyTypeECP384", "SSLKeyTypeECP521", "SSLKeyTypeRSA2048", "SSLKeyTypeRSA3072", "SSLKeyTypeRSA4096", "SSLKeyTypeDefault" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingStatus" : {
         "enum" : [ "active", "pending", "disabled", "expired" ],
@@ -21005,7 +21010,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]
@@ -22281,11 +22286,11 @@
           "email" : {
             "type" : "string"
           },
-          "keySize" : {
-            "type" : "integer"
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLKeyType"
           }
         },
-        "required" : [ "domain", "email", "keySize" ],
+        "required" : [ "domain", "email", "keyType" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.ObtainDomainSSLResp" : {
@@ -28561,6 +28566,9 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
+          "certType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLCertType"
+          },
           "certificate" : {
             "type" : "string"
           },
@@ -28576,8 +28584,8 @@
           "expireAt" : {
             "type" : "string"
           },
-          "keySize" : {
-            "type" : "integer"
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLKeyType"
           },
           "name" : {
             "type" : "string"
@@ -28587,12 +28595,9 @@
           },
           "privateKey" : {
             "type" : "string"
-          },
-          "provider" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
           }
         },
-        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyFrom", "privateKey", "provider" ],
+        "required" : [ "autoRenew", "availableInProjects", "certType", "certificate", "default", "domain", "email", "expireAt", "keyType", "name", "notifyFrom", "privateKey" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.CreateSSLCertResp" : {
@@ -28651,6 +28656,9 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
+          "certType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLCertType"
+          },
           "certificate" : {
             "type" : "string"
           },
@@ -28675,8 +28683,8 @@
           "inherited" : {
             "type" : "boolean"
           },
-          "keySize" : {
-            "type" : "integer"
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLKeyType"
           },
           "kind" : {
             "type" : "string"
@@ -28692,9 +28700,6 @@
           },
           "privateKey" : {
             "type" : "string"
-          },
-          "provider" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
           },
           "renewableFrom" : {
             "type" : "string"
@@ -28715,7 +28720,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "autoRenew", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keySize", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "autoRenew", "certType", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keyType", "name", "notification", "notifyFrom", "privateKey", "renewableFrom", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaReq" : {
@@ -28756,6 +28761,9 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
+          "certType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLCertType"
+          },
           "certificate" : {
             "type" : "string"
           },
@@ -28771,8 +28779,8 @@
           "expireAt" : {
             "type" : "string"
           },
-          "keySize" : {
-            "type" : "integer"
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLKeyType"
           },
           "name" : {
             "type" : "string"
@@ -28783,14 +28791,11 @@
           "privateKey" : {
             "type" : "string"
           },
-          "provider" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SSLProvider"
-          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "autoRenew", "availableInProjects", "certificate", "default", "domain", "email", "expireAt", "keySize", "name", "notifyFrom", "privateKey", "provider", "updateVer" ],
+        "required" : [ "autoRenew", "availableInProjects", "certType", "certificate", "default", "domain", "email", "expireAt", "keyType", "name", "notifyFrom", "privateKey", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertResp" : {

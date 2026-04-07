@@ -2,14 +2,26 @@ package base
 
 import "time"
 
+type SSLKeyType string
+
 const (
-	SSLKeySizeDefault = 2048
+	SSLKeyTypeECP256  SSLKeyType = "ec-p256"
+	SSLKeyTypeECP384  SSLKeyType = "ec-p384"
+	SSLKeyTypeECP521  SSLKeyType = "ec-p521"
+	SSLKeyTypeRSA2048 SSLKeyType = "rsa-2048"
+	SSLKeyTypeRSA3072 SSLKeyType = "rsa-3072"
+	SSLKeyTypeRSA4096 SSLKeyType = "rsa-4096"
+)
+
+var (
+	AllSSLKeyTypes = []SSLKeyType{SSLKeyTypeECP256, SSLKeyTypeECP384, SSLKeyTypeECP521,
+		SSLKeyTypeRSA2048, SSLKeyTypeRSA3072, SSLKeyTypeRSA4096}
+)
+
+const (
+	SSLKeyTypeDefault = SSLKeyTypeECP256
 
 	DomainNameMaxLen = 100
 
 	LetsEncryptExpirationFromFirstRenewableDate = time.Hour * 24 * 30 // 30 days
-)
-
-var (
-	SSLKeySizesAllowed = []int{2048, 3072, 4096}
 )

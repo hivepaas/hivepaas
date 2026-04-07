@@ -32,7 +32,7 @@ func (uc *SSLCertUC) CreateSSLCert(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			pData.Setting.Kind = string(req.Provider)
+			pData.Setting.Kind = string(req.CertType)
 			err := pData.Setting.SetData(req.ToEntity())
 			if err != nil {
 				return apperrors.Wrap(err)

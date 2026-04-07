@@ -70,7 +70,7 @@ func (e *Executor) sslBuildRenewalNotificationMsgData(
 	msgData := &notificationservice.BaseMsgDataSSLRenewalNotification{
 		Succeeded: item.RenewalError == nil,
 		SSLName:   item.Setting.Name,
-		SSLType:   string(ssl.Provider),
+		SSLType:   string(ssl.CertType),
 		Domain:    ssl.Domain,
 		CreatedAt: item.Setting.CreatedAt,
 		ExpireAt:  ssl.ExpireAt,

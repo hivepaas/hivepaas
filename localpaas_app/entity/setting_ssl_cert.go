@@ -23,12 +23,13 @@ func (s *sslCertParser) New() SettingData {
 }
 
 type SSLCert struct {
+	CertType      base.SSLCertType       `json:"certType"`
 	Domain        string                 `json:"domain"`
 	Certificate   string                 `json:"certificate"`
 	PrivateKey    EncryptedField         `json:"privateKey"`
-	KeySize       int                    `json:"keySize"`
-	Provider      base.SSLProvider       `json:"provider,omitempty"`
+	KeyType       base.SSLKeyType        `json:"keyType"`
 	Email         string                 `json:"email"`
+	BaseFilename  string                 `json:"baseFilename,omitempty"`
 	AutoRenew     bool                   `json:"autoRenew,omitempty"`
 	RenewableFrom time.Time              `json:"renewableFrom,omitzero"`
 	ExpireAt      time.Time              `json:"expireAt,omitzero"`
@@ -54,7 +55,7 @@ func (s *SSLCert) MustDecrypt() *SSLCert {
 }
 
 func (s *SSLCert) IsRenewable() bool {
-	return s.Provider == base.SSLProviderLetsEncrypt
+	return s.CertType == base.SSLCertTypeLetsEncrypt || s.CertType == base.SSLCertTypeSelfSigned
 }
 
 func (s *SSLCert) Migrate(setting *Setting) (hasChange bool, err error) {

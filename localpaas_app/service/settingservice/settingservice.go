@@ -9,6 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
+	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/services/docker"
@@ -17,8 +18,8 @@ import (
 type SettingService interface {
 	PersistSettingData(ctx context.Context, db database.IDB, data *PersistingSettingData) error
 
-	PersistSSLConfigFiles(forceRecreate bool, settings ...*entity.Setting) error
-	DeleteSSLConfigFiles(settings ...*entity.Setting) error
+	PersistSSLCertFiles(forceRecreate bool, settings ...*entity.Setting) error
+	DeleteSSLCertFiles(settings ...*entity.Setting) error
 
 	LoadReferenceObjects(ctx context.Context, db database.IDB, scope *base.SettingScope, requireActive bool,
 		errorIfUnavail bool, inSettings ...*entity.Setting) (*entity.RefObjects, error)
@@ -42,6 +43,7 @@ func NewSettingService(
 	healthcheckSettingsRepo cacherepository.HealthcheckSettingsRepo,
 	userService userservice.UserService,
 	taskService taskservice.TaskService,
+	sslService sslservice.SSLService,
 	permissionManager permission.Manager,
 	dockerManager docker.Manager,
 ) SettingService {
@@ -52,6 +54,7 @@ func NewSettingService(
 		healthcheckSettingsRepo: healthcheckSettingsRepo,
 		userService:             userService,
 		taskService:             taskService,
+		sslService:              sslService,
 		permissionManager:       permissionManager,
 		dockerManager:           dockerManager,
 	}
@@ -64,6 +67,7 @@ type settingService struct {
 	healthcheckSettingsRepo cacherepository.HealthcheckSettingsRepo
 	userService             userservice.UserService
 	taskService             taskservice.TaskService
+	sslService              sslservice.SSLService
 	permissionManager       permission.Manager
 	dockerManager           docker.Manager
 }

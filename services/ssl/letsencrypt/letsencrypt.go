@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"fmt"
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
@@ -14,6 +15,7 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 )
 
 type Client struct {
@@ -39,7 +41,7 @@ func (u *User) GetPrivateKey() crypto.PrivateKey {
 	return u.PrivateKey
 }
 
-func NewClient(email string, keySize int, http01NginxRoot string) (client *Client, err error) {
+func NewClient(email string, keyType base.SSLKeyType, http01NginxRoot string) (client *Client, err error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, apperrors.New(err).WithMsgLog("failed to generate private key for user")
@@ -51,14 +53,19 @@ func NewClient(email string, keySize int, http01NginxRoot string) (client *Clien
 	}
 	cfg := lego.NewConfig(&user)
 
-	//nolint Default is RSA2048
-	switch keySize {
-	case 2048:
+	switch keyType { //nolint:exhaustive
+	case base.SSLKeyTypeECP256:
+		cfg.Certificate.KeyType = certcrypto.EC256
+	case base.SSLKeyTypeECP384:
+		cfg.Certificate.KeyType = certcrypto.EC384
+	case base.SSLKeyTypeRSA2048:
 		cfg.Certificate.KeyType = certcrypto.RSA2048
-	case 3072:
+	case base.SSLKeyTypeRSA3072:
 		cfg.Certificate.KeyType = certcrypto.RSA3072
-	case 4096:
+	case base.SSLKeyTypeRSA4096:
 		cfg.Certificate.KeyType = certcrypto.RSA4096
+	default:
+		return nil, apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", keyType))
 	}
 
 	c, err := lego.NewClient(cfg)

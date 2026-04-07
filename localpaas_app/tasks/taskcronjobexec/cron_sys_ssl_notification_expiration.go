@@ -68,7 +68,7 @@ func (e *Executor) sslBuildExpiringNotificationMsgData(
 	ssl := item.Setting.MustAsSSLCert()
 	msgData := &notificationservice.BaseMsgDataSSLExpiringNotification{
 		SSLName:   item.Setting.Name,
-		SSLType:   string(ssl.Provider),
+		SSLType:   string(ssl.CertType),
 		Domain:    ssl.Domain,
 		CreatedAt: item.Setting.CreatedAt,
 		ExpireAt:  ssl.ExpireAt,

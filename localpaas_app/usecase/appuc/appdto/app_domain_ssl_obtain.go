@@ -12,11 +12,11 @@ import (
 )
 
 type ObtainDomainSSLReq struct {
-	ProjectID string `json:"-"`
-	AppID     string `json:"-"`
-	Domain    string `json:"domain"`
-	Email     string `json:"email"`
-	KeySize   int    `json:"keySize"`
+	ProjectID string          `json:"-"`
+	AppID     string          `json:"-"`
+	Domain    string          `json:"domain"`
+	Email     string          `json:"email"`
+	KeyType   base.SSLKeyType `json:"keyType"`
 }
 
 func NewObtainDomainSSLReq() *ObtainDomainSSLReq {
@@ -25,7 +25,7 @@ func NewObtainDomainSSLReq() *ObtainDomainSSLReq {
 
 func (req *ObtainDomainSSLReq) ModifyRequest() error {
 	req.Domain = strings.TrimSpace(strings.ToLower(req.Domain))
-	req.KeySize = gofn.Coalesce(req.KeySize, base.SSLKeySizeDefault)
+	req.KeyType = gofn.Coalesce(req.KeyType, base.SSLKeyTypeDefault)
 	return nil
 }
 
@@ -37,8 +37,8 @@ func (req *ObtainDomainSSLReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStr(&req.Domain, true, 1,
 		base.DomainNameMaxLen, "domain")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)
-	validators = append(validators, basedto.ValidateNumberIn(&req.KeySize, false,
-		base.SSLKeySizesAllowed, "keySize")...)
+	validators = append(validators, basedto.ValidateStrIn(&req.KeyType, false,
+		base.AllSSLKeyTypes, "keyType")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

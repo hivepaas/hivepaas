@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	rootProjectName = "localpaas"
+	rootProjectName = "LocalPaaS"
 	rootProjectKey  = "localpaas"
 )
 
@@ -35,7 +35,6 @@ func (s *projectService) InitRootProject(
 			Name:      rootProjectName,
 			Key:       rootProjectKey,
 			Status:    base.ProjectStatusActive,
-			OwnerID:   "",
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}

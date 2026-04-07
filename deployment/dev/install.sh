@@ -26,9 +26,9 @@ curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/
 # Gen self-signed SSL certs
 if [ ! -f "$LOCALPAAS_SSL_CERTS/self-signed.key" ]; then
   echo "File '$LOCALPAAS_SSL_CERTS/self-signed.key' does not exist. Generate new file..."
-  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  openssl req -x509 -days 365 -nodes -sha256 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
     -keyout $LOCALPAAS_SSL_CERTS/self-signed.key -out $LOCALPAAS_SSL_CERTS/self-signed.crt \
-    -subj "/CN=*.swarm.localhost"
+    -subj "/CN=*.dev.localpaas.com"
 fi
 
 # Create overlay network for traefik to discover services

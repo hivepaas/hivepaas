@@ -38,11 +38,11 @@ type GetSSLCertResp struct {
 
 type SSLCertResp struct {
 	*settings.BaseSettingResp
+	CertType      base.SSLCertType                   `json:"certType"`
 	Domain        string                             `json:"domain"`
 	Certificate   string                             `json:"certificate"`
 	PrivateKey    string                             `json:"privateKey"`
-	KeySize       int                                `json:"keySize"`
-	Provider      base.SSLProvider                   `json:"provider"`
+	KeyType       base.SSLKeyType                    `json:"keyType"`
 	Email         string                             `json:"email"`
 	AutoRenew     bool                               `json:"autoRenew"`
 	RenewableFrom *time.Time                         `json:"renewableFrom" copy:",nilonzero"`

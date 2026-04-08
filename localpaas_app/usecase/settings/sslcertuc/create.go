@@ -37,6 +37,18 @@ func (uc *UC) CreateSSLCert(
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
+
+			_, err = uc.sslService.ObtainCert(ctx, pData.Setting, false)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+
+			// Save SSL cert/key files in a directory for using later
+			err = uc.sslService.WriteCertFiles(true, pData.Setting)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+
 			return nil
 		},
 	})

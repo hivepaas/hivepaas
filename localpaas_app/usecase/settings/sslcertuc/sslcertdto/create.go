@@ -5,11 +5,14 @@ import (
 	"time"
 
 	vld "github.com/tiendc/go-validator"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/netutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
@@ -24,36 +27,49 @@ type CreateSSLCertReq struct {
 }
 
 type SSLCertBaseReq struct {
-	Name        string            `json:"name"`
-	CertType    base.SSLCertType  `json:"certType"`
-	Domain      string            `json:"domain"`
-	Certificate string            `json:"certificate"`
-	PrivateKey  string            `json:"privateKey"`
-	KeyType     base.SSLKeyType   `json:"keyType"`
-	ValidPeriod timeutil.Duration `json:"validPeriod"`
-	Email       string            `json:"email"`
-	AutoRenew   bool              `json:"autoRenew"`
-	ExpireAt    time.Time         `json:"expireAt"`
-	NotifyFrom  time.Time         `json:"notifyFrom"`
+	Name         string                            `json:"name"`
+	CertType     base.SSLCertType                  `json:"certType"`
+	Domain       string                            `json:"domain"`
+	Certificate  string                            `json:"certificate"`
+	PrivateKey   string                            `json:"privateKey"`
+	KeyType      base.SSLKeyType                   `json:"keyType"`
+	ValidPeriod  timeutil.Duration                 `json:"validPeriod"`
+	Email        string                            `json:"email"`
+	AutoRenew    bool                              `json:"autoRenew"`
+	ExpireAt     time.Time                         `json:"expireAt"`
+	NotifyFrom   time.Time                         `json:"notifyFrom"`
+	Notification *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SSLCertBaseReq) ToEntity() *entity.SSLCert {
 	return &entity.SSLCert{
-		CertType:    req.CertType,
-		Domain:      req.Domain,
-		Certificate: req.Certificate,
-		PrivateKey:  entity.NewEncryptedField(req.PrivateKey),
-		KeyType:     req.KeyType,
-		ValidPeriod: req.ValidPeriod,
-		Email:       req.Email,
-		AutoRenew:   req.AutoRenew,
-		ExpireAt:    req.ExpireAt,
-		NotifyFrom:  req.NotifyFrom,
+		CertType:     req.CertType,
+		Domain:       req.Domain,
+		Certificate:  req.Certificate,
+		PrivateKey:   entity.NewEncryptedField(req.PrivateKey),
+		KeyType:      req.KeyType,
+		ValidPeriod:  req.ValidPeriod,
+		Email:        req.Email,
+		AutoRenew:    req.AutoRenew,
+		ExpireAt:     req.ExpireAt,
+		NotifyFrom:   req.NotifyFrom,
+		Notification: req.Notification.ToEntity(),
 	}
 }
 
 func (req *SSLCertBaseReq) modifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
+	req.Domain = strings.TrimSpace(req.Domain)
+	req.Email = strings.TrimSpace(req.Email)
+	req.KeyType = gofn.Coalesce(req.KeyType, base.SSLKeyTypeDefault)
+	switch req.CertType {
+	case base.SSLCertTypeLetsEncrypt:
+		// Do nothing
+	case base.SSLCertTypeSelfSigned:
+		req.ValidPeriod = gofn.Coalesce(req.ValidPeriod, timeutil.Duration(base.SSLSelfSignedValidPeriodDefault))
+	case base.SSLCertTypeCustom:
+		req.AutoRenew = false
+	}
 	return nil
 }
 
@@ -61,11 +77,24 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
+
+	cfg := config.Current
+	requireCert := req.CertType == base.SSLCertTypeCustom
+	wildcardAllowed := req.CertType != base.SSLCertTypeLetsEncrypt
+
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStrIn(&req.CertType, true, base.AllSSLCertTypes, field+"certType")...)
-	res = append(res, basedto.ValidateStr(&req.Certificate, true, 1, keyMaxLen, field+"certificate")...)
-	res = append(res, basedto.ValidateStr(&req.PrivateKey, true, 1, keyMaxLen, field+"privateKey")...)
+	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen, wildcardAllowed, field+"domain")...)
+	res = append(res, basedto.ValidateStr(&req.Certificate, requireCert, 1, keyMaxLen, field+"certificate")...)
+	res = append(res, basedto.ValidateStr(&req.PrivateKey, requireCert, 1, keyMaxLen, field+"privateKey")...)
 	res = append(res, basedto.ValidateEmail(&req.Email, false, field+"email")...)
+
+	res = append(res, vld.Must(netutil.IsSubDomain(cfg.RootDomain, req.Domain)).OnError(
+		vld.SetField(field+"domain", nil),
+		vld.SetCustomKey("ERR_VLD_SUBDOMAIN_REQUIRED"),
+		vld.SetParam("Domain", cfg.RootDomain),
+	))
+
 	return res
 }
 

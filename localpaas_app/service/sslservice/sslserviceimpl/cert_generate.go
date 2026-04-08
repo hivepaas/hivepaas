@@ -17,7 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 )
 
-func (s *service) GenerateCert(
+func (s *service) GenerateCertAsPEM(
 	subject *pkix.Name,
 	keyType base.SSLKeyType,
 	notBefore, notAfter time.Time,
@@ -49,8 +49,7 @@ func (s *service) GenerateCert(
 	// KeyUsage bits set in the x509.Certificate template
 	keyUsage := x509.KeyUsageDigitalSignature
 	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
-	// the context of TLS this KeyUsage is particular to RSA key exchange and
-	// authentication.
+	// the context of TLS this KeyUsage is particular to RSA key exchange and authentication.
 	if _, isRSA := priv.(*rsa.PrivateKey); isRSA {
 		keyUsage |= x509.KeyUsageKeyEncipherment
 	}

@@ -2,6 +2,18 @@ package base
 
 import "time"
 
+type SSLCertType string
+
+const (
+	SSLCertTypeLetsEncrypt SSLCertType = "letsencrypt"
+	SSLCertTypeCustom      SSLCertType = "custom"
+	SSLCertTypeSelfSigned  SSLCertType = "self-signed"
+)
+
+var (
+	AllSSLCertTypes = []SSLCertType{SSLCertTypeLetsEncrypt, SSLCertTypeCustom, SSLCertTypeSelfSigned}
+)
+
 type SSLKeyType string
 
 const (
@@ -20,6 +32,9 @@ var (
 
 const (
 	SSLKeyTypeDefault = SSLKeyTypeECP256
+
+	SSLSelfSignedValidPeriodDefault   = time.Hour * 24 * 365 // 365 days
+	SSLSelfSignedRenewalPeriodDefault = time.Hour * 24 * 30  // 30 days
 
 	DomainNameMaxLen = 100
 

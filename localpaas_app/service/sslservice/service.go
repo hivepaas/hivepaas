@@ -1,6 +1,7 @@
 package sslservice
 
 import (
+	"context"
 	"crypto/x509/pkix"
 	"time"
 
@@ -12,6 +13,7 @@ type Service interface {
 	WriteCertFiles(forceRecreate bool, settings ...*entity.Setting) error
 	DeleteCertFiles(settings ...*entity.Setting) error
 
-	GenerateCert(subject *pkix.Name, keyType base.SSLKeyType, notBefore, notAfter time.Time,
+	GenerateCertAsPEM(subject *pkix.Name, keyType base.SSLKeyType, notBefore, notAfter time.Time,
 		isCA bool) (cert, key []byte, err error)
+	ObtainCert(ctx context.Context, sslSetting *entity.Setting, writeFiles bool) (updated bool, err error)
 }

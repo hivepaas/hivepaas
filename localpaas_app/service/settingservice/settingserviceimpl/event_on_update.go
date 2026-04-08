@@ -22,13 +22,5 @@ func (s *service) OnUpdate(
 		}
 	}
 
-	// Save SSL cert/key files in a directory for using later
-	if event.Setting.Type == base.SettingTypeSSLCert {
-		err = s.sslService.WriteCertFiles(true, event.Setting)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
-
 	return nil
 }

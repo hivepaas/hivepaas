@@ -26,6 +26,8 @@ ERR_VLD_EMAIL_ADDR_REQUIRED = "Email address is required"
 ERR_VLD_EMAIL_ADDRS_NON_UNIQUE = "Email addresses must be unique"
 ERR_VLD_EMAIL_ADDRS_REQUIRED = "Email addresses are required at least {{.Min}} item"
 ERR_VLD_URL_INVALID = "URL is invalid"
+ERR_VLD_WILDCARD_UNALLOWED = "Wildcard value is not allowed"
+ERR_VLD_SUBDOMAIN_REQUIRED = "Value must be sub-domain of '{{.Domain}}'"
 ERR_VLD_MUTUALLY_EXCLUSIVE_FIELDS_INVALID = "Fields are mutually exclusive"
 
 # USERS

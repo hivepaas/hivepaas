@@ -44,7 +44,7 @@ func (s *service) initDefaultSSLSelfSigned(
 	domain := gofn.Coalesce(config.Current.RootDomain, sslSelfSignedCN)
 	validTo := timeNow.Add(sslSelfSignedValidPeriod)
 	if regenerate {
-		certBytes, keyBytes, err = s.sslService.GenerateCert(&pkix.Name{CommonName: domain},
+		certBytes, keyBytes, err = s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: domain},
 			sslSelfSignedKeyType, timeNow, validTo, false)
 		if err != nil {
 			return apperrors.Wrap(err)

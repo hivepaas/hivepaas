@@ -3,19 +3,15 @@ import { useMemo, useState } from "react";
 import { Button, Input } from "@components/ui";
 import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { useParams } from "react-router";
 import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { ProjectNetworksQueries } from "~/projects/data/queries";
 
 import { Combobox, InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
-
-/** Mock networks; replace with API-driven list when available. */
-const MOCK_PROJECT_NETWORKS = [
-    { id: "net_local_1", name: "local_net_1" },
-    { id: "net_local_2", name: "local_net_2" },
-    { id: "net_bridge", name: "bridge" },
-    { id: "net_overlay", name: "overlay_net" },
-] as const;
 
 type NetworkOptionValue = {
     id: string;
@@ -23,6 +19,9 @@ type NetworkOptionValue = {
 };
 
 export function NetworksFields() {
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
+
     const { control } = useFormContext<AppConfigNetworksFormSchemaInput, unknown, AppConfigNetworksFormSchemaOutput>();
     const { fields, append, remove } = useFieldArray({
         control,
@@ -30,31 +29,36 @@ export function NetworksFields() {
     });
 
     const [search, setSearch] = useState("");
-    const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null);
+    const [selectedNetwork, setSelectedNetwork] = useState<NetworkOptionValue | null>(null);
     const [aliasesText, setAliasesText] = useState("");
 
+    const {
+        data: { data: projectNetworks } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = ProjectNetworksQueries.useFindManyPaginated({
+        projectID: projectId,
+        search,
+    });
+
     const comboboxOptions = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        return MOCK_PROJECT_NETWORKS.filter(
-            n => !q || n.id.toLowerCase().includes(q) || n.name.toLowerCase().includes(q),
-        ).map(n => ({
+        return projectNetworks.map(n => ({
             value: { id: n.id, name: n.name },
             label: n.name,
         }));
-    }, [search]);
+    }, [projectNetworks]);
 
     const handleAdd = () => {
-        if (!selectedNetworkId) {
+        if (!selectedNetwork) {
             toast.error("Please select a network");
             return;
         }
-        const net = MOCK_PROJECT_NETWORKS.find(n => n.id === selectedNetworkId);
-        if (!net) {
-            toast.error("Invalid network selection");
-            return;
-        }
-        append({ id: net.id, name: net.name, aliasesText: aliasesText.trim() });
-        setSelectedNetworkId(null);
+
+        console.log("selectedNetwork", selectedNetwork);
+        console.log("aliasesText", aliasesText);
+        append({ id: selectedNetwork.id, name: selectedNetwork.name, aliasesText: aliasesText.trim() });
+        setSelectedNetwork(null);
         setAliasesText("");
     };
 
@@ -72,15 +76,18 @@ export function NetworksFields() {
                     <div className="grid flex-1 grid-cols-2 gap-3 max-w-[500px]">
                         <Combobox<NetworkOptionValue>
                             options={comboboxOptions}
-                            value={selectedNetworkId}
-                            onChange={id => {
-                                setSelectedNetworkId(id);
+                            value={selectedNetwork?.id ?? null}
+                            onChange={(_, option) => {
+                                setSelectedNetwork(option ?? null);
                             }}
                             onSearch={setSearch}
                             placeholder="local_net_1"
                             searchable
-                            emptyText="No networks match your search"
+                            emptyText="No networks available"
                             valueKey="id"
+                            loading={isFetching}
+                            onRefresh={() => void refetch()}
+                            isRefreshing={isRefetching}
                         />
                         <InputWithAddOn
                             addonLeft="Alias"

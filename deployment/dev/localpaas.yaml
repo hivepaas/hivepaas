@@ -8,10 +8,15 @@ services:
       - "--providers.swarm=true"
       - "--providers.swarm.watch=true"
       - "--providers.swarm.network=localpaas_net"
+      - "--providers.swarm.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      - "--log.level=DEBUG"
+      - "--log.filepath=/var/log/traefik/traefik.log"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
     networks:
       # Connect to the 'localpaas_net' overlay network for inter-container communication across nodes
       - localpaas_net
@@ -34,7 +39,8 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - ./localpaas/traefik/etc/dynamic:/etc/traefik/dynamic
+      - ./localpaas/traefik/etc:/etc/traefik
+      - ./localpaas/traefik/var/log:/var/log/traefik
       - ./localpaas/ssl/certs:/etc/traefik/ssl/certs
       - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
@@ -59,6 +65,9 @@ services:
       POSTGRES_PASSWORD: abc123
     volumes:
       - db_data:/var/lib/postgresql/data
+    deploy:
+      labels:
+        - "traefik.enable=false"
 
   redis:
     image: redis:8-alpine
@@ -68,6 +77,9 @@ services:
       - internal_net
     volumes:
       - redis:/data
+    deploy:
+      labels:
+        - "traefik.enable=false"
 
   adminer:
     image: adminer:latest
@@ -86,13 +98,7 @@ services:
         - "traefik.http.routers.adminer-http.rule=Host(`adminer.dev.localpaas.com`)"
         - "traefik.http.routers.adminer-http.entrypoints=web"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
-        - "traefik.docker.network=localpaas_net"
-
-  hello-world:
-    image: crccheck/hello-world:latest
-    restart: unless-stopped
-    networks:
-      - localpaas_net
+        - "traefik.swarm.network=localpaas_net"
 
   app:
     image: localpaas/localpaas-dev:app-latest
@@ -120,7 +126,7 @@ services:
         - "traefik.http.routers.app-router-http-acme.tls=false"
         - "traefik.http.middlewares.addprefix-le-acme.addprefix.prefix=/letsencrypt"
         - "traefik.http.routers.app-router-http-acme.middlewares=addprefix-le-acme@swarm"
-        - "traefik.docker.network=localpaas_net"
+        - "traefik.swarm.network=localpaas_net"
 
 networks:
   localpaas_net:

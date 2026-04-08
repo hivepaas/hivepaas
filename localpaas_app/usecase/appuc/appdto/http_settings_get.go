@@ -126,7 +126,7 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {
 			setting := input.RefSettingMap[domain.SSLCert.ID]
-			domain.SSLCert, _ = sslcertdto.TransformSSLCertNoCertData(setting, &entity.RefObjects{})
+			domain.SSLCert, _ = sslcertdto.TransformSSLCertBasic(setting, &entity.RefObjects{})
 		} else {
 			domain.SSLCert = nil
 		}

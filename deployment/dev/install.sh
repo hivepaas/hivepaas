@@ -16,8 +16,10 @@ mkdir -p $LOCALPAAS_DIR
 mkdir -p $LOCALPAAS_SSL_CERTS
 
 TRAEFIK_DYNAMIC=$LOCALPAAS_DIR/traefik/etc/dynamic
+TRAEFIK_VAR_LOG=$LOCALPAAS_DIR/traefik/var/log
 
 mkdir -p $TRAEFIK_DYNAMIC
+mkdir -p $TRAEFIK_VAR_LOG
 
 # Download traefik conf files
 echo "Download traefik config files..."

@@ -97,7 +97,7 @@ services:
         - "traefik.http.routers.adminer-http.rule=Host(`adminer.localhost`)"
         - "traefik.http.routers.adminer-http.entrypoints=web"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
-        - "traefik.docker.network=localpaas_net"
+        - "traefik.swarm.network=localpaas_net"
 
   redis_ui:
     image: redislabs/redisinsight:latest

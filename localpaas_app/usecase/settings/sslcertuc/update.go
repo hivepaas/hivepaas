@@ -3,8 +3,6 @@ package sslcertuc
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
@@ -22,7 +20,7 @@ func (uc *UC) UpdateSSLCert(
 	newCert := req.ToEntity()
 	reObtainCert := false
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
-		VerifyingName: req.Name,
+		VerifyingName: req.Domain,
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
 			currCert, err := data.Setting.AsSSLCert()
 			if err != nil {
@@ -48,7 +46,6 @@ func (uc *UC) UpdateSSLCert(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			pData.Setting.Name = gofn.Coalesce(req.Name, pData.Setting.Name)
 			err := pData.Setting.SetData(newCert)
 			if err != nil {
 				return apperrors.Wrap(err)

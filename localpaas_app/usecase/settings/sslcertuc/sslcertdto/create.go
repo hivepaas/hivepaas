@@ -27,7 +27,6 @@ type CreateSSLCertReq struct {
 }
 
 type SSLCertBaseReq struct {
-	Name         string                            `json:"name"`
 	CertType     base.SSLCertType                  `json:"certType"`
 	Domain       string                            `json:"domain"`
 	Certificate  string                            `json:"certificate"`
@@ -58,7 +57,6 @@ func (req *SSLCertBaseReq) ToEntity() *entity.SSLCert {
 }
 
 func (req *SSLCertBaseReq) modifyRequest() error {
-	req.Name = strings.TrimSpace(req.Name)
 	req.Domain = strings.TrimSpace(req.Domain)
 	req.Email = strings.TrimSpace(req.Email)
 	req.KeyType = gofn.Coalesce(req.KeyType, base.SSLKeyTypeDefault)
@@ -82,7 +80,6 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	requireCert := req.CertType == base.SSLCertTypeCustom
 	wildcardAllowed := req.CertType != base.SSLCertTypeLetsEncrypt
 
-	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStrIn(&req.CertType, true, base.AllSSLCertTypes, field+"certType")...)
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen, wildcardAllowed, field+"domain")...)
 	res = append(res, basedto.ValidateStr(&req.Certificate, requireCert, 1, keyMaxLen, field+"certificate")...)

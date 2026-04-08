@@ -11,6 +11,7 @@ import (
 
 type ListSSLCertReq struct {
 	settings.ListSettingReq
+	Domain string `json:"-" mapstructure:"domain"`
 }
 
 func NewListSSLCertReq() *ListSSLCertReq {

@@ -24,7 +24,7 @@ func (uc *UC) CreateSSLCert(
 ) (*sslcertdto.CreateSSLCertResp, error) {
 	req.Type = currentSettingType
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
-		VerifyingName: req.Name,
+		VerifyingName: req.Domain,
 		Version:       currentSettingVersion,
 		PrepareCreation: func(
 			ctx context.Context,

@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppNetworkSettings(
+func (uc *UC) GetAppNetworkSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppNetworkSettingsReq,

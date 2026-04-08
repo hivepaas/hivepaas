@@ -27,7 +27,7 @@ const (
 	renewalJobRetryDelay = timeutil.Duration(time.Second * 60)
 )
 
-func (uc *SSLRenewalUC) UpdateSSLRenewal(
+func (uc *UC) UpdateSSLRenewal(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sslrenewaldto.UpdateSSLRenewalReq,
@@ -85,7 +85,7 @@ type persistingSettingData struct {
 	JobSetting *entity.Setting
 }
 
-func (uc *SSLRenewalUC) loadSettingData(
+func (uc *UC) loadSettingData(
 	ctx context.Context,
 	db database.Tx,
 	req *sslrenewaldto.UpdateSSLRenewalReq,
@@ -142,7 +142,7 @@ func (uc *SSLRenewalUC) loadSettingData(
 	return nil
 }
 
-func (uc *SSLRenewalUC) preparePersistingData(
+func (uc *UC) preparePersistingData(
 	req *sslrenewaldto.UpdateSSLRenewalReq,
 	updateData *updateSettingData,
 	persistingData *persistingSettingData,
@@ -170,7 +170,7 @@ func (uc *SSLRenewalUC) preparePersistingData(
 	return nil
 }
 
-func (uc *SSLRenewalUC) postPersisting(
+func (uc *UC) postPersisting(
 	ctx context.Context,
 	db database.Tx,
 	updateData *updateSettingData,

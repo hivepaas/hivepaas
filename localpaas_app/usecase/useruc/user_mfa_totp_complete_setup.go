@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) CompleteMFATotpSetup(
+func (uc *UC) CompleteMFATotpSetup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.CompleteMFATotpSetupReq,

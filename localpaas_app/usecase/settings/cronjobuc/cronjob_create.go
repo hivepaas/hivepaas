@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentCronJobVersion
 )
 
-func (uc *CronJobUC) CreateCronJob(
+func (uc *UC) CreateCronJob(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cronjobdto.CreateCronJobReq,

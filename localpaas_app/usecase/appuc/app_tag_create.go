@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) CreateAppTag(
+func (uc *UC) CreateAppTag(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.CreateAppTagReq,
@@ -42,7 +42,7 @@ type createAppTagData struct {
 	NextDisplayOrder int
 }
 
-func (uc *AppUC) loadAppTagDataForAddNew(
+func (uc *UC) loadAppTagDataForAddNew(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.CreateAppTagReq,

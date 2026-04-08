@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppNetworkSettings(
+func (uc *UC) UpdateAppNetworkSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppNetworkSettingsReq,
@@ -53,7 +53,7 @@ type updateAppNetworkSettingsData struct {
 	Service *swarm.Service
 }
 
-func (uc *AppUC) loadAppNetworkSettingsForUpdate(
+func (uc *UC) loadAppNetworkSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppNetworkSettingsReq,
@@ -84,7 +84,7 @@ func (uc *AppUC) loadAppNetworkSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppNetworkSettings(
+func (uc *UC) prepareUpdatingAppNetworkSettings(
 	req *appdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
@@ -94,7 +94,7 @@ func (uc *AppUC) prepareUpdatingAppNetworkSettings(
 	uc.prepareUpdatingAppEndpointSpec(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppNetworkAttachments(
+func (uc *UC) prepareUpdatingAppNetworkAttachments(
 	req *appdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
@@ -120,7 +120,7 @@ func (uc *AppUC) prepareUpdatingAppNetworkAttachments(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppHostsFileEntries(
+func (uc *UC) prepareUpdatingAppHostsFileEntries(
 	req *appdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
@@ -135,7 +135,7 @@ func (uc *AppUC) prepareUpdatingAppHostsFileEntries(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppEndpointSpec(
+func (uc *UC) prepareUpdatingAppEndpointSpec(
 	req *appdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
@@ -160,7 +160,7 @@ func (uc *AppUC) prepareUpdatingAppEndpointSpec(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppDNSConfig(
+func (uc *UC) prepareUpdatingAppDNSConfig(
 	req *appdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
@@ -178,7 +178,7 @@ func (uc *AppUC) prepareUpdatingAppDNSConfig(
 	containerSpec.DNSConfig.Options = req.DNSConfig.Options
 }
 
-func (uc *AppUC) applyAppNetworkSettings(
+func (uc *UC) applyAppNetworkSettings(
 	ctx context.Context,
 	data *updateAppNetworkSettingsData,
 ) error {

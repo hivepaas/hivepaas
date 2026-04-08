@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/github"
 )
 
-func (uc *GithubAppUC) BeginReprovisionGithubApp(
+func (uc *UC) BeginReprovisionGithubApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.BeginReprovisionGithubAppReq,

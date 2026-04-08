@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *ImageUC) CreateImage(
+func (uc *UC) CreateImage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagedto.CreateImageReq,
@@ -43,7 +43,7 @@ type createImageData struct {
 	AuthHeader   string
 }
 
-func (uc *ImageUC) loadImageData(
+func (uc *UC) loadImageData(
 	ctx context.Context,
 	db database.IDB,
 	req *imagedto.CreateImageReq,

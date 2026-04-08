@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 )
 
-func (uc *CloudStorageUC) GetCloudStorage(
+func (uc *UC) GetCloudStorage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.GetCloudStorageReq,

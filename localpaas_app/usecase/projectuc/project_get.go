@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) GetProject(
+func (uc *UC) GetProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.GetProjectReq,

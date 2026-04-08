@@ -7,20 +7,20 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type ImageUC struct {
+type UC struct {
 	db             *database.DB
 	settingRepo    repository.SettingRepo
 	clusterService clusterservice.Service
 	dockerManager  docker.Manager
 }
 
-func NewImageUC(
+func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	clusterService clusterservice.Service,
 	dockerManager docker.Manager,
-) *ImageUC {
-	return &ImageUC{
+) *UC {
+	return &UC{
 		db:             db,
 		settingRepo:    settingRepo,
 		clusterService: clusterService,

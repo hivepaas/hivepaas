@@ -18,7 +18,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *AppUC) UpdateAppResourceSettings(
+func (uc *UC) UpdateAppResourceSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppResourceSettingsReq,
@@ -56,7 +56,7 @@ type updateAppResourceSettingsData struct {
 	Service *swarm.Service
 }
 
-func (uc *AppUC) loadAppResourceSettingsForUpdate(
+func (uc *UC) loadAppResourceSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppResourceSettingsReq,
@@ -87,7 +87,7 @@ func (uc *AppUC) loadAppResourceSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppResourceSettings(
+func (uc *UC) prepareUpdatingAppResourceSettings(
 	req *appdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
@@ -97,7 +97,7 @@ func (uc *AppUC) prepareUpdatingAppResourceSettings(
 	uc.prepareUpdatingAppCapabilities(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppResourceReservations(
+func (uc *UC) prepareUpdatingAppResourceReservations(
 	req *appdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
@@ -138,7 +138,7 @@ func (uc *AppUC) prepareUpdatingAppResourceReservations(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppResourceLimits(
+func (uc *UC) prepareUpdatingAppResourceLimits(
 	req *appdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
@@ -162,7 +162,7 @@ func (uc *AppUC) prepareUpdatingAppResourceLimits(
 	limits.Pids = req.Limits.Pids
 }
 
-func (uc *AppUC) prepareUpdatingAppResourceUlimits(
+func (uc *UC) prepareUpdatingAppResourceUlimits(
 	req *appdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
@@ -182,7 +182,7 @@ func (uc *AppUC) prepareUpdatingAppResourceUlimits(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppCapabilities(
+func (uc *UC) prepareUpdatingAppCapabilities(
 	req *appdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
@@ -203,7 +203,7 @@ func (uc *AppUC) prepareUpdatingAppCapabilities(
 	containerSpec.Sysctls = req.Capabilities.Sysctls
 }
 
-func (uc *AppUC) applyAppResourceSettings(
+func (uc *UC) applyAppResourceSettings(
 	ctx context.Context,
 	data *updateAppResourceSettingsData,
 ) error {

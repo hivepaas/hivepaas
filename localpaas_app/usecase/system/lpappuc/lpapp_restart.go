@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc/lpappdto"
 )
 
-func (uc *LpAppUC) RestartLpApp(
+func (uc *UC) RestartLpApp(
 	ctx context.Context,
 	_ *basedto.Auth,
 	req *lpappdto.RestartLpAppReq,

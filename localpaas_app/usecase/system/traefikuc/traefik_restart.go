@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc/traefikdto"
 )
 
-func (uc *TraefikUC) RestartTraefik(
+func (uc *UC) RestartTraefik(
 	ctx context.Context,
 	_ *basedto.Auth,
 	_ *traefikdto.RestartTraefikReq,

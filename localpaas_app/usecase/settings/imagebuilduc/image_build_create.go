@@ -19,7 +19,7 @@ const (
 	defaultName = "image build settings"
 )
 
-func (uc *ImageBuildUC) CreateImageBuild(
+func (uc *UC) CreateImageBuild(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagebuilddto.CreateImageBuildReq,

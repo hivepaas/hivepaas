@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 )
 
-func (uc *CloudStorageUC) UpdateCloudStorage(
+func (uc *UC) UpdateCloudStorage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.UpdateCloudStorageReq,

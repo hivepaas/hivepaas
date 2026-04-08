@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) UpdateProfile(
+func (uc *UC) UpdateProfile(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.UpdateProfileReq,
@@ -47,7 +47,7 @@ type persistingUserProfileData struct {
 	UpdatingUser *entity.User
 }
 
-func (uc *UserUC) loadUserProfileData(
+func (uc *UC) loadUserProfileData(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
@@ -107,7 +107,7 @@ func (uc *UserUC) loadUserProfileData(
 	return nil
 }
 
-func (uc *UserUC) preparePersistingUserProfileData(
+func (uc *UC) preparePersistingUserProfileData(
 	req *userdto.UpdateProfileReq,
 	profileData *userProfileData,
 	persistingData *persistingUserProfileData,
@@ -137,7 +137,7 @@ func (uc *UserUC) preparePersistingUserProfileData(
 	}
 }
 
-func (uc *UserUC) persistUserProfileData(
+func (uc *UC) persistUserProfileData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingUserProfileData,

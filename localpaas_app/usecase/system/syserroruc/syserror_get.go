@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc/syserrordto"
 )
 
-func (uc *SysErrorUC) GetSysError(
+func (uc *UC) GetSysError(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *syserrordto.GetSysErrorReq,

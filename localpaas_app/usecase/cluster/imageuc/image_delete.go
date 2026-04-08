@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc/imagedto"
 )
 
-func (uc *ImageUC) DeleteImage(
+func (uc *UC) DeleteImage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagedto.DeleteImageReq,

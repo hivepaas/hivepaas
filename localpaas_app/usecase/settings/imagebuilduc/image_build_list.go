@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
 )
 
-func (uc *ImageBuildUC) ListImageBuild(
+func (uc *UC) ListImageBuild(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagebuilddto.ListImageBuildReq,

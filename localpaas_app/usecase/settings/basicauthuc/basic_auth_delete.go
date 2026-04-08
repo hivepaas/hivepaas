@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
 )
 
-func (uc *BasicAuthUC) DeleteBasicAuth(
+func (uc *UC) DeleteBasicAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *basicauthdto.DeleteBasicAuthReq,

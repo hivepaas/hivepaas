@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/notificationuc/notificationdto"
 )
 
-func (uc *NotificationUC) GetNotification(
+func (uc *UC) GetNotification(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *notificationdto.GetNotificationReq,

@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppEnvVars(
+func (uc *UC) GetAppEnvVars(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppEnvVarsReq,

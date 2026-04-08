@@ -9,13 +9,13 @@ import (
 type UserHandler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.AuthHandler
-	userUC      *useruc.UserUC
+	userUC      *useruc.UC
 }
 
 func NewUserHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	userUC *useruc.UserUC,
+	userUC *useruc.UC,
 ) *UserHandler {
 	return &UserHandler{
 		BaseHandler: baseHandler,

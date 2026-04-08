@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *NetworkUC) ListNetwork(
+func (uc *UC) ListNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.ListNetworkReq,

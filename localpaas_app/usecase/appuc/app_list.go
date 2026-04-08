@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) ListApp(
+func (uc *UC) ListApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.ListAppReq,
@@ -69,7 +69,7 @@ func (uc *AppUC) ListApp(
 	}, nil
 }
 
-func (uc *AppUC) loadAppsSwarmService(
+func (uc *UC) loadAppsSwarmService(
 	ctx context.Context,
 	projectKey string,
 	apps []*entity.App,

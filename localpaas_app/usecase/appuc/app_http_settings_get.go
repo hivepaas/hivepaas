@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppHttpSettings(
+func (uc *UC) GetAppHttpSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppHttpSettingsReq,
@@ -56,7 +56,7 @@ func (uc *AppUC) GetAppHttpSettings(
 	}, nil
 }
 
-func (uc *AppUC) loadAppHttpSettingsRefData(
+func (uc *UC) loadAppHttpSettingsRefData(
 	ctx context.Context,
 	db database.IDB,
 	input *appdto.AppHttpSettingsTransformInput,

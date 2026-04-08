@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) ImportSettingsToProject(
+func (uc *UC) ImportSettingsToProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.ImportSettingsToProjectReq,
@@ -53,7 +53,7 @@ type persistingSettingImportData struct {
 	ProjectSharedSettings []*entity.ProjectSharedSetting
 }
 
-func (uc *ProjectUC) loadSettingsForImport(
+func (uc *UC) loadSettingsForImport(
 	ctx context.Context,
 	db database.Tx,
 	req *projectdto.ImportSettingsToProjectReq,
@@ -86,7 +86,7 @@ func (uc *ProjectUC) loadSettingsForImport(
 	return nil
 }
 
-func (uc *ProjectUC) preparePersistingSettingImports(
+func (uc *UC) preparePersistingSettingImports(
 	req *projectdto.ImportSettingsToProjectReq,
 	data *settingImportData,
 	persistingData *persistingSettingImportData,
@@ -103,7 +103,7 @@ func (uc *ProjectUC) preparePersistingSettingImports(
 	}
 }
 
-func (uc *ProjectUC) persistSettingImports(
+func (uc *UC) persistSettingImports(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingSettingImportData,

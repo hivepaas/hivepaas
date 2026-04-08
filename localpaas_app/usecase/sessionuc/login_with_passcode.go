@@ -15,7 +15,7 @@ const (
 	passcodeMaxAttempts = 5
 )
 
-func (uc *SessionUC) LoginWithPasscode(
+func (uc *UC) LoginWithPasscode(
 	ctx context.Context,
 	req *sessiondto.LoginWithPasscodeReq,
 ) (resp *sessiondto.LoginWithPasscodeResp, err error) {

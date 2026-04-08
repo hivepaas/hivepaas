@@ -37,7 +37,7 @@ type ListSettingData struct {
 	ExtraLoadOpts []bunex.SelectQueryOption
 }
 
-func (uc *BaseSettingUC) ListSetting(
+func (uc *BaseUC) ListSetting(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *ListSettingReq,

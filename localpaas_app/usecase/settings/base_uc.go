@@ -7,7 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 )
 
-type BaseSettingUC struct {
+type BaseUC struct {
 	DB                       *database.DB
 	SettingRepo              repository.SettingRepo
 	ProjectSharedSettingRepo repository.ProjectSharedSettingRepo
@@ -15,14 +15,14 @@ type BaseSettingUC struct {
 	FileService              fileservice.Service
 }
 
-func NewBaseSettingUC(
+func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
 	settingService settingservice.Service,
 	fileService fileservice.Service,
-) *BaseSettingUC {
-	return &BaseSettingUC{
+) *BaseUC {
+	return &BaseUC{
 		DB:                       db,
 		SettingRepo:              settingRepo,
 		ProjectSharedSettingRepo: projectSharedSettingRepo,

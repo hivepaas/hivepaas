@@ -22,7 +22,7 @@ const (
 	executionTimeout = time.Second * 15
 )
 
-func (uc *NodeUC) JoinNode(
+func (uc *UC) JoinNode(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.JoinNodeReq,
@@ -63,7 +63,7 @@ type joinNodeData struct {
 	PreferManagerAddr string
 }
 
-func (uc *NodeUC) loadJoinNodeData(
+func (uc *UC) loadJoinNodeData(
 	ctx context.Context,
 	db database.IDB,
 	req *nodedto.JoinNodeReq,

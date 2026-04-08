@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
 )
 
-func (uc *EmailUC) UpdateEmailMeta(
+func (uc *UC) UpdateEmailMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *emaildto.UpdateEmailMetaReq,

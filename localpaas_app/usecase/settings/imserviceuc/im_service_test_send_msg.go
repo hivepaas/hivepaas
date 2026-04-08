@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/services/im/slack"
 )
 
-func (uc *IMServiceUC) TestSendInstantMsg(
+func (uc *UC) TestSendInstantMsg(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imservicedto.TestSendInstantMsgReq,

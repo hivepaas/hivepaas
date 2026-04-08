@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imserviceuc/imservicedto"
 )
 
-func (uc *IMServiceUC) GetIMService(
+func (uc *UC) GetIMService(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imservicedto.GetIMServiceReq,

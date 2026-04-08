@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *NodeUC) DeleteNode(
+func (uc *UC) DeleteNode(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.DeleteNodeReq,

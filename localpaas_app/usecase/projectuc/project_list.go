@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) ListProject(
+func (uc *UC) ListProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.ListProjectReq,

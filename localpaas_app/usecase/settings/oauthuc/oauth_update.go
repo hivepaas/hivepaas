@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc/oauthdto"
 )
 
-func (uc *OAuthUC) UpdateOAuth(
+func (uc *UC) UpdateOAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *oauthdto.UpdateOAuthReq,

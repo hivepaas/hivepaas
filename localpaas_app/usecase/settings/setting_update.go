@@ -47,7 +47,7 @@ type PersistingSettingData struct {
 	Setting *entity.Setting
 }
 
-func (uc *BaseSettingUC) UpdateSetting(
+func (uc *BaseUC) UpdateSetting(
 	ctx context.Context,
 	req *UpdateSettingReq,
 	data *UpdateSettingData,
@@ -108,7 +108,7 @@ func (uc *BaseSettingUC) UpdateSetting(
 	return &UpdateSettingResp{}, nil
 }
 
-func (uc *BaseSettingUC) loadSettingForUpdate(
+func (uc *BaseUC) loadSettingForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *UpdateSettingReq,
@@ -161,7 +161,7 @@ func (uc *BaseSettingUC) loadSettingForUpdate(
 	return nil
 }
 
-func (uc *BaseSettingUC) prepareSettingUpdate(
+func (uc *BaseUC) prepareSettingUpdate(
 	req *UpdateSettingReq,
 	data *UpdateSettingData,
 	persistingData *PersistingSettingData,
@@ -178,7 +178,7 @@ func (uc *BaseSettingUC) prepareSettingUpdate(
 	persistingData.Setting = setting
 }
 
-func (uc *BaseSettingUC) persistSettingUpdate(
+func (uc *BaseUC) persistSettingUpdate(
 	ctx context.Context,
 	db database.IDB,
 	req *UpdateSettingReq,

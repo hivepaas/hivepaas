@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *AppUC) UpdateAppServiceSettings(
+func (uc *UC) UpdateAppServiceSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppServiceSettingsReq,
@@ -53,7 +53,7 @@ type updateAppServiceSettingsData struct {
 	Service *swarm.Service
 }
 
-func (uc *AppUC) loadAppServiceSettingsForUpdate(
+func (uc *UC) loadAppServiceSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppServiceSettingsReq,
@@ -84,7 +84,7 @@ func (uc *AppUC) loadAppServiceSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppServiceSettings(
+func (uc *UC) prepareUpdatingAppServiceSettings(
 	req *appdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) {
@@ -92,7 +92,7 @@ func (uc *AppUC) prepareUpdatingAppServiceSettings(
 	uc.prepareUpdatingAppServicePlacement(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppServiceMode(
+func (uc *UC) prepareUpdatingAppServiceMode(
 	req *appdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) {
@@ -131,7 +131,7 @@ func (uc *AppUC) prepareUpdatingAppServiceMode(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppServicePlacement(
+func (uc *UC) prepareUpdatingAppServicePlacement(
 	req *appdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) {
@@ -163,7 +163,7 @@ func (uc *AppUC) prepareUpdatingAppServicePlacement(
 	}
 }
 
-func (uc *AppUC) applyAppServiceSettings(
+func (uc *UC) applyAppServiceSettings(
 	ctx context.Context,
 	data *updateAppServiceSettingsData,
 ) error {

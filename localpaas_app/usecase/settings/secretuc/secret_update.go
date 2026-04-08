@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 )
 
-func (uc *SecretUC) UpdateSecret(
+func (uc *UC) UpdateSecret(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *secretdto.UpdateSecretReq,

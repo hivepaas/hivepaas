@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type VolumeUC struct {
+type UC struct {
 	db             *database.DB
 	settingRepo    repository.SettingRepo
 	clusterService clusterservice.Service
@@ -16,14 +16,14 @@ type VolumeUC struct {
 	dockerManager  docker.Manager
 }
 
-func NewVolumeUC(
+func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	clusterService clusterservice.Service,
 	projectService projectservice.Service,
 	dockerManager docker.Manager,
-) *VolumeUC {
-	return &VolumeUC{
+) *UC {
+	return &UC{
 		db:             db,
 		settingRepo:    settingRepo,
 		clusterService: clusterService,

@@ -8,8 +8,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type SSLRenewalUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 	appRepo        repository.AppRepo
 	taskRepo       repository.TaskRepo
 	taskService    taskservice.Service
@@ -17,16 +17,16 @@ type SSLRenewalUC struct {
 	taskQueue      queue.TaskQueue
 }
 
-func NewSSLRenewalUC(
-	baseSettingUC *settings.BaseSettingUC,
+func New(
+	baseSettingUC *settings.BaseUC,
 	appRepo repository.AppRepo,
 	taskRepo repository.TaskRepo,
 	taskService taskservice.Service,
 	cronJobService cronjobservice.Service,
 	taskQueue queue.TaskQueue,
-) *SSLRenewalUC {
-	return &SSLRenewalUC{
-		BaseSettingUC:  baseSettingUC,
+) *UC {
+	return &UC{
+		BaseUC:         baseSettingUC,
 		appRepo:        appRepo,
 		taskRepo:       taskRepo,
 		taskService:    taskService,

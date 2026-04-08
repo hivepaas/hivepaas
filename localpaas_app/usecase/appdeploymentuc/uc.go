@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type AppDeploymentUC struct {
+type UC struct {
 	db                 *database.DB
 	redisClient        rediscache.Client
 	projectRepo        repository.ProjectRepo
@@ -24,7 +24,7 @@ type AppDeploymentUC struct {
 	dockerManager      docker.Manager
 }
 
-func NewAppDeploymentUC(
+func New(
 	db *database.DB,
 	redisClient rediscache.Client,
 	projectRepo repository.ProjectRepo,
@@ -36,8 +36,8 @@ func NewAppDeploymentUC(
 	appService appservice.Service,
 	taskService taskservice.Service,
 	dockerManager docker.Manager,
-) *AppDeploymentUC {
-	return &AppDeploymentUC{
+) *UC {
+	return &UC{
 		db:                 db,
 		redisClient:        redisClient,
 		projectRepo:        projectRepo,

@@ -9,16 +9,16 @@ import (
 
 type AppHandler struct {
 	*basesettinghandler.BaseSettingHandler
-	appUC           *appuc.AppUC
-	appDeploymentUC *appdeploymentuc.AppDeploymentUC
-	secretUC        *secretuc.SecretUC
+	appUC           *appuc.UC
+	appDeploymentUC *appdeploymentuc.UC
+	secretUC        *secretuc.UC
 }
 
 func NewAppHandler(
 	baseSettingHandler *basesettinghandler.BaseSettingHandler,
-	appUC *appuc.AppUC,
-	appDeploymentUC *appdeploymentuc.AppDeploymentUC,
-	secretUC *secretuc.SecretUC,
+	appUC *appuc.UC,
+	appDeploymentUC *appdeploymentuc.UC,
+	secretUC *secretuc.UC,
 ) *AppHandler {
 	return &AppHandler{
 		BaseSettingHandler: baseSettingHandler,

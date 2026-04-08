@@ -27,7 +27,7 @@ const (
 	backupJobRetryDelay = timeutil.Duration(time.Second * 60)
 )
 
-func (uc *SystemBackupUC) UpdateSystemBackup(
+func (uc *UC) UpdateSystemBackup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systembackupdto.UpdateSystemBackupReq,
@@ -85,7 +85,7 @@ type persistingSettingData struct {
 	JobSetting *entity.Setting
 }
 
-func (uc *SystemBackupUC) loadSettingData(
+func (uc *UC) loadSettingData(
 	ctx context.Context,
 	db database.Tx,
 	req *systembackupdto.UpdateSystemBackupReq,
@@ -140,7 +140,7 @@ func (uc *SystemBackupUC) loadSettingData(
 	return nil
 }
 
-func (uc *SystemBackupUC) preparePersistingData(
+func (uc *UC) preparePersistingData(
 	req *systembackupdto.UpdateSystemBackupReq,
 	updateData *updateSettingData,
 	persistingData *persistingSettingData,
@@ -169,7 +169,7 @@ func (uc *SystemBackupUC) preparePersistingData(
 	return nil
 }
 
-func (uc *SystemBackupUC) postPersisting(
+func (uc *UC) postPersisting(
 	ctx context.Context,
 	db database.Tx,
 	updateData *updateSettingData,

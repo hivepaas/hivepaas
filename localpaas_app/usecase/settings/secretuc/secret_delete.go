@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 )
 
-func (uc *SecretUC) DeleteSecret(
+func (uc *UC) DeleteSecret(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *secretdto.DeleteSecretReq,

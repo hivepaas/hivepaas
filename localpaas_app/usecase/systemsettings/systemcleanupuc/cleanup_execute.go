@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto"
 )
 
-func (uc *SystemCleanupUC) ExecuteSystemCleanup(
+func (uc *UC) ExecuteSystemCleanup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systemcleanupdto.ExecuteSystemCleanupReq,
@@ -47,7 +47,7 @@ func (uc *SystemCleanupUC) ExecuteSystemCleanup(
 	}, nil
 }
 
-func (uc *SystemCleanupUC) getCleanupSettingAndJob(
+func (uc *UC) getCleanupSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
 	scope *base.SettingScope,

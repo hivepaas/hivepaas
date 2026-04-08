@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentIMServiceVersion
 )
 
-func (uc *IMServiceUC) CreateIMService(
+func (uc *UC) CreateIMService(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imservicedto.CreateIMServiceReq,

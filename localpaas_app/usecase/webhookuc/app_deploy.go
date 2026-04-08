@@ -18,7 +18,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
 )
 
-func (uc *WebhookUC) DeployApp(
+func (uc *UC) DeployApp(
 	ctx context.Context,
 	req *webhookdto.DeployAppReq,
 ) (*webhookdto.DeployAppResp, error) {
@@ -68,7 +68,7 @@ type persistingAppData struct {
 	appservice.PersistingAppData
 }
 
-func (uc *WebhookUC) loadAppDeploymentSettingsForUpdate(
+func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *webhookdto.DeployAppReq,
@@ -116,7 +116,7 @@ func (uc *WebhookUC) loadAppDeploymentSettingsForUpdate(
 	return nil
 }
 
-func (uc *WebhookUC) prepareUpdatingAppDeploymentSettings(
+func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	req *webhookdto.DeployAppReq,
 	data *deployAppData,
 	persistingData *persistingAppData,
@@ -154,7 +154,7 @@ func (uc *WebhookUC) prepareUpdatingAppDeploymentSettings(
 	return nil
 }
 
-func (uc *WebhookUC) persistAppData(
+func (uc *UC) persistAppData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingAppData,
@@ -166,7 +166,7 @@ func (uc *WebhookUC) persistAppData(
 	return nil
 }
 
-func (uc *WebhookUC) postTransactionAppDeploymentSettings(
+func (uc *UC) postTransactionAppDeploymentSettings(
 	ctx context.Context,
 	persistingData *persistingAppData,
 ) error {

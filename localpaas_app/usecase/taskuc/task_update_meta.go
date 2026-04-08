@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
 )
 
-func (uc *TaskUC) UpdateTaskMeta(
+func (uc *UC) UpdateTaskMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *taskdto.UpdateTaskMetaReq,
@@ -39,7 +39,7 @@ type updateTaskData struct {
 	Task *entity.Task
 }
 
-func (uc *TaskUC) loadTaskDataForUpdateMeta(
+func (uc *UC) loadTaskDataForUpdateMeta(
 	ctx context.Context,
 	db database.IDB,
 	req *taskdto.UpdateTaskMetaReq,
@@ -59,7 +59,7 @@ func (uc *TaskUC) loadTaskDataForUpdateMeta(
 	return nil
 }
 
-func (uc *TaskUC) prepareUpdatingTaskMeta(
+func (uc *UC) prepareUpdatingTaskMeta(
 	req *taskdto.UpdateTaskMetaReq,
 	data *updateTaskData,
 ) {
@@ -73,7 +73,7 @@ func (uc *TaskUC) prepareUpdatingTaskMeta(
 	}
 }
 
-func (uc *TaskUC) persistTaskMeta(
+func (uc *UC) persistTaskMeta(
 	ctx context.Context,
 	db database.IDB,
 	data *updateTaskData,

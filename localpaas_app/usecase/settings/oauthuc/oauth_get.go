@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc/oauthdto"
 )
 
-func (uc *OAuthUC) GetOAuth(
+func (uc *UC) GetOAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *oauthdto.GetOAuthReq,

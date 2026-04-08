@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
 )
 
-func (uc *CronJobUC) GetCronJobTask(
+func (uc *UC) GetCronJobTask(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cronjobdto.GetCronJobTaskReq,

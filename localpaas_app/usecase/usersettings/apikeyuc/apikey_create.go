@@ -24,7 +24,7 @@ const (
 	currentSettingVersion = entity.CurrentAPIKeyVersion
 )
 
-func (uc *APIKeyUC) CreateAPIKey(
+func (uc *UC) CreateAPIKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apikeydto.CreateAPIKeyReq,

@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *NetworkUC) GetNetworkInspection(
+func (uc *UC) GetNetworkInspection(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.GetNetworkInspectionReq,

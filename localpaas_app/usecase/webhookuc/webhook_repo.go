@@ -17,7 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
 )
 
-func (uc *WebhookUC) HandleRepoWebhook(
+func (uc *UC) HandleRepoWebhook(
 	ctx context.Context,
 	req *webhookdto.HandleRepoWebhookReq,
 ) (*webhookdto.HandleRepoWebhookResp, error) {
@@ -68,7 +68,7 @@ type repoPushEventData struct {
 	parsedURL *vcsurl.VCS
 }
 
-func (uc *WebhookUC) processRepoWebhook(
+func (uc *UC) processRepoWebhook(
 	ctx context.Context,
 	db database.IDB,
 	req *webhookdto.HandleRepoWebhookReq,
@@ -111,7 +111,7 @@ func (uc *WebhookUC) processRepoWebhook(
 	return nil
 }
 
-func (uc *WebhookUC) loadWebhookSettings(
+func (uc *UC) loadWebhookSettings(
 	ctx context.Context,
 	db database.IDB,
 	req *webhookdto.HandleRepoWebhookReq,
@@ -133,7 +133,7 @@ func (uc *WebhookUC) loadWebhookSettings(
 	return settings, nil
 }
 
-func (uc *WebhookUC) findAppsToRedeployByPushEvent(
+func (uc *UC) findAppsToRedeployByPushEvent(
 	ctx context.Context,
 	db database.IDB,
 	pushEvent *repoPushEventData,
@@ -171,7 +171,7 @@ func (uc *WebhookUC) findAppsToRedeployByPushEvent(
 	return appsToRedeploy, nil
 }
 
-func (uc *WebhookUC) shouldRedeployAppByPushEvent(
+func (uc *UC) shouldRedeployAppByPushEvent(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
@@ -227,7 +227,7 @@ func (uc *WebhookUC) shouldRedeployAppByPushEvent(
 	return len(deployments) == 0, nil
 }
 
-func (uc *WebhookUC) createAppDeploymentByPushEvent(
+func (uc *UC) createAppDeploymentByPushEvent(
 	app *entity.App,
 	pushEvent *repoPushEventData,
 	persistingData *appservice.PersistingAppData,

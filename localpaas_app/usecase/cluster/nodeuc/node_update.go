@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-func (uc *NodeUC) UpdateNode(
+func (uc *UC) UpdateNode(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.UpdateNodeReq,
@@ -48,7 +48,7 @@ func (uc *NodeUC) UpdateNode(
 	return &nodedto.UpdateNodeResp{}, nil
 }
 
-func (uc *NodeUC) verifyNodeUpdateChange(
+func (uc *UC) verifyNodeUpdateChange(
 	ctx context.Context,
 	req *nodedto.UpdateNodeReq,
 	node *swarm.Node,

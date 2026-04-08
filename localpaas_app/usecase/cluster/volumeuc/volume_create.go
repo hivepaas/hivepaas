@@ -20,7 +20,7 @@ const (
 	namespaceGlobal = "global"
 )
 
-func (uc *VolumeUC) CreateVolume(
+func (uc *UC) CreateVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.CreateVolumeReq,

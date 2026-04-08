@@ -4,14 +4,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type IMServiceUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 }
 
-func NewIMServiceUC(
-	baseSettingUC *settings.BaseSettingUC,
-) *IMServiceUC {
-	return &IMServiceUC{
-		BaseSettingUC: baseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
+) *UC {
+	return &UC{
+		BaseUC: baseUC,
 	}
 }

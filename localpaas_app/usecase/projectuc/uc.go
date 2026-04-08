@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type ProjectUC struct {
+type UC struct {
 	db                       *database.DB
 	projectRepo              repository.ProjectRepo
 	settingRepo              repository.SettingRepo
@@ -22,7 +22,7 @@ type ProjectUC struct {
 	dockerManager            docker.Manager
 }
 
-func NewProjectUC(
+func New(
 	db *database.DB,
 	projectRepo repository.ProjectRepo,
 	settingRepo repository.SettingRepo,
@@ -32,8 +32,8 @@ func NewProjectUC(
 	projectService projectservice.Service,
 	networkService networkservice.Service,
 	dockerManager docker.Manager,
-) *ProjectUC {
-	return &ProjectUC{
+) *UC {
+	return &UC{
 		db:                       db,
 		projectRepo:              projectRepo,
 		settingRepo:              settingRepo,

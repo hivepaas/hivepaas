@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) DeleteProject(
+func (uc *UC) DeleteProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.DeleteProjectReq,
@@ -52,7 +52,7 @@ type deleteProjectData struct {
 	Project *entity.Project
 }
 
-func (uc *ProjectUC) loadProjectDataForDelete(
+func (uc *UC) loadProjectDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	req *projectdto.DeleteProjectReq,
@@ -72,7 +72,7 @@ func (uc *ProjectUC) loadProjectDataForDelete(
 	return nil
 }
 
-func (uc *ProjectUC) prepareDeletingProject(
+func (uc *UC) prepareDeletingProject(
 	data *deleteProjectData,
 	persistingData *persistingProjectData,
 ) {

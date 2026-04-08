@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc/accesstokendto"
 )
 
-func (uc *AccessTokenUC) DeleteAccessToken(
+func (uc *UC) DeleteAccessToken(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *accesstokendto.DeleteAccessTokenReq,

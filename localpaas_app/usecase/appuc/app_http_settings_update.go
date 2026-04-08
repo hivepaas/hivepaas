@@ -19,7 +19,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppHttpSettings(
+func (uc *UC) UpdateAppHttpSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppHttpSettingsReq,
@@ -59,7 +59,7 @@ type updateAppHttpSettingsData struct {
 	RefObjects      *entity.RefObjects
 }
 
-func (uc *AppUC) loadAppHttpSettingsForUpdate(
+func (uc *UC) loadAppHttpSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppHttpSettingsReq,
@@ -96,7 +96,7 @@ func (uc *AppUC) loadAppHttpSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppHttpSettings(
+func (uc *UC) prepareUpdatingAppHttpSettings(
 	_ context.Context,
 	data *updateAppHttpSettingsData,
 	persistingData *persistingAppData,
@@ -124,7 +124,7 @@ func (uc *AppUC) prepareUpdatingAppHttpSettings(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *AppUC) applyAppHttpSettings(
+func (uc *UC) applyAppHttpSettings(
 	ctx context.Context,
 	data *updateAppHttpSettingsData,
 ) error {

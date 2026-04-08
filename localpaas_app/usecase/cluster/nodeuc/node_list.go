@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-func (uc *NodeUC) ListNode(
+func (uc *UC) ListNode(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.ListNodeReq,

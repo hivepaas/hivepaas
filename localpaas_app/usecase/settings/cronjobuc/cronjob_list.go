@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
 )
 
-func (uc *CronJobUC) ListCronJob(
+func (uc *UC) ListCronJob(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cronjobdto.ListCronJobReq,

@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 )
 
-func (uc *SSHKeyUC) UpdateSSHKeyMeta(
+func (uc *UC) UpdateSSHKeyMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sshkeydto.UpdateSSHKeyMetaReq,

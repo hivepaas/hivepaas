@@ -26,7 +26,7 @@ type redirectTemplate struct {
 	Action   string
 }
 
-func (uc *GithubAppUC) BeginGithubAppManifestFlowCreation(
+func (uc *UC) BeginGithubAppManifestFlowCreation(
 	ctx context.Context,
 	req *githubappdto.BeginGithubAppManifestFlowCreationReq,
 ) (*githubappdto.BeginGithubAppManifestFlowCreationResp, error) {

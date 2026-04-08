@@ -19,7 +19,7 @@ const (
 	defaultCheckPortTimeout = time.Second * 5
 )
 
-func (uc *AppUC) CheckAppContainerPort(
+func (uc *UC) CheckAppContainerPort(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.CheckAppContainerPortReq,

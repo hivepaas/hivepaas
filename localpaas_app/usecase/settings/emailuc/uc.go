@@ -4,14 +4,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type EmailUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 }
 
-func NewEmailUC(
-	baseSettingUC *settings.BaseSettingUC,
-) *EmailUC {
-	return &EmailUC{
-		BaseSettingUC: baseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
+) *UC {
+	return &UC{
+		BaseUC: baseUC,
 	}
 }

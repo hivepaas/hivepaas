@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/registryauthuc/registryauthdto"
 )
 
-func (uc *RegistryAuthUC) TestRegistryAuthConn(
+func (uc *UC) TestRegistryAuthConn(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *registryauthdto.TestRegistryAuthConnReq,

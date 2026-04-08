@@ -27,7 +27,7 @@ const (
 	cleanupJobRetryDelay = timeutil.Duration(time.Second * 30)
 )
 
-func (uc *SystemCleanupUC) UpdateSystemCleanup(
+func (uc *UC) UpdateSystemCleanup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systemcleanupdto.UpdateSystemCleanupReq,
@@ -85,7 +85,7 @@ type persistingSettingData struct {
 	JobSetting *entity.Setting
 }
 
-func (uc *SystemCleanupUC) loadSettingData(
+func (uc *UC) loadSettingData(
 	ctx context.Context,
 	db database.Tx,
 	req *systemcleanupdto.UpdateSystemCleanupReq,
@@ -140,7 +140,7 @@ func (uc *SystemCleanupUC) loadSettingData(
 	return nil
 }
 
-func (uc *SystemCleanupUC) preparePersistingData(
+func (uc *UC) preparePersistingData(
 	req *systemcleanupdto.UpdateSystemCleanupReq,
 	updateData *updateSettingData,
 	persistingData *persistingSettingData,
@@ -169,7 +169,7 @@ func (uc *SystemCleanupUC) preparePersistingData(
 	return nil
 }
 
-func (uc *SystemCleanupUC) postPersisting(
+func (uc *UC) postPersisting(
 	ctx context.Context,
 	db database.Tx,
 	updateData *updateSettingData,

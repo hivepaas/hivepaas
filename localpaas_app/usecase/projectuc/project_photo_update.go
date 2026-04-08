@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) UpdateProjectPhoto(
+func (uc *UC) UpdateProjectPhoto(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.UpdateProjectPhotoReq,
@@ -45,7 +45,7 @@ type persistingProjectPhotoData struct {
 	UpdatingProject *entity.Project
 }
 
-func (uc *ProjectUC) loadProjectPhotoDataForUpdate(
+func (uc *UC) loadProjectPhotoDataForUpdate(
 	ctx context.Context,
 	db database.IDB,
 	req *projectdto.UpdateProjectPhotoReq,
@@ -71,7 +71,7 @@ func (uc *ProjectUC) loadProjectPhotoDataForUpdate(
 	return nil
 }
 
-func (uc *ProjectUC) preparePersistingProjectPhotoData(
+func (uc *UC) preparePersistingProjectPhotoData(
 	req *projectdto.UpdateProjectPhotoReq,
 	data *updateProjectPhotoData,
 	persistingData *persistingProjectPhotoData,
@@ -86,7 +86,7 @@ func (uc *ProjectUC) preparePersistingProjectPhotoData(
 	}
 }
 
-func (uc *ProjectUC) persistProjectPhotoData(
+func (uc *UC) persistProjectPhotoData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingProjectPhotoData,

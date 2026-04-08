@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) CompleteUserSignup(
+func (uc *UC) CompleteUserSignup(
 	ctx context.Context,
 	req *userdto.CompleteUserSignupReq,
 ) (*userdto.CompleteUserSignupResp, error) {
@@ -49,7 +49,7 @@ type persistingUserSignupData struct {
 	UpdatingUser *entity.User
 }
 
-func (uc *UserUC) loadUserSignupData(
+func (uc *UC) loadUserSignupData(
 	ctx context.Context,
 	db database.IDB,
 	req *userdto.CompleteUserSignupReq,
@@ -94,7 +94,7 @@ func (uc *UserUC) loadUserSignupData(
 	return nil
 }
 
-func (uc *UserUC) preparePersistingUserSignupData(
+func (uc *UC) preparePersistingUserSignupData(
 	req *userdto.CompleteUserSignupReq,
 	signupData *userSignupData,
 	persistingData *persistingUserSignupData,
@@ -133,7 +133,7 @@ func (uc *UserUC) preparePersistingUserSignupData(
 	return nil
 }
 
-func (uc *UserUC) persistUserSignupData(
+func (uc *UC) persistUserSignupData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingUserSignupData,

@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
 )
 
-func (uc *TaskUC) GetTask(
+func (uc *UC) GetTask(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *taskdto.GetTaskReq,

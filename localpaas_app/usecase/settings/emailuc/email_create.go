@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentEmailVersion
 )
 
-func (uc *EmailUC) CreateEmail(
+func (uc *UC) CreateEmail(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *emaildto.CreateEmailReq,

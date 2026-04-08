@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/services/aws/s3"
 )
 
-func (uc *CloudStorageUC) TestCloudStorageConn(
+func (uc *UC) TestCloudStorageConn(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.TestCloudStorageConnReq,
@@ -25,7 +25,7 @@ func (uc *CloudStorageUC) TestCloudStorageConn(
 	}
 }
 
-func (uc *CloudStorageUC) testCloudStorageS3Conn(
+func (uc *UC) testCloudStorageS3Conn(
 	ctx context.Context,
 	req *cloudstoragedto.TestCloudStorageConnReq,
 ) (*cloudstoragedto.TestCloudStorageConnResp, error) {

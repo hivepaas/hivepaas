@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/registryauthuc/registryauthdto"
 )
 
-func (uc *RegistryAuthUC) DeleteRegistryAuth(
+func (uc *UC) DeleteRegistryAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *registryauthdto.DeleteRegistryAuthReq,

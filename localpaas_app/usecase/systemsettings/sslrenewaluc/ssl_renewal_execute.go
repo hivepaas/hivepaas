@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc/sslrenewaldto"
 )
 
-func (uc *SSLRenewalUC) ExecuteSSLRenewal(
+func (uc *UC) ExecuteSSLRenewal(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sslrenewaldto.ExecuteSSLRenewalReq,
@@ -54,7 +54,7 @@ func (uc *SSLRenewalUC) ExecuteSSLRenewal(
 	}, nil
 }
 
-func (uc *SSLRenewalUC) getRenewalSettingAndJob(
+func (uc *UC) getRenewalSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
 	scope *base.SettingScope,

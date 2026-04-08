@@ -28,7 +28,7 @@ const (
 	nextStepMfaSetup = "NextMfaSetup"
 )
 
-func (uc *SessionUC) LoginWithPassword(
+func (uc *UC) LoginWithPassword(
 	ctx context.Context,
 	req *sessiondto.LoginWithPasswordReq,
 ) (resp *sessiondto.LoginWithPasswordResp, err error) {
@@ -93,7 +93,7 @@ func (uc *SessionUC) LoginWithPassword(
 	}, nil
 }
 
-func (uc *SessionUC) passwordCheck(
+func (uc *UC) passwordCheck(
 	ctx context.Context,
 	req *sessiondto.LoginWithPasswordReq,
 	dbUser *entity.User,
@@ -113,7 +113,7 @@ func (uc *SessionUC) passwordCheck(
 
 // allowPasswordLoginAtTheMoment checks if user can do password login at the moment.
 // If user made too many login failures, they need to wait for some time before they can try again.
-func (uc *SessionUC) allowPasswordLoginAtTheMoment(
+func (uc *UC) allowPasswordLoginAtTheMoment(
 	ctx context.Context,
 	dbUser *entity.User,
 ) (*cacheentity.LoginAttempt, error) {
@@ -144,7 +144,7 @@ func (uc *SessionUC) allowPasswordLoginAtTheMoment(
 
 // savePasswordCheckingStatus saves password checking status including the number of failures
 // and timestamp of the first fail.
-func (uc *SessionUC) savePasswordCheckingStatus(
+func (uc *UC) savePasswordCheckingStatus(
 	ctx context.Context,
 	dbUser *entity.User,
 	attempt *cacheentity.LoginAttempt,
@@ -175,7 +175,7 @@ func (uc *SessionUC) savePasswordCheckingStatus(
 	return nil
 }
 
-func (uc *SessionUC) wrapSensitiveError(err error) error {
+func (uc *UC) wrapSensitiveError(err error) error {
 	// Due to security reason, we don't want to send the real error to user for the cases
 	// user not found and password mismatched.
 	if errors.Is(err, apperrors.ErrNotFound) || errors.Is(err, apperrors.ErrPasswordMismatched) ||

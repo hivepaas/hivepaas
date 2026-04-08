@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 )
 
-func (uc *HealthcheckUC) UpdateHealthcheckMeta(
+func (uc *UC) UpdateHealthcheckMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *healthcheckdto.UpdateHealthcheckMetaReq,

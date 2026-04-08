@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
 )
 
-func (uc *BasicAuthUC) UpdateBasicAuth(
+func (uc *UC) UpdateBasicAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *basicauthdto.UpdateBasicAuthReq,

@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 )
 
-func (uc *GithubAppUC) ListGithubApp(
+func (uc *UC) ListGithubApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.ListGithubAppReq,

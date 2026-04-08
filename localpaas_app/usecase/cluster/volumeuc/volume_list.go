@@ -19,7 +19,7 @@ const (
 	localpaasVolumeLabel = "localpaas.volume.managed"
 )
 
-func (uc *VolumeUC) ListVolume(
+func (uc *UC) ListVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.ListVolumeReq,

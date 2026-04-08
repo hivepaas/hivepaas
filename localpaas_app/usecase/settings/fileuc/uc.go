@@ -4,14 +4,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type FileUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 }
 
-func NewFileUC(
-	baseSettingUC *settings.BaseSettingUC,
-) *FileUC {
-	return &FileUC{
-		BaseSettingUC: baseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
+) *UC {
+	return &UC{
+		BaseUC: baseUC,
 	}
 }

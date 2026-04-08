@@ -9,16 +9,16 @@ import (
 
 type ProjectHandler struct {
 	*basesettinghandler.BaseSettingHandler
-	projectUC       *projectuc.ProjectUC
-	dockerNetworkUC *networkuc.NetworkUC
-	dockerVolumeUC  *volumeuc.VolumeUC
+	projectUC       *projectuc.UC
+	dockerNetworkUC *networkuc.UC
+	dockerVolumeUC  *volumeuc.UC
 }
 
 func NewProjectHandler(
 	baseSettingHandler *basesettinghandler.BaseSettingHandler,
-	projectUC *projectuc.ProjectUC,
-	dockerNetworkUC *networkuc.NetworkUC,
-	dockerVolumeUC *volumeuc.VolumeUC,
+	projectUC *projectuc.UC,
+	dockerNetworkUC *networkuc.UC,
+	dockerVolumeUC *volumeuc.UC,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		BaseSettingHandler: baseSettingHandler,

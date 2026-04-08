@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imserviceuc/imservicedto"
 )
 
-func (uc *IMServiceUC) DeleteIMService(
+func (uc *UC) DeleteIMService(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imservicedto.DeleteIMServiceReq,

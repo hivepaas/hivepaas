@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc/accesstokendto"
 )
 
-func (uc *AccessTokenUC) UpdateAccessToken(
+func (uc *UC) UpdateAccessToken(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *accesstokendto.UpdateAccessTokenReq,

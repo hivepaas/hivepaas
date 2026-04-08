@@ -17,7 +17,7 @@ const (
 	externalAvatarURLMaxLen = 2000
 )
 
-func (uc *SessionUC) CreateOAuthSession(
+func (uc *UC) CreateOAuthSession(
 	ctx context.Context,
 	req *sessiondto.CreateOAuthSessionReq,
 ) (*sessiondto.CreateOAuthSessionResp, error) {

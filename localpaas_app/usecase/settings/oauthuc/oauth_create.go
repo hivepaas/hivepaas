@@ -20,7 +20,7 @@ const (
 	currentSettingVersion = entity.CurrentOAuthVersion
 )
 
-func (uc *OAuthUC) CreateOAuth(
+func (uc *UC) CreateOAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *oauthdto.CreateOAuthReq,

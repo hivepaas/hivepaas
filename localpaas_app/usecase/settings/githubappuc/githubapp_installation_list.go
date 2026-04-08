@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/github"
 )
 
-func (uc *GithubAppUC) ListAppInstallation(
+func (uc *UC) ListAppInstallation(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.ListAppInstallationReq,

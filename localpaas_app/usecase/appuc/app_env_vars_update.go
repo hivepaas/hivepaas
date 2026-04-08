@@ -19,7 +19,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppEnvVars(
+func (uc *UC) UpdateAppEnvVars(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppEnvVarsReq,
@@ -61,7 +61,7 @@ type updateAppEnvVarsData struct {
 	Warnings []string // stores warnings
 }
 
-func (uc *AppUC) loadAppEnvVarsForUpdate(
+func (uc *UC) loadAppEnvVarsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppEnvVarsReq,
@@ -88,7 +88,7 @@ func (uc *AppUC) loadAppEnvVarsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppEnvVars(
+func (uc *UC) prepareUpdatingAppEnvVars(
 	req *appdto.UpdateAppEnvVarsReq,
 	data *updateAppEnvVarsData,
 	persistingData *persistingAppData,
@@ -126,7 +126,7 @@ func (uc *AppUC) prepareUpdatingAppEnvVars(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *AppUC) applyAppEnvVars(
+func (uc *UC) applyAppEnvVars(
 	ctx context.Context,
 	db database.Tx,
 	data *updateAppEnvVarsData,

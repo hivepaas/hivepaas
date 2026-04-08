@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 )
 
-type TaskUC struct {
+type UC struct {
 	db              *database.DB
 	redisClient     rediscache.Client
 	taskRepo        repository.TaskRepo
@@ -18,7 +18,7 @@ type TaskUC struct {
 	taskService     taskservice.Service
 }
 
-func NewTaskUC(
+func New(
 	db *database.DB,
 	redisClient rediscache.Client,
 	taskRepo repository.TaskRepo,
@@ -26,8 +26,8 @@ func NewTaskUC(
 	taskInfoRepo cacherepository.TaskInfoRepo,
 	taskControlRepo cacherepository.TaskControlRepo,
 	taskService taskservice.Service,
-) *TaskUC {
-	return &TaskUC{
+) *UC {
+	return &UC{
 		db:              db,
 		redisClient:     redisClient,
 		taskRepo:        taskRepo,

@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentRegistryAuthVersion
 )
 
-func (uc *RegistryAuthUC) CreateRegistryAuth(
+func (uc *UC) CreateRegistryAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *registryauthdto.CreateRegistryAuthReq,

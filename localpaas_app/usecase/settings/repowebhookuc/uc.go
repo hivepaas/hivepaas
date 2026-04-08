@@ -4,14 +4,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type RepoWebhookUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 }
 
-func NewRepoWebhookUC(
-	baseSettingUC *settings.BaseSettingUC,
-) *RepoWebhookUC {
-	return &RepoWebhookUC{
-		BaseSettingUC: baseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
+) *UC {
+	return &UC{
+		BaseUC: baseUC,
 	}
 }

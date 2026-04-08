@@ -5,16 +5,16 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 )
 
-type SysErrorUC struct {
+type UC struct {
 	db           *database.DB
 	appErrorRepo repository.SysErrorRepo
 }
 
-func NewSysErrorUC(
+func New(
 	db *database.DB,
 	appErrorRepo repository.SysErrorRepo,
-) *SysErrorUC {
-	return &SysErrorUC{
+) *UC {
+	return &UC{
 		db:           db,
 		appErrorRepo: appErrorRepo,
 	}

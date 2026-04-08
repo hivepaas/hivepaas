@@ -24,7 +24,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) InviteUser(
+func (uc *UC) InviteUser(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.InviteUserReq,
@@ -71,7 +71,7 @@ type userInviteData struct {
 	SystemEmail           *entity.Email
 }
 
-func (uc *UserUC) loadUserInviteData(
+func (uc *UC) loadUserInviteData(
 	ctx context.Context,
 	db database.IDB,
 	req *userdto.InviteUserReq,
@@ -133,7 +133,7 @@ func (uc *UserUC) loadUserInviteData(
 	return nil
 }
 
-func (uc *UserUC) preparePersistingUserInviteData(
+func (uc *UC) preparePersistingUserInviteData(
 	req *userdto.InviteUserReq,
 	data *userInviteData,
 	persistingData *userservice.PersistingUserData,
@@ -167,7 +167,7 @@ func (uc *UserUC) preparePersistingUserInviteData(
 	uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
 }
 
-func (uc *UserUC) preparePersistingUserModuleAccesses(
+func (uc *UC) preparePersistingUserModuleAccesses(
 	user *entity.User,
 	moduleReqs basedto.ModuleAccessSliceReq,
 	timeNow time.Time,
@@ -187,7 +187,7 @@ func (uc *UserUC) preparePersistingUserModuleAccesses(
 	}
 }
 
-func (uc *UserUC) preparePersistingUserProjectAccesses(
+func (uc *UC) preparePersistingUserProjectAccesses(
 	user *entity.User,
 	projectReqs basedto.ObjectAccessSliceReq,
 	timeNow time.Time,

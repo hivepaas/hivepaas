@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc/imagedto"
 )
 
-func (uc *ImageUC) ListImage(
+func (uc *UC) ListImage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagedto.ListImageReq,

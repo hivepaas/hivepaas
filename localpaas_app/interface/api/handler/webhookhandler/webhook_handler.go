@@ -7,12 +7,12 @@ import (
 
 type WebhookHandler struct {
 	*handler.BaseHandler
-	webhookUC *webhookuc.WebhookUC
+	webhookUC *webhookuc.UC
 }
 
 func NewWebhookHandler(
 	baseHandler *handler.BaseHandler,
-	webhookUC *webhookuc.WebhookUC,
+	webhookUC *webhookuc.UC,
 ) *WebhookHandler {
 	return &WebhookHandler{
 		BaseHandler: baseHandler,

@@ -17,7 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateApp(
+func (uc *UC) UpdateApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppReq,
@@ -46,7 +46,7 @@ type updateAppData struct {
 	ServiceSpec *swarm.ServiceSpec
 }
 
-func (uc *AppUC) loadAppDataForUpdate(
+func (uc *UC) loadAppDataForUpdate(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.UpdateAppReq,
@@ -79,7 +79,7 @@ func (uc *AppUC) loadAppDataForUpdate(
 	return nil
 }
 
-func (uc *AppUC) preparePersistingAppUpdate(
+func (uc *UC) preparePersistingAppUpdate(
 	req *appdto.UpdateAppReq,
 	data *updateAppData,
 	persistingData *persistingAppData,

@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/github"
 )
 
-func (uc *GithubAppUC) HandleGithubAppManifestFlowProgress(
+func (uc *UC) HandleGithubAppManifestFlowProgress(
 	ctx context.Context,
 	req *githubappdto.HandleGithubAppManifestFlowProgressReq,
 ) (*githubappdto.HandleGithubAppManifestFlowProgressResp, error) {
@@ -28,7 +28,7 @@ func (uc *GithubAppUC) HandleGithubAppManifestFlowProgress(
 	return nil, apperrors.NewNotImplemented()
 }
 
-func (uc *GithubAppUC) handleGithubAppManifestFlowOnCreation(
+func (uc *UC) handleGithubAppManifestFlowOnCreation(
 	ctx context.Context,
 	req *githubappdto.HandleGithubAppManifestFlowProgressReq,
 ) (*githubappdto.HandleGithubAppManifestFlowProgressResp, error) {
@@ -77,7 +77,7 @@ func (uc *GithubAppUC) handleGithubAppManifestFlowOnCreation(
 	}, nil
 }
 
-func (uc *GithubAppUC) handleGithubAppManifestFlowOnInstallation(
+func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 	ctx context.Context,
 	req *githubappdto.HandleGithubAppManifestFlowProgressReq,
 ) (*githubappdto.HandleGithubAppManifestFlowProgressResp, error) {

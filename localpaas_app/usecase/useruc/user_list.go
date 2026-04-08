@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) ListUser(
+func (uc *UC) ListUser(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.ListUserReq,

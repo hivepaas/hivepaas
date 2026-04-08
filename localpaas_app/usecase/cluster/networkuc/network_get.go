@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *NetworkUC) GetNetwork(
+func (uc *UC) GetNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.GetNetworkReq,

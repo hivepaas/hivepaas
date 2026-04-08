@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
 
-func (uc *GitCredentialUC) ListGitCredential(
+func (uc *UC) ListGitCredential(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *gitcredentialdto.ListGitCredentialReq,

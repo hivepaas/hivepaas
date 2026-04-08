@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) RequestResetPassword(
+func (uc *UC) RequestResetPassword(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.RequestResetPasswordReq,

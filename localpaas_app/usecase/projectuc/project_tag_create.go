@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) CreateProjectTag(
+func (uc *UC) CreateProjectTag(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.CreateProjectTagReq,
@@ -43,7 +43,7 @@ type createProjectTagData struct {
 	NextDisplayOrder int
 }
 
-func (uc *ProjectUC) loadProjectTagDataForAddNew(
+func (uc *UC) loadProjectTagDataForAddNew(
 	ctx context.Context,
 	db database.IDB,
 	req *projectdto.CreateProjectTagReq,

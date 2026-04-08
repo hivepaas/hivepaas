@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type NetworkUC struct {
+type UC struct {
 	db             *database.DB
 	settingRepo    repository.SettingRepo
 	clusterService clusterservice.Service
@@ -16,14 +16,14 @@ type NetworkUC struct {
 	dockerManager  docker.Manager
 }
 
-func NewNetworkUC(
+func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	clusterService clusterservice.Service,
 	projectService projectservice.Service,
 	dockerManager docker.Manager,
-) *NetworkUC {
-	return &NetworkUC{
+) *UC {
+	return &UC{
 		db:             db,
 		settingRepo:    settingRepo,
 		clusterService: clusterService,

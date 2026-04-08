@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
 )
 
-func (uc *ImageBuildUC) UpdateImageBuild(
+func (uc *UC) UpdateImageBuild(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagebuilddto.UpdateImageBuildReq,

@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) BeginUserSignup(
+func (uc *UC) BeginUserSignup(
 	ctx context.Context,
 	req *userdto.BeginUserSignupReq,
 ) (*userdto.BeginUserSignupResp, error) {

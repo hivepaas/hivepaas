@@ -16,7 +16,7 @@ const (
 	taskLogSessionTimeout       = 10 * time.Minute
 )
 
-func (uc *TaskUC) GetTaskLogs(
+func (uc *UC) GetTaskLogs(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *taskdto.GetTaskLogsReq,

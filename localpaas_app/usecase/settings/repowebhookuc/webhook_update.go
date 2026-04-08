@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 )
 
-func (uc *RepoWebhookUC) UpdateRepoWebhook(
+func (uc *UC) UpdateRepoWebhook(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *repowebhookdto.UpdateRepoWebhookReq,

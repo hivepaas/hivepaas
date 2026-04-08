@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-func (uc *NodeUC) GetNode(
+func (uc *UC) GetNode(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.GetNodeReq,

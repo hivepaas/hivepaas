@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
-func (uc *AppDeploymentUC) CancelDeployment(
+func (uc *UC) CancelDeployment(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdeploymentdto.CancelDeploymentReq,

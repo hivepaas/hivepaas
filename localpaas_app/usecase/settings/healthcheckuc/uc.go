@@ -7,26 +7,26 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type HealthcheckUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 	appRepo     repository.AppRepo
 	taskRepo    repository.TaskRepo
 	taskService taskservice.Service
 	taskQueue   queue.TaskQueue
 }
 
-func NewHealthcheckUC(
-	baseSettingUC *settings.BaseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
 	appRepo repository.AppRepo,
 	taskRepo repository.TaskRepo,
 	taskService taskservice.Service,
 	taskQueue queue.TaskQueue,
-) *HealthcheckUC {
-	return &HealthcheckUC{
-		BaseSettingUC: baseSettingUC,
-		appRepo:       appRepo,
-		taskRepo:      taskRepo,
-		taskService:   taskService,
-		taskQueue:     taskQueue,
+) *UC {
+	return &UC{
+		BaseUC:      baseUC,
+		appRepo:     appRepo,
+		taskRepo:    taskRepo,
+		taskService: taskService,
+		taskQueue:   taskQueue,
 	}
 }

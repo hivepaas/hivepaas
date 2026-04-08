@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *VolumeUC) GetVolume(
+func (uc *UC) GetVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.GetVolumeReq,

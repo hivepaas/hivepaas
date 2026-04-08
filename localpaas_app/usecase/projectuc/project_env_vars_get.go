@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) GetProjectEnvVars(
+func (uc *UC) GetProjectEnvVars(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.GetProjectEnvVarsReq,

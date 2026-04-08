@@ -23,7 +23,7 @@ const (
 	runtimeLogSessionTimeout       = time.Hour
 )
 
-func (uc *AppUC) GetAppRuntimeLogs(
+func (uc *UC) GetAppRuntimeLogs(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppRuntimeLogsReq,

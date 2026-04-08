@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
 )
 
-func (uc *EmailUC) DeleteEmail(
+func (uc *UC) DeleteEmail(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *emaildto.DeleteEmailReq,

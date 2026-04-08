@@ -30,7 +30,7 @@ type GetSettingData struct {
 	ExtraLoadOpts []bunex.SelectQueryOption
 }
 
-func (uc *BaseSettingUC) GetSetting(
+func (uc *BaseUC) GetSetting(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *GetSettingReq,
@@ -56,7 +56,7 @@ func (uc *BaseSettingUC) GetSetting(
 	}, nil
 }
 
-func (uc *BaseSettingUC) GetSettingByID(
+func (uc *BaseUC) GetSettingByID(
 	ctx context.Context,
 	db database.IDB,
 	req *BaseSettingReq,

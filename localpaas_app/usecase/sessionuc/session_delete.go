@@ -7,7 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) DeleteSession(
+func (uc *UC) DeleteSession(
 	ctx context.Context,
 	req *sessiondto.DeleteSessionReq,
 ) (resp *sessiondto.DeleteSessionResp, err error) {

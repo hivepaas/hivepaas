@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) DeleteProjectTags(
+func (uc *UC) DeleteProjectTags(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.DeleteProjectTagsReq,
@@ -46,7 +46,7 @@ type deleteProjectTagData struct {
 	UpdatingOrderTags   []*entity.ProjectTag
 }
 
-func (uc *ProjectUC) loadProjectTagDataForDelete(
+func (uc *UC) loadProjectTagDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	req *projectdto.DeleteProjectTagsReq,
@@ -78,7 +78,7 @@ func (uc *ProjectUC) loadProjectTagDataForDelete(
 	return nil
 }
 
-func (uc *ProjectUC) prepareDeletingProjectTag(
+func (uc *UC) prepareDeletingProjectTag(
 	tagData *deleteProjectTagData,
 	persistingData *persistingProjectData,
 ) {

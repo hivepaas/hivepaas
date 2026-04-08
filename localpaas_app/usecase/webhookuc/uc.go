@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type WebhookUC struct {
+type UC struct {
 	db             *database.DB
 	projectRepo    repository.ProjectRepo
 	appRepo        repository.AppRepo
@@ -29,7 +29,7 @@ type WebhookUC struct {
 	taskQueue      queue.TaskQueue
 }
 
-func NewWebhookUC(
+func New(
 	db *database.DB,
 	projectRepo repository.ProjectRepo,
 	appRepo repository.AppRepo,
@@ -43,8 +43,8 @@ func NewWebhookUC(
 	traefikService traefikservice.Service,
 	dockerManager docker.Manager,
 	taskQueue queue.TaskQueue,
-) *WebhookUC {
-	return &WebhookUC{
+) *UC {
+	return &UC{
 		db:             db,
 		projectRepo:    projectRepo,
 		appRepo:        appRepo,

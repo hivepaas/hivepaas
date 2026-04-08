@@ -44,7 +44,7 @@ type PersistingSettingDeletionData struct {
 	ProjectSharedSetting *entity.ProjectSharedSetting
 }
 
-func (uc *BaseSettingUC) DeleteSetting(
+func (uc *BaseUC) DeleteSetting(
 	ctx context.Context,
 	req *DeleteSettingReq,
 	data *DeleteSettingData,
@@ -95,7 +95,7 @@ func (uc *BaseSettingUC) DeleteSetting(
 	return &DeleteSettingResp{}, nil
 }
 
-func (uc *BaseSettingUC) loadSettingForDeletion(
+func (uc *BaseUC) loadSettingForDeletion(
 	ctx context.Context,
 	db database.IDB,
 	req *DeleteSettingReq,
@@ -124,7 +124,7 @@ func (uc *BaseSettingUC) loadSettingForDeletion(
 	return nil
 }
 
-func (uc *BaseSettingUC) prepareSettingDeletion(
+func (uc *BaseUC) prepareSettingDeletion(
 	_ *DeleteSettingReq,
 	data *DeleteSettingData,
 	persistingData *PersistingSettingDeletionData,
@@ -140,7 +140,7 @@ func (uc *BaseSettingUC) prepareSettingDeletion(
 	}
 }
 
-func (uc *BaseSettingUC) persistSettingDeletion(
+func (uc *BaseUC) persistSettingDeletion(
 	ctx context.Context,
 	db database.IDB,
 	data *DeleteSettingData,

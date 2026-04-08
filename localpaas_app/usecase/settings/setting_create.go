@@ -43,7 +43,7 @@ type PersistingSettingCreationData struct {
 	Setting *entity.Setting
 }
 
-func (uc *BaseSettingUC) CreateSetting(
+func (uc *BaseUC) CreateSetting(
 	ctx context.Context,
 	req *CreateSettingReq,
 	data *CreateSettingData,
@@ -104,7 +104,7 @@ func (uc *BaseSettingUC) CreateSetting(
 	}, nil
 }
 
-func (uc *BaseSettingUC) loadSettingForCreation(
+func (uc *BaseUC) loadSettingForCreation(
 	ctx context.Context,
 	db database.IDB,
 	req *CreateSettingReq,
@@ -129,7 +129,7 @@ func (uc *BaseSettingUC) loadSettingForCreation(
 	return nil
 }
 
-func (uc *BaseSettingUC) prepareSettingCreation(
+func (uc *BaseUC) prepareSettingCreation(
 	req *CreateSettingReq,
 	data *CreateSettingData,
 	persistingData *PersistingSettingCreationData,
@@ -151,7 +151,7 @@ func (uc *BaseSettingUC) prepareSettingCreation(
 	persistingData.Setting = setting
 }
 
-func (uc *BaseSettingUC) persistSettingCreation(
+func (uc *BaseUC) persistSettingCreation(
 	ctx context.Context,
 	db database.IDB,
 	req *CreateSettingReq,

@@ -16,7 +16,7 @@ const (
 	qrCodeImageType = "image/png"
 )
 
-func (uc *UserUC) BeginMFATotpSetup(
+func (uc *UC) BeginMFATotpSetup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.BeginMFATotpSetupReq,

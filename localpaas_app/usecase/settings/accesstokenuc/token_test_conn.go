@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/gitlab"
 )
 
-func (uc *AccessTokenUC) TestAccessTokenConn(
+func (uc *UC) TestAccessTokenConn(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *accesstokendto.TestAccessTokenConnReq,
@@ -36,7 +36,7 @@ func (uc *AccessTokenUC) TestAccessTokenConn(
 	return &accesstokendto.TestAccessTokenConnResp{}, nil
 }
 
-func (uc *AccessTokenUC) testGithubTokenConn(
+func (uc *UC) testGithubTokenConn(
 	ctx context.Context,
 	req *accesstokendto.TestAccessTokenConnReq,
 ) error {
@@ -51,7 +51,7 @@ func (uc *AccessTokenUC) testGithubTokenConn(
 	return nil
 }
 
-func (uc *AccessTokenUC) testGitlabTokenConn(
+func (uc *UC) testGitlabTokenConn(
 	ctx context.Context,
 	req *accesstokendto.TestAccessTokenConnReq,
 ) error {
@@ -66,7 +66,7 @@ func (uc *AccessTokenUC) testGitlabTokenConn(
 	return nil
 }
 
-func (uc *AccessTokenUC) testGiteaTokenConn(
+func (uc *UC) testGiteaTokenConn(
 	ctx context.Context,
 	req *accesstokendto.TestAccessTokenConnReq,
 ) error {

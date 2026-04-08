@@ -19,7 +19,7 @@ const (
 	deploymentLogSessionTimeout       = 10 * time.Minute
 )
 
-func (uc *AppDeploymentUC) GetDeploymentLogs(
+func (uc *UC) GetDeploymentLogs(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdeploymentdto.GetDeploymentLogsReq,

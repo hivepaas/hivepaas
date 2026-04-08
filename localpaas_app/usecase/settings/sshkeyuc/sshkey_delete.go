@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 )
 
-func (uc *SSHKeyUC) DeleteSSHKey(
+func (uc *UC) DeleteSSHKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sshkeydto.DeleteSSHKeyReq,

@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
 )
 
-func (uc *HealthcheckUC) ListHealthcheckTask(
+func (uc *UC) ListHealthcheckTask(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *healthcheckdto.ListHealthcheckTaskReq,

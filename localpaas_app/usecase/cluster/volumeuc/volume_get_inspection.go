@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *VolumeUC) GetVolumeInspection(
+func (uc *UC) GetVolumeInspection(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.GetVolumeInspectionReq,

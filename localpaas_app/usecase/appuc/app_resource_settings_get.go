@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppResourceSettings(
+func (uc *UC) GetAppResourceSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppResourceSettingsReq,

@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc/imagedto"
 )
 
-func (uc *ImageUC) GetImageInspection(
+func (uc *UC) GetImageInspection(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagedto.GetImageInspectionReq,

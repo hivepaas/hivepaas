@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) UpdatePassword(
+func (uc *UC) UpdatePassword(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.UpdatePasswordReq,

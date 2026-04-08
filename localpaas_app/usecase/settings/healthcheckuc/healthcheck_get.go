@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 )
 
-func (uc *HealthcheckUC) GetHealthcheck(
+func (uc *UC) GetHealthcheck(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *healthcheckdto.GetHealthcheckReq,

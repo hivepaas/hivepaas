@@ -9,13 +9,13 @@ import (
 type FileHandler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.AuthHandler
-	fileUC      *fileuc.FileUC
+	fileUC      *fileuc.UC
 }
 
 func NewFileHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	fileUC *fileuc.FileUC,
+	fileUC *fileuc.UC,
 ) *FileHandler {
 	return &FileHandler{
 		BaseHandler: baseHandler,

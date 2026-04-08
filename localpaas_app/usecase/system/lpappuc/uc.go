@@ -5,16 +5,16 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/lpappservice"
 )
 
-type LpAppUC struct {
+type UC struct {
 	db           *database.DB
 	lpAppService lpappservice.Service
 }
 
-func NewLpAppUC(
+func New(
 	db *database.DB,
 	lpAppService lpappservice.Service,
-) *LpAppUC {
-	return &LpAppUC{
+) *UC {
+	return &UC{
 		db:           db,
 		lpAppService: lpAppService,
 	}

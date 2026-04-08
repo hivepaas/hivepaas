@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
-func (uc *AppDeploymentUC) ListDeployment(
+func (uc *UC) ListDeployment(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdeploymentdto.ListDeploymentReq,

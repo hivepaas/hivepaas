@@ -17,7 +17,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/gitlab"
 )
 
-func (uc *GitCredentialUC) ListRepo(
+func (uc *UC) ListRepo(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *gitcredentialdto.ListRepoReq,
@@ -48,7 +48,7 @@ func (uc *GitCredentialUC) ListRepo(
 	}
 }
 
-func (uc *GitCredentialUC) listGithubRepo(
+func (uc *UC) listGithubRepo(
 	ctx context.Context,
 	req *gitcredentialdto.ListRepoReq,
 	setting *entity.Setting,
@@ -80,7 +80,7 @@ func (uc *GitCredentialUC) listGithubRepo(
 	}, nil
 }
 
-func (uc *GitCredentialUC) listGitlabRepo(
+func (uc *UC) listGitlabRepo(
 	ctx context.Context,
 	req *gitcredentialdto.ListRepoReq,
 	setting *entity.Setting,
@@ -106,7 +106,7 @@ func (uc *GitCredentialUC) listGitlabRepo(
 	}, nil
 }
 
-func (uc *GitCredentialUC) listGiteaRepo(
+func (uc *UC) listGiteaRepo(
 	ctx context.Context,
 	req *gitcredentialdto.ListRepoReq,
 	setting *entity.Setting,

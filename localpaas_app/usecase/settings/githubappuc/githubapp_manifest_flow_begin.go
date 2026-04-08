@@ -42,7 +42,7 @@ var (
 	webhookURLLocal    = "https://smee.io/RBNiNjxieUIWZ6Ej"
 )
 
-func (uc *GithubAppUC) BeginGithubAppManifestFlow(
+func (uc *UC) BeginGithubAppManifestFlow(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.BeginGithubAppManifestFlowReq,

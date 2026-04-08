@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
 )
 
-func (uc *TaskUC) CancelTask(
+func (uc *UC) CancelTask(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *taskdto.CancelTaskReq,

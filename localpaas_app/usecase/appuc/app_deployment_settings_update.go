@@ -19,7 +19,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppDeploymentSettings(
+func (uc *UC) UpdateAppDeploymentSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppDeploymentSettingsReq,
@@ -65,7 +65,7 @@ type updateAppDeploymentSettingsData struct {
 	Warnings              []string // stores warnings
 }
 
-func (uc *AppUC) loadAppDeploymentSettingsForUpdate(
+func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppDeploymentSettingsReq,
@@ -121,7 +121,7 @@ func (uc *AppUC) loadAppDeploymentSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppDeploymentSettings(
+func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	_ context.Context,
 	data *updateAppDeploymentSettingsData,
 	persistingData *persistingAppData,
@@ -164,7 +164,7 @@ func (uc *AppUC) prepareUpdatingAppDeploymentSettings(
 	return nil
 }
 
-func (uc *AppUC) postTransactionAppDeploymentSettings(
+func (uc *UC) postTransactionAppDeploymentSettings(
 	ctx context.Context,
 	persistingData *persistingAppData,
 ) error {

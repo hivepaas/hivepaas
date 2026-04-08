@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc/imagedto"
 )
 
-func (uc *ImageUC) GetImage(
+func (uc *UC) GetImage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagedto.GetImageReq,

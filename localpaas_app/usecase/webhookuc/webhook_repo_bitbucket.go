@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
 )
 
-func (uc *WebhookUC) processBitbucketWebhook(
+func (uc *UC) processBitbucketWebhook(
 	req *webhookdto.HandleRepoWebhookReq,
 	data *repoEventData,
 ) error {

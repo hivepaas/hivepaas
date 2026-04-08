@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) LoginPasswordForgot(
+func (uc *UC) LoginPasswordForgot(
 	ctx context.Context,
 	req *sessiondto.LoginPasswordForgotReq,
 ) (*sessiondto.LoginPasswordForgotResp, error) {

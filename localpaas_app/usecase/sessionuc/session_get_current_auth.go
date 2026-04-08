@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-func (uc *SessionUC) GetCurrentAuthByJWT(ctx context.Context, jwt string) (*basedto.Auth, error) {
+func (uc *UC) GetCurrentAuthByJWT(ctx context.Context, jwt string) (*basedto.Auth, error) {
 	user, err := uc.GetCurrentUserByJWT(ctx, jwt)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -20,7 +20,7 @@ func (uc *SessionUC) GetCurrentAuthByJWT(ctx context.Context, jwt string) (*base
 	return auth, uc.verifyAuth(ctx, auth)
 }
 
-func (uc *SessionUC) GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret string) (*basedto.Auth, error) {
+func (uc *UC) GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret string) (*basedto.Auth, error) {
 	user, err := uc.GetCurrentUserByAPIKey(ctx, keyID, secret)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -29,7 +29,7 @@ func (uc *SessionUC) GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret s
 	return auth, uc.verifyAuth(ctx, auth)
 }
 
-func (uc *SessionUC) verifyAuth(ctx context.Context, auth *basedto.Auth) error {
+func (uc *UC) verifyAuth(ctx context.Context, auth *basedto.Auth) error {
 	user := auth.User
 
 	// User must have access permission

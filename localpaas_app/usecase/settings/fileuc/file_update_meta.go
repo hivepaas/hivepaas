@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 )
 
-func (uc *FileUC) UpdateFileMeta(
+func (uc *UC) UpdateFileMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *filedto.UpdateFileMetaReq,

@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 )
 
-func (uc *GithubAppUC) UpdateGithubAppMeta(
+func (uc *UC) UpdateGithubAppMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.UpdateGithubAppMetaReq,

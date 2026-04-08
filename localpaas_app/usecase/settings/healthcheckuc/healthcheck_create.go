@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentHealthcheckVersion
 )
 
-func (uc *HealthcheckUC) CreateHealthcheck(
+func (uc *UC) CreateHealthcheck(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *healthcheckdto.CreateHealthcheckReq,

@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
 )
 
-func (uc *BasicAuthUC) GetBasicAuth(
+func (uc *UC) GetBasicAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *basicauthdto.GetBasicAuthReq,

@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc/syserrordto"
 )
 
-func (uc *SysErrorUC) CreateSysError(
+func (uc *UC) CreateSysError(
 	ctx context.Context,
 	req *syserrordto.CreateSysErrorReq,
 ) (*syserrordto.CreateSysErrorResp, error) {
@@ -37,7 +37,7 @@ type persistingSysErrorData struct {
 	DeletingSysErrors  []*entity.SysError
 }
 
-func (uc *SysErrorUC) preparePersistingSysError(
+func (uc *UC) preparePersistingSysError(
 	req *syserrordto.CreateSysErrorReq,
 	persistingData *persistingSysErrorData,
 ) {
@@ -55,7 +55,7 @@ func (uc *SysErrorUC) preparePersistingSysError(
 	persistingData.InsertingSysErrors = append(persistingData.InsertingSysErrors, appErr)
 }
 
-func (uc *SysErrorUC) persistData(
+func (uc *UC) persistData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingSysErrorData,

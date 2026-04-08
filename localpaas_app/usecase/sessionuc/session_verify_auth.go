@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 )
 
-func (uc *SessionUC) VerifyAuth(
+func (uc *UC) VerifyAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	accessCheck *permission.AccessCheck,

@@ -21,7 +21,7 @@ import (
 	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
 )
 
-func (uc *AppUC) ObtainDomainSSL(
+func (uc *UC) ObtainDomainSSL(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.ObtainDomainSSLReq,
@@ -81,7 +81,7 @@ type obtainSSLData struct {
 	Email         string
 }
 
-func (uc *AppUC) loadAppDataForObtainDomainSSL(
+func (uc *UC) loadAppDataForObtainDomainSSL(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.ObtainDomainSSLReq,
@@ -116,7 +116,7 @@ func (uc *AppUC) loadAppDataForObtainDomainSSL(
 	return nil
 }
 
-func (uc *AppUC) preparePersistingDomainSSLData(
+func (uc *UC) preparePersistingDomainSSLData(
 	req *appdto.ObtainDomainSSLReq,
 	data *obtainSSLData,
 	persistingData *persistingAppData,
@@ -173,7 +173,7 @@ func (uc *AppUC) preparePersistingDomainSSLData(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, data.HttpSettings)
 }
 
-func (uc *AppUC) applyDomainSSL(
+func (uc *UC) applyDomainSSL(
 	ctx context.Context,
 	db database.IDB,
 	data *obtainSSLData,

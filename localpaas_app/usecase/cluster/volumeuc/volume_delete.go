@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *VolumeUC) DeleteVolume(
+func (uc *UC) DeleteVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.DeleteVolumeReq,

@@ -30,55 +30,55 @@ import (
 type BaseSettingHandler struct {
 	*handler.BaseHandler
 	AuthHandler     *authhandler.AuthHandler
-	OAuthUC         *oauthuc.OAuthUC
-	CloudStorageUC  *cloudstorageuc.CloudStorageUC
-	SSHKeyUC        *sshkeyuc.SSHKeyUC
-	IMServiceUC     *imserviceuc.IMServiceUC
-	RegistryAuthUC  *registryauthuc.RegistryAuthUC
-	BasicAuthUC     *basicauthuc.BasicAuthUC
-	SSLCertUC       *sslcertuc.SSLCertUC
-	GithubAppUC     *githubappuc.GithubAppUC
-	AccessTokenUC   *accesstokenuc.AccessTokenUC
-	CronJobUC       *cronjobuc.CronJobUC
-	HealthcheckUC   *healthcheckuc.HealthcheckUC
-	SecretUC        *secretuc.SecretUC
-	EmailUC         *emailuc.EmailUC
-	APIKeyUC        *apikeyuc.APIKeyUC
-	RepoWebhookUC   *repowebhookuc.RepoWebhookUC
-	NotificationUC  *notificationuc.NotificationUC
-	ImageBuildUC    *imagebuilduc.ImageBuildUC
-	SystemCleanupUC *systemcleanupuc.SystemCleanupUC
-	SystemBackupUC  *systembackupuc.SystemBackupUC
-	GitCredentialUC *gitcredentialuc.GitCredentialUC
-	SSLRenewalUC    *sslrenewaluc.SSLRenewalUC
-	FileUC          *fileuc.FileUC
+	OAuthUC         *oauthuc.UC
+	CloudStorageUC  *cloudstorageuc.UC
+	SSHKeyUC        *sshkeyuc.UC
+	IMServiceUC     *imserviceuc.UC
+	RegistryAuthUC  *registryauthuc.UC
+	BasicAuthUC     *basicauthuc.UC
+	SSLCertUC       *sslcertuc.UC
+	GithubAppUC     *githubappuc.UC
+	AccessTokenUC   *accesstokenuc.UC
+	CronJobUC       *cronjobuc.UC
+	HealthcheckUC   *healthcheckuc.UC
+	SecretUC        *secretuc.UC
+	EmailUC         *emailuc.UC
+	APIKeyUC        *apikeyuc.UC
+	RepoWebhookUC   *repowebhookuc.UC
+	NotificationUC  *notificationuc.UC
+	ImageBuildUC    *imagebuilduc.UC
+	SystemCleanupUC *systemcleanupuc.UC
+	SystemBackupUC  *systembackupuc.UC
+	GitCredentialUC *gitcredentialuc.UC
+	SSLRenewalUC    *sslrenewaluc.UC
+	FileUC          *fileuc.UC
 }
 
 func NewBaseSettingHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	oauthUC *oauthuc.OAuthUC,
-	cloudStorageUC *cloudstorageuc.CloudStorageUC,
-	sshKeyUC *sshkeyuc.SSHKeyUC,
-	imServiceUC *imserviceuc.IMServiceUC,
-	registryAuthUC *registryauthuc.RegistryAuthUC,
-	basicAuthUC *basicauthuc.BasicAuthUC,
-	sslCertUC *sslcertuc.SSLCertUC,
-	githubAppUC *githubappuc.GithubAppUC,
-	accessTokenUC *accesstokenuc.AccessTokenUC,
-	cronJobUC *cronjobuc.CronJobUC,
-	healthcheckUC *healthcheckuc.HealthcheckUC,
-	secretUC *secretuc.SecretUC,
-	emailUC *emailuc.EmailUC,
-	apiKeyUC *apikeyuc.APIKeyUC,
-	repoWebhookUC *repowebhookuc.RepoWebhookUC,
-	notificationUC *notificationuc.NotificationUC,
-	imageBuildUC *imagebuilduc.ImageBuildUC,
-	systemCleanupUC *systemcleanupuc.SystemCleanupUC,
-	systemBackupUC *systembackupuc.SystemBackupUC,
-	gitCredentialUC *gitcredentialuc.GitCredentialUC,
-	sslRenewalUC *sslrenewaluc.SSLRenewalUC,
-	fileUC *fileuc.FileUC,
+	oauthUC *oauthuc.UC,
+	cloudStorageUC *cloudstorageuc.UC,
+	sshKeyUC *sshkeyuc.UC,
+	imServiceUC *imserviceuc.UC,
+	registryAuthUC *registryauthuc.UC,
+	basicAuthUC *basicauthuc.UC,
+	sslCertUC *sslcertuc.UC,
+	githubAppUC *githubappuc.UC,
+	accessTokenUC *accesstokenuc.UC,
+	cronJobUC *cronjobuc.UC,
+	healthcheckUC *healthcheckuc.UC,
+	secretUC *secretuc.UC,
+	emailUC *emailuc.UC,
+	apiKeyUC *apikeyuc.UC,
+	repoWebhookUC *repowebhookuc.UC,
+	notificationUC *notificationuc.UC,
+	imageBuildUC *imagebuilduc.UC,
+	systemCleanupUC *systemcleanupuc.UC,
+	systemBackupUC *systembackupuc.UC,
+	gitCredentialUC *gitcredentialuc.UC,
+	sslRenewalUC *sslrenewaluc.UC,
+	fileUC *fileuc.UC,
 ) *BaseSettingHandler {
 	return &BaseSettingHandler{
 		BaseHandler:     baseHandler,

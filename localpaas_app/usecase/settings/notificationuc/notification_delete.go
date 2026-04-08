@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/notificationuc/notificationdto"
 )
 
-func (uc *NotificationUC) DeleteNotification(
+func (uc *UC) DeleteNotification(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *notificationdto.DeleteNotificationReq,

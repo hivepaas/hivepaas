@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) ResetPassword(
+func (uc *UC) ResetPassword(
 	ctx context.Context,
 	req *userdto.ResetPasswordReq,
 ) (*userdto.ResetPasswordResp, error) {

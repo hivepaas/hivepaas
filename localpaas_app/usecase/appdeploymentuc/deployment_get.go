@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
-func (uc *AppDeploymentUC) GetDeployment(
+func (uc *UC) GetDeployment(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdeploymentdto.GetDeploymentReq,

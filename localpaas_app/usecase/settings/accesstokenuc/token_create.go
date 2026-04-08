@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentAccessTokenVersion
 )
 
-func (uc *AccessTokenUC) CreateAccessToken(
+func (uc *UC) CreateAccessToken(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *accesstokendto.CreateAccessTokenReq,

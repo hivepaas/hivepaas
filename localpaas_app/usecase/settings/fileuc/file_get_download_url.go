@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 )
 
-func (uc *FileUC) GetFileDownloadURL(
+func (uc *UC) GetFileDownloadURL(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *filedto.GetFileDownloadURLReq,

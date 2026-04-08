@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) GetUserInviteInfo(
+func (uc *UC) GetUserInviteInfo(
 	ctx context.Context,
 	_ *basedto.Auth,
 	_ *userdto.GetUserInviteInfoReq,

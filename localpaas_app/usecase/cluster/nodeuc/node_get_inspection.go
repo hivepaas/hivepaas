@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-func (uc *NodeUC) GetNodeInspection(
+func (uc *UC) GetNodeInspection(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.GetNodeInspectionReq,

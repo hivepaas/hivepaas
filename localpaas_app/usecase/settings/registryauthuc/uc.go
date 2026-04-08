@@ -5,17 +5,17 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type RegistryAuthUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 	dockerManager docker.Manager
 }
 
-func NewRegistryAuthUC(
-	baseSettingUC *settings.BaseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
 	dockerManager docker.Manager,
-) *RegistryAuthUC {
-	return &RegistryAuthUC{
-		BaseSettingUC: baseSettingUC,
+) *UC {
+	return &UC{
+		BaseUC:        baseUC,
 		dockerManager: dockerManager,
 	}
 }

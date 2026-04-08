@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) RemoveMFATotp(
+func (uc *UC) RemoveMFATotp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.RemoveMFATotpReq,

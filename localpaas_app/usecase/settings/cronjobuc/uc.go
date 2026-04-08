@@ -8,8 +8,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type CronJobUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 	appRepo        repository.AppRepo
 	taskRepo       repository.TaskRepo
 	taskService    taskservice.Service
@@ -17,16 +17,16 @@ type CronJobUC struct {
 	taskQueue      queue.TaskQueue
 }
 
-func NewCronJobUC(
-	baseSettingUC *settings.BaseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
 	appRepo repository.AppRepo,
 	taskRepo repository.TaskRepo,
 	taskService taskservice.Service,
 	cronJobService cronjobservice.Service,
 	taskQueue queue.TaskQueue,
-) *CronJobUC {
-	return &CronJobUC{
-		BaseSettingUC:  baseSettingUC,
+) *UC {
+	return &UC{
+		BaseUC:         baseUC,
 		appRepo:        appRepo,
 		taskRepo:       taskRepo,
 		taskService:    taskService,

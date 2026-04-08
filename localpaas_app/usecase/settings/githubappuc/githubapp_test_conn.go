@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/github"
 )
 
-func (uc *GithubAppUC) TestGithubAppConn(
+func (uc *UC) TestGithubAppConn(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.TestGithubAppConnReq,

@@ -27,7 +27,7 @@ const (
 	appKeyMaxLen = 100
 )
 
-func (uc *AppUC) CreateApp(
+func (uc *UC) CreateApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.CreateAppReq,
@@ -79,7 +79,7 @@ type createAppData struct {
 	ServiceSpec *swarm.ServiceSpec
 }
 
-func (uc *AppUC) loadAppData(
+func (uc *UC) loadAppData(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.CreateAppReq,
@@ -116,7 +116,7 @@ type persistingAppData struct {
 	appservice.PersistingAppData
 }
 
-func (uc *AppUC) preparePersistingApp(
+func (uc *UC) preparePersistingApp(
 	req *appdto.CreateAppReq,
 	data *createAppData,
 	persistingData *persistingAppData,
@@ -136,7 +136,7 @@ func (uc *AppUC) preparePersistingApp(
 	uc.preparePersistingAppSettingsDefault(app, timeNow, data, persistingData)
 }
 
-func (uc *AppUC) preparePersistingAppBase(
+func (uc *UC) preparePersistingAppBase(
 	app *entity.App,
 	req *appdto.AppBaseReq,
 	timeNow time.Time,
@@ -150,7 +150,7 @@ func (uc *AppUC) preparePersistingAppBase(
 	persistingData.UpsertingApps = append(persistingData.UpsertingApps, app)
 }
 
-func (uc *AppUC) preparePersistingAppTags(
+func (uc *UC) preparePersistingAppTags(
 	app *entity.App,
 	tags []string,
 	startDisplayOrder int,
@@ -168,7 +168,7 @@ func (uc *AppUC) preparePersistingAppTags(
 	}
 }
 
-func (uc *AppUC) preparePersistingAppSettingsDefault(
+func (uc *UC) preparePersistingAppSettingsDefault(
 	app *entity.App,
 	timeNow time.Time,
 	data *createAppData,
@@ -215,7 +215,7 @@ func (uc *AppUC) preparePersistingAppSettingsDefault(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSettings)
 }
 
-func (uc *AppUC) persistData(
+func (uc *UC) persistData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingAppData,

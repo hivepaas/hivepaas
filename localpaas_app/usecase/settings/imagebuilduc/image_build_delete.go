@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuilduc/imagebuilddto"
 )
 
-func (uc *ImageBuildUC) DeleteImageBuild(
+func (uc *UC) DeleteImageBuild(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imagebuilddto.DeleteImageBuildReq,

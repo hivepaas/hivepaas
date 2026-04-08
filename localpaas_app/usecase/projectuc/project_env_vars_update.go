@@ -18,7 +18,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) UpdateProjectEnvVars(
+func (uc *UC) UpdateProjectEnvVars(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.UpdateProjectEnvVarsReq,
@@ -56,7 +56,7 @@ type updateProjectEnvVarsData struct {
 	Warnings []string // stores warnings
 }
 
-func (uc *ProjectUC) loadProjectEnvVarsForUpdate(
+func (uc *UC) loadProjectEnvVarsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *projectdto.UpdateProjectEnvVarsReq,
@@ -82,7 +82,7 @@ func (uc *ProjectUC) loadProjectEnvVarsForUpdate(
 	return nil
 }
 
-func (uc *ProjectUC) prepareUpdatingProjectEnvVars(
+func (uc *UC) prepareUpdatingProjectEnvVars(
 	req *projectdto.UpdateProjectEnvVarsReq,
 	data *updateProjectEnvVarsData,
 	persistingData *persistingProjectData,

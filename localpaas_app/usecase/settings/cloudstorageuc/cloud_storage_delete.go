@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 )
 
-func (uc *CloudStorageUC) DeleteCloudStorage(
+func (uc *UC) DeleteCloudStorage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.DeleteCloudStorageReq,

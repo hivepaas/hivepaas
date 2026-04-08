@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentRepoWebhookVersion
 )
 
-func (uc *RepoWebhookUC) CreateRepoWebhook(
+func (uc *UC) CreateRepoWebhook(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *repowebhookdto.CreateRepoWebhookReq,

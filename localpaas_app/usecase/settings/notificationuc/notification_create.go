@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentNotificationVersion
 )
 
-func (uc *NotificationUC) CreateNotification(
+func (uc *UC) CreateNotification(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *notificationdto.CreateNotificationReq,

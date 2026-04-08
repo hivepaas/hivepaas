@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentSecretVersion
 )
 
-func (uc *SecretUC) CreateSecret(
+func (uc *UC) CreateSecret(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *secretdto.CreateSecretReq,

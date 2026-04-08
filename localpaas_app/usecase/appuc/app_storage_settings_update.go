@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppStorageSettings(
+func (uc *UC) UpdateAppStorageSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppStorageSettingsReq,
@@ -54,7 +54,7 @@ type updateAppStorageSettingsData struct {
 	Service *swarm.Service
 }
 
-func (uc *AppUC) loadAppStorageSettingsForUpdate(
+func (uc *UC) loadAppStorageSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppStorageSettingsReq,
@@ -85,14 +85,14 @@ func (uc *AppUC) loadAppStorageSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppStorageSettings(
+func (uc *UC) prepareUpdatingAppStorageSettings(
 	req *appdto.UpdateAppStorageSettingsReq,
 	data *updateAppStorageSettingsData,
 ) {
 	uc.prepareUpdatingAppStorageMounts(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppStorageMounts(
+func (uc *UC) prepareUpdatingAppStorageMounts(
 	req *appdto.UpdateAppStorageSettingsReq,
 	data *updateAppStorageSettingsData,
 ) {
@@ -126,7 +126,7 @@ func (uc *AppUC) prepareUpdatingAppStorageMounts(
 	}
 }
 
-func (uc *AppUC) applyAppStorageSettings(
+func (uc *UC) applyAppStorageSettings(
 	ctx context.Context,
 	data *updateAppStorageSettingsData,
 ) error {

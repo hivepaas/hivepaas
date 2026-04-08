@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type NodeUC struct {
+type UC struct {
 	db             *database.DB
 	settingRepo    repository.SettingRepo
 	clusterService clusterservice.Service
@@ -16,14 +16,14 @@ type NodeUC struct {
 	dockerManager  docker.Manager
 }
 
-func NewNodeUC(
+func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	clusterService clusterservice.Service,
 	lpAppService lpappservice.Service,
 	dockerManager docker.Manager,
-) *NodeUC {
-	return &NodeUC{
+) *UC {
+	return &UC{
 		db:             db,
 		settingRepo:    settingRepo,
 		clusterService: clusterService,

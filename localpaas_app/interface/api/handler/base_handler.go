@@ -70,11 +70,11 @@ var (
 
 // BaseHandler base handler for every other handler to inherit from
 type BaseHandler struct {
-	sysErrorUC *syserroruc.SysErrorUC
+	sysErrorUC *syserroruc.UC
 }
 
 func NewBaseHandler(
-	sysErrorUC *syserroruc.SysErrorUC,
+	sysErrorUC *syserroruc.UC,
 ) *BaseHandler {
 	return &BaseHandler{
 		sysErrorUC: sysErrorUC,

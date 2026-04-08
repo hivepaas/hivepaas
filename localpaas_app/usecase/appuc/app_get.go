@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetApp(
+func (uc *UC) GetApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppReq,

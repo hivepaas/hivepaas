@@ -12,19 +12,19 @@ import (
 type SystemHandler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.AuthHandler
-	sysErrorUC  *syserroruc.SysErrorUC
-	taskUC      *taskuc.TaskUC
-	lpAppUC     *lpappuc.LpAppUC
-	traefikUC   *traefikuc.TraefikUC
+	sysErrorUC  *syserroruc.UC
+	taskUC      *taskuc.UC
+	lpAppUC     *lpappuc.UC
+	traefikUC   *traefikuc.UC
 }
 
 func NewSystemHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	sysErrorUC *syserroruc.SysErrorUC,
-	taskUC *taskuc.TaskUC,
-	lpAppUC *lpappuc.LpAppUC,
-	traefikUC *traefikuc.TraefikUC,
+	sysErrorUC *syserroruc.UC,
+	taskUC *taskuc.UC,
+	lpAppUC *lpappuc.UC,
+	traefikUC *traefikuc.UC,
 ) *SystemHandler {
 	return &SystemHandler{
 		BaseHandler: baseHandler,

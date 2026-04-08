@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppToken(
+func (uc *UC) UpdateAppToken(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppTokenReq,
@@ -41,7 +41,7 @@ type updateAppTokenData struct {
 	App *entity.App
 }
 
-func (uc *AppUC) loadAppDataForUpdateToken(
+func (uc *UC) loadAppDataForUpdateToken(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.UpdateAppTokenReq,
@@ -63,7 +63,7 @@ func (uc *AppUC) loadAppDataForUpdateToken(
 	return nil
 }
 
-func (uc *AppUC) preparePersistingAppTokenUpdate(
+func (uc *UC) preparePersistingAppTokenUpdate(
 	data *updateAppTokenData,
 ) {
 	data.App.ResetToken()
@@ -71,7 +71,7 @@ func (uc *AppUC) preparePersistingAppTokenUpdate(
 	data.App.UpdatedAt = timeutil.NowUTC()
 }
 
-func (uc *AppUC) persistAppTokenData(
+func (uc *UC) persistAppTokenData(
 	ctx context.Context,
 	db database.IDB,
 	data *updateAppTokenData,

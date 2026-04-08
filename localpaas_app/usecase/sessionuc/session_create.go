@@ -15,7 +15,7 @@ const (
 	uidLen = 16
 )
 
-func (uc *SessionUC) createSession(
+func (uc *UC) createSession(
 	ctx context.Context,
 	req *sessiondto.BaseCreateSessionReq,
 ) (resp *sessiondto.BaseCreateSessionResp, err error) {

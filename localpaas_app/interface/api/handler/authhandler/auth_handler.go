@@ -18,12 +18,12 @@ var (
 
 type AuthHandler struct {
 	*handler.BaseHandler
-	sessionUC *sessionuc.SessionUC
+	sessionUC *sessionuc.UC
 }
 
 func NewAuthHandler(
 	baseHandler *handler.BaseHandler,
-	sessionUC *sessionuc.SessionUC,
+	sessionUC *sessionuc.UC,
 ) *AuthHandler {
 	return &AuthHandler{
 		BaseHandler: baseHandler,

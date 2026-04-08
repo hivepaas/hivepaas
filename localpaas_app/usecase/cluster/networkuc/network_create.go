@@ -15,7 +15,7 @@ const (
 	namespaceGlobal = "global"
 )
 
-func (uc *NetworkUC) CreateNetwork(
+func (uc *UC) CreateNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.CreateNetworkReq,

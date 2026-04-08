@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc/lpappdto"
 )
 
-func (uc *LpAppUC) ReloadLpAppConfig(
+func (uc *UC) ReloadLpAppConfig(
 	ctx context.Context,
 	_ *basedto.Auth,
 	_ *lpappdto.ReloadLpAppConfigReq,

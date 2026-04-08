@@ -12,19 +12,19 @@ import (
 type ClusterHandler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.AuthHandler
-	nodeUC      *nodeuc.NodeUC
-	volumeUC    *volumeuc.VolumeUC
-	imageUC     *imageuc.ImageUC
-	networkUC   *networkuc.NetworkUC
+	nodeUC      *nodeuc.UC
+	volumeUC    *volumeuc.UC
+	imageUC     *imageuc.UC
+	networkUC   *networkuc.UC
 }
 
 func NewClusterHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	nodeUC *nodeuc.NodeUC,
-	volumeUC *volumeuc.VolumeUC,
-	imageUC *imageuc.ImageUC,
-	networkUC *networkuc.NetworkUC,
+	nodeUC *nodeuc.UC,
+	volumeUC *volumeuc.UC,
+	imageUC *imageuc.UC,
+	networkUC *networkuc.UC,
 ) *ClusterHandler {
 	return &ClusterHandler{
 		BaseHandler: baseHandler,

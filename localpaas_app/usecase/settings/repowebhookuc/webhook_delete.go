@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 )
 
-func (uc *RepoWebhookUC) DeleteRepoWebhook(
+func (uc *UC) DeleteRepoWebhook(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *repowebhookdto.DeleteRepoWebhookReq,

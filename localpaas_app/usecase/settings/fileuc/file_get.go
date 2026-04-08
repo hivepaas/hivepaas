@@ -14,7 +14,7 @@ const (
 	currentSettingType = base.SettingTypeFile
 )
 
-func (uc *FileUC) GetFile(
+func (uc *UC) GetFile(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *filedto.GetFileReq,

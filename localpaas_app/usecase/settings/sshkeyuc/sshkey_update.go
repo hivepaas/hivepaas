@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 )
 
-func (uc *SSHKeyUC) UpdateSSHKey(
+func (uc *UC) UpdateSSHKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sshkeydto.UpdateSSHKeyReq,

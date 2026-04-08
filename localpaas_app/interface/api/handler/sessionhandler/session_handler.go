@@ -15,13 +15,13 @@ import (
 type SessionHandler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.AuthHandler
-	sessionUC   *sessionuc.SessionUC
+	sessionUC   *sessionuc.UC
 }
 
 func NewSessionHandler(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.AuthHandler,
-	sessionUC *sessionuc.SessionUC,
+	sessionUC *sessionuc.UC,
 ) *SessionHandler {
 	return &SessionHandler{
 		BaseHandler: baseHandler,

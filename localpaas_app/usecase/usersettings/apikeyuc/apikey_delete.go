@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
 
-func (uc *APIKeyUC) DeleteAPIKey(
+func (uc *UC) DeleteAPIKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apikeydto.DeleteAPIKeyReq,

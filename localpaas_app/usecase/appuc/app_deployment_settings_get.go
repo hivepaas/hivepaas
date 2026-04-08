@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) GetAppDeploymentSettings(
+func (uc *UC) GetAppDeploymentSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.GetAppDeploymentSettingsReq,
@@ -54,7 +54,7 @@ func (uc *AppUC) GetAppDeploymentSettings(
 	}, nil
 }
 
-func (uc *AppUC) loadAppDeploymentSettingsRefData(
+func (uc *UC) loadAppDeploymentSettingsRefData(
 	ctx context.Context,
 	db database.IDB,
 	input *appdto.AppDeploymentSettingsTransformInput,

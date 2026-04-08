@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
 
-func (uc *APIKeyUC) GetAPIKey(
+func (uc *UC) GetAPIKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apikeydto.GetAPIKeyReq,

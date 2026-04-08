@@ -7,7 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) DevModeLogin(
+func (uc *UC) DevModeLogin(
 	ctx context.Context,
 	req *sessiondto.DevModeLoginReq,
 ) (*sessiondto.DevModeLoginResp, error) {

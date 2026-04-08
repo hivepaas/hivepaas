@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) GetMe(
+func (uc *UC) GetMe(
 	ctx context.Context,
 	user *basedto.User,
 	req *sessiondto.GetMeReq,

@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) DeleteUser(
+func (uc *UC) DeleteUser(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.DeleteUserReq,
@@ -43,7 +43,7 @@ type deleteUserData struct {
 	User *entity.User
 }
 
-func (uc *UserUC) loadUserDataForDelete(
+func (uc *UC) loadUserDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
@@ -84,7 +84,7 @@ func (uc *UserUC) loadUserDataForDelete(
 	return nil
 }
 
-func (uc *UserUC) prepareDeletingUser(
+func (uc *UC) prepareDeletingUser(
 	userData *deleteUserData,
 	persistingData *userservice.PersistingUserData,
 ) {

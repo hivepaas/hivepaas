@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-func (uc *NetworkUC) DeleteNetwork(
+func (uc *UC) DeleteNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.DeleteNetworkReq,

@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/notificationuc/notificationdto"
 )
 
-func (uc *NotificationUC) UpdateNotification(
+func (uc *UC) UpdateNotification(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *notificationdto.UpdateNotificationReq,

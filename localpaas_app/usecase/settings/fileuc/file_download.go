@@ -22,7 +22,7 @@ const (
 	defaultPresignExpiration = time.Minute * 5
 )
 
-func (uc *FileUC) DownloadFile(
+func (uc *UC) DownloadFile(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *filedto.DownloadFileReq,
@@ -63,7 +63,7 @@ func (uc *FileUC) DownloadFile(
 	}
 }
 
-func (uc *FileUC) downloadLocalFile(
+func (uc *UC) downloadLocalFile(
 	_ context.Context,
 	req *filedto.DownloadFileReq,
 	setting *entity.Setting,
@@ -92,7 +92,7 @@ func (uc *FileUC) downloadLocalFile(
 	return &filedto.DownloadFileResp{Data: respData}, nil
 }
 
-func (uc *FileUC) downloadCloudFile(
+func (uc *UC) downloadCloudFile(
 	ctx context.Context,
 	req *filedto.DownloadFileReq,
 	setting *entity.Setting,

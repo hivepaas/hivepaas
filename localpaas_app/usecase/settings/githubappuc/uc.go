@@ -5,17 +5,17 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type GithubAppUC struct {
-	*settings.BaseSettingUC
+type UC struct {
+	*settings.BaseUC
 	cacheAppManifestRepo cacherepository.GithubAppManifestRepo
 }
 
-func NewGithubAppUC(
-	baseSettingUC *settings.BaseSettingUC,
+func New(
+	baseUC *settings.BaseUC,
 	cacheAppManifestRepo cacherepository.GithubAppManifestRepo,
-) *GithubAppUC {
-	return &GithubAppUC{
-		BaseSettingUC:        baseSettingUC,
+) *UC {
+	return &UC{
+		BaseUC:               baseUC,
 		cacheAppManifestRepo: cacheAppManifestRepo,
 	}
 }

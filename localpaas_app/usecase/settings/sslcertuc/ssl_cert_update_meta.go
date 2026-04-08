@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
-func (uc *SSLCertUC) UpdateSSLCertMeta(
+func (uc *UC) UpdateSSLCertMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sslcertdto.UpdateSSLCertMetaReq,

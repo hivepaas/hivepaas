@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) LoginWithAPIKey(
+func (uc *UC) LoginWithAPIKey(
 	ctx context.Context,
 	req *sessiondto.LoginWithAPIKeyReq,
 ) (resp *sessiondto.LoginWithAPIKeyResp, err error) {

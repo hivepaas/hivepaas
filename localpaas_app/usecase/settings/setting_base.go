@@ -36,7 +36,7 @@ type BaseSettingResp struct {
 	ExpireAt  *time.Time `json:"expireAt,omitempty" copy:",nilonzero"`
 }
 
-func (uc *BaseSettingUC) loadSettingByID(
+func (uc *BaseUC) loadSettingByID(
 	ctx context.Context,
 	db database.IDB,
 	req *BaseSettingReq,
@@ -52,7 +52,7 @@ func (uc *BaseSettingUC) loadSettingByID(
 	return setting, nil
 }
 
-func (uc *BaseSettingUC) checkNameConflict(
+func (uc *BaseUC) checkNameConflict(
 	ctx context.Context,
 	db database.IDB,
 	req *BaseSettingReq,
@@ -72,7 +72,7 @@ func (uc *BaseSettingUC) checkNameConflict(
 	return nil
 }
 
-func (uc *BaseSettingUC) checkRefSettingsExistence(
+func (uc *BaseUC) checkRefSettingsExistence(
 	ctx context.Context,
 	db database.IDB,
 	req *BaseSettingReq,
@@ -98,7 +98,7 @@ func (uc *BaseSettingUC) checkRefSettingsExistence(
 	return nil
 }
 
-func (uc *BaseSettingUC) ensureSettingDefaultUniqueness(
+func (uc *BaseUC) ensureSettingDefaultUniqueness(
 	ctx context.Context,
 	db database.IDB,
 	req *BaseSettingReq,

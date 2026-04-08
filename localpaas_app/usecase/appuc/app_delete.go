@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) DeleteApp(
+func (uc *UC) DeleteApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.DeleteAppReq,
@@ -52,7 +52,7 @@ type deleteAppData struct {
 	App *entity.App
 }
 
-func (uc *AppUC) loadAppDataForDelete(
+func (uc *UC) loadAppDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.DeleteAppReq,
@@ -69,7 +69,7 @@ func (uc *AppUC) loadAppDataForDelete(
 	return nil
 }
 
-func (uc *AppUC) prepareDeletingApp(
+func (uc *UC) prepareDeletingApp(
 	data *deleteAppData,
 	persistingData *persistingAppData,
 ) {

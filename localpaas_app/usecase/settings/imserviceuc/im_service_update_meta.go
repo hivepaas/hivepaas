@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imserviceuc/imservicedto"
 )
 
-func (uc *IMServiceUC) UpdateIMServiceMeta(
+func (uc *UC) UpdateIMServiceMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *imservicedto.UpdateIMServiceMetaReq,

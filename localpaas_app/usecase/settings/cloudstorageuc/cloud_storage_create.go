@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentCloudStorageVersion
 )
 
-func (uc *CloudStorageUC) CreateCloudStorage(
+func (uc *UC) CreateCloudStorage(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.CreateCloudStorageReq,

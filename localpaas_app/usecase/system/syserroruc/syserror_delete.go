@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc/syserrordto"
 )
 
-func (uc *SysErrorUC) DeleteSysError(
+func (uc *UC) DeleteSysError(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *syserrordto.DeleteSysErrorReq,
@@ -40,7 +40,7 @@ type deleteSysErrorData struct {
 	SysError *entity.SysError
 }
 
-func (uc *SysErrorUC) loadSysErrorDataForDelete(
+func (uc *UC) loadSysErrorDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	req *syserrordto.DeleteSysErrorReq,
@@ -57,7 +57,7 @@ func (uc *SysErrorUC) loadSysErrorDataForDelete(
 	return nil
 }
 
-func (uc *SysErrorUC) prepareDeletingSysError(
+func (uc *UC) prepareDeletingSysError(
 	data *deleteSysErrorData,
 	persistingData *persistingSysErrorData,
 ) {

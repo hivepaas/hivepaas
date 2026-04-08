@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
 )
 
-func (uc *SessionUC) RefreshSession(
+func (uc *UC) RefreshSession(
 	ctx context.Context,
 	user *basedto.User,
 ) (resp *sessiondto.RefreshSessionResp, err error) {

@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) DeleteAppTags(
+func (uc *UC) DeleteAppTags(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.DeleteAppTagsReq,
@@ -46,7 +46,7 @@ type deleteAppTagData struct {
 	UpdatingOrderTags []*entity.AppTag
 }
 
-func (uc *AppUC) loadAppTagDataForDelete(
+func (uc *UC) loadAppTagDataForDelete(
 	ctx context.Context,
 	db database.IDB,
 	req *appdto.DeleteAppTagsReq,
@@ -79,7 +79,7 @@ func (uc *AppUC) loadAppTagDataForDelete(
 	return nil
 }
 
-func (uc *AppUC) prepareDeletingAppTag(
+func (uc *UC) prepareDeletingAppTag(
 	tagData *deleteAppTagData,
 	persistingData *persistingAppData,
 ) {

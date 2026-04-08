@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 )
 
-type SessionUC struct {
+type UC struct {
 	db                     *database.DB
 	userRepo               repository.UserRepo
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo
@@ -22,7 +22,7 @@ type SessionUC struct {
 	permissionManager      permission.Manager
 }
 
-func NewSessionUC(
+func New(
 	db *database.DB,
 	userRepo repository.UserRepo,
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
@@ -33,8 +33,8 @@ func NewSessionUC(
 	userService userservice.Service,
 	emailService emailservice.Service,
 	permissionManager permission.Manager,
-) *SessionUC {
-	return &SessionUC{
+) *UC {
+	return &UC{
 		db:                     db,
 		userRepo:               userRepo,
 		loginTrustedDeviceRepo: loginTrustedDeviceRepo,

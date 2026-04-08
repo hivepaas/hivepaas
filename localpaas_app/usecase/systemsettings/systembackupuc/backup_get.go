@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
 
-func (uc *SystemBackupUC) GetSystemBackup(
+func (uc *UC) GetSystemBackup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systembackupdto.GetSystemBackupReq,

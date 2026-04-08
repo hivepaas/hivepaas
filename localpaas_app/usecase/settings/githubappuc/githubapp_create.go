@@ -25,7 +25,7 @@ const (
 	webhookSecretLen = 24
 )
 
-func (uc *GithubAppUC) CreateGithubApp(
+func (uc *UC) CreateGithubApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *githubappdto.CreateGithubAppReq,
@@ -65,7 +65,7 @@ func (uc *GithubAppUC) CreateGithubApp(
 	}, nil
 }
 
-func (uc *GithubAppUC) installGithubAppWebhook(
+func (uc *UC) installGithubAppWebhook(
 	ctx context.Context,
 	githubApp *entity.GithubApp,
 	update bool,

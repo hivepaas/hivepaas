@@ -47,7 +47,7 @@ type PersistingSettingMetaData struct {
 	Setting *entity.Setting
 }
 
-func (uc *BaseSettingUC) UpdateSettingMeta(
+func (uc *BaseUC) UpdateSettingMeta(
 	ctx context.Context,
 	req *UpdateSettingMetaReq,
 	data *UpdateSettingMetaData,
@@ -101,7 +101,7 @@ func (uc *BaseSettingUC) UpdateSettingMeta(
 	return &UpdateSettingMetaResp{}, nil
 }
 
-func (uc *BaseSettingUC) loadSettingForUpdateMeta(
+func (uc *BaseUC) loadSettingForUpdateMeta(
 	ctx context.Context,
 	db database.Tx,
 	req *UpdateSettingMetaReq,
@@ -139,7 +139,7 @@ func (uc *BaseSettingUC) loadSettingForUpdateMeta(
 	return nil
 }
 
-func (uc *BaseSettingUC) prepareSettingMetaUpdate(
+func (uc *BaseUC) prepareSettingMetaUpdate(
 	req *UpdateSettingMetaReq,
 	data *UpdateSettingMetaData,
 	persistingData *PersistingSettingMetaData,
@@ -166,7 +166,7 @@ func (uc *BaseSettingUC) prepareSettingMetaUpdate(
 	persistingData.Setting = setting
 }
 
-func (uc *BaseSettingUC) persistSettingMetaUpdate(
+func (uc *BaseUC) persistSettingMetaUpdate(
 	ctx context.Context,
 	db database.IDB,
 	req *UpdateSettingMetaReq,

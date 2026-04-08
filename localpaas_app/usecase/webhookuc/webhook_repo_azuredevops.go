@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
 )
 
-func (uc *WebhookUC) processAzureDevOpsWebhook(
+func (uc *UC) processAzureDevOpsWebhook(
 	req *webhookdto.HandleRepoWebhookReq,
 	data *repoEventData,
 ) error {

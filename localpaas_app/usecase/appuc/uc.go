@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-type AppUC struct {
+type UC struct {
 	db             *database.DB
 	projectRepo    repository.ProjectRepo
 	appRepo        repository.AppRepo
@@ -35,7 +35,7 @@ type AppUC struct {
 	taskQueue      queue.TaskQueue
 }
 
-func NewAppUC(
+func New(
 	db *database.DB,
 	projectRepo repository.ProjectRepo,
 	appRepo repository.AppRepo,
@@ -52,8 +52,8 @@ func NewAppUC(
 	clusterService clusterservice.Service,
 	dockerManager docker.Manager,
 	taskQueue queue.TaskQueue,
-) *AppUC {
-	return &AppUC{
+) *UC {
+	return &UC{
 		db:             db,
 		projectRepo:    projectRepo,
 		appRepo:        appRepo,

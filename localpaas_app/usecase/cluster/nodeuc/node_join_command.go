@@ -13,7 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-func (uc *NodeUC) GetNodeJoinCommand(
+func (uc *UC) GetNodeJoinCommand(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *nodedto.GetNodeJoinCommandReq,
@@ -37,7 +37,7 @@ type joinNodeCommandData struct {
 	PreferManagerAddr string
 }
 
-func (uc *NodeUC) loadGetNodeJoinCommandData(
+func (uc *UC) loadGetNodeJoinCommandData(
 	ctx context.Context,
 	req *nodedto.GetNodeJoinCommandReq,
 	data *joinNodeCommandData,

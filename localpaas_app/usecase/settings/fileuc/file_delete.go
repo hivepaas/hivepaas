@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 )
 
-func (uc *FileUC) DeleteFile(
+func (uc *UC) DeleteFile(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *filedto.DeleteFileReq,

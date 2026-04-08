@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/services/email"
 )
 
-func (uc *EmailUC) TestSendMail(
+func (uc *UC) TestSendMail(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *emaildto.TestSendMailReq,

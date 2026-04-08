@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
 
-func (uc *SystemBackupUC) ExecuteSystemBackup(
+func (uc *UC) ExecuteSystemBackup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systembackupdto.ExecuteSystemBackupReq,
@@ -47,7 +47,7 @@ func (uc *SystemBackupUC) ExecuteSystemBackup(
 	}, nil
 }
 
-func (uc *SystemBackupUC) getBackupSettingAndJob(
+func (uc *UC) getBackupSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
 	scope *base.SettingScope,

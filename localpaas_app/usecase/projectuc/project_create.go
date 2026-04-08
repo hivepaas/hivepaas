@@ -32,7 +32,7 @@ var (
 	unallowedProjectKey = []string{"localpaas"}
 )
 
-func (uc *ProjectUC) CreateProject(
+func (uc *UC) CreateProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.CreateProjectReq,
@@ -81,7 +81,7 @@ type createProjectData struct {
 	ProjectKey string
 }
 
-func (uc *ProjectUC) loadProjectData(
+func (uc *UC) loadProjectData(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
@@ -130,7 +130,7 @@ type persistingProjectData struct {
 	projectservice.PersistingProjectData
 }
 
-func (uc *ProjectUC) preparePersistingProject(
+func (uc *UC) preparePersistingProject(
 	req *projectdto.CreateProjectReq,
 	data *createProjectData,
 	persistingData *persistingProjectData,
@@ -148,7 +148,7 @@ func (uc *ProjectUC) preparePersistingProject(
 	uc.preparePersistingProjectWebhook(project, timeNow, persistingData)
 }
 
-func (uc *ProjectUC) preparePersistingProjectBase(
+func (uc *UC) preparePersistingProjectBase(
 	project *entity.Project,
 	req *projectdto.ProjectBaseReq,
 	timeNow time.Time,
@@ -163,7 +163,7 @@ func (uc *ProjectUC) preparePersistingProjectBase(
 	persistingData.UpsertingProjects = append(persistingData.UpsertingProjects, project)
 }
 
-func (uc *ProjectUC) preparePersistingProjectTags(
+func (uc *UC) preparePersistingProjectTags(
 	project *entity.Project,
 	tags []string,
 	startDisplayOrder int,
@@ -181,7 +181,7 @@ func (uc *ProjectUC) preparePersistingProjectTags(
 	}
 }
 
-func (uc *ProjectUC) preparePersistingProjectWebhook(
+func (uc *UC) preparePersistingProjectWebhook(
 	project *entity.Project,
 	timeNow time.Time,
 	persistingData *persistingProjectData,
@@ -204,7 +204,7 @@ func (uc *ProjectUC) preparePersistingProjectWebhook(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *ProjectUC) persistData(
+func (uc *UC) persistData(
 	ctx context.Context,
 	db database.IDB,
 	persistingData *persistingProjectData,

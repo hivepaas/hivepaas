@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentSSLCertVersion
 )
 
-func (uc *SSLCertUC) CreateSSLCert(
+func (uc *UC) CreateSSLCert(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sslcertdto.CreateSSLCertReq,

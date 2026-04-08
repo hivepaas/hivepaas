@@ -17,7 +17,7 @@ var (
 	}
 )
 
-func (uc *SessionUC) GetLoginOptions(
+func (uc *UC) GetLoginOptions(
 	ctx context.Context,
 	req *sessiondto.GetLoginOptionsReq,
 ) (*sessiondto.GetLoginOptionsResp, error) {

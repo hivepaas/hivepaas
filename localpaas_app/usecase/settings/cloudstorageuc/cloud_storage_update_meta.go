@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 )
 
-func (uc *CloudStorageUC) UpdateCloudStorageMeta(
+func (uc *UC) UpdateCloudStorageMeta(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cloudstoragedto.UpdateCloudStorageMetaReq,

@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc/sslrenewaldto"
 )
 
-func (uc *SSLRenewalUC) GetSSLRenewal(
+func (uc *UC) GetSSLRenewal(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sslrenewaldto.GetSSLRenewalReq,

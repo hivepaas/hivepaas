@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc/syserrordto"
 )
 
-func (uc *SysErrorUC) ListSysError(
+func (uc *UC) ListSysError(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *syserrordto.ListSysErrorReq,

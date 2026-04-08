@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentSSHKeyVersion
 )
 
-func (uc *SSHKeyUC) CreateSSHKey(
+func (uc *UC) CreateSSHKey(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *sshkeydto.CreateSSHKeyReq,

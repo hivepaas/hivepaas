@@ -7,20 +7,20 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 )
 
-type UserUC struct {
+type UC struct {
 	db           *database.DB
 	userRepo     repository.UserRepo
 	userService  userservice.Service
 	emailService emailservice.Service
 }
 
-func NewUserUC(
+func New(
 	db *database.DB,
 	userRepo repository.UserRepo,
 	userService userservice.Service,
 	emailService emailservice.Service,
-) *UserUC {
-	return &UserUC{
+) *UC {
+	return &UC{
 		db:           db,
 		userRepo:     userRepo,
 		userService:  userService,

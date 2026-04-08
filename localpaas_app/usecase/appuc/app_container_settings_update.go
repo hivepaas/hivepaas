@@ -19,7 +19,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-func (uc *AppUC) UpdateAppContainerSettings(
+func (uc *UC) UpdateAppContainerSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.UpdateAppContainerSettingsReq,
@@ -57,7 +57,7 @@ type updateAppContainerSettingsData struct {
 	Service *swarm.Service
 }
 
-func (uc *AppUC) loadAppContainerSettingsForUpdate(
+func (uc *UC) loadAppContainerSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appdto.UpdateAppContainerSettingsReq,
@@ -88,14 +88,14 @@ func (uc *AppUC) loadAppContainerSettingsForUpdate(
 	return nil
 }
 
-func (uc *AppUC) prepareUpdatingAppContainerSettings(
+func (uc *UC) prepareUpdatingAppContainerSettings(
 	req *appdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) {
 	uc.prepareUpdatingAppContainerSpec(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppContainerSpec(
+func (uc *UC) prepareUpdatingAppContainerSpec(
 	req *appdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) {
@@ -122,7 +122,7 @@ func (uc *AppUC) prepareUpdatingAppContainerSpec(
 	uc.prepareUpdatingAppContainerRestartPolicy(req, data)
 }
 
-func (uc *AppUC) prepareUpdatingAppContainerHealthcheck(
+func (uc *UC) prepareUpdatingAppContainerHealthcheck(
 	req *appdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) {
@@ -145,7 +145,7 @@ func (uc *AppUC) prepareUpdatingAppContainerHealthcheck(
 	containerSpec.Healthcheck.Retries = req.Healthcheck.Retries
 }
 
-func (uc *AppUC) prepareUpdatingAppContainerPrivileges(
+func (uc *UC) prepareUpdatingAppContainerPrivileges(
 	req *appdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) {
@@ -197,7 +197,7 @@ func (uc *AppUC) prepareUpdatingAppContainerPrivileges(
 	}
 }
 
-func (uc *AppUC) prepareUpdatingAppContainerRestartPolicy(
+func (uc *UC) prepareUpdatingAppContainerRestartPolicy(
 	req *appdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) {
@@ -221,7 +221,7 @@ func (uc *AppUC) prepareUpdatingAppContainerRestartPolicy(
 	}
 }
 
-func (uc *AppUC) applyAppContainerSettings(
+func (uc *UC) applyAppContainerSettings(
 	ctx context.Context,
 	data *updateAppContainerSettingsData,
 ) error {

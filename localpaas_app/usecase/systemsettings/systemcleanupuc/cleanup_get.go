@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto"
 )
 
-func (uc *SystemCleanupUC) GetSystemCleanup(
+func (uc *UC) GetSystemCleanup(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *systemcleanupdto.GetSystemCleanupReq,

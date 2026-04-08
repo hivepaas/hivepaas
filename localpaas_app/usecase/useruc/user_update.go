@@ -16,7 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
-func (uc *UserUC) UpdateUser(
+func (uc *UC) UpdateUser(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *userdto.UpdateUserReq,
@@ -44,7 +44,7 @@ type userUpdateData struct {
 	User *entity.User
 }
 
-func (uc *UserUC) loadUserDataForUpdate(
+func (uc *UC) loadUserDataForUpdate(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
@@ -93,7 +93,7 @@ func (uc *UserUC) loadUserDataForUpdate(
 	return nil
 }
 
-func (uc *UserUC) prepareUpdatingUserData(
+func (uc *UC) prepareUpdatingUserData(
 	req *userdto.UpdateUserReq,
 	updateData *userUpdateData,
 	persistingData *userservice.PersistingUserData,

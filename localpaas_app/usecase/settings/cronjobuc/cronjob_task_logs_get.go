@@ -19,7 +19,7 @@ const (
 	taskLogSessionTimeout       = 10 * time.Minute
 )
 
-func (uc *CronJobUC) GetCronJobTaskLogs(
+func (uc *UC) GetCronJobTaskLogs(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *cronjobdto.GetCronJobTaskLogsReq,

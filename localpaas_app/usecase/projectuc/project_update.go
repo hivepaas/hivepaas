@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
-func (uc *ProjectUC) UpdateProject(
+func (uc *UC) UpdateProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.UpdateProjectReq,
@@ -43,7 +43,7 @@ type updateProjectData struct {
 	Project *entity.Project
 }
 
-func (uc *ProjectUC) loadProjectDataForUpdate(
+func (uc *UC) loadProjectDataForUpdate(
 	ctx context.Context,
 	db database.IDB,
 	req *projectdto.UpdateProjectReq,
@@ -83,7 +83,7 @@ func (uc *ProjectUC) loadProjectDataForUpdate(
 	return nil
 }
 
-func (uc *ProjectUC) preparePersistingProjectUpdate(
+func (uc *UC) preparePersistingProjectUpdate(
 	req *projectdto.UpdateProjectReq,
 	data *updateProjectData,
 	persistingData *persistingProjectData,

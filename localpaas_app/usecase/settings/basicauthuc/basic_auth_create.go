@@ -17,7 +17,7 @@ const (
 	currentSettingVersion = entity.CurrentBasicAuthVersion
 )
 
-func (uc *BasicAuthUC) CreateBasicAuth(
+func (uc *UC) CreateBasicAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *basicauthdto.CreateBasicAuthReq,

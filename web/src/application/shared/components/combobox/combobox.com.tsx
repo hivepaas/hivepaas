@@ -156,7 +156,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                         splitBadge={splitLabelBadge}
                                     />
                                 ) : (
-                                    placeholder
+                                    <span className="text-muted-foreground">{placeholder}</span>
                                 )}
                             </span>
                             {loading ? (

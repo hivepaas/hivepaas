@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	envAdminEmail    = "LP_ADMIN_EMAIL"
-	envAdminUsername = "LP_ADMIN_USERNAME"
 	envAdminPassword = "LP_ADMIN_PASSWORD"
 )
 
@@ -59,8 +57,7 @@ func (s *service) InitAdminUser(
 
 	return func() {
 		// Clear sensitive ENV vars
-		_ = os.Unsetenv(envAdminEmail)
-		_ = os.Unsetenv(envAdminUsername)
 		_ = os.Unsetenv(envAdminPassword)
+		accCfg.Password = ""
 	}, nil
 }

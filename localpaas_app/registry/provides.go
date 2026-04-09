@@ -57,6 +57,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
@@ -70,7 +71,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
@@ -152,7 +152,7 @@ var Provides = []any{
 	registryauthuc.New,
 	basicauthuc.New,
 	sslcertuc.New,
-	sslcertsettingsuc.New,
+	domainsettingsuc.New,
 	githubappuc.New,
 	accesstokenuc.New,
 	traefikuc.New,

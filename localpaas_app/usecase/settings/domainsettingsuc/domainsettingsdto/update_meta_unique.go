@@ -1,4 +1,4 @@
-package sslcertsettingsdto
+package domainsettingsdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -9,22 +9,22 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type UpdateUniqueSSLCertSettingsMetaReq struct {
+type UpdateUniqueDomainSettingsMetaReq struct {
 	settings.UpdateUniqueSettingMetaReq
 }
 
-func NewUpdateUniqueSSLCertSettingsMetaReq() *UpdateUniqueSSLCertSettingsMetaReq {
-	return &UpdateUniqueSSLCertSettingsMetaReq{}
+func NewUpdateUniqueDomainSettingsMetaReq() *UpdateUniqueDomainSettingsMetaReq {
+	return &UpdateUniqueDomainSettingsMetaReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateUniqueSSLCertSettingsMetaReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateUniqueDomainSettingsMetaReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateUniqueSSLCertSettingsMetaResp struct {
+type UpdateUniqueDomainSettingsMetaResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

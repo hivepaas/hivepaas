@@ -1,4 +1,4 @@
-package sslcertsettingsuc
+package domainsettingsuc
 
 import (
 	"context"
@@ -7,17 +7,17 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc/sslcertsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 )
 
-func (uc *UC) UpdateUniqueSSLCertSettings(
+func (uc *UC) UpdateUniqueDomainSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *sslcertsettingsdto.UpdateUniqueSSLCertSettingsReq,
-) (*sslcertsettingsdto.UpdateUniqueSSLCertSettingsResp, error) {
+	req *domainsettingsdto.UpdateUniqueDomainSettingsReq,
+) (*domainsettingsdto.UpdateUniqueDomainSettingsResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
-		Name: string(currentSettingType),
+		Name: "Domain settings",
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,
@@ -35,5 +35,5 @@ func (uc *UC) UpdateUniqueSSLCertSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &sslcertsettingsdto.UpdateUniqueSSLCertSettingsResp{}, nil
+	return &domainsettingsdto.UpdateUniqueDomainSettingsResp{}, nil
 }

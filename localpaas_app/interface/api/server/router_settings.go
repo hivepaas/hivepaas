@@ -121,12 +121,12 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		sslCertGroup.DELETE("/:itemID", settingHandler.DeleteSSLCert)
 	}
 
-	{ // ssl cert settings group
-		sslCertSettingsGroup := settingGroup.Group("/ssl-cert-settings")
-		sslCertSettingsGroup.GET("", settingHandler.GetUniqueSSLCertSettings)
-		sslCertSettingsGroup.PUT("", settingHandler.UpdateUniqueSSLCertSettings)
-		sslCertSettingsGroup.PUT("/meta", settingHandler.UpdateUniqueSSLCertSettingsMeta)
-		sslCertSettingsGroup.DELETE("", settingHandler.DeleteUniqueSSLCertSettings)
+	{ // domain settings group
+		domainSettingsGroup := settingGroup.Group("/domain-settings")
+		domainSettingsGroup.GET("", settingHandler.GetUniqueDomainSettings)
+		domainSettingsGroup.PUT("", settingHandler.UpdateUniqueDomainSettings)
+		domainSettingsGroup.PUT("/meta", settingHandler.UpdateUniqueDomainSettingsMeta)
+		domainSettingsGroup.DELETE("", settingHandler.DeleteUniqueDomainSettings)
 	}
 
 	{ // email group

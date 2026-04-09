@@ -38,11 +38,11 @@ func (s *service) InitDefaults(
 		}
 	}
 
-	// SSL cert settings
+	// Domain settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
-		return item.Type == base.SettingTypeSSLCertSettings
+		return item.Type == base.SettingTypeDomainSettings
 	}) {
-		err = s.initDefaultSSLCertSettings(ctx, db, timeNow)
+		err = s.initDefaultDomainSettings(ctx, db, timeNow)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

@@ -1,4 +1,4 @@
-package sslcertsettingsdto
+package domainsettingsdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -11,33 +11,46 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type UpdateUniqueSSLCertSettingsReq struct {
+type UpdateUniqueDomainSettingsReq struct {
 	settings.UpdateUniqueSettingReq
-	*SSLCertSettingsBaseReq
+	*DomainSettingsBaseReq
 }
 
-type SSLCertSettingsBaseReq struct {
+type DomainSettingsBaseReq struct {
+	RootDomain   string                 `json:"rootDomain"`
+	CertSettings *DomainCertSettingsReq `json:"certSettings"`
+}
+
+func (req *DomainSettingsBaseReq) ToEntity() *entity.DomainSettings {
+	return &entity.DomainSettings{
+		RootDomain:   req.RootDomain,
+		CertSettings: req.CertSettings.ToEntity(),
+	}
+}
+
+type DomainCertSettingsReq struct {
 	CertType    base.SSLCertType  `json:"certType"`
 	KeyType     base.SSLKeyType   `json:"keyType"`
-	ValidPeriod timeutil.Duration `json:"validPeriod"`
-	RootDomain  string            `json:"rootDomain"`
+	ValidPeriod timeutil.Duration `json:"validPeriod,omitempty"`
 	Email       string            `json:"email"`
-	AutoRenew   bool              `json:"autoRenew"`
+	AutoRenew   bool              `json:"autoRenew,omitempty"`
 }
 
-func (req *SSLCertSettingsBaseReq) ToEntity() *entity.SSLCertSettings {
-	return &entity.SSLCertSettings{
+func (req *DomainCertSettingsReq) ToEntity() *entity.DomainCertSettings {
+	if req == nil {
+		return nil
+	}
+	return &entity.DomainCertSettings{
 		CertType:    req.CertType,
 		KeyType:     req.KeyType,
 		ValidPeriod: req.ValidPeriod,
-		RootDomain:  req.RootDomain,
 		Email:       req.Email,
 		AutoRenew:   req.AutoRenew,
 	}
 }
 
 // nolint
-func (req *SSLCertSettingsBaseReq) validate(field string) (res []vld.Validator) {
+func (req *DomainSettingsBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
@@ -45,17 +58,17 @@ func (req *SSLCertSettingsBaseReq) validate(field string) (res []vld.Validator) 
 	return res
 }
 
-func NewUpdateUniqueSSLCertSettingsReq() *UpdateUniqueSSLCertSettingsReq {
-	return &UpdateUniqueSSLCertSettingsReq{}
+func NewUpdateUniqueDomainSettingsReq() *UpdateUniqueDomainSettingsReq {
+	return &UpdateUniqueDomainSettingsReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateUniqueSSLCertSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateUniqueDomainSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateUniqueSSLCertSettingsResp struct {
+type UpdateUniqueDomainSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

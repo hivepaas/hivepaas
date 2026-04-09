@@ -1,4 +1,4 @@
-package sslcertsettingsdto
+package domainsettingsdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -12,40 +12,44 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type GetUniqueSSLCertSettingsReq struct {
+type GetUniqueDomainSettingsReq struct {
 	settings.GetUniqueSettingReq
 }
 
-func NewGetUniqueSSLCertSettingsReq() *GetUniqueSSLCertSettingsReq {
-	return &GetUniqueSSLCertSettingsReq{}
+func NewGetUniqueDomainSettingsReq() *GetUniqueDomainSettingsReq {
+	return &GetUniqueDomainSettingsReq{}
 }
 
-func (req *GetUniqueSSLCertSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetUniqueDomainSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetUniqueSSLCertSettingsResp struct {
-	Meta *basedto.Meta        `json:"meta"`
-	Data *SSLCertSettingsResp `json:"data"`
+type GetUniqueDomainSettingsResp struct {
+	Meta *basedto.Meta       `json:"meta"`
+	Data *DomainSettingsResp `json:"data"`
 }
 
-type SSLCertSettingsResp struct {
+type DomainSettingsResp struct {
 	*settings.BaseSettingResp
+	RootDomain   string                  `json:"rootDomain"`
+	CertSettings *DomainCertSettingsResp `json:"certSettings"`
+}
+
+type DomainCertSettingsResp struct {
 	CertType    base.SSLCertType  `json:"certType"`
 	KeyType     base.SSLKeyType   `json:"keyType"`
-	ValidPeriod timeutil.Duration `json:"validPeriod"`
-	RootDomain  string            `json:"rootDomain"`
+	ValidPeriod timeutil.Duration `json:"validPeriod,omitempty"`
 	Email       string            `json:"email"`
-	AutoRenew   bool              `json:"autoRenew"`
+	AutoRenew   bool              `json:"autoRenew,omitempty"`
 }
 
-func TransformSSLCertSettings(
+func TransformDomainSettings(
 	setting *entity.Setting,
 	_ *entity.RefObjects,
-) (resp *SSLCertSettingsResp, err error) {
-	config := setting.MustAsSSLCertSettings()
+) (resp *DomainSettingsResp, err error) {
+	config := setting.MustAsDomainSettings()
 	if err = copier.Copy(&resp, config); err != nil {
 		return nil, apperrors.Wrap(err)
 	}

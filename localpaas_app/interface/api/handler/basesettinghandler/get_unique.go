@@ -8,8 +8,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc/sslcertsettingsdto"
 )
 
 type GetUniqueSettingOptions struct {
@@ -67,10 +67,10 @@ func (h *Handler) GetUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.GetUniqueImageBuildSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeSSLCertSettings:
-		r := sslcertsettingsdto.NewGetUniqueSSLCertSettingsReq()
+	case base.ResourceTypeDomainSettings:
+		r := domainsettingsdto.NewGetUniqueDomainSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.SSLCertSettingsUC.GetUniqueSSLCertSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.GetUniqueDomainSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

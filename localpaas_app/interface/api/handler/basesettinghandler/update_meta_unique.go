@@ -8,8 +8,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc/sslcertsettingsdto"
 )
 
 //nolint:funlen
@@ -55,10 +55,10 @@ func (h *Handler) UpdateUniqueSettingMeta(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateUniqueImageBuildSettingsMeta(reqCtx, auth, r) }
 
-	case base.ResourceTypeSSLCertSettings:
-		r := sslcertsettingsdto.NewUpdateUniqueSSLCertSettingsMetaReq()
+	case base.ResourceTypeDomainSettings:
+		r := domainsettingsdto.NewUpdateUniqueDomainSettingsMetaReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.SSLCertSettingsUC.UpdateUniqueSSLCertSettingsMeta(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateUniqueDomainSettingsMeta(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

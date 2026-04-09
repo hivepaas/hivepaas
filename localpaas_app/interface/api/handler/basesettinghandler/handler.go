@@ -7,6 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
@@ -20,7 +21,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc"
@@ -30,30 +30,30 @@ import (
 
 type Handler struct {
 	*handler.BaseHandler
-	AuthHandler       *authhandler.Handler
-	OAuthUC           *oauthuc.UC
-	CloudStorageUC    *cloudstorageuc.UC
-	SSHKeyUC          *sshkeyuc.UC
-	IMServiceUC       *imserviceuc.UC
-	RegistryAuthUC    *registryauthuc.UC
-	BasicAuthUC       *basicauthuc.UC
-	SSLCertUC         *sslcertuc.UC
-	SSLCertSettingsUC *sslcertsettingsuc.UC
-	GithubAppUC       *githubappuc.UC
-	AccessTokenUC     *accesstokenuc.UC
-	CronJobUC         *cronjobuc.UC
-	HealthcheckUC     *healthcheckuc.UC
-	SecretUC          *secretuc.UC
-	EmailUC           *emailuc.UC
-	APIKeyUC          *apikeyuc.UC
-	RepoWebhookUC     *repowebhookuc.UC
-	NotificationUC    *notificationuc.UC
-	ImageBuildUC      *imagebuildsettingsuc.UC
-	SystemCleanupUC   *systemcleanupuc.UC
-	SystemBackupUC    *systembackupuc.UC
-	GitCredentialUC   *gitcredentialuc.UC
-	SSLRenewalUC      *sslrenewaluc.UC
-	FileUC            *fileuc.UC
+	AuthHandler      *authhandler.Handler
+	OAuthUC          *oauthuc.UC
+	CloudStorageUC   *cloudstorageuc.UC
+	SSHKeyUC         *sshkeyuc.UC
+	IMServiceUC      *imserviceuc.UC
+	RegistryAuthUC   *registryauthuc.UC
+	BasicAuthUC      *basicauthuc.UC
+	SSLCertUC        *sslcertuc.UC
+	DomainSettingsUC *domainsettingsuc.UC
+	GithubAppUC      *githubappuc.UC
+	AccessTokenUC    *accesstokenuc.UC
+	CronJobUC        *cronjobuc.UC
+	HealthcheckUC    *healthcheckuc.UC
+	SecretUC         *secretuc.UC
+	EmailUC          *emailuc.UC
+	APIKeyUC         *apikeyuc.UC
+	RepoWebhookUC    *repowebhookuc.UC
+	NotificationUC   *notificationuc.UC
+	ImageBuildUC     *imagebuildsettingsuc.UC
+	SystemCleanupUC  *systemcleanupuc.UC
+	SystemBackupUC   *systembackupuc.UC
+	GitCredentialUC  *gitcredentialuc.UC
+	SSLRenewalUC     *sslrenewaluc.UC
+	FileUC           *fileuc.UC
 }
 
 func New(
@@ -66,7 +66,7 @@ func New(
 	registryAuthUC *registryauthuc.UC,
 	basicAuthUC *basicauthuc.UC,
 	sslCertUC *sslcertuc.UC,
-	sslCertSettingsUC *sslcertsettingsuc.UC,
+	domainSettingsUC *domainsettingsuc.UC,
 	githubAppUC *githubappuc.UC,
 	accessTokenUC *accesstokenuc.UC,
 	cronJobUC *cronjobuc.UC,
@@ -84,30 +84,30 @@ func New(
 	fileUC *fileuc.UC,
 ) *Handler {
 	return &Handler{
-		BaseHandler:       baseHandler,
-		AuthHandler:       authHandler,
-		OAuthUC:           oauthUC,
-		CloudStorageUC:    cloudStorageUC,
-		SSHKeyUC:          sshKeyUC,
-		IMServiceUC:       imServiceUC,
-		RegistryAuthUC:    registryAuthUC,
-		BasicAuthUC:       basicAuthUC,
-		SSLCertUC:         sslCertUC,
-		SSLCertSettingsUC: sslCertSettingsUC,
-		GithubAppUC:       githubAppUC,
-		AccessTokenUC:     accessTokenUC,
-		CronJobUC:         cronJobUC,
-		HealthcheckUC:     healthcheckUC,
-		SecretUC:          secretUC,
-		EmailUC:           emailUC,
-		APIKeyUC:          apiKeyUC,
-		RepoWebhookUC:     repoWebhookUC,
-		NotificationUC:    notificationUC,
-		ImageBuildUC:      imageBuildUC,
-		SystemCleanupUC:   systemCleanupUC,
-		SystemBackupUC:    systemBackupUC,
-		GitCredentialUC:   gitCredentialUC,
-		SSLRenewalUC:      sslRenewalUC,
-		FileUC:            fileUC,
+		BaseHandler:      baseHandler,
+		AuthHandler:      authHandler,
+		OAuthUC:          oauthUC,
+		CloudStorageUC:   cloudStorageUC,
+		SSHKeyUC:         sshKeyUC,
+		IMServiceUC:      imServiceUC,
+		RegistryAuthUC:   registryAuthUC,
+		BasicAuthUC:      basicAuthUC,
+		SSLCertUC:        sslCertUC,
+		DomainSettingsUC: domainSettingsUC,
+		GithubAppUC:      githubAppUC,
+		AccessTokenUC:    accessTokenUC,
+		CronJobUC:        cronJobUC,
+		HealthcheckUC:    healthcheckUC,
+		SecretUC:         secretUC,
+		EmailUC:          emailUC,
+		APIKeyUC:         apiKeyUC,
+		RepoWebhookUC:    repoWebhookUC,
+		NotificationUC:   notificationUC,
+		ImageBuildUC:     imageBuildUC,
+		SystemCleanupUC:  systemCleanupUC,
+		SystemBackupUC:   systemBackupUC,
+		GitCredentialUC:  gitCredentialUC,
+		SSLRenewalUC:     sslRenewalUC,
+		FileUC:           fileUC,
 	}
 }

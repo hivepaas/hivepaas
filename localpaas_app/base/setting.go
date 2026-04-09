@@ -24,7 +24,7 @@ const (
 	SettingTypeRegistryAuth       SettingType = "registry-auth"
 	SettingTypeBasicAuth          SettingType = "basic-auth"
 	SettingTypeSSLCert            SettingType = "ssl-cert"
-	SettingTypeSSLCertSettings    SettingType = "ssl-cert-settings"
+	SettingTypeDomainSettings     SettingType = "domain-settings"
 	SettingTypeGithubApp          SettingType = "github-app"
 	SettingTypeAccessToken        SettingType = "access-token"
 	SettingTypeCronJob            SettingType = "cron-job"

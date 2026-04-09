@@ -1,4 +1,4 @@
-package sslcertsettingsuc
+package domainsettingsuc
 
 import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	currentSettingType = base.SettingTypeSSLCertSettings
+	currentSettingType = base.SettingTypeDomainSettings
 )
 
 type UC struct {

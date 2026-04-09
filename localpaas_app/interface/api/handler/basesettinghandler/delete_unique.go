@@ -8,8 +8,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertsettingsuc/sslcertsettingsdto"
 )
 
 type DeleteUniqueSettingOptions struct {
@@ -67,10 +67,10 @@ func (h *Handler) DeleteUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.DeleteUniqueImageBuildSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeSSLCertSettings:
-		r := sslcertsettingsdto.NewDeleteUniqueSSLCertSettingsReq()
+	case base.ResourceTypeDomainSettings:
+		r := domainsettingsdto.NewDeleteUniqueDomainSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.SSLCertSettingsUC.DeleteUniqueSSLCertSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.DeleteUniqueDomainSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

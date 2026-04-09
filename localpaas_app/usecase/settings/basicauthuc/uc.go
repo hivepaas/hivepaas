@@ -1,7 +1,14 @@
 package basicauthuc
 
 import (
+	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
+)
+
+const (
+	currentSettingType    = base.SettingTypeBasicAuth
+	currentSettingVersion = entity.CurrentBasicAuthVersion
 )
 
 type UC struct {

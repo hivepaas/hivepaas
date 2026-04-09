@@ -6,18 +6,11 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/config"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc/oauthdto"
-)
-
-const (
-	currentSettingType    = base.SettingTypeOAuth
-	currentSettingVersion = entity.CurrentOAuthVersion
 )
 
 func (uc *UC) CreateOAuth(

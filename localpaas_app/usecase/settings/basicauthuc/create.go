@@ -4,17 +4,10 @@ import (
 	"context"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
-)
-
-const (
-	currentSettingType    = base.SettingTypeBasicAuth
-	currentSettingVersion = entity.CurrentBasicAuthVersion
 )
 
 func (uc *UC) CreateBasicAuth(

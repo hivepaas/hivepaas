@@ -19,9 +19,6 @@ import (
 )
 
 const (
-	currentSettingType    = base.SettingTypeGithubApp
-	currentSettingVersion = entity.CurrentGithubAppVersion
-
 	webhookSecretLen = 24
 )
 

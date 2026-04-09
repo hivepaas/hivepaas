@@ -4,14 +4,9 @@ import (
 	"context"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
-)
-
-const (
-	currentSettingType = base.SettingTypeFile
 )
 
 func (uc *UC) GetFile(

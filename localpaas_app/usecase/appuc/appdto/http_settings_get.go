@@ -76,11 +76,11 @@ type HTTPHeaderConfigResp struct {
 }
 
 type HTTPRateLimitConfigResp struct {
-	Enabled           bool              `json:"enabled"`
-	Average           int               `json:"average"`
-	Period            timeutil.Duration `json:"period"`
-	Burst             int               `json:"burst"`
-	InFlightReqAmount int               `json:"inFlightReqAmount"`
+	Enabled        bool              `json:"enabled"`
+	Average        int               `json:"average"`
+	Period         timeutil.Duration `json:"period"`
+	Burst          int               `json:"burst"`
+	MaxInFlightReq int               `json:"maxInFlightReq"`
 }
 
 type HTTPCompressionConfigResp struct {

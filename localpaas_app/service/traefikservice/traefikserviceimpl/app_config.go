@@ -389,10 +389,10 @@ func (s *service) createRateLimitConfig(
 		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
 
-	if rlCfg.InFlightReqAmount > 0 {
+	if rlCfg.MaxInFlightReq > 0 {
 		mwName := fmt.Sprintf("%s-inflightreq", routerName)
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.amount", mwName)] =
-			strconv.Itoa(rlCfg.InFlightReqAmount)
+			strconv.Itoa(rlCfg.MaxInFlightReq)
 		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
 }

@@ -68,11 +68,11 @@ type HTTPCompressionConfig struct {
 }
 
 type HTTPRateLimitConfig struct {
-	Enabled           bool              `json:"enabled"`
-	Average           int               `json:"average,omitempty"`
-	Period            timeutil.Duration `json:"period,omitempty"`
-	Burst             int               `json:"burst,omitempty"`
-	InFlightReqAmount int               `json:"inFlightReqAmount,omitempty"`
+	Enabled        bool              `json:"enabled"`
+	Average        int               `json:"average,omitempty"`
+	Period         timeutil.Duration `json:"period,omitempty"`
+	Burst          int               `json:"burst,omitempty"`
+	MaxInFlightReq int               `json:"maxInFlightReq,omitempty"`
 }
 
 type HTTPPathConfig struct {

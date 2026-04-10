@@ -21164,6 +21164,12 @@
           "note" : {
             "type" : "string"
           },
+          "parentID" : {
+            "type" : "string"
+          },
+          "projectID" : {
+            "type" : "string"
+          },
           "stats" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppStatsResp"
@@ -21191,7 +21197,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "id", "key", "name", "note", "stats", "status", "tags", "token", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "id", "key", "name", "note", "parentID", "projectID", "stats", "status", "tags", "token", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppRuntimeLogsDataResp" : {
@@ -22076,14 +22082,14 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "inFlightReqAmount" : {
+          "maxInFlightReq" : {
             "type" : "integer"
           },
           "period" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
           }
         },
-        "required" : [ "average", "burst", "enabled", "inFlightReqAmount", "period" ],
+        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.HTTPRateLimitConfigResp" : {
@@ -22097,14 +22103,14 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "inFlightReqAmount" : {
+          "maxInFlightReq" : {
             "type" : "integer"
           },
           "period" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
           }
         },
-        "required" : [ "average", "burst", "enabled", "inFlightReqAmount", "period" ],
+        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.Healthcheck" : {

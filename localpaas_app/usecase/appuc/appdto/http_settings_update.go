@@ -1,6 +1,8 @@
 package appdto
 
 import (
+	"fmt"
+
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
@@ -71,7 +73,13 @@ func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	// TODO:
+	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen,
+		false, field+"domain")...)
+	res = append(res, basedto.ValidateDomain(&req.DomainRedirect, false, base.DomainNameMaxLen,
+		false, field+"domainRedirect")...)
+	res = append(res, basedto.ValidatePort(&req.ContainerPort, true, 1,field+"containerPort")...)
+	// TODO: validate other config
+	// TODO: validate paths
 	return res
 }
 
@@ -135,11 +143,11 @@ func (r *HTTPCompressionConfigReq) ToEntity() *entity.HTTPCompressionConfig {
 }
 
 type HTTPRateLimitConfigReq struct {
-	Enabled           bool              `json:"enabled"`
-	Average           int               `json:"average"`
-	Period            timeutil.Duration `json:"period"`
-	Burst             int               `json:"burst"`
-	InFlightReqAmount int               `json:"inFlightReqAmount"`
+	Enabled        bool              `json:"enabled"`
+	Average        int               `json:"average"`
+	Period         timeutil.Duration `json:"period"`
+	Burst          int               `json:"burst"`
+	MaxInFlightReq int               `json:"maxInFlightReq"`
 }
 
 func (r *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
@@ -147,11 +155,11 @@ func (r *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
 		return nil
 	}
 	return &entity.HTTPRateLimitConfig{
-		Enabled:           r.Enabled,
-		Average:           r.Average,
-		Period:            r.Period,
-		Burst:             r.Burst,
-		InFlightReqAmount: r.InFlightReqAmount,
+		Enabled:        r.Enabled,
+		Average:        r.Average,
+		Period:         r.Period,
+		Burst:          r.Burst,
+		MaxInFlightReq: r.MaxInFlightReq,
 	}
 }
 
@@ -185,7 +193,10 @@ func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectID")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appID")...)
-	// TODO: validate http settings input
+	validators = append(validators, vld.Slice(req.Domains).ForEach(
+		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
+			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)
+		}))
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

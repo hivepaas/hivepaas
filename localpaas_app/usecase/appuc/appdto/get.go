@@ -39,6 +39,8 @@ type GetAppResp struct {
 type AppResp struct {
 	ID        string         `json:"id"`
 	Name      string         `json:"name"`
+	ProjectID string         `json:"projectID"`
+	ParentID  string         `json:"parentID"`
 	Key       string         `json:"key"`
 	Status    base.AppStatus `json:"status"`
 	Token     string         `json:"token"`

@@ -34,3 +34,8 @@ func ValidateDomain[T ~string](s *T, required bool, maxLen int, wildcardAllowed 
 	}
 	return result
 }
+
+func ValidatePort[T int | uint | int32 | uint32 | int64 | uint64](v *T, required bool, min T,
+	field string) []vld.Validator {
+	return ValidateNumber(v, required, min, 65535, field) //nolint:mnd
+}

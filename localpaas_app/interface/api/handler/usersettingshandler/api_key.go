@@ -66,20 +66,20 @@ func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 		}))
 }
 
-// UpdateAPIKeyMeta Updates API key meta
-// @Summary Updates API key meta
-// @Description Updates API key meta
+// UpdateAPIKeyStatus Updates API key status
+// @Summary Updates API key status
+// @Description Updates API key status
 // @Tags    user_settings
 // @Produce json
-// @Id      updateUserAPIKeyMeta
+// @Id      updateUserAPIKeyStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body apikeydto.UpdateAPIKeyMetaReq true "request data"
-// @Success 200 {object} apikeydto.UpdateAPIKeyMetaResp
+// @Param   body body apikeydto.UpdateAPIKeyStatusReq true "request data"
+// @Success 200 {object} apikeydto.UpdateAPIKeyStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /users/current/settings/api-keys/{itemID}/meta [put]
-func (h *Handler) UpdateAPIKeyMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser,
+// @Router  /users/current/settings/api-keys/{itemID}/status [put]
+func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser,
 		basesettinghandler.UpdateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to update API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {

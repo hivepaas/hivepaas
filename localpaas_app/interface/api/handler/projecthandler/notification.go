@@ -76,21 +76,21 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
 }
 
-// UpdateNotificationMeta Updates notification meta
-// @Summary Updates notification meta
-// @Description Updates notification meta
+// UpdateNotificationStatus Updates notification status
+// @Summary Updates notification status
+// @Description Updates notification status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectNotificationMeta
+// @Id      updateProjectNotificationStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body notificationdto.UpdateNotificationMetaReq true "request data"
-// @Success 200 {object} notificationdto.UpdateNotificationMetaResp
+// @Param   body body notificationdto.UpdateNotificationStatusReq true "request data"
+// @Success 200 {object} notificationdto.UpdateNotificationStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/notifications/{itemID}/meta [put]
-func (h *Handler) UpdateNotificationMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+// @Router  /projects/{projectID}/notifications/{itemID}/status [put]
+func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
 }
 
 // DeleteNotification Deletes notification setting

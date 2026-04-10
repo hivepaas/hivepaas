@@ -75,20 +75,20 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
 }
 
-// UpdateGithubAppMeta Updates github-app meta
-// @Summary Updates github-app meta
-// @Description Updates github-app meta
+// UpdateGithubAppStatus Updates github-app status
+// @Summary Updates github-app status
+// @Description Updates github-app status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingGithubAppMeta
+// @Id      updateSettingGithubAppStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body githubappdto.UpdateGithubAppMetaReq true "request data"
-// @Success 200 {object} githubappdto.UpdateGithubAppMetaResp
+// @Param   body body githubappdto.UpdateGithubAppStatusReq true "request data"
+// @Success 200 {object} githubappdto.UpdateGithubAppStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/github-apps/{itemID}/meta [put]
-func (h *Handler) UpdateGithubAppMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+// @Router  /settings/github-apps/{itemID}/status [put]
+func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
 }
 
 // DeleteGithubApp Deletes github-app setting

@@ -98,19 +98,19 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// UpdateTaskMeta Updates task meta
-// @Summary Updates task meta
-// @Description Updates task meta
+// UpdateTaskStatus Updates task status
+// @Summary Updates task status
+// @Description Updates task status
 // @Tags    system_tasks
 // @Produce json
-// @Id      updateTaskMeta
+// @Id      updateTaskStatus
 // @Param   taskID path string true "task ID"
-// @Param   body body taskdto.UpdateTaskMetaReq true "request data"
-// @Success 200 {object} taskdto.UpdateTaskMetaResp
+// @Param   body body taskdto.UpdateTaskStatusReq true "request data"
+// @Success 200 {object} taskdto.UpdateTaskStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /system/tasks/{taskID}/meta [put]
-func (h *Handler) UpdateTaskMeta(ctx *gin.Context) {
+// @Router  /system/tasks/{taskID}/status [put]
+func (h *Handler) UpdateTaskStatus(ctx *gin.Context) {
 	taskID, err := h.ParseStringParam(ctx, "taskID")
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -128,14 +128,14 @@ func (h *Handler) UpdateTaskMeta(ctx *gin.Context) {
 		return
 	}
 
-	req := taskdto.NewUpdateTaskMetaReq()
+	req := taskdto.NewUpdateTaskStatusReq()
 	req.ID = taskID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.taskUC.UpdateTaskMeta(h.RequestCtx(ctx), auth, req)
+	resp, err := h.taskUC.UpdateTaskStatus(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

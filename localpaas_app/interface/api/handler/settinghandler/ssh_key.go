@@ -72,20 +72,20 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
 }
 
-// UpdateSSHKeyMeta Updates ssh-key meta
-// @Summary Updates ssh-key meta
-// @Description Updates ssh-key meta
+// UpdateSSHKeyStatus Updates ssh-key status
+// @Summary Updates ssh-key status
+// @Description Updates ssh-key status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingSSHKeyMeta
+// @Id      updateSettingSSHKeyStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body sshkeydto.UpdateSSHKeyMetaReq true "request data"
-// @Success 200 {object} sshkeydto.UpdateSSHKeyMetaResp
+// @Param   body body sshkeydto.UpdateSSHKeyStatusReq true "request data"
+// @Success 200 {object} sshkeydto.UpdateSSHKeyStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/ssh-keys/{itemID}/meta [put]
-func (h *Handler) UpdateSSHKeyMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+// @Router  /settings/ssh-keys/{itemID}/status [put]
+func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
 }
 
 // DeleteSSHKey Deletes sshkey setting

@@ -72,20 +72,20 @@ func (h *Handler) UpdateOAuth(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
 }
 
-// UpdateOAuthMeta Updates oauth meta
-// @Summary Updates oauth meta
-// @Description Updates oauth meta
+// UpdateOAuthStatus Updates oauth status
+// @Summary Updates oauth status
+// @Description Updates oauth status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingOAuthMeta
+// @Id      updateSettingOAuthStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body oauthdto.UpdateOAuthMetaReq true "request data"
-// @Success 200 {object} oauthdto.UpdateOAuthMetaResp
+// @Param   body body oauthdto.UpdateOAuthStatusReq true "request data"
+// @Success 200 {object} oauthdto.UpdateOAuthStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/oauth/{itemID}/meta [put]
-func (h *Handler) UpdateOAuthMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+// @Router  /settings/oauth/{itemID}/status [put]
+func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
 }
 
 // DeleteOAuth Deletes oauth setting

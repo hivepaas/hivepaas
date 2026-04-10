@@ -2355,10 +2355,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/access-tokens/{itemID}/meta" : {
+    "/projects/{projectID}/access-tokens/{itemID}/status" : {
       "put" : {
-        "description" : "Updates access-token meta",
-        "operationId" : "updateProjectAccessTokenMeta",
+        "description" : "Updates access-token status",
+        "operationId" : "updateProjectAccessTokenStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -2380,7 +2380,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusReq"
               }
             }
           },
@@ -2392,7 +2392,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusResp"
                 }
               }
             },
@@ -2419,7 +2419,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates access-token meta",
+        "summary" : "Updates access-token status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -3466,10 +3466,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/apps/{appID}/cron-jobs/{itemID}/meta" : {
+    "/projects/{projectID}/apps/{appID}/cron-jobs/{itemID}/status" : {
       "put" : {
-        "description" : "Updates cron-job meta",
-        "operationId" : "updateAppCronJobMeta",
+        "description" : "Updates cron-job status",
+        "operationId" : "updateAppCronJobStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -3499,7 +3499,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusReq"
               }
             }
           },
@@ -3511,7 +3511,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusResp"
                 }
               }
             },
@@ -3538,7 +3538,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates cron-job meta",
+        "summary" : "Updates cron-job status",
         "tags" : [ "apps" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -4712,10 +4712,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/apps/{appID}/healthchecks/{itemID}/meta" : {
+    "/projects/{projectID}/apps/{appID}/healthchecks/{itemID}/status" : {
       "put" : {
-        "description" : "Updates healthcheck meta",
-        "operationId" : "updateAppHealthcheckMeta",
+        "description" : "Updates healthcheck status",
+        "operationId" : "updateAppHealthcheckStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -4745,7 +4745,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckStatusReq"
               }
             }
           },
@@ -4757,7 +4757,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckStatusResp"
                 }
               }
             },
@@ -4784,7 +4784,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates healthcheck meta",
+        "summary" : "Updates healthcheck status",
         "tags" : [ "apps" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -6373,10 +6373,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/basic-auth/{itemID}/meta" : {
+    "/projects/{projectID}/basic-auth/{itemID}/status" : {
       "put" : {
-        "description" : "Updates basic auth meta",
-        "operationId" : "updateProjectBasicAuthMeta",
+        "description" : "Updates basic auth status",
+        "operationId" : "updateProjectBasicAuthStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -6398,7 +6398,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusReq"
               }
             }
           },
@@ -6410,7 +6410,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusResp"
                 }
               }
             },
@@ -6437,7 +6437,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates basic auth meta",
+        "summary" : "Updates basic auth status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -6757,10 +6757,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/cloud-storages/{itemID}/meta" : {
+    "/projects/{projectID}/cloud-storages/{itemID}/status" : {
       "put" : {
-        "description" : "Updates cloud storage meta",
-        "operationId" : "updateProjectCloudStorageMeta",
+        "description" : "Updates cloud storage status",
+        "operationId" : "updateProjectCloudStorageStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -6782,7 +6782,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusReq"
               }
             }
           },
@@ -6794,7 +6794,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusResp"
                 }
               }
             },
@@ -6821,7 +6821,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates cloud storage meta",
+        "summary" : "Updates cloud storage status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -7141,10 +7141,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/cron-jobs/{itemID}/meta" : {
+    "/projects/{projectID}/cron-jobs/{itemID}/status" : {
       "put" : {
-        "description" : "Updates cron-job meta",
-        "operationId" : "updateProjectCronJobMeta",
+        "description" : "Updates cron-job status",
+        "operationId" : "updateProjectCronJobStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -7166,7 +7166,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusReq"
               }
             }
           },
@@ -7178,7 +7178,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusResp"
                 }
               }
             },
@@ -7205,7 +7205,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates cron-job meta",
+        "summary" : "Updates cron-job status",
         "tags" : [ "projects" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -7975,10 +7975,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/domain-settings/meta" : {
+    "/projects/{projectID}/domain-settings/status" : {
       "put" : {
-        "description" : "Updates domain settings meta",
-        "operationId" : "updateProjectDomainSettingsMeta",
+        "description" : "Updates domain settings status",
+        "operationId" : "updateProjectDomainSettingsStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -7992,7 +7992,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq"
               }
             }
           },
@@ -8004,7 +8004,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp"
                 }
               }
             },
@@ -8031,7 +8031,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates domain settings meta",
+        "summary" : "Updates domain settings status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -8351,10 +8351,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/emails/{itemID}/meta" : {
+    "/projects/{projectID}/emails/{itemID}/status" : {
       "put" : {
-        "description" : "Updates Email meta setting",
-        "operationId" : "updateProjectEmailMeta",
+        "description" : "Updates Email status setting",
+        "operationId" : "updateProjectEmailStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -8376,7 +8376,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusReq"
               }
             }
           },
@@ -8388,7 +8388,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusResp"
                 }
               }
             },
@@ -8415,7 +8415,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates Email meta setting",
+        "summary" : "Updates Email status setting",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -9237,10 +9237,10 @@
         "tags" : [ "project_settings" ]
       }
     },
-    "/projects/{projectID}/github-apps/{itemID}/meta" : {
+    "/projects/{projectID}/github-apps/{itemID}/status" : {
       "put" : {
-        "description" : "Updates github-app meta",
-        "operationId" : "updateProjectGithubAppMeta",
+        "description" : "Updates github-app status",
+        "operationId" : "updateProjectGithubAppStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -9262,7 +9262,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusReq"
               }
             }
           },
@@ -9274,7 +9274,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusResp"
                 }
               }
             },
@@ -9301,7 +9301,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates github-app meta",
+        "summary" : "Updates github-app status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -9621,10 +9621,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/im-services/{itemID}/meta" : {
+    "/projects/{projectID}/im-services/{itemID}/status" : {
       "put" : {
-        "description" : "Updates IM service meta",
-        "operationId" : "updateProjectIMServiceMeta",
+        "description" : "Updates IM service status",
+        "operationId" : "updateProjectIMServiceStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -9646,7 +9646,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusReq"
               }
             }
           },
@@ -9658,7 +9658,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusResp"
                 }
               }
             },
@@ -9685,7 +9685,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates IM service meta",
+        "summary" : "Updates IM service status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -9845,10 +9845,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/image-build-settings/meta" : {
+    "/projects/{projectID}/image-build-settings/status" : {
       "put" : {
-        "description" : "Updates image build meta",
-        "operationId" : "updateProjectImageBuildSettingsMeta",
+        "description" : "Updates image build status",
+        "operationId" : "updateProjectImageBuildSettingsStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -9862,7 +9862,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq"
               }
             }
           },
@@ -9874,7 +9874,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp"
                 }
               }
             },
@@ -9901,7 +9901,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates image build meta",
+        "summary" : "Updates image build status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -10221,10 +10221,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/notifications/{itemID}/meta" : {
+    "/projects/{projectID}/notifications/{itemID}/status" : {
       "put" : {
-        "description" : "Updates notification meta",
-        "operationId" : "updateProjectNotificationMeta",
+        "description" : "Updates notification status",
+        "operationId" : "updateProjectNotificationStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -10246,7 +10246,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusReq"
               }
             }
           },
@@ -10258,7 +10258,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusResp"
                 }
               }
             },
@@ -10285,7 +10285,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates notification meta",
+        "summary" : "Updates notification status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -10666,10 +10666,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/registry-auth/{itemID}/meta" : {
+    "/projects/{projectID}/registry-auth/{itemID}/status" : {
       "put" : {
-        "description" : "Updates registry auth meta",
-        "operationId" : "updateProjectRegistryAuthMeta",
+        "description" : "Updates registry auth status",
+        "operationId" : "updateProjectRegistryAuthStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -10691,7 +10691,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusReq"
               }
             }
           },
@@ -10703,7 +10703,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusResp"
                 }
               }
             },
@@ -10730,7 +10730,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates registry auth meta",
+        "summary" : "Updates registry auth status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -11050,10 +11050,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/repo-webhooks/{itemID}/meta" : {
+    "/projects/{projectID}/repo-webhooks/{itemID}/status" : {
       "put" : {
-        "description" : "Updates webhook meta",
-        "operationId" : "updateProjectRepoWebhookMeta",
+        "description" : "Updates webhook status",
+        "operationId" : "updateProjectRepoWebhookStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -11075,7 +11075,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookStatusReq"
               }
             }
           },
@@ -11087,7 +11087,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookStatusResp"
                 }
               }
             },
@@ -11114,7 +11114,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates webhook meta",
+        "summary" : "Updates webhook status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -11734,10 +11734,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/ssh-keys/{itemID}/meta" : {
+    "/projects/{projectID}/ssh-keys/{itemID}/status" : {
       "put" : {
-        "description" : "Updates ssh-key meta",
-        "operationId" : "updateProjectSSHKeyMeta",
+        "description" : "Updates ssh-key status",
+        "operationId" : "updateProjectSSHKeyStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -11759,7 +11759,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusReq"
               }
             }
           },
@@ -11771,7 +11771,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusResp"
                 }
               }
             },
@@ -11798,7 +11798,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates ssh-key meta",
+        "summary" : "Updates ssh-key status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -12118,10 +12118,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/ssl-certs/{itemID}/meta" : {
+    "/projects/{projectID}/ssl-certs/{itemID}/status" : {
       "put" : {
-        "description" : "Updates SSL cert meta",
-        "operationId" : "updateProjectSSLCertMeta",
+        "description" : "Updates SSL cert status",
+        "operationId" : "updateProjectSSLCertStatus",
         "parameters" : [ {
           "description" : "project ID",
           "in" : "path",
@@ -12143,7 +12143,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusReq"
               }
             }
           },
@@ -12155,7 +12155,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusResp"
                 }
               }
             },
@@ -12182,7 +12182,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates SSL cert meta",
+        "summary" : "Updates SSL cert status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -12803,10 +12803,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/access-tokens/{itemID}/meta" : {
+    "/settings/access-tokens/{itemID}/status" : {
       "put" : {
-        "description" : "Updates access-token meta",
-        "operationId" : "updateSettingAccessTokenMeta",
+        "description" : "Updates access-token status",
+        "operationId" : "updateSettingAccessTokenStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -12820,7 +12820,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusReq"
               }
             }
           },
@@ -12832,7 +12832,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusResp"
                 }
               }
             },
@@ -12859,7 +12859,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates access-token meta",
+        "summary" : "Updates access-token status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -13138,10 +13138,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/basic-auth/{itemID}/meta" : {
+    "/settings/basic-auth/{itemID}/status" : {
       "put" : {
-        "description" : "Updates basic auth meta",
-        "operationId" : "updateSettingBasicAuthMeta",
+        "description" : "Updates basic auth status",
+        "operationId" : "updateSettingBasicAuthStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -13155,7 +13155,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusReq"
               }
             }
           },
@@ -13167,7 +13167,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusResp"
                 }
               }
             },
@@ -13194,7 +13194,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates basic auth meta",
+        "summary" : "Updates basic auth status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -13525,10 +13525,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/cloud-storages/{itemID}/meta" : {
+    "/settings/cloud-storages/{itemID}/status" : {
       "put" : {
-        "description" : "Updates a cloud storage's meta",
-        "operationId" : "updateSettingCloudStorageMeta",
+        "description" : "Updates a cloud storage's status",
+        "operationId" : "updateSettingCloudStorageStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -13542,7 +13542,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusReq"
               }
             }
           },
@@ -13554,7 +13554,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusResp"
                 }
               }
             },
@@ -13581,7 +13581,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates a cloud storage's meta",
+        "summary" : "Updates a cloud storage's status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -13860,10 +13860,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/cron-jobs/{itemID}/meta" : {
+    "/settings/cron-jobs/{itemID}/status" : {
       "put" : {
-        "description" : "Updates cron-job meta",
-        "operationId" : "updateSettingCronJobMeta",
+        "description" : "Updates cron-job status",
+        "operationId" : "updateSettingCronJobStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -13877,7 +13877,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusReq"
               }
             }
           },
@@ -13889,7 +13889,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusResp"
                 }
               }
             },
@@ -13916,7 +13916,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates cron-job meta",
+        "summary" : "Updates cron-job status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -14049,15 +14049,15 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/domain-settings/meta" : {
+    "/settings/domain-settings/status" : {
       "put" : {
-        "description" : "Updates domain settings meta",
-        "operationId" : "updateSettingDomainSettingsMeta",
+        "description" : "Updates domain settings status",
+        "operationId" : "updateSettingDomainSettingsStatus",
         "requestBody" : {
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq"
               }
             }
           },
@@ -14069,7 +14069,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp"
                 }
               }
             },
@@ -14096,7 +14096,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates domain settings meta",
+        "summary" : "Updates domain settings status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -14427,10 +14427,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/emails/{itemID}/meta" : {
+    "/settings/emails/{itemID}/status" : {
       "put" : {
-        "description" : "Updates email setting meta",
-        "operationId" : "updateSettingEmailMeta",
+        "description" : "Updates email setting status",
+        "operationId" : "updateSettingEmailStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -14444,7 +14444,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusReq"
               }
             }
           },
@@ -14456,7 +14456,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusResp"
                 }
               }
             },
@@ -14483,7 +14483,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates email setting meta",
+        "summary" : "Updates email setting status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -15134,10 +15134,10 @@
         "tags" : [ "settings" ]
       }
     },
-    "/settings/github-apps/{itemID}/meta" : {
+    "/settings/github-apps/{itemID}/status" : {
       "put" : {
-        "description" : "Updates github-app meta",
-        "operationId" : "updateSettingGithubAppMeta",
+        "description" : "Updates github-app status",
+        "operationId" : "updateSettingGithubAppStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -15151,7 +15151,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusReq"
               }
             }
           },
@@ -15163,7 +15163,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusResp"
                 }
               }
             },
@@ -15190,7 +15190,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates github-app meta",
+        "summary" : "Updates github-app status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -15521,10 +15521,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/im-services/{itemID}/meta" : {
+    "/settings/im-services/{itemID}/status" : {
       "put" : {
-        "description" : "Updates IMService meta setting",
-        "operationId" : "updateSettingIMServiceMeta",
+        "description" : "Updates IMService status setting",
+        "operationId" : "updateSettingIMServiceStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -15538,7 +15538,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusReq"
               }
             }
           },
@@ -15550,7 +15550,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusResp"
                 }
               }
             },
@@ -15577,7 +15577,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates IMService meta setting",
+        "summary" : "Updates IMService status setting",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -15710,15 +15710,15 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/image-build-settings/meta" : {
+    "/settings/image-build-settings/status" : {
       "put" : {
-        "description" : "Updates image build settings meta",
-        "operationId" : "updateSettingImageBuildSettingsMeta",
+        "description" : "Updates image build settings status",
+        "operationId" : "updateSettingImageBuildSettingsStatus",
         "requestBody" : {
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq"
               }
             }
           },
@@ -15730,7 +15730,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp"
                 }
               }
             },
@@ -15757,7 +15757,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates image build settings meta",
+        "summary" : "Updates image build settings status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -16036,10 +16036,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/notifications/{itemID}/meta" : {
+    "/settings/notifications/{itemID}/status" : {
       "put" : {
-        "description" : "Updates notification meta",
-        "operationId" : "updateSettingNotificationMeta",
+        "description" : "Updates notification status",
+        "operationId" : "updateSettingNotificationStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -16053,7 +16053,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusReq"
               }
             }
           },
@@ -16065,7 +16065,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusResp"
                 }
               }
             },
@@ -16092,7 +16092,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates notification meta",
+        "summary" : "Updates notification status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -16371,10 +16371,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/oauth/{itemID}/meta" : {
+    "/settings/oauth/{itemID}/status" : {
       "put" : {
-        "description" : "Updates oauth meta",
-        "operationId" : "updateSettingOAuthMeta",
+        "description" : "Updates oauth status",
+        "operationId" : "updateSettingOAuthStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -16388,7 +16388,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthStatusReq"
               }
             }
           },
@@ -16400,7 +16400,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthStatusResp"
                 }
               }
             },
@@ -16427,7 +16427,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates oauth meta",
+        "summary" : "Updates oauth status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -16758,10 +16758,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/registry-auth/{itemID}/meta" : {
+    "/settings/registry-auth/{itemID}/status" : {
       "put" : {
-        "description" : "Updates registry auth meta",
-        "operationId" : "updateSettingRegistryAuthMeta",
+        "description" : "Updates registry auth status",
+        "operationId" : "updateSettingRegistryAuthStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -16775,7 +16775,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusReq"
               }
             }
           },
@@ -16787,7 +16787,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusResp"
                 }
               }
             },
@@ -16814,7 +16814,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates registry auth meta",
+        "summary" : "Updates registry auth status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -17046,10 +17046,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/secrets/{itemID}/meta" : {
+    "/settings/secrets/{itemID}/status" : {
       "put" : {
-        "description" : "Updates secret meta",
-        "operationId" : "updateSettingSecretMeta",
+        "description" : "Updates secret status",
+        "operationId" : "updateSettingSecretStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -17063,7 +17063,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretStatusReq"
               }
             }
           },
@@ -17075,7 +17075,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretStatusResp"
                 }
               }
             },
@@ -17102,7 +17102,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates secret meta",
+        "summary" : "Updates secret status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -17381,10 +17381,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/ssh-keys/{itemID}/meta" : {
+    "/settings/ssh-keys/{itemID}/status" : {
       "put" : {
-        "description" : "Updates ssh-key meta",
-        "operationId" : "updateSettingSSHKeyMeta",
+        "description" : "Updates ssh-key status",
+        "operationId" : "updateSettingSSHKeyStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -17398,7 +17398,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusReq"
               }
             }
           },
@@ -17410,7 +17410,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusResp"
                 }
               }
             },
@@ -17437,7 +17437,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates ssh-key meta",
+        "summary" : "Updates ssh-key status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -17716,10 +17716,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/ssl-certs/{itemID}/meta" : {
+    "/settings/ssl-certs/{itemID}/status" : {
       "put" : {
-        "description" : "Updates SSL cert meta",
-        "operationId" : "updateSettingSSLCertMeta",
+        "description" : "Updates SSL cert status",
+        "operationId" : "updateSettingSSLCertStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -17733,7 +17733,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusReq"
               }
             }
           },
@@ -17745,7 +17745,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusResp"
                 }
               }
             },
@@ -17772,7 +17772,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates SSL cert meta",
+        "summary" : "Updates SSL cert status",
         "tags" : [ "settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -18791,10 +18791,10 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/system/tasks/{taskID}/meta" : {
+    "/system/tasks/{taskID}/status" : {
       "put" : {
-        "description" : "Updates task meta",
-        "operationId" : "updateTaskMeta",
+        "description" : "Updates task status",
+        "operationId" : "updateTaskStatus",
         "parameters" : [ {
           "description" : "task ID",
           "in" : "path",
@@ -18808,7 +18808,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusReq"
               }
             }
           },
@@ -18820,7 +18820,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusResp"
                 }
               }
             },
@@ -18847,7 +18847,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates task meta",
+        "summary" : "Updates task status",
         "tags" : [ "system_tasks" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -19684,10 +19684,10 @@
         "tags" : [ "user_settings" ]
       }
     },
-    "/users/current/settings/api-keys/{itemID}/meta" : {
+    "/users/current/settings/api-keys/{itemID}/status" : {
       "put" : {
-        "description" : "Updates API key meta",
-        "operationId" : "updateUserAPIKeyMeta",
+        "description" : "Updates API key status",
+        "operationId" : "updateUserAPIKeyStatus",
         "parameters" : [ {
           "description" : "setting ID",
           "in" : "path",
@@ -19701,7 +19701,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyMetaReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyStatusReq"
               }
             }
           },
@@ -19713,7 +19713,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyMetaResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyStatusResp"
                 }
               }
             },
@@ -19740,7 +19740,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates API key meta",
+        "summary" : "Updates API key status",
         "tags" : [ "user_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -21014,7 +21014,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]
@@ -24542,36 +24542,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -24606,6 +24576,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.UpdateAccessTokenStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -24734,36 +24734,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -24789,6 +24759,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.UpdateBasicAuthStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -24980,36 +24980,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -25035,6 +25005,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.UpdateCloudStorageStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -25429,36 +25429,6 @@
         "required" : [ "initialTime" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobReq" : {
         "properties" : {
           "app" : {
@@ -25505,6 +25475,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -25624,36 +25624,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -25676,6 +25646,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -25961,36 +25961,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -26019,6 +25989,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.UpdateEmailStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -26561,36 +26561,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppReq" : {
         "properties" : {
           "appId" : {
@@ -26631,6 +26601,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.UpdateGithubAppStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -26858,36 +26858,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -26934,6 +26904,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.UpdateHealthcheckStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -27050,36 +27050,6 @@
         "required" : [ "createdAt", "id", "name", "noCache", "noVerbose", "resources", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -27105,6 +27075,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -27302,36 +27302,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -27360,6 +27330,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.UpdateIMServiceStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -27581,36 +27581,6 @@
         "required" : [ "webhook" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -27642,6 +27612,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -27824,36 +27824,6 @@
         "required" : [ "callbackURL", "clientId", "clientSecret", "createdAt", "id", "name", "organization", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthReq" : {
         "properties" : {
           "authURL" : {
@@ -27900,6 +27870,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28070,36 +28070,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthReq" : {
         "properties" : {
           "address" : {
@@ -28131,6 +28101,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.UpdateRegistryAuthStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28253,36 +28253,6 @@
         "required" : [ "createdAt", "id", "kind", "name", "secret", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -28308,6 +28278,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28418,36 +28418,6 @@
         "required" : [ "createdAt", "id", "key", "name", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -28473,6 +28443,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.UpdateSecretStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28601,36 +28601,6 @@
         "required" : [ "createdAt", "id", "name", "privateKey", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -28656,6 +28626,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28835,36 +28835,6 @@
         "required" : [ "autoRenew", "certType", "certificate", "createdAt", "domain", "email", "expireAt", "id", "keyType", "name", "notification", "notifyFrom", "privateKey", "renewableFrom", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertMetaResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertReq" : {
         "properties" : {
           "autoRenew" : {
@@ -28914,6 +28884,36 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -29663,7 +29663,7 @@
         "required" : [ "config", "createdAt", "endedAt", "id", "retryAt", "runAt", "startedAt", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskMetaReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusReq" : {
         "properties" : {
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.TaskStatus"
@@ -29675,7 +29675,7 @@
         "required" : [ "status", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskMetaResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -29816,7 +29816,7 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyMetaReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyStatusReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -29837,7 +29837,7 @@
         "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyMetaResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.UpdateAPIKeyStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"

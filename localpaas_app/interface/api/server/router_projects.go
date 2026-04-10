@@ -47,7 +47,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		cronJobGroup.GET("/:itemID", projectHandler.GetCronJob)
 		cronJobGroup.POST("", projectHandler.CreateCronJob)
 		cronJobGroup.PUT("/:itemID", projectHandler.UpdateCronJob)
-		cronJobGroup.PUT("/:itemID/meta", projectHandler.UpdateCronJobMeta)
+		cronJobGroup.PUT("/:itemID/status", projectHandler.UpdateCronJobStatus)
 		cronJobGroup.DELETE("/:itemID", projectHandler.DeleteCronJob)
 	}
 
@@ -57,7 +57,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		githubAppGroup.GET("", projectHandler.ListGithubApp)
 		githubAppGroup.POST("", projectHandler.CreateGithubApp)
 		githubAppGroup.PUT("/:itemID", projectHandler.UpdateGithubApp)
-		githubAppGroup.PUT("/:itemID/meta", projectHandler.UpdateGithubAppMeta)
+		githubAppGroup.PUT("/:itemID/status", projectHandler.UpdateGithubAppStatus)
 		githubAppGroup.DELETE("/:itemID", projectHandler.DeleteGithubApp)
 		// Manifest flow
 		githubAppGroup.POST("/manifest-flow/begin", projectHandler.BeginProjectGithubAppManifestFlow)
@@ -72,7 +72,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		accessTokenGroup.GET("", projectHandler.ListAccessToken)
 		accessTokenGroup.POST("", projectHandler.CreateAccessToken)
 		accessTokenGroup.PUT("/:itemID", projectHandler.UpdateAccessToken)
-		accessTokenGroup.PUT("/:itemID/meta", projectHandler.UpdateAccessTokenMeta)
+		accessTokenGroup.PUT("/:itemID/status", projectHandler.UpdateAccessTokenStatus)
 		accessTokenGroup.DELETE("/:itemID", projectHandler.DeleteAccessToken)
 	}
 
@@ -90,7 +90,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		cloudStorageGroup.GET("", projectHandler.ListCloudStorage)
 		cloudStorageGroup.POST("", projectHandler.CreateCloudStorage)
 		cloudStorageGroup.PUT("/:itemID", projectHandler.UpdateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID/meta", projectHandler.UpdateCloudStorageMeta)
+		cloudStorageGroup.PUT("/:itemID/status", projectHandler.UpdateCloudStorageStatus)
 		cloudStorageGroup.DELETE("/:itemID", projectHandler.DeleteCloudStorage)
 	}
 
@@ -100,7 +100,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		sshKeyGroup.GET("", projectHandler.ListSSHKey)
 		sshKeyGroup.POST("", projectHandler.CreateSSHKey)
 		sshKeyGroup.PUT("/:itemID", projectHandler.UpdateSSHKey)
-		sshKeyGroup.PUT("/:itemID/meta", projectHandler.UpdateSSHKeyMeta)
+		sshKeyGroup.PUT("/:itemID/status", projectHandler.UpdateSSHKeyStatus)
 		sshKeyGroup.DELETE("/:itemID", projectHandler.DeleteSSHKey)
 	}
 
@@ -110,7 +110,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imServiceGroup.GET("", projectHandler.ListIMService)
 		imServiceGroup.POST("", projectHandler.CreateIMService)
 		imServiceGroup.PUT("/:itemID", projectHandler.UpdateIMService)
-		imServiceGroup.PUT("/:itemID/meta", projectHandler.UpdateIMServiceMeta)
+		imServiceGroup.PUT("/:itemID/status", projectHandler.UpdateIMServiceStatus)
 		imServiceGroup.DELETE("/:itemID", projectHandler.DeleteIMService)
 	}
 
@@ -120,7 +120,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		registryAuthGroup.GET("", projectHandler.ListRegistryAuth)
 		registryAuthGroup.POST("", projectHandler.CreateRegistryAuth)
 		registryAuthGroup.PUT("/:itemID", projectHandler.UpdateRegistryAuth)
-		registryAuthGroup.PUT("/:itemID/meta", projectHandler.UpdateRegistryAuthMeta)
+		registryAuthGroup.PUT("/:itemID/status", projectHandler.UpdateRegistryAuthStatus)
 		registryAuthGroup.DELETE("/:itemID", projectHandler.DeleteRegistryAuth)
 	}
 
@@ -130,7 +130,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		basicAuthGroup.GET("", projectHandler.ListBasicAuth)
 		basicAuthGroup.POST("", projectHandler.CreateBasicAuth)
 		basicAuthGroup.PUT("/:itemID", projectHandler.UpdateBasicAuth)
-		basicAuthGroup.PUT("/:itemID/meta", projectHandler.UpdateBasicAuthMeta)
+		basicAuthGroup.PUT("/:itemID/status", projectHandler.UpdateBasicAuthStatus)
 		basicAuthGroup.DELETE("/:itemID", projectHandler.DeleteBasicAuth)
 	}
 
@@ -140,7 +140,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		sslCertGroup.GET("", projectHandler.ListSSLCert)
 		sslCertGroup.POST("", projectHandler.CreateSSLCert)
 		sslCertGroup.PUT("/:itemID", projectHandler.UpdateSSLCert)
-		sslCertGroup.PUT("/:itemID/meta", projectHandler.UpdateSSLCertMeta)
+		sslCertGroup.PUT("/:itemID/status", projectHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", projectHandler.DeleteSSLCert)
 	}
 
@@ -148,7 +148,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		domainSettingsGroup := projectGroup.Group("/:projectID/domain-settings")
 		domainSettingsGroup.GET("", projectHandler.GetUniqueDomainSettings)
 		domainSettingsGroup.PUT("", projectHandler.UpdateUniqueDomainSettings)
-		domainSettingsGroup.PUT("/meta", projectHandler.UpdateUniqueDomainSettingsMeta)
+		domainSettingsGroup.PUT("/status", projectHandler.UpdateUniqueDomainSettingsStatus)
 		domainSettingsGroup.DELETE("", projectHandler.DeleteUniqueDomainSettings)
 	}
 
@@ -158,7 +158,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		emailGroup.GET("", projectHandler.ListEmail)
 		emailGroup.POST("", projectHandler.CreateEmail)
 		emailGroup.PUT("/:itemID", projectHandler.UpdateEmail)
-		emailGroup.PUT("/:itemID/meta", projectHandler.UpdateEmailMeta)
+		emailGroup.PUT("/:itemID/status", projectHandler.UpdateEmailStatus)
 		emailGroup.DELETE("/:itemID", projectHandler.DeleteEmail)
 	}
 
@@ -168,7 +168,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		repoWebhookGroup.GET("", projectHandler.ListRepoWebhook)
 		repoWebhookGroup.POST("", projectHandler.CreateRepoWebhook)
 		repoWebhookGroup.PUT("/:itemID", projectHandler.UpdateRepoWebhook)
-		repoWebhookGroup.PUT("/:itemID/meta", projectHandler.UpdateRepoWebhookMeta)
+		repoWebhookGroup.PUT("/:itemID/status", projectHandler.UpdateRepoWebhookStatus)
 		repoWebhookGroup.DELETE("/:itemID", projectHandler.DeleteRepoWebhook)
 	}
 
@@ -178,7 +178,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		notificationGroup.GET("", projectHandler.ListNotification)
 		notificationGroup.POST("", projectHandler.CreateNotification)
 		notificationGroup.PUT("/:itemID", projectHandler.UpdateNotification)
-		notificationGroup.PUT("/:itemID/meta", projectHandler.UpdateNotificationMeta)
+		notificationGroup.PUT("/:itemID/status", projectHandler.UpdateNotificationStatus)
 		notificationGroup.DELETE("/:itemID", projectHandler.DeleteNotification)
 	}
 
@@ -186,7 +186,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imageBuildSettingsGroup := projectGroup.Group("/:projectID/image-build-settings")
 		imageBuildSettingsGroup.GET("", projectHandler.GetUniqueImageBuildSettings)
 		imageBuildSettingsGroup.PUT("", projectHandler.UpdateUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/meta", projectHandler.UpdateUniqueImageBuildSettingsMeta)
+		imageBuildSettingsGroup.PUT("/status", projectHandler.UpdateUniqueImageBuildSettingsStatus)
 		imageBuildSettingsGroup.DELETE("", projectHandler.DeleteUniqueImageBuildSettings)
 	}
 

@@ -15,7 +15,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		oauthGroup.GET("", settingHandler.ListOAuth)
 		oauthGroup.POST("", settingHandler.CreateOAuth)
 		oauthGroup.PUT("/:itemID", settingHandler.UpdateOAuth)
-		oauthGroup.PUT("/:itemID/meta", settingHandler.UpdateOAuthMeta)
+		oauthGroup.PUT("/:itemID/status", settingHandler.UpdateOAuthStatus)
 		oauthGroup.DELETE("/:itemID", settingHandler.DeleteOAuth)
 	}
 
@@ -25,7 +25,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		githubAppGroup.GET("", settingHandler.ListGithubApp)
 		githubAppGroup.POST("", settingHandler.CreateGithubApp)
 		githubAppGroup.PUT("/:itemID", settingHandler.UpdateGithubApp)
-		githubAppGroup.PUT("/:itemID/meta", settingHandler.UpdateGithubAppMeta)
+		githubAppGroup.PUT("/:itemID/status", settingHandler.UpdateGithubAppStatus)
 		githubAppGroup.DELETE("/:itemID", settingHandler.DeleteGithubApp)
 		// Test connection
 		githubAppGroup.POST("/test-conn", settingHandler.TestGithubAppConn)
@@ -44,7 +44,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		accessTokenGroup.GET("", settingHandler.ListAccessToken)
 		accessTokenGroup.POST("", settingHandler.CreateAccessToken)
 		accessTokenGroup.PUT("/:itemID", settingHandler.UpdateAccessToken)
-		accessTokenGroup.PUT("/:itemID/meta", settingHandler.UpdateAccessTokenMeta)
+		accessTokenGroup.PUT("/:itemID/status", settingHandler.UpdateAccessTokenStatus)
 		accessTokenGroup.DELETE("/:itemID", settingHandler.DeleteAccessToken)
 		// Test connection
 		accessTokenGroup.POST("/test-conn", settingHandler.TestAccessTokenConn)
@@ -61,7 +61,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		cloudStorageGroup.GET("", settingHandler.ListCloudStorage)
 		cloudStorageGroup.POST("", settingHandler.CreateCloudStorage)
 		cloudStorageGroup.PUT("/:itemID", settingHandler.UpdateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID/meta", settingHandler.UpdateCloudStorageMeta)
+		cloudStorageGroup.PUT("/:itemID/status", settingHandler.UpdateCloudStorageStatus)
 		cloudStorageGroup.DELETE("/:itemID", settingHandler.DeleteCloudStorage)
 		// Test connection
 		cloudStorageGroup.POST("/test-conn", settingHandler.TestCloudStorageConn)
@@ -73,7 +73,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		sshKeyGroup.GET("", settingHandler.ListSSHKey)
 		sshKeyGroup.POST("", settingHandler.CreateSSHKey)
 		sshKeyGroup.PUT("/:itemID", settingHandler.UpdateSSHKey)
-		sshKeyGroup.PUT("/:itemID/meta", settingHandler.UpdateSSHKeyMeta)
+		sshKeyGroup.PUT("/:itemID/status", settingHandler.UpdateSSHKeyStatus)
 		sshKeyGroup.DELETE("/:itemID", settingHandler.DeleteSSHKey)
 	}
 
@@ -83,7 +83,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imServiceGroup.GET("", settingHandler.ListIMService)
 		imServiceGroup.POST("", settingHandler.CreateIMService)
 		imServiceGroup.PUT("/:itemID", settingHandler.UpdateIMService)
-		imServiceGroup.PUT("/:itemID/meta", settingHandler.UpdateIMServiceMeta)
+		imServiceGroup.PUT("/:itemID/status", settingHandler.UpdateIMServiceStatus)
 		imServiceGroup.DELETE("/:itemID", settingHandler.DeleteIMService)
 		// Test connection
 		imServiceGroup.POST("/test-send-msg", settingHandler.TestSendInstantMsg)
@@ -95,7 +95,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		registryAuthGroup.GET("", settingHandler.ListRegistryAuth)
 		registryAuthGroup.POST("", settingHandler.CreateRegistryAuth)
 		registryAuthGroup.PUT("/:itemID", settingHandler.UpdateRegistryAuth)
-		registryAuthGroup.PUT("/:itemID/meta", settingHandler.UpdateRegistryAuthMeta)
+		registryAuthGroup.PUT("/:itemID/status", settingHandler.UpdateRegistryAuthStatus)
 		registryAuthGroup.DELETE("/:itemID", settingHandler.DeleteRegistryAuth)
 		// Test connection
 		registryAuthGroup.POST("/test-conn", settingHandler.TestRegistryAuthConn)
@@ -107,7 +107,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		basicAuthGroup.GET("", settingHandler.ListBasicAuth)
 		basicAuthGroup.POST("", settingHandler.CreateBasicAuth)
 		basicAuthGroup.PUT("/:itemID", settingHandler.UpdateBasicAuth)
-		basicAuthGroup.PUT("/:itemID/meta", settingHandler.UpdateBasicAuthMeta)
+		basicAuthGroup.PUT("/:itemID/status", settingHandler.UpdateBasicAuthStatus)
 		basicAuthGroup.DELETE("/:itemID", settingHandler.DeleteBasicAuth)
 	}
 
@@ -117,7 +117,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		sslCertGroup.GET("", settingHandler.ListSSLCert)
 		sslCertGroup.POST("", settingHandler.CreateSSLCert)
 		sslCertGroup.PUT("/:itemID", settingHandler.UpdateSSLCert)
-		sslCertGroup.PUT("/:itemID/meta", settingHandler.UpdateSSLCertMeta)
+		sslCertGroup.PUT("/:itemID/status", settingHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", settingHandler.DeleteSSLCert)
 	}
 
@@ -125,7 +125,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		domainSettingsGroup := settingGroup.Group("/domain-settings")
 		domainSettingsGroup.GET("", settingHandler.GetUniqueDomainSettings)
 		domainSettingsGroup.PUT("", settingHandler.UpdateUniqueDomainSettings)
-		domainSettingsGroup.PUT("/meta", settingHandler.UpdateUniqueDomainSettingsMeta)
+		domainSettingsGroup.PUT("/status", settingHandler.UpdateUniqueDomainSettingsStatus)
 		domainSettingsGroup.DELETE("", settingHandler.DeleteUniqueDomainSettings)
 	}
 
@@ -135,7 +135,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		emailGroup.GET("", settingHandler.ListEmail)
 		emailGroup.POST("", settingHandler.CreateEmail)
 		emailGroup.PUT("/:itemID", settingHandler.UpdateEmail)
-		emailGroup.PUT("/:itemID/meta", settingHandler.UpdateEmailMeta)
+		emailGroup.PUT("/:itemID/status", settingHandler.UpdateEmailStatus)
 		emailGroup.DELETE("/:itemID", settingHandler.DeleteEmail)
 		// Test connection
 		emailGroup.POST("/test-send-mail", settingHandler.TestSendMail)
@@ -146,7 +146,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		secretGroup.GET("", settingHandler.ListSecret)
 		secretGroup.POST("", settingHandler.CreateSecret)
 		secretGroup.PUT("/:itemID", settingHandler.UpdateSecret)
-		secretGroup.PUT("/:itemID/meta", settingHandler.UpdateSecretMeta)
+		secretGroup.PUT("/:itemID/status", settingHandler.UpdateSecretStatus)
 		secretGroup.DELETE("/:itemID", settingHandler.DeleteSecret)
 	}
 
@@ -156,7 +156,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		cronJobGroup.GET("", settingHandler.ListCronJob)
 		cronJobGroup.POST("", settingHandler.CreateCronJob)
 		cronJobGroup.PUT("/:itemID", settingHandler.UpdateCronJob)
-		cronJobGroup.PUT("/:itemID/meta", settingHandler.UpdateCronJobMeta)
+		cronJobGroup.PUT("/:itemID/status", settingHandler.UpdateCronJobStatus)
 		cronJobGroup.DELETE("/:itemID", settingHandler.DeleteCronJob)
 	}
 
@@ -166,7 +166,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		notificationGroup.GET("", settingHandler.ListNotification)
 		notificationGroup.POST("", settingHandler.CreateNotification)
 		notificationGroup.PUT("/:itemID", settingHandler.UpdateNotification)
-		notificationGroup.PUT("/:itemID/meta", settingHandler.UpdateNotificationMeta)
+		notificationGroup.PUT("/:itemID/status", settingHandler.UpdateNotificationStatus)
 		notificationGroup.DELETE("/:itemID", settingHandler.DeleteNotification)
 	}
 
@@ -174,7 +174,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		imageBuildSettingsGroup := settingGroup.Group("/image-build-settings")
 		imageBuildSettingsGroup.GET("", settingHandler.GetUniqueImageBuildSettings)
 		imageBuildSettingsGroup.PUT("", settingHandler.UpdateUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/meta", settingHandler.UpdateUniqueImageBuildSettingsMeta)
+		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateUniqueImageBuildSettingsStatus)
 		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteUniqueImageBuildSettings)
 	}
 

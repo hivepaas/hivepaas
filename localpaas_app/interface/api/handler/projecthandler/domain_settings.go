@@ -39,20 +39,20 @@ func (h *Handler) UpdateUniqueDomainSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.SettingScopeProject)
 }
 
-// UpdateUniqueDomainSettingsMeta Updates domain settings meta
-// @Summary Updates domain settings meta
-// @Description Updates domain settings meta
+// UpdateUniqueDomainSettingsStatus Updates domain settings status
+// @Summary Updates domain settings status
+// @Description Updates domain settings status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectDomainSettingsMeta
+// @Id      updateProjectDomainSettingsStatus
 // @Param   projectID path string true "project ID"
-// @Param   body body domainsettingsdto.UpdateUniqueDomainSettingsMetaReq true "request data"
-// @Success 200 {object} domainsettingsdto.UpdateUniqueDomainSettingsMetaResp
+// @Param   body body domainsettingsdto.UpdateUniqueDomainSettingsStatusReq true "request data"
+// @Success 200 {object} domainsettingsdto.UpdateUniqueDomainSettingsStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/domain-settings/meta [put]
-func (h *Handler) UpdateUniqueDomainSettingsMeta(ctx *gin.Context) {
-	h.UpdateUniqueSettingMeta(ctx, base.ResourceTypeDomainSettings, base.SettingScopeProject)
+// @Router  /projects/{projectID}/domain-settings/status [put]
+func (h *Handler) UpdateUniqueDomainSettingsStatus(ctx *gin.Context) {
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeDomainSettings, base.SettingScopeProject)
 }
 
 // DeleteUniqueDomainSettings Deletes domain settings setting

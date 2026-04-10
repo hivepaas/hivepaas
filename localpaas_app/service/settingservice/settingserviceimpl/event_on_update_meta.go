@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 )
 
-func (s *service) OnUpdateMeta(
+func (s *service) OnUpdateStatus(
 	ctx context.Context,
 	db database.IDB,
 	event *settingservice.UpdateEvent,

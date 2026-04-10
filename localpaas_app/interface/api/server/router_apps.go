@@ -55,7 +55,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		cronJobGroup.GET("/:itemID", appHandler.GetAppCronJob)
 		cronJobGroup.POST("", appHandler.CreateAppCronJob)
 		cronJobGroup.PUT("/:itemID", appHandler.UpdateAppCronJob)
-		cronJobGroup.PUT("/:itemID/meta", appHandler.UpdateAppCronJobMeta)
+		cronJobGroup.PUT("/:itemID/status", appHandler.UpdateAppCronJobStatus)
 		cronJobGroup.DELETE("/:itemID", appHandler.DeleteAppCronJob)
 		// Execute
 		cronJobGroup.POST("/:itemID/exec", appHandler.ExecuteAppCronJob)
@@ -74,7 +74,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		healthcheckGroup.GET("/:itemID", appHandler.GetAppHealthcheck)
 		healthcheckGroup.POST("", appHandler.CreateAppHealthcheck)
 		healthcheckGroup.PUT("/:itemID", appHandler.UpdateAppHealthcheck)
-		healthcheckGroup.PUT("/:itemID/meta", appHandler.UpdateAppHealthcheckMeta)
+		healthcheckGroup.PUT("/:itemID/status", appHandler.UpdateAppHealthcheckStatus)
 		healthcheckGroup.DELETE("/:itemID", appHandler.DeleteAppHealthcheck)
 
 		// Healthcheck task group

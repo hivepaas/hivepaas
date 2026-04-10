@@ -37,19 +37,19 @@ func (h *Handler) UpdateUniqueImageBuildSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
 }
 
-// UpdateUniqueImageBuildSettingsMeta Updates image build settings meta
-// @Summary Updates image build settings meta
-// @Description Updates image build settings meta
+// UpdateUniqueImageBuildSettingsStatus Updates image build settings status
+// @Summary Updates image build settings status
+// @Description Updates image build settings status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingImageBuildSettingsMeta
-// @Param   body body imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaReq true "request data"
-// @Success 200 {object} imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaResp
+// @Id      updateSettingImageBuildSettingsStatus
+// @Param   body body imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq true "request data"
+// @Success 200 {object} imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/image-build-settings/meta [put]
-func (h *Handler) UpdateUniqueImageBuildSettingsMeta(ctx *gin.Context) {
-	h.UpdateUniqueSettingMeta(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
+// @Router  /settings/image-build-settings/status [put]
+func (h *Handler) UpdateUniqueImageBuildSettingsStatus(ctx *gin.Context) {
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
 }
 
 // DeleteUniqueImageBuildSettings Deletes image build settings

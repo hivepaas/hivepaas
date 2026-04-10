@@ -76,21 +76,21 @@ func (h *Handler) UpdateSSLCert(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeProject)
 }
 
-// UpdateSSLCertMeta Updates SSL cert meta
-// @Summary Updates SSL cert meta
-// @Description Updates SSL cert meta
+// UpdateSSLCertStatus Updates SSL cert status
+// @Summary Updates SSL cert status
+// @Description Updates SSL cert status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectSSLCertMeta
+// @Id      updateProjectSSLCertStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body sslcertdto.UpdateSSLCertMetaReq true "request data"
-// @Success 200 {object} sslcertdto.UpdateSSLCertMetaResp
+// @Param   body body sslcertdto.UpdateSSLCertStatusReq true "request data"
+// @Success 200 {object} sslcertdto.UpdateSSLCertStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/ssl-certs/{itemID}/meta [put]
-func (h *Handler) UpdateSSLCertMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeSSLCert, base.SettingScopeProject)
+// @Router  /projects/{projectID}/ssl-certs/{itemID}/status [put]
+func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSLCert, base.SettingScopeProject)
 }
 
 // DeleteSSLCert Deletes an SSL cert

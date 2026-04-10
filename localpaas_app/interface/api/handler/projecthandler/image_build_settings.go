@@ -39,20 +39,20 @@ func (h *Handler) UpdateUniqueImageBuildSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeProject)
 }
 
-// UpdateUniqueImageBuildSettingsMeta Updates image build meta
-// @Summary Updates image build meta
-// @Description Updates image build meta
+// UpdateUniqueImageBuildSettingsStatus Updates image build status
+// @Summary Updates image build status
+// @Description Updates image build status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectImageBuildSettingsMeta
+// @Id      updateProjectImageBuildSettingsStatus
 // @Param   projectID path string true "project ID"
-// @Param   body body imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaReq true "request data"
-// @Success 200 {object} imagebuildsettingsdto.UpdateUniqueImageBuildSettingsMetaResp
+// @Param   body body imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq true "request data"
+// @Success 200 {object} imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/image-build-settings/meta [put]
-func (h *Handler) UpdateUniqueImageBuildSettingsMeta(ctx *gin.Context) {
-	h.UpdateUniqueSettingMeta(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeProject)
+// @Router  /projects/{projectID}/image-build-settings/status [put]
+func (h *Handler) UpdateUniqueImageBuildSettingsStatus(ctx *gin.Context) {
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeProject)
 }
 
 // DeleteUniqueImageBuildSettings Deletes image build settings

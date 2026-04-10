@@ -75,20 +75,20 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
 }
 
-// UpdateEmailMeta Updates email setting meta
-// @Summary Updates email setting meta
-// @Description Updates email setting meta
+// UpdateEmailStatus Updates email setting status
+// @Summary Updates email setting status
+// @Description Updates email setting status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingEmailMeta
+// @Id      updateSettingEmailStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body emaildto.UpdateEmailMetaReq true "request data"
-// @Success 200 {object} emaildto.UpdateEmailMetaResp
+// @Param   body body emaildto.UpdateEmailStatusReq true "request data"
+// @Success 200 {object} emaildto.UpdateEmailStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/emails/{itemID}/meta [put]
-func (h *Handler) UpdateEmailMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+// @Router  /settings/emails/{itemID}/status [put]
+func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
 }
 
 // DeleteEmail Deletes e-mail setting

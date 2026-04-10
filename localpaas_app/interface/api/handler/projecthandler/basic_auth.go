@@ -76,21 +76,21 @@ func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeProject)
 }
 
-// UpdateBasicAuthMeta Updates basic auth meta
-// @Summary Updates basic auth meta
-// @Description Updates basic auth meta
+// UpdateBasicAuthStatus Updates basic auth status
+// @Summary Updates basic auth status
+// @Description Updates basic auth status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectBasicAuthMeta
+// @Id      updateProjectBasicAuthStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body basicauthdto.UpdateBasicAuthMetaReq true "request data"
-// @Success 200 {object} basicauthdto.UpdateBasicAuthMetaResp
+// @Param   body body basicauthdto.UpdateBasicAuthStatusReq true "request data"
+// @Success 200 {object} basicauthdto.UpdateBasicAuthStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/basic-auth/{itemID}/meta [put]
-func (h *Handler) UpdateBasicAuthMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeBasicAuth, base.SettingScopeProject)
+// @Router  /projects/{projectID}/basic-auth/{itemID}/status [put]
+func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeBasicAuth, base.SettingScopeProject)
 }
 
 // DeleteBasicAuth Deletes basic auth setting

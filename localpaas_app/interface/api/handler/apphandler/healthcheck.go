@@ -80,22 +80,22 @@ func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
 }
 
-// UpdateAppHealthcheckMeta Updates healthcheck meta
-// @Summary Updates healthcheck meta
-// @Description Updates healthcheck meta
+// UpdateAppHealthcheckStatus Updates healthcheck status
+// @Summary Updates healthcheck status
+// @Description Updates healthcheck status
 // @Tags    apps
 // @Produce json
-// @Id      updateAppHealthcheckMeta
+// @Id      updateAppHealthcheckStatus
 // @Param   projectID path string true "project ID"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body healthcheckdto.UpdateHealthcheckMetaReq true "request data"
-// @Success 200 {object} healthcheckdto.UpdateHealthcheckMetaResp
+// @Param   body body healthcheckdto.UpdateHealthcheckStatusReq true "request data"
+// @Success 200 {object} healthcheckdto.UpdateHealthcheckStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID}/meta [put]
-func (h *Handler) UpdateAppHealthcheckMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID}/status [put]
+func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
 }
 
 // DeleteAppHealthcheck Deletes healthcheck

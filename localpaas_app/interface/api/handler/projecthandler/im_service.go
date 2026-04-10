@@ -76,21 +76,21 @@ func (h *Handler) UpdateIMService(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
 }
 
-// UpdateIMServiceMeta Updates IM service meta
-// @Summary Updates IM service meta
-// @Description Updates IM service meta
+// UpdateIMServiceStatus Updates IM service status
+// @Summary Updates IM service status
+// @Description Updates IM service status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectIMServiceMeta
+// @Id      updateProjectIMServiceStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body imservicedto.UpdateIMServiceMetaReq true "request data"
-// @Success 200 {object} imservicedto.UpdateIMServiceMetaResp
+// @Param   body body imservicedto.UpdateIMServiceStatusReq true "request data"
+// @Success 200 {object} imservicedto.UpdateIMServiceStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/im-services/{itemID}/meta [put]
-func (h *Handler) UpdateIMServiceMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+// @Router  /projects/{projectID}/im-services/{itemID}/status [put]
+func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
 }
 
 // DeleteIMService Deletes IM service

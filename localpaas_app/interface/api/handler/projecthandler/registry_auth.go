@@ -76,21 +76,21 @@ func (h *Handler) UpdateRegistryAuth(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
 }
 
-// UpdateRegistryAuthMeta Updates registry auth meta
-// @Summary Updates registry auth meta
-// @Description Updates registry auth meta
+// UpdateRegistryAuthStatus Updates registry auth status
+// @Summary Updates registry auth status
+// @Description Updates registry auth status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectRegistryAuthMeta
+// @Id      updateProjectRegistryAuthStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body registryauthdto.UpdateRegistryAuthMetaReq true "request data"
-// @Success 200 {object} registryauthdto.UpdateRegistryAuthMetaResp
+// @Param   body body registryauthdto.UpdateRegistryAuthStatusReq true "request data"
+// @Success 200 {object} registryauthdto.UpdateRegistryAuthStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/registry-auth/{itemID}/meta [put]
-func (h *Handler) UpdateRegistryAuthMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+// @Router  /projects/{projectID}/registry-auth/{itemID}/status [put]
+func (h *Handler) UpdateRegistryAuthStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
 }
 
 // DeleteRegistryAuth Deletes registry auth setting

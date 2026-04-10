@@ -72,20 +72,20 @@ func (h *Handler) UpdateCronJob(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
 }
 
-// UpdateCronJobMeta Updates cron-job meta
-// @Summary Updates cron-job meta
-// @Description Updates cron-job meta
+// UpdateCronJobStatus Updates cron-job status
+// @Summary Updates cron-job status
+// @Description Updates cron-job status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingCronJobMeta
+// @Id      updateSettingCronJobStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body cronjobdto.UpdateCronJobMetaReq true "request data"
-// @Success 200 {object} cronjobdto.UpdateCronJobMetaResp
+// @Param   body body cronjobdto.UpdateCronJobStatusReq true "request data"
+// @Success 200 {object} cronjobdto.UpdateCronJobStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/{itemID}/meta [put]
-func (h *Handler) UpdateCronJobMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/cron-jobs/{itemID}/status [put]
+func (h *Handler) UpdateCronJobStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
 }
 
 // DeleteCronJob Deletes cron-job

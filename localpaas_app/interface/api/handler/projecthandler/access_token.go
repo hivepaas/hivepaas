@@ -76,21 +76,21 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
 }
 
-// UpdateAccessTokenMeta Updates access-token meta
-// @Summary Updates access-token meta
-// @Description Updates access-token meta
+// UpdateAccessTokenStatus Updates access-token status
+// @Summary Updates access-token status
+// @Description Updates access-token status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectAccessTokenMeta
+// @Id      updateProjectAccessTokenStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body accesstokendto.UpdateAccessTokenMetaReq true "request data"
-// @Success 200 {object} accesstokendto.UpdateAccessTokenMetaResp
+// @Param   body body accesstokendto.UpdateAccessTokenStatusReq true "request data"
+// @Success 200 {object} accesstokendto.UpdateAccessTokenStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/access-tokens/{itemID}/meta [put]
-func (h *Handler) UpdateAccessTokenMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+// @Router  /projects/{projectID}/access-tokens/{itemID}/status [put]
+func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
 }
 
 // DeleteAccessToken Deletes access-token setting

@@ -76,21 +76,21 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
 }
 
-// UpdateSSHKeyMeta Updates ssh-key meta
-// @Summary Updates ssh-key meta
-// @Description Updates ssh-key meta
+// UpdateSSHKeyStatus Updates ssh-key status
+// @Summary Updates ssh-key status
+// @Description Updates ssh-key status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectSSHKeyMeta
+// @Id      updateProjectSSHKeyStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body sshkeydto.UpdateSSHKeyMetaReq true "request data"
-// @Success 200 {object} sshkeydto.UpdateSSHKeyMetaResp
+// @Param   body body sshkeydto.UpdateSSHKeyStatusReq true "request data"
+// @Success 200 {object} sshkeydto.UpdateSSHKeyStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/ssh-keys/{itemID}/meta [put]
-func (h *Handler) UpdateSSHKeyMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+// @Router  /projects/{projectID}/ssh-keys/{itemID}/status [put]
+func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
 }
 
 // DeleteSSHKey Deletes ssh-key setting

@@ -76,21 +76,21 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeProject)
 }
 
-// UpdateGithubAppMeta Updates github-app meta
-// @Summary Updates github-app meta
-// @Description Updates github-app meta
+// UpdateGithubAppStatus Updates github-app status
+// @Summary Updates github-app status
+// @Description Updates github-app status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectGithubAppMeta
+// @Id      updateProjectGithubAppStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body githubappdto.UpdateGithubAppMetaReq true "request data"
-// @Success 200 {object} githubappdto.UpdateGithubAppMetaResp
+// @Param   body body githubappdto.UpdateGithubAppStatusReq true "request data"
+// @Success 200 {object} githubappdto.UpdateGithubAppStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/github-apps/{itemID}/meta [put]
-func (h *Handler) UpdateGithubAppMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeGithubApp, base.SettingScopeProject)
+// @Router  /projects/{projectID}/github-apps/{itemID}/status [put]
+func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.SettingScopeProject)
 }
 
 // DeleteGithubApp Deletes github-app setting

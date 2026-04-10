@@ -76,21 +76,21 @@ func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
 }
 
-// UpdateCloudStorageMeta Updates cloud storage meta
-// @Summary Updates cloud storage meta
-// @Description Updates cloud storage meta
+// UpdateCloudStorageStatus Updates cloud storage status
+// @Summary Updates cloud storage status
+// @Description Updates cloud storage status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectCloudStorageMeta
+// @Id      updateProjectCloudStorageStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body cloudstoragedto.UpdateCloudStorageMetaReq true "request data"
-// @Success 200 {object} cloudstoragedto.UpdateCloudStorageMetaResp
+// @Param   body body cloudstoragedto.UpdateCloudStorageStatusReq true "request data"
+// @Success 200 {object} cloudstoragedto.UpdateCloudStorageStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/cloud-storages/{itemID}/meta [put]
-func (h *Handler) UpdateCloudStorageMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+// @Router  /projects/{projectID}/cloud-storages/{itemID}/status [put]
+func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
 }
 
 // DeleteCloudStorage Deletes a cloud storage

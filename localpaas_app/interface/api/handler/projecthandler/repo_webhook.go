@@ -76,21 +76,21 @@ func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
 }
 
-// UpdateRepoWebhookMeta Updates webhook meta
-// @Summary Updates webhook meta
-// @Description Updates webhook meta
+// UpdateRepoWebhookStatus Updates webhook status
+// @Summary Updates webhook status
+// @Description Updates webhook status
 // @Tags    project_settings
 // @Produce json
-// @Id      updateProjectRepoWebhookMeta
+// @Id      updateProjectRepoWebhookStatus
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
-// @Param   body body repowebhookdto.UpdateRepoWebhookMetaReq true "request data"
-// @Success 200 {object} repowebhookdto.UpdateRepoWebhookMetaResp
+// @Param   body body repowebhookdto.UpdateRepoWebhookStatusReq true "request data"
+// @Success 200 {object} repowebhookdto.UpdateRepoWebhookStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/repo-webhooks/{itemID}/meta [put]
-func (h *Handler) UpdateRepoWebhookMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+// @Router  /projects/{projectID}/repo-webhooks/{itemID}/status [put]
+func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
 }
 
 // DeleteRepoWebhook Deletes webhook setting

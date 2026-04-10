@@ -57,20 +57,20 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
 }
 
-// UpdateSecretMeta Updates secret meta
-// @Summary Updates secret meta
-// @Description Updates secret meta
+// UpdateSecretStatus Updates secret status
+// @Summary Updates secret status
+// @Description Updates secret status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingSecretMeta
+// @Id      updateSettingSecretStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body secretdto.UpdateSecretMetaReq true "request data"
-// @Success 201 {object} secretdto.UpdateSecretMetaResp
+// @Param   body body secretdto.UpdateSecretStatusReq true "request data"
+// @Success 201 {object} secretdto.UpdateSecretStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/secrets/{itemID}/meta [put]
-func (h *Handler) UpdateSecretMeta(ctx *gin.Context) {
-	h.UpdateSettingMeta(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+// @Router  /settings/secrets/{itemID}/status [put]
+func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
 }
 
 // DeleteSecret Deletes a secret

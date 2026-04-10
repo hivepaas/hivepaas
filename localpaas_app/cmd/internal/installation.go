@@ -37,6 +37,7 @@ func CompleteInstallation(
 			if err != nil {
 				return fmt.Errorf("failed to load system status: %w", err)
 			}
+			config.Current.SystemInfo.NextStep = sysStatus.NextStep
 
 			if sysStatus.NextStep == base.InstallationStepInitData {
 				err = installationInitData(ctx, db, sysStatusRepo, projectRepo, userService,
@@ -73,6 +74,7 @@ func installationInitData(
 		if err != nil {
 			return fmt.Errorf("failed to load system status: %w", err)
 		}
+		config.Current.SystemInfo.NextStep = sysStatus.NextStep
 		if sysStatus.NextStep == "" {
 			return nil
 		}
@@ -101,6 +103,7 @@ func installationInitData(
 		if err != nil {
 			return fmt.Errorf("failed to save system status: %w", err)
 		}
+		config.Current.SystemInfo.NextStep = sysStatus.NextStep
 
 		return nil
 	})

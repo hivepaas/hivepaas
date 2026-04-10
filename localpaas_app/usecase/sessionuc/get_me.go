@@ -6,6 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
@@ -36,6 +37,16 @@ func (uc *UC) GetMe(
 	}
 
 	respData := &sessiondto.GetMeDataResp{User: userResp}
+
+	if config.Current.SystemInfo.NextStep != "" && user.IsAdmin() {
+		sysStatus, err := uc.systemStatusRepo.Get(ctx, uc.db)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		config.Current.SystemInfo.NextStep = sysStatus.NextStep
+		respData.NextStep = string(sysStatus.NextStep)
+	}
+
 	if user.Status == base.UserStatusPending && user.TotpSecret == "" {
 		respData.NextStep = nextStepMfaSetup
 	}

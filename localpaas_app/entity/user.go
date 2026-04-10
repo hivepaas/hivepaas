@@ -48,6 +48,10 @@ func (u *User) IsAccessExpired() bool {
 	return !u.AccessExpireAt.IsZero() && u.AccessExpireAt.Before(timeutil.NowUTC())
 }
 
+func (u *User) IsAdmin() bool {
+	return u.Role == base.UserRoleAdmin
+}
+
 func (u *User) GetSettingScope() *base.SettingScope {
 	return &base.SettingScope{
 		UserID: u.ID,

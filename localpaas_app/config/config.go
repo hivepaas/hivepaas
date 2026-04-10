@@ -63,6 +63,9 @@ type Config struct {
 	Session      Session      `toml:"session"`
 	Proxy        Proxy        `toml:"proxy"`
 	Tasks        Tasks        `toml:"tasks"`
+
+	// Readonly
+	SystemInfo SystemInfo `toml:"-"`
 }
 
 func (cfg *Config) IsDevEnv() bool  { return cfg.Env == EnvDev }

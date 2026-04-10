@@ -14,6 +14,7 @@ type UC struct {
 	userRepo               repository.UserRepo
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo
 	settingRepo            repository.SettingRepo
+	systemStatusRepo       repository.SystemStatusRepo
 	userTokenRepo          cacherepository.UserTokenRepo
 	cacheMfaPasscodeRepo   cacherepository.MFAPasscodeRepo
 	cacheLoginAttemptRepo  cacherepository.LoginAttemptRepo
@@ -27,6 +28,7 @@ func New(
 	userRepo repository.UserRepo,
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
 	settingRepo repository.SettingRepo,
+	systemStatusRepo repository.SystemStatusRepo,
 	userTokenRepo cacherepository.UserTokenRepo,
 	cacheMfaPasscodeRepo cacherepository.MFAPasscodeRepo,
 	cacheLoginAttemptRepo cacherepository.LoginAttemptRepo,
@@ -39,6 +41,7 @@ func New(
 		userRepo:               userRepo,
 		loginTrustedDeviceRepo: loginTrustedDeviceRepo,
 		settingRepo:            settingRepo,
+		systemStatusRepo:       systemStatusRepo,
 		userTokenRepo:          userTokenRepo,
 		cacheMfaPasscodeRepo:   cacheMfaPasscodeRepo,
 		cacheLoginAttemptRepo:  cacheLoginAttemptRepo,

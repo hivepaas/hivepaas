@@ -8,6 +8,7 @@ import (
 func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.RouterGroup {
 	projectGroup := apiGroup.Group("/projects")
 	projectHandler := s.handlerRegistry.projectHandler
+	projectSettingsHandler := s.handlerRegistry.projectSettingsHandler
 
 	// Projects
 	projectGroup.GET("/base", projectHandler.ListProjectBase)
@@ -19,193 +20,197 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 	projectGroup.DELETE("/:projectID", projectHandler.DeleteProject)
 
 	// Settings import
-	projectGroup.POST("/:projectID/settings-import", projectHandler.ImportSettings)
+	projectGroup.POST("/:projectID/settings-import", projectSettingsHandler.ImportSettings)
 
 	{ // Tags
 		tagGroup := projectGroup.Group("/:projectID/tags")
-		tagGroup.POST("", projectHandler.CreateProjectTag)
-		tagGroup.POST("/delete", projectHandler.DeleteProjectTags)
+		tagGroup.POST("", projectSettingsHandler.CreateProjectTag)
+		tagGroup.POST("/delete", projectSettingsHandler.DeleteProjectTags)
 	}
 
 	{ // Env vars
 		envVarGroup := projectGroup.Group("/:projectID/env-vars")
-		envVarGroup.GET("", projectHandler.GetProjectEnvVars)
-		envVarGroup.PUT("", projectHandler.UpdateProjectEnvVars)
+		envVarGroup.GET("", projectSettingsHandler.GetProjectEnvVars)
+		envVarGroup.PUT("", projectSettingsHandler.UpdateProjectEnvVars)
 	}
 
 	{ // Secrets
 		secretGroup := projectGroup.Group("/:projectID/secrets")
-		secretGroup.GET("", projectHandler.ListProjectSecrets)
-		secretGroup.POST("", projectHandler.CreateProjectSecret)
-		secretGroup.PUT("/:itemID", projectHandler.UpdateProjectSecret)
-		secretGroup.DELETE("/:itemID", projectHandler.DeleteProjectSecret)
+		secretGroup.GET("", projectSettingsHandler.ListProjectSecrets)
+		secretGroup.POST("", projectSettingsHandler.CreateProjectSecret)
+		secretGroup.PUT("/:itemID", projectSettingsHandler.UpdateProjectSecret)
+		secretGroup.DELETE("/:itemID", projectSettingsHandler.DeleteProjectSecret)
 	}
 
 	{ // Cron jobs
 		cronJobGroup := projectGroup.Group("/:projectID/cron-jobs")
-		cronJobGroup.GET("", projectHandler.ListCronJob)
-		cronJobGroup.GET("/:itemID", projectHandler.GetCronJob)
-		cronJobGroup.POST("", projectHandler.CreateCronJob)
-		cronJobGroup.PUT("/:itemID", projectHandler.UpdateCronJob)
-		cronJobGroup.PUT("/:itemID/status", projectHandler.UpdateCronJobStatus)
-		cronJobGroup.DELETE("/:itemID", projectHandler.DeleteCronJob)
+		cronJobGroup.GET("", projectSettingsHandler.ListCronJob)
+		cronJobGroup.GET("/:itemID", projectSettingsHandler.GetCronJob)
+		cronJobGroup.POST("", projectSettingsHandler.CreateCronJob)
+		cronJobGroup.PUT("/:itemID", projectSettingsHandler.UpdateCronJob)
+		cronJobGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCronJobStatus)
+		cronJobGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCronJob)
 	}
 
 	{ // Github-app group
 		githubAppGroup := projectGroup.Group("/:projectID/github-apps")
-		githubAppGroup.GET("/:itemID", projectHandler.GetGithubApp)
-		githubAppGroup.GET("", projectHandler.ListGithubApp)
-		githubAppGroup.POST("", projectHandler.CreateGithubApp)
-		githubAppGroup.PUT("/:itemID", projectHandler.UpdateGithubApp)
-		githubAppGroup.PUT("/:itemID/status", projectHandler.UpdateGithubAppStatus)
-		githubAppGroup.DELETE("/:itemID", projectHandler.DeleteGithubApp)
+		githubAppGroup.GET("/:itemID", projectSettingsHandler.GetGithubApp)
+		githubAppGroup.GET("", projectSettingsHandler.ListGithubApp)
+		githubAppGroup.POST("", projectSettingsHandler.CreateGithubApp)
+		githubAppGroup.PUT("/:itemID", projectSettingsHandler.UpdateGithubApp)
+		githubAppGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateGithubAppStatus)
+		githubAppGroup.DELETE("/:itemID", projectSettingsHandler.DeleteGithubApp)
 		// Manifest flow
-		githubAppGroup.POST("/manifest-flow/begin", projectHandler.BeginProjectGithubAppManifestFlow)
-		githubAppGroup.GET("/:itemID/manifest-flow/begin", projectHandler.BeginProjectGithubAppManifestFlowCreation)
-		githubAppGroup.GET("/:itemID/manifest-flow/progress", projectHandler.HandleProjectGithubAppManifestFlowProgress)
-		githubAppGroup.POST("/:itemID/begin-reprovision", projectHandler.BeginReprovisionProjectGithubApp)
+		githubAppGroup.POST("/manifest-flow/begin",
+			projectSettingsHandler.BeginProjectGithubAppManifestFlow)
+		githubAppGroup.GET("/:itemID/manifest-flow/begin",
+			projectSettingsHandler.BeginProjectGithubAppManifestFlowCreation)
+		githubAppGroup.GET("/:itemID/manifest-flow/progress",
+			projectSettingsHandler.HandleProjectGithubAppManifestFlowProgress)
+		githubAppGroup.POST("/:itemID/begin-reprovision",
+			projectSettingsHandler.BeginReprovisionProjectGithubApp)
 	}
 
 	{ // Access-token group
 		accessTokenGroup := projectGroup.Group("/:projectID/access-tokens")
-		accessTokenGroup.GET("/:itemID", projectHandler.GetAccessToken)
-		accessTokenGroup.GET("", projectHandler.ListAccessToken)
-		accessTokenGroup.POST("", projectHandler.CreateAccessToken)
-		accessTokenGroup.PUT("/:itemID", projectHandler.UpdateAccessToken)
-		accessTokenGroup.PUT("/:itemID/status", projectHandler.UpdateAccessTokenStatus)
-		accessTokenGroup.DELETE("/:itemID", projectHandler.DeleteAccessToken)
+		accessTokenGroup.GET("/:itemID", projectSettingsHandler.GetAccessToken)
+		accessTokenGroup.GET("", projectSettingsHandler.ListAccessToken)
+		accessTokenGroup.POST("", projectSettingsHandler.CreateAccessToken)
+		accessTokenGroup.PUT("/:itemID", projectSettingsHandler.UpdateAccessToken)
+		accessTokenGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateAccessTokenStatus)
+		accessTokenGroup.DELETE("/:itemID", projectSettingsHandler.DeleteAccessToken)
 	}
 
 	{ // Git credentials group
 		gitCredentialGroup := projectGroup.Group("/:projectID/git-credentials")
-		gitCredentialGroup.GET("", projectHandler.ListGitCredential)
+		gitCredentialGroup.GET("", projectSettingsHandler.ListGitCredential)
 
 		// Repos
-		gitCredentialGroup.GET("/:itemID/repositories", projectHandler.ListGitRepo)
+		gitCredentialGroup.GET("/:itemID/repositories", projectSettingsHandler.ListGitRepo)
 	}
 
 	{ // Cloud storage group
 		cloudStorageGroup := projectGroup.Group("/:projectID/cloud-storages")
-		cloudStorageGroup.GET("/:itemID", projectHandler.GetCloudStorage)
-		cloudStorageGroup.GET("", projectHandler.ListCloudStorage)
-		cloudStorageGroup.POST("", projectHandler.CreateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID", projectHandler.UpdateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID/status", projectHandler.UpdateCloudStorageStatus)
-		cloudStorageGroup.DELETE("/:itemID", projectHandler.DeleteCloudStorage)
+		cloudStorageGroup.GET("/:itemID", projectSettingsHandler.GetCloudStorage)
+		cloudStorageGroup.GET("", projectSettingsHandler.ListCloudStorage)
+		cloudStorageGroup.POST("", projectSettingsHandler.CreateCloudStorage)
+		cloudStorageGroup.PUT("/:itemID", projectSettingsHandler.UpdateCloudStorage)
+		cloudStorageGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCloudStorageStatus)
+		cloudStorageGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCloudStorage)
 	}
 
 	{ // SSH key group
 		sshKeyGroup := projectGroup.Group("/:projectID/ssh-keys")
-		sshKeyGroup.GET("/:itemID", projectHandler.GetSSHKey)
-		sshKeyGroup.GET("", projectHandler.ListSSHKey)
-		sshKeyGroup.POST("", projectHandler.CreateSSHKey)
-		sshKeyGroup.PUT("/:itemID", projectHandler.UpdateSSHKey)
-		sshKeyGroup.PUT("/:itemID/status", projectHandler.UpdateSSHKeyStatus)
-		sshKeyGroup.DELETE("/:itemID", projectHandler.DeleteSSHKey)
+		sshKeyGroup.GET("/:itemID", projectSettingsHandler.GetSSHKey)
+		sshKeyGroup.GET("", projectSettingsHandler.ListSSHKey)
+		sshKeyGroup.POST("", projectSettingsHandler.CreateSSHKey)
+		sshKeyGroup.PUT("/:itemID", projectSettingsHandler.UpdateSSHKey)
+		sshKeyGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSSHKeyStatus)
+		sshKeyGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSSHKey)
 	}
 
 	{ // IM service group
 		imServiceGroup := projectGroup.Group("/:projectID/im-services")
-		imServiceGroup.GET("/:itemID", projectHandler.GetIMService)
-		imServiceGroup.GET("", projectHandler.ListIMService)
-		imServiceGroup.POST("", projectHandler.CreateIMService)
-		imServiceGroup.PUT("/:itemID", projectHandler.UpdateIMService)
-		imServiceGroup.PUT("/:itemID/status", projectHandler.UpdateIMServiceStatus)
-		imServiceGroup.DELETE("/:itemID", projectHandler.DeleteIMService)
+		imServiceGroup.GET("/:itemID", projectSettingsHandler.GetIMService)
+		imServiceGroup.GET("", projectSettingsHandler.ListIMService)
+		imServiceGroup.POST("", projectSettingsHandler.CreateIMService)
+		imServiceGroup.PUT("/:itemID", projectSettingsHandler.UpdateIMService)
+		imServiceGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateIMServiceStatus)
+		imServiceGroup.DELETE("/:itemID", projectSettingsHandler.DeleteIMService)
 	}
 
 	{ // Registry auth group
 		registryAuthGroup := projectGroup.Group("/:projectID/registry-auth")
-		registryAuthGroup.GET("/:itemID", projectHandler.GetRegistryAuth)
-		registryAuthGroup.GET("", projectHandler.ListRegistryAuth)
-		registryAuthGroup.POST("", projectHandler.CreateRegistryAuth)
-		registryAuthGroup.PUT("/:itemID", projectHandler.UpdateRegistryAuth)
-		registryAuthGroup.PUT("/:itemID/status", projectHandler.UpdateRegistryAuthStatus)
-		registryAuthGroup.DELETE("/:itemID", projectHandler.DeleteRegistryAuth)
+		registryAuthGroup.GET("/:itemID", projectSettingsHandler.GetRegistryAuth)
+		registryAuthGroup.GET("", projectSettingsHandler.ListRegistryAuth)
+		registryAuthGroup.POST("", projectSettingsHandler.CreateRegistryAuth)
+		registryAuthGroup.PUT("/:itemID", projectSettingsHandler.UpdateRegistryAuth)
+		registryAuthGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateRegistryAuthStatus)
+		registryAuthGroup.DELETE("/:itemID", projectSettingsHandler.DeleteRegistryAuth)
 	}
 
 	{ // Basic auth group
 		basicAuthGroup := projectGroup.Group("/:projectID/basic-auth")
-		basicAuthGroup.GET("/:itemID", projectHandler.GetBasicAuth)
-		basicAuthGroup.GET("", projectHandler.ListBasicAuth)
-		basicAuthGroup.POST("", projectHandler.CreateBasicAuth)
-		basicAuthGroup.PUT("/:itemID", projectHandler.UpdateBasicAuth)
-		basicAuthGroup.PUT("/:itemID/status", projectHandler.UpdateBasicAuthStatus)
-		basicAuthGroup.DELETE("/:itemID", projectHandler.DeleteBasicAuth)
+		basicAuthGroup.GET("/:itemID", projectSettingsHandler.GetBasicAuth)
+		basicAuthGroup.GET("", projectSettingsHandler.ListBasicAuth)
+		basicAuthGroup.POST("", projectSettingsHandler.CreateBasicAuth)
+		basicAuthGroup.PUT("/:itemID", projectSettingsHandler.UpdateBasicAuth)
+		basicAuthGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateBasicAuthStatus)
+		basicAuthGroup.DELETE("/:itemID", projectSettingsHandler.DeleteBasicAuth)
 	}
 
 	{ // SSL Cert group
 		sslCertGroup := projectGroup.Group("/:projectID/ssl-certs")
-		sslCertGroup.GET("/:itemID", projectHandler.GetSSLCert)
-		sslCertGroup.GET("", projectHandler.ListSSLCert)
-		sslCertGroup.POST("", projectHandler.CreateSSLCert)
-		sslCertGroup.PUT("/:itemID", projectHandler.UpdateSSLCert)
-		sslCertGroup.PUT("/:itemID/status", projectHandler.UpdateSSLCertStatus)
-		sslCertGroup.DELETE("/:itemID", projectHandler.DeleteSSLCert)
+		sslCertGroup.GET("/:itemID", projectSettingsHandler.GetSSLCert)
+		sslCertGroup.GET("", projectSettingsHandler.ListSSLCert)
+		sslCertGroup.POST("", projectSettingsHandler.CreateSSLCert)
+		sslCertGroup.PUT("/:itemID", projectSettingsHandler.UpdateSSLCert)
+		sslCertGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSSLCertStatus)
+		sslCertGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSSLCert)
 	}
 
 	{ // Domain settings group
 		domainSettingsGroup := projectGroup.Group("/:projectID/domain-settings")
-		domainSettingsGroup.GET("", projectHandler.GetUniqueDomainSettings)
-		domainSettingsGroup.PUT("", projectHandler.UpdateUniqueDomainSettings)
-		domainSettingsGroup.PUT("/status", projectHandler.UpdateUniqueDomainSettingsStatus)
-		domainSettingsGroup.DELETE("", projectHandler.DeleteUniqueDomainSettings)
+		domainSettingsGroup.GET("", projectSettingsHandler.GetUniqueDomainSettings)
+		domainSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueDomainSettings)
+		domainSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueDomainSettingsStatus)
+		domainSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueDomainSettings)
 	}
 
 	{ // Email group
 		emailGroup := projectGroup.Group("/:projectID/emails")
-		emailGroup.GET("/:itemID", projectHandler.GetEmail)
-		emailGroup.GET("", projectHandler.ListEmail)
-		emailGroup.POST("", projectHandler.CreateEmail)
-		emailGroup.PUT("/:itemID", projectHandler.UpdateEmail)
-		emailGroup.PUT("/:itemID/status", projectHandler.UpdateEmailStatus)
-		emailGroup.DELETE("/:itemID", projectHandler.DeleteEmail)
+		emailGroup.GET("/:itemID", projectSettingsHandler.GetEmail)
+		emailGroup.GET("", projectSettingsHandler.ListEmail)
+		emailGroup.POST("", projectSettingsHandler.CreateEmail)
+		emailGroup.PUT("/:itemID", projectSettingsHandler.UpdateEmail)
+		emailGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateEmailStatus)
+		emailGroup.DELETE("/:itemID", projectSettingsHandler.DeleteEmail)
 	}
 
 	{ // Repo webhook group
 		repoWebhookGroup := projectGroup.Group("/:projectID/repo-webhooks")
-		repoWebhookGroup.GET("/:itemID", projectHandler.GetRepoWebhook)
-		repoWebhookGroup.GET("", projectHandler.ListRepoWebhook)
-		repoWebhookGroup.POST("", projectHandler.CreateRepoWebhook)
-		repoWebhookGroup.PUT("/:itemID", projectHandler.UpdateRepoWebhook)
-		repoWebhookGroup.PUT("/:itemID/status", projectHandler.UpdateRepoWebhookStatus)
-		repoWebhookGroup.DELETE("/:itemID", projectHandler.DeleteRepoWebhook)
+		repoWebhookGroup.GET("/:itemID", projectSettingsHandler.GetRepoWebhook)
+		repoWebhookGroup.GET("", projectSettingsHandler.ListRepoWebhook)
+		repoWebhookGroup.POST("", projectSettingsHandler.CreateRepoWebhook)
+		repoWebhookGroup.PUT("/:itemID", projectSettingsHandler.UpdateRepoWebhook)
+		repoWebhookGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateRepoWebhookStatus)
+		repoWebhookGroup.DELETE("/:itemID", projectSettingsHandler.DeleteRepoWebhook)
 	}
 
 	{ // Notification group
 		notificationGroup := projectGroup.Group("/:projectID/notifications")
-		notificationGroup.GET("/:itemID", projectHandler.GetNotification)
-		notificationGroup.GET("", projectHandler.ListNotification)
-		notificationGroup.POST("", projectHandler.CreateNotification)
-		notificationGroup.PUT("/:itemID", projectHandler.UpdateNotification)
-		notificationGroup.PUT("/:itemID/status", projectHandler.UpdateNotificationStatus)
-		notificationGroup.DELETE("/:itemID", projectHandler.DeleteNotification)
+		notificationGroup.GET("/:itemID", projectSettingsHandler.GetNotification)
+		notificationGroup.GET("", projectSettingsHandler.ListNotification)
+		notificationGroup.POST("", projectSettingsHandler.CreateNotification)
+		notificationGroup.PUT("/:itemID", projectSettingsHandler.UpdateNotification)
+		notificationGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateNotificationStatus)
+		notificationGroup.DELETE("/:itemID", projectSettingsHandler.DeleteNotification)
 	}
 
 	{ // Image build settings group
 		imageBuildSettingsGroup := projectGroup.Group("/:projectID/image-build-settings")
-		imageBuildSettingsGroup.GET("", projectHandler.GetUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", projectHandler.UpdateUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", projectHandler.UpdateUniqueImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", projectHandler.DeleteUniqueImageBuildSettings)
+		imageBuildSettingsGroup.GET("", projectSettingsHandler.GetUniqueImageBuildSettings)
+		imageBuildSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueImageBuildSettings)
+		imageBuildSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueImageBuildSettingsStatus)
+		imageBuildSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueImageBuildSettings)
 	}
 
 	{ // Docker network group
 		networkGroup := projectGroup.Group("/:projectID/docker-networks")
-		networkGroup.GET("/:networkID", projectHandler.GetDockerNetwork)
-		networkGroup.GET("/:networkID/inspect", projectHandler.GetDockerNetworkInspection)
-		networkGroup.GET("", projectHandler.ListDockerNetwork)
-		networkGroup.POST("", projectHandler.CreateDockerNetwork)
-		networkGroup.DELETE("/:networkID", projectHandler.DeleteDockerNetwork)
+		networkGroup.GET("/:networkID", projectSettingsHandler.GetDockerNetwork)
+		networkGroup.GET("/:networkID/inspect", projectSettingsHandler.GetDockerNetworkInspection)
+		networkGroup.GET("", projectSettingsHandler.ListDockerNetwork)
+		networkGroup.POST("", projectSettingsHandler.CreateDockerNetwork)
+		networkGroup.DELETE("/:networkID", projectSettingsHandler.DeleteDockerNetwork)
 	}
 
 	{ // Docker volume group
 		volumeGroup := projectGroup.Group("/:projectID/docker-volumes")
-		volumeGroup.GET("/:volumeID", projectHandler.GetDockerVolume)
-		volumeGroup.GET("/:volumeID/inspect", projectHandler.GetDockerVolumeInspection)
-		volumeGroup.GET("", projectHandler.ListDockerVolume)
-		volumeGroup.POST("", projectHandler.CreateDockerVolume)
-		volumeGroup.DELETE("/:volumeID", projectHandler.DeleteDockerVolume)
+		volumeGroup.GET("/:volumeID", projectSettingsHandler.GetDockerVolume)
+		volumeGroup.GET("/:volumeID/inspect", projectSettingsHandler.GetDockerVolumeInspection)
+		volumeGroup.GET("", projectSettingsHandler.ListDockerVolume)
+		volumeGroup.POST("", projectSettingsHandler.CreateDockerVolume)
+		volumeGroup.DELETE("/:volumeID", projectSettingsHandler.DeleteDockerVolume)
 	}
 
 	return projectGroup

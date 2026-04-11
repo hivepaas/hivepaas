@@ -14,7 +14,9 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/basesettinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectbasehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/sessionhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/settinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemhandler"
@@ -54,6 +56,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/projectsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
@@ -126,7 +129,9 @@ var Provides = []any{
 	clusterhandler.New,
 	sessionhandler.New,
 	userhandler.New,
+	projectbasehandler.New,
 	projecthandler.New,
+	projectsettingshandler.New,
 	appbasehandler.New,
 	apphandler.New,
 	appsettingshandler.New,
@@ -147,6 +152,7 @@ var Provides = []any{
 	sessionuc.New,
 	useruc.New,
 	projectuc.New,
+	projectsettingsuc.New,
 	appuc.New,
 	appsettingsuc.New,
 	appdeploymentuc.New,

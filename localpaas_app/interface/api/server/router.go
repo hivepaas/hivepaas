@@ -15,6 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/sessionhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/settinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemhandler"
@@ -30,20 +31,21 @@ var (
 )
 
 type HandlerRegistry struct {
-	authHandler           *authhandler.Handler
-	clusterHandler        *clusterhandler.Handler
-	sessionHandler        *sessionhandler.Handler
-	userHandler           *userhandler.Handler
-	projectHandler        *projecthandler.Handler
-	appHandler            *apphandler.Handler
-	appSettingsHandler    *appsettingshandler.Handler
-	appDeploymentHandler  *appdeploymenthandler.Handler
-	settingHandler        *settinghandler.Handler
-	userSettingsHandler   *usersettingshandler.Handler
-	systemHandler         *systemhandler.Handler
-	systemSettingsHandler *systemsettingshandler.Handler
-	webhookHandler        *webhookhandler.Handler
-	fileHandler           *filehandler.Handler
+	authHandler            *authhandler.Handler
+	clusterHandler         *clusterhandler.Handler
+	sessionHandler         *sessionhandler.Handler
+	userHandler            *userhandler.Handler
+	projectHandler         *projecthandler.Handler
+	projectSettingsHandler *projectsettingshandler.Handler
+	appHandler             *apphandler.Handler
+	appSettingsHandler     *appsettingshandler.Handler
+	appDeploymentHandler   *appdeploymenthandler.Handler
+	settingHandler         *settinghandler.Handler
+	userSettingsHandler    *usersettingshandler.Handler
+	systemHandler          *systemhandler.Handler
+	systemSettingsHandler  *systemsettingshandler.Handler
+	webhookHandler         *webhookhandler.Handler
+	fileHandler            *filehandler.Handler
 }
 
 func NewHandlerRegistry(
@@ -52,6 +54,7 @@ func NewHandlerRegistry(
 	sessionHandler *sessionhandler.Handler,
 	userHandler *userhandler.Handler,
 	projectHandler *projecthandler.Handler,
+	projectSettingsHandler *projectsettingshandler.Handler,
 	appHandler *apphandler.Handler,
 	appSettingsHandler *appsettingshandler.Handler,
 	appDeploymentHandler *appdeploymenthandler.Handler,
@@ -63,20 +66,21 @@ func NewHandlerRegistry(
 	fileHandler *filehandler.Handler,
 ) *HandlerRegistry {
 	return &HandlerRegistry{
-		authHandler:           authHandler,
-		clusterHandler:        clusterHandler,
-		sessionHandler:        sessionHandler,
-		userHandler:           userHandler,
-		projectHandler:        projectHandler,
-		appHandler:            appHandler,
-		appSettingsHandler:    appSettingsHandler,
-		appDeploymentHandler:  appDeploymentHandler,
-		settingHandler:        settingHandler,
-		userSettingsHandler:   userSettingsHandler,
-		systemHandler:         systemHandler,
-		systemSettingsHandler: systemSettingsHandler,
-		webhookHandler:        webhookHandler,
-		fileHandler:           fileHandler,
+		authHandler:            authHandler,
+		clusterHandler:         clusterHandler,
+		sessionHandler:         sessionHandler,
+		userHandler:            userHandler,
+		projectHandler:         projectHandler,
+		projectSettingsHandler: projectSettingsHandler,
+		appHandler:             appHandler,
+		appSettingsHandler:     appSettingsHandler,
+		appDeploymentHandler:   appDeploymentHandler,
+		settingHandler:         settingHandler,
+		userSettingsHandler:    userSettingsHandler,
+		systemHandler:          systemHandler,
+		systemSettingsHandler:  systemSettingsHandler,
+		webhookHandler:         webhookHandler,
+		fileHandler:            fileHandler,
 	}
 }
 

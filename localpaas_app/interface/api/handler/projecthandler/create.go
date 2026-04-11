@@ -22,7 +22,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects [post]
 func (h *Handler) CreateProject(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ActionTypeWrite, false)
+	auth, _, err := h.GetAuth(ctx, base.ActionTypeWrite, false)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -56,7 +56,7 @@ func (h *Handler) CreateProject(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID} [put]
 func (h *Handler) UpdateProject(ctx *gin.Context) {
-	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -91,7 +91,7 @@ func (h *Handler) UpdateProject(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/photo [put]
 func (h *Handler) UpdateProjectPhoto(ctx *gin.Context) {
-	auth, projectID, err := h.getAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -125,7 +125,7 @@ func (h *Handler) UpdateProjectPhoto(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID} [delete]
 func (h *Handler) DeleteProject(ctx *gin.Context) {
-	auth, projectID, err := h.getAuth(ctx, base.ActionTypeDelete, true)
+	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeDelete, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

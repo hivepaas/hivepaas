@@ -12,7 +12,7 @@ import (
 
 const (
 	errVldStatusCode   = http.StatusBadRequest
-	errVldDisplayLevel = ""
+	errVldDisplayLevel = DisplayLevelMedium
 
 	errKeyVldCommonDetail = "ERR_VLD_COMMON_DETAIL"
 )

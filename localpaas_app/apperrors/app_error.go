@@ -22,6 +22,10 @@ const (
 	DisplayLevelLow    DisplayLevel = "low"
 )
 
+const (
+	errDetailsConsiderLong = 200
+)
+
 // AppError represents an error type to be used for any issue within the app.
 // This error type is designed to be able to carry much extra information
 // and ability to translate the error message into a specific language.
@@ -173,6 +177,9 @@ func (e *appError) Build(lang translation.Lang) *ErrorInfo {
 	errInfo.Detail = detail
 	errInfo.DebugLog = e.msgLog
 	errInfo.DisplayLevel = e.displayLevel
+	if len(detail) > errDetailsConsiderLong || errors.Is(e.err, ErrInfra) { // TODO: rune count?
+		errInfo.DisplayLevel = DisplayLevelHigh
+	}
 	if e.cause != nil {
 		errInfo.Cause = e.cause.Error()
 	} else {

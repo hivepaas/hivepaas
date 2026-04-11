@@ -94,13 +94,15 @@ func (h *BaseHandler) RenderResponse(ctx *gin.Context, status int, body any) {
 // RenderError renders errors to client as JSON
 func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 	// Parse the error
-	errInfo, errType := apperrors.ParseError(err, h.ParseRequestLang(ctx))
-	h.SaveError(ctx, err, errInfo, errType)
+	errInfo, _ := apperrors.ParseError(err, h.ParseRequestLang(ctx))
+	h.SaveError(ctx, err, errInfo)
 
-	// Remove the error details from the response if we are in production env
+	// Remove the error debug data from the response if we are in production env
 	if config.Current.IsProdEnv() {
+		// these fields are for dev only
 		errInfo.Cause = ""
 		errInfo.DebugLog = ""
+		errInfo.StackTrace = ""
 
 		// Also remove the details from InnerErrors
 		for i := range errInfo.InnerErrors {
@@ -108,16 +110,11 @@ func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 		}
 	}
 
-	errInfo.DisplayLevel = apperrors.DisplayLevelHigh
-	// Always remove the stack trace regardless of env due to concern of response body length
-	errInfo.StackTrace = ""
-
 	ctx.JSON(errInfo.Status, errInfo)
 }
 
 // SaveError save error in to DB
-func (h *BaseHandler) SaveError(ctx *gin.Context, _ error, errInfo *apperrors.ErrorInfo,
-	errLevel apperrors.ErrLevel) {
+func (h *BaseHandler) SaveError(ctx *gin.Context, _ error, errInfo *apperrors.ErrorInfo) {
 	_, _ = h.sysErrorUC.CreateSysError(ctx, &syserrordto.CreateSysErrorReq{
 		ErrorInfo: errInfo,
 	})

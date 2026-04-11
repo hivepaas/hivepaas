@@ -20359,9 +20359,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {

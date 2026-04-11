@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	InitAdminUser(ctx context.Context, db database.IDB) (cleanupFunc func(), err error)
+	InitAdminUser(ctx context.Context, db database.IDB) (err error)
 
 	LoadUser(ctx context.Context, db database.IDB, userID string) (*entity.User, error)
 	LoadUsers(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavail bool) (

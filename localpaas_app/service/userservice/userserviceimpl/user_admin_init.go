@@ -3,7 +3,6 @@ package userserviceimpl
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/tiendc/gofn"
@@ -17,19 +16,15 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 )
 
-const (
-	envAdminPassword = "LP_ADMIN_PASSWORD"
-)
-
 func (s *service) InitAdminUser(
 	ctx context.Context,
 	db database.IDB,
-) (cleanupFunc func(), err error) {
+) (err error) {
 	accCfg := &config.Current.AdminAccount
 	email := accCfg.Email
 	password := accCfg.Password
 	if email == "" || password == "" {
-		return nil, apperrors.NewMissing("Email or password is missing")
+		return apperrors.NewMissing("Email or password is missing")
 	}
 	username := gofn.Coalesce(accCfg.Username, strings.Split(email, "@")[0])
 
@@ -47,17 +42,12 @@ func (s *service) InitAdminUser(
 
 	user.Password, err = s.createPasswordHash(password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate password hash: %w", err)
+		return fmt.Errorf("failed to generate password hash: %w", err)
 	}
 
 	err = s.userRepo.Upsert(ctx, db, user, entity.UserUpsertingConflictCols, entity.UserUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return apperrors.Wrap(err)
 	}
-
-	return func() {
-		// Clear sensitive ENV vars
-		_ = os.Unsetenv(envAdminPassword)
-		accCfg.Password = ""
-	}, nil
+	return nil
 }

@@ -3,7 +3,10 @@ package projectserviceimpl
 import (
 	"context"
 	"errors"
+	"strings"
+	"time"
 
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -14,15 +17,24 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
+	"github.com/localpaas/localpaas/services/docker"
+)
+
+var (
+	localpaasAppInitExcludedEnvs = map[string]struct{}{
+		"LP_ADMIN_USERNAME": {},
+		"LP_ADMIN_PASSWORD": {},
+		"LP_ADMIN_EMAIL":    {},
+	}
 )
 
 func (s *service) InitRootProject(
 	ctx context.Context,
 	db database.IDB,
-) error {
+) (postInitFunc func() error, err error) {
 	project, err := s.projectRepo.GetByKey(ctx, db, base.LocalpaasProjectKey)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if project == nil {
 		timeNow := timeutil.NowUTC()
@@ -44,7 +56,7 @@ func (s *service) InitRootProject(
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if len(users) > 0 {
 			project.OwnerID = users[0].ID
@@ -54,31 +66,56 @@ func (s *service) InitRootProject(
 	err = s.projectRepo.Upsert(ctx, db, project,
 		entity.ProjectUpsertingConflictCols, entity.ProjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
-	newApps, _, err := s.SyncProject(ctx, db, project)
+	newApps, _, services, err := s.SyncProject(ctx, db, project)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
+	var updatingServices []*swarm.Service
 	for _, app := range newApps {
 		if app.Key == base.LocalpaasAppKey {
-			err = s.initRootAppLocalpaas(ctx, db, app)
+			var svc *swarm.Service
+			for i := range services {
+				if services[i].ID == app.ServiceID {
+					svc = &services[i]
+					break
+				}
+			}
+			shouldUpdateService, err := s.initRootAppLocalpaas(ctx, db, app, svc)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return nil, apperrors.Wrap(err)
+			}
+			if shouldUpdateService {
+				updatingServices = append(updatingServices, svc)
 			}
 		}
 	}
 
-	return nil
+	postInitFunc = func() error {
+		for _, svc := range updatingServices {
+			err := docker.CallRetry(func() error {
+				_, err := s.dockerManager.ServiceUpdate(ctx, svc.ID, &svc.Version, &svc.Spec)
+				return apperrors.Wrap(err)
+			}, 2, time.Second*5) //nolint
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+		}
+		return nil
+	}
+
+	return postInitFunc, nil
 }
 
 func (s *service) initRootAppLocalpaas(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-) error {
+	service *swarm.Service,
+) (shouldUpdateService bool, err error) {
 	timeNow := timeutil.NowUTC()
 	cfg := config.Current
 
@@ -106,11 +143,43 @@ func (s *service) initRootAppLocalpaas(
 	}
 	dbHttpSetting.MustSetData(httpSettings)
 
-	err := s.settingRepo.Upsert(ctx, db, dbHttpSetting,
-		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
-	if err != nil {
-		return apperrors.Wrap(err)
+	// Sync env-vars from the swarm service
+	dbEnvVarsSetting := &entity.Setting{
+		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeApp,
+		ObjectID:  app.ID,
+		Type:      base.SettingTypeEnvVar,
+		Status:    base.SettingStatusActive,
+		Version:   entity.CurrentEnvVarsVersion,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	}
+	envVars := &entity.EnvVars{}
+	var newEnv []string
+	for _, env := range service.Spec.TaskTemplate.ContainerSpec.Env {
+		k, v, _ := strings.Cut(env, "=")
+		if _, exists := localpaasAppInitExcludedEnvs[k]; exists {
+			shouldUpdateService = true
+			continue
+		}
+		newEnv = append(newEnv, env)
+		envVars.Data = append(envVars.Data, &entity.EnvVar{
+			Key:       k,
+			Value:     v,
+			IsLiteral: true,
+		})
+	}
+	if shouldUpdateService {
+		service.Spec.TaskTemplate.ContainerSpec.Env = newEnv
 	}
 
-	return nil
+	dbEnvVarsSetting.MustSetData(envVars)
+
+	// Insert the settings into DB
+	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbHttpSetting, dbEnvVarsSetting})
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+
+	return shouldUpdateService, nil
 }

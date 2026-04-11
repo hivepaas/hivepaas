@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/fx"
@@ -66,7 +67,7 @@ func installationInitData(
 	logger logging.Logger,
 ) error {
 	logger.Info("initializing system data...")
-	var userCleanupFunc func()
+	var postInitFunc func() error
 	err := transaction.Execute(ctx, db, func(db database.Tx) error {
 		sysStatus, err := sysStatusRepo.Get(ctx, db,
 			bunex.SelectFor("UPDATE"),
@@ -79,19 +80,19 @@ func installationInitData(
 			return nil
 		}
 
-		if userCleanupFunc, err = userService.InitAdminUser(ctx, db); err != nil {
+		if err = userService.InitAdminUser(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize admin user: %w", err)
 		}
 
-		if err := settingService.InitDefaults(ctx, db); err != nil {
+		if err = settingService.InitDefaults(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize default settings: %w", err)
 		}
 
-		if err := projectService.InitRootProject(ctx, db); err != nil {
+		if postInitFunc, err = projectService.InitRootProject(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize root project: %w", err)
 		}
 
-		if err := installationInitDevProjects(ctx, db, projectRepo, projectService, logger); err != nil {
+		if err = installationInitDevProjects(ctx, db, projectRepo, projectService, logger); err != nil {
 			return fmt.Errorf("failed to initialize dev projects: %w", err)
 		}
 
@@ -111,10 +112,13 @@ func installationInitData(
 		return fmt.Errorf("failed to initialize system data: %w", err)
 	}
 
-	if userCleanupFunc != nil {
-		userCleanupFunc()
+	if postInitFunc != nil {
+		e := postInitFunc()
+		if e != nil {
+			err = errors.Join(err, e)
+		}
 	}
-	return nil
+	return err
 }
 
 func installationInitDevProjects(
@@ -135,7 +139,7 @@ func installationInitDevProjects(
 		return apperrors.Wrap(err)
 	}
 
-	_, _, err = projectService.SyncProject(ctx, db, projectA)
+	_, _, _, err = projectService.SyncProject(ctx, db, projectA) //nolint:dogsled
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -42,6 +42,17 @@ func (req *CreateNetworkReq) ModifyRequest() error {
 func (req *CreateNetworkReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, nameMaxLen, "name")...)
+
+	// Validate network labels
+	unallowedLabels := docker.ValidateUserLabels(req.Labels, true)
+	if len(unallowedLabels) > 0 {
+		validators = append(validators, vld.Must(false).OnError(
+			vld.SetField("labels", nil),
+			vld.SetCustomKey("ERR_VLD_DOCKER_LABEL_UNALLOWED"),
+			vld.SetParam("Label", unallowedLabels[0]),
+		))
+	}
+
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -102,7 +102,7 @@ func TransformNode(node *swarm.Node, detailed bool) *NodeResp {
 		UpdatedAt: node.UpdatedAt,
 	}
 	if detailed {
-		resp.Labels = node.Spec.Labels
+		resp.Labels = docker.FilterOutSystemLabels(node.Spec.Labels)
 		resp.EngineDesc = &NodeEngineDescResp{
 			EngineVersion: node.Description.Engine.EngineVersion,
 			Labels:        node.Description.Engine.Labels,

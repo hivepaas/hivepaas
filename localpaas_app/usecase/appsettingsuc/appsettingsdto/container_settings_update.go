@@ -28,11 +28,11 @@ func (req *UpdateAppContainerSettingsReq) Validate() apperrors.ValidationErrors 
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 
 	// Validate service labels
-	unallowedLabels := docker.ServiceValidateUserLabels(req.Labels, true)
+	unallowedLabels := docker.ValidateUserLabels(req.Labels, true)
 	if len(unallowedLabels) > 0 {
 		validators = append(validators, vld.Must(false).OnError(
 			vld.SetField("labels", nil),
-			vld.SetCustomKey("ERR_VLD_APP_LABEL_UNALLOWED"),
+			vld.SetCustomKey("ERR_VLD_DOCKER_LABEL_UNALLOWED"),
 			vld.SetParam("Label", unallowedLabels[0]),
 		))
 	}

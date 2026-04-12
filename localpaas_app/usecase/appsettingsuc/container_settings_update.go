@@ -103,7 +103,7 @@ func (uc *UC) prepareUpdatingAppContainerSpec(
 	service := data.Service
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 
-	containerSpec.Labels = docker.ServiceApplyUserLabels(containerSpec.Labels, req.Labels)
+	containerSpec.Labels = docker.ApplyUserLabels(containerSpec.Labels, req.Labels)
 	containerSpec.Image = req.Image
 	containerSpec.Command = gofn.If(req.Command == "", nil, gofn.Must(shellutil.CmdSplit(req.Command)))
 	containerSpec.Dir = req.WorkingDir

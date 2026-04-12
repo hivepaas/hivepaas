@@ -64,7 +64,7 @@ func TransformNetworkInspection(net *network.Inspect) *NetworkResp {
 		EnableIPv4:      net.EnableIPv4,
 		EnableIPv6:      net.EnableIPv6,
 		Options:         net.Options,
-		Labels:          net.Labels,
+		Labels:          docker.FilterOutSystemLabels(net.Labels),
 		CreatedAt:       net.Created,
 	}
 }
@@ -81,7 +81,7 @@ func TransformNetwork(net *network.Summary) *NetworkResp {
 		EnableIPv4:      net.EnableIPv4,
 		EnableIPv6:      net.EnableIPv6,
 		Options:         net.Options,
-		Labels:          net.Labels,
+		Labels:          docker.FilterOutSystemLabels(net.Labels),
 		CreatedAt:       net.Created,
 	}
 }

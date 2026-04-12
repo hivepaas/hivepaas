@@ -63,7 +63,7 @@ func TransformVolume(vol *volume.Volume, _ bool) *VolumeResp {
 		Options:         vol.Options,
 		Scope:           base.VolumeScope(vol.Scope),
 		Status:          vol.Status,
-		Labels:          vol.Labels,
+		Labels:          docker.FilterOutSystemLabels(vol.Labels),
 		CreatedAt:       transformVolumeCreatedAt(vol.CreatedAt),
 	}
 	if vol.ClusterVolume != nil {

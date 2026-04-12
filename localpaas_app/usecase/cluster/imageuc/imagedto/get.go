@@ -8,6 +8,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 type GetImageReq struct {
@@ -42,7 +43,7 @@ type ImageResp struct {
 func TransformImage(img *image.Summary, _ bool) *ImageResp {
 	resp := &ImageResp{
 		ID:        img.ID,
-		Labels:    img.Labels,
+		Labels:    docker.FilterOutSystemLabels(img.Labels),
 		Size:      img.Size,
 		RepoTags:  img.RepoTags,
 		CreatedAt: time.Unix(img.Created, 0),

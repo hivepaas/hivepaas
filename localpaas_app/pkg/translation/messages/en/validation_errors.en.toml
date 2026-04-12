@@ -40,5 +40,5 @@ ERR_VLD_USER_STATUS_INVALID = "User status must be one of {{.TargetValue}}"
 ERR_VLD_USER_SECURITY_OPTION_INVALID = "User security option must be one of {{.TargetValue}}"
 ERR_VLD_ACCESS_EXPIRATION_INVALID = "Access expiration date is invalid"
 
-# APPS
-ERR_VLD_APP_LABEL_UNALLOWED = "Label '{{.Label}}' is unallowed"
+# INFRA
+ERR_VLD_DOCKER_LABEL_UNALLOWED = "Docker object label '{{.Label}}' is unallowed"

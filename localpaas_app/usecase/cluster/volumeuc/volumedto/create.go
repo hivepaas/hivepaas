@@ -6,6 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 const (
@@ -54,6 +55,17 @@ func (req *CreateVolumeReq) Validate() apperrors.ValidationErrors {
 	if req.Type == base.VolumeTypeNfs {
 		validators = append(validators, req.NfsOpts.validate("nfsOpts")...)
 	}
+
+	// Validate volume labels
+	unallowedLabels := docker.ValidateUserLabels(req.Labels, true)
+	if len(unallowedLabels) > 0 {
+		validators = append(validators, vld.Must(false).OnError(
+			vld.SetField("labels", nil),
+			vld.SetCustomKey("ERR_VLD_DOCKER_LABEL_UNALLOWED"),
+			vld.SetParam("Label", unallowedLabels[0]),
+		))
+	}
+
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

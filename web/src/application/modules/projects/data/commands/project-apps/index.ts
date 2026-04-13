@@ -6,3 +6,4 @@ export * from "./app-deployment-settings.commands";
 export * from "./app-network-settings.commands";
 export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";
+export * from "./app-storage-settings.commands";

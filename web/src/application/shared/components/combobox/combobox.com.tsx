@@ -134,7 +134,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     };
 
     return (
-        <div className={cn("flex w-full items-center gap-1.5", className)}>
+        <div className={cn("flex w-full min-w-0 items-center gap-1.5", className)}>
             <div className="group/clear min-w-0 flex-1">
                 <Popover
                     open={open}
@@ -147,9 +147,9 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                             aria-expanded={open}
                             aria-invalid={ariaInvalid}
                             disabled={disabled || loading}
-                            className="h-auto min-h-9 w-full justify-between gap-2 py-2"
+                            className="h-auto min-h-9 w-full min-w-0 justify-between gap-2 overflow-hidden py-2"
                         >
-                            <span className="min-w-0 flex-1 text-left font-normal">
+                            <span className="min-w-0 flex-1 overflow-hidden text-left font-normal leading-[18px]">
                                 {selectedOption ? (
                                     <ComboboxLabelContent
                                         label={selectedOption.label}
@@ -183,7 +183,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                        className="w-(--radix-popover-trigger-width) p-0"
+                        className="w-fit p-0"
                         align="start"
                     >
                         <Command shouldFilter={!onSearch}>

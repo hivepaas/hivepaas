@@ -2,10 +2,10 @@ import { z } from "zod";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
 export const StorageMountFormSchema = z.object({
-    type: z.nativeEnum(EMountType),
+    type: z.nativeEnum(EMountType).optional(),
     source: z.string(),
     target: z.string(),
-    consistency: z.nativeEnum(EMountConsistency),
+    consistency: z.nativeEnum(EMountConsistency).optional(),
 });
 
 export const AppConfigStorageFormSchema = z.object({

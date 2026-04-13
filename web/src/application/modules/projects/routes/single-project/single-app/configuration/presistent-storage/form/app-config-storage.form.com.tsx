@@ -16,24 +16,24 @@ import {
 } from "../schemas";
 import { type AppConfigStorageFormRef } from "../types";
 
-import { mapAppStorageSettingsToFormInput } from "./app-config-storage.form-mappers";
-
 type SchemaInput = AppConfigStorageFormSchemaInput;
 type SchemaOutput = AppConfigStorageFormSchemaOutput;
 
 export function AppConfigStorageForm({ ref, defaultValues, onSubmit, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
-        defaultValues: defaultValues
-            ? mapAppStorageSettingsToFormInput(defaultValues)
-            : emptyAppConfigStorageFormDefaults,
+        defaultValues: {
+            ...emptyAppConfigStorageFormDefaults,
+            ...defaultValues,
+        },
         resolver: zodResolver(AppConfigStorageFormSchema),
         mode: "onSubmit",
     });
 
     useUpdateEffect(() => {
-        methods.reset(
-            defaultValues ? mapAppStorageSettingsToFormInput(defaultValues) : emptyAppConfigStorageFormDefaults,
-        );
+        methods.reset({
+            ...emptyAppConfigStorageFormDefaults,
+            ...defaultValues,
+        });
     }, [defaultValues]);
 
     useImperativeHandle(

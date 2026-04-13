@@ -9,10 +9,10 @@ import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/project
 import { AppLoader } from "@application/shared/components";
 
 import { isValidationException } from "@infrastructure/api";
+
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { AppConfigStorageForm } from "../form";
-import { mapFormValuesToAppStoragePayload } from "../form/app-config-storage.form-mappers";
 import { type AppConfigStorageFormSchemaOutput } from "../schemas";
 import { type AppConfigStorageFormRef } from "../types";
 
@@ -50,7 +50,10 @@ export function AppConfigStorageRoute() {
         update({
             projectID: projectId,
             appID: appId,
-            payload: mapFormValuesToAppStoragePayload(values, data?.data),
+            payload: {
+                mounts: values.mounts,
+                updateVer: data?.data.updateVer ?? 0,
+            },
         });
     }
 
@@ -70,7 +73,6 @@ export function AppConfigStorageRoute() {
                 >
                     docs
                 </a>
-                .
             </div>
 
             <AppConfigStorageForm

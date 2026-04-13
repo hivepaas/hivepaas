@@ -6,3 +6,4 @@ export * from "./project-apps";
 export * from "./service-settings";
 export * from "./network-settings";
 export * from "./resource-settings";
+export * from "./storage-settings";

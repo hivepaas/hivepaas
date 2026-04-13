@@ -34,6 +34,10 @@ import {
     AppResourceSettingsApi,
     AppResourceSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/resource-settings";
+import {
+    AppStorageSettingsApi,
+    AppStorageSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/storage-settings";
 
 function createApi() {
     /**
@@ -49,6 +53,7 @@ function createApi() {
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
+    const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
     const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
@@ -76,6 +81,9 @@ function createApi() {
                 },
                 resourceSettings: {
                     $: new AppResourceSettingsApi(appResourceSettingsApiValidator),
+                },
+                storageSettings: {
+                    $: new AppStorageSettingsApi(appStorageSettingsApiValidator),
                 },
                 serviceSettings: {
                     $: new AppServiceSettingsApi(appServiceSettingsApiValidator),

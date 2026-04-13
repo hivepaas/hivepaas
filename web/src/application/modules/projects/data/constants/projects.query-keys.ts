@@ -46,6 +46,10 @@ export const QK = {
      */
     "projects.apps.resource-settings.$.find-one": "projects.apps.resource-settings.$.find-one",
     /*
+     * Project App Storage Settings
+     */
+    "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",
+    /*
      * Project Git Credentials
      */
     "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",

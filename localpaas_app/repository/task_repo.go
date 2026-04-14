@@ -100,7 +100,7 @@ func (repo *taskRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 		return nil, nil
 	}
 	var tasks []*entity.Task
-	query := db.NewSelect().Model(&tasks).Where("task.id IN (?)", bun.In(ids))
+	query := db.NewSelect().Model(&tasks).Where("task.id IN (?)", bun.List(ids))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)

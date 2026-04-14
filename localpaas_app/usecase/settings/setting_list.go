@@ -34,6 +34,8 @@ type ListSettingResp struct {
 }
 
 type ListSettingData struct {
+	BaseSettingData
+
 	ExtraLoadOpts []bunex.SelectQueryOption
 }
 
@@ -44,6 +46,12 @@ func (uc *BaseUC) ListSetting(
 	data *ListSettingData,
 ) (_ *ListSettingResp, err error) {
 	db := uc.DB
+
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectWhere("setting.type = ?", req.Type),
 	}
@@ -77,7 +85,7 @@ func (uc *BaseUC) ListSetting(
 		setting.CurrentObjectID = req.Scope.MainObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true,
+	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true,
 		false, settings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

@@ -17,7 +17,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
-	"github.com/localpaas/localpaas/services/docker"
 )
 
 var (
@@ -96,7 +95,7 @@ func (s *service) InitRootProject(
 
 	postInitFunc = func() error {
 		for _, svc := range updatingServices {
-			err := docker.CallRetry(func() error {
+			err := gofn.ExecRetry(func() error {
 				_, err := s.dockerManager.ServiceUpdate(ctx, svc.ID, &svc.Version, &svc.Spec)
 				return apperrors.Wrap(err)
 			}, 2, time.Second*5) //nolint

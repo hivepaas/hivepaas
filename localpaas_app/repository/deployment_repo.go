@@ -95,7 +95,7 @@ func (repo *deploymentRepo) ListByIDs(ctx context.Context, db database.IDB, appI
 		return nil, nil
 	}
 	var deployments []*entity.Deployment
-	query := db.NewSelect().Model(&deployments).Where("deployment.id IN (?)", bun.In(ids))
+	query := db.NewSelect().Model(&deployments).Where("deployment.id IN (?)", bun.List(ids))
 	if appID != "" {
 		query = query.Where("deployment.app_id = ?", appID)
 	}

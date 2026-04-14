@@ -26,6 +26,14 @@ type Manager interface {
 	ConfigInspect(ctx context.Context, configID string) (*swarm.Config, error)
 	ConfigCreate(ctx context.Context, name string, data []byte, options ...ConfigSpecOption) (
 		*swarm.ConfigCreateResponse, error)
+	ConfigRemove(ctx context.Context, configID string) error
+
+	// Secrets
+	SecretList(ctx context.Context, options ...SecretListOption) ([]swarm.Secret, error)
+	SecretInspect(ctx context.Context, secretID string) (*swarm.Secret, error)
+	SecretCreate(ctx context.Context, name string, data []byte, options ...SecretSpecOption) (
+		*swarm.SecretCreateResponse, error)
+	SecretRemove(ctx context.Context, secretID string) error
 
 	// Containers
 	ContainerList(ctx context.Context, options ...ContainerListOption) ([]container.Summary, error)

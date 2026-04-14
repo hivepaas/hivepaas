@@ -57,6 +57,23 @@ func (h *Handler) UpdateProjectSecret(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
 }
 
+// UpdateProjectSecretStatus Updates project secret status
+// @Summary Updates project secret status
+// @Description Updates project secret status
+// @Tags    projects
+// @Produce json
+// @Id      updateProjectSecretStatus
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "setting ID"
+// @Param   body body secretdto.UpdateSecretStatusReq true "request data"
+// @Success 200 {object} secretdto.UpdateSecretStatusResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/secrets/{itemID}/status [put]
+func (h *Handler) UpdateProjectSecretStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+}
+
 // DeleteProjectSecret Deletes a project secret
 // @Summary Deletes a project secret
 // @Description Deletes a project secret

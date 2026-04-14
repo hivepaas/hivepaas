@@ -2,6 +2,7 @@ package entity
 
 import (
 	"encoding/base64"
+	"os"
 
 	"github.com/tiendc/gofn"
 
@@ -23,9 +24,23 @@ func (s *secretParser) New() SettingData {
 }
 
 type Secret struct {
-	Key    string         `json:"k"`
-	Value  EncryptedField `json:"v"`
-	Base64 bool           `json:"b64"`
+	Key      string          `json:"k"`
+	Value    EncryptedField  `json:"v"`
+	Base64   bool            `json:"b64"`
+	SwarmRef *SwarmSecretRef `json:"swarmRef,omitempty"`
+}
+
+type SwarmSecretRef struct {
+	File       *SwarmSecretRefFileTarget `json:"file"`
+	SecretID   string                    `json:"secretId"`
+	SecretName string                    `json:"secretName"`
+}
+
+type SwarmSecretRefFileTarget struct {
+	Name string      `json:"name,omitempty"`
+	UID  string      `json:"uid,omitempty"`
+	GID  string      `json:"gid,omitempty"`
+	Mode os.FileMode `json:"mode,omitempty"`
 }
 
 func (s *Secret) GetType() base.SettingType {

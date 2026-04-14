@@ -82,7 +82,7 @@ func (repo *appTagRepo) DeleteAllByApps(ctx context.Context, db database.IDB,
 		return nil
 	}
 	query := db.NewDelete().Model((*entity.AppTag)(nil)).
-		Where("app_id IN (?)", bun.In(appIDs))
+		Where("app_id IN (?)", bun.List(appIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

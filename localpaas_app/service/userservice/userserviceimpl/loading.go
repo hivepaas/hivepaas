@@ -29,6 +29,22 @@ func (s *service) LoadUser(
 	return userMap[userID], nil
 }
 
+func (s *service) LoadUserEx(
+	ctx context.Context,
+	db database.IDB,
+	userID string,
+	errorIfUnavail bool,
+) (*entity.User, error) {
+	userMap, err := s.LoadUsers(ctx, db, []string{userID}, errorIfUnavail)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	if len(userMap) == 0 {
+		return nil, apperrors.NewNotFound("User")
+	}
+	return userMap[userID], nil
+}
+
 func (s *service) LoadUsers(
 	ctx context.Context,
 	db database.IDB,

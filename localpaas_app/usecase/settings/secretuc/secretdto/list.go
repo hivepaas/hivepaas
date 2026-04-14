@@ -1,6 +1,8 @@
 package secretdto
 
 import (
+	"os"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -38,7 +40,20 @@ type ListSecretResp struct {
 
 type SecretResp struct {
 	*settings.BaseSettingResp
-	Key string `json:"key"`
+	Key      string              `json:"key"`
+	Base64   bool                `json:"base64"`
+	SwarmRef *SwarmSecretRefResp `json:"swarmRef"`
+}
+
+type SwarmSecretRefResp struct {
+	File *SwarmSecretRefFileTargetResp `json:"file"`
+}
+
+type SwarmSecretRefFileTargetResp struct {
+	Name string      `json:"name"`
+	UID  string      `json:"uid"`
+	GID  string      `json:"gid"`
+	Mode os.FileMode `json:"mode"`
 }
 
 func TransformSecret(

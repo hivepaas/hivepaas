@@ -94,7 +94,7 @@ func SelectWhereIn[T any](queryStr string, slice ...T) SelectQueryOption {
 	if len(slice) == 0 {
 		return SelectWhere("1=0")
 	}
-	return SelectWhere(queryStr, In(slice))
+	return SelectWhere(queryStr, List(slice))
 }
 
 func SelectWhereInIf[T any](cond bool, queryStr string, slice ...T) SelectQueryOption {
@@ -108,7 +108,7 @@ func SelectWhereNotIn[T any](queryStr string, slice ...T) SelectQueryOption {
 	if len(slice) == 0 {
 		return SelectWhere("1=1")
 	}
-	return SelectWhere(queryStr, In(slice))
+	return SelectWhere(queryStr, List(slice))
 }
 
 func SelectWhereNotInIf[T any](cond bool, queryStr string, slice ...T) SelectQueryOption {

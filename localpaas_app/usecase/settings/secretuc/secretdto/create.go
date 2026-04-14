@@ -1,6 +1,8 @@
 package secretdto
 
 import (
+	"os"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -20,25 +22,70 @@ type CreateSecretReq struct {
 }
 
 type SecretBaseReq struct {
-	Key    string `json:"key"`
-	Value  string `json:"value"`
-	Base64 bool   `json:"base64"`
+	Key      string             `json:"key"`
+	Value    string             `json:"value"`
+	Base64   bool               `json:"base64"`
+	SwarmRef *SwarmSecretRefReq `json:"swarmRef"`
 }
 
 func (req *SecretBaseReq) ToEntity() *entity.Secret {
 	return &entity.Secret{
-		Key:    req.Key,
-		Value:  entity.NewEncryptedField(req.Value),
-		Base64: req.Base64,
+		Key:      req.Key,
+		Value:    entity.NewEncryptedField(req.Value),
+		Base64:   req.Base64,
+		SwarmRef: req.SwarmRef.ToEntity(),
 	}
 }
 
-func (req *SecretBaseReq) validate(field string) (res []vld.Validator) {
+func (req *SecretBaseReq) validate(valueRequired bool, field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Key, true, 1, secretKeyMaxLen, field+"key")...)
-	res = append(res, basedto.ValidateStr(&req.Value, true, 1, secretValueMaxLen, field+"value")...)
+	res = append(res, basedto.ValidateStr(&req.Value, valueRequired, 1, secretValueMaxLen, field+"value")...)
+	res = append(res, req.SwarmRef.validate(field+"swarmRef")...)
+	return res
+}
+
+type SwarmSecretRefReq struct {
+	File *SwarmSecretRefFileTargetReq `json:"file"`
+}
+
+func (req *SwarmSecretRefReq) ToEntity() *entity.SwarmSecretRef {
+	return &entity.SwarmSecretRef{
+		File: req.File.ToEntity(),
+	}
+}
+
+func (req *SwarmSecretRefReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, req.File.validate(field+"file")...)
+	return res
+}
+
+type SwarmSecretRefFileTargetReq struct {
+	Name string      `json:"name"`
+	UID  string      `json:"uid"`
+	GID  string      `json:"gid"`
+	Mode os.FileMode `json:"mode"`
+}
+
+func (req *SwarmSecretRefFileTargetReq) ToEntity() *entity.SwarmSecretRefFileTarget {
+	return &entity.SwarmSecretRefFileTarget{
+		Name: req.Name,
+		UID:  req.UID,
+		GID:  req.GID,
+		Mode: req.Mode,
+	}
+}
+
+func (req *SwarmSecretRefFileTargetReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStr(&req.Name, false, 1, secretKeyMaxLen, field+"name")...)
 	return res
 }
 
@@ -49,7 +96,7 @@ func NewCreateSecretReq() *CreateSecretReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateSecretReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.validate("")...)
+	validators = append(validators, req.validate(true, "")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

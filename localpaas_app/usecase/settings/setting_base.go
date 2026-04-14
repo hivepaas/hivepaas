@@ -36,6 +36,57 @@ type BaseSettingResp struct {
 	ExpireAt  *time.Time `json:"expireAt,omitempty" copy:",nilonzero"`
 }
 
+type BaseSettingData struct {
+	ScopeProject *entity.Project
+	ScopeApp     *entity.App
+	ScopeUser    *entity.User
+}
+
+func (uc *BaseUC) loadSettingScopeData(
+	ctx context.Context,
+	db database.IDB,
+	req *BaseSettingReq,
+	data *BaseSettingData,
+) (err error) {
+	requireActive := !req.Scope.NotRequireActive
+	switch req.Scope.ScopeType() {
+	case base.SettingScopeGlobal:
+		return nil
+
+	case base.SettingScopeProject:
+		data.ScopeProject, err = uc.ProjectService.LoadProject(ctx, db, req.Scope.ProjectID, requireActive,
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+	case base.SettingScopeApp:
+		data.ScopeApp, err = uc.AppService.LoadApp(ctx, db, req.Scope.ProjectID, req.Scope.AppID,
+			requireActive, requireActive,
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ParentApp",
+				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			),
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.ScopeProject = data.ScopeApp.Project
+
+	case base.SettingScopeUser:
+		data.ScopeUser, err = uc.UserService.LoadUserEx(ctx, db, req.Scope.UserID, requireActive)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
+	return nil
+}
+
 func (uc *BaseUC) loadSettingByID(
 	ctx context.Context,
 	db database.IDB,
@@ -83,7 +134,7 @@ func (uc *BaseUC) checkRefSettingsExistence(
 		return nil
 	}
 	settings, _, err := uc.SettingRepo.List(ctx, db, req.Scope, nil,
-		bunex.SelectWhere("setting.id IN (?)", bunex.In(refSettingIDs)),
+		bunex.SelectWhere("setting.id IN (?)", bunex.List(refSettingIDs)),
 		bunex.SelectWhereIf(requireActive, "setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {

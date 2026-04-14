@@ -50,6 +50,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 	appGroup.GET("/:appID/secrets", appSettingsHandler.ListAppSecret)
 	appGroup.POST("/:appID/secrets", appSettingsHandler.CreateAppSecret)
 	appGroup.PUT("/:appID/secrets/:itemID", appSettingsHandler.UpdateAppSecret)
+	appGroup.PUT("/:appID/secrets/:itemID/status", appSettingsHandler.UpdateAppSecretStatus)
 	appGroup.DELETE("/:appID/secrets/:itemID", appSettingsHandler.DeleteAppSecret)
 
 	cronJobGroup := appGroup.Group("/:appID/cron-jobs")

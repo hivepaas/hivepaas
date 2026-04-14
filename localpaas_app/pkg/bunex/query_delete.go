@@ -48,7 +48,7 @@ func DeleteWhereIn[T any](queryStr string, slice ...T) DeleteQueryOption {
 	if len(slice) == 0 {
 		return DeleteWhere("1=0")
 	}
-	return DeleteWhere(queryStr, In(slice))
+	return DeleteWhere(queryStr, List(slice))
 }
 
 func DeleteWhereInIf[T any](cond bool, queryStr string, slice ...T) DeleteQueryOption {
@@ -62,7 +62,7 @@ func DeleteWhereNotIn[T any](queryStr string, slice ...T) DeleteQueryOption {
 	if len(slice) == 0 {
 		return DeleteWhere("1=1")
 	}
-	return DeleteWhere(queryStr, In(slice))
+	return DeleteWhere(queryStr, List(slice))
 }
 
 func DeleteWhereNotInIf[T any](cond bool, queryStr string, slice ...T) DeleteQueryOption {

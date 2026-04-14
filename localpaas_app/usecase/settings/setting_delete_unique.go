@@ -28,6 +28,8 @@ type DeleteUniqueSettingResp struct {
 }
 
 type DeleteUniqueSettingData struct {
+	BaseSettingData
+
 	Setting              *entity.Setting
 	ProjectSharedSetting *entity.ProjectSharedSetting
 	ExtraLoadOpts        []bunex.SelectQueryOption
@@ -94,6 +96,11 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	req *DeleteUniqueSettingReq,
 	data *DeleteUniqueSettingData,
 ) (err error) {
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	loadOpts := []bunex.SelectQueryOption{
 		bunex.SelectFor("UPDATE OF setting"),
 	}

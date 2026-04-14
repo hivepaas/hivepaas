@@ -18,11 +18,11 @@ func (uc *UC) ListSysError(
 
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app_error.status IN (?)", bunex.In(req.Status)))
+			bunex.SelectWhere("app_error.status IN (?)", bunex.List(req.Status)))
 	}
 	if len(req.Code) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app_error.code IN (?)", bunex.In(req.Code)))
+			bunex.SelectWhere("app_error.code IN (?)", bunex.List(req.Code)))
 	}
 	if req.Search != "" {
 		keyword := bunex.MakeLikeOpStr(req.Search, true)

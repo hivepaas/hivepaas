@@ -147,7 +147,7 @@ func (repo *projectRepo) ListByIDs(ctx context.Context, db database.IDB, ids []s
 		return nil, nil
 	}
 	var projects []*entity.Project
-	query := db.NewSelect().Model(&projects).Where("project.id IN (?)", bun.In(ids))
+	query := db.NewSelect().Model(&projects).Where("project.id IN (?)", bun.List(ids))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)

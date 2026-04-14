@@ -55,10 +55,10 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/tiendc/go-deepcopy v1.7.2
 	github.com/tiendc/go-validator v1.2.0
-	github.com/tiendc/gofn v1.16.0
-	github.com/uptrace/bun v1.2.16
-	github.com/uptrace/bun/dialect/pgdialect v1.2.16
-	github.com/uptrace/bun/extra/bundebug v1.2.16
+	github.com/tiendc/gofn v1.17.0
+	github.com/uptrace/bun v1.2.18
+	github.com/uptrace/bun/dialect/pgdialect v1.2.18
+	github.com/uptrace/bun/extra/bundebug v1.2.18
 	github.com/xhit/go-str2duration/v2 v2.1.0
 	gitlab.com/gitlab-org/api/client-go v1.20.0
 	go.uber.org/fx v1.24.0

@@ -25,7 +25,16 @@ func (uc *UC) CreateSecret(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			err := pData.Setting.SetData(req.ToEntity())
+			secret := req.ToEntity()
+			if data.ScopeApp != nil {
+				// Create a secret in docker swarm
+				err := uc.AppService.CreateSwarmSecret(ctx, db, data.ScopeApp, secret)
+				if err != nil {
+					return apperrors.Wrap(err)
+				}
+			}
+
+			err := pData.Setting.SetData(secret)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

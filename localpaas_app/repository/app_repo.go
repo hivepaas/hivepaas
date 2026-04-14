@@ -158,7 +158,7 @@ func (repo *appRepo) ListByIDs(ctx context.Context, db database.IDB, projectID s
 		return nil, nil
 	}
 	var apps []*entity.App
-	query := db.NewSelect().Model(&apps).Where("app.id IN (?)", bun.In(ids))
+	query := db.NewSelect().Model(&apps).Where("app.id IN (?)", bun.List(ids))
 	if projectID != "" {
 		query = query.Where("app.project_id = ?", projectID)
 	}

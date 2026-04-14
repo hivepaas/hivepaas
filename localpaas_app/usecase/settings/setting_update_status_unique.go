@@ -31,6 +31,8 @@ type UpdateUniqueSettingStatusResp struct {
 }
 
 type UpdateUniqueSettingStatusData struct {
+	BaseSettingData
+
 	Setting *entity.Setting
 
 	ExtraLoadOpts []bunex.SelectQueryOption
@@ -47,7 +49,7 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 	data *UpdateUniqueSettingStatusData,
 ) (*UpdateUniqueSettingStatusResp, error) {
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
-		err := uc.loadUniqueSettingForUpdateMeta(ctx, db, req, data)
+		err := uc.loadUniqueSettingForUpdateStatus(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -95,12 +97,17 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 	return &UpdateUniqueSettingStatusResp{}, nil
 }
 
-func (uc *BaseUC) loadUniqueSettingForUpdateMeta(
+func (uc *BaseUC) loadUniqueSettingForUpdateStatus(
 	ctx context.Context,
 	db database.Tx,
 	req *UpdateUniqueSettingStatusReq,
 	data *UpdateUniqueSettingStatusData,
 ) (err error) {
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {

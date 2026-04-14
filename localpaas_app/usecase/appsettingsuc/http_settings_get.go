@@ -73,7 +73,7 @@ func (uc *UC) loadAppHttpSettingsRefData(
 	settingIDs := appHttpSettings.GetRefObjectIDs().RefSettingIDs
 
 	settings, _, err := uc.settingRepo.List(ctx, db, app.GetSettingScope(), nil,
-		bunex.SelectWhere("setting.id IN (?)", bunex.In(settingIDs)),
+		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

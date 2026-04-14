@@ -25,6 +25,8 @@ type GetUniqueSettingResp struct {
 }
 
 type GetUniqueSettingData struct {
+	BaseSettingData
+
 	ExtraLoadOpts []bunex.SelectQueryOption
 }
 
@@ -34,7 +36,14 @@ func (uc *BaseUC) GetUniqueSetting(
 	req *GetUniqueSettingReq,
 	data *GetUniqueSettingData,
 ) (*GetUniqueSettingResp, error) {
-	setting, err := uc.SettingRepo.GetSingle(ctx, uc.DB, req.Scope, req.Type, false,
+	db := uc.DB
+
+	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type, false,
 		data.ExtraLoadOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -43,7 +52,7 @@ func (uc *BaseUC) GetUniqueSetting(
 		setting.CurrentObjectID = req.Scope.MainObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true, false, setting)
+	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true, false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -154,7 +154,7 @@ func (repo *userRepo) ListByEmails(ctx context.Context, db database.IDB, emails 
 	}
 	lowercaseEmails := gofn.MapSlice(emails, strings.ToLower)
 	users := make([]*entity.User, 0, len(emails))
-	query := db.NewSelect().Model(&users).Where("\"user\".email IN (?)", bun.In(lowercaseEmails))
+	query := db.NewSelect().Model(&users).Where("\"user\".email IN (?)", bun.List(lowercaseEmails))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)
@@ -170,7 +170,7 @@ func (repo *userRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 		return nil, nil
 	}
 	users := make([]*entity.User, 0, len(ids))
-	query := db.NewSelect().Model(&users).Where("\"user\".id IN (?)", bun.In(ids))
+	query := db.NewSelect().Model(&users).Where("\"user\".id IN (?)", bun.List(ids))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)

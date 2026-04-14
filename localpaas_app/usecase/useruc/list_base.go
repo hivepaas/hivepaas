@@ -21,7 +21,7 @@ func (uc *UC) ListUserBase(
 
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("\"user\".status IN (?)", bunex.In(req.Status)),
+			bunex.SelectWhere("\"user\".status IN (?)", bunex.List(req.Status)),
 		)
 	}
 

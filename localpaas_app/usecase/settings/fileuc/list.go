@@ -19,7 +19,7 @@ func (uc *UC) ListFile(
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{
 		ExtraLoadOpts: []bunex.SelectQueryOption{
 			bunex.SelectWhereIf(len(req.StorageTypes) > 0,
-				"setting.data->>'storageType' IN (?)", bunex.In(req.StorageTypes)),
+				"setting.data->>'storageType' IN (?)", bunex.List(req.StorageTypes)),
 		},
 	})
 	if err != nil {

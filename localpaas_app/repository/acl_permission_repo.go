@@ -84,7 +84,7 @@ func (repo *aclPermissionRepo) ListByUsers(ctx context.Context, db database.IDB,
 		return nil, nil
 	}
 	var permissions []*entity.ACLPermission
-	query := db.NewSelect().Model(&permissions).Where("subject_id IN (?)", bun.In(userIDs))
+	query := db.NewSelect().Model(&permissions).Where("subject_id IN (?)", bun.List(userIDs))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)
@@ -186,7 +186,7 @@ func (repo *aclPermissionRepo) DeleteByUsers(ctx context.Context, db database.ID
 		return nil
 	}
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).
-		Where("subject_id IN (?)", bun.In(userIDs))
+		Where("subject_id IN (?)", bun.List(userIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

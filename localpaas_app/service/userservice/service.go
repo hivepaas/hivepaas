@@ -14,6 +14,7 @@ type Service interface {
 	InitAdminUser(ctx context.Context, db database.IDB) (err error)
 
 	LoadUser(ctx context.Context, db database.IDB, userID string) (*entity.User, error)
+	LoadUserEx(ctx context.Context, db database.IDB, userID string, errorIfUnavail bool) (*entity.User, error)
 	LoadUsers(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavail bool) (
 		userMap map[string]*entity.User, err error)
 	LoadUsersEx(ctx context.Context, db database.IDB, errorIfUnavail bool,

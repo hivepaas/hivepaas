@@ -20,7 +20,7 @@ func NewUpdateSecretReq() *UpdateSecretReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateSecretReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.validate("")...)
+	validators = append(validators, req.validate(false, "")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

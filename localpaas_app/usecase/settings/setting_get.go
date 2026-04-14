@@ -27,6 +27,8 @@ type GetSettingResp struct {
 }
 
 type GetSettingData struct {
+	BaseSettingData
+
 	ExtraLoadOpts []bunex.SelectQueryOption
 }
 
@@ -36,7 +38,14 @@ func (uc *BaseUC) GetSetting(
 	req *GetSettingReq,
 	data *GetSettingData,
 ) (*GetSettingResp, error) {
-	setting, err := uc.loadSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.ID,
+	db := uc.DB
+
+	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 		false, data.ExtraLoadOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -45,7 +54,7 @@ func (uc *BaseUC) GetSetting(
 		setting.CurrentObjectID = req.Scope.MainObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true, false, setting)
+	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true, false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

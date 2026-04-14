@@ -71,10 +71,11 @@ const (
 )
 
 type SettingScope struct {
-	AppID       string
-	ParentAppID string
-	ProjectID   string
-	UserID      string
+	AppID            string
+	ParentAppID      string
+	ProjectID        string
+	UserID           string
+	NotRequireActive bool
 }
 
 func (s *SettingScope) ScopeType() SettingScopeType {

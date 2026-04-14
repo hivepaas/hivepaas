@@ -29,6 +29,8 @@ type UpdateSettingResp struct {
 }
 
 type UpdateSettingData struct {
+	BaseSettingData
+
 	Setting *entity.Setting
 
 	VerifyingName     string
@@ -114,6 +116,11 @@ func (uc *BaseUC) loadSettingForUpdate(
 	req *UpdateSettingReq,
 	data *UpdateSettingData,
 ) (err error) {
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {

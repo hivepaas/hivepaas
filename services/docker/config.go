@@ -53,3 +53,11 @@ func (m *manager) ConfigCreate(
 	}
 	return &resp, nil
 }
+
+func (m *manager) ConfigRemove(ctx context.Context, configID string) error {
+	err := m.client.ConfigRemove(ctx, configID)
+	if err != nil {
+		return apperrors.NewInfra(err)
+	}
+	return nil
+}

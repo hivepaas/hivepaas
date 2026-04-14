@@ -30,7 +30,19 @@ func (uc *UC) UpdateSecret(
 			updatedSecret := req.ToEntity()
 			if oldSecret != nil {
 				updatedSecret.Key = oldSecret.Key // when update, keep the old KEY of the secret
+				if req.Value == "" {
+					updatedSecret.Value = oldSecret.Value
+				}
 			}
+
+			if data.ScopeApp != nil {
+				// Update the related secrets in docker swarm
+				err := uc.AppService.UpdateSwarmSecret(ctx, db, data.ScopeApp, oldSecret, updatedSecret)
+				if err != nil {
+					return apperrors.Wrap(err)
+				}
+			}
+
 			if err = pData.Setting.SetData(updatedSecret); err != nil {
 				return apperrors.Wrap(err)
 			}

@@ -82,7 +82,7 @@ func (repo *projectTagRepo) DeleteAllByProjects(ctx context.Context, db database
 		return nil
 	}
 	query := db.NewDelete().Model((*entity.ProjectTag)(nil)).
-		Where("project_id IN (?)", bun.In(projectIDs))
+		Where("project_id IN (?)", bun.List(projectIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

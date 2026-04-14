@@ -30,6 +30,8 @@ type UpdateUniqueSettingResp struct {
 }
 
 type UpdateUniqueSettingData struct {
+	BaseSettingData
+
 	Setting *entity.Setting
 
 	Name            string
@@ -112,6 +114,11 @@ func (uc *BaseUC) loadUniqueSettingForUpdate(
 	req *UpdateUniqueSettingReq,
 	data *UpdateUniqueSettingData,
 ) (err error) {
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {

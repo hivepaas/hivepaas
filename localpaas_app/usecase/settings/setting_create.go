@@ -28,6 +28,8 @@ type CreateSettingResp struct {
 }
 
 type CreateSettingData struct {
+	BaseSettingData
+
 	VerifyingName     string
 	VerifyingRefIDs   []string
 	DefaultMustUnique bool
@@ -110,6 +112,11 @@ func (uc *BaseUC) loadSettingForCreation(
 	req *CreateSettingReq,
 	data *CreateSettingData,
 ) error {
+	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	// Verify that the name is available to use
 	if data.VerifyingName != "" {
 		err := uc.checkNameConflict(ctx, db, &req.BaseSettingReq, data.VerifyingName)

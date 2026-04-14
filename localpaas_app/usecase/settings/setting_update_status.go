@@ -32,6 +32,8 @@ type UpdateSettingStatusResp struct {
 }
 
 type UpdateSettingStatusData struct {
+	BaseSettingData
+
 	Setting *entity.Setting
 
 	DefaultMustUnique bool
@@ -107,6 +109,11 @@ func (uc *BaseUC) loadSettingForUpdateStatus(
 	req *UpdateSettingStatusReq,
 	data *UpdateSettingStatusData,
 ) (err error) {
+	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {
@@ -173,9 +180,7 @@ func (uc *BaseUC) persistSettingStatusUpdate(
 	data *UpdateSettingStatusData,
 	persistingData *PersistingSettingStatusData,
 ) error {
-	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting,
-		bunex.UpdateColumns("update_ver", "updated_at", "status", "expire_at", "avail_in_projects", "is_default"),
-	)
+	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -24,7 +24,7 @@ func (uc *UC) ListApp(
 
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.status IN (?)", bunex.In(req.Status)),
+			bunex.SelectWhere("app.status IN (?)", bunex.List(req.Status)),
 		)
 	}
 	// Filter by search keyword
@@ -39,7 +39,7 @@ func (uc *UC) ListApp(
 	}
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.id IN (?)", bunex.In(auth.AllowObjectIDs)),
+			bunex.SelectWhere("app.id IN (?)", bunex.List(auth.AllowObjectIDs)),
 		)
 	}
 

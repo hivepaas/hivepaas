@@ -5,6 +5,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 )
@@ -15,7 +16,30 @@ func (uc *UC) UpdateSecretStatus(
 	req *secretdto.UpdateSecretStatusReq,
 ) (*secretdto.UpdateSecretStatusResp, error) {
 	req.Type = currentSettingType
-	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
+	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
+		BeforePersisting: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.UpdateSettingStatusData,
+			pData *settings.PersistingSettingStatusData,
+		) (err error) {
+			if data.ScopeApp != nil {
+				secret := pData.Setting.MustAsSecret()
+				if pData.Setting.IsActive() {
+					// Create a secret in docker swarm for the app
+					err = uc.AppService.CreateSwarmSecret(ctx, db, data.ScopeApp, secret)
+				} else {
+					// Delete the related secret in docker swarm
+					err = uc.AppService.DeleteSwarmSecret(ctx, db, data.ScopeApp, secret)
+				}
+				if err != nil {
+					return apperrors.Wrap(err)
+				}
+				pData.Setting.MustSetData(secret)
+			}
+			return nil
+		},
+	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

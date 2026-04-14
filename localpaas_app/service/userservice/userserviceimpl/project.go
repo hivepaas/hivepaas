@@ -44,7 +44,7 @@ func (s *service) LoadProjectUsers(
 	}
 
 	opts := []bunex.SelectQueryOption{
-		bunex.SelectWhere("\"user\".id IN (?)", bunex.In(userIDs)),
+		bunex.SelectWhere("\"user\".id IN (?)", bunex.List(userIDs)),
 	}
 	if loadAdmins {
 		opts = append(opts, bunex.SelectWhereOr("\"user\".role = ?", base.UserRoleAdmin))

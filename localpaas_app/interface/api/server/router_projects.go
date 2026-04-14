@@ -39,6 +39,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		secretGroup.GET("", projectSettingsHandler.ListProjectSecrets)
 		secretGroup.POST("", projectSettingsHandler.CreateProjectSecret)
 		secretGroup.PUT("/:itemID", projectSettingsHandler.UpdateProjectSecret)
+		secretGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateProjectSecretStatus)
 		secretGroup.DELETE("/:itemID", projectSettingsHandler.DeleteProjectSecret)
 	}
 

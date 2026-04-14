@@ -266,7 +266,7 @@ func (repo *settingRepo) ListByIDs(ctx context.Context, db database.IDB, scope *
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	opts = append(opts, bunex.SelectWhere("setting.id IN (?)", bun.In(ids)))
+	opts = append(opts, bunex.SelectWhere("setting.id IN (?)", bun.List(ids)))
 	opts = repo.applyFilter(opts, "", "", requireActive)
 	settings, _, err := repo.List(ctx, db, scope, nil, opts...)
 	return settings, apperrors.Wrap(err)

@@ -7,7 +7,7 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { EAppServicePlacement } from "~/projects/module-shared/enums";
 
-import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { EditComboboxWithAddOn, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigAvailabilitySchemaInput, type AppConfigAvailabilitySchemaOutput } from "../schemas";
 
@@ -61,18 +61,14 @@ export function PlacementConstraintsFields() {
                             className="grid gap-3 flex-1"
                             style={{ gridTemplateColumns: "1fr 120px 1fr" }}
                         >
-                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
-                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
-                                    Name
-                                </span>
-                                <EditableCombobox
-                                    options={[...CONSTRAINT_NAME_OPTIONS]}
-                                    value={newName}
-                                    onChange={setNewName}
-                                    placeholder="Select or type name"
-                                    className="flex-1 border-0 shadow-none focus-visible:ring-0 rounded-l-none"
-                                />
-                            </div>
+                            <EditComboboxWithAddOn
+                                addonLeft="Name"
+                                options={[...CONSTRAINT_NAME_OPTIONS]}
+                                value={newName}
+                                onChange={setNewName}
+                                placeholder="Select or type name"
+                                inputClassName="h-9"
+                            />
 
                             <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">

@@ -26,10 +26,10 @@ const columns: ColumnDef<UserBase>[] = [
         cell: ({ row }) => (
             <div className="flex items-center gap-2">
                 <Avatar
-                    name={row.original.fullName}
+                    name={row.original.fullName ? row.original.fullName : row.original.username}
                     src={row.original.photo}
                 />
-                <span>{row.original.fullName}</span>
+                <span>{row.original.fullName ? row.original.fullName : row.original.username}</span>
             </div>
         ),
     },

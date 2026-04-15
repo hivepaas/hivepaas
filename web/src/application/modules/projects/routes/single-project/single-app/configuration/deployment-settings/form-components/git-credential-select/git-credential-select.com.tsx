@@ -51,7 +51,7 @@ export function GitCredentialSelect() {
     }, [credentials]);
 
     return (
-        <InfoBlock title="Git Credential">
+        <InfoBlock title="Git Credentials">
             <FieldGroup>
                 <Field>
                     <Combobox
@@ -63,6 +63,7 @@ export function GitCredentialSelect() {
                         onSearch={setSearchQuery}
                         placeholder="Select git credential"
                         searchable
+                        allowClear
                         closeOnSelect
                         emptyText="No git credentials available"
                         className="max-w-[400px]"

@@ -128,10 +128,15 @@ export function CapabilitiesFields() {
                             />
                             <InputNumberWithAddon
                                 addonLeft="Value"
-                                value={Number(newValue)}
-                                onChange={e => {
-                                    setNewValue(e.target.value);
+                                value={
+                                    newValue.trim() === "" || Number.isNaN(Number(newValue))
+                                        ? undefined
+                                        : Number(newValue)
+                                }
+                                onValueChange={v => {
+                                    setNewValue(v === undefined ? "" : String(v));
                                 }}
+                                useGrouping={false}
                                 placeholder="1024"
                             />
                         </div>

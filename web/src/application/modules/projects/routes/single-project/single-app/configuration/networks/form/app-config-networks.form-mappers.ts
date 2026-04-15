@@ -21,8 +21,8 @@ export function mapAppNetworkSettingsToFormInput(data: AppNetworkSettings): AppC
         },
         resolutionMode: data.endpointSpec?.mode ?? EEndpointResolutionMode.VIP,
         portConfigs: (data.endpointSpec?.ports ?? []).map(item => ({
-            published: item.published != null ? String(item.published) : "",
-            target: item.target != null ? String(item.target) : "",
+            published: item.published ?? 0,
+            target: item.target ?? 0,
             protocol: item.protocol ?? EPortConfigProtocol.TCP,
             publishMode: item.publishMode ?? EPortConfigPublishMode.Host,
         })),

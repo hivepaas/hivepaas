@@ -3,20 +3,25 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Check, X } from "lucide-react";
+import { Check, RefreshCw, X } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 export interface EditableComboboxProps {
-    options: string[];
-    value: string;
-    onChange: (value: string) => void;
-    placeholder?: string;
-    className?: string;
-    emptyText?: string;
-    allowClear?: boolean;
+    "options": string[];
+    "value"?: string | null;
+    "onChange": (value: string) => void;
+    "placeholder"?: string;
+    "className"?: string;
+    "emptyText"?: string;
+    "allowClear"?: boolean;
+    "aria-invalid"?: boolean;
+    "onRefresh"?: () => void;
+    "isRefreshing"?: boolean;
+    "inputClassName"?: string;
 }
 
 export function EditableCombobox({
@@ -27,15 +32,21 @@ export function EditableCombobox({
     className,
     emptyText = "No matching options",
     allowClear = true,
+    "aria-invalid": ariaInvalid,
+    onRefresh,
+    inputClassName,
+    isRefreshing = false,
 }: EditableComboboxProps) {
     const [open, setOpen] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const text = value ?? "";
+    const showRefresh = Boolean(onRefresh);
 
     const filtered = React.useMemo(() => {
-        if (!value) return options;
-        const lower = value.toLowerCase();
+        if (!text) return options;
+        const lower = text.toLowerCase();
         return options.filter(opt => opt.toLowerCase().includes(lower));
-    }, [options, value]);
+    }, [options, text]);
 
     const handleSelect = (selected: string) => {
         onChange(selected);
@@ -43,83 +54,107 @@ export function EditableCombobox({
         inputRef.current?.focus();
     };
 
-    const showClear = allowClear && value.length > 0;
+    const showClear = allowClear && text.length > 0;
 
     return (
-        <Popover
-            open={open}
-            onOpenChange={setOpen}
-        >
-            <PopoverAnchor asChild>
-                <div className={cn("group/clear relative flex items-center", className)}>
-                    <Input
-                        ref={inputRef}
-                        value={value}
-                        onChange={e => {
-                            onChange(e.target.value);
+        <div className={cn("flex w-full min-w-0 items-center gap-1.5", className)}>
+            <div className="group/clear min-w-0 flex-1">
+                <Popover
+                    open={open}
+                    onOpenChange={setOpen}
+                >
+                    <PopoverAnchor asChild>
+                        <div className="relative flex w-full items-center">
+                            <Input
+                                ref={inputRef}
+                                value={text}
+                                onChange={e => {
+                                    onChange(e.target.value);
+                                }}
+                                onFocus={() => {
+                                    setOpen(true);
+                                }}
+                                placeholder={placeholder}
+                                aria-invalid={ariaInvalid}
+                                className={cn(
+                                    "h-auto min-h-9 w-full min-w-0 overflow-hidden py-2 pr-8 pl-3 text-left font-normal leading-[18px]",
+                                    showClear && "pr-9",
+                                    inputClassName,
+                                )}
+                            />
+                            {showClear && (
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    aria-label="Clear"
+                                    className="absolute right-2 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
+                                    onPointerDown={e => {
+                                        e.preventDefault();
+                                    }}
+                                    onClick={() => {
+                                        onChange("");
+                                        inputRef.current?.focus();
+                                    }}
+                                >
+                                    <X className="size-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    </PopoverAnchor>
+                    <PopoverContent
+                        className="w-fit p-0"
+                        align="start"
+                        onOpenAutoFocus={e => {
+                            e.preventDefault();
                         }}
-                        onFocus={() => {
-                            setOpen(true);
-                        }}
-                        placeholder={placeholder}
-                        className={cn("h-9 w-full border-0", showClear && "pr-7")}
-                    />
-                    {showClear && (
-                        <button
-                            type="button"
-                            tabIndex={-1}
-                            aria-label="Clear"
-                            className="absolute right-1.5 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
-                            onPointerDown={e => {
+                        onInteractOutside={e => {
+                            if (e.target === inputRef.current) {
                                 e.preventDefault();
-                            }}
-                            onClick={() => {
-                                onChange("");
-                                inputRef.current?.focus();
-                            }}
-                        >
-                            <X className="size-3.5" />
-                        </button>
-                    )}
-                </div>
-            </PopoverAnchor>
-            <PopoverContent
-                className="w-(--radix-popover-anchor-width) p-0"
-                align="start"
-                onOpenAutoFocus={e => {
-                    e.preventDefault();
-                }}
-                onInteractOutside={e => {
-                    if (e.target === inputRef.current) {
-                        e.preventDefault();
-                    }
-                }}
-            >
-                <Command shouldFilter={false}>
-                    <CommandList>
-                        <CommandEmpty className="p-2 text-sm text-gray-500">{emptyText}</CommandEmpty>
-                        {filtered.length > 0 && (
-                            <CommandGroup>
-                                {filtered.map(option => (
-                                    <CommandItem
-                                        key={option}
-                                        value={option}
-                                        onSelect={handleSelect}
-                                    >
-                                        <span className="truncate">{option}</span>
-                                        <Check
-                                            className={cn(
-                                                "ml-auto h-4 w-4 shrink-0",
-                                                value === option ? "opacity-100" : "opacity-0",
-                                            )}
-                                        />
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        )}
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
+                            }
+                        }}
+                    >
+                        <Command shouldFilter={false}>
+                            <CommandList>
+                                <CommandEmpty className="p-2 text-sm text-gray-500">{emptyText}</CommandEmpty>
+                                {filtered.length > 0 && (
+                                    <CommandGroup>
+                                        {filtered.map(option => (
+                                            <CommandItem
+                                                key={option}
+                                                value={option}
+                                                onSelect={handleSelect}
+                                            >
+                                                <span className="truncate">{option}</span>
+                                                <Check
+                                                    className={cn(
+                                                        "ml-auto h-4 w-4 shrink-0",
+                                                        text === option ? "opacity-100" : "opacity-0",
+                                                    )}
+                                                />
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                )}
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+            </div>
+            {showRefresh && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="Refresh list"
+                    title="Refresh list"
+                    className="size-9 shrink-0 shadow-none"
+                    onClick={() => {
+                        onRefresh?.();
+                    }}
+                >
+                    <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+                </Button>
+            )}
+        </div>
     );
 }

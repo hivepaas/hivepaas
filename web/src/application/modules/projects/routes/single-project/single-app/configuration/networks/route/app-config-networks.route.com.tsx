@@ -42,8 +42,8 @@ function mapFormValuesToPayload(
         endpointSpec: {
             mode: values.resolutionMode,
             ports: values.portConfigs.map(item => ({
-                published: Number(item.published),
-                target: Number(item.target),
+                published: item.published,
+                target: item.target,
                 protocol: item.protocol,
                 publishMode: item.publishMode,
             })),

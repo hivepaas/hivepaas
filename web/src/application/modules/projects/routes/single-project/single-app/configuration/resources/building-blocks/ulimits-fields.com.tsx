@@ -1,11 +1,10 @@
 import { useState } from "react";
 
 import { Button, Input } from "@components/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
+import { EditableCombobox, InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
@@ -39,17 +38,18 @@ export function UlimitsFields() {
         name: "ulimits",
     });
 
-    const [name, setName] = useState<string>(ULIMIT_NAMES[0]);
+    const [name, setName] = useState<string>("");
     const [soft, setSoft] = useState("");
     const [hard, setHard] = useState("");
 
     const handleAdd = () => {
-        if (!name || !soft.trim() || !hard.trim()) return;
+        if (!name) return;
         append({
             name,
             soft: Number(soft),
             hard: Number(hard),
         });
+        setName("");
         setSoft("");
         setHard("");
     };
@@ -71,40 +71,32 @@ export function UlimitsFields() {
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
                                     Name
                                 </span>
-                                <Select
+                                <EditableCombobox
+                                    options={[...ULIMIT_NAMES]}
                                     value={name}
-                                    onValueChange={setName}
-                                >
-                                    <SelectTrigger className="flex-1 border-0 shadow-none focus:ring-0 rounded-l-none h-9">
-                                        <SelectValue placeholder="nofile" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {ULIMIT_NAMES.map(n => (
-                                            <SelectItem
-                                                key={n}
-                                                value={n}
-                                            >
-                                                {n}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onChange={setName}
+                                    placeholder="nofile"
+                                    className="-mx-px flex-1 gap-0"
+                                    inputClassName="h-9 border-0 shadow-none focus-visible:ring-0 rounded-l-none"
+                                />
                             </div>
                             <InputNumberWithAddon
                                 addonLeft="Soft"
-                                value={Number(soft)}
-                                onChange={e => {
-                                    setSoft(e.target.value);
+                                value={soft.trim() === "" || Number.isNaN(Number(soft)) ? undefined : Number(soft)}
+                                onValueChange={v => {
+                                    setSoft(v === undefined ? "" : String(v));
                                 }}
+                                useGrouping={false}
                                 placeholder="1024"
                                 classNameContainer="col-span-3"
                             />
                             <InputNumberWithAddon
                                 addonLeft="Hard"
-                                value={Number(hard)}
-                                onChange={e => {
-                                    setHard(e.target.value);
+                                value={hard.trim() === "" || Number.isNaN(Number(hard)) ? undefined : Number(hard)}
+                                onValueChange={v => {
+                                    setHard(v === undefined ? "" : String(v));
                                 }}
+                                useGrouping={false}
                                 placeholder="1024"
                                 classNameContainer="col-span-3"
                             />
@@ -113,7 +105,6 @@ export function UlimitsFields() {
                             type="button"
                             variant="outline"
                             onClick={handleAdd}
-                            disabled={!soft.trim() || !hard.trim()}
                         >
                             <Plus className="size-4" /> Add
                         </Button>

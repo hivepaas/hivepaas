@@ -116,7 +116,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                         joinAsManagerField.onChange(value === "manager");
                                     }}
                                 >
-                                    <TabsList className="w-full">
+                                    <TabsList>
                                         <TabsTrigger
                                             value="manager"
                                             className="flex-1"

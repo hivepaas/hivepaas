@@ -159,6 +159,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		domainSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueDomainSettings)
 	}
 
+	{ // Storage settings group
+		storageSettingsGroup := projectGroup.Group("/:projectID/storage-settings")
+		storageSettingsGroup.GET("", projectSettingsHandler.GetUniqueStorageSettings)
+		storageSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueStorageSettings)
+		storageSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueStorageSettingsStatus)
+		storageSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueStorageSettings)
+	}
+
 	{ // Email group
 		emailGroup := projectGroup.Group("/:projectID/emails")
 		emailGroup.GET("/:itemID", projectSettingsHandler.GetEmail)

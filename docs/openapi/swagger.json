@@ -12855,6 +12855,222 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/storage-settings" : {
+      "delete" : {
+        "description" : "Deletes storage settings setting",
+        "operationId" : "deleteProjectStorageSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes storage settings setting",
+        "tags" : [ "project_settings" ]
+      },
+      "get" : {
+        "description" : "Gets storage settings details",
+        "operationId" : "getProjectStorageSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets storage settings details",
+        "tags" : [ "project_settings" ]
+      },
+      "put" : {
+        "description" : "Updates storage settings",
+        "operationId" : "updateProjectStorageSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates storage settings",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/storage-settings/status" : {
+      "put" : {
+        "description" : "Updates storage settings status",
+        "operationId" : "updateProjectStorageSettingsStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates storage settings status",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/tags" : {
       "post" : {
         "description" : "Creates a new project tag",
@@ -18445,6 +18661,186 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/settings/storage-settings" : {
+      "delete" : {
+        "description" : "Deletes storage settings setting",
+        "operationId" : "deleteSettingStorageSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes storage settings setting",
+        "tags" : [ "settings" ]
+      },
+      "get" : {
+        "description" : "Gets storage settings details",
+        "operationId" : "getSettingStorageSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets storage settings details",
+        "tags" : [ "settings" ]
+      },
+      "put" : {
+        "description" : "Updates storage settings",
+        "operationId" : "updateSettingStorageSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates storage settings",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/storage-settings/status" : {
+      "put" : {
+        "description" : "Updates storage settings status",
+        "operationId" : "updateSettingStorageSettingsStatus",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates storage settings status",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/errors" : {
       "get" : {
         "description" : "Lists sys errors",
@@ -21230,9 +21626,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingType" : {
-        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-provider", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "domain-settings", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "image-build-settings", "system-cleanup", "system-backup", "ssl-renewal", "file" ],
+        "enum" : [ "project", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "system-cleanup", "system-backup", "ssl-renewal", "file", "domain-settings", "storage-settings", "image-build-settings" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudProvider", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeDomainSettings", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeImageBuildSettings", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeFile" ]
+        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeFile", "SettingTypeDomainSettings", "SettingTypeStorageSettings", "SettingTypeImageBuildSettings" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.TaskPriority" : {
         "enum" : [ "low", "default", "critical" ],
@@ -29905,6 +30301,231 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageBindSettingsReq" : {
+        "properties" : {
+          "allowAny" : {
+            "type" : "boolean"
+          },
+          "appsMustUseSubPaths" : {
+            "type" : "boolean"
+          },
+          "baseDirs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "appsMustUseSubPaths", "baseDirs" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageBindSettingsResp" : {
+        "properties" : {
+          "allowAny" : {
+            "type" : "boolean"
+          },
+          "appsMustUseSubPaths" : {
+            "type" : "boolean"
+          },
+          "baseDirs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "appsMustUseSubPaths", "baseDirs" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageSettingsResp" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "bindSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageBindSettingsResp"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "tmpfsSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageTmpfsSettingsResp"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          },
+          "volumeSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsResp"
+          }
+        },
+        "required" : [ "bindSettings", "createdAt", "id", "name", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageTmpfsSettingsReq" : {
+        "properties" : {
+          "maxSize" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+          }
+        },
+        "required" : [ "maxSize" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageTmpfsSettingsResp" : {
+        "properties" : {
+          "maxSize" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+          }
+        },
+        "required" : [ "maxSize" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsReq" : {
+        "properties" : {
+          "allowAny" : {
+            "type" : "boolean"
+          },
+          "appsMustUseSubPaths" : {
+            "type" : "boolean"
+          },
+          "volumes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "appsMustUseSubPaths", "volumes" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsResp" : {
+        "properties" : {
+          "allowAny" : {
+            "type" : "boolean"
+          },
+          "appsMustUseSubPaths" : {
+            "type" : "boolean"
+          },
+          "volumes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "appsMustUseSubPaths", "volumes" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "bindSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageBindSettingsReq"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "tmpfsSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageTmpfsSettingsReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "volumeSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsReq"
+          }
+        },
+        "required" : [ "availableInProjects", "bindSettings", "default", "tmpfsSettings", "updateVer", "volumeSettings" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappuc_lpappdto.ReloadLpAppConfigReq" : {
         "type" : "object"
       },
@@ -31520,7 +32141,7 @@
         "x-enum-varnames" : [ "TypeBind", "TypeVolume", "TypeTmpfs", "TypeNamedPipe", "TypeCluster", "TypeImage" ]
       },
       "os.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -31531,7 +32152,7 @@
           "ModeExclusive" : "l: exclusive use",
           "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
           "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits, 0o777",
+          "ModePerm" : "Unix permission bits",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
           "ModeSocket" : "S: Unix domain socket",
@@ -31539,7 +32160,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits" ],
         "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "swarm.AppArmorMode" : {

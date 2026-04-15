@@ -22,10 +22,8 @@ const (
 	ResourceTypeNetwork            ResourceType = "network"
 	ResourceTypeVolume             ResourceType = "volume"
 	ResourceTypeImage              ResourceType = "image"
-	ResourceTypeDeployment         ResourceType = "deployment"
 	ResourceTypeProject            ResourceType = "project"
 	ResourceTypeApp                ResourceType = "app"
-	ResourceTypeCloudProvider      ResourceType = "cloud-provider"
 	ResourceTypeCloudStorage       ResourceType = "cloud-storage"
 	ResourceTypeOAuth              ResourceType = "oauth"
 	ResourceTypeSSHKey             ResourceType = "ssh-key"
@@ -36,7 +34,6 @@ const (
 	ResourceTypeRegistryAuth       ResourceType = "registry-auth"
 	ResourceTypeBasicAuth          ResourceType = "basic-auth"
 	ResourceTypeSSLCert            ResourceType = "ssl-cert"
-	ResourceTypeDomainSettings     ResourceType = "domain-settings"
 	ResourceTypeGithubApp          ResourceType = "github-app"
 	ResourceTypeAccessToken        ResourceType = "access-token"
 	ResourceTypeCronJob            ResourceType = "cron-job"
@@ -46,11 +43,13 @@ const (
 	ResourceTypeSysError           ResourceType = "sys-error"
 	ResourceTypeTask               ResourceType = "task"
 	ResourceTypeNotification       ResourceType = "notification"
-	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"
 	ResourceTypeSystemCleanup      ResourceType = "system-cleanup"
 	ResourceTypeSystemBackup       ResourceType = "system-backup"
 	ResourceTypeSSLRenewal         ResourceType = "ssl-renewal"
 	ResourceTypeFile               ResourceType = "file"
+	ResourceTypeDomainSettings     ResourceType = "domain-settings"
+	ResourceTypeStorageSettings    ResourceType = "storage-settings"
+	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"
 )
 
 type ResourceModule string

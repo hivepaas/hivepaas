@@ -129,6 +129,14 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		domainSettingsGroup.DELETE("", settingHandler.DeleteUniqueDomainSettings)
 	}
 
+	{ // storage settings group
+		storageSettingsGroup := settingGroup.Group("/storage-settings")
+		storageSettingsGroup.GET("", settingHandler.GetUniqueStorageSettings)
+		storageSettingsGroup.PUT("", settingHandler.UpdateUniqueStorageSettings)
+		storageSettingsGroup.PUT("/status", settingHandler.UpdateUniqueStorageSettingsStatus)
+		storageSettingsGroup.DELETE("", settingHandler.DeleteUniqueStorageSettings)
+	}
+
 	{ // email group
 		emailGroup := settingGroup.Group("/emails")
 		emailGroup.GET("/:itemID", settingHandler.GetEmail)

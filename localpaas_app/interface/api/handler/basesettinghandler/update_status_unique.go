@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
 
 //nolint:funlen
@@ -59,6 +60,11 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		r := domainsettingsdto.NewUpdateUniqueDomainSettingsStatusReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateUniqueDomainSettingsStatus(reqCtx, auth, r) }
+
+	case base.ResourceTypeStorageSettings:
+		r := storagesettingsdto.NewUpdateUniqueStorageSettingsStatusReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateUniqueStorageSettingsStatus(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

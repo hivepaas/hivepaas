@@ -2,7 +2,7 @@ module github.com/localpaas/localpaas
 
 go 1.26
 
-toolchain go1.26.0
+toolchain go1.26.2
 
 require (
 	code.gitea.io/sdk/gitea v0.22.1
@@ -39,7 +39,7 @@ require (
 	github.com/markbates/goth v1.82.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/moby/go-archive v0.2.0
-	github.com/moby/moby/api v1.53.0
+	github.com/moby/moby/api v1.54.1
 	github.com/mozillazg/go-slugify v0.2.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/oklog/ulid/v2 v2.1.1
@@ -55,7 +55,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/tiendc/go-deepcopy v1.7.2
 	github.com/tiendc/go-validator v1.2.0
-	github.com/tiendc/gofn v1.17.0
+	github.com/tiendc/gofn v1.17.1
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/pgdialect v1.2.18
 	github.com/uptrace/bun/extra/bundebug v1.2.18

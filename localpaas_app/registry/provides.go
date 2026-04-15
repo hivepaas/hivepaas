@@ -80,6 +80,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc"
@@ -186,6 +187,7 @@ var Provides = []any{
 	sslrenewaluc.New,
 	systembackupuc.New,
 	fileuc.New,
+	storagesettingsuc.New,
 
 	// Service
 	clusterserviceimpl.New,

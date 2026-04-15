@@ -16,7 +16,6 @@ const (
 	SettingTypeEnvVar             SettingType = "env-var"
 	SettingTypeSecret             SettingType = "secret"
 	SettingTypeConfigFile         SettingType = "config-file"
-	SettingTypeCloudProvider      SettingType = "cloud-provider"
 	SettingTypeCloudStorage       SettingType = "cloud-storage"
 	SettingTypeOAuth              SettingType = "oauth"
 	SettingTypeSSHKey             SettingType = "ssh-key"
@@ -25,7 +24,6 @@ const (
 	SettingTypeRegistryAuth       SettingType = "registry-auth"
 	SettingTypeBasicAuth          SettingType = "basic-auth"
 	SettingTypeSSLCert            SettingType = "ssl-cert"
-	SettingTypeDomainSettings     SettingType = "domain-settings"
 	SettingTypeGithubApp          SettingType = "github-app"
 	SettingTypeAccessToken        SettingType = "access-token"
 	SettingTypeCronJob            SettingType = "cron-job"
@@ -33,11 +31,13 @@ const (
 	SettingTypeEmail              SettingType = "email"
 	SettingTypeRepoWebhook        SettingType = "repo-webhook"
 	SettingTypeNotification       SettingType = "notification"
-	SettingTypeImageBuildSettings SettingType = "image-build-settings"
 	SettingTypeSystemCleanup      SettingType = "system-cleanup"
 	SettingTypeSystemBackup       SettingType = "system-backup"
 	SettingTypeSSLRenewal         SettingType = "ssl-renewal"
 	SettingTypeFile               SettingType = "file"
+	SettingTypeDomainSettings     SettingType = "domain-settings"
+	SettingTypeStorageSettings    SettingType = "storage-settings"
+	SettingTypeImageBuildSettings SettingType = "image-build-settings"
 )
 
 var (

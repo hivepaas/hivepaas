@@ -48,6 +48,16 @@ func (s *service) InitDefaults(
 		}
 	}
 
+	// Storage settings
+	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
+		return item.Type == base.SettingTypeStorageSettings
+	}) {
+		err = s.initDefaultStorageSettings(ctx, db, timeNow)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
 	// System cleanup settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
 		return item.Type == base.SettingTypeSystemCleanup

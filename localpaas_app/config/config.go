@@ -58,6 +58,7 @@ type Config struct {
 
 	AdminAccount AdminAccount `toml:"admin_account"`
 	HTTPServer   HTTPServer   `toml:"http_server"`
+	Storage      Storage      `toml:"storage"`
 	DB           DB           `toml:"db"`
 	Cache        Cache        `toml:"cache"`
 	Session      Session      `toml:"session"`

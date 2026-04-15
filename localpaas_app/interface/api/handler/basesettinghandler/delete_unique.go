@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
 
 type DeleteUniqueSettingOptions struct {
@@ -71,6 +72,11 @@ func (h *Handler) DeleteUniqueSetting(
 		r := domainsettingsdto.NewDeleteUniqueDomainSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.DeleteUniqueDomainSettings(reqCtx, auth, r) }
+
+	case base.ResourceTypeStorageSettings:
+		r := storagesettingsdto.NewDeleteUniqueStorageSettingsReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.DeleteUniqueStorageSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

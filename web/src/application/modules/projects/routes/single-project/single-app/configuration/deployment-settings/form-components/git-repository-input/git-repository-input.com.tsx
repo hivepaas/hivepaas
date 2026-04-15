@@ -8,7 +8,6 @@ import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
-import { useDebouncedSearch } from "@application/shared/hooks";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
@@ -25,8 +24,6 @@ export function GitRepositoryInput() {
         AppConfigDeploymentSettingsFormSchemaOutput
     >();
 
-    const [debouncedSearch, setSearch] = useDebouncedSearch(250, "");
-
     const credentials = useWatch({ control, name: "repoSource.credentials" });
     const credentialId = credentials?.id;
 
@@ -38,7 +35,6 @@ export function GitRepositoryInput() {
         {
             projectID: projectId,
             itemID: credentialId ?? "",
-            search: debouncedSearch,
         },
         { enabled: Boolean(credentialId) },
     );

@@ -1,7 +1,7 @@
 import { FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { GitCredentialSelect, GitRepositoryInput, PushToRegistrySelect } from "../form-components";
 import {
@@ -39,9 +39,10 @@ export function GitSourceFields() {
 
             <InfoBlock
                 title={
-                    <>
-                        Branch / Commit <span className="text-destructive">*</span>
-                    </>
+                    <LabelWithInfo
+                        label="Branch / Commit"
+                        isRequired
+                    />
                 }
             >
                 <Input

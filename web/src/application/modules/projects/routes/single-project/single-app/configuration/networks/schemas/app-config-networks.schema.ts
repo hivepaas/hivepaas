@@ -13,8 +13,8 @@ export const NetworksFormHostsEntrySchema = z.object({
 });
 
 export const NetworksFormPortConfigSchema = z.object({
-    published: z.string(),
-    target: z.string(),
+    published: z.number(),
+    target: z.number(),
     protocol: z.nativeEnum(EPortConfigProtocol),
     publishMode: z.nativeEnum(EPortConfigPublishMode),
 });

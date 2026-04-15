@@ -159,7 +159,7 @@ function View() {
             </InfoBlock>
             <Field>
                 <div className={cn(dashedBorderBox, "space-y-6")}>
-                    <p className="text-sm">
+                    <p className="text-sm text-center">
                         <span className="text-orange-600 dark:text-orange-400 font-semibold">WARNING:</span> If the
                         server above is already part of another Swarm cluster, it will be removed from that cluster. Any
                         associated data will also be deleted.

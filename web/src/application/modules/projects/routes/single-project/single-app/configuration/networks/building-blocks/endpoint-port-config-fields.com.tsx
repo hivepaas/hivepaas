@@ -9,7 +9,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { EEndpointResolutionMode, EPortConfigProtocol, EPortConfigPublishMode } from "~/projects/module-shared/enums";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
 
@@ -24,8 +24,8 @@ export function EndpointPortConfigFields() {
         name: "portConfigs",
     });
 
-    const [published, setPublished] = useState("");
-    const [target, setTarget] = useState("");
+    const [published, setPublished] = useState<number>(0);
+    const [target, setTarget] = useState<number>(0);
     const [protocol, setProtocol] = useState<EPortConfigProtocol>(EPortConfigProtocol.TCP);
     const [publishMode, setPublishMode] = useState<EPortConfigPublishMode>(EPortConfigPublishMode.Host);
     const resolutionMode = watch("resolutionMode");
@@ -75,23 +75,24 @@ export function EndpointPortConfigFields() {
             >
                 <div className="flex flex-col gap-2">
                     <div className="flex gap-3 items-center max-w-[800px]">
-                        <InputWithAddOn
+                        <InputNumberWithAddon
                             addonLeft="Host"
                             value={published}
-                            onChange={e => {
-                                setPublished(e.target.value);
+                            onValueChange={v => {
+                                setPublished(v ?? 0);
                             }}
+                            useGrouping={false}
                             placeholder="8000"
-                            classNameContainer="flex-1"
+                            classNameContainer="col-span-3"
                         />
-                        <InputWithAddOn
+                        <InputNumberWithAddon
                             addonLeft="Container"
                             value={target}
-                            onChange={e => {
-                                setTarget(e.target.value);
+                            onValueChange={v => {
+                                setTarget(v ?? 0);
                             }}
+                            useGrouping={false}
                             placeholder="80"
-                            classNameContainer="flex-1"
                         />
                         <div className="flex items-center rounded-md border border-input h-9 flex-1">
                             <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
@@ -103,7 +104,7 @@ export function EndpointPortConfigFields() {
                                     setProtocol(value as EPortConfigProtocol);
                                 }}
                             >
-                                <SelectTrigger className="w-[80px] border-0 shadow-none rounded-l-none focus:ring-0">
+                                <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -123,7 +124,7 @@ export function EndpointPortConfigFields() {
                                     setPublishMode(value as EPortConfigPublishMode);
                                 }}
                             >
-                                <SelectTrigger className="w-[80px] border-0 shadow-none rounded-l-none focus:ring-0">
+                                <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -138,15 +139,15 @@ export function EndpointPortConfigFields() {
                             variant="outline"
                             onClick={() => {
                                 append({
-                                    published: published.trim(),
-                                    target: target.trim(),
+                                    published,
+                                    target,
                                     protocol,
                                     publishMode,
                                 });
-                                setPublished("");
-                                setTarget("");
+                                setPublished(0);
+                                setTarget(0);
                             }}
-                            disabled={!published.trim() || !target.trim()}
+                            disabled={published === 0 || target === 0}
                         >
                             <Plus className="size-4" /> Add
                         </Button>

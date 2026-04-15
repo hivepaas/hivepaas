@@ -4,9 +4,25 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button, Group, Input, NumberField } from "react-aria-components";
 
+/**
+ * Number input backed by react-aria `NumberField`.
+ *
+ * Prefer **`onValueChange`** with the parsed `number | undefined`. Do not rely on
+ * `onChange` + `Number(e.target.value)` — formatted strings (e.g. thousand separators)
+ * are not valid `Number()` input and yield `NaN`.
+ *
+ * **Grouping:** Locale controls separator characters (`,` vs `.`). Pass `useGrouping={false}`
+ * or `thousandSeparator=""` to disable thousand grouping while typing.
+ */
 export interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "defaultValue"> {
     stepper?: number;
+    /**
+     * When `""`, disables thousand grouping (`useGrouping: false`). Other values do not set a custom
+     * separator — use app locale / `useGrouping` instead.
+     */
     thousandSeparator?: string;
+    /** When `false`, disables thousand grouping. When `true`, enables grouping. When omitted, follows locale default unless `thousandSeparator === ""`. */
+    useGrouping?: boolean;
     defaultValue?: number;
     min?: number;
     max?: number;
@@ -31,6 +47,7 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
         {
             stepper,
             thousandSeparator,
+            useGrouping,
             defaultValue,
             min,
             max,
@@ -64,11 +81,13 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
                     next.minimumFractionDigits = decimalScale;
                 }
             }
-            if (thousandSeparator === "") {
+            if (thousandSeparator === "" || useGrouping === false) {
                 next.useGrouping = false;
+            } else if (useGrouping === true) {
+                next.useGrouping = true;
             }
             return next;
-        }, [decimalScale, fixedDecimalScale, thousandSeparator]);
+        }, [decimalScale, fixedDecimalScale, thousandSeparator, useGrouping]);
 
         return (
             <NumberField

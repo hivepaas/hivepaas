@@ -2,12 +2,12 @@ package entity
 
 import (
 	"encoding/base64"
-	"os"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/osutil"
 )
 
 const (
@@ -37,10 +37,10 @@ type SwarmSecretRef struct {
 }
 
 type SwarmRefFileTarget struct {
-	Name string      `json:"name,omitempty"`
-	UID  string      `json:"uid,omitempty"`
-	GID  string      `json:"gid,omitempty"`
-	Mode os.FileMode `json:"mode,omitempty"`
+	Name string          `json:"name,omitempty"`
+	UID  string          `json:"uid,omitempty"`
+	GID  string          `json:"gid,omitempty"`
+	Mode osutil.FileMode `json:"mode,omitempty"`
 }
 
 func (s *Secret) GetType() base.SettingType {

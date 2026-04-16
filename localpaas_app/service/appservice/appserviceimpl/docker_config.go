@@ -190,7 +190,7 @@ func (s *service) addSwarmConfigToService(
 				Name: swarmRef.File.Name,
 				UID:  swarmRef.File.UID,
 				GID:  swarmRef.File.GID,
-				Mode: swarmRef.File.Mode,
+				Mode: swarmRef.File.Mode.ToFileMode(),
 			},
 			ConfigID:   swarmRef.ConfigID,
 			ConfigName: swarmRef.ConfigName,

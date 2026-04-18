@@ -12,6 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
 type GetAppReq struct {
@@ -37,16 +38,17 @@ type GetAppResp struct {
 }
 
 type AppResp struct {
-	ID        string         `json:"id"`
-	Name      string         `json:"name"`
-	ProjectID string         `json:"projectId"`
-	ParentID  string         `json:"parentId"`
-	Key       string         `json:"key"`
-	Status    base.AppStatus `json:"status"`
-	Token     string         `json:"token"`
-	Note      string         `json:"note"`
-	Tags      []string       `json:"tags" copy:"-"` // manual copy AppTag -> string
-	UpdateVer int            `json:"updateVer"`
+	ID        string                      `json:"id"`
+	Name      string                      `json:"name"`
+	Project   *projectdto.ProjectBaseResp `json:"project"`
+	ParentID  string                      `json:"parentId"`
+	Key       string                      `json:"key"`
+	LocalKey  string                      `json:"localKey"`
+	Status    base.AppStatus              `json:"status"`
+	Token     string                      `json:"token"`
+	Note      string                      `json:"note"`
+	Tags      []string                    `json:"tags" copy:"-"` // manual copy AppTag -> string
+	UpdateVer int                         `json:"updateVer"`
 
 	// Stats of app, only returns when req.getStats=true
 	Stats *AppStatsResp `json:"stats"`
@@ -67,10 +69,11 @@ type AppStatsResp struct {
 }
 
 type AppBaseResp struct {
-	ID     string         `json:"id"`
-	Name   string         `json:"name"`
-	Key    string         `json:"key"`
-	Status base.AppStatus `json:"status"`
+	ID       string         `json:"id"`
+	Name     string         `json:"name"`
+	Key      string         `json:"key"`
+	LocalKey string         `json:"localKey"`
+	Status   base.AppStatus `json:"status"`
 }
 
 type AppTransformationInput struct {
@@ -105,10 +108,11 @@ func TransformAppStats(app *entity.App, input *AppTransformationInput) *AppStats
 func TransformAppsBase(apps []*entity.App) []*AppBaseResp {
 	return gofn.MapSlice(apps, func(app *entity.App) *AppBaseResp {
 		return &AppBaseResp{
-			ID:     app.ID,
-			Name:   app.Name,
-			Key:    app.Key,
-			Status: app.Status,
+			ID:       app.ID,
+			Name:     app.Name,
+			Key:      app.Key,
+			LocalKey: app.LocalKey,
+			Status:   app.Status,
 		}
 	})
 }

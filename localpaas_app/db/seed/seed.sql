@@ -39,18 +39,18 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'tag 1', 0),
        ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'my tag', 1)
 ON CONFLICT DO NOTHING;
 
-INSERT INTO apps (id, name, key, status, project_id, token, created_at, updated_at)
-VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Backend', 'project_a_backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
+INSERT INTO apps (id, name, key, local_key, status, project_id, token, created_at, updated_at)
+VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Backend', 'project_a_backend', 'backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
         'tokena1', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD2', 'Frontend', 'project_a_frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
+       ('01JAB9XED0GTXBSQDFVYAJ8WD2', 'Frontend', 'project_a_frontend', 'frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
         'tokena2',  '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD3', 'Redis', 'project_a_redis', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
+       ('01JAB9XED0GTXBSQDFVYAJ8WD3', 'Redis', 'project_a_redis', 'redis', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
         'tokena3',  '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD4', 'Postgres', 'project_a_db', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
+       ('01JAB9XED0GTXBSQDFVYAJ8WD4', 'Postgres', 'project_a_db', 'db', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
         'tokena4',  '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD5', 'Backend', 'project_b_backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
+       ('01JAB9XED0GTXBSQDFVYAJ8WD5', 'Backend', 'project_b_backend', 'backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
         'tokenb1',  '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD6', 'Frontend', 'project_b_frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
+       ('01JAB9XED0GTXBSQDFVYAJ8WD6', 'Frontend', 'project_b_frontend', 'frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
         'tokenb2',  '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 

@@ -40,8 +40,7 @@ func (s *service) CreateSwarmConfig(
 	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, configDefaultFileMode)
 
 	// Create the config in docker swarm
-	prefix := strings.TrimLeft(strings.TrimPrefix(app.Key, app.Project.Key), "_-")
-	configName := prefix + "_" + strings.ToLower(config.Name)
+	configName := app.LocalKey + "_" + strings.ToLower(config.Name)
 	configVal := reflectutil.UnsafeStrToBytes(config.Content)
 	configResp, err := s.dockerManager.ConfigCreate(ctx, configName, configVal, func(cfg *swarm.ConfigSpec) {
 		cfg.Labels = map[string]string{

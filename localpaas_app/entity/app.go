@@ -13,7 +13,7 @@ import (
 
 var (
 	AppUpsertingConflictCols = []string{"id"}
-	AppUpsertingUpdateCols   = []string{"name", "key", "project_id", "parent_id", "service_id",
+	AppUpsertingUpdateCols   = []string{"name", "key", "local_key", "project_id", "parent_id", "service_id",
 		"status", "token", "note", "update_ver", "updated_at", "deleted_at"}
 	AppDefaultExcludeColumns = []string{"note"}
 )
@@ -26,6 +26,7 @@ type App struct {
 	ID        string         `bun:",pk" json:"id"`
 	Name      string         `json:"name"`
 	Key       string         `json:"key"`
+	LocalKey  string         `json:"localKey"`
 	ProjectID string         `json:"projectId"`
 	ParentID  string         `bun:",nullzero" json:"parentId"`
 	ServiceID string         `bun:",nullzero" json:"serviceId"`

@@ -40,8 +40,7 @@ func (s *service) CreateSwarmSecret(
 	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, secretDefaultFileMode)
 
 	// Create the secret in docker swarm
-	prefix := strings.TrimLeft(strings.TrimPrefix(app.Key, app.Project.Key), "_-")
-	secretName := prefix + "_" + strings.ToLower(secret.Key)
+	secretName := app.LocalKey + "_" + strings.ToLower(secret.Key)
 	secretVal := reflectutil.UnsafeStrToBytes(secret.Value.MustGetPlain())
 	secretResp, err := s.dockerManager.SecretCreate(ctx, secretName, secretVal, func(sec *swarm.SecretSpec) {
 		sec.Labels = map[string]string{

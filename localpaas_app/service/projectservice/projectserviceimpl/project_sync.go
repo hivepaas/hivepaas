@@ -42,7 +42,8 @@ func (s *service) SyncProject(
 	// Sync the services with the apps, create new apps if need to
 	for _, svc := range services {
 		appKey := svc.Spec.Name
-		appName := strings.Trim(strings.TrimPrefix(appKey, project.Key), "_-")
+		appName := strings.TrimLeft(strings.TrimPrefix(appKey, project.Key), "_-")
+		appLocalKey := appName
 
 		if existingApp, exists := appMapByKey[appKey]; exists {
 			if existingApp.ServiceID != svc.ID {
@@ -56,6 +57,7 @@ func (s *service) SyncProject(
 				ID:        gofn.Must(ulid.NewStringULID()),
 				Name:      appName,
 				Key:       appKey,
+				LocalKey:  appLocalKey,
 				ProjectID: project.ID,
 				ServiceID: svc.ID,
 				Status:    base.AppStatusActive,

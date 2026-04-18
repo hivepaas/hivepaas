@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
@@ -136,8 +135,7 @@ func (uc *UC) validateStorageSettingsBindMount(
 
 	var appSubpath string
 	if bindSettings.AppsMustUseSubPaths {
-		appSubpath = filepath.Join(bindSettings.BaseSubpath, app.Project.Key,
-			strings.TrimLeft(strings.TrimPrefix(app.Key, app.Project.Key), "-_"))
+		appSubpath = filepath.Join(bindSettings.BaseSubpath, app.Project.Key, app.LocalKey)
 	}
 
 	for _, baseDir := range bindSettings.BaseDirs {
@@ -173,8 +171,7 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 	}
 
 	if volumeSettings.AppsMustUseSubPaths {
-		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key,
-			strings.TrimLeft(strings.TrimPrefix(app.Key, app.Project.Key), "-_"))
+		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key, app.LocalKey)
 		isSubpath, err := fileutil.IsEqualOrSubpath(appSubpath, mnt.VolumeOptions.Subpath)
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -205,8 +202,7 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 	}
 
 	if volumeSettings.AppsMustUseSubPaths {
-		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key,
-			strings.TrimLeft(strings.TrimPrefix(app.Key, app.Project.Key), "-_"))
+		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key, app.LocalKey)
 		isSubpath, err := fileutil.IsEqualOrSubpath(appSubpath, mnt.VolumeOptions.Subpath)
 		if err != nil {
 			return apperrors.Wrap(err)

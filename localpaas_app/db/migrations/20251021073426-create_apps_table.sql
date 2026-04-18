@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS apps
     id             VARCHAR(100) PRIMARY KEY,
     name           VARCHAR(100) NOT NULL,
     key            VARCHAR(100) NOT NULL,
+    local_key      VARCHAR(100) NOT NULL,
     project_id     VARCHAR(100) NOT NULL,
     parent_id      VARCHAR(100) NULL,
     service_id     VARCHAR(100) NULL,

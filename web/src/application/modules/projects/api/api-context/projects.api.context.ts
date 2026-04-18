@@ -21,6 +21,8 @@ import {
     ProjectNetworksApiValidator,
     ProjectRegistryAuthApi,
     ProjectRegistryAuthApiValidator,
+    ProjectSslCertApi,
+    ProjectSslCertApiValidator,
     ProjectSecretsApi,
     ProjectSecretsApiValidator,
     ProjectsApi,
@@ -38,6 +40,10 @@ import {
     AppStorageSettingsApi,
     AppStorageSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/storage-settings";
+import {
+    AppHttpSettingsApi,
+    AppHttpSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/http-settings";
 
 function createApi() {
     /**
@@ -54,10 +60,12 @@ function createApi() {
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
+    const appHttpSettingsApiValidator = new AppHttpSettingsApiValidator();
     const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
+    const projectSslCertApiValidator = new ProjectSslCertApiValidator();
 
     return {
         projects: {
@@ -85,6 +93,9 @@ function createApi() {
                 storageSettings: {
                     $: new AppStorageSettingsApi(appStorageSettingsApiValidator),
                 },
+                httpSettings: {
+                    $: new AppHttpSettingsApi(appHttpSettingsApiValidator),
+                },
                 serviceSettings: {
                     $: new AppServiceSettingsApi(appServiceSettingsApiValidator),
                 },
@@ -103,6 +114,9 @@ function createApi() {
             },
             registryAuth: {
                 $: new ProjectRegistryAuthApi(projectRegistryAuthApiValidator),
+            },
+            sslCert: {
+                $: new ProjectSslCertApi(projectSslCertApiValidator),
             },
         },
     };

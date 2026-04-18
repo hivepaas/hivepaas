@@ -50,6 +50,10 @@ export const QK = {
      */
     "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",
     /*
+     * Project App HTTP Settings
+     */
+    "projects.apps.http-settings.$.find-one": "projects.apps.http-settings.$.find-one",
+    /*
      * Project Git Credentials
      */
     "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",
@@ -59,4 +63,9 @@ export const QK = {
      */
     "projects.registry-auth.$.find-many-paginated": "projects.registry-auth.$.find-many-paginated",
     "projects.registry-auth.$.find-one-by-id": "projects.registry-auth.$.find-one-by-id",
+    /*
+     * Project SSL certs
+     */
+    "projects.ssl-cert.$.find-many-paginated": "projects.ssl-cert.$.find-many-paginated",
+    "projects.ssl-cert.$.find-one-by-id": "projects.ssl-cert.$.find-one-by-id",
 } as const;

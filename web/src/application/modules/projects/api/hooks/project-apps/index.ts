@@ -7,3 +7,4 @@ export * from "./use-app-network-settings.api";
 export * from "./use-app-service-settings.api";
 export * from "./use-app-resource-settings.api";
 export * from "./use-app-storage-settings.api";
+export * from "./use-app-http-settings.api";

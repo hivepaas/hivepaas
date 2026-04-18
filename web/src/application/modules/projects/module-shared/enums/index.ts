@@ -3,6 +3,7 @@ export * from "./e.app-build-tool";
 export * from "./e.app-deployment-method";
 export * from "./e.endpoint-resolution-mode";
 export * from "./e.healthcheck-mode";
+export * from "./e.http-path-mode";
 export * from "./e.mount-consistency";
 export * from "./e.mount-type";
 export * from "./e.port-config-protocol";

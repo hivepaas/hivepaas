@@ -11,3 +11,17 @@ export type AppContainerSettings_UpdateOne_Req = ApiRequestBase<{
     payload: AppContainerSettings;
 }>;
 export type AppContainerSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type AppContainerSettings_CheckPort_Payload = {
+    port: number;
+    /** Duration string (API matches Go `timeutil.Duration` JSON). */
+    timeout: string;
+};
+
+export type AppContainerSettings_CheckPort_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    payload: AppContainerSettings_CheckPort_Payload;
+}>;
+
+export type AppContainerSettings_CheckPort_Res = ApiResponseBase<{ open: boolean }>;

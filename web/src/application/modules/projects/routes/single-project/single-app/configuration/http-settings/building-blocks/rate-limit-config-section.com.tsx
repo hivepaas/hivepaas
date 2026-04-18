@@ -7,10 +7,7 @@ import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock, InputNumberWithAddon } from "@application/shared/components";
 
-import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface RateLimitConfigSectionProps {
     prefix: string;
@@ -55,7 +52,11 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                         type="button"
                         className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
                     >
-                        {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                        {open ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                        ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                        )}
                         Rate Limit Configuration
                     </button>
                 </CollapsibleTrigger>
@@ -76,7 +77,7 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
                     <InfoBlock title="Enabled">
                         <Checkbox
-                            checked={enabled.value ?? false}
+                            checked={enabled.value}
                             onCheckedChange={enabled.onChange}
                         />
                     </InfoBlock>
@@ -84,7 +85,7 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                     <InfoBlock title="Average">
                         <InputNumberWithAddon
                             addonLeft="req/s"
-                            value={average.value ?? 0}
+                            value={average.value}
                             onValueChange={v => {
                                 average.onChange(v ?? 0);
                             }}
@@ -97,7 +98,7 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                     <InfoBlock title="Period">
                         <InputNumberWithAddon
                             addonLeft="ms"
-                            value={period.value ?? 0}
+                            value={period.value}
                             onValueChange={v => {
                                 period.onChange(v ?? 0);
                             }}
@@ -110,7 +111,7 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                     <InfoBlock title="Burst">
                         <InputNumberWithAddon
                             addonLeft="req"
-                            value={burst.value ?? 0}
+                            value={burst.value}
                             onValueChange={v => {
                                 burst.onChange(v ?? 0);
                             }}
@@ -123,7 +124,7 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                     <InfoBlock title="Max In-Flight Requests">
                         <InputNumberWithAddon
                             addonLeft="req"
-                            value={maxInFlightReq.value ?? 0}
+                            value={maxInFlightReq.value}
                             onValueChange={v => {
                                 maxInFlightReq.onChange(v ?? 0);
                             }}

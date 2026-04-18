@@ -1,9 +1,5 @@
-import {
-    type AppHttpDomain,
-    type AppHttpSettings,
-    type AppHttpSettingsUpdatePayload,
-} from "~/projects/domain";
-import { EHttpPathMode } from "~/projects/module-shared/enums";
+import { type AppHttpDomain, type AppHttpSettings, type AppHttpSettingsUpdatePayload } from "~/projects/domain";
+import { type EHttpPathMode } from "~/projects/module-shared/enums";
 
 import {
     type AppConfigHttpSettingsFormSchemaInput,
@@ -17,40 +13,36 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         domain: domain.domain,
         containerPort: domain.containerPort,
         domainRedirect: domain.domainRedirect ?? "",
-        sslCert:
-            domain.sslCert && domain.sslCert.id
-                ? { id: domain.sslCert.id, name: domain.sslCert.name }
-                : undefined,
+        sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
         forceHttps: domain.forceHttps ?? false,
-        basicAuth:
-            domain.basicAuth && domain.basicAuth.id
-                ? { id: domain.basicAuth.id, name: domain.basicAuth.name }
-                : undefined,
+        basicAuth: domain.basicAuth?.id ? { id: domain.basicAuth.id, name: domain.basicAuth.name } : undefined,
         clientConfig: domain.clientConfig
             ? {
                   enabled: domain.clientConfig.enabled,
                   maxRequestBody: domain.clientConfig.maxRequestBody,
                   memRequestBody: domain.clientConfig.memRequestBody,
-                  allowedIPs: (domain.clientConfig.allowedIPs ?? []).map(value => ({ value })),
+                  allowedIPs: domain.clientConfig.allowedIPs.map(value => ({ value })),
               }
             : undefined,
         headerConfig: domain.headerConfig
             ? {
-                  toAddToRequests: Object.entries(domain.headerConfig.toAddToRequests ?? {}).map(
-                      ([key, value]) => ({ key, value }),
-                  ),
-                  toRemoveFromRequests: (domain.headerConfig.toRemoveFromRequests ?? []).map(value => ({ value })),
-                  toAddToResponses: Object.entries(domain.headerConfig.toAddToResponses ?? {}).map(
-                      ([key, value]) => ({ key, value }),
-                  ),
-                  toRemoveFromResponses: (domain.headerConfig.toRemoveFromResponses ?? []).map(value => ({ value })),
+                  toAddToRequests: Object.entries(domain.headerConfig.toAddToRequests).map(([key, value]) => ({
+                      key,
+                      value,
+                  })),
+                  toRemoveFromRequests: domain.headerConfig.toRemoveFromRequests.map(value => ({ value })),
+                  toAddToResponses: Object.entries(domain.headerConfig.toAddToResponses).map(([key, value]) => ({
+                      key,
+                      value,
+                  })),
+                  toRemoveFromResponses: domain.headerConfig.toRemoveFromResponses.map(value => ({ value })),
               }
             : undefined,
         compressionConfig: domain.compressionConfig
             ? {
                   enabled: domain.compressionConfig.enabled,
-                  excludedContentTypes: (domain.compressionConfig.excludedContentTypes ?? []).map(value => ({ value })),
-                  includedContentTypes: (domain.compressionConfig.includedContentTypes ?? []).map(value => ({ value })),
+                  excludedContentTypes: domain.compressionConfig.excludedContentTypes.map(value => ({ value })),
+                  includedContentTypes: domain.compressionConfig.includedContentTypes.map(value => ({ value })),
                   minResponseBody: domain.compressionConfig.minResponseBody,
                   defaultEncoding: domain.compressionConfig.defaultEncoding,
               }
@@ -67,16 +59,13 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         paths: (domain.paths ?? []).map(path => ({
             path: path.path,
             mode: path.mode,
-            basicAuth:
-                path.basicAuth && path.basicAuth.id
-                    ? { id: path.basicAuth.id, name: path.basicAuth.name }
-                    : undefined,
+            basicAuth: path.basicAuth?.id ? { id: path.basicAuth.id, name: path.basicAuth.name } : undefined,
             clientConfig: path.clientConfig
                 ? {
                       enabled: path.clientConfig.enabled,
                       maxRequestBody: path.clientConfig.maxRequestBody,
                       memRequestBody: path.clientConfig.memRequestBody,
-                      allowedIPs: (path.clientConfig.allowedIPs ?? []).map(value => ({ value })),
+                      allowedIPs: path.clientConfig.allowedIPs.map(value => ({ value })),
                   }
                 : undefined,
             rateLimitConfig: path.rateLimitConfig

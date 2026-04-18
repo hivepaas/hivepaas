@@ -7,10 +7,7 @@ import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
 import { InfoBlock, InputNumberWithAddon } from "@application/shared/components";
 
-import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface CompressionConfigSectionProps {
     prefix: string;
@@ -61,7 +58,11 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                         type="button"
                         className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
                     >
-                        {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                        {open ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                        ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                        )}
                         Compression Configuration
                     </button>
                 </CollapsibleTrigger>
@@ -82,7 +83,7 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
                     <InfoBlock title="Enabled">
                         <Checkbox
-                            checked={enabled.value ?? false}
+                            checked={enabled.value}
                             onCheckedChange={enabled.onChange}
                         />
                     </InfoBlock>
@@ -90,7 +91,7 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                     <InfoBlock title="Default Encoding">
                         <Input
                             {...defaultEncoding}
-                            value={defaultEncoding.value ?? ""}
+                            value={defaultEncoding.value}
                             onChange={defaultEncoding.onChange}
                             placeholder="gzip"
                             className="max-w-[300px]"
@@ -101,7 +102,7 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                     <InfoBlock title="Min Response Body Size">
                         <InputNumberWithAddon
                             addonLeft="Bytes"
-                            value={minResponseBody.value ?? 0}
+                            value={minResponseBody.value}
                             onValueChange={v => {
                                 minResponseBody.onChange(v ?? 0);
                             }}
@@ -141,9 +142,7 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                                         key={field.id}
                                         className="flex items-center justify-between py-1.5"
                                     >
-                                        <span className="text-sm">
-                                            {(field as unknown as { value: string }).value}
-                                        </span>
+                                        <span className="text-sm">{(field as unknown as { value: string }).value}</span>
                                         <Button
                                             type="button"
                                             variant="ghost"
@@ -190,9 +189,7 @@ export function CompressionConfigSection({ prefix, onRemove }: CompressionConfig
                                         key={field.id}
                                         className="flex items-center justify-between py-1.5"
                                     >
-                                        <span className="text-sm">
-                                            {(field as unknown as { value: string }).value}
-                                        </span>
+                                        <span className="text-sm">{(field as unknown as { value: string }).value}</span>
                                         <Button
                                             type="button"
                                             variant="ghost"

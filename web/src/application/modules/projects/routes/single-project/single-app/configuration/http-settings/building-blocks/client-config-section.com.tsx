@@ -7,10 +7,7 @@ import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
 import { InfoBlock, InputNumberWithAddon } from "@application/shared/components";
 
-import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface ClientConfigSectionProps {
     prefix: string;
@@ -42,7 +39,11 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
         fieldState: { error: memRequestBodyError },
     } = useController({ control, name: memRequestBodyName as never });
 
-    const { fields: ipFields, append: appendIp, remove: removeIp } = useFieldArray({
+    const {
+        fields: ipFields,
+        append: appendIp,
+        remove: removeIp,
+    } = useFieldArray({
         control,
         name: allowedIPsName as never,
     });
@@ -58,7 +59,11 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
                         type="button"
                         className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
                     >
-                        {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                        {open ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                        ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                        )}
                         Client Configuration
                     </button>
                 </CollapsibleTrigger>
@@ -79,7 +84,7 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
                     <InfoBlock title="Enabled">
                         <Checkbox
-                            checked={enabled.value ?? false}
+                            checked={enabled.value}
                             onCheckedChange={enabled.onChange}
                         />
                     </InfoBlock>
@@ -87,7 +92,7 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
                     <InfoBlock title="Max Request Body Size">
                         <InputNumberWithAddon
                             addonLeft="Bytes"
-                            value={maxRequestBody.value ?? 0}
+                            value={maxRequestBody.value}
                             onValueChange={v => {
                                 maxRequestBody.onChange(v ?? 0);
                             }}
@@ -100,7 +105,7 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
                     <InfoBlock title="Mem Request Body Size">
                         <InputNumberWithAddon
                             addonLeft="Bytes"
-                            value={memRequestBody.value ?? 0}
+                            value={memRequestBody.value}
                             onValueChange={v => {
                                 memRequestBody.onChange(v ?? 0);
                             }}

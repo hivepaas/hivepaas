@@ -4,7 +4,10 @@ import { EAppArmorMode, EHealthcheckMode, ERestartPolicyCondition, ESeccompMode 
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import { type AppContainerSettings_FindOne_Res } from "./app-container-settings.api.contracts";
+import {
+    type AppContainerSettings_CheckPort_Res,
+    type AppContainerSettings_FindOne_Res,
+} from "./app-container-settings.api.contracts";
 
 const SELinuxContextSchema = z.object({
     disable: z.boolean().optional(),
@@ -75,6 +78,13 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const CheckPortSchema = z.object({
+    data: z.object({
+        open: z.boolean(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 export class AppContainerSettingsApiValidator {
     findOne = (response: AxiosResponse): AppContainerSettings_FindOne_Res => {
         const data = parseApiResponse({ response, schema: FindOneSchema });
@@ -86,5 +96,14 @@ export class AppContainerSettingsApiValidator {
             },
             meta: data.meta,
         };
+    };
+
+    checkPort = (response: AxiosResponse): AppContainerSettings_CheckPort_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: CheckPortSchema,
+        });
+
+        return { data, meta };
     };
 }

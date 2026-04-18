@@ -1,9 +1,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 
-import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
+
 import { AddConfigurationDropdown } from "./add-configuration-dropdown.com";
 import { BasicAuthSection } from "./basic-auth-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
@@ -36,46 +34,40 @@ export function DomainConfigurableSections({ domainIndex }: DomainConfigurableSe
                 basePath={basePath}
                 scope="domain"
             />
-            {basicAuth != null && (
-                <BasicAuthSection
-                    prefix={`${basePath}.basicAuth`}
-                    onRemove={() => {
-                        unregister(`${basePath}.basicAuth` as never);
-                    }}
-                />
-            )}
-            {clientConfig != null && (
-                <ClientConfigSection
-                    prefix={`${basePath}.clientConfig`}
-                    onRemove={() => {
-                        unregister(`${basePath}.clientConfig` as never);
-                    }}
-                />
-            )}
-            {compressionConfig != null && (
-                <CompressionConfigSection
-                    prefix={`${basePath}.compressionConfig`}
-                    onRemove={() => {
-                        unregister(`${basePath}.compressionConfig` as never);
-                    }}
-                />
-            )}
-            {headerConfig != null && (
-                <HeaderConfigSection
-                    prefix={`${basePath}.headerConfig`}
-                    onRemove={() => {
-                        unregister(`${basePath}.headerConfig` as never);
-                    }}
-                />
-            )}
-            {rateLimitConfig != null && (
-                <RateLimitConfigSection
-                    prefix={`${basePath}.rateLimitConfig`}
-                    onRemove={() => {
-                        unregister(`${basePath}.rateLimitConfig` as never);
-                    }}
-                />
-            )}
+            <BasicAuthSection
+                prefix={`${basePath}.basicAuth`}
+                onRemove={() => {
+                    unregister(`${basePath}.basicAuth` as never);
+                }}
+            />
+
+            <ClientConfigSection
+                prefix={`${basePath}.clientConfig`}
+                onRemove={() => {
+                    unregister(`${basePath}.clientConfig` as never);
+                }}
+            />
+
+            <CompressionConfigSection
+                prefix={`${basePath}.compressionConfig`}
+                onRemove={() => {
+                    unregister(`${basePath}.compressionConfig` as never);
+                }}
+            />
+
+            <HeaderConfigSection
+                prefix={`${basePath}.headerConfig`}
+                onRemove={() => {
+                    unregister(`${basePath}.headerConfig` as never);
+                }}
+            />
+
+            <RateLimitConfigSection
+                prefix={`${basePath}.rateLimitConfig`}
+                onRemove={() => {
+                    unregister(`${basePath}.rateLimitConfig` as never);
+                }}
+            />
         </div>
     );
 }

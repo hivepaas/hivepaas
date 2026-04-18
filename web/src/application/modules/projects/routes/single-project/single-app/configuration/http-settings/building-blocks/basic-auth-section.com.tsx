@@ -7,10 +7,7 @@ import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
 
-import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface BasicAuthSectionProps {
     prefix: string;
@@ -50,7 +47,11 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                         type="button"
                         className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
                     >
-                        {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                        {open ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                        ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                        )}
                         Basic Auth
                     </button>
                 </CollapsibleTrigger>
@@ -69,11 +70,11 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
                     <InfoBlock title="Credential">
                         <Input
-                            value={nameField.value ?? ""}
+                            value={nameField.value}
                             placeholder="Select basic auth credential"
                             readOnly
                             className="max-w-[400px] text-muted-foreground"
- />
+                        />
                         <FieldError errors={[nameError]} />
                     </InfoBlock>
                 </div>

@@ -4,7 +4,10 @@ import { match } from "oxide.ts";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import { type AppContainerSettings_UpdateOne_Req } from "../../../api/services";
+import {
+    type AppContainerSettings_CheckPort_Req,
+    type AppContainerSettings_UpdateOne_Req,
+} from "../../../api/services";
 import { ProjectsApiContext } from "../../api-context/projects.api.context";
 
 function createHook() {
@@ -36,6 +39,16 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to update container settings", error });
+                            throw error;
+                        },
+                    });
+                },
+                checkPort: async (request: AppContainerSettings_CheckPort_Req["data"]) => {
+                    const result = await api.projects.apps.containerSettings.$.checkPort({ data: request });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to check container port", error });
                             throw error;
                         },
                     });

@@ -65,9 +65,9 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        <span className="font-mono text-sm">{String(path.value ?? "") || "(empty path)"}</span>
+                        <span className="font-mono text-sm">{path.value}</span>
                         <span className="text-xs text-muted-foreground rounded bg-accent px-1.5 py-0.5">
-                            {String(mode.value ?? "")}
+                            {mode.value}
                         </span>
                     </button>
                 </CollapsibleTrigger>
@@ -118,30 +118,26 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
                         basePath={basePath}
                         scope="path"
                     />
-                    {basicAuth && (
-                        <BasicAuthSection
-                            prefix={`${basePath}.basicAuth`}
-                            onRemove={() => {
-                                unregister(`${basePath}.basicAuth` as never);
-                            }}
-                        />
-                    )}
-                    {clientConfig && (
-                        <ClientConfigSection
-                            prefix={`${basePath}.clientConfig`}
-                            onRemove={() => {
-                                unregister(`${basePath}.clientConfig` as never);
-                            }}
-                        />
-                    )}
-                    {rateLimitConfig && (
-                        <RateLimitConfigSection
-                            prefix={`${basePath}.rateLimitConfig`}
-                            onRemove={() => {
-                                unregister(`${basePath}.rateLimitConfig` as never);
-                            }}
-                        />
-                    )}
+                    <BasicAuthSection
+                        prefix={`${basePath}.basicAuth`}
+                        onRemove={() => {
+                            unregister(`${basePath}.basicAuth` as never);
+                        }}
+                    />
+
+                    <ClientConfigSection
+                        prefix={`${basePath}.clientConfig`}
+                        onRemove={() => {
+                            unregister(`${basePath}.clientConfig` as never);
+                        }}
+                    />
+
+                    <RateLimitConfigSection
+                        prefix={`${basePath}.rateLimitConfig`}
+                        onRemove={() => {
+                            unregister(`${basePath}.rateLimitConfig` as never);
+                        }}
+                    />
                 </div>
             </CollapsibleContent>
         </Collapsible>

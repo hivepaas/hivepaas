@@ -9,7 +9,7 @@ import { ProjectSslCertQueries } from "~/projects/data/queries";
 import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 
-import { ContainerPort } from "../form-components";
+import { ContainerPort, SslCert } from "../form-components";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface DomainGeneralFieldsProps {
@@ -57,52 +57,7 @@ export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
     return (
         <>
             <ContainerPort domainIndex={domainIndex} />
-
-            <InfoBlock
-                title={
-                    <LabelWithInfo
-                        label="SSL certificate"
-                        content="TLS certificate for this hostname (project-scoped)."
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Combobox
-                            options={comboboxOptions}
-                            value={sslCert.value?.id ?? null}
-                            onChange={(_, option) => {
-                                sslCert.onChange(option ? { id: option.id, name: option.name } : undefined);
-                            }}
-                            onSearch={setSearchQuery}
-                            placeholder="Select SSL certificate"
-                            searchable
-                            closeOnSelect
-                            emptyText="No SSL certificates available"
-                            className="max-w-[400px]"
-                            valueKey="id"
-                            aria-invalid={isSslCertInvalid}
-                            loading={isFetching}
-                            onRefresh={() => void refetch()}
-                            isRefreshing={isRefetching}
-                            splitLabelBadge
-                            allowClear
-                        />
-                        <FieldError errors={[sslCertError]} />
-                        <div className="text-xs text-muted-foreground">
-                            <p>
-                                Need another certificate?{" "}
-                                <Link
-                                    to="#"
-                                    className="text-primary underline-offset-4 hover:underline"
-                                >
-                                    Add in project settings
-                                </Link>
-                            </p>
-                        </div>
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
+            <SslCert domainIndex={domainIndex} />
 
             <InfoBlock title="Redirect To">
                 <Input

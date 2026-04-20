@@ -21,7 +21,7 @@ interface CheckPortResult {
     open: boolean;
 }
 
-export function View({ domainIndex }: ContainerPortProps) {
+function View({ domainIndex }: ContainerPortProps) {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");

@@ -1,7 +1,7 @@
 import React, { type PropsWithChildren, useEffect, useImperativeHandle, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
+import { type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
 
@@ -46,7 +46,9 @@ function ConditionalDomainDetailSections({
 
     return (
         <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Domain Settings</h3>
+            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg text-red-500">
+                Selected Domain: {domains[activeDomainIndex]?.domain ?? ""}
+            </h3>
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields domainIndex={activeDomainIndex} />
                 <DomainConfigurableSections domainIndex={activeDomainIndex} />
@@ -70,6 +72,8 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
         resolver: zodResolver(AppConfigHttpSettingsFormSchema),
         mode: "onSubmit",
     });
+
+    const { control } = methods;
 
     useUpdateEffect(() => {
         methods.reset(
@@ -103,6 +107,8 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
         [methods],
     );
 
+    const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
+
     return (
         <div className="pt-2">
             <FormProvider {...methods}>
@@ -113,7 +119,6 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Domain Configuration</h3>
                     <div className="flex flex-col gap-6 px-2">
                         <DomainSelector
                             activeDomainIndex={activeDomainIndex}
@@ -123,10 +128,12 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
                         />
                     </div>
 
-                    <ConditionalDomainDetailSections
-                        activeDomainIndex={activeDomainIndex}
-                        setActiveDomainIndex={setActiveDomainIndex}
-                    />
+                    {exposePublicly.value && (
+                        <ConditionalDomainDetailSections
+                            activeDomainIndex={activeDomainIndex}
+                            setActiveDomainIndex={setActiveDomainIndex}
+                        />
+                    )}
 
                     {children}
                 </form>

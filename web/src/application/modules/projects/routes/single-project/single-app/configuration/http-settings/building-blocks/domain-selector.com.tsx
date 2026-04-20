@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Button, Checkbox } from "@components/ui";
 import { Badge } from "@components/ui/badge";
 import { Plus } from "lucide-react";
@@ -37,21 +38,24 @@ export function DomainSelector({
 
     const domainValues = useWatch({ control, name: "domains", defaultValue: [] });
     const domainNames = domainValues.map(d => d.domain).filter(Boolean);
-    const [draft, setDraft] = useState("");
+    const [draft, setDraft] = useState(domainSuggestion);
     const [duplicateDomainError, setDuplicateDomainError] = useState<string | null>(null);
 
     const activeDomainValue = domainValues[activeDomainIndex]?.domain ?? "";
-    const normalizeDomain = useMemo(
-        () => (value: string) => value.trim().toLowerCase(),
-        [],
-    );
+    const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
 
     useEffect(() => {
         setDraft(activeDomainValue);
     }, [activeDomainIndex, activeDomainValue]);
 
+    useEffect(() => {
+        setDraft(domainSuggestion);
+    }, [domainSuggestion]);
+
     function handleDomainSelect(value: string) {
-        const selectedIndex = domainValues.findIndex(domain => normalizeDomain(domain.domain) === normalizeDomain(value));
+        const selectedIndex = domainValues.findIndex(
+            domain => normalizeDomain(domain.domain) === normalizeDomain(value),
+        );
         if (selectedIndex >= 0) {
             setActiveDomainIndex(selectedIndex);
             setDraft(domainValues[selectedIndex]?.domain ?? value);
@@ -64,7 +68,9 @@ export function DomainSelector({
     function handleAddDomain() {
         const trimmedDraft = draft.trim();
         if (trimmedDraft.length > 0) {
-            const hasDuplicateDomain = domainValues.some(domain => normalizeDomain(domain.domain) === normalizeDomain(trimmedDraft));
+            const hasDuplicateDomain = domainValues.some(
+                domain => normalizeDomain(domain.domain) === normalizeDomain(trimmedDraft),
+            );
             if (hasDuplicateDomain) {
                 setDuplicateDomainError("Domain already exists.");
                 return;
@@ -84,32 +90,23 @@ export function DomainSelector({
 
     return (
         <div className="flex flex-col gap-4">
-            {internalEndpoints.length > 0 && (
-                <InfoBlock title="Internal Endpoints">
-                    <div className="flex flex-wrap gap-2">
-                        {internalEndpoints.map(ep => (
-                            <Badge
-                                key={ep}
-                                variant="outline"
-                                className="font-mono text-xs"
-                            >
-                                {ep}
-                            </Badge>
-                        ))}
-                    </div>
-                </InfoBlock>
-            )}
-
-            {domainSuggestion && (
-                <InfoBlock title="Domain Suggestion">
-                    <span className="text-sm text-muted-foreground font-mono">{domainSuggestion}</span>
-                </InfoBlock>
-            )}
+            <InfoBlock title="Project Internal Endpoint(s)">
+                <div className="flex flex-wrap gap-2">
+                    {internalEndpoints.map(ep => (
+                        <span
+                            key={ep}
+                            className="font-mono text-xs text-red-500"
+                        >
+                            {ep}
+                        </span>
+                    ))}
+                </div>
+            </InfoBlock>
 
             <InfoBlock
                 title={
                     <LabelWithInfo
-                        label="Expose Publicly"
+                        label="Expose The App To The Internet"
                         content="Allow external access to this app via HTTP/HTTPS"
                     />
                 }
@@ -119,41 +116,42 @@ export function DomainSelector({
                     onCheckedChange={exposePublicly.onChange}
                 />
             </InfoBlock>
-
-            <InfoBlock
-                title={
-                    <LabelWithInfo
-                        label="Domain"
-                        content="Select an existing domain to edit or type a new domain name"
-                    />
-                }
-            >
-                <div className="flex items-center gap-2 max-w-[500px]">
-                    <EditableCombobox
-                        options={domainNames}
-                        value={draft}
-                        onInputChange={(value: string) => {
-                            setDraft(value);
-                            setDuplicateDomainError(null);
-                        }}
-                        onChange={handleDomainSelect}
-                        onRefresh={undefined}
-                        placeholder="e.g. app.example.com"
-                        emptyText="No domains configured"
-                        className="flex-1"
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        title="Add domain"
-                        onClick={handleAddDomain}
-                    >
-                        <Plus className="size-4" />
-                    </Button>
-                </div>
-                {duplicateDomainError ? <p className="text-destructive text-sm">{duplicateDomainError}</p> : null}
-            </InfoBlock>
+            {exposePublicly.value && (
+                <InfoBlock
+                    title={
+                        <LabelWithInfo
+                            label="Domain"
+                            content="Select an existing domain to edit or type a new domain name"
+                        />
+                    }
+                >
+                    <div className="flex items-center gap-2 max-w-[500px]">
+                        <EditableCombobox
+                            options={domainNames}
+                            value={draft}
+                            onInputChange={(value: string) => {
+                                setDraft(value);
+                                setDuplicateDomainError(null);
+                            }}
+                            onChange={handleDomainSelect}
+                            onRefresh={undefined}
+                            placeholder="e.g. app.example.com"
+                            emptyText="No domains configured"
+                            className="flex-1"
+                        />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            title="Add domain"
+                            onClick={handleAddDomain}
+                        >
+                            <Plus className="size-4" />
+                        </Button>
+                    </div>
+                    {duplicateDomainError ? <p className="text-destructive text-sm">{duplicateDomainError}</p> : null}
+                </InfoBlock>
+            )}
         </div>
     );
 }

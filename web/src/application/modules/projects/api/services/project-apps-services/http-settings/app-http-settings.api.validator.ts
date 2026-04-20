@@ -12,10 +12,7 @@ import { EHttpPathMode } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppHttpSettings_FindOne_Res,
-    type AppHttpSettings_UpdateOne_Res,
-} from "./app-http-settings.api.contracts";
+import { type AppHttpSettings_FindOne_Res } from "./app-http-settings.api.contracts";
 
 const SettingRefSchema = z
     .object({
@@ -87,11 +84,6 @@ const AppHttpSettingsSchema = z.object({
 
 const FindOneSchema = z.object({
     data: AppHttpSettingsSchema,
-    meta: BaseMetaApiSchema.nullable(),
-});
-
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
     meta: BaseMetaApiSchema.nullable(),
 });
 
@@ -196,9 +188,5 @@ export class AppHttpSettingsApiValidator {
             },
             meta,
         };
-    };
-
-    updateOne = (response: AxiosResponse): AppHttpSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

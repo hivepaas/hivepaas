@@ -6,9 +6,10 @@ import { Link, useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { ProjectSslCertQueries } from "~/projects/data/queries";
 
-import { Combobox, InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
+import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 
+import { ContainerPort } from "../form-components";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface DomainGeneralFieldsProps {
@@ -36,11 +37,6 @@ export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
         isRefetching,
     } = ProjectSslCertQueries.useFindManyPaginated({ projectID: projectId, search: searchQuery });
 
-    const { field: enabled } = useController({ control, name: `${p}.enabled` });
-    const {
-        field: containerPort,
-        fieldState: { error: containerPortError },
-    } = useController({ control, name: `${p}.containerPort` });
     const {
         field: domainRedirect,
         fieldState: { error: domainRedirectError },
@@ -60,33 +56,7 @@ export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
 
     return (
         <>
-            <InfoBlock title="Enabled">
-                <Checkbox
-                    checked={enabled.value}
-                    onCheckedChange={enabled.onChange}
-                />
-            </InfoBlock>
-
-            <InfoBlock
-                title={
-                    <LabelWithInfo
-                        label="Container Port"
-                        isRequired
-                    />
-                }
-            >
-                <InputNumberWithAddon
-                    addonLeft="Port"
-                    value={containerPort.value}
-                    onValueChange={v => {
-                        containerPort.onChange(v ?? 0);
-                    }}
-                    useGrouping={false}
-                    placeholder="80"
-                    classNameContainer="max-w-[240px]"
-                />
-                <FieldError errors={[containerPortError]} />
-            </InfoBlock>
+            <ContainerPort domainIndex={domainIndex} />
 
             <InfoBlock
                 title={

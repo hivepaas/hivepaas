@@ -11,11 +11,11 @@ import (
 
 // DevModeLogin Login user for dev mode
 // @Summary Login user for dev mode
-// @Description Login user for dev mode. `userID` params is required.
+// @Description Login user for dev mode
 // @Tags    sessions
 // @Produce json
 // @Id      devModeLogin
-// @Param   userID query string false "user ID to login"
+// @Param   userId query string false "user ID to login"
 // @Success 200 {object} sessiondto.DevModeLoginResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo

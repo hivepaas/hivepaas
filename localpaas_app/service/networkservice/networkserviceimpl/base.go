@@ -2,23 +2,25 @@ package networkserviceimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/infra/gocache"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-var (
-	GlobalRoutingNetworkID = "" // cache value
+const (
+	cacheKeyGlobalRoutingNetworkID = "network:globalRoutingNetId"
+	cacheExpGlobalRoutingNetworkID = 5 * time.Minute
 )
 
 func (s *service) FindGlobalRoutingNetworkID(ctx context.Context) (string, error) {
-	// TODO: do we need a lock?
-	if GlobalRoutingNetworkID != "" {
-		return GlobalRoutingNetworkID, nil
+	if netID, _ := gocache.Global.GetStr(cacheKeyGlobalRoutingNetworkID); netID != "" {
+		return netID, nil
 	}
 
 	net, err := s.dockerManager.NetworkList(ctx, func(options *network.ListOptions) {
@@ -28,19 +30,23 @@ func (s *service) FindGlobalRoutingNetworkID(ctx context.Context) (string, error
 		return "", apperrors.Wrap(err)
 	}
 
+	var netID string
 	if len(net) == 0 {
-		err = s.createGlobalRoutingNetwork(ctx)
+		netID, err = s.createGlobalRoutingNetwork(ctx)
 		if err != nil {
 			return "", apperrors.New(err).WithMsgLog("failed to create global routing network")
 		}
 	} else {
-		GlobalRoutingNetworkID = net[0].ID
+		netID = net[0].ID
 	}
 
-	return GlobalRoutingNetworkID, nil
+	// Cache the network ID
+	_ = gocache.Global.Set(cacheKeyGlobalRoutingNetworkID, netID, cacheExpGlobalRoutingNetworkID)
+
+	return netID, nil
 }
 
-func (s *service) createGlobalRoutingNetwork(ctx context.Context) error {
+func (s *service) createGlobalRoutingNetwork(ctx context.Context) (string, error) {
 	resp, err := s.dockerManager.NetworkCreate(ctx, base.NetworkGlobalRouting, func(options *network.CreateOptions) {
 		options.Driver = docker.NetworkDriverOverlay
 		options.Scope = docker.NetworkScopeSwarm
@@ -50,9 +56,7 @@ func (s *service) createGlobalRoutingNetwork(ctx context.Context) error {
 		}
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return "", apperrors.Wrap(err)
 	}
-
-	GlobalRoutingNetworkID = resp.ID
-	return nil
+	return resp.ID, nil
 }

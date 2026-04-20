@@ -18,6 +18,10 @@ const (
 	NoExpiration time.Duration = cache.NoExpiration
 )
 
+var (
+	Global = NewCache()
+)
+
 type Cache struct {
 	client *cache.Cache
 }
@@ -34,6 +38,42 @@ func (c *Cache) Get(key string) (any, error) {
 		return nil, apperrors.NewNotFoundNT(key)
 	}
 	return val, nil
+}
+
+func (c *Cache) GetStr(key string) (string, error) {
+	val, err := c.Get(key)
+	if err != nil {
+		return "", apperrors.Wrap(err)
+	}
+	v, ok := val.(string)
+	if !ok {
+		return "", apperrors.NewTypeInvalid()
+	}
+	return v, nil
+}
+
+func (c *Cache) GetInt(key string) (int, error) {
+	val, err := c.Get(key)
+	if err != nil {
+		return 0, apperrors.Wrap(err)
+	}
+	v, ok := val.(int)
+	if !ok {
+		return 0, apperrors.NewTypeInvalid()
+	}
+	return v, nil
+}
+
+func (c *Cache) GetBool(key string) (bool, error) {
+	val, err := c.Get(key)
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+	v, ok := val.(bool)
+	if !ok {
+		return false, apperrors.NewTypeInvalid()
+	}
+	return v, nil
 }
 
 func (c *Cache) Set(key string, value any, expiration time.Duration) error {

@@ -31,10 +31,15 @@ func RemoveEmptyLines(str string, trimSpace bool) string {
 	cleanedLines := make([]string, 0, len(lines))
 
 	for _, line := range lines {
-		if trimSpace && strings.TrimSpace(line) != "" {
+		if trimSpace {
+			// If after trimming spaces the line is empty, skip it
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
 			cleanedLines = append(cleanedLines, line)
 			continue
 		}
+		// When not trimming spaces, keep non-empty lines (including whitespace-only)
 		if line != "" {
 			cleanedLines = append(cleanedLines, line)
 		}

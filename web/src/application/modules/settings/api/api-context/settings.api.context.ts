@@ -7,6 +7,8 @@ import {
     NotificationsApiValidator,
     RegistryAuthApi,
     RegistryAuthApiValidator,
+    SslCertApi,
+    SslCertApiValidator,
 } from "../services";
 
 function createApi() {
@@ -16,12 +18,14 @@ function createApi() {
     const notificationsValidator = new NotificationsApiValidator();
     const gitCredentialsValidator = new GitCredentialsApiValidator();
     const registryAuthValidator = new RegistryAuthApiValidator();
+    const sslCertValidator = new SslCertApiValidator();
 
     return {
         settings: {
             notifications: new NotificationsApi(notificationsValidator),
             gitCredentials: new GitCredentialsApi(gitCredentialsValidator),
             registryAuth: new RegistryAuthApi(registryAuthValidator),
+            sslCert: new SslCertApi(sslCertValidator),
         },
     };
 }

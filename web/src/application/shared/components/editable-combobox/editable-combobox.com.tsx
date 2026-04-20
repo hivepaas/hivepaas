@@ -14,6 +14,7 @@ export interface EditableComboboxProps {
     "options": string[];
     "value"?: string | null;
     "onChange": (value: string) => void;
+    "onInputChange"?: (value: string) => void;
     "placeholder"?: string;
     "className"?: string;
     "emptyText"?: string;
@@ -28,6 +29,7 @@ export function EditableCombobox({
     options,
     value,
     onChange,
+    onInputChange,
     placeholder = "Type or select...",
     className,
     emptyText = "No matching options",
@@ -69,6 +71,10 @@ export function EditableCombobox({
                                 ref={inputRef}
                                 value={text}
                                 onChange={e => {
+                                    if (onInputChange) {
+                                        onInputChange(e.target.value);
+                                        return;
+                                    }
                                     onChange(e.target.value);
                                 }}
                                 onFocus={() => {
@@ -92,7 +98,11 @@ export function EditableCombobox({
                                         e.preventDefault();
                                     }}
                                     onClick={() => {
-                                        onChange("");
+                                        if (onInputChange) {
+                                            onInputChange("");
+                                        } else {
+                                            onChange("");
+                                        }
                                         inputRef.current?.focus();
                                     }}
                                 >

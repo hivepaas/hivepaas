@@ -4,6 +4,8 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import {
+    type AppContainerSettings_CheckPort_Req,
+    type AppContainerSettings_CheckPort_Res,
     type AppContainerSettings_FindOne_Req,
     type AppContainerSettings_FindOne_Res,
     type AppContainerSettings_UpdateOne_Req,
@@ -50,6 +52,25 @@ export class AppContainerSettingsApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async checkPort(
+        req: AppContainerSettings_CheckPort_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppContainerSettings_CheckPort_Res, Error>> {
+        const { projectID, appID, payload } = req.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(`/projects/${projectID}/apps/${appID}/container/check-port`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.checkPort),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

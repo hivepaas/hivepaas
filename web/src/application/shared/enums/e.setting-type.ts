@@ -22,6 +22,7 @@ export const ESettingType = {
     RepoWebhook: "repo-webhook",
     Notification: "notification",
     ImageBuild: "image-build",
+    SSLCert: "ssl-cert",
 } as const;
 
 export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

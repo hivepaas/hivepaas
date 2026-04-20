@@ -4,4 +4,6 @@ export const QK = {
     "settings.git-credentials.find-many-paginated": "settings.git-credentials.find-many-paginated",
     "settings.registry-auth.find-many-paginated": "settings.registry-auth.find-many-paginated",
     "settings.registry-auth.find-one-by-id": "settings.registry-auth.find-one-by-id",
+    "settings.ssl-cert.find-many-paginated": "settings.ssl-cert.find-many-paginated",
+    "settings.ssl-cert.find-one-by-id": "settings.ssl-cert.find-one-by-id",
 } as const;

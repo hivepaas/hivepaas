@@ -5,3 +5,5 @@ export * from "./e.user-status";
 export * from "./e.profile-api-key-status";
 export * from "./e.setting-type";
 export * from "./e.setting-status";
+export * from "./e.ssl-cert-type";
+export * from "./e.ssl-key-type";

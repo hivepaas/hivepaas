@@ -7,17 +7,20 @@ import {
     CreateOrEditProjectSecretDialog,
     useCreateOrEditProjectSecretDialogState,
 } from "~/projects/dialogs/create-or-edit-project-secret";
+import { QuickInstallSslCertDialog, useQuickInstallSslCertDialogState } from "~/projects/dialogs/quick-install-ssl-cert";
 
 function View() {
     const location = useLocation();
     const createProjectDialog = useCreateProjectDialogState();
     const createProjectAppDialog = useCreateProjectAppDialogState();
     const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
+    const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
         createProjectAppDialog.destroy();
         createOrEditProjectSecretDialog.destroy();
+        quickInstallSslCertDialog.destroy();
     }, [location]);
 
     return (
@@ -25,6 +28,7 @@ function View() {
             <CreateProjectDialog />
             <CreateProjectAppDialog />
             <CreateOrEditProjectSecretDialog />
+            <QuickInstallSslCertDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

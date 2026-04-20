@@ -2,6 +2,8 @@ import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/
 
 import { useAppContainerSettingsApi } from "../../../api/hooks/project-apps";
 import {
+    type AppContainerSettings_CheckPort_Req,
+    type AppContainerSettings_CheckPort_Res,
     type AppContainerSettings_UpdateOne_Req,
     type AppContainerSettings_UpdateOne_Res,
 } from "../../../api/services";
@@ -30,6 +32,20 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
+type CheckPortReq = AppContainerSettings_CheckPort_Req["data"];
+type CheckPortRes = AppContainerSettings_CheckPort_Res;
+type CheckPortOptions = Omit<UseMutationOptions<CheckPortRes, Error, CheckPortReq>, "mutationFn">;
+
+function useCheckPort(options: CheckPortOptions = {}) {
+    const { mutations } = useAppContainerSettingsApi();
+
+    return useMutation({
+        mutationFn: mutations.checkPort,
+        ...options,
+    });
+}
+
 export const AppContainerSettingsCommands = Object.freeze({
     useUpdateOne,
+    useCheckPort,
 });

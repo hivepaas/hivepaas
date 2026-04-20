@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 
 import { Field, FieldError, FieldGroup } from "@components/ui";
-import { useController, useFormContext } from "react-hook-form";
+import { useController, useFormContext, useWatch } from "react-hook-form";
 import { Link, useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { useQuickInstallSslCertDialog } from "~/projects/dialogs/quick-install-ssl-cert";
 
 import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -22,16 +23,25 @@ function View({ domainIndex }: SslCertProps) {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedSslId, setSelectedSslId] = useState<string | null>(null);
 
-    const { control } = useFormContext<
+    const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
     >();
+    const domainValue = useWatch({ control, name: `domains.${domainIndex}.domain` });
 
     const {
         field: sslCert,
         fieldState: { error: sslCertError, invalid: isSslCertInvalid },
     } = useController({ control, name: `domains.${domainIndex}.sslCert` });
+
+    const { actions: quickInstallActions } = useQuickInstallSslCertDialog({
+        onSuccess: created => {
+            setSelectedSslId(created.id);
+            setValue(`domains.${domainIndex}.sslCert`, { id: created.id, name: created.name }, { shouldDirty: true });
+            void refetch();
+        },
+    });
 
     const {
         data: { data: sslCerts } = DEFAULT_PAGINATED_DATA,
@@ -46,8 +56,6 @@ function View({ domainIndex }: SslCertProps) {
             enabled: Boolean(selectedSslId),
         },
     );
-
-    console.log("sslCert", sslCert.value);
 
     const comboboxOptions = useMemo(() => {
         return sslCerts.map(cert => ({
@@ -73,14 +81,18 @@ function View({ domainIndex }: SslCertProps) {
                                 options={comboboxOptions}
                                 value={sslCert.value?.id ?? null}
                                 onChange={(_, option) => {
-                                    console.log("option", option);
                                     if (!option) {
-                                        sslCert.onChange(null);
+                                        setValue(`domains.${domainIndex}.sslCert`, undefined, { shouldDirty: true });
                                         setSelectedSslId(null);
+                                        setModalOpen(false);
                                         return;
                                     }
 
-                                    sslCert.onChange({ id: option.id, name: option.name });
+                                    setValue(
+                                        `domains.${domainIndex}.sslCert`,
+                                        { id: option.id, name: option.name },
+                                        { shouldDirty: true },
+                                    );
                                     setSelectedSslId(option.id);
                                 }}
                                 onSearch={setSearchQuery}
@@ -113,7 +125,7 @@ function View({ domainIndex }: SslCertProps) {
                                     type="button"
                                     className="text-blue-500 cursor-pointer hover:underline select-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={() => {
-                                        setModalOpen(true);
+                                        quickInstallActions.open(projectId, domainValue);
                                     }}
                                 >
                                     Quick Install

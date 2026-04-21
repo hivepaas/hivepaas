@@ -4,17 +4,14 @@ import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
-import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useController, useFieldArray, useFormContext } from "react-hook-form";
 import { EHttpPathMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
-import { AddConfigurationDropdown } from "./add-configuration-dropdown.com";
-import { BasicAuthSection } from "./basic-auth-section.com";
-import { ClientConfigSection } from "./client-config-section.com";
-import { RateLimitConfigSection } from "./rate-limit-config-section.com";
+import { HttpConfigurableSections } from "./http-configurable-sections.com";
 
 interface PathsSectionProps {
     domainIndex: number;
@@ -29,7 +26,7 @@ interface PathRowProps {
 function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
     const [expanded, setExpanded] = useState(false);
 
-    const { control, unregister } = useFormContext<
+    const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
@@ -44,10 +41,6 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
     } = useController({ control, name: `${pathPrefix}.path` as never });
 
     const { field: mode } = useController({ control, name: `${pathPrefix}.mode` as never });
-
-    const basicAuth = useWatch({ control, name: `${basePath}.basicAuth` as never });
-    const clientConfig = useWatch({ control, name: `${basePath}.clientConfig` as never });
-    const rateLimitConfig = useWatch({ control, name: `${basePath}.rateLimitConfig` as never });
 
     return (
         <Collapsible
@@ -114,29 +107,9 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
                         </Tabs>
                     </InfoBlock>
 
-                    <AddConfigurationDropdown
+                    <HttpConfigurableSections
                         basePath={basePath}
                         scope="path"
-                    />
-                    <BasicAuthSection
-                        prefix={`${basePath}.basicAuth`}
-                        onRemove={() => {
-                            unregister(`${basePath}.basicAuth` as never);
-                        }}
-                    />
-
-                    <ClientConfigSection
-                        prefix={`${basePath}.clientConfig`}
-                        onRemove={() => {
-                            unregister(`${basePath}.clientConfig` as never);
-                        }}
-                    />
-
-                    <RateLimitConfigSection
-                        prefix={`${basePath}.rateLimitConfig`}
-                        onRemove={() => {
-                            unregister(`${basePath}.rateLimitConfig` as never);
-                        }}
                     />
                 </div>
             </CollapsibleContent>

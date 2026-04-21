@@ -1,4 +1,5 @@
 export * from "./project-env-vars";
+export * from "./project-domain-settings";
 export * from "./project-git-credentials";
 export * from "./project-networks";
 export * from "./project-registry-auth";

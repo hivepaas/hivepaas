@@ -30,6 +30,8 @@ function ConditionalDomainDetailSections({
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
+    const activeDomain = domains[activeDomainIndex];
+    const hasRedirect = Boolean(activeDomain ? activeDomain.domainRedirect.trim() : "");
 
     useEffect(() => {
         const len = domains.length;
@@ -51,13 +53,19 @@ function ConditionalDomainDetailSections({
             </h3>
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields domainIndex={activeDomainIndex} />
-                <DomainConfigurableSections domainIndex={activeDomainIndex} />
             </div>
+            {!hasRedirect && (
+                <>
+                    <div className="flex flex-col gap-6 px-2">
+                        <DomainConfigurableSections domainIndex={activeDomainIndex} />
+                    </div>
 
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Path Configuration</h3>
-            <div className="flex flex-col gap-6 px-2">
-                <PathsSection domainIndex={activeDomainIndex} />
-            </div>
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Path Configuration</h3>
+                    <div className="flex flex-col gap-6 px-2">
+                        <PathsSection domainIndex={activeDomainIndex} />
+                    </div>
+                </>
+            )}
         </>
     );
 }

@@ -23,6 +23,7 @@ export const ESettingType = {
     Notification: "notification",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",
+    DomainSettings: "domain-settings",
 } as const;
 
 export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from "react";
 
 import { Button } from "@components/ui/button";
 import { Checkbox } from "@components/ui/checkbox";
-import { DateTimePicker } from "@components/ui/date-time-picker";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@components/ui/field";
 import { Input } from "@components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
@@ -62,7 +61,14 @@ function addDays(date: Date, days: number): Date {
     return result;
 }
 
-export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChanges }: Props) {
+export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, onHasChanges }: Props) {
+    const defaultEmail = "";
+    const defaultKeyType = ESslKeyType.ECP256;
+    const defaultAutoRenew = true;
+    const prefillEmail = prefill?.email ?? defaultEmail;
+    const prefillKeyType = prefill?.keyType ?? defaultKeyType;
+    const prefillAutoRenew = prefill?.autoRenew ?? defaultAutoRenew;
+
     const {
         handleSubmit,
         control,
@@ -74,9 +80,9 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
             name: domain,
             domain,
             certType: ESslCertType.LetsEncrypt,
-            email: "",
-            keyType: ESslKeyType.ECP256,
-            autoRenew: true,
+            email: prefillEmail,
+            keyType: prefillKeyType,
+            autoRenew: prefillAutoRenew,
             certificate: "",
             privateKey: "",
             expireAt: null,
@@ -91,15 +97,15 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
             name: domain,
             domain,
             certType: ESslCertType.LetsEncrypt,
-            email: "",
-            keyType: ESslKeyType.ECP256,
-            autoRenew: true,
+            email: prefillEmail,
+            keyType: prefillKeyType,
+            autoRenew: prefillAutoRenew,
             certificate: "",
             privateKey: "",
             expireAt: null,
             notifyFrom: null,
         });
-    }, [domain, reset]);
+    }, [domain, prefillAutoRenew, prefillEmail, prefillKeyType, reset]);
 
     useEffect(() => {
         onHasChanges?.(isDirty);
@@ -130,10 +136,6 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
         }));
     }, [isLetsEncrypt]);
 
-    const {
-        field: name,
-        fieldState: { invalid: isNameInvalid },
-    } = useController({ name: "name", control });
     const { field: certTypeField } = useController({ name: "certType", control });
     const {
         field: email,
@@ -145,10 +147,6 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
         field: certificate,
         fieldState: { invalid: isCertificateInvalid },
     } = useController({ name: "certificate", control });
-    const {
-        field: privateKey,
-        fieldState: { invalid: isPrivateKeyInvalid },
-    } = useController({ name: "privateKey", control });
     const {
         field: expireAtField,
         fieldState: { invalid: isExpireAtInvalid },
@@ -316,6 +314,7 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
                                     }}
                                     aria-invalid={isExpireAtInvalid}
                                     placeholder="Select date"
+                                    allowClear
                                 />
                                 <FieldError errors={[errors.expireAt]} />
                             </InfoBlock>
@@ -333,6 +332,7 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
                                     }}
                                     aria-invalid={isNotifyFromInvalid}
                                     placeholder="Select date"
+                                    allowClear
                                 />
                                 <FieldError errors={[errors.notifyFrom]} />
                             </InfoBlock>
@@ -353,9 +353,16 @@ export function QuickInstallSslCertForm({ domain, isPending, onSubmit, onHasChan
     );
 }
 
+interface PrefillValues {
+    email?: string;
+    keyType?: ESslKeyType;
+    autoRenew?: boolean;
+}
+
 interface Props {
     domain: string;
     isPending: boolean;
+    prefill?: PrefillValues;
     onSubmit: (values: QuickInstallSslCertFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
 }

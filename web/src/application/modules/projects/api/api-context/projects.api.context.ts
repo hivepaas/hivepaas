@@ -13,6 +13,8 @@ import {
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
+    ProjectDomainSettingsApi,
+    ProjectDomainSettingsApiValidator,
     ProjectEnvVarsApi,
     ProjectEnvVarsApiValidator,
     ProjectGitCredentialsApi,
@@ -21,13 +23,17 @@ import {
     ProjectNetworksApiValidator,
     ProjectRegistryAuthApi,
     ProjectRegistryAuthApiValidator,
-    ProjectSslCertApi,
-    ProjectSslCertApiValidator,
     ProjectSecretsApi,
     ProjectSecretsApiValidator,
+    ProjectSslCertApi,
+    ProjectSslCertApiValidator,
     ProjectsApi,
     ProjectsApiValidator,
 } from "~/projects/api/services";
+import {
+    AppHttpSettingsApi,
+    AppHttpSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/http-settings";
 import {
     AppNetworkSettingsApi,
     AppNetworkSettingsApiValidator,
@@ -40,10 +46,6 @@ import {
     AppStorageSettingsApi,
     AppStorageSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/storage-settings";
-import {
-    AppHttpSettingsApi,
-    AppHttpSettingsApiValidator,
-} from "~/projects/api/services/project-apps-services/http-settings";
 
 function createApi() {
     /**
@@ -54,6 +56,7 @@ function createApi() {
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
+    const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
     const projectNetworksApiValidator = new ProjectNetworksApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
@@ -105,6 +108,9 @@ function createApi() {
             },
             envVars: {
                 $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),
+            },
+            domainSettings: {
+                $: new ProjectDomainSettingsApi(projectDomainSettingsApiValidator),
             },
             networks: {
                 $: new ProjectNetworksApi(projectNetworksApiValidator),

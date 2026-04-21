@@ -1,3 +1,4 @@
+export * from "./domain-settings.queries";
 export * from "./git-credentials.queries";
 export * from "./notification.queries";
 export * from "./registry-auth.queries";

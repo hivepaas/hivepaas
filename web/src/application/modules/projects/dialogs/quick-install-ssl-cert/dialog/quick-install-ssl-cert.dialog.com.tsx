@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
+import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
 
 import { ESslCertType } from "@application/shared/enums";
 
@@ -24,6 +25,20 @@ export function QuickInstallSslCertDialog() {
     const open = state.mode !== "closed";
     const projectId = state.mode === "open" ? state.projectId : null;
     const domain = state.mode === "open" ? state.domain : "";
+    const domainSettingsQuery = ProjectDomainSettingsQueries.useFindOne(
+        { projectID: projectId ?? "" },
+        {
+            enabled: open && !!projectId,
+        },
+    );
+    const certSettings = domainSettingsQuery.data?.data.certSettings;
+    const prefill = certSettings
+        ? {
+              email: certSettings.email,
+              keyType: certSettings.keyType,
+              autoRenew: certSettings.autoRenew,
+          }
+        : undefined;
 
     const { mutate: createSslCert, isPending } = ProjectSslCertCommands.useCreateOne({
         onSuccess: response => {
@@ -111,6 +126,7 @@ export function QuickInstallSslCertDialog() {
                 <QuickInstallSslCertForm
                     domain={domain}
                     isPending={isPending}
+                    prefill={prefill}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />

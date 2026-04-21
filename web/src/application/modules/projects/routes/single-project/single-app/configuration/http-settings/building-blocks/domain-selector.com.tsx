@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button, Checkbox } from "@components/ui";
-import { Badge } from "@components/ui/badge";
 import { Plus } from "lucide-react";
 import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 

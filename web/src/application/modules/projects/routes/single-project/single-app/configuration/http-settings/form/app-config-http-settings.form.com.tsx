@@ -1,9 +1,13 @@
 import React, { type PropsWithChildren, useEffect, useImperativeHandle, useState } from "react";
 
+import { Button } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { X } from "lucide-react";
+import { type FieldPath, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
+
+import { PopConfirm } from "@application/shared/components/pop-confirm";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -24,40 +28,70 @@ type SchemaOutput = AppConfigHttpSettingsFormSchemaOutput;
 function ConditionalDomainDetailSections({
     activeDomainIndex,
     setActiveDomainIndex,
+    onRemoveDomain,
 }: {
     activeDomainIndex: number;
     setActiveDomainIndex: React.Dispatch<React.SetStateAction<number>>;
+    onRemoveDomain: (index: number) => void;
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
+    const activeDomain = domains[activeDomainIndex];
+    const hasRedirect = Boolean(activeDomain ? activeDomain.domainRedirect.trim() : "");
+
+    console.log("domains", domains);
 
     useEffect(() => {
         const len = domains.length;
         if (len === 0) {
-            setActiveDomainIndex(0);
-            return;
+            setActiveDomainIndex(-1);
         }
-        setActiveDomainIndex(prev => (prev >= len ? len - 1 : prev));
     }, [domains.length, setActiveDomainIndex]);
 
-    if (!hasDomains) {
+    if (!hasDomains || activeDomainIndex < 0) {
         return null;
     }
 
     return (
         <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg text-red-500">
+            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg text-red-500 flex items-center justify-between">
                 Selected Domain: {domains[activeDomainIndex]?.domain ?? ""}
+                <PopConfirm
+                    title="Remove domain"
+                    description="Confirm deletion of this domain?"
+                    confirmText="Remove"
+                    cancelText="Cancel"
+                    variant="destructive"
+                    onConfirm={() => {
+                        onRemoveDomain(activeDomainIndex);
+                    }}
+                >
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        title="Remove domain"
+                    >
+                        <X className="size-4" />
+                    </Button>
+                </PopConfirm>
             </h3>
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields domainIndex={activeDomainIndex} />
-                <DomainConfigurableSections domainIndex={activeDomainIndex} />
             </div>
+            {!hasRedirect && (
+                <>
+                    <div className="flex flex-col gap-6 px-2">
+                        <DomainConfigurableSections domainIndex={activeDomainIndex} />
+                    </div>
 
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Path Configuration</h3>
-            <div className="flex flex-col gap-6 px-2">
-                <PathsSection domainIndex={activeDomainIndex} />
-            </div>
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Path Configuration</h3>
+                    <div className="flex flex-col gap-6 px-2">
+                        <PathsSection domainIndex={activeDomainIndex} />
+                    </div>
+                </>
+            )}
         </>
     );
 }
@@ -74,6 +108,12 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
     });
 
     const { control } = methods;
+    const { remove } = useFieldArray({ control, name: "domains" });
+
+    const handleRemoveDomain = (index: number) => {
+        remove(index);
+        setActiveDomainIndex(-1);
+    };
 
     useUpdateEffect(() => {
         methods.reset(
@@ -132,6 +172,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
                         <ConditionalDomainDetailSections
                             activeDomainIndex={activeDomainIndex}
                             setActiveDomainIndex={setActiveDomainIndex}
+                            onRemoveDomain={handleRemoveDomain}
                         />
                     )}
 

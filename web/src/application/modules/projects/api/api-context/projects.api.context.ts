@@ -11,6 +11,8 @@ import {
     AppServiceSettingsApiValidator,
     ProjectAppEnvVarsApi,
     ProjectAppEnvVarsApiValidator,
+    ProjectBasicAuthApi,
+    ProjectBasicAuthApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
     ProjectDomainSettingsApi,
@@ -54,6 +56,7 @@ function createApi() {
     const projectsApiValidator = new ProjectsApiValidator();
     const projectAppsApiValidator = new ProjectAppsApiValidator();
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
+    const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
@@ -105,6 +108,9 @@ function createApi() {
             },
             secrets: {
                 $: new ProjectSecretsApi(projectSecretsApiValidator),
+            },
+            basicAuth: {
+                $: new ProjectBasicAuthApi(projectBasicAuthApiValidator),
             },
             envVars: {
                 $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),

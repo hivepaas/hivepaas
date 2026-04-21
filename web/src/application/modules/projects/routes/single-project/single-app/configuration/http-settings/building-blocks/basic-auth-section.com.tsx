@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, FieldError } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
-import { useController, useFormContext } from "react-hook-form";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
 
-import { InfoBlock } from "@application/shared/components";
+import { Combobox, InfoBlock } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+
+import { ProjectBasicAuthQueries } from "@application/modules/projects/data";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
@@ -16,6 +21,9 @@ interface BasicAuthSectionProps {
 
 export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
     const [open, setOpen] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -31,10 +39,34 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
         name: `${prefix}.name` as never,
     });
 
-    useController({
+    const { field: idField } = useController({
         control,
         name: `${prefix}.id` as never,
     });
+    const basicAuthValue = useWatch({
+        control,
+        name: prefix as never,
+    }) as { id?: string; name?: string } | undefined;
+
+    const {
+        data: { data: basicAuths } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = ProjectBasicAuthQueries.useFindManyPaginated({
+        projectID: projectId,
+        search: searchQuery,
+    });
+
+    const comboboxOptions = useMemo(() => {
+        return basicAuths.map(item => ({
+            value: {
+                id: item.id,
+                name: item.name,
+            },
+            label: item.name,
+        }));
+    }, [basicAuths]);
 
     return (
         <Collapsible
@@ -69,11 +101,30 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
                     <InfoBlock title="Credential">
-                        <Input
-                            value={nameField.value}
+                        <Combobox
+                            options={comboboxOptions}
+                            value={basicAuthValue?.id ?? null}
+                            onChange={(_, option) => {
+                                if (!option) {
+                                    idField.onChange("");
+                                    nameField.onChange("");
+                                    return;
+                                }
+
+                                idField.onChange(option.id);
+                                nameField.onChange(option.name);
+                            }}
+                            onSearch={setSearchQuery}
                             placeholder="Select basic auth credential"
-                            readOnly
-                            className="max-w-[400px] text-muted-foreground"
+                            searchable
+                            closeOnSelect
+                            emptyText="No basic auth credentials available"
+                            className="max-w-[400px]"
+                            valueKey="id"
+                            loading={isFetching}
+                            onRefresh={() => void refetch()}
+                            isRefreshing={isRefetching}
+                            allowClear
                         />
                         <FieldError errors={[nameError]} />
                     </InfoBlock>

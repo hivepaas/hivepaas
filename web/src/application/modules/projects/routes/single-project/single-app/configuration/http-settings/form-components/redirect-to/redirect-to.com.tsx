@@ -23,8 +23,9 @@ function View({ domainIndex }: RedirectToProps) {
 
     const options = useMemo(() => {
         const deduped = new Set<string>();
-        for (const item of domains) {
-            const value = item.domain.trim();
+        for (const item of domains as ({ domain?: string } | undefined)[]) {
+            const rawDomain = item?.domain;
+            const value = typeof rawDomain === "string" ? rawDomain.trim() : "";
             if (!value || value === currentDomain) {
                 continue;
             }

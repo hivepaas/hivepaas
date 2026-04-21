@@ -15,12 +15,18 @@ interface HttpConfigurableSectionsProps {
 }
 
 export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSectionsProps) {
-    const { control, unregister } = useFormContext<
+    const { control, setValue, unregister } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
     >();
     const segment = useWatch({ control, name: basePath as never }) as Record<string, unknown> | undefined;
+    const setFormValue = setValue as (name: string, value: unknown, opts?: object) => void;
+
+    const removeSection = (fieldPath: string) => {
+        setFormValue(fieldPath, undefined, { shouldDirty: true, shouldValidate: true });
+        unregister(fieldPath as never);
+    };
 
     return (
         <div className="flex flex-col gap-4">
@@ -28,7 +34,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 <BasicAuthSection
                     prefix={`${basePath}.basicAuth`}
                     onRemove={() => {
-                        unregister(`${basePath}.basicAuth` as never);
+                        removeSection(`${basePath}.basicAuth`);
                     }}
                 />
             )}
@@ -37,7 +43,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 <ClientConfigSection
                     prefix={`${basePath}.clientConfig`}
                     onRemove={() => {
-                        unregister(`${basePath}.clientConfig` as never);
+                        removeSection(`${basePath}.clientConfig`);
                     }}
                 />
             )}
@@ -46,7 +52,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 <CompressionConfigSection
                     prefix={`${basePath}.compressionConfig`}
                     onRemove={() => {
-                        unregister(`${basePath}.compressionConfig` as never);
+                        removeSection(`${basePath}.compressionConfig`);
                     }}
                 />
             )}
@@ -55,7 +61,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 <HeaderConfigSection
                     prefix={`${basePath}.headerConfig`}
                     onRemove={() => {
-                        unregister(`${basePath}.headerConfig` as never);
+                        removeSection(`${basePath}.headerConfig`);
                     }}
                 />
             )}
@@ -64,7 +70,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 <RateLimitConfigSection
                     prefix={`${basePath}.rateLimitConfig`}
                     onRemove={() => {
-                        unregister(`${basePath}.rateLimitConfig` as never);
+                        removeSection(`${basePath}.rateLimitConfig`);
                     }}
                 />
             )}

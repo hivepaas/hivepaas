@@ -23,6 +23,7 @@ export interface EditableComboboxProps {
     "onRefresh"?: () => void;
     "isRefreshing"?: boolean;
     "inputClassName"?: string;
+    "disableFilter"?: boolean;
 }
 
 export function EditableCombobox({
@@ -38,6 +39,7 @@ export function EditableCombobox({
     onRefresh,
     inputClassName,
     isRefreshing = false,
+    disableFilter = false,
 }: EditableComboboxProps) {
     const [open, setOpen] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -45,10 +47,10 @@ export function EditableCombobox({
     const showRefresh = Boolean(onRefresh);
 
     const filtered = React.useMemo(() => {
-        if (!text) return options;
+        if (disableFilter || !text) return options;
         const lower = text.toLowerCase();
         return options.filter(opt => opt.toLowerCase().includes(lower));
-    }, [options, text]);
+    }, [options, text, disableFilter]);
 
     const handleSelect = (selected: string) => {
         onChange(selected);

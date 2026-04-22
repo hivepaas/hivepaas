@@ -137,6 +137,7 @@ export function DomainSelector({
                             placeholder="e.g. app.example.com"
                             emptyText="No domains configured"
                             className="flex-1"
+                            disableFilter
                         />
                         <Button
                             type="button"

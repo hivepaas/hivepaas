@@ -39,8 +39,6 @@ function ConditionalDomainDetailSections({
     const activeDomain = domains[activeDomainIndex];
     const hasRedirect = Boolean(activeDomain ? activeDomain.domainRedirect.trim() : "");
 
-    console.log("domains", domains);
-
     useEffect(() => {
         const len = domains.length;
         if (len === 0) {

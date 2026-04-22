@@ -21,7 +21,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                   enabled: domain.clientConfig.enabled,
                   maxRequestBody: domain.clientConfig.maxRequestBody,
                   memRequestBody: domain.clientConfig.memRequestBody,
-                  allowedIPs: domain.clientConfig.allowedIPs.map(value => ({ value })),
+                  allowedIPs: domain.clientConfig.allowedIPs.join(","),
               }
             : undefined,
         headerConfig: domain.headerConfig
@@ -41,8 +41,8 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         compressionConfig: domain.compressionConfig
             ? {
                   enabled: domain.compressionConfig.enabled,
-                  excludedContentTypes: domain.compressionConfig.excludedContentTypes.map(value => ({ value })),
-                  includedContentTypes: domain.compressionConfig.includedContentTypes.map(value => ({ value })),
+                  excludedContentTypes: domain.compressionConfig.excludedContentTypes.join("\n"),
+                  includedContentTypes: domain.compressionConfig.includedContentTypes.join("\n"),
                   minResponseBody: domain.compressionConfig.minResponseBody,
                   defaultEncoding: domain.compressionConfig.defaultEncoding,
               }
@@ -65,7 +65,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                       enabled: path.clientConfig.enabled,
                       maxRequestBody: path.clientConfig.maxRequestBody,
                       memRequestBody: path.clientConfig.memRequestBody,
-                      allowedIPs: path.clientConfig.allowedIPs.map(value => ({ value })),
+                      allowedIPs: path.clientConfig.allowedIPs.join(","),
                   }
                 : undefined,
             rateLimitConfig: path.rateLimitConfig
@@ -104,7 +104,11 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                       enabled: domain.clientConfig.enabled,
                       maxRequestBody: domain.clientConfig.maxRequestBody,
                       memRequestBody: domain.clientConfig.memRequestBody,
-                      allowedIPs: domain.clientConfig.allowedIPs.map(item => item.value).filter(Boolean),
+                      allowedIPs: domain.clientConfig.allowedIPs
+                          .replace(/\n/g, ",")
+                          .split(",")
+                          .map(s => s.trim())
+                          .filter(Boolean),
                   }
                 : null,
             headerConfig: domain.headerConfig
@@ -127,10 +131,14 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                 ? {
                       enabled: domain.compressionConfig.enabled,
                       excludedContentTypes: domain.compressionConfig.excludedContentTypes
-                          .map(item => item.value)
+                          .replace(/\n/g, ",")
+                          .split(",")
+                          .map(item => item.trim())
                           .filter(Boolean),
                       includedContentTypes: domain.compressionConfig.includedContentTypes
-                          .map(item => item.value)
+                          .replace(/\n/g, ",")
+                          .split(",")
+                          .map(item => item.trim())
                           .filter(Boolean),
                       minResponseBody: domain.compressionConfig.minResponseBody,
                       defaultEncoding: domain.compressionConfig.defaultEncoding,
@@ -154,7 +162,11 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                           enabled: path.clientConfig.enabled,
                           maxRequestBody: path.clientConfig.maxRequestBody,
                           memRequestBody: path.clientConfig.memRequestBody,
-                          allowedIPs: path.clientConfig.allowedIPs.map(item => item.value).filter(Boolean),
+                          allowedIPs: path.clientConfig.allowedIPs
+                              .replace(/\n/g, ",")
+                              .split(",")
+                              .map(s => s.trim())
+                              .filter(Boolean),
                       }
                     : null,
                 rateLimitConfig: path.rateLimitConfig

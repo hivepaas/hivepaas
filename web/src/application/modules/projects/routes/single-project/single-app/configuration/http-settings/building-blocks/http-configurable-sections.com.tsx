@@ -2,7 +2,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
-import { AddConfigurationDropdown, type HttpConfigSectionScope } from "./add-configuration-dropdown.com";
+import { AddConfigurationDropdown } from "./add-configuration-dropdown.com";
 import { BasicAuthSection } from "./basic-auth-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
 import { CompressionConfigSection } from "./compression-config-section.com";
@@ -11,10 +11,9 @@ import { RateLimitConfigSection } from "./rate-limit-config-section.com";
 
 interface HttpConfigurableSectionsProps {
     basePath: string;
-    scope: HttpConfigSectionScope;
 }
 
-export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSectionsProps) {
+export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsProps) {
     const { control, setValue, unregister } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -75,10 +74,7 @@ export function HttpConfigurableSections({ basePath, scope }: HttpConfigurableSe
                 />
             )}
 
-            <AddConfigurationDropdown
-                basePath={basePath}
-                scope={scope}
-            />
+            <AddConfigurationDropdown basePath={basePath} />
         </div>
     );
 }

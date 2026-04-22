@@ -23,8 +23,8 @@ const SettingRefSchema = z
 
 const HttpClientConfigSchema = z.object({
     enabled: z.boolean(),
-    maxRequestBody: z.number(),
-    memRequestBody: z.number(),
+    maxRequestBody: z.string(),
+    memRequestBody: z.string(),
     allowedIPs: z.array(z.string()).nullish(),
 });
 
@@ -39,14 +39,14 @@ const HttpCompressionConfigSchema = z.object({
     enabled: z.boolean(),
     excludedContentTypes: z.array(z.string()).nullish(),
     includedContentTypes: z.array(z.string()).nullish(),
-    minResponseBody: z.number(),
+    minResponseBody: z.string(),
     defaultEncoding: z.string(),
 });
 
 const HttpRateLimitConfigSchema = z.object({
     enabled: z.boolean(),
     average: z.number(),
-    period: z.number(),
+    period: z.string(),
     burst: z.number(),
     maxInFlightReq: z.number(),
 });

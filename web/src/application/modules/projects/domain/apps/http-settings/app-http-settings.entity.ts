@@ -41,8 +41,8 @@ export type AppHttpDomain = {
 
 export type AppHttpClientConfig = {
     enabled: boolean;
-    maxRequestBody: number;
-    memRequestBody: number;
+    maxRequestBody: string;
+    memRequestBody: string;
     allowedIPs: string[];
 };
 
@@ -57,14 +57,14 @@ export type AppHttpCompressionConfig = {
     enabled: boolean;
     excludedContentTypes: string[];
     includedContentTypes: string[];
-    minResponseBody: number;
+    minResponseBody: string;
     defaultEncoding: string;
 };
 
 export type AppHttpRateLimitConfig = {
     enabled: boolean;
     average: number;
-    period: number;
+    period: string;
     burst: number;
     maxInFlightReq: number;
 };

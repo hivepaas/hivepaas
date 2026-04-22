@@ -1,41 +1,28 @@
 import { useMemo } from "react";
 
 import { Button } from "@components/ui";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { ChevronDown, Plus } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import {
+    type AppConfigHttpSettingsFormSchemaInput,
+    type AppConfigHttpSettingsFormSchemaOutput,
     createDefaultBasicAuthRef,
     createDefaultClientConfig,
     createDefaultCompressionConfig,
     createDefaultHeaderConfig,
     createDefaultRateLimitConfig,
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
 } from "../schemas";
-
-export type HttpConfigSectionScope = "domain" | "path";
 
 type ConfigKeyDomain = "basicAuth" | "clientConfig" | "compressionConfig" | "headerConfig" | "rateLimitConfig";
 type ConfigKeyPath = "basicAuth" | "clientConfig" | "rateLimitConfig";
 
-const DOMAIN_OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
+const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "basicAuth", label: "Basic Auth" },
     { key: "clientConfig", label: "Client Configuration" },
     { key: "compressionConfig", label: "Compression Configuration" },
     { key: "headerConfig", label: "Header Configuration" },
-    { key: "rateLimitConfig", label: "Rate Limit Configuration" },
-];
-
-const PATH_OPTIONS: { key: ConfigKeyPath; label: string }[] = [
-    { key: "basicAuth", label: "Basic Auth" },
-    { key: "clientConfig", label: "Client Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
 ];
 
@@ -55,10 +42,9 @@ function segmentAtPath(
 
 interface AddConfigurationDropdownProps {
     basePath: string;
-    scope: HttpConfigSectionScope;
 }
 
-export function AddConfigurationDropdown({ basePath, scope }: AddConfigurationDropdownProps) {
+export function AddConfigurationDropdown({ basePath }: AddConfigurationDropdownProps) {
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -69,8 +55,6 @@ export function AddConfigurationDropdown({ basePath, scope }: AddConfigurationDr
 
     const values = useWatch({ control }) as AppConfigHttpSettingsFormSchemaInput | undefined;
     const segment = useMemo(() => segmentAtPath(values, basePath), [values, basePath]);
-
-    const options = scope === "domain" ? DOMAIN_OPTIONS : PATH_OPTIONS;
 
     function add(key: ConfigKeyDomain | ConfigKeyPath) {
         const fieldPath = `${basePath}.${key}`;
@@ -109,7 +93,7 @@ export function AddConfigurationDropdown({ basePath, scope }: AddConfigurationDr
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-                {options.map(({ key, label }) => {
+                {OPTIONS.map(({ key, label }) => {
                     const present = segment?.[key] != null;
                     return (
                         <DropdownMenuItem

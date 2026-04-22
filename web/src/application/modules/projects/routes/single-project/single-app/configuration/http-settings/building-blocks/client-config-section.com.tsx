@@ -1,11 +1,12 @@
 import { useState } from "react";
 
-import { Button, Checkbox, FieldError, Input } from "@components/ui";
+import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
+import { Textarea } from "@components/ui/textarea";
 import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputNumberWithAddon } from "@application/shared/components";
+import { InfoBlock, InputNumberWithAddon, InputWithAddOn } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
@@ -16,7 +17,6 @@ interface ClientConfigSectionProps {
 
 export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionProps) {
     const [open, setOpen] = useState(false);
-    const [ipInput, setIpInput] = useState("");
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -24,29 +24,23 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const enabledName = `${prefix}.enabled` as `domains.${number}.clientConfig.enabled`;
     const maxRequestBodyName = `${prefix}.maxRequestBody` as `domains.${number}.clientConfig.maxRequestBody`;
     const memRequestBodyName = `${prefix}.memRequestBody` as `domains.${number}.clientConfig.memRequestBody`;
     const allowedIPsName = `${prefix}.allowedIPs` as `domains.${number}.clientConfig.allowedIPs`;
 
-    const { field: enabled } = useController({ control, name: enabledName as never });
     const {
         field: maxRequestBody,
-        fieldState: { error: maxRequestBodyError },
+        fieldState: { error: maxRequestBodyError, invalid: isMaxRequestBodyInvalid },
     } = useController({ control, name: maxRequestBodyName as never });
     const {
         field: memRequestBody,
-        fieldState: { error: memRequestBodyError },
+        fieldState: { error: memRequestBodyError, invalid: isMemRequestBodyInvalid },
     } = useController({ control, name: memRequestBodyName as never });
 
     const {
-        fields: ipFields,
-        append: appendIp,
-        remove: removeIp,
-    } = useFieldArray({
-        control,
-        name: allowedIPsName as never,
-    });
+        field: allowedIPs,
+        fieldState: { error: allowedIPsError, invalid: isAllowedIPsInvalid },
+    } = useController({ control, name: allowedIPsName as never });
 
     return (
         <Collapsible
@@ -65,6 +59,14 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
                             <ChevronRight className="size-4 shrink-0" />
                         )}
                         Client Configuration
+                        <a
+                            className="text-xs text-blue-500 hover:text-blue-600"
+                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/buffering/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            (docs)
+                        </a>
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (
@@ -82,85 +84,37 @@ export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionPro
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
-                        <Checkbox
-                            checked={enabled.value}
-                            onCheckedChange={enabled.onChange}
-                        />
-                    </InfoBlock>
-
                     <InfoBlock title="Max Request Body Size">
-                        <InputNumberWithAddon
-                            addonLeft="Bytes"
+                        <Input
                             value={maxRequestBody.value}
-                            onValueChange={v => {
-                                maxRequestBody.onChange(v ?? 0);
-                            }}
-                            useGrouping={false}
-                            classNameContainer="max-w-[300px]"
+                            onChange={maxRequestBody.onChange}
+                            className="max-w-[100px]"
+                            aria-invalid={isMaxRequestBodyInvalid}
                         />
                         <FieldError errors={[maxRequestBodyError]} />
                     </InfoBlock>
 
                     <InfoBlock title="Mem Request Body Size">
-                        <InputNumberWithAddon
-                            addonLeft="Bytes"
+                        <Input
                             value={memRequestBody.value}
-                            onValueChange={v => {
-                                memRequestBody.onChange(v ?? 0);
-                            }}
-                            useGrouping={false}
-                            classNameContainer="max-w-[300px]"
+                            onChange={memRequestBody.onChange}
+                            className="max-w-[100px]"
+                            aria-invalid={isMemRequestBodyInvalid}
                         />
                         <FieldError errors={[memRequestBodyError]} />
                     </InfoBlock>
 
                     <InfoBlock title="Allowed IPs">
                         <div className="flex flex-col gap-2 max-w-[400px]">
-                            <div className="flex gap-2">
-                                <Input
-                                    value={ipInput}
-                                    onChange={e => {
-                                        setIpInput(e.target.value);
-                                    }}
-                                    placeholder="192.168.1.0/24"
-                                    className="flex-1"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                        if (ipInput.trim()) {
-                                            appendIp({ value: ipInput.trim() });
-                                            setIpInput("");
-                                        }
-                                    }}
-                                >
-                                    <Plus className="size-4" />
-                                </Button>
-                            </div>
-                            <div className="flex flex-col divide-y">
-                                {ipFields.map((field, index) => (
-                                    <div
-                                        key={field.id}
-                                        className="flex items-center justify-between py-1.5"
-                                    >
-                                        <span className="font-mono text-sm">
-                                            {(field as unknown as { value: string }).value}
-                                        </span>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                removeIp(index);
-                                            }}
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                            <Textarea
+                                {...allowedIPs}
+                                onChange={allowedIPs.onChange}
+                                placeholder="192.168.1.0/24"
+                                rows={2}
+                                className="resize-y"
+                                aria-invalid={isAllowedIPsInvalid}
+                            />
+                            <FieldError errors={[allowedIPsError]} />
                         </div>
                     </InfoBlock>
                 </div>

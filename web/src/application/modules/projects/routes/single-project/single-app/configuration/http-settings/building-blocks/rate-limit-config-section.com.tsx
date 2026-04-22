@@ -1,11 +1,12 @@
 import { useState } from "react";
 
-import { Button, Checkbox, FieldError } from "@components/ui";
+import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
+import { InputNumber } from "@components/ui/input-number";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputNumberWithAddon } from "@application/shared/components";
+import { InfoBlock } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
@@ -23,22 +24,21 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
     const {
         field: average,
-        fieldState: { error: averageError },
+        fieldState: { error: averageError, invalid: averageInvalid },
     } = useController({ control, name: `${prefix}.average` as never });
     const {
         field: period,
-        fieldState: { error: periodError },
+        fieldState: { error: periodError, invalid: periodInvalid },
     } = useController({ control, name: `${prefix}.period` as never });
     const {
         field: burst,
-        fieldState: { error: burstError },
+        fieldState: { error: burstError, invalid: burstInvalid },
     } = useController({ control, name: `${prefix}.burst` as never });
     const {
         field: maxInFlightReq,
-        fieldState: { error: maxInFlightReqError },
+        fieldState: { error: maxInFlightReqError, invalid: maxInFlightReqInvalid },
     } = useController({ control, name: `${prefix}.maxInFlightReq` as never });
 
     return (
@@ -58,6 +58,22 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                             <ChevronRight className="size-4 shrink-0" />
                         )}
                         Rate Limit Configuration
+                        <a
+                            className="text-xs text-blue-500 hover:text-blue-600"
+                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            (docs 1)
+                        </a>
+                        <a
+                            className="text-xs text-blue-500 hover:text-blue-600"
+                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            (docs 2)
+                        </a>
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (
@@ -75,61 +91,51 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
-                        <Checkbox
-                            checked={enabled.value}
-                            onCheckedChange={enabled.onChange}
-                        />
-                    </InfoBlock>
-
                     <InfoBlock title="Average">
-                        <InputNumberWithAddon
-                            addonLeft="req/s"
+                        <InputNumber
                             value={average.value}
-                            onValueChange={v => {
-                                average.onChange(v ?? 0);
-                            }}
+                            onValueChange={average.onChange}
+                            placeholder="100"
+                            className="max-w-[100px]"
                             useGrouping={false}
-                            classNameContainer="max-w-[240px]"
+                            aria-invalid={averageInvalid}
                         />
                         <FieldError errors={[averageError]} />
                     </InfoBlock>
 
                     <InfoBlock title="Period">
-                        <InputNumberWithAddon
-                            addonLeft="ms"
+                        <Input
                             value={period.value}
-                            onValueChange={v => {
-                                period.onChange(v ?? 0);
+                            onChange={v => {
+                                period.onChange(v);
                             }}
-                            useGrouping={false}
-                            classNameContainer="max-w-[240px]"
+                            placeholder="1s"
+                            className="max-w-[100px]"
+                            aria-invalid={periodInvalid}
                         />
                         <FieldError errors={[periodError]} />
                     </InfoBlock>
 
                     <InfoBlock title="Burst">
-                        <InputNumberWithAddon
-                            addonLeft="req"
+                        <InputNumber
                             value={burst.value}
-                            onValueChange={v => {
-                                burst.onChange(v ?? 0);
-                            }}
+                            onValueChange={burst.onChange}
+                            placeholder="100"
+                            className="max-w-[100px]"
                             useGrouping={false}
-                            classNameContainer="max-w-[240px]"
+                            aria-invalid={burstInvalid}
                         />
                         <FieldError errors={[burstError]} />
                     </InfoBlock>
 
                     <InfoBlock title="Max In-Flight Requests">
-                        <InputNumberWithAddon
-                            addonLeft="req"
+                        <InputNumber
                             value={maxInFlightReq.value}
-                            onValueChange={v => {
-                                maxInFlightReq.onChange(v ?? 0);
-                            }}
+                            onValueChange={maxInFlightReq.onChange}
+                            placeholder="100"
+                            className="max-w-[100px]"
                             useGrouping={false}
-                            classNameContainer="max-w-[240px]"
+                            aria-invalid={maxInFlightReqInvalid}
                         />
                         <FieldError errors={[maxInFlightReqError]} />
                     </InfoBlock>

@@ -8,9 +8,9 @@ export const HttpSettingsRefSchema = z.object({
 
 export const HttpClientConfigSchema = z.object({
     enabled: z.boolean(),
-    maxRequestBody: z.number().min(0),
-    memRequestBody: z.number().min(0),
-    allowedIPs: z.array(z.object({ value: z.string() })),
+    maxRequestBody: z.string(),
+    memRequestBody: z.string(),
+    allowedIPs: z.string(),
 });
 
 export const HttpHeaderConfigSchema = z.object({
@@ -22,16 +22,16 @@ export const HttpHeaderConfigSchema = z.object({
 
 export const HttpCompressionConfigSchema = z.object({
     enabled: z.boolean(),
-    excludedContentTypes: z.array(z.object({ value: z.string() })),
-    includedContentTypes: z.array(z.object({ value: z.string() })),
-    minResponseBody: z.number().min(0),
+    excludedContentTypes: z.string(),
+    includedContentTypes: z.string(),
+    minResponseBody: z.string(),
     defaultEncoding: z.string(),
 });
 
 export const HttpRateLimitConfigSchema = z.object({
     enabled: z.boolean(),
     average: z.number().min(0),
-    period: z.number().min(0),
+    period: z.string(),
     burst: z.number().min(0),
     maxInFlightReq: z.number().min(0),
 });
@@ -74,9 +74,9 @@ export function createDefaultBasicAuthRef(): z.infer<typeof HttpSettingsRefSchem
 export function createDefaultClientConfig(): z.infer<typeof HttpClientConfigSchema> {
     return {
         enabled: false,
-        maxRequestBody: 0,
-        memRequestBody: 0,
-        allowedIPs: [],
+        maxRequestBody: "",
+        memRequestBody: "",
+        allowedIPs: "",
     };
 }
 
@@ -92,9 +92,9 @@ export function createDefaultHeaderConfig(): z.infer<typeof HttpHeaderConfigSche
 export function createDefaultCompressionConfig(): z.infer<typeof HttpCompressionConfigSchema> {
     return {
         enabled: false,
-        excludedContentTypes: [],
-        includedContentTypes: [],
-        minResponseBody: 0,
+        excludedContentTypes: "",
+        includedContentTypes: "",
+        minResponseBody: "",
         defaultEncoding: "",
     };
 }
@@ -103,7 +103,7 @@ export function createDefaultRateLimitConfig(): z.infer<typeof HttpRateLimitConf
     return {
         enabled: false,
         average: 0,
-        period: 0,
+        period: "",
         burst: 0,
         maxInFlightReq: 0,
     };

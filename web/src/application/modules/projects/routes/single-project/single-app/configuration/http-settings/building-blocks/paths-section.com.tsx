@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, FieldError, Input } from "@components/ui";
+import { Badge } from "@components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
@@ -8,6 +9,7 @@ import { useController, useFieldArray, useFormContext } from "react-hook-form";
 import { EHttpPathMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { PopConfirm } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
@@ -47,7 +49,7 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
             open={expanded}
             onOpenChange={setExpanded}
         >
-            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+            <div className="flex items-center gap-2 rounded-md border p2 bg-accent">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
@@ -58,20 +60,26 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        <span className="font-mono text-sm">{path.value}</span>
-                        <span className="text-xs text-muted-foreground rounded bg-accent px-1.5 py-0.5">
-                            {mode.value}
-                        </span>
+                        <span className="font-mono text-sm text-red-500">Path: {path.value}</span>
+                        <Badge>{mode.value}</Badge>
                     </button>
                 </CollapsibleTrigger>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={onRemove}
+                <PopConfirm
+                    title="Remove path"
+                    description="Confirm deletion of this path?"
+                    confirmText="Remove"
+                    cancelText="Cancel"
+                    variant="destructive"
+                    onConfirm={onRemove}
                 >
-                    <Trash2 className="size-3.5" />
-                </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                    >
+                        <Trash2 className="size-3.5" />
+                    </Button>
+                </PopConfirm>
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
@@ -107,10 +115,7 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
                         </Tabs>
                     </InfoBlock>
 
-                    <HttpConfigurableSections
-                        basePath={basePath}
-                        scope="path"
-                    />
+                    <HttpConfigurableSections basePath={basePath} />
                 </div>
             </CollapsibleContent>
         </Collapsible>
@@ -140,66 +145,67 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
     }
 
     return (
-        <InfoBlock
-            title={
-                <LabelWithInfo
-                    label="Path Rules"
-                    content="Override settings for specific request paths."
-                />
-            }
-        >
-            <div className="flex flex-col gap-3 max-w-[700px]">
-                <div className="flex items-center gap-2">
-                    <Input
-                        value={newPath}
-                        onChange={e => {
-                            setNewPath(e.target.value);
-                        }}
-                        placeholder="/api/admin"
-                        className="flex-1"
-                        onKeyDown={e => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleAdd();
-                            }
-                        }}
+        <>
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Path"
+                        content="Override settings for specific request paths."
                     />
-                    <Tabs
-                        value={newMode}
-                        onValueChange={v => {
-                            setNewMode(v as EHttpPathMode);
-                        }}
-                        className="w-fit"
-                    >
-                        <TabsList>
-                            <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
-                            <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
-                            <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAdd}
-                        disabled={!newPath.trim()}
-                    >
-                        <Plus className="size-4" /> Add
-                    </Button>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    {fields.map((field, index) => (
-                        <PathRow
-                            key={field.id}
-                            domainIndex={domainIndex}
-                            pathIndex={index}
-                            onRemove={() => {
-                                remove(index);
+                }
+            >
+                <div className="flex flex-col gap-3 max-w-[700px]">
+                    <div className="flex items-center gap-2">
+                        <Input
+                            value={newPath}
+                            onChange={e => {
+                                setNewPath(e.target.value);
+                            }}
+                            placeholder="/api/admin"
+                            className="flex-1"
+                            onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleAdd();
+                                }
                             }}
                         />
-                    ))}
+                        <Tabs
+                            value={newMode}
+                            onValueChange={v => {
+                                setNewMode(v as EHttpPathMode);
+                            }}
+                            className="w-fit"
+                        >
+                            <TabsList>
+                                <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
+                                <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
+                                <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAdd}
+                            disabled={!newPath.trim()}
+                        >
+                            <Plus className="size-4" /> Add
+                        </Button>
+                    </div>
                 </div>
+            </InfoBlock>
+            <div className="flex flex-col gap-2">
+                {fields.map((field, index) => (
+                    <PathRow
+                        key={field.id}
+                        domainIndex={domainIndex}
+                        pathIndex={index}
+                        onRemove={() => {
+                            remove(index);
+                        }}
+                    />
+                ))}
             </div>
-        </InfoBlock>
+        </>
     );
 }

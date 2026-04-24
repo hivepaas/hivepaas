@@ -16,7 +16,17 @@
     "format:src:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "codegen:download": "curl -o ./src/infrastructure/api/be-api/swagger.json -LJO https://raw.githubusercontent.com/localpaas/localpaas/main/docs/openapi/swagger.json",
     "codegen:gen": "openapi-ts",
-    "codegen": "yarn codegen:download && yarn codegen:gen"
+    "codegen": "yarn codegen:download && yarn codegen:gen",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^5.0.1",
@@ -103,6 +113,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.5.6",
     "prettier": "^3.3.3",
     "tailwindcss": "^4.1.16",

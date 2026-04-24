@@ -1,15 +1,15 @@
 import { useState } from "react";
 
-import { Button, Input } from "@components/ui";
+import { Input } from "@components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { EEndpointResolutionMode, EPortConfigProtocol, EPortConfigPublishMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
+import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
 
@@ -65,6 +65,7 @@ export function EndpointPortConfigFields() {
                     external access, consider using port mapping in the HTTP settings.
                 </div>
             </div>
+
             <InfoBlock
                 title={
                     <LabelWithInfo
@@ -73,124 +74,103 @@ export function EndpointPortConfigFields() {
                     />
                 }
             >
-                <div className="flex flex-col gap-2">
-                    <div className="flex gap-3 items-center max-w-[800px]">
-                        <InputNumberWithAddon
-                            addonLeft="Host"
-                            value={published}
-                            onValueChange={v => {
-                                setPublished(v ?? 0);
-                            }}
-                            useGrouping={false}
-                            placeholder="8000"
-                            classNameContainer="col-span-3"
-                        />
-                        <InputNumberWithAddon
-                            addonLeft="Container"
-                            value={target}
-                            onValueChange={v => {
-                                setTarget(v ?? 0);
-                            }}
-                            useGrouping={false}
-                            placeholder="80"
-                        />
-                        <div className="flex items-center rounded-md border border-input h-9 flex-1">
-                            <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
-                                Protocol
-                            </span>
-                            <Select
-                                value={protocol}
-                                onValueChange={value => {
-                                    setProtocol(value as EPortConfigProtocol);
+                <FieldListLayout
+                    className="max-w-[800px]"
+                    inputRow={
+                        <div className="flex gap-3 items-center flex-1">
+                            <InputNumberWithAddon
+                                addonLeft="Host"
+                                value={published}
+                                onValueChange={v => {
+                                    setPublished(v ?? 0);
                                 }}
-                            >
-                                <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={EPortConfigProtocol.TCP}>TCP</SelectItem>
-                                    <SelectItem value={EPortConfigProtocol.UDP}>UDP</SelectItem>
-                                    <SelectItem value={EPortConfigProtocol.SCTP}>SCTP</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center rounded-md border border-input h-9 flex-1">
-                            <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
-                                Mode
-                            </span>
-                            <Select
-                                value={publishMode}
-                                onValueChange={value => {
-                                    setPublishMode(value as EPortConfigPublishMode);
+                                useGrouping={false}
+                                placeholder="8000"
+                                classNameContainer="col-span-3"
+                            />
+                            <InputNumberWithAddon
+                                addonLeft="Container"
+                                value={target}
+                                onValueChange={v => {
+                                    setTarget(v ?? 0);
                                 }}
-                            >
-                                <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={EPortConfigPublishMode.Host}>Host</SelectItem>
-                                    <SelectItem value={EPortConfigPublishMode.Ingress}>Ingress</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                append({
-                                    published,
-                                    target,
-                                    protocol,
-                                    publishMode,
-                                });
-                                setPublished(0);
-                                setTarget(0);
-                            }}
-                            disabled={published === 0 || target === 0}
-                        >
-                            <Plus className="size-4" /> Add
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="divide-y divide-zinc-200">
-                    {fields.map((field, index) => (
-                        <div
-                            key={field.id}
-                            className="flex items-center gap-3 py-2 max-w-[800px]"
-                        >
-                            <Input
-                                value={field.published}
-                                disabled
+                                useGrouping={false}
+                                placeholder="80"
                             />
-                            <Input
-                                value={field.target}
-                                disabled
-                            />
-                            <Input
-                                value={field.protocol}
-                                disabled
-                            />
-                            <Input
-                                value={field.publishMode}
-                                disabled
-                            />
-                            <div className="w-[76px]">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        remove(index);
+                            <div className="flex items-center rounded-md border border-input h-9 flex-1">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                    Protocol
+                                </span>
+                                <Select
+                                    value={protocol}
+                                    onValueChange={value => {
+                                        setProtocol(value as EPortConfigProtocol);
                                     }}
                                 >
-                                    <Trash2 className="size-4" />
-                                </Button>
+                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={EPortConfigProtocol.TCP}>TCP</SelectItem>
+                                        <SelectItem value={EPortConfigProtocol.UDP}>UDP</SelectItem>
+                                        <SelectItem value={EPortConfigProtocol.SCTP}>SCTP</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-center rounded-md border border-input h-9 flex-1">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                    Mode
+                                </span>
+                                <Select
+                                    value={publishMode}
+                                    onValueChange={value => {
+                                        setPublishMode(value as EPortConfigPublishMode);
+                                    }}
+                                >
+                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={EPortConfigPublishMode.Host}>Host</SelectItem>
+                                        <SelectItem value={EPortConfigPublishMode.Ingress}>Ingress</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-                    ))}
-                </div>
+                    }
+                    onAdd={() => {
+                        append({ published, target, protocol, publishMode });
+                        setPublished(0);
+                        setTarget(0);
+                    }}
+                    addDisabled={published === 0 || target === 0}
+                    items={fields.map((field, index) => ({
+                        id: field.id,
+                        content: (
+                            <div className="flex gap-3 flex-1">
+                                <Input
+                                    value={field.published}
+                                    disabled
+                                />
+                                <Input
+                                    value={field.target}
+                                    disabled
+                                />
+                                <Input
+                                    value={field.protocol}
+                                    disabled
+                                />
+                                <Input
+                                    value={field.publishMode}
+                                    disabled
+                                />
+                            </div>
+                        ),
+                        onRemove: () => {
+                            remove(index);
+                        },
+                    }))}
+                />
             </InfoBlock>
         </>
     );

@@ -1,186 +1,17 @@
 import { useState } from "react";
 
-import { Button, Input } from "@components/ui";
+import { Button } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList, SingleValueList } from "@application/shared/form";
 
 import { type AppConfigHttpSettingsFormSchemaInput } from "../schemas";
 
 interface HeaderConfigSectionProps {
     prefix: string;
     onRemove?: () => void;
-}
-
-function KeyValueList({
-    name,
-    title,
-    keyPlaceholder,
-    valuePlaceholder,
-    description,
-}: {
-    name: string;
-    title: string;
-    keyPlaceholder?: string;
-    valuePlaceholder?: string;
-    description?: string;
-}) {
-    const { control } = useFormContext<AppConfigHttpSettingsFormSchemaInput>();
-    const { fields, append, remove } = useFieldArray({ control, name: name as never });
-    const [keyInput, setKeyInput] = useState("");
-    const [valueInput, setValueInput] = useState("");
-
-    return (
-        <InfoBlock
-            title={
-                <LabelWithInfo
-                    label={title}
-                    content={description}
-                />
-            }
-        >
-            <div className="flex flex-col gap-2 max-w-[550px]">
-                <div className="flex gap-2">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                        <InputWithAddOn
-                            addonLeft="Name"
-                            value={keyInput}
-                            onChange={e => {
-                                setKeyInput(e.target.value);
-                            }}
-                            placeholder={keyPlaceholder ?? "Name"}
-                            className="flex-1"
-                        />
-                        <InputWithAddOn
-                            addonLeft="Value"
-                            value={valueInput}
-                            onChange={e => {
-                                setValueInput(e.target.value);
-                            }}
-                            placeholder={valuePlaceholder ?? "Value"}
-                            className="flex-1"
-                        />
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                            if (keyInput.trim()) {
-                                append({ key: keyInput.trim(), value: valueInput.trim() });
-                                setKeyInput("");
-                                setValueInput("");
-                            }
-                        }}
-                    >
-                        <Plus className="size-4" /> Add
-                    </Button>
-                </div>
-                <div className="flex flex-col divide-y">
-                    {fields.map((field, index) => (
-                        <div
-                            key={field.id}
-                            className="flex items-center justify-between"
-                        >
-                            <div className="flex-1 grid grid-cols-2 items-center gap-2 py-1.5">
-                                <span className="text-sm break-words">{(field as { key?: string }).key}</span>
-                                <span className="text-sm break-words">{(field as { value?: string }).value}</span>
-                            </div>
-                            <div className="w-[76px]">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        remove(index);
-                                    }}
-                                >
-                                    <Trash2 className="size-3.5" />
-                                </Button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </InfoBlock>
-    );
-}
-
-function StringList({
-    name,
-    title,
-    placeholder,
-    description,
-}: {
-    name: string;
-    title: string;
-    placeholder?: string;
-    description?: string;
-}) {
-    const { control } = useFormContext<AppConfigHttpSettingsFormSchemaInput>();
-    const { fields, append, remove } = useFieldArray({ control, name: name as never });
-    const [input, setInput] = useState("");
-
-    return (
-        <InfoBlock
-            title={
-                <LabelWithInfo
-                    label={title}
-                    content={description}
-                />
-            }
-        >
-            <div className="flex flex-col gap-2 max-w-[314px]">
-                <div className="flex gap-2">
-                    <Input
-                        value={input}
-                        onChange={e => {
-                            setInput(e.target.value);
-                        }}
-                        placeholder={placeholder ?? "Header name"}
-                        className="flex-1"
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                            if (input.trim()) {
-                                append({ value: input.trim() });
-                                setInput("");
-                            }
-                        }}
-                    >
-                        <Plus className="size-4" /> Add
-                    </Button>
-                </div>
-                <div className="flex flex-col divide-y">
-                    {fields.map((field, index) => (
-                        <div
-                            key={field.id}
-                            className="flex items-center justify-between py-1.5"
-                        >
-                            <div className="flex-1 grid grid-cols-1 items-center">
-                                <div className="text-sm break-words">{(field as { value?: string }).value}</div>
-                            </div>
-                            <div className="w-[76px]">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        remove(index);
-                                    }}
-                                >
-                                    <Trash2 className="size-3.5" />
-                                </Button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </InfoBlock>
-    );
 }
 
 export function HeaderConfigSection({ prefix, onRemove }: HeaderConfigSectionProps) {
@@ -228,26 +59,60 @@ export function HeaderConfigSection({ prefix, onRemove }: HeaderConfigSectionPro
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <KeyValueList
-                        name={`${prefix}.toAddToRequests`}
-                        title="To Add To Requests"
-                        description="Headers to add to the request."
-                    />
-                    <StringList
-                        name={`${prefix}.toRemoveFromRequests`}
-                        title="To Remove From Requests"
-                        description="Headers to remove from the request."
-                    />
-                    <KeyValueList
-                        name={`${prefix}.toAddToResponses`}
-                        title="To Add To Responses"
-                        description="Headers to add to the response."
-                    />
-                    <StringList
-                        name={`${prefix}.toRemoveFromResponses`}
-                        title="To Remove From Responses"
-                        description="Headers to remove from the response."
-                    />
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="To Add To Requests"
+                                content="Headers to add to the request."
+                            />
+                        }
+                    >
+                        <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
+                            name={`${prefix}.toAddToRequests` as never}
+                            className="max-w-[550px]"
+                        />
+                    </InfoBlock>
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="To Remove From Requests"
+                                content="Headers to remove from the request."
+                            />
+                        }
+                    >
+                        <SingleValueList<AppConfigHttpSettingsFormSchemaInput>
+                            name={`${prefix}.toRemoveFromRequests` as never}
+                            placeholder="Header name"
+                            className="max-w-[314px]"
+                        />
+                    </InfoBlock>
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="To Add To Responses"
+                                content="Headers to add to the response."
+                            />
+                        }
+                    >
+                        <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
+                            name={`${prefix}.toAddToResponses` as never}
+                            className="max-w-[550px]"
+                        />
+                    </InfoBlock>
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="To Remove From Responses"
+                                content="Headers to remove from the response."
+                            />
+                        }
+                    >
+                        <SingleValueList<AppConfigHttpSettingsFormSchemaInput>
+                            name={`${prefix}.toRemoveFromResponses` as never}
+                            placeholder="Header name"
+                            className="max-w-[314px]"
+                        />
+                    </InfoBlock>
                 </div>
             </CollapsibleContent>
         </Collapsible>

@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-import { Button, Input } from "@components/ui";
+import { Input } from "@components/ui";
 import { Checkbox } from "@components/ui/checkbox";
 import { InputNumber } from "@components/ui/input-number";
-import { Plus, Trash2 } from "lucide-react";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
 import { InfoBlock, InputNumberWithAddon, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
@@ -115,9 +115,11 @@ export function CapabilitiesFields() {
                     />
                 }
             >
-                <div className="flex flex-col gap-3 max-w-[590px]">
-                    <div className="flex gap-3 items-center">
-                        <div className="grid grid-cols-2 flex-1 gap-3">
+                <FieldListLayout
+                    className="max-w-[590px]"
+                    inputsClassName="grid grid-cols-2 flex-1 gap-3"
+                    inputRow={
+                        <>
                             <InputWithAddOn
                                 addonLeft="Name"
                                 value={newName}
@@ -139,54 +141,28 @@ export function CapabilitiesFields() {
                                 useGrouping={false}
                                 placeholder="1024"
                             />
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                if (!newName.trim()) return;
-                                append({ name: newName.trim(), value: newValue.trim() });
-                                setNewName("");
-                                setNewValue("");
-                            }}
-                            disabled={!newName.trim()}
-                        >
-                            <Plus className="size-4" /> Add
-                        </Button>
-                    </div>
-
-                    <div className="divide-y divide-zinc-200">
-                        {fields.map((field, index) => (
-                            <div
-                                key={field.id}
-                                className="flex items-center gap-3 py-2"
-                            >
-                                <div className="grid grid-cols-2 flex-1 gap-3">
-                                    <Input
-                                        value={field.name}
-                                        disabled
-                                    />
-                                    <Input
-                                        value={field.value}
-                                        disabled
-                                    />
-                                </div>
-                                <div className="w-[76px]">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                            remove(index);
-                                        }}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
+                        </>
+                    }
+                    onAdd={() => {
+                        if (!newName.trim()) return;
+                        append({ name: newName.trim(), value: newValue.trim() });
+                        setNewName("");
+                        setNewValue("");
+                    }}
+                    addDisabled={!newName.trim()}
+                    items={fields.map((field, index) => ({
+                        id: field.id,
+                        content: (
+                            <div className="grid grid-cols-2 flex-1 gap-3">
+                                <span className="text-sm break-words">{field.name}</span>
+                                <span className="text-sm break-words">{field.value}</span>
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        ),
+                        onRemove: () => {
+                            remove(index);
+                        },
+                    }))}
+                />
             </InfoBlock>
         </div>
     );

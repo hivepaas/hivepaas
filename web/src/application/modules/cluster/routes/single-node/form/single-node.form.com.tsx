@@ -1,16 +1,15 @@
 import * as React from "react";
-import { type PropsWithChildren, useImperativeHandle, useState } from "react";
+import { type PropsWithChildren, useImperativeHandle } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { FieldError, Input } from "@components/ui";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
-import { FormProvider, useController, useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { FormProvider, useController, useForm } from "react-hook-form";
 import { type NodeDetails } from "~/cluster/domain";
 import { ENodeAvailability, ENodeRole } from "~/cluster/module-shared/enums";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList } from "@application/shared/form";
 
 import { NodeStatusBadge } from "@application/modules/cluster/module-shared/components";
 
@@ -33,14 +32,6 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
         control,
         formState: { errors },
     } = methods;
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "labels",
-    });
-
-    const [newLabelKey, setNewLabelKey] = useState("");
-    const [newLabelValue, setNewLabelValue] = useState("");
 
     useImperativeHandle(
         ref,
@@ -65,21 +56,6 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
         control,
         name: "name",
     });
-
-    const handleAddLabel = () => {
-        if (newLabelKey && newLabelValue) {
-            const exists = fields.some(field => field.key === newLabelKey);
-
-            if (exists) {
-                toast.error(`Label key "${newLabelKey}" already exists`);
-                return;
-            }
-
-            append({ key: newLabelKey, value: newLabelValue });
-            setNewLabelKey("");
-            setNewLabelValue("");
-        }
-    };
 
     return (
         <div className="pt-2">
@@ -201,62 +177,12 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, children }: Props
                             />
                         }
                     >
-                        <div className="flex flex-col gap-4 max-w-[660px]">
-                            <div className="flex gap-4">
-                                <InputWithAddOn
-                                    addonLeft="Label"
-                                    value={newLabelKey}
-                                    onChange={e => {
-                                        setNewLabelKey(e.target.value);
-                                    }}
-                                    // className="bg-white border-zinc-200"
-                                />
-                                <InputWithAddOn
-                                    addonLeft="Value"
-                                    value={newLabelValue}
-                                    onChange={e => {
-                                        setNewLabelValue(e.target.value);
-                                    }}
-                                    // className="bg-white border-zinc-200"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleAddLabel}
-                                    disabled={newLabelKey === "" || newLabelValue === ""}
-                                    className=" border-zinc-20 h-9 px-4"
-                                >
-                                    <Plus className="size-4" /> Add
-                                </Button>
-                            </div>
-
-                            <div className="mt-2 divide-y divide-zinc-200">
-                                {fields.map((field, index) => (
-                                    <div
-                                        key={field.id}
-                                        className="flex items-center group gap-4 py-2"
-                                    >
-                                        <div className="grid grid-cols-2 flex-1 gap-4">
-                                            <div className="text-sm break-words">{field.key}</div>
-                                            <div className="text-sm break-words">{field.value}</div>
-                                        </div>
-                                        <div className="w-[76px]">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    remove(index);
-                                                }}
-                                                className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        <KeyValueList<SingleNodeFormSchemaInput>
+                            name="labels"
+                            keyLabel="Label"
+                            className="max-w-[660px]"
+                            checkDuplicates
+                        />
                     </InfoBlock>
                     {children}
                 </form>

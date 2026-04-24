@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Textarea } from "@components/ui/textarea";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
-import { useController, useFieldArray, useFormContext } from "react-hook-form";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputNumberWithAddon, InputWithAddOn } from "@application/shared/components";
+import { InfoBlock } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 

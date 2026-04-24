@@ -1,10 +1,9 @@
 import { useState } from "react";
 
-import { Button, Input } from "@components/ui";
-import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { EditableCombobox, InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/shared/components";
+import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
@@ -39,20 +38,8 @@ export function UlimitsFields() {
     });
 
     const [name, setName] = useState<string>("");
-    const [soft, setSoft] = useState("");
-    const [hard, setHard] = useState("");
-
-    const handleAdd = () => {
-        if (!name) return;
-        append({
-            name,
-            soft: Number(soft),
-            hard: Number(hard),
-        });
-        setName("");
-        setSoft("");
-        setHard("");
-    };
+    const [soft, setSoft] = useState<number>(0);
+    const [hard, setHard] = useState<number>(0);
 
     return (
         <div className="flex flex-col gap-6 px-2">
@@ -64,9 +51,11 @@ export function UlimitsFields() {
                     />
                 }
             >
-                <div className="flex flex-col gap-3 max-w-[590px]">
-                    <div className="flex gap-3 items-center">
-                        <div className="grid grid-cols-10 flex-1 gap-3">
+                <FieldListLayout
+                    className="max-w-[590px]"
+                    inputsClassName="grid grid-cols-10 flex-1 gap-3"
+                    inputRow={
+                        <>
                             <div className="col-span-4 flex items-center rounded-md border border-input h-9 flex-1">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
                                     Name
@@ -82,9 +71,9 @@ export function UlimitsFields() {
                             </div>
                             <InputNumberWithAddon
                                 addonLeft="Soft"
-                                value={soft.trim() === "" || Number.isNaN(Number(soft)) ? undefined : Number(soft)}
+                                value={soft}
                                 onValueChange={v => {
-                                    setSoft(v === undefined ? "" : String(v));
+                                    setSoft(v ?? 0);
                                 }}
                                 useGrouping={false}
                                 placeholder="1024"
@@ -92,63 +81,38 @@ export function UlimitsFields() {
                             />
                             <InputNumberWithAddon
                                 addonLeft="Hard"
-                                value={hard.trim() === "" || Number.isNaN(Number(hard)) ? undefined : Number(hard)}
+                                value={hard}
                                 onValueChange={v => {
-                                    setHard(v === undefined ? "" : String(v));
+                                    setHard(v ?? 0);
                                 }}
                                 useGrouping={false}
                                 placeholder="1024"
                                 classNameContainer="col-span-3"
                             />
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAdd}
-                        >
-                            <Plus className="size-4" /> Add
-                        </Button>
-                    </div>
-
-                    <div className="divide-y divide-zinc-200">
-                        {fields.map((field, index) => (
-                            <div
-                                key={field.id}
-                                className="flex items-center gap-3 py-2"
-                            >
-                                <div className="grid grid-cols-10 flex-1 gap-3">
-                                    <Input
-                                        value={field.name}
-                                        disabled
-                                        className="col-span-4"
-                                    />
-                                    <Input
-                                        value={String(field.soft)}
-                                        disabled
-                                        className="col-span-3"
-                                    />
-                                    <Input
-                                        value={String(field.hard)}
-                                        disabled
-                                        className="col-span-3"
-                                    />
-                                </div>
-                                <div className="w-[76px]">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                            remove(index);
-                                        }}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
+                        </>
+                    }
+                    onAdd={() => {
+                        if (!name) return;
+                        append({ name, soft, hard });
+                        setName("");
+                        setSoft(0);
+                        setHard(0);
+                    }}
+                    addDisabled={!name}
+                    items={fields.map((field, index) => ({
+                        id: field.id,
+                        content: (
+                            <div className="grid grid-cols-10 flex-1 gap-3">
+                                <span className="text-sm break-words col-span-4">{field.name}</span>
+                                <span className="text-sm break-words col-span-3">{field.soft}</span>
+                                <span className="text-sm break-words col-span-3">{field.hard}</span>
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        ),
+                        onRemove: () => {
+                            remove(index);
+                        },
+                    }))}
+                />
             </InfoBlock>
         </div>
     );

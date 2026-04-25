@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 
 import { Field, FieldError } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
-import { Link } from "react-router";
-import { NotificationQueries } from "~/settings/data/queries";
+import { Link, useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { ProjectNotificationQueries } from "~/projects/data/queries";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -22,6 +23,9 @@ export interface NotificationSelectProps {
 }
 
 export function NotificationSelect({ name, title, disabled = false }: NotificationSelectProps) {
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
+
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -35,7 +39,8 @@ export function NotificationSelect({ name, title, disabled = false }: Notificati
         isFetching,
         refetch,
         isRefetching,
-    } = NotificationQueries.useFindManyPaginated({
+    } = ProjectNotificationQueries.useFindManyPaginated({
+        projectID: projectId,
         search: searchQuery,
     });
 

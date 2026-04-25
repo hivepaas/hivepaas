@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
-import { CircleHelp } from "lucide-react";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { LinkGenerate } from "../building-blocks";
@@ -37,7 +35,11 @@ export function InviteUserDialog() {
             { user: values, sendInviteEmail },
             {
                 onSuccess: response => {
-                    setInviteLink(response.data.inviteLink);
+                    if (sendInviteEmail) {
+                        setInviteLink(null);
+                    } else {
+                        setInviteLink(response.data.inviteLink);
+                    }
                     setSendInviteEmail(false); // Reset after submission
                 },
             },
@@ -82,30 +84,12 @@ export function InviteUserDialog() {
                             type="submit"
                             variant="default"
                             isLoading={isGeneratingLink}
-                            disabled={inviteLink !== null}
                             onClick={() => {
                                 setSendInviteEmail(true);
                             }}
                         >
                             Send Email
                         </Button>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    type="button"
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <CircleHelp className="size-5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p className="max-w-xs">
-                                    <strong>Send Email:</strong> Automatically sends an invitation email to the user
-                                    <br />
-                                    <strong>Generate Link:</strong> Creates an invite link you can share manually
-                                </p>
-                            </TooltipContent>
-                        </Tooltip>
                         <Button
                             type="submit"
                             variant="default"

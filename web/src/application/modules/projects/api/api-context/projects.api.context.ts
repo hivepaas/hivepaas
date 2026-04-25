@@ -11,10 +11,10 @@ import {
     AppServiceSettingsApiValidator,
     ProjectAppEnvVarsApi,
     ProjectAppEnvVarsApiValidator,
-    ProjectBasicAuthApi,
-    ProjectBasicAuthApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
+    ProjectBasicAuthApi,
+    ProjectBasicAuthApiValidator,
     ProjectDomainSettingsApi,
     ProjectDomainSettingsApiValidator,
     ProjectEnvVarsApi,
@@ -23,6 +23,8 @@ import {
     ProjectGitCredentialsApiValidator,
     ProjectNetworksApi,
     ProjectNetworksApiValidator,
+    ProjectNotificationApi,
+    ProjectNotificationApiValidator,
     ProjectRegistryAuthApi,
     ProjectRegistryAuthApiValidator,
     ProjectSecretsApi,
@@ -61,6 +63,7 @@ function createApi() {
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
     const projectNetworksApiValidator = new ProjectNetworksApiValidator();
+    const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
@@ -120,6 +123,9 @@ function createApi() {
             },
             networks: {
                 $: new ProjectNetworksApi(projectNetworksApiValidator),
+            },
+            notifications: {
+                $: new ProjectNotificationApi(projectNotificationApiValidator),
             },
             gitCredentials: {
                 $: new ProjectGitCredentialsApi(projectGitCredentialsApiValidator),

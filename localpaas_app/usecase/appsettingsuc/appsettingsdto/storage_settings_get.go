@@ -1,14 +1,18 @@
 package appsettingsdto
 
 import (
+	"strings"
+
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/osutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 )
 
@@ -41,7 +45,6 @@ type StorageSettingsResp struct {
 
 type Mount struct {
 	Type           mount.Type        `json:"type"`
-	Source         string            `json:"source,omitempty"`
 	Target         string            `json:"target"`
 	ReadOnly       bool              `json:"readOnly,omitempty"`
 	Consistency    mount.Consistency `json:"consistency,omitempty"`
@@ -52,6 +55,10 @@ type Mount struct {
 }
 
 type BindOptions struct {
+	BaseDir         string `json:"baseDir"`
+	Subpath         string `json:"subpath"`
+	SubpathRequired string `json:"subpathRequired"`
+
 	Propagation            mount.Propagation `json:"propagation"`
 	NonRecursive           bool              `json:"nonRecursive"`
 	CreateMountpoint       bool              `json:"createMountpoint"`
@@ -60,9 +67,12 @@ type BindOptions struct {
 }
 
 type VolumeOptions struct {
+	Volume          string `json:"volume"`
+	Subpath         string `json:"subpath"`
+	SubpathRequired string `json:"subpathRequired"`
+
 	NoCopy       bool              `json:"noCopy"`
 	Labels       map[string]string `json:"labels"`
-	Subpath      string            `json:"subpath"`
 	DriverConfig *VolumeDriver     `json:"driverConfig"`
 }
 
@@ -82,6 +92,8 @@ type ClusterOptions struct {
 }
 
 func TransformStorageSettings(
+	app *entity.App,
+	storageSettings *entity.StorageSettings,
 	service *swarm.Service,
 ) (resp *StorageSettingsResp, err error) {
 	spec := &service.Spec
@@ -89,7 +101,7 @@ func TransformStorageSettings(
 		UpdateVer: int(service.Version.Index), //nolint:gosec
 	}
 
-	resp.Mounts, err = TransformStorageMounts(spec.TaskTemplate.ContainerSpec.Mounts)
+	resp.Mounts, err = TransformStorageMounts(app, storageSettings, spec.TaskTemplate.ContainerSpec.Mounts)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -97,17 +109,80 @@ func TransformStorageSettings(
 	return resp, nil
 }
 
-func TransformStorageMount(mount *mount.Mount) (resp *Mount, err error) {
-	if err = copier.Copy(&resp, mount); err != nil {
+func TransformStorageMount(
+	app *entity.App,
+	storageSettings *entity.StorageSettings,
+	mnt *mount.Mount,
+) (resp *Mount, err error) {
+	if err = copier.Copy(&resp, mnt); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+
+	switch mnt.Type { //nolint:exhaustive
+	case mount.TypeBind:
+		if resp.BindOptions == nil {
+			resp.BindOptions = &BindOptions{}
+		}
+		mntResp := resp.BindOptions
+		mntSettings := storageSettings.BindSettings
+		if mntSettings == nil {
+			mntSettings = &entity.StorageBindSettings{}
+		}
+
+		mntResp.SubpathRequired = mntSettings.CaclRequiredSubpath(app)
+		baseDir, _, found := strutil.Cut(mnt.Source, mntResp.SubpathRequired)
+		if found {
+			mntResp.BaseDir = baseDir
+			mntResp.Subpath = strings.TrimLeft(strings.TrimPrefix(mnt.Source, baseDir), "/\\")
+		} else {
+			mntResp.BaseDir = mnt.Source
+			mntResp.Subpath = ""
+		}
+
+	case mount.TypeVolume:
+		if resp.VolumeOptions == nil {
+			resp.VolumeOptions = &VolumeOptions{}
+		}
+		mntResp := resp.VolumeOptions
+		mntSettings := storageSettings.VolumeSettings
+		if mntSettings == nil {
+			mntSettings = &entity.StorageVolumeSettings{}
+		}
+
+		mntResp.Volume = mnt.Source
+		mntResp.SubpathRequired = mntSettings.CaclRequiredSubpath(app)
+		if mnt.VolumeOptions != nil {
+			mntResp.Subpath = mnt.VolumeOptions.Subpath
+		}
+
+	case mount.TypeCluster:
+		if resp.ClusterOptions == nil {
+			resp.ClusterOptions = &ClusterOptions{}
+		}
+		mntResp := resp.ClusterOptions
+		mntSettings := storageSettings.ClusterVolumeSettings
+		if mntSettings == nil {
+			mntSettings = &entity.StorageClusterVolumeSettings{}
+		}
+
+		mntResp.Volume = mnt.Source
+		mntResp.SubpathRequired = mntSettings.CaclRequiredSubpath(app)
+		if mnt.VolumeOptions != nil {
+			mntResp.Subpath = mnt.VolumeOptions.Subpath
+		}
+	}
+
 	return resp, nil
 }
 
-func TransformStorageMounts(mounts []mount.Mount) ([]*Mount, error) {
+func TransformStorageMounts(
+	app *entity.App,
+	storageSettings *entity.StorageSettings,
+	mounts []mount.Mount,
+) ([]*Mount, error) {
 	resp := make([]*Mount, 0, len(mounts))
 	for _, mnt := range mounts {
-		itemResp, err := TransformStorageMount(&mnt)
+		itemResp, err := TransformStorageMount(app, storageSettings, &mnt)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/swarm"
@@ -15,7 +16,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc/appsettingsdto"
 )
@@ -127,30 +127,21 @@ func (uc *UC) validateStorageSettingsBindMount(
 ) error {
 	bindSettings := storageSettings.BindSettings
 	if bindSettings == nil || !bindSettings.Enabled {
-		return apperrors.NewUnavailable("Bind settings is not configured")
-	}
-	if len(bindSettings.BaseDirs) == 0 {
-		return nil
+		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Bind settings")
 	}
 
-	var appSubpath string
-	if bindSettings.AppsMustUseSubPaths {
-		appSubpath = filepath.Join(bindSettings.BaseSubpath, app.Project.Key, app.LocalKey)
+	if len(bindSettings.BaseDirs) > 0 && !gofn.Contain(bindSettings.BaseDirs, mnt.BindOptions.BaseDir) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of base dir '%v'", mnt.BindOptions.BaseDir))
 	}
 
-	for _, baseDir := range bindSettings.BaseDirs {
-		if bindSettings.AppsMustUseSubPaths {
-			baseDir = filepath.Join(baseDir, appSubpath)
-		}
-		isSubpath, err := fileutil.IsEqualOrSubpath(baseDir, mnt.Source)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if isSubpath {
-			return nil
-		}
+	subpathRequired := bindSettings.CaclRequiredSubpath(app)
+	if subpathRequired != "" && !strings.HasPrefix(mnt.BindOptions.Subpath, subpathRequired) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.BindOptions.Subpath))
 	}
-	return apperrors.NewParamInvalid(fmt.Sprintf("Bind source '%v'", mnt.Source))
+
+	return nil
 }
 
 func (uc *UC) validateStorageSettingsVolumeMount(
@@ -160,28 +151,22 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 ) error {
 	volumeSettings := storageSettings.VolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
-		return apperrors.NewUnavailable("Volume settings is not configured")
-	}
-	if len(volumeSettings.Volumes) == 0 {
-		return nil
+		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Volume settings")
 	}
 
-	if !gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.Source) {
-		return apperrors.NewParamInvalid(fmt.Sprintf("Volume '%v'", mnt.Source))
+	if len(volumeSettings.Volumes) > 0 &&
+		!gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.VolumeOptions.Volume) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of volume '%v'", mnt.VolumeOptions.Volume))
 	}
 
-	if volumeSettings.AppsMustUseSubPaths {
-		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key, app.LocalKey)
-		isSubpath, err := fileutil.IsEqualOrSubpath(appSubpath, mnt.VolumeOptions.Subpath)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if isSubpath {
-			return nil
-		}
+	subpathRequired := volumeSettings.CaclRequiredSubpath(app)
+	if subpathRequired != "" && !strings.HasPrefix(mnt.VolumeOptions.Subpath, subpathRequired) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.VolumeOptions.Subpath))
 	}
 
-	return apperrors.NewParamInvalid(fmt.Sprintf("Volume '%v'", mnt.Source))
+	return nil
 }
 
 func (uc *UC) validateStorageSettingsClusterVolumeMount(
@@ -191,28 +176,22 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 ) error {
 	volumeSettings := storageSettings.ClusterVolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
-		return apperrors.NewUnavailable("Cluster volume settings is not configured")
-	}
-	if len(volumeSettings.Volumes) == 0 {
-		return nil
+		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Cluster volume settings")
 	}
 
-	if !gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.Source) {
-		return apperrors.NewParamInvalid(fmt.Sprintf("Cluster volume '%v'", mnt.Source))
+	if len(volumeSettings.Volumes) > 0 &&
+		!gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.ClusterOptions.Volume) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of volume '%v'", mnt.ClusterOptions.Volume))
 	}
 
-	if volumeSettings.AppsMustUseSubPaths {
-		appSubpath := filepath.Join(volumeSettings.BaseSubpath, app.Project.Key, app.LocalKey)
-		isSubpath, err := fileutil.IsEqualOrSubpath(appSubpath, mnt.VolumeOptions.Subpath)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if isSubpath {
-			return nil
-		}
+	subpathRequired := volumeSettings.CaclRequiredSubpath(app)
+	if subpathRequired != "" && !strings.HasPrefix(mnt.ClusterOptions.Subpath, subpathRequired) {
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.ClusterOptions.Subpath))
 	}
 
-	return apperrors.NewParamInvalid(fmt.Sprintf("Cluster volume '%v'", mnt.Source))
+	return nil
 }
 
 func (uc *UC) validateStorageSettingsTmpfsMount(
@@ -221,7 +200,7 @@ func (uc *UC) validateStorageSettingsTmpfsMount(
 ) error {
 	tmpfsSettings := storageSettings.TmpfsSettings
 	if tmpfsSettings == nil || !tmpfsSettings.Enabled {
-		return apperrors.NewUnavailable("Tmpfs settings is not configured")
+		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Tmpfs settings")
 	}
 
 	var size int64
@@ -229,7 +208,8 @@ func (uc *UC) validateStorageSettingsTmpfsMount(
 		size = int64(mnt.TmpfsOptions.Size)
 	}
 	if tmpfsSettings.MaxSize > 0 && size > int64(tmpfsSettings.MaxSize) {
-		return apperrors.NewParamInvalid(fmt.Sprintf("Tmpfs size '%v'", size))
+		return apperrors.New(apperrors.ErrSettingViolated).
+			WithParam("Name", fmt.Sprintf("Tmpfs size '%v'", size))
 	}
 
 	return nil
@@ -266,25 +246,33 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 			containerSpec.Mounts = append(containerSpec.Mounts, *mnt)
 			continue
 		}
-		// Use type and source to identify a mount (add subpath if Volume mount)
-		key := fmt.Sprintf("type:%v:src:%v", mnt.Type, mnt.Source)
-		if mnt.Type == mount.TypeVolume && mnt.VolumeOptions != nil && mnt.VolumeOptions.Subpath != "" {
-			key += fmt.Sprintf(":subpath:%v", mnt.VolumeOptions.Subpath)
+		// Use type and source to identify a mount
+		var subpath string
+		if mnt.VolumeOptions != nil {
+			subpath = mnt.VolumeOptions.Subpath
 		}
-		currMountMap[key] = mnt
+		currMountMap[fmt.Sprintf("type:%v:src:%v:subpath:%v", mnt.Type, mnt.Source, subpath)] = mnt
 	}
 
 	for _, reqMnt := range req.Mounts {
-		key := fmt.Sprintf("type:%v:src:%v", reqMnt.Type, reqMnt.Source)
-		if reqMnt.Type == mount.TypeVolume && reqMnt.VolumeOptions != nil && reqMnt.VolumeOptions.Subpath != "" {
-			key += fmt.Sprintf(":subpath:%v", reqMnt.VolumeOptions.Subpath)
+		var source, subpath string
+		switch reqMnt.Type { //nolint:exhaustive
+		case mount.TypeBind:
+			source = filepath.Join(reqMnt.BindOptions.BaseDir, reqMnt.BindOptions.Subpath)
+		case mount.TypeVolume:
+			source = reqMnt.VolumeOptions.Volume
+			subpath = reqMnt.VolumeOptions.Subpath
+		case mount.TypeCluster:
+			source = reqMnt.ClusterOptions.Volume
+			subpath = reqMnt.ClusterOptions.Subpath
 		}
+		key := fmt.Sprintf("type:%v:src:%v:subpath:%v", reqMnt.Type, source, subpath)
 
 		mnt := currMountMap[key]
 		if mnt == nil {
 			mnt = &mount.Mount{
 				Type:   reqMnt.Type,
-				Source: reqMnt.Source,
+				Source: source,
 			}
 		}
 
@@ -309,7 +297,7 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 			}
 			if reqMnt.VolumeOptions != nil {
 				mnt.VolumeOptions.NoCopy = reqMnt.VolumeOptions.NoCopy
-				mnt.VolumeOptions.Subpath = reqMnt.VolumeOptions.Subpath
+				mnt.VolumeOptions.Subpath = subpath
 				mnt.VolumeOptions.Labels = reqMnt.VolumeOptions.Labels
 				if reqMnt.VolumeOptions.DriverConfig != nil {
 					mnt.VolumeOptions.DriverConfig = &mount.Driver{
@@ -327,7 +315,7 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 			}
 			if reqMnt.ClusterOptions != nil {
 				mnt.VolumeOptions.NoCopy = reqMnt.ClusterOptions.NoCopy
-				mnt.VolumeOptions.Subpath = reqMnt.ClusterOptions.Subpath
+				mnt.VolumeOptions.Subpath = subpath
 				mnt.VolumeOptions.Labels = reqMnt.ClusterOptions.Labels
 				if reqMnt.ClusterOptions.DriverConfig != nil {
 					mnt.VolumeOptions.DriverConfig = &mount.Driver{

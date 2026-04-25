@@ -3,6 +3,7 @@ package projectsettingsuc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -86,7 +87,8 @@ func (uc *UC) loadProjectData(
 ) error {
 	data.ProjectKey = slugify.SlugifyEx(req.Name, nil, projectKeyMaxLen)
 	if gofn.Contain(base.UnallowedProjectKeys, data.ProjectKey) {
-		return apperrors.New(apperrors.ErrNameUnavailable).WithMsgLog("project name is not allowed")
+		return apperrors.NewParamInvalid(fmt.Sprintf("Project name '%v'", req.Name)).
+			WithMsgLog("project name is not allowed")
 	}
 
 	// Project key must be unique

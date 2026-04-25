@@ -3,6 +3,7 @@ package useruc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -75,7 +76,7 @@ func (uc *UC) loadUserProfileData(
 			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrNameUnavailable).
+			return apperrors.NewAlreadyExist(fmt.Sprintf("Username '%v'", req.Username)).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}

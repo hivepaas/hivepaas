@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"path/filepath"
+
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -35,6 +37,16 @@ type StorageBindSettings struct {
 	AppsMustUseSubPaths bool     `json:"appsMustUseSubPaths"`
 }
 
+func (s *StorageBindSettings) CaclRequiredSubpath(app *App) string {
+	if !s.Enabled || len(s.BaseDirs) == 0 {
+		return ""
+	}
+	if !s.AppsMustUseSubPaths {
+		return s.BaseSubpath
+	}
+	return filepath.Join(s.BaseSubpath, app.Project.Key, app.LocalKey)
+}
+
 type StorageVolumeSettings struct {
 	Enabled             bool          `json:"enabled,omitempty"`
 	Volumes             ObjectIDSlice `json:"volumes"`
@@ -42,11 +54,31 @@ type StorageVolumeSettings struct {
 	AppsMustUseSubPaths bool          `json:"appsMustUseSubPaths"`
 }
 
+func (s *StorageVolumeSettings) CaclRequiredSubpath(app *App) string {
+	if !s.Enabled || len(s.Volumes) == 0 {
+		return ""
+	}
+	if !s.AppsMustUseSubPaths {
+		return s.BaseSubpath
+	}
+	return filepath.Join(s.BaseSubpath, app.Project.Key, app.LocalKey)
+}
+
 type StorageClusterVolumeSettings struct {
 	Enabled             bool          `json:"enabled,omitempty"`
 	Volumes             ObjectIDSlice `json:"volumes"`
 	BaseSubpath         string        `json:"baseSubpath"`
 	AppsMustUseSubPaths bool          `json:"appsMustUseSubPaths"`
+}
+
+func (s *StorageClusterVolumeSettings) CaclRequiredSubpath(app *App) string {
+	if !s.Enabled || len(s.Volumes) == 0 {
+		return ""
+	}
+	if !s.AppsMustUseSubPaths {
+		return s.BaseSubpath
+	}
+	return filepath.Join(s.BaseSubpath, app.Project.Key, app.LocalKey)
 }
 
 type StorageTmpfsSettings struct {

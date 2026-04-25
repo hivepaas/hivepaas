@@ -12,7 +12,6 @@ var (
 	ErrBadRequest       = errors.New("ERR_BAD_REQUEST")
 	ErrParamInvalid     = errors.New("ERR_PARAM_INVALID")
 	ErrUnavailable      = errors.New("ERR_UNAVAILABLE")
-	ErrNameUnavailable  = errors.New("ERR_NAME_UNAVAILABLE")
 	ErrUnauthorized     = errors.New("ERR_UNAUTHORIZED")
 	ErrForbidden        = errors.New("ERR_FORBIDDEN")
 	ErrNotFound         = errors.New("ERR_NOT_FOUND")
@@ -73,10 +72,13 @@ var (
 
 // Errors for settings
 var (
+	ErrUnconfigured              = errors.New("ERR_UNCONFIGURED")
 	ErrSettingInactive           = errors.New("ERR_SETTING_INACTIVE")
+	ErrSettingMissing            = errors.New("ERR_SETTING_MISSING")
+	ErrSettingViolated           = errors.New("ERR_SETTING_VIOLATED")
+	ErrSettingUnallowed          = errors.New("ERR_SETTING_UNALLOWED")
 	ErrGlobalSettingRequired     = errors.New("ERR_GLOBAL_SETTING_REQUIRED")
 	ErrOwnSettingRequired        = errors.New("ERR_OWN_SETTING_REQUIRED")
-	ErrSettingMissing            = errors.New("ERR_SETTING_MISSING")
 	ErrSettingTypeInvalid        = errors.New("ERR_SETTING_TYPE_INVALID")
 	ErrDataVerNewerThanSystemVer = errors.New("ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
@@ -128,7 +130,6 @@ var errorStatusMap = map[error]int{
 	ErrParamInvalid:     http.StatusBadRequest,
 	ErrUnavailable:      http.StatusBadRequest,
 	ErrUnauthorized:     http.StatusUnauthorized,
-	ErrNameUnavailable:  http.StatusConflict,
 	ErrForbidden:        http.StatusForbidden,
 	ErrNotFound:         http.StatusNotFound,
 	ErrAlreadyExist:     http.StatusConflict,
@@ -170,29 +171,32 @@ var errorStatusMap = map[error]int{
 	ErrAPIKeyInvalid:    http.StatusUnauthorized,
 
 	// User errors
-	ErrUserUnavailable:             http.StatusForbidden,
-	ErrUserStatusNotAllowAction:    http.StatusForbidden,
-	ErrUserAlreadySignUp:           http.StatusForbidden,
-	ErrUserNotCompleteMFASetup:     http.StatusForbidden,
+	ErrUserUnavailable:             http.StatusUnprocessableEntity,
+	ErrUserStatusNotAllowAction:    http.StatusUnprocessableEntity,
+	ErrUserAlreadySignUp:           http.StatusUnprocessableEntity,
+	ErrUserNotCompleteMFASetup:     http.StatusUnprocessableEntity,
 	ErrPasswordNotMeetRequirements: http.StatusUnprocessableEntity,
-	ErrPasswordResetTokenInvalid:   http.StatusNotAcceptable,
+	ErrPasswordResetTokenInvalid:   http.StatusUnprocessableEntity,
 	ErrEmailUnavailable:            http.StatusUnprocessableEntity,
 	ErrEmailChangeUnallowed:        http.StatusUnprocessableEntity,
 
 	// Settings errors
-	ErrSettingInactive:           http.StatusNotAcceptable,
+	ErrUnconfigured:              http.StatusUnprocessableEntity,
+	ErrSettingInactive:           http.StatusUnprocessableEntity,
+	ErrSettingMissing:            http.StatusUnprocessableEntity,
+	ErrSettingViolated:           http.StatusUnprocessableEntity,
+	ErrSettingUnallowed:          http.StatusUnprocessableEntity,
 	ErrGlobalSettingRequired:     http.StatusUnprocessableEntity,
 	ErrOwnSettingRequired:        http.StatusUnprocessableEntity,
-	ErrSettingMissing:            http.StatusUnprocessableEntity,
-	ErrSettingTypeInvalid:        http.StatusNotAcceptable,
+	ErrSettingTypeInvalid:        http.StatusUnprocessableEntity,
 	ErrDataVerNewerThanSystemVer: http.StatusUnprocessableEntity,
 
 	// Project errors
-	ErrProjectInactive: http.StatusNotAcceptable,
+	ErrProjectInactive: http.StatusUnprocessableEntity,
 
 	// App errors
-	ErrAppInactive: http.StatusNotAcceptable,
-	ErrMultiNodeClusterRequireRegistryForImages: http.StatusForbidden,
+	ErrAppInactive: http.StatusUnprocessableEntity,
+	ErrMultiNodeClusterRequireRegistryForImages: http.StatusUnprocessableEntity,
 
 	// Errors from infrastructure
 	ErrInfra:                   http.StatusInternalServerError,
@@ -215,7 +219,7 @@ var errorStatusMap = map[error]int{
 	ErrInfraUnauthorized:       http.StatusUnauthorized,
 
 	// Cluster errors
-	ErrNodeRequiredByLocalPaasApp: http.StatusForbidden,
+	ErrNodeRequiredByLocalPaasApp: http.StatusUnprocessableEntity,
 }
 
 // errorWarnLevelMap defines the errors that are handled but unexpected to happen.

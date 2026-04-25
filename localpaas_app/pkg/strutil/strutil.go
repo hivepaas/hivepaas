@@ -46,3 +46,10 @@ func RemoveEmptyLines(str string, trimSpace bool) string {
 	}
 	return strings.Join(cleanedLines, "\n")
 }
+
+func Cut(s, sep string) (string, string, bool) {
+	if sep == "" {
+		return s, "", false
+	}
+	return strings.Cut(s, sep)
+}

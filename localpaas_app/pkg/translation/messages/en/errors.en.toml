@@ -1,11 +1,10 @@
 # Base errors
-ERR_UNAUTHORIZED = "Unauthorized"
 ERR_INTERNAL_SERVER = "Unexpected error"
 ERR_PANIC = "Panic: {{.Error}}"
 ERR_BAD_REQUEST = "Bad request"
 ERR_PARAM_INVALID = "{{.Name}} is invalid"
 ERR_UNAVAILABLE = "{{.Name}} unavailable"
-ERR_NAME_UNAVAILABLE = "The name is not available"
+ERR_UNAUTHORIZED = "Unauthorized"
 ERR_FORBIDDEN = "{{.Name}} is forbidden"
 ERR_NOT_FOUND = "{{.Name}} not found"
 ERR_ALREADY_EXIST = "{{.Name}} already exists"
@@ -58,10 +57,12 @@ ERR_EMAIL_UNAVAILABLE = "Email address is not available"
 ERR_EMAIL_CHANGE_UNALLOWED = "Email changing is not allowed"
 
 # Settings errors
+ERR_UNCONFIGURED = "{{.Name}} is not configured"
 ERR_SETTING_INACTIVE = "Setting '{{.Name}}' is inactive"
+ERR_SETTING_MISSING = "Setting {{.Name}} is missing"
+ERR_SETTING_VIOLATED = "{{.Name}} violates the configured settings"
 ERR_GLOBAL_SETTING_REQUIRED = "Global setting is required"
 ERR_OWN_SETTING_REQUIRED = "Own setting is required"
-ERR_SETTING_MISSING = "Setting {{.Name}} is missing"
 ERR_SETTING_TYPE_INVALID = "Setting type is invalid"
 ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 

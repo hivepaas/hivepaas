@@ -19,6 +19,8 @@ export const QK = {
     "projects.env-vars.$.find-one": "projects.env-vars.$.find-one",
     "projects.domain-settings.$.find-one": "projects.domain-settings.$.find-one",
     "projects.networks.$.find-many-paginated": "projects.networks.$.find-many-paginated",
+    "projects.notifications.$.find-many-paginated": "projects.notifications.$.find-many-paginated",
+    "projects.notifications.$.find-one-by-id": "projects.notifications.$.find-one-by-id",
     /*
      * Project App Env Vars
      */

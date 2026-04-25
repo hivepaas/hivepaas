@@ -4,6 +4,7 @@ export * from "./project-basic-auth";
 export * from "./project-git-credentials";
 export * from "./project-networks";
 export * from "./project-registry-auth";
+export * from "./project-notification";
 export * from "./project-ssl-cert";
 export * from "./project-secrets";
 export * from "./projects";

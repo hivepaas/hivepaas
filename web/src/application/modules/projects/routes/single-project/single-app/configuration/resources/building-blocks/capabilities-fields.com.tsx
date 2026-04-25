@@ -79,7 +79,7 @@ export function CapabilitiesFields() {
                     <span className="text-sm text-muted-foreground">
                         This will add <code className="text-orange-500">[gpu]</code> to capabilities, see{" "}
                         <a
-                            href="https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Service/operation/ServiceUpdate"
+                            href="https://docs.docker.com/compose/how-tos/gpu-support/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 underline underline-offset-2"

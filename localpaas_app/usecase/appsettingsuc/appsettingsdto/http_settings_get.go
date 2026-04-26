@@ -115,7 +115,7 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 
 	if input.HttpSettings == nil {
-		return nil, nil
+		return resp, nil
 	}
 
 	if err = copier.Copy(&resp, input.HttpSettings); err != nil {

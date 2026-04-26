@@ -107,6 +107,13 @@ type AppHttpSettingsTransformInput struct {
 }
 
 func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSettingsResp, err error) {
+	resp = &HttpSettingsResp{}
+	resp.InternalEndpoints = []string{
+		fmt.Sprintf("http://%s:<port>", input.App.Key),
+		fmt.Sprintf("http://%s:<port>", input.App.LocalKey),
+	}
+	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
+
 	if input.HttpSettings == nil {
 		return nil, nil
 	}
@@ -118,11 +125,6 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	if err = copier.Copy(&resp, appHttpSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-
-	resp.InternalEndpoints = []string{
-		fmt.Sprintf("http://%s:<port>", input.App.Key),
-	}
-	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {

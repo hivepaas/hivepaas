@@ -51,7 +51,7 @@ func (uc *UC) ListApp(
 	transformationInput := &appdto.AppTransformationInput{}
 
 	if req.GetStats && len(apps) > 0 {
-		serviceMap, err := uc.loadAppsSwarmService(ctx, apps[0].Project.Key, apps)
+		serviceMap, err := uc.loadAppSwarmServices(ctx, apps[0].Project.Key, apps)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -69,13 +69,27 @@ func (uc *UC) ListApp(
 	}, nil
 }
 
-func (uc *UC) loadAppsSwarmService(
+func (uc *UC) loadAppSwarmServices(
 	ctx context.Context,
 	projectKey string,
 	apps []*entity.App,
 ) (map[string]*swarm.Service, error) {
 	// TODO: implement caching?
 
+	// Special case: only one app
+	if len(apps) == 1 {
+		app := apps[0]
+		if app.ServiceID == "" {
+			return nil, nil
+		}
+		service, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		return map[string]*swarm.Service{app.ID: service}, nil
+	}
+
+	// Load all services of the project
 	services, err := uc.dockerManager.ServiceListByStack(ctx, projectKey, func(opts *swarm.ServiceListOptions) {
 		opts.Status = true
 	})

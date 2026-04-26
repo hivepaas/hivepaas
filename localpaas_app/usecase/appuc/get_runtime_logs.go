@@ -79,7 +79,7 @@ func (uc *UC) GetAppRuntimeLogs(
 		ctx, _ = context.WithTimeout(ctx, runtimeLogSessionTimeout) //nolint:govet
 
 		// NOTE: We may want to send log frames to client by batch to reduce network overhead.
-		// I'm not expert about this, appreciate if anyone can verify this solution.
+		// I'm not an expert about this, appreciate if anyone can verify this solution.
 		// This solution: only send data to client after a period of time or when we have some frames.
 		resp.LogChan, resp.LogChanCloser = docker.StartScanningLog(ctx, logsReader,
 			docker.WithParseLogHeader(true),

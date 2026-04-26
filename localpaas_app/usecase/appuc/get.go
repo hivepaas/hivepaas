@@ -29,7 +29,7 @@ func (uc *UC) GetApp(
 	transformationInput := &appdto.AppTransformationInput{}
 
 	if req.GetStats {
-		serviceMap, err := uc.loadAppsSwarmService(ctx, app.Project.Key, []*entity.App{app})
+		serviceMap, err := uc.loadAppSwarmServices(ctx, app.Project.Key, []*entity.App{app})
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

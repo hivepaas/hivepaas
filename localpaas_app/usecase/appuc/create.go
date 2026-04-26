@@ -193,7 +193,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 			},
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
-					Target: data.Project.GetDefaultNetworkName(),
+					Target:  data.Project.GetDefaultNetworkName(),
+					Aliases: []string{app.LocalKey},
 				},
 			},
 		},

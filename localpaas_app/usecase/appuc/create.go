@@ -11,6 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
@@ -76,6 +77,7 @@ func (uc *UC) CreateApp(
 type createAppData struct {
 	Project     *entity.Project
 	AppKey      string
+	AppLocalKey string
 	ServiceSpec *swarm.ServiceSpec
 }
 
@@ -97,7 +99,8 @@ func (uc *UC) loadAppData(
 	}
 	data.Project = project
 
-	data.AppKey = project.Key + "_" + slugify.SlugifyEx(req.Name, nil, appKeyMaxLen)
+	data.AppLocalKey = slugify.SlugifyEx(req.Name, nil, appKeyMaxLen)
+	data.AppKey = project.Key + "_" + data.AppLocalKey
 
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByKey(ctx, db, "", data.AppKey, bunex.SelectColumns("id"))
@@ -127,6 +130,7 @@ func (uc *UC) preparePersistingApp(
 		ID:        gofn.Must(ulid.NewStringULID()),
 		ProjectID: project.ID,
 		Key:       data.AppKey,
+		LocalKey:  data.AppLocalKey,
 		CreatedAt: timeNow,
 	}
 	app.ResetToken()
@@ -174,6 +178,7 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	data *createAppData,
 	persistingData *persistingAppData,
 ) {
+	isDevEnv := config.Current.IsDevEnv()
 	serviceSpec := &swarm.ServiceSpec{
 		Mode: swarm.ServiceMode{
 			Replicated: &swarm.ReplicatedService{
@@ -188,7 +193,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 		},
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: &swarm.ContainerSpec{
-				Image:    "crccheck/hello-world:latest", // TODO: we can use busybox:latest
+				Image:    gofn.If(isDevEnv, "crccheck/hello-world:latest", "busybox:latest"),
+				Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
 				Hostname: app.Key,
 			},
 			Networks: []swarm.NetworkAttachmentConfig{

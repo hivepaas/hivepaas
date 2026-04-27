@@ -15,6 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
+	"github.com/localpaas/localpaas/services/traefik"
 )
 
 type GetAppHttpSettingsReq struct {
@@ -53,12 +54,17 @@ type DomainResp struct {
 	SSLCert           *sslcertdto.SSLCertResp    `json:"sslCert,omitempty"`
 	ContainerPort     int                        `json:"containerPort"`
 	ForceHttps        bool                       `json:"forceHttps,omitempty"`
+	LBConfig          *HTTPLBConfigResp          `json:"lbConfig,omitempty"`
 	BasicAuth         *settings.BaseSettingResp  `json:"basicAuth,omitempty"`
 	ClientConfig      *HTTPClientConfigResp      `json:"clientConfig,omitempty"`
 	HeaderConfig      *HTTPHeaderConfigResp      `json:"headerConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfigResp `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfigResp   `json:"rateLimitConfig,omitempty"`
 	Paths             []*HTTPPathConfigResp      `json:"paths,omitempty"`
+}
+
+type HTTPLBConfigResp struct {
+	Strategy traefik.LBStrategy `json:"strategy"`
 }
 
 type HTTPClientConfigResp struct {

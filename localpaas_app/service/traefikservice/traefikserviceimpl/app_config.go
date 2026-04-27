@@ -73,7 +73,7 @@ func (s *service) ApplyAppConfig(
 		labels["traefik.swarm.network"] = base.NetworkGlobalRouting
 
 		for i, domain := range httpSettings.Domains {
-			s.collectDomainConfig(app, domain, i, labels, traefikConfig, data)
+			s.collectDomainConfig(domain, i, labels, traefikConfig, data)
 		}
 	}
 
@@ -98,24 +98,26 @@ func (s *service) ApplyAppConfig(
 }
 
 func (s *service) collectDomainConfig(
-	app *entity.App,
 	domain *entity.AppDomain,
 	domainIndex int,
 	labels map[string]string,
 	traefikConfig *AppTraefikConfig,
 	data *appConfigData,
 ) {
-	appKey := sanitizeRouterNameReplacer.Replace(app.Key)
 	domainKey := sanitizeRouterNameReplacer.Replace(domain.Domain)
 	if domainKey == "" {
 		return
 	}
 
 	// Service
-	serviceName := fmt.Sprintf("svc-%s", appKey)
+	serviceName := fmt.Sprintf("svc-%v", domainIndex)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", serviceName)] =
 		strconv.Itoa(domain.ContainerPort)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.passhostheader", serviceName)] = labelValueTrue
+	if domain.LBConfig != nil && domain.LBConfig.Strategy != "" {
+		labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.strategy", serviceName)] =
+			string(domain.LBConfig.Strategy)
+	}
 
 	// Main router
 	routerName := fmt.Sprintf("router-%v", domainIndex)
@@ -239,7 +241,7 @@ func (s *service) createForceHttpsConfig(
 	// Listen to HTTP, then redirect to HTTPS
 	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
 
-	mwName := fmt.Sprintf("%s-forcehttps", routerName)
+	mwName := routerName
 	labels[fmt.Sprintf("traefik.http.middlewares.%s.redirectscheme.scheme", mwName)] = "https"
 	labels[fmt.Sprintf("traefik.http.middlewares.%s.redirectscheme.permanent", mwName)] = labelValueTrue
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = mwName + middlewareProvider

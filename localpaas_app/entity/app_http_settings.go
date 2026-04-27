@@ -9,6 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
+	"github.com/localpaas/localpaas/services/traefik"
 )
 
 const (
@@ -37,12 +38,17 @@ type AppDomain struct {
 	SSLCert           ObjectID               `json:"sslCert,omitzero"`
 	ContainerPort     int                    `json:"containerPort,omitempty"`
 	ForceHttps        bool                   `json:"forceHttps,omitempty"`
+	LBConfig          *HTTPLBConfig          `json:"lbConfig,omitempty"`
 	BasicAuth         ObjectID               `json:"basicAuth,omitzero"`
 	ClientConfig      *HTTPClientConfig      `json:"clientConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
 	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
 	Paths             []*HTTPPathConfig      `json:"paths,omitempty"`
+}
+
+type HTTPLBConfig struct {
+	Strategy traefik.LBStrategy `json:"strategy"`
 }
 
 type HTTPClientConfig struct {

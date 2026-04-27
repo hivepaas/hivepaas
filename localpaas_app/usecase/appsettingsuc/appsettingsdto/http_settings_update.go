@@ -12,6 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
+	"github.com/localpaas/localpaas/services/traefik"
 )
 
 type UpdateAppHttpSettingsReq struct {
@@ -38,6 +39,7 @@ type DomainReq struct {
 	SSLCert           basedto.ObjectIDReq       `json:"sslCert"`
 	ContainerPort     int                       `json:"containerPort"`
 	ForceHttps        bool                      `json:"forceHttps"`
+	LBConfig          *HTTPLBConfigReq          `json:"lbConfig"`
 	BasicAuth         basedto.ObjectIDReq       `json:"basicAuth"`
 	ClientConfig      *HTTPClientConfigReq      `json:"clientConfig"`
 	HeaderConfig      *HTTPHeaderConfigReq      `json:"headerConfig"`
@@ -54,6 +56,7 @@ func (req *DomainReq) ToEntity() *entity.AppDomain {
 		SSLCert:           entity.ObjectID{ID: req.SSLCert.ID},
 		ContainerPort:     req.ContainerPort,
 		ForceHttps:        req.ForceHttps,
+		LBConfig:          req.LBConfig.ToEntity(),
 		BasicAuth:         entity.ObjectID{ID: req.BasicAuth.ID},
 		ClientConfig:      req.ClientConfig.ToEntity(),
 		HeaderConfig:      req.HeaderConfig.ToEntity(),
@@ -81,6 +84,19 @@ func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	// TODO: validate other config
 	// TODO: validate paths
 	return res
+}
+
+type HTTPLBConfigReq struct {
+	Strategy traefik.LBStrategy `json:"strategy"`
+}
+
+func (r *HTTPLBConfigReq) ToEntity() *entity.HTTPLBConfig {
+	if r == nil {
+		return nil
+	}
+	return &entity.HTTPLBConfig{
+		Strategy: r.Strategy,
+	}
 }
 
 type HTTPClientConfigReq struct {

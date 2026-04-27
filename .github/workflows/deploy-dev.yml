@@ -34,8 +34,8 @@ jobs:
           push: true
           file: deployment/dev/Dockerfile
           tags: |
-            localpaas/localpaas-dev:app-${{ env.TAG_VERSION }}
-            localpaas/localpaas-dev:app-latest
+            localpaas/localpaas-dev:${{ env.TAG_VERSION }}
+            localpaas/localpaas-dev:latest
       - name: Deploy BE to Server
         uses: appleboy/ssh-action@v1
         with:

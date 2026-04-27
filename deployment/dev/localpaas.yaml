@@ -98,7 +98,7 @@ services:
         - "traefik.swarm.network=localpaas_net"
 
   app:
-    image: localpaas/localpaas-dev:app-latest
+    image: localpaas/localpaas-dev:latest
     networks:
       - localpaas_net
       - internal_net
@@ -118,6 +118,7 @@ services:
         - "traefik.http.routers.app-router.rule=Host(`app.dev.localpaas.com`)"
         - "traefik.http.routers.app-router.entrypoints=websecure"
         - "traefik.http.routers.app-router.tls=true"
+        - "traefik.http.routers.app-router.service=app-svc"
         - "traefik.http.routers.x-custom-router-le-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
         - "traefik.http.routers.x-custom-router-le-acme.entrypoints=web"
         - "traefik.http.routers.x-custom-router-le-acme.tls=false"
@@ -125,13 +126,13 @@ services:
         - "traefik.http.routers.x-custom-router-le-acme.middlewares=x-custom-addprefix-le@swarm"
         - "traefik.swarm.network=localpaas_net"
 
-  admin:
-    image: localpaas/localpaas-dev:app-latest
+  worker:
+    image: localpaas/localpaas-dev:latest
     networks:
       - internal_net
     environment:
       LP_CONFIG_FILE: config/config.development.toml
-      LP_RUN_MODE: admin
+      LP_RUN_MODE: worker
       LP_ADMIN_USERNAME: admin
       LP_ADMIN_EMAIL: admin@domain.name
       LP_ADMIN_PASSWORD: abc123

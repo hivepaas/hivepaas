@@ -51,14 +51,14 @@ curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/
 
 # Deploy localpaas stack
 echo "Deploy localpaas stack..."
-docker pull localpaas/localpaas-dev:app-latest # pull latest image
+docker pull localpaas/localpaas-dev:latest # pull latest image
 docker stack deploy -c localpaas.yaml localpaas
 
 sleep 10
 docker run --net localpaas_internal_net \
   -e LP_PLATFORM=remote -e LP_DB_HOST=db -e LP_DB_PORT=5432 -e LP_DB_DB_NAME=localpaas \
   -e LP_DB_USER=localpaas -e LP_DB_PASSWORD=abc123 -e LP_DB_SSL_MODE=disable \
-  -w /app localpaas/localpaas-dev:app-latest \
+  -w /app localpaas/localpaas-dev:latest \
   make seed-data-with-clear
 
 # Force restart the main app

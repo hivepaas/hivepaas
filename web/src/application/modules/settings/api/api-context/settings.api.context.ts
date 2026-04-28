@@ -13,6 +13,8 @@ import {
     RegistryAuthApiValidator,
     SslCertApi,
     SslCertApiValidator,
+    StorageSettingsApi,
+    StorageSettingsApiValidator,
 } from "../services";
 
 function createApi() {
@@ -22,6 +24,7 @@ function createApi() {
     const notificationsValidator = new NotificationsApiValidator();
     const basicAuthValidator = new BasicAuthApiValidator();
     const domainSettingsValidator = new DomainSettingsApiValidator();
+    const storageSettingsValidator = new StorageSettingsApiValidator();
     const gitCredentialsValidator = new GitCredentialsApiValidator();
     const registryAuthValidator = new RegistryAuthApiValidator();
     const sslCertValidator = new SslCertApiValidator();
@@ -31,6 +34,7 @@ function createApi() {
             notifications: new NotificationsApi(notificationsValidator),
             basicAuth: new BasicAuthApi(basicAuthValidator),
             domainSettings: new DomainSettingsApi(domainSettingsValidator),
+            storageSettings: new StorageSettingsApi(storageSettingsValidator),
             gitCredentials: new GitCredentialsApi(gitCredentialsValidator),
             registryAuth: new RegistryAuthApi(registryAuthValidator),
             sslCert: new SslCertApi(sslCertValidator),

@@ -1,4 +1,5 @@
 export * from "./domain-settings-services";
+export * from "./storage-settings-services";
 export * from "./basic-auth-services";
 export * from "./git-credentials-services";
 export * from "./notifications-services";

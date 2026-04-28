@@ -54,6 +54,7 @@ export const QK = {
      * Project App Storage Settings
      */
     "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",
+    "projects.storage-settings.$.find-one": "projects.storage-settings.$.find-one",
     /*
      * Project App HTTP Settings
      */

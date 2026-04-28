@@ -1,1 +1,1 @@
-export * from "./storage-mounts-fields.com";
+export * from "./storage-table";

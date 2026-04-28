@@ -5,6 +5,7 @@ export * from "./e.endpoint-resolution-mode";
 export * from "./e.healthcheck-mode";
 export * from "./e.http-path-mode";
 export * from "./e.mount-consistency";
+export * from "./e.mount-propagation";
 export * from "./e.mount-type";
 export * from "./e.port-config-protocol";
 export * from "./e.port-config-publish-mode";

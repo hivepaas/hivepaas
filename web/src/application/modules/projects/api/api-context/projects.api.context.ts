@@ -50,6 +50,10 @@ import {
     AppStorageSettingsApi,
     AppStorageSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/storage-settings";
+import {
+    ProjectStorageSettingsApi,
+    ProjectStorageSettingsApiValidator,
+} from "~/projects/api/services/project-settings-services/storage-settings";
 
 function createApi() {
     /**
@@ -75,6 +79,7 @@ function createApi() {
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
     const projectSslCertApiValidator = new ProjectSslCertApiValidator();
+    const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
 
     return {
         projects: {
@@ -135,6 +140,9 @@ function createApi() {
             },
             sslCert: {
                 $: new ProjectSslCertApi(projectSslCertApiValidator),
+            },
+            storageSettings: {
+                $: new ProjectStorageSettingsApi(projectStorageSettingsApiValidator),
             },
         },
     };

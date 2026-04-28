@@ -1,31 +1,32 @@
-import { useRef } from "react";
-
 import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
+import { AppStorageSettingsCommands, AppStorageSettingsQueries, ProjectStorageSettingsQueries } from "~/projects/data";
+import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
+import type { AppStorageMount } from "~/projects/domain";
 
 import { AppLoader } from "@application/shared/components";
 
-import { isValidationException } from "@infrastructure/api";
+import { StorageTable } from "../building-blocks";
+import { StorageMountsProvider, useStorageMounts } from "../context";
 
-import { ValidationException } from "@infrastructure/exceptions/validation";
+type StorageMountWithId = AppStorageMount & { _id: string };
 
-import { AppConfigStorageForm } from "../form";
-import { type AppConfigStorageFormSchemaOutput } from "../schemas";
-import { type AppConfigStorageFormRef } from "../types";
-
-export function AppConfigStorageRoute() {
+function AppConfigStorageContent() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
-    const formRef = useRef<AppConfigStorageFormRef>(null);
+    const { mounts, addMount, updateMount } = useStorageMounts();
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppStorageSettingsQueries.useFindOne({
+    const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne({
         projectID: projectId,
         appID: appId,
+    });
+
+    const { data: projectRulesData, isLoading: projectRulesLoading } = ProjectStorageSettingsQueries.useFindOne({
+        projectID: projectId,
     });
 
     const { mutate: update, isPending } = AppStorageSettingsCommands.useUpdateOne({
@@ -33,9 +34,7 @@ export function AppConfigStorageRoute() {
             toast.success("Storage settings updated");
         },
         onError: err => {
-            if (isValidationException(err)) {
-                formRef.current?.onError(ValidationException.fromHttp(err));
-            } else if (err instanceof Error) {
+            if (err instanceof Error) {
                 toast.error(err.message);
             } else {
                 toast.error("Failed to update storage settings");
@@ -43,21 +42,41 @@ export function AppConfigStorageRoute() {
         },
     });
 
-    function handleSubmit(values: AppConfigStorageFormSchemaOutput) {
+    const storageMountDialog = useStorageMountDialog();
+
+    const handleAddMount = () => {
+        storageMountDialog.actions.open(projectRulesData?.data, {
+            onSubmit: (mount: AppStorageMount) => {
+                addMount(mount);
+            },
+        });
+    };
+
+    const handleEditMount = (mount: StorageMountWithId) => {
+        storageMountDialog.actions.openEdit(mount, projectRulesData?.data, {
+            onSubmit: (updatedMount: AppStorageMount) => {
+                updateMount(mount._id, updatedMount);
+            },
+        });
+    };
+
+    const handleSave = () => {
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
+
+        const mountsWithoutIds = mounts.map(({ _id, ...mount }) => mount);
 
         update({
             projectID: projectId,
             appID: appId,
             payload: {
-                mounts: values.mounts,
-                updateVer: data?.data.updateVer ?? 0,
+                mounts: mountsWithoutIds,
+                updateVer: appData?.data.updateVer ?? 0,
             },
         });
-    }
+    };
 
-    if (isLoading) {
+    if (appLoading || projectRulesLoading) {
         return <AppLoader />;
     }
 
@@ -75,22 +94,45 @@ export function AppConfigStorageRoute() {
                 </a>
             </div>
 
-            <AppConfigStorageForm
-                ref={formRef}
-                defaultValues={data?.data}
-                onSubmit={handleSubmit}
-            >
-                <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </AppConfigStorageForm>
+            <div className="rounded-lg border p-4">
+                <StorageTable
+                    onAddMount={handleAddMount}
+                    onEditMount={handleEditMount}
+                />
+            </div>
+
+            <div className="flex justify-end mt-4">
+                <Button
+                    onClick={handleSave}
+                    className="min-w-[100px]"
+                    disabled={isPending}
+                    isLoading={isPending}
+                >
+                    Save
+                </Button>
+            </div>
         </div>
+    );
+}
+
+export function AppConfigStorageRoute() {
+    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+
+    invariant(projectId, "projectId must be defined");
+    invariant(appId, "appId must be defined");
+
+    const { data, isLoading } = AppStorageSettingsQueries.useFindOne({
+        projectID: projectId,
+        appID: appId,
+    });
+
+    if (isLoading) {
+        return <AppLoader />;
+    }
+
+    return (
+        <StorageMountsProvider initialMounts={data?.data.mounts ?? []}>
+            <AppConfigStorageContent />
+        </StorageMountsProvider>
     );
 }

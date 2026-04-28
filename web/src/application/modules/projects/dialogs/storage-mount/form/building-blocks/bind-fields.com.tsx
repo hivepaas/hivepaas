@@ -1,12 +1,13 @@
 import React from "react";
 
-import { Field, FieldError, FieldLabel } from "@components/ui/field";
-import { SelectItem } from "@components/ui/select";
+import { Input } from "@components/ui";
+import { Field, FieldError } from "@components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { useController, useFormContext } from "react-hook-form";
 import type { ProjectStorageSettings } from "~/projects/domain";
 import { EMountPropagation } from "~/projects/module-shared/enums";
 
-import { InputWithAddOn, SelectWithAddon } from "@application/shared/components";
+import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
 
@@ -29,65 +30,64 @@ export function BindFields({ projectRules }: BindFieldsProps) {
     return (
         <>
             <Field>
-                <FieldLabel htmlFor="baseDir">Base Directory *</FieldLabel>
-                {baseDirs.length > 0 ? (
-                    <SelectWithAddon
-                        {...baseDirField}
-                        addonLeft="Base Dir"
+                <InfoBlock
+                    title={
+                        <LabelWithInfo
+                            label="Base Source Dir"
+                            isRequired
+                        />
+                    }
+                >
+                    <EditableCombobox
+                        options={baseDirs}
                         value={baseDirField.value || ""}
-                        onValueChange={baseDirField.onChange}
-                    >
-                        {baseDirs.map((dir: string) => (
-                            <SelectItem
-                                key={dir}
-                                value={dir}
-                            >
-                                {dir}
-                            </SelectItem>
-                        ))}
-                    </SelectWithAddon>
-                ) : (
-                    <InputWithAddOn
-                        {...baseDirField}
-                        id="baseDir"
+                        onChange={baseDirField.onChange}
                         placeholder="/data"
                         aria-invalid={baseDirInvalid}
-                        addonLeft="Base Dir"
+                        emptyText={baseDirs.length === 0 ? "No base directories available" : "No matching directories"}
                     />
-                )}
-                <FieldError errors={[baseDirError]} />
+                    <FieldError errors={[baseDirError]} />
+                </InfoBlock>
             </Field>
 
             <Field>
-                <FieldLabel htmlFor="subpath">Subpath</FieldLabel>
-                <InputWithAddOn
-                    {...subpathField}
-                    id="subpath"
-                    placeholder="app/data"
-                    addonLeft="Subpath"
-                />
-                {projectRules?.bindSettings?.appsMustUseSubPaths && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Required prefix: {projectRules.bindSettings.baseSubpath}
-                    </p>
-                )}
+                <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
+                    {projectRules?.bindSettings?.appsMustUseSubPaths && (
+                        <p className="text-xs text-muted-foreground mt-1">{projectRules.bindSettings.baseSubpath}</p>
+                    )}
+                </InfoBlock>
             </Field>
 
             <Field>
-                <FieldLabel htmlFor="propagation">Propagation</FieldLabel>
-                <SelectWithAddon
-                    {...propagationField}
-                    addonLeft="Propagation"
-                    value={propagationField.value ?? EMountPropagation.RPrivate}
-                    onValueChange={propagationField.onChange}
-                >
-                    <SelectItem value={EMountPropagation.RPrivate}>rprivate</SelectItem>
-                    <SelectItem value={EMountPropagation.Private}>private</SelectItem>
-                    <SelectItem value={EMountPropagation.RShared}>rshared</SelectItem>
-                    <SelectItem value={EMountPropagation.Shared}>shared</SelectItem>
-                    <SelectItem value={EMountPropagation.RSlave}>rslave</SelectItem>
-                    <SelectItem value={EMountPropagation.Slave}>slave</SelectItem>
-                </SelectWithAddon>
+                <InfoBlock title={<LabelWithInfo label="Subpath" />}>
+                    <Input
+                        {...subpathField}
+                        id="subpath"
+                        placeholder="app/data"
+                    />
+                </InfoBlock>
+            </Field>
+
+            <Field>
+                <InfoBlock title={<LabelWithInfo label="Propagation" />}>
+                    <Select
+                        {...propagationField}
+                        value={propagationField.value ?? EMountPropagation.RPrivate}
+                        onValueChange={propagationField.onChange}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Propagation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={EMountPropagation.RPrivate}>rprivate</SelectItem>
+                            <SelectItem value={EMountPropagation.Private}>private</SelectItem>
+                            <SelectItem value={EMountPropagation.RShared}>rshared</SelectItem>
+                            <SelectItem value={EMountPropagation.Shared}>shared</SelectItem>
+                            <SelectItem value={EMountPropagation.RSlave}>rslave</SelectItem>
+                            <SelectItem value={EMountPropagation.Slave}>slave</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </InfoBlock>
             </Field>
         </>
     );

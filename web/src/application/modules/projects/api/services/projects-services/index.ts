@@ -8,3 +8,4 @@ export * from "./project-notification";
 export * from "./project-ssl-cert";
 export * from "./project-secrets";
 export * from "./projects";
+export * from "./project-docker-volumes";

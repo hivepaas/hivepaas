@@ -1,11 +1,14 @@
 import React from "react";
 
-import { Field, FieldError, FieldLabel } from "@components/ui/field";
-import { SelectItem } from "@components/ui/select";
+import { Checkbox } from "@components/ui";
+import { Field, FieldError } from "@components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { useController, useFormContext } from "react-hook-form";
+import { useParams } from "react-router-dom";
+import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-docker-volumes";
 import type { ProjectStorageSettings } from "~/projects/domain";
 
-import { InputWithAddOn, SelectWithAddon } from "@application/shared/components";
+import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form/key-value-list/key-value-list.com";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
@@ -14,8 +17,9 @@ interface VolumeFieldsProps {
     projectRules?: ProjectStorageSettings;
 }
 
-export function VolumeFields({ projectRules }: VolumeFieldsProps) {
+export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps) {
     const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
+    const { id: projectId } = useParams<{ id: string }>();
 
     const {
         field: volumeField,
@@ -24,68 +28,80 @@ export function VolumeFields({ projectRules }: VolumeFieldsProps) {
     const { field: subpathField } = useController({ name: "volumeOptions.subpath", control });
     const { field: noCopyField } = useController({ name: "volumeOptions.noCopy", control });
 
-    const volumes = projectRules?.volumeSettings?.volumes ?? [];
+    const { data: volumesData, isLoading: isLoadingVolumes } = ProjectDockerVolumesQueries.useList(
+        {
+            projectID: projectId ?? "",
+        },
+        {
+            enabled: !!projectId,
+        },
+    );
+
+    const volumes = volumesData?.data ?? [];
 
     return (
         <>
             <Field>
-                <FieldLabel htmlFor="volume">Volume *</FieldLabel>
-                {volumes.length > 0 ? (
-                    <SelectWithAddon
+                <InfoBlock
+                    title={
+                        <LabelWithInfo
+                            label="Volume"
+                            isRequired
+                        />
+                    }
+                >
+                    <Select
                         {...volumeField}
-                        addonLeft="Volume"
-                        value={volumeField.value || ""}
+                        value={volumeField.value}
                         onValueChange={volumeField.onChange}
                     >
-                        {volumes.map((vol: { id: string; name: string }) => (
-                            <SelectItem
-                                key={vol.id}
-                                value={vol.id}
-                            >
-                                {vol.name}
-                            </SelectItem>
-                        ))}
-                    </SelectWithAddon>
-                ) : (
+                        <SelectTrigger>
+                            <SelectValue placeholder="Volume" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {volumes.map(vol => (
+                                <SelectItem
+                                    key={vol.id}
+                                    value={vol.id}
+                                >
+                                    {vol.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <FieldError errors={[volumeError]} />
+                </InfoBlock>
+            </Field>
+
+            <Field>
+                <InfoBlock title={<LabelWithInfo label="Subpath" />}>
                     <InputWithAddOn
-                        {...volumeField}
-                        id="volume"
-                        placeholder="volume-name"
-                        aria-invalid={volumeInvalid}
-                        addonLeft="Volume"
+                        {...subpathField}
+                        id="subpath"
+                        placeholder="app/data"
+                        addonLeft="Subpath"
                     />
-                )}
-                <FieldError errors={[volumeError]} />
+                </InfoBlock>
             </Field>
 
             <Field>
-                <FieldLabel htmlFor="subpath">Subpath</FieldLabel>
-                <InputWithAddOn
-                    {...subpathField}
-                    id="subpath"
-                    placeholder="app/data"
-                    addonLeft="Subpath"
-                />
-            </Field>
-
-            <Field>
-                <label className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
+                <InfoBlock title={<LabelWithInfo label="No Copy" />}>
+                    <Checkbox
                         checked={noCopyField.value ?? false}
-                        onChange={noCopyField.onChange}
+                        onCheckedChange={noCopyField.onChange}
                     />
-                    <span className="text-sm">No Copy</span>
-                </label>
+                </InfoBlock>
             </Field>
 
             <Field>
-                <FieldLabel>Labels</FieldLabel>
-                <KeyValueList
-                    name="volumeOptions.labels"
-                    keyLabel="Key"
-                    valueLabel="Value"
-                />
+                <InfoBlock title={<LabelWithInfo label="Labels" />}>
+                    <KeyValueList
+                        name="volumeOptions.labels"
+                        keyLabel="Key"
+                        valueLabel="Value"
+                    />
+                </InfoBlock>
             </Field>
         </>
     );

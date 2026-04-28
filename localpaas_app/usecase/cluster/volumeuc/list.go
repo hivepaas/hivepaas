@@ -51,6 +51,17 @@ func (uc *UC) ListVolume(
 			return label == "" || label == project.Key
 		})
 	}
+	if req.Type != "" {
+		filterVolumes = gofn.Filter(filterVolumes, func(vol *volume.Volume) bool {
+			switch req.Type {
+			case docker.VolumeTypeVolume:
+				return vol.ClusterVolume == nil
+			case docker.VolumeTypeCluster:
+				return vol.ClusterVolume != nil
+			}
+			return false
+		})
+	}
 	if req.Search != "" {
 		keyword := strings.ToLower(req.Search)
 		filterVolumes = gofn.Filter(filterVolumes, func(vol *volume.Volume) bool {

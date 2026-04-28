@@ -4,8 +4,8 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -15,31 +15,55 @@ const (
 )
 
 type CreateVolumeReq struct {
-	ProjectID       string            `json:"projectId"`
-	AvailInProjects bool              `json:"availableInProjects"`
-	Name            string            `json:"name"`
-	Driver          base.VolumeDriver `json:"driver"`
-	Type            base.VolumeType   `json:"type"`
-	Source          string            `json:"source"`
-	NfsOpts         VolumeNfsOptsReq  `json:"nfsOpts"`
-	ExtraDriverOpts map[string]string `json:"extraDriverOpts"`
-	Labels          map[string]string `json:"labels"`
+	ProjectID       string              `json:"projectId"`
+	AvailInProjects bool                `json:"availableInProjects"`
+	Name            string              `json:"name"`
+	Driver          docker.VolumeDriver `json:"driver"`
+
+	// For `local` driver only
+	NfsOptions   *VolumeNfsOptionsReq   `json:"nfsOptions"`
+	TmpfsOptions *VolumeTmpfsOptionsReq `json:"tmpfsOptions"`
+	BtrfsOptions *VolumeBtrfsOptionsReq `json:"btrfsOptions"`
+
+	Options map[string]string `json:"options"`
+	Labels  map[string]string `json:"labels"`
 }
 
-type VolumeNfsOptsReq struct {
+type VolumeNfsOptionsReq struct {
 	Addr     string `json:"addr"`
 	Device   string `json:"device"`
 	Readonly bool   `json:"readonly"`
 	Version  string `json:"version"`
 }
 
-func (req *VolumeNfsOptsReq) validate(field string) (res []vld.Validator) {
+func (req *VolumeNfsOptionsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return res
+	}
 	if field != "" {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Addr, true, 1, volumeNameMaxLen, field+"addr")...)
 	res = append(res, basedto.ValidateStr(&req.Device, true, 1, volumeNameMaxLen, field+"device")...)
 	return res
+}
+
+type VolumeTmpfsOptionsReq struct {
+	Size   unit.DataSize `json:"size"`
+	UID    int           `json:"uid"`
+	Device string        `json:"device"`
+}
+
+func (req *VolumeTmpfsOptionsReq) validate(_ string) []vld.Validator {
+	return nil
+}
+
+type VolumeBtrfsOptionsReq struct {
+	Device string `json:"device"`
+}
+
+func (req *VolumeBtrfsOptionsReq) validate(_ string) []vld.Validator {
+	return nil
 }
 
 func NewCreateVolumeReq() *CreateVolumeReq {
@@ -50,11 +74,9 @@ func (req *CreateVolumeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, false, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, volumeNameMaxLen, "name")...)
-	validators = append(validators, basedto.ValidateStrIn(&req.Driver, true, base.AllVolumeDrivers, "driver")...)
-	validators = append(validators, basedto.ValidateStrIn(&req.Type, true, base.AllVolumeTypes, "type")...)
-	if req.Type == base.VolumeTypeNfs {
-		validators = append(validators, req.NfsOpts.validate("nfsOpts")...)
-	}
+	validators = append(validators, req.NfsOptions.validate("nfsOpts")...)
+	validators = append(validators, req.TmpfsOptions.validate("tmpfsOpts")...)
+	validators = append(validators, req.BtrfsOptions.validate("btrfsOpts")...)
 
 	// Validate volume labels
 	unallowedLabels := docker.ValidateUserLabels(req.Labels, true)

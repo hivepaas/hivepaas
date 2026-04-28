@@ -10,6 +10,34 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
+type VolumeDriver string
+
+const (
+	VolumeDriverLocal VolumeDriver = "local"
+)
+
+type VolumeScope string
+
+const (
+	VolumeScopeGlobal VolumeScope = "global"
+	VolumeScopeLocal  VolumeScope = "local"
+)
+
+var (
+	AllVolumeScopes = []VolumeScope{VolumeScopeGlobal, VolumeScopeLocal}
+)
+
+type VolumeType string
+
+const (
+	VolumeTypeVolume  VolumeType = "volume"
+	VolumeTypeCluster VolumeType = "cluster"
+)
+
+var (
+	AllVolumeTypes = []VolumeType{VolumeTypeVolume, VolumeTypeCluster}
+)
+
 type VolumeListOption func(*volume.ListOptions)
 
 func (m *manager) VolumeList(

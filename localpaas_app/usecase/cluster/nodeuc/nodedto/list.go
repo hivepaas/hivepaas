@@ -6,14 +6,14 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 type ListNodeReq struct {
-	Status []base.NodeStatus `json:"-" mapstructure:"status"`
-	Role   []base.NodeRole   `json:"-" mapstructure:"role"`
-	Search string            `json:"-" mapstructure:"search"`
+	Status []docker.NodeStatus `json:"-" mapstructure:"status"`
+	Role   []docker.NodeRole   `json:"-" mapstructure:"role"`
+	Search string              `json:"-" mapstructure:"search"`
 
 	Paging basedto.Paging `json:"-"`
 }
@@ -30,9 +30,9 @@ func NewListNodeReq() *ListNodeReq {
 func (req *ListNodeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
-		base.AllNodeStatuses, "status")...)
+		docker.AllNodeStatuses, "status")...)
 	validators = append(validators, basedto.ValidateSlice(req.Role, true, 0,
-		base.AllNodeRoles, "role")...)
+		docker.AllNodeRoles, "role")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/services/docker"
 )
@@ -39,19 +38,19 @@ type GetNodeResp struct {
 }
 
 type NodeResp struct {
-	ID           string                `json:"id"`
-	Name         string                `json:"name"`
-	Labels       map[string]string     `json:"labels"`
-	Hostname     string                `json:"hostname"`
-	Addr         string                `json:"addr"`
-	Status       base.NodeStatus       `json:"status"`
-	Availability base.NodeAvailability `json:"availability"`
-	Role         base.NodeRole         `json:"role"`
-	IsLeader     bool                  `json:"isLeader"`
-	Platform     *NodePlatformResp     `json:"platform"`
-	Resources    *NodeResources        `json:"resources"`
-	EngineDesc   *NodeEngineDescResp   `json:"engineDesc"`
-	UpdateVer    int                   `json:"updateVer"`
+	ID           string                  `json:"id"`
+	Name         string                  `json:"name"`
+	Labels       map[string]string       `json:"labels"`
+	Hostname     string                  `json:"hostname"`
+	Addr         string                  `json:"addr"`
+	Status       docker.NodeStatus       `json:"status"`
+	Availability docker.NodeAvailability `json:"availability"`
+	Role         docker.NodeRole         `json:"role"`
+	IsLeader     bool                    `json:"isLeader"`
+	Platform     *NodePlatformResp       `json:"platform"`
+	Resources    *NodeResources          `json:"resources"`
+	EngineDesc   *NodeEngineDescResp     `json:"engineDesc"`
+	UpdateVer    int                     `json:"updateVer"`
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -83,9 +82,9 @@ func TransformNode(node *swarm.Node, detailed bool) *NodeResp {
 	resp := &NodeResp{
 		ID:           node.ID,
 		Name:         gofn.Coalesce(node.Spec.Name, "<unset>"),
-		Status:       base.NodeStatus(node.Status.State),
-		Availability: base.NodeAvailability(node.Spec.Availability),
-		Role:         base.NodeRole(node.Spec.Role),
+		Status:       docker.NodeStatus(node.Status.State),
+		Availability: docker.NodeAvailability(node.Spec.Availability),
+		Role:         docker.NodeRole(node.Spec.Role),
 		IsLeader:     isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader,
 		Hostname:     node.Description.Hostname,
 		Addr:         node.Status.Addr,

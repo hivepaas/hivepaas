@@ -21580,21 +21580,6 @@
         "type" : "string",
         "x-enum-varnames" : [ "MFATypeTOTP", "MFATypeEmail" ]
       },
-      "github_com_localpaas_localpaas_localpaas_app_base.NodeAvailability" : {
-        "enum" : [ "active", "pause", "drain" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "NodeAvailabilityActive", "NodeAvailabilityPause", "NodeAvailabilityDrain" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_base.NodeRole" : {
-        "enum" : [ "manager", "worker" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "NodeRoleManager", "NodeRoleWorker" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_base.NodeStatus" : {
-        "enum" : [ "unknown", "down", "ready", "disconnected" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "NodeStatusUnknown", "NodeStatusDown", "NodeStatusReady", "NodeStatusDisconnected" ]
-      },
       "github_com_localpaas_localpaas_localpaas_app_base.OAuthKind" : {
         "enum" : [ "github", "github-app", "gitlab", "gitea", "google" ],
         "type" : "string",
@@ -21659,21 +21644,6 @@
         "enum" : [ "active", "pending", "disabled" ],
         "type" : "string",
         "x-enum-varnames" : [ "UserStatusActive", "UserStatusPending", "UserStatusDisabled" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_base.VolumeDriver" : {
-        "enum" : [ "local" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "VolumeDriverLocal" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_base.VolumeScope" : {
-        "enum" : [ "global", "local" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "VolumeScopeGlobal", "VolumeScopeLocal" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_base.VolumeType" : {
-        "enum" : [ "volume", "nfs" ],
-        "type" : "string",
-        "x-enum-varnames" : [ "VolumeTypeVolume", "VolumeTypeNfs" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.WebhookKind" : {
         "enum" : [ "github", "gitlab", "gitea", "bitbucket", "gogs", "azuredevops" ],
@@ -22078,7 +22048,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_osutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -22101,7 +22071,7 @@
         "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]
@@ -24638,7 +24608,7 @@
             "type" : "string"
           },
           "availability" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.NodeAvailability"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NodeAvailability"
           },
           "createdAt" : {
             "type" : "string"
@@ -24671,10 +24641,10 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_nodeuc_nodedto.NodeResources"
           },
           "role" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.NodeRole"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NodeRole"
           },
           "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.NodeStatus"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NodeStatus"
           },
           "updateVer" : {
             "type" : "integer"
@@ -24689,7 +24659,7 @@
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_nodeuc_nodedto.UpdateNodeReq" : {
         "properties" : {
           "availability" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.NodeAvailability"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NodeAvailability"
           },
           "labels" : {
             "additionalProperties" : {
@@ -24701,7 +24671,7 @@
             "type" : "string"
           },
           "role" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.NodeRole"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.NodeRole"
           },
           "updateVer" : {
             "type" : "integer"
@@ -24727,14 +24697,11 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
-          "driver" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.VolumeDriver"
+          "btrfsOptions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsReq"
           },
-          "extraDriverOpts" : {
-            "additionalProperties" : {
-              "type" : "string"
-            },
-            "type" : "object"
+          "driver" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.VolumeDriver"
           },
           "labels" : {
             "additionalProperties" : {
@@ -24745,20 +24712,27 @@
           "name" : {
             "type" : "string"
           },
-          "nfsOpts" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptsReq"
+          "nfsOptions" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsReq"
+            } ],
+            "description" : "For `local` driver only",
+            "type" : "object"
+          },
+          "options" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
           },
           "projectId" : {
             "type" : "string"
           },
-          "source" : {
-            "type" : "string"
-          },
-          "type" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.VolumeType"
+          "tmpfsOptions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsReq"
           }
         },
-        "required" : [ "availableInProjects", "driver", "extraDriverOpts", "labels", "name", "nfsOpts", "projectId", "source", "type" ],
+        "required" : [ "availableInProjects", "btrfsOptions", "driver", "labels", "name", "nfsOptions", "options", "projectId", "tmpfsOptions" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeResp" : {
@@ -24821,7 +24795,16 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptsReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsReq" : {
+        "properties" : {
+          "device" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "device" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsReq" : {
         "properties" : {
           "addr" : {
             "type" : "string"
@@ -24851,7 +24834,7 @@
             "type" : "string"
           },
           "driver" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.VolumeDriver"
           },
           "id" : {
             "type" : "string"
@@ -24878,7 +24861,7 @@
             "type" : "integer"
           },
           "scope" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.VolumeScope"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.VolumeScope"
           },
           "size" : {
             "type" : "integer"
@@ -24894,6 +24877,21 @@
           }
         },
         "required" : [ "availableInProjects", "clusterVolumeSpec", "createdAt", "driver", "id", "labels", "mountpoint", "name", "options", "refCount", "scope", "size", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsReq" : {
+        "properties" : {
+          "device" : {
+            "type" : "string"
+          },
+          "size" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+          },
+          "uid" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "device", "size", "uid" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.CreateProjectTagReq" : {
@@ -32373,10 +32371,35 @@
         "type" : "string",
         "x-enum-varnames" : [ "HealthcheckModeInherit", "HealthcheckModeNone", "HealthcheckModeCmd", "HealthcheckModeCmdShell" ]
       },
+      "github_com_localpaas_localpaas_services_docker.NodeAvailability" : {
+        "enum" : [ "active", "pause", "drain" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "NodeAvailabilityActive", "NodeAvailabilityPause", "NodeAvailabilityDrain" ]
+      },
+      "github_com_localpaas_localpaas_services_docker.NodeRole" : {
+        "enum" : [ "manager", "worker" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "NodeRoleManager", "NodeRoleWorker" ]
+      },
+      "github_com_localpaas_localpaas_services_docker.NodeStatus" : {
+        "enum" : [ "unknown", "down", "ready", "disconnected" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "NodeStatusUnknown", "NodeStatusDown", "NodeStatusReady", "NodeStatusDisconnected" ]
+      },
       "github_com_localpaas_localpaas_services_docker.ServiceMode" : {
         "enum" : [ "replicated", "replicated-job", "global", "global-job" ],
         "type" : "string",
         "x-enum-varnames" : [ "ServiceModeReplicated", "ServiceModeReplicatedJob", "ServiceModeGlobal", "ServiceModeGlobalJob" ]
+      },
+      "github_com_localpaas_localpaas_services_docker.VolumeDriver" : {
+        "enum" : [ "local" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "VolumeDriverLocal" ]
+      },
+      "github_com_localpaas_localpaas_services_docker.VolumeScope" : {
+        "enum" : [ "global", "local" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "VolumeScopeGlobal", "VolumeScopeLocal" ]
       },
       "github_com_localpaas_localpaas_services_traefik.LBStrategy" : {
         "enum" : [ "wrr", "p2c", "hrw", "leasttime" ],

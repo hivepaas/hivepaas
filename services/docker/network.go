@@ -16,8 +16,8 @@ const (
 )
 
 const (
-	NetworkScopeSwarm  = "swarm"
-	NetworkDriverLocal = "local"
+	NetworkScopeSwarm = "swarm"
+	NetworkScopeLocal = "local"
 )
 
 type NetworkListOption func(*network.ListOptions)

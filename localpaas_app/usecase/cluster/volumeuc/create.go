@@ -10,8 +10,8 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/localpaas/localpaas/services/docker"
 )
@@ -38,23 +38,26 @@ func (uc *UC) CreateVolume(
 
 	driverOpts := map[string]string{}
 	switch req.Driver {
-	case base.VolumeDriverLocal:
-		switch req.Type {
-		case base.VolumeTypeVolume:
-			// Do nothing
-
-		case base.VolumeTypeNfs:
-			driverOpts["type"] = string(req.Type)
-			o := fmt.Sprintf("addr=%s,%s", req.NfsOpts.Addr, gofn.If(req.NfsOpts.Readonly, "ro", "rw"))
-			if req.NfsOpts.Version != "" {
-				o += "," + req.NfsOpts.Version
+	case docker.VolumeDriverLocal:
+		switch {
+		case req.NfsOptions != nil:
+			driverOpts["type"] = "nfs"
+			o := fmt.Sprintf("addr=%s,%s", req.NfsOptions.Addr, gofn.If(req.NfsOptions.Readonly, "ro", "rw"))
+			if req.NfsOptions.Version != "" {
+				o += "," + req.NfsOptions.Version
 			}
 			driverOpts["o"] = o
-			driverOpts["device"] = req.NfsOpts.Device
+			driverOpts["device"] = req.NfsOptions.Device
 
-		default:
-			return nil, apperrors.New(apperrors.ErrUnsupported).
-				WithMsgLog("driver '%s' does not support volume type '%s'", req.Driver, req.Type)
+		case req.TmpfsOptions != nil:
+			driverOpts["type"] = "tmpfs"
+			bytes := req.TmpfsOptions.Size.Bytes() + int64(unit.MB) - 1
+			driverOpts["o"] = fmt.Sprintf("size=%vm,uid=%v", bytes/int64(unit.MB), req.TmpfsOptions.UID)
+			driverOpts["device"] = gofn.Coalesce(req.TmpfsOptions.Device, "tmpfs")
+
+		case req.BtrfsOptions != nil:
+			driverOpts["type"] = "btrfs"
+			driverOpts["device"] = req.BtrfsOptions.Device
 		}
 
 	default:
@@ -62,7 +65,7 @@ func (uc *UC) CreateVolume(
 			WithMsgLog("driver '%s' is not supported", req.Driver)
 	}
 	// Overwrite the driver opts with the extra values from the client
-	maps.Copy(driverOpts, req.ExtraDriverOpts)
+	maps.Copy(driverOpts, req.Options)
 
 	// Setup default labels
 	if req.Labels == nil {

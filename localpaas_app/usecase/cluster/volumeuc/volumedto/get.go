@@ -7,7 +7,6 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/services/docker"
 )
@@ -39,10 +38,10 @@ type VolumeResp struct {
 	Name              string                 `json:"name"`
 	AvailInProjects   bool                   `json:"availableInProjects"`
 	Labels            map[string]string      `json:"labels"`
-	Driver            string                 `json:"driver"`
+	Driver            docker.VolumeDriver    `json:"driver"`
 	Mountpoint        string                 `json:"mountpoint"`
 	Options           map[string]string      `json:"options"`
-	Scope             base.VolumeScope       `json:"scope"`
+	Scope             docker.VolumeScope     `json:"scope"`
 	Status            map[string]any         `json:"status"`
 	RefCount          int64                  `json:"refCount"`
 	Size              int64                  `json:"size"`
@@ -60,10 +59,10 @@ func TransformVolume(vol *volume.Volume, _ bool) *VolumeResp {
 		ID:              vol.Name,
 		Name:            vol.Name,
 		AvailInProjects: vol.Labels[docker.StackLabelNamespace] == "",
-		Driver:          vol.Driver,
+		Driver:          docker.VolumeDriver(vol.Driver),
 		Mountpoint:      vol.Mountpoint,
 		Options:         vol.Options,
-		Scope:           base.VolumeScope(vol.Scope),
+		Scope:           docker.VolumeScope(vol.Scope),
 		Status:          vol.Status,
 		Labels:          docker.FilterOutSystemLabels(vol.Labels),
 		CreatedAt:       transformVolumeCreatedAt(vol.CreatedAt),

@@ -4,18 +4,17 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
 type UpdateNodeReq struct {
-	NodeID       string                `json:"-"`
-	Name         string                `json:"name"`
-	Labels       map[string]string     `json:"labels"`
-	Role         base.NodeRole         `json:"role"`
-	Availability base.NodeAvailability `json:"availability"`
-	UpdateVer    int                   `json:"updateVer"`
+	NodeID       string                  `json:"-"`
+	Name         string                  `json:"name"`
+	Labels       map[string]string       `json:"labels"`
+	Role         docker.NodeRole         `json:"role"`
+	Availability docker.NodeAvailability `json:"availability"`
+	UpdateVer    int                     `json:"updateVer"`
 }
 
 func NewUpdateNodeReq() *UpdateNodeReq {
@@ -28,8 +27,8 @@ func (req *UpdateNodeReq) Validate() apperrors.ValidationErrors {
 	// NOTE: node id is docker id, it's not ULID
 	validators = append(validators, basedto.ValidateStr(&req.NodeID, true, 1, nodeIDMaxLen, "nodeId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1, nodeNameMaxLen, "name")...)
-	validators = append(validators, basedto.ValidateStrIn(&req.Role, false, base.AllNodeRoles, "role")...)
-	validators = append(validators, basedto.ValidateStrIn(&req.Availability, false, base.AllNodeAvailabilities,
+	validators = append(validators, basedto.ValidateStrIn(&req.Role, false, docker.AllNodeRoles, "role")...)
+	validators = append(validators, basedto.ValidateStrIn(&req.Availability, false, docker.AllNodeAvailabilities,
 		"availability")...)
 
 	// Validate node labels

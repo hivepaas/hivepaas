@@ -8,6 +8,43 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
+type NodeStatus string
+
+const (
+	NodeStatusUnknown      = NodeStatus(swarm.NodeStateUnknown)
+	NodeStatusDown         = NodeStatus(swarm.NodeStateDown)
+	NodeStatusReady        = NodeStatus(swarm.NodeStateReady)
+	NodeStatusDisconnected = NodeStatus(swarm.NodeStateDisconnected)
+)
+
+var (
+	AllNodeStatuses = []NodeStatus{NodeStatusUnknown, NodeStatusDown, NodeStatusReady, NodeStatusDisconnected}
+)
+
+type NodeRole string
+
+const (
+	NodeRoleManager = NodeRole(swarm.NodeRoleManager)
+	NodeRoleWorker  = NodeRole(swarm.NodeRoleWorker)
+)
+
+var (
+	AllNodeRoles = []NodeRole{NodeRoleManager, NodeRoleWorker}
+)
+
+type NodeAvailability string
+
+const (
+	NodeAvailabilityActive = NodeAvailability(swarm.NodeAvailabilityActive)
+	NodeAvailabilityPause  = NodeAvailability(swarm.NodeAvailabilityPause)
+	NodeAvailabilityDrain  = NodeAvailability(swarm.NodeAvailabilityDrain)
+)
+
+var (
+	AllNodeAvailabilities = []NodeAvailability{NodeAvailabilityActive, NodeAvailabilityPause,
+		NodeAvailabilityDrain}
+)
+
 type NodeListOption func(*swarm.NodeListOptions)
 
 func (m *manager) NodeList(

@@ -8,9 +8,9 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc/nodedto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 func (uc *UC) ListNode(
@@ -26,12 +26,12 @@ func (uc *UC) ListNode(
 	filterNodes := nodes
 	if len(req.Status) > 0 {
 		filterNodes = gofn.FilterPtr(filterNodes, func(node *swarm.Node) bool {
-			return gofn.Contain(req.Status, base.NodeStatus(node.Status.State))
+			return gofn.Contain(req.Status, docker.NodeStatus(node.Status.State))
 		})
 	}
 	if len(req.Role) > 0 {
 		filterNodes = gofn.FilterPtr(filterNodes, func(node *swarm.Node) bool {
-			return gofn.Contain(req.Role, base.NodeRole(node.Spec.Role))
+			return gofn.Contain(req.Role, docker.NodeRole(node.Spec.Role))
 		})
 	}
 	if req.Search != "" {

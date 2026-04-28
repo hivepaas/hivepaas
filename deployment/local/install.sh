@@ -9,6 +9,10 @@ echo "---------------------------------------------------------------"
 # Delete all unused data that take the disk space
 # docker system prune -a -f
 
+# Reset whole cluster
+# docker swarm leave --force || true
+# docker swarm init
+
 LOCALPAAS_DIR=.appdata/localpaas
 LOCALPAAS_SSL_CERTS=$LOCALPAAS_DIR/ssl/certs
 

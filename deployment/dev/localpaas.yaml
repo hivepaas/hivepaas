@@ -54,7 +54,7 @@ services:
   db:
     image: postgres:18-alpine
     networks:
-      - internal_net
+      - local_net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -76,7 +76,7 @@ services:
     restart: unless-stopped
     command: redis-server
     networks:
-      - internal_net
+      - local_net
     deploy:
       labels:
         - "traefik.enable=false"
@@ -86,7 +86,7 @@ services:
     restart: unless-stopped
     networks:
       - localpaas_net
-      - internal_net
+      - local_net
     deploy:
       labels:
         - "traefik.enable=true"
@@ -102,7 +102,7 @@ services:
     image: localpaas/localpaas-dev:latest
     networks:
       - localpaas_net
-      - internal_net
+      - local_net
     environment:
       LP_CONFIG_FILE: config/config.development.toml
       LP_ADMIN_USERNAME: admin
@@ -130,7 +130,7 @@ services:
   worker:
     image: localpaas/localpaas-dev:latest
     networks:
-      - internal_net
+      - local_net
     environment:
       LP_CONFIG_FILE: config/config.development.toml
       LP_RUN_MODE: worker
@@ -147,7 +147,7 @@ services:
 networks:
   localpaas_net:
     external: true
-  internal_net:
+  local_net:
     driver: overlay
     attachable: true
 

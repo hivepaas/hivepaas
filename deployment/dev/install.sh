@@ -7,7 +7,11 @@ echo "INSTALL LocalPaaS"
 echo "---------------------------------------------------------------"
 
 # Delete all unused data that take the disk space
-docker system prune -a -f
+# docker system prune -a -f
+
+# Reset whole cluster
+docker swarm leave --force || true
+docker swarm init
 
 LOCALPAAS_DIR=localpaas
 LOCALPAAS_SSL_CERTS=$LOCALPAAS_DIR/ssl/certs
@@ -37,6 +41,10 @@ fi
 echo "Create overlay network 'localpaas_net'..."
 docker network create --driver overlay --attachable localpaas_net || true
 
+# Create some volumes
+docker volume create test-vol-1
+docker volume create test-vol-2
+
 # Download dev_project_a.yaml
 echo "Download dev_project_a.yaml..."
 curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/dev/dev_project_a.yaml" -o dev_project_a.yaml
@@ -55,7 +63,7 @@ docker pull localpaas/localpaas-dev:latest # pull latest image
 docker stack deploy -c localpaas.yaml localpaas
 
 sleep 10
-docker run --net localpaas_internal_net \
+docker run --net localpaas_local_net \
   -e LP_PLATFORM=remote -e LP_DB_HOST=db -e LP_DB_PORT=5432 -e LP_DB_DB_NAME=localpaas \
   -e LP_DB_USER=localpaas -e LP_DB_PASSWORD=abc123 -e LP_DB_SSL_MODE=disable \
   -w /app localpaas/localpaas-dev:latest \
@@ -64,12 +72,12 @@ docker run --net localpaas_internal_net \
 # Force restart the main app
 docker service update --force localpaas_app
 
-sleep 3
-# docker restart $(docker ps -a -q -f status=running)
-TRAEFIK_CONT_ID=$(docker ps -f "status=running" | grep traefik | awk -F' ' '{print $1}')
-if [ -n "$TRAEFIK_CONT_ID" ]; then
-  docker container restart "$TRAEFIK_CONT_ID"
-fi
+#sleep 3
+## docker restart $(docker ps -a -q -f status=running)
+#TRAEFIK_CONT_ID=$(docker ps -f "status=running" | grep traefik | awk -F' ' '{print $1}')
+#if [ -n "$TRAEFIK_CONT_ID" ]; then
+#  docker container restart "$TRAEFIK_CONT_ID"
+#fi
 
 echo "---------------------------------------------------------------"
 echo "DONE."

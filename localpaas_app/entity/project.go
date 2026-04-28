@@ -69,5 +69,5 @@ func (p *Project) GetSettingByType(typ base.SettingType) *Setting {
 }
 
 func (p *Project) GetDefaultNetworkName() string {
-	return p.Key + "_net"
+	return p.Key + "_local_net"
 }

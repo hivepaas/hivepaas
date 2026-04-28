@@ -12,5 +12,5 @@ export interface DockerVolume {
     size: number;
     updateVer: number;
     status: Record<string, unknown>;
-    clusterVolumeSpec: null;
+    clusterVolumeSpe?: null;
 }

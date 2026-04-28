@@ -1,15 +1,16 @@
 import React, { useEffect } from "react";
 
+import { Checkbox, Input } from "@components/ui";
 import { Button } from "@components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@components/ui/field";
-import { SelectItem } from "@components/ui/select";
+import { Field, FieldError, FieldGroup } from "@components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import type { ProjectStorageSettings } from "~/projects/domain";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
-import { InputWithAddOn, SelectWithAddon } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../schemas";
 import { StorageMountFormSchema } from "../schemas";
@@ -80,24 +81,36 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
                     void handleSubmit(onValid, onInvalid)(e);
                 }}
             >
-                <FieldGroup>
+                <FieldGroup className="gap-6">
                     <Field>
-                        <FieldLabel htmlFor="type">Storage Type *</FieldLabel>
-                        <SelectWithAddon
-                            {...typeField}
-                            addonLeft="Type"
-                            value={typeField.value}
-                            onValueChange={typeField.onChange}
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Type"
+                                    isRequired
+                                />
+                            }
                         >
-                            {availableTypes.map(type => (
-                                <SelectItem
-                                    key={type}
-                                    value={type}
-                                >
-                                    {type}
-                                </SelectItem>
-                            ))}
-                        </SelectWithAddon>
+                            <Select
+                                {...typeField}
+                                value={typeField.value}
+                                onValueChange={typeField.onChange}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableTypes.map(type => (
+                                        <SelectItem
+                                            key={type}
+                                            value={type}
+                                        >
+                                            {type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </InfoBlock>
                         <FieldError errors={[errors.type]} />
                     </Field>
 
@@ -110,41 +123,54 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
                     {storageType === EMountType.Tmpfs && <TmpfsFields projectRules={projectRules} />}
 
                     <Field>
-                        <FieldLabel htmlFor="target">Target *</FieldLabel>
-                        <InputWithAddOn
-                            {...targetField}
-                            id="target"
-                            placeholder="/path/in/container"
-                            aria-invalid={targetInvalid}
-                            addonLeft="Target"
-                        />
-                        <FieldError errors={[errors.target]} />
-                    </Field>
-
-                    <Field>
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={readOnlyField.value ?? false}
-                                onChange={readOnlyField.onChange}
-                            />
-                            <span className="text-sm">Read-only</span>
-                        </label>
-                    </Field>
-
-                    <Field>
-                        <FieldLabel htmlFor="consistency">Consistency</FieldLabel>
-                        <SelectWithAddon
-                            {...consistencyField}
-                            addonLeft="Consistency"
-                            value={consistencyField.value ?? EMountConsistency.Default}
-                            onValueChange={consistencyField.onChange}
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Target"
+                                    isRequired
+                                />
+                            }
                         >
-                            <SelectItem value={EMountConsistency.Default}>default</SelectItem>
-                            <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
-                            <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
-                            <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
-                        </SelectWithAddon>
+                            <Input
+                                {...targetField}
+                                id="target"
+                                placeholder="/path/in/container"
+                                aria-invalid={targetInvalid}
+                            />
+                            <FieldError errors={[errors.target]} />
+                        </InfoBlock>
+                    </Field>
+
+                    <Field>
+                        <InfoBlock title={<LabelWithInfo label="Read-only" />}>
+                            <Checkbox
+                                id="read-only"
+                                checked={readOnlyField.value ?? false}
+                                onCheckedChange={checked => {
+                                    readOnlyField.onChange(checked === true);
+                                }}
+                            />
+                        </InfoBlock>
+                    </Field>
+
+                    <Field>
+                        <InfoBlock title={<LabelWithInfo label="Consistency" />}>
+                            <Select
+                                {...consistencyField}
+                                value={consistencyField.value ?? EMountConsistency.Default}
+                                onValueChange={consistencyField.onChange}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Consistency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={EMountConsistency.Default}>default</SelectItem>
+                                    <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
+                                    <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
+                                    <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </InfoBlock>
                     </Field>
 
                     <div className="flex justify-end gap-2 pt-4">

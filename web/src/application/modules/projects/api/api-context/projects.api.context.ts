@@ -15,6 +15,8 @@ import {
     ProjectAppsApiValidator,
     ProjectBasicAuthApi,
     ProjectBasicAuthApiValidator,
+    ProjectDockerVolumesApi,
+    ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
     ProjectDomainSettingsApiValidator,
     ProjectEnvVarsApi,
@@ -67,6 +69,7 @@ function createApi() {
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
     const projectNetworksApiValidator = new ProjectNetworksApiValidator();
+    const projectDockerVolumesApiValidator = new ProjectDockerVolumesApiValidator();
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
@@ -128,6 +131,9 @@ function createApi() {
             },
             networks: {
                 $: new ProjectNetworksApi(projectNetworksApiValidator),
+            },
+            dockerVolumes: {
+                $: new ProjectDockerVolumesApi(projectDockerVolumesApiValidator),
             },
             notifications: {
                 $: new ProjectNotificationApi(projectNotificationApiValidator),

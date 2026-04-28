@@ -7,3 +7,4 @@ export * from "./ssl-cert.entity";
 export * from "./notification.entity";
 export * from "./domain-settings";
 export * from "./storage-settings";
+export * from "./docker-volume";

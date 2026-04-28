@@ -64,9 +64,9 @@ func (s *HTTPServer) init() {
 	s.websocket = melody.New()
 	s.Server = &http.Server{
 		Addr:           s.config.HTTPServer.BindingAddress(),
-		ReadTimeout:    10 * time.Second, //nolint:mnd
-		WriteTimeout:   10 * time.Second, //nolint:mnd
-		MaxHeaderBytes: 1 << 20,          //nolint:mnd
+		ReadTimeout:    180 * time.Second, //nolint:mnd
+		WriteTimeout:   180 * time.Second, //nolint:mnd
+		MaxHeaderBytes: 1 << 20,           //nolint:mnd
 		Handler:        engine,
 	}
 

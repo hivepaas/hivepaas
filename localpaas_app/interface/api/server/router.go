@@ -130,6 +130,7 @@ func (s *HTTPServer) registerRoutes() {
 	_ = s.registerClusterRoutes(apiGroup)
 	_ = s.registerWebhookRoutes(apiGroup)
 	_ = s.registerFileRoutes(apiGroup)
+	_ = s.registerTestRoutes(apiGroup)
 }
 
 func routePing(c *gin.Context) {

@@ -49,6 +49,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue/queueimpl"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskappdeploy"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskcronjobexec"
+	"github.com/localpaas/localpaas/localpaas_app/tasks/taskdummy"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskhealthcheck"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/tasksystemupdate"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
@@ -122,6 +123,7 @@ var Provides = []any{
 	// Task queue
 	queueimpl.New,
 	initializer.NewWorkerInitializer,
+	taskdummy.NewExecutor,
 	taskappdeploy.NewExecutor,
 	taskcronjobexec.NewExecutor,
 	taskhealthcheck.NewExecutor,

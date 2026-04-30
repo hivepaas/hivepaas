@@ -175,6 +175,8 @@ func (q *taskQueue) loadTask(
 		// Do nothing
 	case base.TaskTypeSystemUpdate:
 		// Do nothing
+	case base.TaskTypeDummy:
+		// Do nothing
 	}
 	if shouldCancelTask {
 		task.Status = base.TaskStatusCanceled

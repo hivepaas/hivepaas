@@ -3,6 +3,7 @@ package base
 type TaskType string
 
 const (
+	TaskTypeDummy        TaskType = "task:dummy"
 	TaskTypeAppDeploy    TaskType = "task:app-deploy"
 	TaskTypeCronJobExec  TaskType = "task:cron-job-exec"
 	TaskTypeHealthcheck  TaskType = "task:healthcheck"
@@ -10,7 +11,7 @@ const (
 )
 
 var (
-	AllTaskTypes = []TaskType{TaskTypeAppDeploy, TaskTypeCronJobExec, TaskTypeHealthcheck,
+	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeCronJobExec, TaskTypeHealthcheck,
 		TaskTypeSystemUpdate}
 )
 

@@ -7,6 +7,7 @@ import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
 import type { AppStorageMount } from "~/projects/domain";
 
 import { AppLoader } from "@application/shared/components";
+import { PageError } from "@application/shared/pages";
 
 import { StorageTable } from "../building-blocks";
 import { StorageMountsProvider, useStorageMounts } from "../context";
@@ -121,13 +122,22 @@ export function AppConfigStorageRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppStorageSettingsQueries.useFindOne({
+    const { data, isLoading, error, refetch } = AppStorageSettingsQueries.useFindOne({
         projectID: projectId,
         appID: appId,
     });
 
     if (isLoading) {
         return <AppLoader />;
+    }
+
+    if (error) {
+        return (
+            <PageError
+                error={error}
+                onRetry={refetch}
+            />
+        );
     }
 
     return (

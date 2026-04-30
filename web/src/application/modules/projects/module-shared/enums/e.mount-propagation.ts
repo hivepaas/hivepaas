@@ -1,4 +1,5 @@
 export const EMountPropagation = {
+    Default: "",
     RPrivate: "rprivate",
     Private: "private",
     RShared: "rshared",

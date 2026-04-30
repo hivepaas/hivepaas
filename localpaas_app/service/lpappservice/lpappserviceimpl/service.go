@@ -8,15 +8,18 @@ import (
 
 func New(
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 	dockerManager docker.Manager,
 ) lpappservice.Service {
 	return &service{
 		settingRepo:   settingRepo,
+		taskRepo:      taskRepo,
 		dockerManager: dockerManager,
 	}
 }
 
 type service struct {
 	settingRepo   repository.SettingRepo
+	taskRepo      repository.TaskRepo
 	dockerManager docker.Manager
 }

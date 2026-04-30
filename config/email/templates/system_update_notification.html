@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title> LocalPaaS Notification </title>
+	<!--[if !mso]><!-->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<!--<![endif]-->
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,700" rel="stylesheet" type="text/css">
+	<!--[if !mso]><!-->
+	<style>
+		@import url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,700);
+	</style>
+	<!--<![endif]-->
+	<style>
+		body {
+			-webkit-text-size-adjust: 100%;
+			-ms-text-size-adjust: 100%;
+		}
+
+		a, span {
+			-webkit-font-smoothing: antialiased !important;
+			-moz-osx-font-smoothing: grayscale !important;
+		}
+
+		b {
+			font-weight:500;
+		}
+
+		.title {
+			font-family:Roboto, Helvetica, Arial, sans-serif;
+			font-size:24px;
+			font-weight:300;
+			line-height:30px;
+			text-align:left;
+			color:#252525;
+		}
+
+		.p_default {
+			padding:12px 0;
+			word-break:break-word;
+		}
+
+		.text_default {
+			font-family:Roboto, Helvetica, Arial, sans-serif;
+			font-size:15px;
+			line-height:20px;
+			text-align:left;
+			color:#252525;
+		}
+
+		.button {
+			background-color:#4E46B4;
+			border:1px solid #4E46B4;
+			border-radius:6px;
+			color:#ffffff;
+			display:inline-block;
+			font-family:Roboto, Helvetica, Arial, sans-serif;
+			font-size:15px;
+			font-weight:700;
+			letter-spacing:0px;
+			line-height:16px;
+			padding:12px 18px 12px 18px;
+			text-align:center;
+			text-decoration:none;
+		}
+		.button_text {
+			color:#ffffff;
+		}
+
+		.col_left {
+			text-align:left;
+			max-width:30%;
+		}
+		.col_main {
+			text-align:left;
+			padding-left:10px;
+		}
+	</style>
+</head>
+
+<body>
+<div style="padding:4px 0;">
+	<div style="background-color:#ffffff;margin:0 auto;border:2px solid #f2f2f2;border-radius:8px;max-width:600px;">
+		<div style="padding:20px 20px;">
+			<div>
+				{{if .Succeeded}}
+				<span class="title">System update succeeded</span>
+				{{else}}
+				<span class="title">System update failed</span>
+				{{end}}
+			</div>
+		</div>
+		<hr style="border:none; height:2px; background-color:#f2f2f2;">
+		<div style="padding:20px 20px;">
+			<table style="width:100%;border:0;border-spacing:0;text-align:left;">
+				<tbody>
+				<tr class="text_default">
+					<td class="col_left">
+						<b>Current Version:</b>
+					</td>
+					<td class="col_main">
+						{{.CurrentVersion}}
+					</td>
+				</tr>
+				<tr class="text_default">
+					<td class="col_left">
+						<b>Target Version:</b>
+					</td>
+					<td class="col_main">
+						{{.TargetVersion}}
+					</td>
+				</tr>
+
+				<tr class="text_default">
+					<td class="col_left">
+						<b>Started at:</b>
+					</td>
+					<td class="col_main">
+						{{.StartedAt}}
+					</td>
+				</tr>
+				<tr class="text_default">
+					<td class="col_left">
+						<b>Duration:</b>
+					</td>
+					<td class="col_main">
+						{{.Duration}}
+					</td>
+				</tr>
+				</tbody>
+			</table>
+
+			<div class="p_default" style="text-align:center;">
+				<a href="{{.DashboardLink}}" class="button" target="_blank">
+					<span class="button_text">See Details</span>
+				</a>
+			</div>
+			<div class="p_default">
+				<div class="text_default">Or copy and paste this link into your browser:</div>
+				<a class="text_default" href="{{.DashboardLink}}" target="_blank">{{.DashboardLink}}</a>
+			</div>
+			<div class="p_default">
+				<span class="text_default">Cheers,<br/>LocalPaaS</span>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+
+</html>

@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types/swarm"
+
+	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 )
 
 type Service interface {
@@ -13,6 +16,7 @@ type Service interface {
 	ReloadLpAppConfig(ctx context.Context) error
 
 	GetAppReleaseInfo(ctx context.Context) (*AppReleaseInfo, error)
+	UpdateSystemVersion(ctx context.Context, db database.IDB, targetVersion *base.ReleaseInfo) error
 
 	GetLpWorkerSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartLpWorkerSwarmService(ctx context.Context) error

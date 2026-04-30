@@ -25,7 +25,7 @@ func (uc *UC) GetTaskLogs(
 		TaskID:                  req.TaskID,
 		Follow:                  req.Follow,
 		Since:                   req.Since,
-		Duration:                req.Duration,
+		Duration:                req.Duration.ToDuration(),
 		Tail:                    req.Tail,
 		LogBatchThresholdPeriod: taskLogBatchThresholdPeriod,
 		LogBatchMaxFrame:        taskLogBatchMaxFrame,

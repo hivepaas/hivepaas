@@ -173,7 +173,7 @@ func (q *taskQueue) loadTask(
 		shouldCancelTask = task.TargetJob == nil || !task.TargetJob.IsActive()
 	case base.TaskTypeHealthcheck:
 		// Do nothing
-	case base.TaskTypeAppVerUpdate:
+	case base.TaskTypeSystemUpdate:
 		// Do nothing
 	}
 	if shouldCancelTask {

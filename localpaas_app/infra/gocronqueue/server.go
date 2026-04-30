@@ -43,10 +43,11 @@ type Config struct {
 	RedisClient redis.UniversalClient
 	Logger      logging.Logger
 
-	TaskCheckFunc      func(ctx context.Context) ([]*entity.Task, error)
-	TaskCheckInterval  time.Duration
-	TaskCreateFunc     func(ctx context.Context) error
-	TaskCreateInterval time.Duration
+	TaskCheckFunc       func(ctx context.Context) ([]*entity.Task, error)
+	TaskCheckInterval   time.Duration
+	TaskCreateFunc      func(ctx context.Context) error
+	TaskCreateInterval  time.Duration
+	TaskCanScheduleFunc func(*entity.Task) bool
 
 	// Healthcheck: a special kind of task
 	HealthcheckBaseInterval time.Duration
@@ -231,6 +232,9 @@ func (s *Server) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
 }
 
 func (s *Server) shouldSchedule(task *entity.Task, runAt time.Time) bool {
+	if s.config.TaskCanScheduleFunc != nil && !s.config.TaskCanScheduleFunc(task) {
+		return false
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	existingJob := s.jobMap[task.ID]

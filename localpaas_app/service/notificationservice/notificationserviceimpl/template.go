@@ -33,6 +33,7 @@ const (
 	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
 	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
 	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
+	TemplateSystemUpdateNotification  TemplateName = "system-update-notification"
 )
 
 type Template interface {
@@ -96,6 +97,8 @@ func (s *service) loadEmailTemplate(
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_expiring_notification.html")
 	case TemplateSSLRenewalNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_renewal_notification.html")
+	case TemplateSystemUpdateNotification:
+		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "system_update_notification.html")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -120,6 +123,8 @@ func (s *service) loadSlackTemplate(
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_expiring_notification.tpl")
 	case TemplateSSLRenewalNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_renewal_notification.tpl")
+	case TemplateSystemUpdateNotification:
+		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -144,6 +149,8 @@ func (s *service) loadDiscordTemplate(
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_expiring_notification.tpl")
 	case TemplateSSLRenewalNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_renewal_notification.tpl")
+	case TemplateSystemUpdateNotification:
+		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

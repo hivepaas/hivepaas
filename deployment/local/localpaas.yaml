@@ -5,13 +5,20 @@ services:
     image: traefik:v3.6
     command:
       - "--api.insecure=true"
+      - "--api.dashboard=true"
       - "--providers.swarm=true"
       - "--providers.swarm.watch=true"
       - "--providers.swarm.network=localpaas_net"
+      - "--providers.swarm.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      - "--log.level=DEBUG"
+      - "--log.filepath=/var/log/traefik/traefik.log"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
     networks:
       # Connect to the 'localpaas_net' overlay network for inter-container communication across nodes
       - localpaas_net
@@ -107,6 +114,78 @@ services:
         published: 35540 # Host port exposed on the nodes
         protocol: tcp
         mode: host
+
+  app:
+    image: localpaas/localpaas-dev:latest
+    networks:
+      - localpaas_net
+      - local_net
+    environment:
+      LP_CONFIG_FILE: config/config.local.toml
+      LP_ADMIN_USERNAME: admin
+      LP_ADMIN_EMAIL: admin@domain.name
+      LP_ADMIN_PASSWORD: abc123
+      VITE_API_URL: http://localhost:10000
+    volumes:
+      - ./localpaas:/var/lib/localpaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.app-svc.loadbalancer.server.port=10000"
+        - "traefik.http.routers.app-router.rule=Host(`app.dev.localhost`)"
+        - "traefik.http.routers.app-router.entrypoints=websecure"
+        - "traefik.http.routers.app-router.tls=true"
+        - "traefik.http.routers.app-router.service=app-svc"
+        - "traefik.http.routers.x-custom-router-le-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.x-custom-router-le-acme.entrypoints=web"
+        - "traefik.http.routers.x-custom-router-le-acme.tls=false"
+        - "traefik.http.middlewares.x-custom-addprefix-le.addprefix.prefix=/letsencrypt"
+        - "traefik.http.routers.x-custom-router-le-acme.middlewares=x-custom-addprefix-le@swarm"
+        - "traefik.swarm.network=localpaas_net"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+
+  worker:
+    image: localpaas/localpaas-dev:latest
+    networks:
+      - local_net
+    environment:
+      LP_CONFIG_FILE: config/config.local.toml
+      LP_RUN_MODE: worker
+    volumes:
+      - ./localpaas:/var/lib/localpaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+
+  updater:
+    image: localpaas/localpaas-dev:latest
+    networks:
+      - local_net
+    environment:
+      LP_CONFIG_FILE: config/config.local.toml
+      LP_RUN_MODE: updater
+    volumes:
+      - ./localpaas:/var/lib/localpaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
 
 # Define the overlay network for Swarm
 networks:

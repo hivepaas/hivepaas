@@ -52,7 +52,7 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 # For running app
-COPY --from=builder /build/app .
+COPY --from=builder /build/localpaas .
 COPY --from=builder /build/localpaas_app/db ./localpaas_app/db
 COPY --from=builder /build/config ./config
 COPY --from=builder /build/scripts ./scripts
@@ -61,4 +61,4 @@ COPY --from=builder /build/sql-migrate /usr/local/bin/sql-migrate
 COPY --from=dashboard_builder /dist-dashboard ./dist-dashboard
 
 # Command to run
-CMD ["sh","-c","./app"]
+CMD ["sh","-c","./localpaas"]

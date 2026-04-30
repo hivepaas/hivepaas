@@ -1,8 +1,6 @@
 package filedto
 
 import (
-	"time"
-
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -13,10 +11,10 @@ import (
 
 type GetFileDownloadURLReq struct {
 	settings.GetSettingReq
-	Expiration   time.Duration `json:"-" mapstructure:"-"`
-	RequireLogin bool          `json:"-" mapstructure:"-"`
-	ViewInline   bool          `json:"-" mapstructure:"viewInline"`
-	CloudPresign bool          `json:"-" mapstructure:"-"`
+	Expiration   timeutil.Duration `json:"-" mapstructure:"-"`
+	RequireLogin bool              `json:"-" mapstructure:"-"`
+	ViewInline   bool              `json:"-" mapstructure:"viewInline"`
+	CloudPresign bool              `json:"-" mapstructure:"-"`
 }
 
 func NewGetFileDownloadURLReq() *GetFileDownloadURLReq {

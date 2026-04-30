@@ -82,6 +82,12 @@ func (cfg *Config) DashboardProjectHealthcheckDetailsURL(projectID, healthcheckI
 		"tasks", taskID)) // TODO: update this
 }
 
+// Tasks
+
+func (cfg *Config) DashboardTaskDetailsURL(taskID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID)) // TODO: update this
+}
+
 /// BACK-END
 
 func (cfg *Config) SsoBaseCallbackURL() string {

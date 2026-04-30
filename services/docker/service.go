@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/swarm"
@@ -189,4 +190,45 @@ func (m *manager) ServiceLogs(
 		return nil, apperrors.NewInfra(err)
 	}
 	return resp, nil
+}
+
+func (m *manager) ServiceWaitUntilRunning(
+	ctx context.Context,
+	serviceID string,
+	requireAllReplicas bool,
+	requireRunningDuration time.Duration,
+	checkInterval time.Duration,
+	timeout time.Duration,
+) (bool, error) {
+	if serviceID == "" {
+		return false, nil
+	}
+	start := time.Now()
+	var isRunningFrom time.Time
+	for time.Since(start) <= timeout {
+		service, _, err := m.client.ServiceInspectWithRaw(ctx, serviceID, swarm.ServiceInspectOptions{})
+		if err != nil {
+			return false, apperrors.NewInfra(err)
+		}
+		if service.Spec.Mode.Replicated == nil || *service.Spec.Mode.Replicated.Replicas == 0 {
+			return false, nil
+		}
+		if service.ServiceStatus == nil {
+			return false, nil
+		}
+		if (requireAllReplicas && service.ServiceStatus.RunningTasks < service.ServiceStatus.DesiredTasks) ||
+			(!requireAllReplicas && service.ServiceStatus.RunningTasks == 0) {
+			isRunningFrom = time.Time{}
+			time.Sleep(checkInterval)
+			continue
+		}
+		if isRunningFrom.IsZero() {
+			isRunningFrom = time.Now()
+		}
+		if time.Since(isRunningFrom) >= requireRunningDuration {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

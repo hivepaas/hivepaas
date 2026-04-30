@@ -1,17 +1,11 @@
-development:
+main:
+  dialect: postgres
+  datasource: postgres://${LP_DB_USER}:${LP_DB_PASSWORD}@${LP_DB_HOST}:${LP_DB_PORT}/${LP_DB_DB_NAME}?sslmode=disable
+  dir: localpaas_app/db/migrations
+  table: migrations
+
+dev:
   dialect: postgres
   datasource: postgres://localpaas:abc123@localhost:35432/localpaas?sslmode=disable
-  dir: localpaas_app/db/migrations
-  table: migrations
-
-deployment: # used for remote deployments
-  dialect: postgres
-  datasource: postgres://${LP_DB_USER}:${LP_DB_PASSWORD}@${LP_DB_HOST}:${LP_DB_PORT}/${LP_DB_DB_NAME}?sslmode=${LP_DB_SSL_MODE}
-  dir: localpaas_app/db/migrations
-  table: migrations
-
-production:
-  dialect: postgres
-  datasource: ${DATABASE_URL}
   dir: localpaas_app/db/migrations
   table: migrations

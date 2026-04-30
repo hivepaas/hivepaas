@@ -8,6 +8,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
+//
+// APP DEPLOYMENT
+//
+
 type BaseMsgDataAppDeploymentNotification struct {
 	ProjectName   string
 	AppName       string
@@ -39,6 +43,10 @@ type DiscordMsgDataAppDeploymentNotification struct {
 	Setting *entity.Discord
 }
 
+//
+// CRON TASK
+//
+
 type BaseMsgDataCronTaskNotification struct {
 	ProjectName   string
 	AppName       string
@@ -68,6 +76,10 @@ type DiscordMsgDataCronTaskNotification struct {
 	*BaseMsgDataCronTaskNotification
 	Setting *entity.Discord
 }
+
+//
+// HEALTH CHECK
+//
 
 type BaseMsgDataHealthcheckNotification struct {
 	ProjectName     string
@@ -100,6 +112,10 @@ type DiscordMsgDataHealthcheckNotification struct {
 	Setting *entity.Discord
 }
 
+//
+// SSL EXPIRING
+//
+
 type BaseMsgDataSSLExpiringNotification struct {
 	ProjectName   string
 	AppName       string
@@ -129,6 +145,10 @@ type DiscordMsgDataSSLExpiringNotification struct {
 	Setting *entity.Discord
 }
 
+//
+// SSL RENEWAL
+//
+
 type BaseMsgDataSSLRenewalNotification struct {
 	ProjectName   string
 	AppName       string
@@ -156,5 +176,35 @@ type SlackMsgDataSSLRenewalNotification struct {
 
 type DiscordMsgDataSSLRenewalNotification struct {
 	*BaseMsgDataSSLRenewalNotification
+	Setting *entity.Discord
+}
+
+//
+// SYSTEM UPDATE
+//
+
+type BaseMsgDataSystemUpdateNotification struct {
+	Succeeded      bool
+	CurrentVersion string
+	TargetVersion  string
+	StartedAt      time.Time
+	Duration       time.Duration
+	DashboardLink  string
+}
+
+type EmailMsgDataSystemUpdateNotification struct {
+	*BaseMsgDataSystemUpdateNotification
+	Email      *entity.Email
+	Recipients []string
+	Subject    string
+}
+
+type SlackMsgDataSystemUpdateNotification struct {
+	*BaseMsgDataSystemUpdateNotification
+	Setting *entity.Slack
+}
+
+type DiscordMsgDataSystemUpdateNotification struct {
+	*BaseMsgDataSystemUpdateNotification
 	Setting *entity.Discord
 }

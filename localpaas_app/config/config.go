@@ -30,13 +30,11 @@ var (
 	ErrConfigFileNotFound = errors.New("config file not found")
 )
 
-type RunMode string
-
 const (
-	RunModeApp          RunMode = "app"
-	RunModeWorker       RunMode = "worker"
-	RunModeAppAndWorker RunMode = "app-n-worker"
-	RunModeUpdater      RunMode = "updater"
+	RunModeApp          = "app"
+	RunModeWorker       = "worker"
+	RunModeAppAndWorker = "app+worker"
+	RunModeUpdater      = "updater"
 )
 
 var (
@@ -45,9 +43,9 @@ var (
 )
 
 type Config struct {
-	Env      string  `toml:"env" env:"LP_ENV"`
-	Platform string  `toml:"platform" env:"LP_PLATFORM" default:"remote"`
-	RunMode  RunMode `toml:"run_mode" env:"LP_RUN_MODE" default:"app-n-worker"`
+	Env      string `toml:"env" env:"LP_ENV"`
+	Platform string `toml:"platform" env:"LP_PLATFORM" default:"remote"`
+	RunMode  string `toml:"run_mode" env:"LP_RUN_MODE" default:"app+worker"`
 
 	RootDomain string `toml:"root_domain" env:"LP_ROOT_DOMAIN"`
 	AppDomain  string `toml:"app_domain" env:"LP_APP_DOMAIN"`

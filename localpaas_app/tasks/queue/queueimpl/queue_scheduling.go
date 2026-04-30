@@ -6,6 +6,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
@@ -14,7 +15,7 @@ import (
 )
 
 const (
-	missedTaskPeriod = 5 * time.Minute
+	missedTaskPeriod = 10 * time.Minute
 )
 
 func (q *taskQueue) doCreateTasks(
@@ -114,18 +115,20 @@ func (q *taskQueue) findSchedulingTasks(
 	scanTo := timeNow.Add(q.config.Tasks.Queue.TaskCheckInterval)
 	tasks, _, err := q.taskRepo.List(ctx, q.db, "", nil,
 		bunex.SelectWhere("task.type != ?", base.TaskTypeHealthcheck), // special tasks no need scheduling
-		// Not-started tasks
 		bunex.SelectWhereGroup(
-			bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
-			bunex.SelectWhere("(task.run_at IS NULL OR (task.run_at >= ? AND task.run_at < ?))",
-				scanFrom, scanTo),
-		),
-		// Failed tasks need retry
-		bunex.SelectWhereOrGroup(
-			bunex.SelectWhere("task.status = ?", base.TaskStatusFailed),
-			bunex.SelectWhere("task.retry_at IS NOT NULL"),
-			bunex.SelectWhere("task.retry_at >= ?", scanFrom),
-			bunex.SelectWhere("task.retry_at < ?", scanTo),
+			// Not-started tasks
+			bunex.SelectWhereGroup(
+				bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
+				bunex.SelectWhere("((task.run_at IS NULL AND task.created_at >= ?) "+
+					"OR (task.run_at >= ? AND task.run_at < ?))", scanFrom, scanFrom, scanTo),
+			),
+			// Failed tasks need retry
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("task.status = ?", base.TaskStatusFailed),
+				bunex.SelectWhere("task.retry_at IS NOT NULL"),
+				bunex.SelectWhere("task.retry_at >= ?", scanFrom),
+				bunex.SelectWhere("task.retry_at < ?", scanTo),
+			),
 		),
 	)
 	if err != nil {
@@ -172,6 +175,14 @@ func (q *taskQueue) shouldRunMissedTask(
 		if runAt.Sub(timeNow) < timeNow.Sub(missedTask.RunAt) {
 			return false
 		}
+	}
+	return true
+}
+
+func (q *taskQueue) canScheduleTask(task *entity.Task) bool {
+	// System update task requires run mode `updater`
+	if task.Type == base.TaskTypeSystemUpdate {
+		return config.Current.RunMode == config.RunModeUpdater
 	}
 	return true
 }

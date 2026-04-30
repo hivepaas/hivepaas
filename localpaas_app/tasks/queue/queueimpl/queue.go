@@ -79,6 +79,7 @@ func (q *taskQueue) Start() (err error) {
 			TaskCheckFunc:           q.findSchedulingTasks,
 			TaskCreateInterval:      q.config.Tasks.Queue.TaskCreateInterval,
 			TaskCreateFunc:          q.doCreateTasks,
+			TaskCanScheduleFunc:     q.canScheduleTask,
 			HealthcheckBaseInterval: q.config.Tasks.Healthcheck.BaseInterval,
 			HealthcheckFunc:         q.doHealthcheck,
 		})
@@ -94,7 +95,7 @@ func (q *taskQueue) Start() (err error) {
 	}
 
 	// Initialize task queue client if configured
-	if q.config.RunMode == config.RunModeApp || q.config.RunMode == config.RunModeAppAndWorker {
+	if q.isAppMode() {
 		q.logger.Infof("starting task queue client...")
 		q.client, err = gocronqueue.NewClient(q.redisClient, q.logger)
 		if err != nil {
@@ -122,6 +123,11 @@ func (q *taskQueue) Shutdown() error {
 	return nil
 }
 
+func (q *taskQueue) isAppMode() bool {
+	return q.config.RunMode == config.RunModeApp || q.config.RunMode == config.RunModeAppAndWorker
+}
+
 func (q *taskQueue) isWorkerMode() bool {
-	return q.config.RunMode == config.RunModeWorker || q.config.RunMode == config.RunModeAppAndWorker
+	return q.config.RunMode == config.RunModeWorker || q.config.RunMode == config.RunModeAppAndWorker ||
+		q.config.RunMode == config.RunModeUpdater
 }

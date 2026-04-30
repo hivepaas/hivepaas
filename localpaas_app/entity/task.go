@@ -93,6 +93,9 @@ func (t *Task) CanRetry() bool {
 }
 
 func (t *Task) GetDuration() time.Duration {
+	if t.EndedAt.IsZero() || t.EndedAt.Before(t.StartedAt) {
+		return time.Since(t.StartedAt)
+	}
 	return t.EndedAt.Sub(t.StartedAt)
 }
 

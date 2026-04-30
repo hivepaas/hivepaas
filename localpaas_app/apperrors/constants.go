@@ -7,34 +7,34 @@ import (
 
 // Base errors with equivalent http status code
 var (
-	ErrInternalServer   = errors.New("ERR_INTERNAL_SERVER")
-	ErrPanic            = errors.New("ERR_PANIC")
-	ErrBadRequest       = errors.New("ERR_BAD_REQUEST")
-	ErrParamInvalid     = errors.New("ERR_PARAM_INVALID")
-	ErrUnavailable      = errors.New("ERR_UNAVAILABLE")
-	ErrUnauthorized     = errors.New("ERR_UNAUTHORIZED")
-	ErrForbidden        = errors.New("ERR_FORBIDDEN")
-	ErrNotFound         = errors.New("ERR_NOT_FOUND")
-	ErrAlreadyExist     = errors.New("ERR_ALREADY_EXIST")
-	ErrConflict         = errors.New("ERR_CONFLICT")
-	ErrNonEditable      = errors.New("ERR_NON_EDITABLE")
-	ErrNonDeletable     = errors.New("ERR_NON_DELETABLE")
-	ErrResourceInUse    = errors.New("ERR_RESOURCE_IN_USE")
-	ErrResourceInactive = errors.New("ERR_RESOURCE_INACTIVE")
-	ErrResourceMissing  = errors.New("ERR_RESOURCE_MISSING")
-	ErrTooMany          = errors.New("ERR_TOO_MANY")
-	ErrActionNotAllowed = errors.New("ERR_ACTION_NOT_ALLOWED")
-	ErrActionFailed     = errors.New("ERR_ACTION_FAILED")
-	ErrNotImplemented   = errors.New("ERR_NOT_IMPLEMENTED")
-	ErrUnsupported      = errors.New("ERR_UNSUPPORTED")
-	ErrTokenInvalid     = errors.New("ERR_TOKEN_INVALID")
-	ErrTypeInvalid      = errors.New("ERR_TYPE_INVALID")
-	ErrValueInvalid     = errors.New("ERR_VALUE_INVALID")
-	ErrValidation       = errors.New("ERR_VALIDATION")
+	ErrInternalServer = errors.New("ERR_INTERNAL_SERVER")
+	ErrBadRequest     = errors.New("ERR_BAD_REQUEST")
+	ErrUnauthorized   = errors.New("ERR_UNAUTHORIZED")
+	ErrForbidden      = errors.New("ERR_FORBIDDEN")
+	ErrNotFound       = errors.New("ERR_NOT_FOUND")
+	ErrConflict       = errors.New("ERR_CONFLICT")
+	ErrNotImplemented = errors.New("ERR_NOT_IMPLEMENTED")
 
+	ErrPanic                = errors.New("ERR_PANIC")
+	ErrAlreadyExist         = errors.New("ERR_ALREADY_EXIST")
+	ErrUnsupported          = errors.New("ERR_UNSUPPORTED")
+	ErrNonEditable          = errors.New("ERR_NON_EDITABLE")
+	ErrNonDeletable         = errors.New("ERR_NON_DELETABLE")
+	ErrResourceInUse        = errors.New("ERR_RESOURCE_IN_USE")
+	ErrResourceInactive     = errors.New("ERR_RESOURCE_INACTIVE")
+	ErrResourceMissing      = errors.New("ERR_RESOURCE_MISSING")
+	ErrTooMany              = errors.New("ERR_TOO_MANY")
+	ErrActionNotAllowed     = errors.New("ERR_ACTION_NOT_ALLOWED")
+	ErrActionFailed         = errors.New("ERR_ACTION_FAILED")
+	ErrUnavailable          = errors.New("ERR_UNAVAILABLE")
+	ErrParamInvalid         = errors.New("ERR_PARAM_INVALID")
+	ErrTypeInvalid          = errors.New("ERR_TYPE_INVALID")
+	ErrValueInvalid         = errors.New("ERR_VALUE_INVALID")
+	ErrTokenInvalid         = errors.New("ERR_TOKEN_INVALID")
 	ErrUpdateVerMismatched  = errors.New("ERR_UPDATE_VER_MISMATCHED")
 	ErrStatusNotAllowAction = errors.New("ERR_STATUS_NOT_ALLOW_ACTION")
 	ErrURLInvalid           = errors.New("ERR_URL_INVALID")
+	ErrValidation           = errors.New("ERR_VALIDATION")
 )
 
 // Errors for session
@@ -52,12 +52,6 @@ var (
 	ErrTooManyPasscodeAttempts     = errors.New("ERR_TOO_MANY_PASSCODE_ATTEMPTS")
 )
 
-// Errors for api client
-var (
-	ErrAPIKeyMismatched = errors.New("ERR_API_KEY_MISMATCHED")
-	ErrAPIKeyInvalid    = errors.New("ERR_API_KEY_INVALID")
-)
-
 // Errors for user
 var (
 	ErrUserUnavailable             = errors.New("ERR_USER_UNAVAILABLE")
@@ -68,6 +62,12 @@ var (
 	ErrPasswordResetTokenInvalid   = errors.New("ERR_PASSWORD_RESET_TOKEN_INVALID")
 	ErrEmailUnavailable            = errors.New("ERR_EMAIL_UNAVAILABLE")
 	ErrEmailChangeUnallowed        = errors.New("ERR_EMAIL_CHANGE_UNALLOWED")
+)
+
+// Errors for api client
+var (
+	ErrAPIKeyMismatched = errors.New("ERR_API_KEY_MISMATCHED")
+	ErrAPIKeyInvalid    = errors.New("ERR_API_KEY_INVALID")
 )
 
 // Errors for settings
@@ -94,11 +94,17 @@ var (
 	ErrMultiNodeClusterRequireRegistryForImages = errors.New("ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES")
 )
 
+// Errors for cluster
+var (
+	ErrNodeRequiredByLocalPaaSApp = errors.New("ERR_NODE_REQUIRED_BY_LOCALPAAS_APP")
+)
+
 // nolint Errors from infrastructure
 var (
 	ErrInfra                   = errors.New("ERR_INFRA")
-	ErrInfraActionFailed       = errors.New("ERR_INFRA_ACTION_FAILED")
 	ErrInfraUnknown            = errors.New("ERR_INFRA_UNKNOWN")
+	ErrInfraInternal           = errors.Join(errors.New("ERR_INFRA_INTERNAL"), ErrInternalServer)
+	ErrInfraActionFailed       = errors.New("ERR_INFRA_ACTION_FAILED")
 	ErrInfraInvalidArgument    = errors.Join(errors.New("ERR_INFRA_INVALID_ARGUMENT"), ErrParamInvalid)
 	ErrInfraNotFound           = errors.Join(errors.New("ERR_INFRA_NOT_FOUND"), ErrNotFound)
 	ErrInfraAlreadyExists      = errors.Join(errors.New("ERR_INFRA_ALREADY_EXISTS"), ErrAlreadyExist)
@@ -110,65 +116,55 @@ var (
 	ErrInfraAborted            = errors.New("ERR_INFRA_ABORTED")
 	ErrInfraOutOfRange         = errors.New("ERR_INFRA_OUT_OF_RANGE")
 	ErrInfraNotImplemented     = errors.Join(errors.New("ERR_INFRA_NOT_IMPLEMENTED"), ErrNotImplemented)
-	ErrInfraInternal           = errors.Join(errors.New("ERR_INFRA_INTERNAL"), ErrInternalServer)
 	ErrInfraUnavailable        = errors.Join(errors.New("ERR_INFRA_UNAVAILABLE"), ErrUnavailable)
 	ErrInfraDataLoss           = errors.New("ERR_INFRA_DATA_LOSS")
 	ErrInfraUnauthorized       = errors.Join(errors.New("ERR_INFRA_UNAUTHORIZED"), ErrUnauthorized)
 )
 
-// Errors for cluster
-var (
-	ErrNodeRequiredByLocalPaaSApp = errors.New("ERR_NODE_REQUIRED_BY_LOCAL_PAAS_APP")
-)
-
 // errorStatusMap - mapping from error to http status code
 var errorStatusMap = map[error]int{
 	// Base errors
-	ErrInternalServer:   http.StatusInternalServerError,
-	ErrPanic:            http.StatusInternalServerError,
-	ErrBadRequest:       http.StatusBadRequest,
-	ErrParamInvalid:     http.StatusBadRequest,
-	ErrUnavailable:      http.StatusBadRequest,
-	ErrUnauthorized:     http.StatusUnauthorized,
-	ErrForbidden:        http.StatusForbidden,
-	ErrNotFound:         http.StatusNotFound,
-	ErrAlreadyExist:     http.StatusConflict,
-	ErrConflict:         http.StatusConflict,
-	ErrNonEditable:      http.StatusUnprocessableEntity,
-	ErrNonDeletable:     http.StatusUnprocessableEntity,
-	ErrResourceInUse:    http.StatusConflict,
-	ErrResourceInactive: http.StatusNotAcceptable,
-	ErrResourceMissing:  http.StatusNotAcceptable,
-	ErrTooMany:          http.StatusTooManyRequests,
-	ErrActionNotAllowed: http.StatusForbidden,
-	ErrActionFailed:     http.StatusUnprocessableEntity,
-	ErrNotImplemented:   http.StatusNotImplemented,
-	ErrUnsupported:      http.StatusNotImplemented,
-	ErrTokenInvalid:     http.StatusUnauthorized,
-	ErrTypeInvalid:      http.StatusUnprocessableEntity,
-	ErrValueInvalid:     http.StatusUnprocessableEntity,
-	ErrValidation:       http.StatusBadRequest,
+	ErrInternalServer: http.StatusInternalServerError,
+	ErrBadRequest:     http.StatusBadRequest,
+	ErrUnauthorized:   http.StatusUnauthorized,
+	ErrForbidden:      http.StatusForbidden,
+	ErrNotFound:       http.StatusNotFound,
+	ErrConflict:       http.StatusConflict,
+	ErrNotImplemented: http.StatusNotImplemented,
 
-	ErrUpdateVerMismatched:  http.StatusConflict,
-	ErrStatusNotAllowAction: http.StatusForbidden,
+	ErrPanic:                http.StatusInternalServerError,
+	ErrAlreadyExist:         http.StatusConflict,
+	ErrUnsupported:          http.StatusUnprocessableEntity,
+	ErrNonEditable:          http.StatusUnprocessableEntity,
+	ErrNonDeletable:         http.StatusUnprocessableEntity,
+	ErrResourceInUse:        http.StatusUnprocessableEntity,
+	ErrResourceInactive:     http.StatusUnprocessableEntity,
+	ErrResourceMissing:      http.StatusUnprocessableEntity,
+	ErrTooMany:              http.StatusUnprocessableEntity,
+	ErrActionNotAllowed:     http.StatusUnprocessableEntity,
+	ErrActionFailed:         http.StatusUnprocessableEntity,
+	ErrUnavailable:          http.StatusUnprocessableEntity,
+	ErrParamInvalid:         http.StatusUnprocessableEntity,
+	ErrTypeInvalid:          http.StatusUnprocessableEntity,
+	ErrValueInvalid:         http.StatusUnprocessableEntity,
+	ErrTokenInvalid:         http.StatusUnprocessableEntity,
+	ErrUpdateVerMismatched:  http.StatusUnprocessableEntity,
+	ErrStatusNotAllowAction: http.StatusUnprocessableEntity,
 	ErrURLInvalid:           http.StatusUnprocessableEntity,
+	ErrValidation:           http.StatusBadRequest,
 
 	// Session errors
 	ErrNoSession:                   http.StatusUnauthorized,
 	ErrSessionJWTInvalid:           http.StatusUnauthorized,
 	ErrSessionJWTExpired:           http.StatusUnauthorized,
 	ErrSessionAPIKeyInvalid:        http.StatusUnauthorized,
-	ErrSessionRefreshTokenRequired: http.StatusForbidden,
-	ErrSSORequired:                 http.StatusForbidden,
+	ErrSessionRefreshTokenRequired: http.StatusUnauthorized,
+	ErrSSORequired:                 http.StatusUnauthorized,
 	ErrLoginInputInvalid:           http.StatusUnauthorized,
 	ErrPasswordMismatched:          http.StatusUnauthorized,
 	ErrPasscodeMismatched:          http.StatusUnauthorized,
-	ErrTooManyLoginFailures:        http.StatusForbidden,
-	ErrTooManyPasscodeAttempts:     http.StatusForbidden,
-
-	// Api client errors
-	ErrAPIKeyMismatched: http.StatusUnauthorized,
-	ErrAPIKeyInvalid:    http.StatusUnauthorized,
+	ErrTooManyLoginFailures:        http.StatusUnauthorized,
+	ErrTooManyPasscodeAttempts:     http.StatusUnauthorized,
 
 	// User errors
 	ErrUserUnavailable:             http.StatusUnprocessableEntity,
@@ -179,6 +175,10 @@ var errorStatusMap = map[error]int{
 	ErrPasswordResetTokenInvalid:   http.StatusUnprocessableEntity,
 	ErrEmailUnavailable:            http.StatusUnprocessableEntity,
 	ErrEmailChangeUnallowed:        http.StatusUnprocessableEntity,
+
+	// Api client errors
+	ErrAPIKeyMismatched: http.StatusUnauthorized,
+	ErrAPIKeyInvalid:    http.StatusUnauthorized,
 
 	// Settings errors
 	ErrUnconfigured:              http.StatusUnprocessableEntity,
@@ -198,10 +198,14 @@ var errorStatusMap = map[error]int{
 	ErrAppInactive: http.StatusUnprocessableEntity,
 	ErrMultiNodeClusterRequireRegistryForImages: http.StatusUnprocessableEntity,
 
+	// Cluster errors
+	ErrNodeRequiredByLocalPaaSApp: http.StatusUnprocessableEntity,
+
 	// Errors from infrastructure
 	ErrInfra:                   http.StatusInternalServerError,
-	ErrInfraActionFailed:       http.StatusUnprocessableEntity,
 	ErrInfraUnknown:            http.StatusInternalServerError,
+	ErrInfraInternal:           http.StatusInternalServerError,
+	ErrInfraActionFailed:       http.StatusUnprocessableEntity,
 	ErrInfraInvalidArgument:    http.StatusBadRequest,
 	ErrInfraNotFound:           http.StatusNotFound,
 	ErrInfraAlreadyExists:      http.StatusConflict,
@@ -213,13 +217,9 @@ var errorStatusMap = map[error]int{
 	ErrInfraAborted:            http.StatusUnprocessableEntity,
 	ErrInfraOutOfRange:         http.StatusUnprocessableEntity,
 	ErrInfraNotImplemented:     http.StatusNotImplemented,
-	ErrInfraInternal:           http.StatusInternalServerError,
 	ErrInfraUnavailable:        http.StatusConflict,
 	ErrInfraDataLoss:           http.StatusUnprocessableEntity,
 	ErrInfraUnauthorized:       http.StatusUnauthorized,
-
-	// Cluster errors
-	ErrNodeRequiredByLocalPaaSApp: http.StatusUnprocessableEntity,
 }
 
 // errorWarnLevelMap defines the errors that are handled but unexpected to happen.

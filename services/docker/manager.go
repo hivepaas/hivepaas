@@ -109,6 +109,9 @@ type Manager interface {
 	ServiceExists(ctx context.Context, serviceID string) bool
 	ServiceLogs(ctx context.Context, serviceID string, options ...ContainerLogsOption) (io.ReadCloser, error)
 
+	ServiceWaitUntilRunning(ctx context.Context, serviceID string, requireAllReplicas bool,
+		requireRunningDuration time.Duration, checkInterval time.Duration, timeout time.Duration) (bool, error)
+
 	// Swarm
 	SwarmInspect(ctx context.Context) (*swarm.Swarm, error)
 

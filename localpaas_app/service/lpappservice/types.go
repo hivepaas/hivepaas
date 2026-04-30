@@ -1,6 +1,8 @@
 package lpappservice
 
-import "github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+import (
+	"github.com/localpaas/localpaas/localpaas_app/base"
+)
 
 type AppReleaseInfo struct {
 	Stable *ReleaseInfo `json:"stable"`
@@ -8,12 +10,8 @@ type AppReleaseInfo struct {
 }
 
 type ReleaseInfo struct {
-	ReleaseDate  timeutil.Date `json:"releaseDate"`
-	AppVersion   string        `json:"appVersion"`
-	AppImage     string        `json:"appImage"`
-	RedisImage   string        `json:"redisImage"`
-	DbImage      string        `json:"dbImage"`
-	TraefikImage string        `json:"traefikImage"`
+	base.ReleaseInfo
 
+	// System specific flag
 	CanUpdate bool `json:"canUpdate"`
 }

@@ -24,6 +24,7 @@ import (
 
 func CompleteInstallation(
 	lc fx.Lifecycle,
+	cfg *config.Config,
 	db *database.DB,
 	sysStatusRepo repository.SystemStatusRepo,
 	projectRepo repository.ProjectRepo,
@@ -32,8 +33,12 @@ func CompleteInstallation(
 	projectService projectservice.Service,
 	logger logging.Logger,
 ) {
+	stepEnabled := cfg.RunMode != config.RunModeUpdater
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
+			if !stepEnabled {
+				return nil
+			}
 			sysStatus, err := sysStatusRepo.Get(ctx, db)
 			if err != nil {
 				return fmt.Errorf("failed to load system status: %w", err)
@@ -51,6 +56,9 @@ func CompleteInstallation(
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
+			if !stepEnabled {
+				return nil
+			}
 			return nil
 		},
 	})

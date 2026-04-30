@@ -41,14 +41,14 @@ func (uc *UC) GetAppRuntimeLogs(
 
 	var since, until, tail string
 	if req.Duration > 0 && req.Since.IsZero() {
-		req.Since = timeutil.NowUTC().Add(-req.Duration)
+		req.Since = timeutil.NowUTC().Add(-req.Duration.ToDuration())
 		req.Duration = 0
 	}
 	if !req.Since.IsZero() {
 		since = fmt.Sprintf("%d", req.Since.Unix())
 	}
 	if !req.Follow && req.Duration > 0 {
-		until = fmt.Sprintf("%d", req.Since.Add(req.Duration).Unix())
+		until = fmt.Sprintf("%d", req.Since.Add(req.Duration.ToDuration()).Unix())
 	}
 	if req.Tail > 0 {
 		tail = fmt.Sprintf("%d", req.Tail)

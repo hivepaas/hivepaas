@@ -5,7 +5,6 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/fileservice"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 )
@@ -24,7 +23,7 @@ func (uc *UC) GetFileDownloadURL(
 	resp, err := uc.FileService.GetDownloadURL(ctx, uc.DB, auth, &fileservice.GetDownloadURLReq{
 		File:         setting,
 		RequireLogin: req.RequireLogin,
-		Expiration:   req.Expiration,
+		Expiration:   req.Expiration.ToDuration(),
 		CloudPresign: req.CloudPresign,
 		ViewInline:   req.ViewInline,
 	})
@@ -33,6 +32,6 @@ func (uc *UC) GetFileDownloadURL(
 	}
 
 	return &filedto.GetFileDownloadURLResp{
-		Data: &filedto.FileDownloadURLDataResp{URL: resp.URL, Expiration: timeutil.Duration(req.Expiration)},
+		Data: &filedto.FileDownloadURLDataResp{URL: resp.URL, Expiration: req.Expiration},
 	}, nil
 }

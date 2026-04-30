@@ -1,6 +1,6 @@
 env = "development"
 platform = "remote"
-run_mode = "app-n-worker"
+run_mode = "app+worker"
 root_domain = "dev.localpaas.com"
 app_domain = "app.dev.localpaas.com"
 base_url = "https://app.dev.localpaas.com" # dashboard base URL

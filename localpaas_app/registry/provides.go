@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/basesettinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/devhelperhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectbasehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
@@ -49,6 +50,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskappdeploy"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskcronjobexec"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskhealthcheck"
+	"github.com/localpaas/localpaas/localpaas_app/tasks/tasksystemupdate"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc"
@@ -56,6 +58,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/devhelperuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc"
@@ -122,6 +125,7 @@ var Provides = []any{
 	taskappdeploy.NewExecutor,
 	taskcronjobexec.NewExecutor,
 	taskhealthcheck.NewExecutor,
+	tasksystemupdate.NewExecutor,
 
 	// Route handler
 	server.NewHandlerRegistry, // for all handler list
@@ -144,6 +148,7 @@ var Provides = []any{
 	systemsettingshandler.New,
 	webhookhandler.New,
 	filehandler.New,
+	devhelperhandler.New,
 
 	// Use case
 	syserroruc.New,
@@ -188,6 +193,7 @@ var Provides = []any{
 	systembackupuc.New,
 	fileuc.New,
 	storagesettingsuc.New,
+	devhelperuc.New,
 
 	// Service
 	clusterserviceimpl.New,

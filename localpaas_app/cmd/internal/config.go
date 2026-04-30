@@ -99,7 +99,7 @@ func createSystemDataDirs(cfg *config.Config, logger logging.Logger) {
 	logger.Info("creating data dirs if not exists...")
 
 	for path, mode := range cfg.DataPathsToInitAtStartup() {
-		err := os.Mkdir(path, mode)
+		err := os.MkdirAll(path, mode)
 		if err != nil {
 			logger.Errorf("failed to create data dir %s: %v", path, err)
 		}

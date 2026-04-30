@@ -164,6 +164,25 @@ services:
         constraints:
           - node.role == manager
 
+  updater:
+    image: localpaas/localpaas-dev:latest
+    networks:
+      - local_net
+    environment:
+      LP_CONFIG_FILE: config/config.development.toml
+      LP_RUN_MODE: updater
+    volumes:
+      - ./localpaas:/var/lib/localpaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+
 networks:
   localpaas_net:
     external: true

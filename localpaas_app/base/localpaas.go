@@ -15,6 +15,9 @@ const (
 
 	LocalpaasTraefikServiceName = "localpaas_traefik"
 	LocalpaasTraefikAppKey      = "localpaas_traefik"
+
+	LocalpaasUpdaterServiceName = "localpaas_updater"
+	LocalpaasUpdaterKey         = "localpaas_updater"
 )
 
 const (

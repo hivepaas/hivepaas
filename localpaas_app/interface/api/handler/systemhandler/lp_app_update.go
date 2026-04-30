@@ -47,3 +47,41 @@ func (h *Handler) GetLocalPaaSReleaseInfo(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// UpdateLocalPaaSAppVersion Updates LocalPaaS app
+// @Summary Updates LocalPaaS app
+// @Description Updates LocalPaaS app
+// @Tags    system_localpaas_app
+// @Produce json
+// @Id      updateLocalPaaSAppVersion
+// @Param   body body lpappdto.UpdateLpAppReq true "request data"
+// @Success 201 {object} lpappdto.UpdateLpAppResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /system/localpaas/update-version [post]
+func (h *Handler) UpdateLocalPaaSAppVersion(ctx *gin.Context) {
+	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Update app version").
+			WithMsgLog("only admin can update app version"))
+		return
+	}
+
+	req := lpappdto.NewUpdateLpAppReq()
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.lpAppUC.UpdateLpApp(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, resp)
+}

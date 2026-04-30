@@ -9,17 +9,18 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 type GetCronJobTaskLogsReq struct {
 	settings.BaseSettingReq
-	JobID    string        `json:"-"`
-	TaskID   string        `json:"-"`
-	Follow   bool          `json:"-" mapstructure:"follow"`
-	Since    time.Time     `json:"-" mapstructure:"since"`
-	Duration time.Duration `json:"-" mapstructure:"duration"`
-	Tail     int           `json:"-" mapstructure:"tail"`
+	JobID    string            `json:"-"`
+	TaskID   string            `json:"-"`
+	Follow   bool              `json:"-" mapstructure:"follow"`
+	Since    time.Time         `json:"-" mapstructure:"since"`
+	Duration timeutil.Duration `json:"-" mapstructure:"duration"`
+	Tail     int               `json:"-" mapstructure:"tail"`
 }
 
 func NewGetCronJobTaskLogsReq() *GetCronJobTaskLogsReq {

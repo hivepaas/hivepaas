@@ -1,32 +1,32 @@
 # Base errors
 ERR_INTERNAL_SERVER = "Unexpected error"
-ERR_PANIC = "Panic: {{.Error}}"
 ERR_BAD_REQUEST = "Bad request"
-ERR_PARAM_INVALID = "{{.Name}} is invalid"
-ERR_UNAVAILABLE = "{{.Name}} unavailable"
 ERR_UNAUTHORIZED = "Unauthorized"
 ERR_FORBIDDEN = "{{.Name}} is forbidden"
 ERR_NOT_FOUND = "{{.Name}} not found"
-ERR_ALREADY_EXIST = "{{.Name}} already exists"
 ERR_CONFLICT = "{{.Name}} conflicts with the existing data"
+ERR_NOT_IMPLEMENTED = "Not implemented"
+
+ERR_PANIC = "Panic: {{.Error}}"
+ERR_ALREADY_EXIST = "{{.Name}} already exists"
+ERR_UNSUPPORTED = "{{.Name}} is unsupported"
 ERR_NON_EDITABLE = "{{.Name}} is non-editable"
 ERR_NON_DELETABLE = "{{.Name}} is non-deletable"
 ERR_RESOURCE_IN_USE = "{{.Name}} is in use"
 ERR_RESOURCE_INACTIVE = "{{.Name}} is not active"
 ERR_RESOURCE_MISSING = "{{.Name}} is missing"
-ERR_VALIDATION = "Validation failed"
 ERR_TOO_MANY = "{{.Name}} are too many"
 ERR_ACTION_NOT_ALLOWED = "Action is not allowed"
 ERR_ACTION_FAILED = "Action failed"
-ERR_TOKEN_INVALID = "Token is invalid"
+ERR_UNAVAILABLE = "{{.Name}} unavailable"
+ERR_PARAM_INVALID = "{{.Name}} is invalid"
 ERR_TYPE_INVALID = "Type is invalid"
 ERR_VALUE_INVALID = "Value is invalid"
-ERR_NOT_IMPLEMENTED = "Not implemented"
-ERR_UNSUPPORTED = "{{.Name}} is unsupported"
-
-ERR_UPDATE_VER_MISMATCHED = "Concurrent update detected. Please reload data.\nAnother person made modifications to the object."
+ERR_TOKEN_INVALID = "Token is invalid"
+ERR_UPDATE_VER_MISMATCHED = "Mismatching update version. Please reload the page."
 ERR_STATUS_NOT_ALLOW_ACTION = "Status of object does not allow the action"
 ERR_URL_INVALID = "URL '{{.URL}}' is invalid or unsupported"
+ERR_VALIDATION = "Validation failed"
 
 # Session errors
 ERR_NO_SESSION = "No session found"
@@ -41,10 +41,6 @@ ERR_PASSCODE_MISMATCHED = "Passcode is incorrect"
 ERR_TOO_MANY_LOGIN_FAILURES = "You made too many login failures. Please wait {{.WaitDuration}} seconds before trying again."
 ERR_TOO_MANY_PASSCODE_ATTEMPTS = "You made too many passcode attempts. Please start over the login process."
 
-# API client errors
-ERR_API_KEY_MISMATCHED = "API key is mismatched"
-ERR_API_KEY_INVALID = "API key is invalid"
-
 # User errors
 ERR_USER_UNAVAILABLE = "User is unavailable. Please contact administrator."
 ERR_USER_INVITE_TOKEN_INVALID = "Invite token is invalid or expired"
@@ -55,6 +51,10 @@ ERR_PASSWORD_NOT_MEET_REQUIREMENTS = "Password does not meet requirements. Must 
 ERR_PASSWORD_RESET_TOKEN_INVALID = "Password reset token is invalid or expired"
 ERR_EMAIL_UNAVAILABLE = "Email address is not available"
 ERR_EMAIL_CHANGE_UNALLOWED = "Email changing is not allowed"
+
+# API client errors
+ERR_API_KEY_MISMATCHED = "API key is mismatched"
+ERR_API_KEY_INVALID = "API key is invalid"
 
 # Settings errors
 ERR_UNCONFIGURED = "{{.Name}} is not configured"
@@ -73,10 +73,14 @@ ERR_PROJECT_INACTIVE = "Project '{{.Name}}' is inactive"
 ERR_APP_INACTIVE = "App '{{.Name}}' is inactive"
 ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquires an accessible registry for the built images"
 
+# Cluster error
+ERR_NODE_REQUIRED_BY_LOCALPAAS_APP = "Node is required to be an active manager as LocalPaaS app is running in it"
+
 # Infra errors
 ERR_INFRA = "{{.Error}}"
-ERR_INFRA_ACTION_FAILED = "{{.Error}}"
 ERR_INFRA_UNKNOWN = "{{.Error}}"
+ERR_INFRA_INTERNAL = "{{.Error}}"
+ERR_INFRA_ACTION_FAILED = "{{.Error}}"
 ERR_INFRA_INVALID_ARGUMENT = "{{.Error}}"
 ERR_INFRA_NOT_FOUND = "{{.Error}}"
 ERR_INFRA_ALREADY_EXISTS = "{{.Error}}"
@@ -88,10 +92,6 @@ ERR_INFRA_NOT_MODIFIED = "{{.Error}}"
 ERR_INFRA_ABORTED = "{{.Error}}"
 ERR_INFRA_OUT_OF_RANGE = "{{.Error}}"
 ERR_INFRA_NOT_IMPLEMENTED = "{{.Error}}"
-ERR_INFRA_INTERNAL = "{{.Error}}"
 ERR_INFRA_UNAVAILABLE = "{{.Error}}"
 ERR_INFRA_DATA_LOSS = "{{.Error}}"
 ERR_INFRA_UNAUTHORIZED = "{{.Error}}"
-
-# Cluster error
-ERR_NODE_REQUIRED_BY_LOCAL_PAAS_APP = "Node is required to be an active manager as LocalPaaS app is running in it"

@@ -30,6 +30,7 @@ func TestNewServer_DefaultConcurrency(t *testing.T) {
 
 func TestServer_shouldSchedule(t *testing.T) {
 	server := &Server{
+		config: &Config{},
 		jobMap: make(map[string]*jobData),
 	}
 

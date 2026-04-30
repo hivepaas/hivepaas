@@ -89,6 +89,6 @@ func Execute(ctx context.Context, db database.IDB, exec func(tx database.Tx) err
 
 // IsErrorDeadLock Postgres deadlock check
 func IsErrorDeadLock(err error) bool {
-	sqlErr := &pgconn.PgError{}
-	return errors.As(err, &sqlErr) && (sqlErr.Code == "40P01")
+	pgErr, ok := errors.AsType[*pgconn.PgError](err)
+	return ok && pgErr.Code == "40P01"
 }

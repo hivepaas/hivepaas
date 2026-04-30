@@ -1,6 +1,6 @@
 env = "development"
 platform = "local"
-run_mode = "app-n-worker"
+run_mode = "app+worker"
 root_domain = "localhost"
 app_domain = "localhost"
 base_url = "http://localhost:10000" # dashboard base URL

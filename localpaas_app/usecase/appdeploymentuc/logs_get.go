@@ -40,7 +40,7 @@ func (uc *UC) GetDeploymentLogs(
 		TaskID:                  task.ID,
 		Follow:                  req.Follow,
 		Since:                   req.Since,
-		Duration:                req.Duration,
+		Duration:                req.Duration.ToDuration(),
 		Tail:                    req.Tail,
 		LogBatchThresholdPeriod: deploymentLogBatchThresholdPeriod,
 		LogBatchMaxFrame:        deploymentLogBatchMaxFrame,

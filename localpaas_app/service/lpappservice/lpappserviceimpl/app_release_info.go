@@ -28,7 +28,7 @@ func (s *service) GetAppReleaseInfo(ctx context.Context) (*lpappservice.AppRelea
 	}
 
 	if info.Stable != nil && info.Stable.AppVersion != "" {
-		cmp, err := version.CmpStr(info.Stable.AppVersion, base.StableVersion)
+		cmp, err := version.CmpStr(info.Stable.AppVersion, base.StableVersion.AppVersion)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -36,7 +36,7 @@ func (s *service) GetAppReleaseInfo(ctx context.Context) (*lpappservice.AppRelea
 	}
 
 	if info.Beta != nil && info.Beta.AppVersion != "" {
-		cmp, err := version.CmpStr(info.Beta.AppVersion, base.BetaVersion)
+		cmp, err := version.CmpStr(info.Beta.AppVersion, base.BetaVersion.AppVersion)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

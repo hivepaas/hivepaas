@@ -44,4 +44,12 @@ type Service interface {
 		data *SlackMsgDataHealthcheckNotification) error
 	DiscordSendHealthcheckNotification(ctx context.Context, db database.IDB,
 		data *DiscordMsgDataHealthcheckNotification) error
+
+	// System update notification
+	EmailSendSystemUpdateNotification(ctx context.Context, db database.IDB,
+		data *EmailMsgDataSystemUpdateNotification) error
+	SlackSendSystemUpdateNotification(ctx context.Context, db database.IDB,
+		data *SlackMsgDataSystemUpdateNotification) error
+	DiscordSendSystemUpdateNotification(ctx context.Context, db database.IDB,
+		data *DiscordMsgDataSystemUpdateNotification) error
 }

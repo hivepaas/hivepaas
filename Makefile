@@ -20,17 +20,11 @@ lint-local:
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.9.0
 	golangci-lint --timeout=5m run -v ./...
 
-up:
-	docker compose up -d
-
-down:
-	docker compose down
-
 test:
 	@./scripts/test.sh
 
 build:
-	@go build -o app ./localpaas_app/cmd/app/...
+	@go build -o localpaas ./localpaas_app/cmd/app/...
 
 run:
 	@go run ./localpaas_app/cmd/app/...
@@ -48,7 +42,7 @@ gen-swag:
 DB_MIGRATE_DIR := localpaas_app/db
 DB_CONN_STR := host=localhost port=35432 dbname=localpaas user=localpaas password=abc123
 DB_MIGRATE_BASE := $(DEVTOOLS_CMD) sql-migrate
-DB_MIGRATE_ENV := development
+DB_MIGRATE_ENV := dev
 DB_EXEC_BASE := $(DEVTOOLS_CMD) psql -d "$(DB_CONN_STR)"
 
 # This is considered the remote env
@@ -56,7 +50,7 @@ ifdef LP_PLATFORM
 ifneq ($(LP_PLATFORM), local)
 	DB_CONN_STR := host=${LP_DB_HOST} port=${LP_DB_PORT} dbname=${LP_DB_DB_NAME} user=${LP_DB_USER} password=${LP_DB_PASSWORD}
 	DB_MIGRATE_BASE := sql-migrate
-	DB_MIGRATE_ENV := deployment
+	DB_MIGRATE_ENV := main
 	DB_EXEC_BASE := psql -d "${DB_CONN_STR}"
 endif
 endif

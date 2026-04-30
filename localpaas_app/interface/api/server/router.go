@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appsettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/devhelperhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectsettingshandler"
@@ -46,6 +47,7 @@ type HandlerRegistry struct {
 	systemSettingsHandler  *systemsettingshandler.Handler
 	webhookHandler         *webhookhandler.Handler
 	fileHandler            *filehandler.Handler
+	devHelperHandler       *devhelperhandler.Handler
 }
 
 func NewHandlerRegistry(
@@ -64,6 +66,7 @@ func NewHandlerRegistry(
 	systemSettingsHandler *systemsettingshandler.Handler,
 	webhookHandler *webhookhandler.Handler,
 	fileHandler *filehandler.Handler,
+	devHelperHandler *devhelperhandler.Handler,
 ) *HandlerRegistry {
 	return &HandlerRegistry{
 		authHandler:            authHandler,
@@ -81,6 +84,7 @@ func NewHandlerRegistry(
 		systemSettingsHandler:  systemSettingsHandler,
 		webhookHandler:         webhookHandler,
 		fileHandler:            fileHandler,
+		devHelperHandler:       devHelperHandler,
 	}
 }
 
@@ -130,7 +134,7 @@ func (s *HTTPServer) registerRoutes() {
 	_ = s.registerClusterRoutes(apiGroup)
 	_ = s.registerWebhookRoutes(apiGroup)
 	_ = s.registerFileRoutes(apiGroup)
-	_ = s.registerTestRoutes(apiGroup)
+	_ = s.registerDevRoutes(apiGroup)
 }
 
 func routePing(c *gin.Context) {

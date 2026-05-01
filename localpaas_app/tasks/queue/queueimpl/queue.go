@@ -78,7 +78,7 @@ func (q *taskQueue) Start() (err error) {
 			TaskCheckInterval:       q.config.Tasks.Queue.TaskCheckInterval,
 			TaskCheckFunc:           q.findSchedulingTasks,
 			TaskCreateInterval:      q.config.Tasks.Queue.TaskCreateInterval,
-			TaskCreateFunc:          q.doCreateTasks,
+			TaskCreateFunc:          q.doCreateTasksForJobs,
 			TaskCanScheduleFunc:     q.canScheduleTask,
 			HealthcheckBaseInterval: q.config.Tasks.Healthcheck.BaseInterval,
 			HealthcheckFunc:         q.doHealthcheck,

@@ -13,10 +13,10 @@ func (e *Executor) updateSystemVersion(
 	data *taskData,
 ) (err error) {
 	// 1. Pull all images we need
-	// err := e.pullAllImages(ctx, data)
-	// if err != nil {
-	//	return apperrors.Wrap(err)
-	// }
+	err = e.pullAllImages(ctx, data)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 
 	// 2. Scale down the main app to zero instance
 	err = e.scaleMainAppService(ctx, 0, data)

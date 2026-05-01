@@ -8,6 +8,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
@@ -54,7 +55,7 @@ func (s *service) UpdateSystemVersion(
 		UpdatedAt: timeNow,
 	}
 	task.MustSetArgs(&entity.TaskSystemUpdateArgs{
-		CurrentVersion: base.StableVersion, // TODO: correct this
+		CurrentVersion: gofn.If(config.Current.IsBetaEnv(), base.BetaVersion, base.StableVersion),
 		TargetVersion:  targetVersion,
 	})
 

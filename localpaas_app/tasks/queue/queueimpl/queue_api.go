@@ -85,7 +85,7 @@ func (q *taskQueue) ScheduleTasksForCronJob(
 	}
 
 	if jobSetting.DeletedAt.IsZero() && jobSetting.IsActive() {
-		tasks, err := q.createTasks(ctx, db, []string{jobSetting.ID}, q.config.Tasks.Queue.TaskCreateInterval)
+		tasks, err := q.createTasksForJobs(ctx, db, []string{jobSetting.ID}, q.config.Tasks.Queue.TaskCreateInterval)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

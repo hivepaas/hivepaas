@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/services/docker"
 )
 
-//nolint:unused
 func (e *Executor) pullAllImages(
 	ctx context.Context,
 	data *taskData,
@@ -40,7 +39,6 @@ func (e *Executor) pullAllImages(
 	return nil
 }
 
-//nolint:unused
 func (e *Executor) pullImage(
 	ctx context.Context,
 	image string,

@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 
 services:
   traefik:
@@ -117,6 +117,7 @@ services:
 
   app:
     image: localpaas/localpaas-dev:latest
+    platform: linux/amd64 # to make it work on ARM machines, but slower
     networks:
       - localpaas_net
       - local_net
@@ -151,6 +152,7 @@ services:
 
   worker:
     image: localpaas/localpaas-dev:latest
+    platform: linux/amd64 # to make it work on ARM machines, but slower
     networks:
       - local_net
     environment:
@@ -170,6 +172,7 @@ services:
 
   updater:
     image: localpaas/localpaas-dev:latest
+    platform: linux/amd64 # to make it work on ARM machines, but slower
     networks:
       - local_net
     environment:

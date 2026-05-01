@@ -5,9 +5,12 @@ RUN apk update && apk upgrade --no-cache && apk add --update --no-cache git yarn
 
 WORKDIR /build
 
-RUN git clone --depth=1 https://github.com/localpaas/localpaas-dashboard.git && \
+RUN --mount=type=cache,target=/tmp/yarn-cache \
+    git clone --depth=1 https://github.com/localpaas/localpaas-dashboard.git && \
     cd localpaas-dashboard && \
-    yarn install --no-cache --frozen-lockfile && \
+    yarn config set network-timeout 300000 && \
+    yarn config set cache-folder /tmp/yarn-cache && \
+    yarn install --frozen-lockfile && \
     yarn build && \
     mv dist /dist-dashboard
 
@@ -48,7 +51,7 @@ RUN go install github.com/rubenv/sql-migrate/...@latest && \
 FROM alpine:3.22
 WORKDIR /app
 RUN apk update && \
-    apk add --no-cache ca-certificates make openssl aws-cli postgresql-client && \
+    apk add --no-cache ca-certificates make openssl postgresql-client && \
     rm -rf /var/cache/apk/*
 
 # For running app

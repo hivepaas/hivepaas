@@ -1,0 +1,46 @@
+# This job is so slow as we use QEMU
+# So move the build in to a separate job
+name: '[Dev] Build ARM image'
+
+on:
+  push:
+    tags:
+      - 'dev-**'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          submodules: recursive
+      -
+        name: Get tag
+        run: echo "TAG_VERSION=${GITHUB_REF_NAME#dev-v}" >> $GITHUB_ENV
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build and push BE image
+        uses: docker/build-push-action@v7
+        with:
+          push: true
+          file: deployment/dev/Dockerfile
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            localpaas/localpaas-dev:${{ env.TAG_VERSION }}
+            localpaas/localpaas-dev:latest

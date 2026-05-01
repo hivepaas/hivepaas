@@ -2,7 +2,7 @@
   "stable": {
     "releaseDate": "2026-01-01",
     "appVersion": "v0.1.1",
-    "appImage": "localpaas/localpaas-dev:0.1.0",
+    "appImage": "localpaas/localpaas-dev:v0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
     "traefikImage": "traefik:v3.6"
@@ -10,7 +10,7 @@
   "beta": {
     "releaseDate": "2026-01-01",
     "appVersion": "v0.1.1-beta3",
-    "appImage": "localpaas/localpaas-dev:0.1.0",
+    "appImage": "localpaas/localpaas-dev:v0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
     "traefikImage": "traefik:v3.6"

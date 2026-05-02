@@ -1,6 +1,6 @@
 # This job is so slow as we use QEMU
 # So move the build in to a separate job
-name: '[Dev] Build ARM image'
+name: '[Dev] Build ARM image (slow)'
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - 'dev-**'
 
 jobs:
-  build_and_deploy:
+  build_arm_image:
     runs-on: ubuntu-latest
     steps:
       -

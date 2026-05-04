@@ -1,5 +1,7 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+import { Badge } from "@components/ui/badge";
 import { type ColumnDef } from "@tanstack/react-table";
 import type { AppStorageMount } from "~/projects/domain";
 import { EMountType } from "~/projects/module-shared/enums";
@@ -8,7 +10,16 @@ import { PopConfirm } from "@application/shared/components";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
 
-function getSourceDisplay(mount: AppStorageMount): string {
+const mountTypeColorMap: Record<EMountType, string> = {
+    [EMountType.Bind]: "bg-cyan-500 text-white hover:bg-cyan-500/90",
+    [EMountType.Volume]: "bg-purple-400 text-white hover:bg-purple-400/90",
+    [EMountType.Cluster]: "bg-indigo-400 text-white hover:bg-indigo-400/90",
+    [EMountType.Tmpfs]: "bg-rose-400 text-white hover:bg-rose-400/90",
+    [EMountType.Npipe]: "bg-muted text-foreground hover:bg-muted",
+    [EMountType.Image]: "bg-muted text-foreground hover:bg-muted",
+};
+
+function getSourceDisplay(mount: AppStorageMount): ReactNode {
     switch (mount.type) {
         case EMountType.Bind:
             if (mount.bindOptions?.baseDir && mount.bindOptions.subpath) {
@@ -64,10 +75,10 @@ function getOptionsDisplay(mount: AppStorageMount): string {
         }
         case EMountType.Tmpfs:
             if (mount.tmpfsOptions?.size) {
-                options.push(`size=${mount.tmpfsOptions.size}B`);
+                options.push(`size=${mount.tmpfsOptions.size}`);
             }
             if (mount.tmpfsOptions?.mode) {
-                options.push(`mode=${mount.tmpfsOptions.mode.toString(8)}`);
+                options.push(`mode=${mount.tmpfsOptions.mode}`);
             }
             break;
     }
@@ -83,7 +94,16 @@ export function createStorageTableColumns(
         {
             accessorKey: "type",
             header: "Type",
-            cell: ({ row }) => <div className="font-medium">{row.original.type ?? "-"}</div>,
+            cell: ({ row }) => {
+                const { type } = row.original;
+                if (!type) return <div className="font-medium">-</div>;
+
+                return (
+                    <Badge className={cn("justify-center rounded-full text-sm lowercase", mountTypeColorMap[type])}>
+                        {type}
+                    </Badge>
+                );
+            },
             meta: {
                 align: "left",
             },

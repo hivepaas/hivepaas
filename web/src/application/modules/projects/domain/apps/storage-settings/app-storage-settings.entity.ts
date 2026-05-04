@@ -43,8 +43,8 @@ export type VolumeDriver = {
 
 export type TmpfsOptions = {
     size?: string;
-    mode?: number;
-    options?: string[][];
+    mode?: string;
+    options?: string[][] | null;
 };
 
 export type ClusterOptions = {

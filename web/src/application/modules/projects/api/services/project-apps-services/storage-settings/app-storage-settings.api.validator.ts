@@ -36,8 +36,8 @@ const VolumeOptionsSchema = z.object({
 
 const TmpfsOptionsSchema = z.object({
     size: z.string().optional(),
-    mode: z.number().optional(),
-    options: z.array(z.array(z.string())).optional(),
+    mode: z.string().optional(),
+    options: z.array(z.array(z.string())).nullish(),
 });
 
 const ClusterOptionsSchema = z.object({

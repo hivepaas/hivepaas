@@ -2,7 +2,13 @@ import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { AppStorageSettingsCommands, AppStorageSettingsQueries, ProjectStorageSettingsQueries } from "~/projects/data";
+import {
+    AppStorageSettingsCommands,
+    AppStorageSettingsQueries,
+    ProjectAppsQueries,
+    ProjectStorageSettingsQueries,
+    ProjectsQueries,
+} from "~/projects/data";
 import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
 import type { AppStorageMount } from "~/projects/domain";
 
@@ -30,23 +36,30 @@ function AppConfigStorageContent() {
         projectID: projectId,
     });
 
+    const { data: projectData, isLoading: projectMetaLoading } = ProjectsQueries.useFindOneById({
+        projectID: projectId,
+    });
+
+    const { data: appDetailsData, isLoading: appDetailsLoading } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        appID: appId,
+    });
+
     const { mutate: update, isPending } = AppStorageSettingsCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Storage settings updated");
-        },
-        onError: err => {
-            if (err instanceof Error) {
-                toast.error(err.message);
-            } else {
-                toast.error("Failed to update storage settings");
-            }
         },
     });
 
     const storageMountDialog = useStorageMountDialog();
 
+    const projectKey = projectData?.data.key;
+    const appLocalKey = appDetailsData?.data.localKey;
+
     const handleAddMount = () => {
         storageMountDialog.actions.open(projectRulesData?.data, {
+            projectKey,
+            appLocalKey,
             onSubmit: (mount: AppStorageMount) => {
                 addMount(mount);
             },
@@ -55,6 +68,8 @@ function AppConfigStorageContent() {
 
     const handleEditMount = (mount: StorageMountWithId) => {
         storageMountDialog.actions.openEdit(mount, projectRulesData?.data, {
+            projectKey,
+            appLocalKey,
             onSubmit: (updatedMount: AppStorageMount) => {
                 updateMount(mount._id, updatedMount);
             },
@@ -77,7 +92,7 @@ function AppConfigStorageContent() {
         });
     };
 
-    if (appLoading || projectRulesLoading) {
+    if (appLoading || projectRulesLoading || projectMetaLoading || appDetailsLoading) {
         return <AppLoader />;
     }
 

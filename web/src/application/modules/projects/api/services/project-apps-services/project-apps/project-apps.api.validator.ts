@@ -19,6 +19,10 @@ const ProjectAppSchema = z.object({
     note: z.string(),
     tags: z.array(z.string()),
     key: z.string(),
+    localKey: z
+        .string()
+        .nullish()
+        .transform(val => val ?? ""),
     updateVer: z.number(),
     stats: z
         .object({
@@ -63,6 +67,10 @@ const ProjectAppStatsSchema = z.object({
  */
 const ProjectAppDetailsSchema = ProjectAppSchema.extend({
     key: z.string(),
+    localKey: z
+        .string()
+        .nullish()
+        .transform(val => val ?? ""),
     updateVer: z.number(),
     stats: ProjectAppStatsSchema.nullable(),
 });

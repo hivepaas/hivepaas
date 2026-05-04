@@ -1,12 +1,21 @@
-import React from "react";
+import React, { useRef } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import type { AppStorageMount } from "~/projects/domain";
 
 import { StorageMountForm } from "../form";
+import { formValuesToMount } from "../form/storage-mount.form-mappers";
 import { useStorageMountDialogState } from "../hooks";
-import type { StorageMountFormInput, StorageMountFormOutput } from "../schemas";
+import type { StorageMountFormOutput } from "../schemas";
+import type { StorageMountFormRef } from "../types";
 
 const fnPlaceholder = () => null;
+
+function mountWithoutId(mount: AppStorageMount & { _id: string }): AppStorageMount {
+    const { _id: _unused, ...rest } = mount;
+    return rest;
+}
+
 export function StorageMountDialog() {
     const {
         state,
@@ -14,13 +23,17 @@ export function StorageMountDialog() {
         ...actions
     } = useStorageMountDialogState();
 
+    const formRef = useRef<StorageMountFormRef>(null);
+
     const open = state.mode !== "closed";
     const isEdit = state.mode === "edit";
     const projectRules = state.mode !== "closed" ? state.projectRules : undefined;
-    const initialValues = state.mode === "edit" ? (state.mount as StorageMountFormInput) : undefined;
+    const projectKey = state.mode !== "closed" ? state.projectKey : undefined;
+    const appLocalKey = state.mode !== "closed" ? state.appLocalKey : undefined;
+    const defaultValues = state.mode === "edit" ? mountWithoutId(state.mount) : undefined;
 
-    function handleSubmit(mount: StorageMountFormOutput) {
-        onSubmit(mount);
+    function handleSubmit(values: StorageMountFormOutput) {
+        onSubmit(formValuesToMount(values));
         actions.close();
     }
 
@@ -45,10 +58,13 @@ export function StorageMountDialog() {
 
                 {open && (
                     <StorageMountForm
+                        ref={formRef}
                         isPending={false}
                         onSubmit={handleSubmit}
-                        initialValues={initialValues}
+                        defaultValues={defaultValues}
                         projectRules={projectRules}
+                        projectKey={projectKey}
+                        appLocalKey={appLocalKey}
                     />
                 )}
             </DialogContent>

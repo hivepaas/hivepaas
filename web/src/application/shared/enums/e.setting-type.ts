@@ -24,6 +24,7 @@ export const ESettingType = {
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",
     DomainSettings: "domain-settings",
+    StorageSettings: "storage-settings",
 } as const;
 
 export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

@@ -1,36 +1,50 @@
-import React, { useEffect } from "react";
+import React, { useImperativeHandle } from "react";
 
 import { Checkbox, Input } from "@components/ui";
 import { Button } from "@components/ui/button";
 import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { type FieldErrors, type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
-import type { ProjectStorageSettings } from "~/projects/domain";
+import type { AppStorageMount, ProjectStorageSettings } from "~/projects/domain";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
+import type { ValidationException } from "@infrastructure/exceptions/validation";
+
 import type { StorageMountFormInput, StorageMountFormOutput } from "../schemas";
 import { StorageMountFormSchema } from "../schemas";
+import type { StorageMountFormRef } from "../types";
 
 import { BindFields, ClusterFields, TmpfsFields, VolumeFields } from "./building-blocks";
+import { emptyStorageMountFormDefaults, mountToFormInput } from "./storage-mount.form-mappers";
 
-export function StorageMountForm({ isPending, onSubmit, initialValues, projectRules }: Props) {
+type Props = {
+    ref?: React.Ref<StorageMountFormRef>;
+    isPending: boolean;
+    defaultValues?: AppStorageMount;
+    onSubmit: (values: StorageMountFormOutput) => void;
+    projectRules?: ProjectStorageSettings;
+    projectKey?: string;
+    appLocalKey?: string;
+};
+
+export function StorageMountForm({
+    ref,
+    isPending,
+    onSubmit,
+    defaultValues,
+    projectRules,
+    projectKey,
+    appLocalKey,
+}: Props) {
     const methods = useForm<StorageMountFormInput, unknown, StorageMountFormOutput>({
+        defaultValues: defaultValues ? mountToFormInput(defaultValues) : emptyStorageMountFormDefaults,
         resolver: zodResolver(StorageMountFormSchema),
         mode: "onSubmit",
-        defaultValues: initialValues ?? {
-            type: EMountType.Bind,
-            target: "",
-            readOnly: false,
-            consistency: EMountConsistency.Default,
-            bindOptions: {
-                baseDir: "",
-                subpath: "",
-            },
-        },
     });
 
     const {
@@ -50,11 +64,34 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
 
     const storageType = useWatch({ control, name: "type" });
 
-    useEffect(() => {
-        if (initialValues) {
-            reset(initialValues);
-        }
-    }, [initialValues, reset]);
+    useUpdateEffect(() => {
+        reset(defaultValues ? mountToFormInput(defaultValues) : emptyStorageMountFormDefaults);
+    }, [defaultValues, reset]);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            setValues: (values: Partial<StorageMountFormInput>) => {
+                reset({
+                    ...methods.getValues(),
+                    ...values,
+                } as StorageMountFormInput);
+            },
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as FieldPath<StorageMountFormInput>,
+                        { message, type: "manual" },
+                        { shouldFocus: index === 0 },
+                    );
+                });
+            },
+        }),
+        [methods, reset],
+    );
 
     const availableTypes = React.useMemo(() => {
         const types: EMountType[] = [];
@@ -62,14 +99,15 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
         if (projectRules?.volumeSettings?.enabled) types.push(EMountType.Volume);
         if (projectRules?.clusterVolumeSettings?.enabled) types.push(EMountType.Cluster);
         if (projectRules?.tmpfsSettings?.enabled) types.push(EMountType.Tmpfs);
-        return types.length > 0 ? types : [EMountType.Bind, EMountType.Volume, EMountType.Cluster, EMountType.Tmpfs];
+        return types.length > 0 ? types : [];
     }, [projectRules]);
 
     function onValid(data: StorageMountFormOutput) {
-        void onSubmit(data);
+        onSubmit(data);
     }
 
-    function onInvalid(_errors: FieldErrors<StorageMountFormOutput>) {
+    function onInvalid(_errors: FieldErrors<StorageMountFormInput>) {
+        console.error(_errors);
         toast.error("Please fix the validation errors");
     }
 
@@ -114,11 +152,29 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
                         <FieldError errors={[errors.type]} />
                     </Field>
 
-                    {storageType === EMountType.Bind && <BindFields projectRules={projectRules} />}
+                    {storageType === EMountType.Bind && (
+                        <BindFields
+                            projectRules={projectRules}
+                            projectKey={projectKey}
+                            appLocalKey={appLocalKey}
+                        />
+                    )}
 
-                    {storageType === EMountType.Volume && <VolumeFields projectRules={projectRules} />}
+                    {storageType === EMountType.Volume && (
+                        <VolumeFields
+                            projectRules={projectRules}
+                            projectKey={projectKey}
+                            appLocalKey={appLocalKey}
+                        />
+                    )}
 
-                    {storageType === EMountType.Cluster && <ClusterFields projectRules={projectRules} />}
+                    {storageType === EMountType.Cluster && (
+                        <ClusterFields
+                            projectRules={projectRules}
+                            projectKey={projectKey}
+                            appLocalKey={appLocalKey}
+                        />
+                    )}
 
                     {storageType === EMountType.Tmpfs && <TmpfsFields projectRules={projectRules} />}
 
@@ -141,17 +197,19 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
                         </InfoBlock>
                     </Field>
 
-                    <Field>
-                        <InfoBlock title={<LabelWithInfo label="Read-only" />}>
-                            <Checkbox
-                                id="read-only"
-                                checked={readOnlyField.value ?? false}
-                                onCheckedChange={checked => {
-                                    readOnlyField.onChange(checked === true);
-                                }}
-                            />
-                        </InfoBlock>
-                    </Field>
+                    {storageType !== EMountType.Tmpfs && (
+                        <Field>
+                            <InfoBlock title={<LabelWithInfo label="Read-only" />}>
+                                <Checkbox
+                                    id="read-only"
+                                    checked={readOnlyField.value ?? false}
+                                    onCheckedChange={checked => {
+                                        readOnlyField.onChange(checked === true);
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    )}
 
                     <Field>
                         <InfoBlock title={<LabelWithInfo label="Consistency" />}>
@@ -178,18 +236,11 @@ export function StorageMountForm({ isPending, onSubmit, initialValues, projectRu
                             type="submit"
                             isLoading={isPending}
                         >
-                            {initialValues ? "Update" : "Add"}
+                            {defaultValues ? "Update" : "Add"}
                         </Button>
                     </div>
                 </FieldGroup>
             </form>
         </FormProvider>
     );
-}
-
-interface Props {
-    isPending: boolean;
-    onSubmit: (values: StorageMountFormOutput) => Promise<void> | void;
-    initialValues?: StorageMountFormInput;
-    projectRules?: ProjectStorageSettings;
 }

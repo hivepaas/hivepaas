@@ -1,22 +1,27 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 
+import { cn } from "@/lib/utils";
 import { Input } from "@components/ui";
 import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
-import { useController, useFormContext } from "react-hook-form";
+import { dashedBorderBox } from "@lib/styles";
+import { useController, useFormContext, useWatch } from "react-hook-form";
 import type { ProjectStorageSettings } from "~/projects/domain";
 import { EMountPropagation } from "~/projects/module-shared/enums";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
+import { computeRequiredSubpath } from "../../utils/required-subpath.util";
 
 interface BindFieldsProps {
     projectRules?: ProjectStorageSettings;
+    projectKey?: string;
+    appLocalKey?: string;
 }
 
-export function BindFields({ projectRules }: BindFieldsProps) {
-    const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
+export function BindFields({ projectRules, projectKey, appLocalKey }: BindFieldsProps) {
+    const { control, setValue } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
 
     const {
         field: baseDirField,
@@ -26,6 +31,30 @@ export function BindFields({ projectRules }: BindFieldsProps) {
     const { field: propagationField } = useController({ name: "bindOptions.propagation", control });
 
     const baseDirs = projectRules?.bindSettings?.baseDirs ?? [];
+
+    const requiredPrefix = useMemo(
+        () =>
+            computeRequiredSubpath(
+                {
+                    enabled: projectRules?.bindSettings?.enabled,
+                    baseSubpath: projectRules?.bindSettings?.baseSubpath,
+                    appsMustUseSubPaths: projectRules?.bindSettings?.appsMustUseSubPaths,
+                    hasItems: (projectRules?.bindSettings?.baseDirs?.length ?? 0) > 0,
+                },
+                projectKey,
+                appLocalKey,
+            ),
+        [projectRules?.bindSettings, projectKey, appLocalKey],
+    );
+
+    const subpathValue = useWatch({ control, name: "bindOptions.subpath" }) ?? "";
+    useEffect(() => {
+        setValue("bindOptions.subpathRequired", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+        if (requiredPrefix && !subpathValue) {
+            // Auto-fill prefix once as initial value, then let user edit freely.
+            setValue("bindOptions.subpath", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+        }
+    }, [requiredPrefix, setValue, subpathValue]);
 
     return (
         <>
@@ -50,20 +79,21 @@ export function BindFields({ projectRules }: BindFieldsProps) {
                 </InfoBlock>
             </Field>
 
-            <Field>
-                <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
-                    {projectRules?.bindSettings?.appsMustUseSubPaths && (
-                        <p className="text-xs text-muted-foreground mt-1">{projectRules.bindSettings.baseSubpath}</p>
-                    )}
-                </InfoBlock>
-            </Field>
+            {requiredPrefix !== "" && (
+                <Field>
+                    <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
+                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
+                    </InfoBlock>
+                </Field>
+            )}
 
             <Field>
                 <InfoBlock title={<LabelWithInfo label="Subpath" />}>
                     <Input
                         {...subpathField}
                         id="subpath"
-                        placeholder="app/data"
+                        value={subpathValue}
+                        placeholder={requiredPrefix}
                     />
                 </InfoBlock>
             </Field>

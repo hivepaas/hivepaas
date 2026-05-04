@@ -1,24 +1,29 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 
-import { Checkbox } from "@components/ui";
+import { cn } from "@/lib/utils";
+import { Checkbox, Input } from "@components/ui";
 import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
-import { useController, useFormContext } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { dashedBorderBox } from "@lib/styles";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { useParams } from "react-router";
 import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-docker-volumes";
 import type { ProjectStorageSettings } from "~/projects/domain";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form/key-value-list/key-value-list.com";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
+import { computeRequiredSubpath } from "../../utils/required-subpath.util";
 
 interface VolumeFieldsProps {
     projectRules?: ProjectStorageSettings;
+    projectKey?: string;
+    appLocalKey?: string;
 }
 
-export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps) {
-    const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
+export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFieldsProps) {
+    const { control, setValue } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
     const { id: projectId } = useParams<{ id: string }>();
 
     const {
@@ -39,6 +44,29 @@ export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps)
 
     const volumes = volumesData?.data ?? [];
 
+    const requiredPrefix = useMemo(
+        () =>
+            computeRequiredSubpath(
+                {
+                    enabled: projectRules?.volumeSettings?.enabled,
+                    baseSubpath: projectRules?.volumeSettings?.baseSubpath,
+                    appsMustUseSubPaths: projectRules?.volumeSettings?.appsMustUseSubPaths,
+                    hasItems: (projectRules?.volumeSettings?.volumes?.length ?? 0) > 0,
+                },
+                projectKey,
+                appLocalKey,
+            ),
+        [projectRules?.volumeSettings, projectKey, appLocalKey],
+    );
+
+    const subpathValue = useWatch({ control, name: "volumeOptions.subpath" }) ?? "";
+    useEffect(() => {
+        setValue("volumeOptions.subpathRequired", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+        if (requiredPrefix && !subpathValue) {
+            setValue("volumeOptions.subpath", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+        }
+    }, [requiredPrefix, setValue, subpathValue]);
+
     return (
         <>
             <Field>
@@ -54,9 +82,10 @@ export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps)
                         {...volumeField}
                         value={volumeField.value}
                         onValueChange={volumeField.onChange}
+                        disabled={isLoadingVolumes}
                     >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Volume" />
+                        <SelectTrigger aria-invalid={volumeInvalid}>
+                            <SelectValue placeholder={isLoadingVolumes ? "Loading volumes…" : "Volume"} />
                         </SelectTrigger>
                         <SelectContent>
                             {volumes.map(vol => (
@@ -74,13 +103,21 @@ export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps)
                 </InfoBlock>
             </Field>
 
+            {requiredPrefix !== "" && (
+                <Field>
+                    <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
+                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
+                    </InfoBlock>
+                </Field>
+            )}
+
             <Field>
                 <InfoBlock title={<LabelWithInfo label="Subpath" />}>
-                    <InputWithAddOn
+                    <Input
                         {...subpathField}
                         id="subpath"
-                        placeholder="app/data"
-                        addonLeft="Subpath"
+                        value={subpathValue}
+                        placeholder={requiredPrefix}
                     />
                 </InfoBlock>
             </Field>
@@ -96,7 +133,7 @@ export function VolumeFields({ projectRules: _projectRules }: VolumeFieldsProps)
 
             <Field>
                 <InfoBlock title={<LabelWithInfo label="Labels" />}>
-                    <KeyValueList
+                    <KeyValueList<StorageMountFormInput>
                         name="volumeOptions.labels"
                         keyLabel="Key"
                         valueLabel="Value"

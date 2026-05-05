@@ -23,10 +23,7 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 # ENV vars
-ENV GO111MODULE=on \
-  CGO_ENABLED=0 \
-  GOOS=linux \
-  GOARCH=amd64
+ENV CGO_ENABLED=0
 
 # Move to working directory /build
 WORKDIR /build

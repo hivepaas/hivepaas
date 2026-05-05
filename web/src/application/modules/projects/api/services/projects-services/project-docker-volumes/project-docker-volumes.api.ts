@@ -18,10 +18,14 @@ export class ProjectDockerVolumesApi extends BaseApi {
         request: ProjectDockerVolumes_List_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectDockerVolumes_List_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, search, pagination, sorting, type } = request.data;
 
         const query = this.queryBuilder.getInstance();
-        query.pagination(pagination).sorting(sorting).search(search);
+        query
+            .pagination(pagination)
+            .sorting(sorting)
+            .search(search)
+            .filterBy({ type: [type] });
 
         return lastValueFrom(
             from(
@@ -38,7 +42,10 @@ export class ProjectDockerVolumesApi extends BaseApi {
     }
 
     get queries(): {
-        list: (request: ProjectDockerVolumes_List_Req, signal?: AbortSignal) => Promise<Result<ProjectDockerVolumes_List_Res, Error>>;
+        list: (
+            request: ProjectDockerVolumes_List_Req,
+            signal?: AbortSignal,
+        ) => Promise<Result<ProjectDockerVolumes_List_Res, Error>>;
     } {
         return {
             list: this.list.bind(this),

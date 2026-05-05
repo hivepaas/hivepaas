@@ -44,7 +44,7 @@ const VolumeMountSchema = z.object({
         subpathRequired: z.string().optional(),
         noCopy: z.boolean().optional(),
         labels: LabelsSchema,
-        driverConfig: VolumeDriverSchema.optional(),
+        driverConfig: VolumeDriverSchema.nullish(),
     }),
 });
 
@@ -59,7 +59,7 @@ const ClusterMountSchema = z.object({
         subpathRequired: z.string().optional(),
         noCopy: z.boolean().optional(),
         labels: LabelsSchema,
-        driverConfig: VolumeDriverSchema.optional(),
+        driverConfig: VolumeDriverSchema.nullish(),
     }),
 });
 

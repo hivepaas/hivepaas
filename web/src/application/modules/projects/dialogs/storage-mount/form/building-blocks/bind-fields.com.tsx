@@ -39,7 +39,6 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
                     enabled: projectRules?.bindSettings?.enabled,
                     baseSubpath: projectRules?.bindSettings?.baseSubpath,
                     appsMustUseSubPaths: projectRules?.bindSettings?.appsMustUseSubPaths,
-                    hasItems: (projectRules?.bindSettings?.baseDirs?.length ?? 0) > 0,
                 },
                 projectKey,
                 appLocalKey,
@@ -48,6 +47,7 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
     );
 
     const subpathValue = useWatch({ control, name: "bindOptions.subpath" }) ?? "";
+
     useEffect(() => {
         setValue("bindOptions.subpathRequired", requiredPrefix, { shouldDirty: false, shouldValidate: false });
         if (requiredPrefix && !subpathValue) {
@@ -66,6 +66,7 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
                             isRequired
                         />
                     }
+                    titleWidth={180}
                 >
                     <EditableCombobox
                         options={baseDirs}
@@ -81,14 +82,20 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
 
             {requiredPrefix !== "" && (
                 <Field>
-                    <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
+                    <InfoBlock
+                        title={<LabelWithInfo label="Required Subpath Prefix" />}
+                        titleWidth={180}
+                    >
                         <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
                     </InfoBlock>
                 </Field>
             )}
 
             <Field>
-                <InfoBlock title={<LabelWithInfo label="Subpath" />}>
+                <InfoBlock
+                    title={<LabelWithInfo label="Subpath" />}
+                    titleWidth={180}
+                >
                     <Input
                         {...subpathField}
                         id="subpath"
@@ -99,13 +106,16 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
             </Field>
 
             <Field>
-                <InfoBlock title={<LabelWithInfo label="Propagation" />}>
+                <InfoBlock
+                    title={<LabelWithInfo label="Propagation" />}
+                    titleWidth={180}
+                >
                     <Select
                         {...propagationField}
                         value={propagationField.value ?? EMountPropagation.RPrivate}
                         onValueChange={propagationField.onChange}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-[220px]">
                             <SelectValue placeholder="Propagation" />
                         </SelectTrigger>
                         <SelectContent>

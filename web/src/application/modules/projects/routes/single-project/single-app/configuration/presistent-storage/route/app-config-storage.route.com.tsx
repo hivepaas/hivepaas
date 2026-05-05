@@ -1,4 +1,3 @@
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -22,7 +21,7 @@ type StorageMountWithId = AppStorageMount & { _id: string };
 
 function AppConfigStorageContent() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
-    const { mounts, addMount, updateMount } = useStorageMounts();
+    const { mounts, addMount, updateMount, removeMount } = useStorageMounts();
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -45,22 +44,47 @@ function AppConfigStorageContent() {
         appID: appId,
     });
 
-    const { mutate: update, isPending } = AppStorageSettingsCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("Storage settings updated");
-        },
-    });
+    const { mutateAsync: update } = AppStorageSettingsCommands.useUpdateOne();
 
     const storageMountDialog = useStorageMountDialog();
 
     const projectKey = projectData?.data.key;
     const appLocalKey = appDetailsData?.data.localKey;
+    const updateVer = appData?.data.updateVer ?? 0;
+
+    async function persistMounts(nextMounts: StorageMountWithId[], successMessage: string) {
+        invariant(projectId, "projectId must be defined");
+        invariant(appId, "appId must be defined");
+
+        const mountsWithoutIds = nextMounts.map(({ _id, ...mount }) => mount);
+
+        try {
+            await update({
+                projectID: projectId,
+                appID: appId,
+                payload: {
+                    mounts: mountsWithoutIds,
+                    updateVer,
+                },
+            });
+            toast.success(successMessage);
+        } catch {
+            // toast.error("Failed to update storage settings");
+            throw new Error("Failed to update storage settings");
+        }
+    }
 
     const handleAddMount = () => {
         storageMountDialog.actions.open(projectRulesData?.data, {
             projectKey,
             appLocalKey,
-            onSubmit: (mount: AppStorageMount) => {
+            onSubmit: async (mount: AppStorageMount) => {
+                const mountWithId: StorageMountWithId = {
+                    ...mount,
+                    _id: `mount-${Date.now()}-${Math.random()}`,
+                };
+                const nextMounts = [...mounts, mountWithId];
+                await persistMounts(nextMounts, "Storage mount created");
                 addMount(mount);
             },
         });
@@ -70,25 +94,20 @@ function AppConfigStorageContent() {
         storageMountDialog.actions.openEdit(mount, projectRulesData?.data, {
             projectKey,
             appLocalKey,
-            onSubmit: (updatedMount: AppStorageMount) => {
+            onSubmit: async (updatedMount: AppStorageMount) => {
+                const nextMounts = mounts.map(existing =>
+                    existing._id === mount._id ? { ...updatedMount, _id: mount._id } : existing,
+                );
+                await persistMounts(nextMounts, "Storage mount updated");
                 updateMount(mount._id, updatedMount);
             },
         });
     };
 
-    const handleSave = () => {
-        invariant(projectId, "projectId must be defined");
-        invariant(appId, "appId must be defined");
-
-        const mountsWithoutIds = mounts.map(({ _id, ...mount }) => mount);
-
-        update({
-            projectID: projectId,
-            appID: appId,
-            payload: {
-                mounts: mountsWithoutIds,
-                updateVer: appData?.data.updateVer ?? 0,
-            },
+    const handleDeleteMount = (mount: StorageMountWithId) => {
+        const nextMounts = mounts.filter(existing => existing._id !== mount._id);
+        void persistMounts(nextMounts, "Storage mount removed").then(() => {
+            removeMount(mount._id);
         });
     };
 
@@ -114,18 +133,8 @@ function AppConfigStorageContent() {
                 <StorageTable
                     onAddMount={handleAddMount}
                     onEditMount={handleEditMount}
+                    onDeleteMount={handleDeleteMount}
                 />
-            </div>
-
-            <div className="flex justify-end mt-4">
-                <Button
-                    onClick={handleSave}
-                    className="min-w-[100px]"
-                    disabled={isPending}
-                    isLoading={isPending}
-                >
-                    Save
-                </Button>
             </div>
         </div>
     );

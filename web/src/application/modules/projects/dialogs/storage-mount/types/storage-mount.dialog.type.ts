@@ -25,7 +25,7 @@ export interface StorageMountDialogOptions {
     appLocalKey?: string;
     props?: {
         onClose?: () => void;
-        onSubmit?: (mount: AppStorageMount) => void;
+        onSubmit?: (mount: AppStorageMount) => Promise<void>;
         onError?: (error: Error) => void;
     };
 }

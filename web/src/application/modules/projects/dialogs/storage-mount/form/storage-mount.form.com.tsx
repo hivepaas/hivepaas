@@ -128,13 +128,14 @@ export function StorageMountForm({
                                     isRequired
                                 />
                             }
+                            titleWidth={180}
                         >
                             <Select
                                 {...typeField}
                                 value={typeField.value}
                                 onValueChange={typeField.onChange}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="w-[220px]">
                                     <SelectValue placeholder="Type" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -186,6 +187,7 @@ export function StorageMountForm({
                                     isRequired
                                 />
                             }
+                            titleWidth={180}
                         >
                             <Input
                                 {...targetField}
@@ -199,7 +201,10 @@ export function StorageMountForm({
 
                     {storageType !== EMountType.Tmpfs && (
                         <Field>
-                            <InfoBlock title={<LabelWithInfo label="Read-only" />}>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Read-only" />}
+                                titleWidth={180}
+                            >
                                 <Checkbox
                                     id="read-only"
                                     checked={readOnlyField.value ?? false}
@@ -212,13 +217,16 @@ export function StorageMountForm({
                     )}
 
                     <Field>
-                        <InfoBlock title={<LabelWithInfo label="Consistency" />}>
+                        <InfoBlock
+                            title={<LabelWithInfo label="Consistency" />}
+                            titleWidth={180}
+                        >
                             <Select
                                 {...consistencyField}
                                 value={consistencyField.value ?? EMountConsistency.Default}
                                 onValueChange={consistencyField.onChange}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="w-[220px]">
                                     <SelectValue placeholder="Consistency" />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -7,8 +7,6 @@ export interface SubpathPrefixSettings {
     enabled?: boolean;
     baseSubpath?: string;
     appsMustUseSubPaths?: boolean;
-    /** `len(baseDirs) > 0` or `len(volumes) > 0` */
-    hasItems: boolean;
 }
 
 function normalizeSegment(segment: string): string {
@@ -25,7 +23,7 @@ export function computeRequiredSubpath(
     projectKey: string | undefined,
     appLocalKey: string | undefined,
 ): string {
-    if (!s?.enabled || !s.hasItems) {
+    if (!s?.enabled) {
         return "";
     }
     const base = normalizeSegment(s.baseSubpath ?? "");

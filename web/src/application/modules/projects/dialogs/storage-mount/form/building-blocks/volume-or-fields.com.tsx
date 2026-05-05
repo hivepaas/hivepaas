@@ -11,7 +11,6 @@ import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-doc
 import type { ProjectStorageSettings } from "~/projects/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { KeyValueList } from "@application/shared/form/key-value-list/key-value-list.com";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
 import { computeRequiredSubpath } from "../../utils/required-subpath.util";
@@ -22,20 +21,41 @@ interface VolumeFieldsProps {
     appLocalKey?: string;
 }
 
-export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFieldsProps) {
+type MountVariant = "volume" | "cluster";
+type MountOptionsPath = "volumeOptions" | "clusterOptions";
+type MountVolumePath = `${MountOptionsPath}.volume`;
+type MountSubpathPath = `${MountOptionsPath}.subpath`;
+type MountNoCopyPath = `${MountOptionsPath}.noCopy`;
+type MountSubpathRequiredPath = `${MountOptionsPath}.subpathRequired`;
+
+function VolumeOrClusterMountFields({
+    projectRules,
+    projectKey,
+    appLocalKey,
+    variant,
+}: VolumeFieldsProps & { variant: MountVariant }) {
     const { control, setValue } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
     const { id: projectId } = useParams<{ id: string }>();
+    const optionsPath: MountOptionsPath = variant === "cluster" ? "clusterOptions" : "volumeOptions";
+    const rulesSettings = variant === "cluster" ? projectRules?.clusterVolumeSettings : projectRules?.volumeSettings;
+    const volumeLabel = variant === "cluster" ? "Cluster Volume" : "Volume";
+
+    const volumePath: MountVolumePath = `${optionsPath}.volume`;
+    const subpathPath: MountSubpathPath = `${optionsPath}.subpath`;
+    const noCopyPath: MountNoCopyPath = `${optionsPath}.noCopy`;
+    const subpathRequiredPath: MountSubpathRequiredPath = `${optionsPath}.subpathRequired`;
 
     const {
         field: volumeField,
         fieldState: { invalid: volumeInvalid, error: volumeError },
-    } = useController({ name: "volumeOptions.volume", control });
-    const { field: subpathField } = useController({ name: "volumeOptions.subpath", control });
-    const { field: noCopyField } = useController({ name: "volumeOptions.noCopy", control });
+    } = useController({ name: volumePath, control });
+    const { field: subpathField } = useController({ name: subpathPath, control });
+    const { field: noCopyField } = useController({ name: noCopyPath, control });
 
     const { data: volumesData, isLoading: isLoadingVolumes } = ProjectDockerVolumesQueries.useList(
         {
             projectID: projectId ?? "",
+            type: variant,
         },
         {
             enabled: !!projectId,
@@ -48,24 +68,23 @@ export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFi
         () =>
             computeRequiredSubpath(
                 {
-                    enabled: projectRules?.volumeSettings?.enabled,
-                    baseSubpath: projectRules?.volumeSettings?.baseSubpath,
-                    appsMustUseSubPaths: projectRules?.volumeSettings?.appsMustUseSubPaths,
-                    hasItems: (projectRules?.volumeSettings?.volumes?.length ?? 0) > 0,
+                    enabled: rulesSettings?.enabled,
+                    baseSubpath: rulesSettings?.baseSubpath,
+                    appsMustUseSubPaths: rulesSettings?.appsMustUseSubPaths,
                 },
                 projectKey,
                 appLocalKey,
             ),
-        [projectRules?.volumeSettings, projectKey, appLocalKey],
+        [rulesSettings, projectKey, appLocalKey],
     );
 
-    const subpathValue = useWatch({ control, name: "volumeOptions.subpath" }) ?? "";
+    const subpathValue = useWatch({ control, name: subpathPath }) ?? "";
     useEffect(() => {
-        setValue("volumeOptions.subpathRequired", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+        setValue(subpathRequiredPath, requiredPrefix, { shouldDirty: false, shouldValidate: false });
         if (requiredPrefix && !subpathValue) {
-            setValue("volumeOptions.subpath", requiredPrefix, { shouldDirty: false, shouldValidate: false });
+            setValue(subpathPath, requiredPrefix, { shouldDirty: false, shouldValidate: false });
         }
-    }, [requiredPrefix, setValue, subpathValue]);
+    }, [requiredPrefix, setValue, subpathRequiredPath, subpathPath, subpathValue]);
 
     return (
         <>
@@ -73,10 +92,11 @@ export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFi
                 <InfoBlock
                     title={
                         <LabelWithInfo
-                            label="Volume"
+                            label={volumeLabel}
                             isRequired
                         />
                     }
+                    titleWidth={180}
                 >
                     <Select
                         {...volumeField}
@@ -84,7 +104,10 @@ export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFi
                         onValueChange={volumeField.onChange}
                         disabled={isLoadingVolumes}
                     >
-                        <SelectTrigger aria-invalid={volumeInvalid}>
+                        <SelectTrigger
+                            className="w-[220px]"
+                            aria-invalid={volumeInvalid}
+                        >
                             <SelectValue placeholder={isLoadingVolumes ? "Loading volumes…" : "Volume"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -105,14 +128,20 @@ export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFi
 
             {requiredPrefix !== "" && (
                 <Field>
-                    <InfoBlock title={<LabelWithInfo label="Required Subpath Prefix" />}>
+                    <InfoBlock
+                        title={<LabelWithInfo label="Required Subpath Prefix" />}
+                        titleWidth={180}
+                    >
                         <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
                     </InfoBlock>
                 </Field>
             )}
 
             <Field>
-                <InfoBlock title={<LabelWithInfo label="Subpath" />}>
+                <InfoBlock
+                    title={<LabelWithInfo label="Subpath" />}
+                    titleWidth={180}
+                >
                     <Input
                         {...subpathField}
                         id="subpath"
@@ -123,23 +152,34 @@ export function VolumeFields({ projectRules, projectKey, appLocalKey }: VolumeFi
             </Field>
 
             <Field>
-                <InfoBlock title={<LabelWithInfo label="No Copy" />}>
+                <InfoBlock
+                    title={<LabelWithInfo label="No Copy" />}
+                    titleWidth={180}
+                >
                     <Checkbox
                         checked={noCopyField.value ?? false}
                         onCheckedChange={noCopyField.onChange}
                     />
                 </InfoBlock>
             </Field>
-
-            <Field>
-                <InfoBlock title={<LabelWithInfo label="Labels" />}>
-                    <KeyValueList<StorageMountFormInput>
-                        name="volumeOptions.labels"
-                        keyLabel="Key"
-                        valueLabel="Value"
-                    />
-                </InfoBlock>
-            </Field>
         </>
+    );
+}
+
+export function VolumeFields(props: VolumeFieldsProps) {
+    return (
+        <VolumeOrClusterMountFields
+            {...props}
+            variant="volume"
+        />
+    );
+}
+
+export function ClusterFields(props: VolumeFieldsProps) {
+    return (
+        <VolumeOrClusterMountFields
+            {...props}
+            variant="cluster"
+        />
     );
 }

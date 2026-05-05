@@ -33,7 +33,7 @@ export type VolumeOptions = {
     subpathRequired?: string;
     noCopy?: boolean;
     labels?: Record<string, string>;
-    driverConfig?: VolumeDriver;
+    driverConfig?: VolumeDriver | null;
 };
 
 export type VolumeDriver = {
@@ -53,5 +53,5 @@ export type ClusterOptions = {
     subpathRequired?: string;
     noCopy?: boolean;
     labels?: Record<string, string>;
-    driverConfig?: VolumeDriver;
+    driverConfig?: VolumeDriver | null;
 };

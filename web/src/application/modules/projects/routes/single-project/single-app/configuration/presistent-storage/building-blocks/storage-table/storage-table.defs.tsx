@@ -2,7 +2,10 @@ import React, { type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
+import { MoreVertical, PencilIcon, Trash2Icon } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
 import { EMountType } from "~/projects/module-shared/enums";
 
@@ -46,49 +49,37 @@ function getSourceDisplay(mount: AppStorageMount): ReactNode {
 function getOptionsDisplay(mount: AppStorageMount): string {
     const options: string[] = [];
 
-    if (mount.readOnly) {
-        options.push("ro");
-    }
-    if (mount.consistency) {
-        options.push(`consistency=${mount.consistency}`);
-    }
-
     switch (mount.type) {
-        case EMountType.Bind:
-            if (mount.bindOptions?.propagation) {
-                options.push(`propagation=${mount.bindOptions.propagation}`);
+        case EMountType.Bind: {
+            if (mount.bindOptions?.subpath) {
+                options.push(`Subpath: ${mount.bindOptions.subpath}`);
             }
             break;
+        }
         case EMountType.Volume:
         case EMountType.Cluster: {
             const opts = mount.type === EMountType.Volume ? mount.volumeOptions : (mount.clusterOptions ?? {});
-            if (opts?.noCopy) {
-                options.push("nocopy");
-            }
-            if (opts?.labels) {
-                const labelCount = Object.keys(opts.labels).length;
-                if (labelCount > 0) {
-                    options.push(`labels=${labelCount}`);
-                }
+            if (opts?.subpath) {
+                options.push(`Subpath: ${opts.subpath}`);
             }
             break;
         }
         case EMountType.Tmpfs:
             if (mount.tmpfsOptions?.size) {
-                options.push(`size=${mount.tmpfsOptions.size}`);
+                options.push(`Size: ${mount.tmpfsOptions.size}`);
             }
             if (mount.tmpfsOptions?.mode) {
-                options.push(`mode=${mount.tmpfsOptions.mode}`);
+                options.push(`Mode: ${mount.tmpfsOptions.mode}`);
             }
             break;
     }
 
-    return options.join(", ") || "-";
+    return options.join("\n") || "-";
 }
 
 export function createStorageTableColumns(
     onEdit: (mount: StorageMountWithId) => void,
-    onDelete: (mount: StorageMountWithId) => void,
+    onDelete: (mount: StorageMountWithId) => Promise<void> | void,
 ): ColumnDef<StorageMountWithId>[] {
     return [
         {
@@ -127,7 +118,11 @@ export function createStorageTableColumns(
         {
             accessorKey: "options",
             header: "Options",
-            cell: ({ row }) => <div className="text-sm text-muted-foreground">{getOptionsDisplay(row.original)}</div>,
+            cell: ({ row }) => (
+                <div className="text-sm text-muted-foreground whitespace-pre-line wrap-break-word">
+                    {getOptionsDisplay(row.original)}
+                </div>
+            ),
             meta: {
                 align: "left",
             },
@@ -135,38 +130,56 @@ export function createStorageTableColumns(
         {
             id: "actions",
             header: "",
-            cell: ({ row }) => {
-                return (
-                    <div className="flex items-center justify-end gap-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onEdit(row.original);
-                            }}
-                            className="text-sm text-blue-600 hover:underline"
+            cell: ({ row }) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        asChild
+                        className="h-8 w-8"
+                    >
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
                         >
-                            Edit
-                        </button>
-                        <PopConfirm
-                            title="Remove Storage Mount"
-                            variant="destructive"
-                            confirmText="Remove"
-                            cancelText="Cancel"
-                            description="Are you sure you want to remove this storage mount?"
-                            onConfirm={() => {
-                                onDelete(row.original);
-                            }}
-                        >
-                            <button
-                                type="button"
-                                className="text-sm text-red-600 hover:underline"
+                            <MoreVertical className="size-4" />
+                            <span className="sr-only">Actions menu</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <div className="flex flex-col gap-0">
+                            <Button
+                                className="justify-start py-1.5"
+                                variant="ghost"
+                                onClick={() => {
+                                    onEdit(row.original);
+                                }}
                             >
-                                Delete
-                            </button>
-                        </PopConfirm>
-                    </div>
-                );
-            },
+                                <PencilIcon className="mr-2 size-4" />
+                                Edit
+                            </Button>
+
+                            <PopConfirm
+                                title="Remove Storage Mount"
+                                variant="destructive"
+                                confirmText="Remove"
+                                cancelText="Cancel"
+                                description="Are you sure you want to remove this storage mount?"
+                                onConfirm={() => {
+                                    void onDelete(row.original);
+                                }}
+                            >
+                                <Button
+                                    className="justify-start py-1.5"
+                                    variant="ghost"
+                                >
+                                    <Trash2Icon className="mr-2 size-4" />
+                                    Remove
+                                </Button>
+                            </PopConfirm>
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ),
             meta: {
                 align: "right",
             },

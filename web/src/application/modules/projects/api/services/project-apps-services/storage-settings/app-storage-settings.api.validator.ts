@@ -4,10 +4,7 @@ import { EMountConsistency, EMountPropagation, EMountType } from "~/projects/mod
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppStorageSettings_FindOne_Res,
-    type AppStorageSettings_UpdateOne_Res,
-} from "./app-storage-settings.api.contracts";
+import { type AppStorageSettings_FindOne_Res } from "./app-storage-settings.api.contracts";
 
 const VolumeDriverSchema = z.object({
     name: z.string().optional(),
@@ -30,8 +27,11 @@ const VolumeOptionsSchema = z.object({
     subpath: z.string().optional(),
     subpathRequired: z.string().optional(),
     noCopy: z.boolean().optional(),
-    labels: z.record(z.string()).optional(),
-    driverConfig: VolumeDriverSchema.optional(),
+    labels: z
+        .record(z.string())
+        .nullish()
+        .transform(rec => rec ?? ({} as Record<string, string>)),
+    driverConfig: VolumeDriverSchema.nullish(),
 });
 
 const TmpfsOptionsSchema = z.object({
@@ -45,8 +45,11 @@ const ClusterOptionsSchema = z.object({
     subpath: z.string().optional(),
     subpathRequired: z.string().optional(),
     noCopy: z.boolean().optional(),
-    labels: z.record(z.string()).optional(),
-    driverConfig: VolumeDriverSchema.optional(),
+    labels: z
+        .record(z.string())
+        .nullish()
+        .transform(rec => rec ?? ({} as Record<string, string>)),
+    driverConfig: VolumeDriverSchema.nullish(),
 });
 
 const MountSchema = z.object({
@@ -70,11 +73,6 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 export class AppStorageSettingsApiValidator {
     findOne = (response: AxiosResponse): AppStorageSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
@@ -95,9 +93,5 @@ export class AppStorageSettingsApiValidator {
             },
             meta,
         };
-    };
-
-    updateOne = (response: AxiosResponse): AppStorageSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

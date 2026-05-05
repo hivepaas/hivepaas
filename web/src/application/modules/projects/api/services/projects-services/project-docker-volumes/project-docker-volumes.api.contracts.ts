@@ -11,6 +11,7 @@ export type ProjectDockerVolumes_List_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
+    type?: "cluster" | "volume";
 }>;
 
 export type ProjectDockerVolumes_List_Res = ApiResponsePaginated<DockerVolume>;

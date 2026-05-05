@@ -34,6 +34,7 @@ export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
                             isRequired
                         />
                     }
+                    titleWidth={180}
                 >
                     <Input
                         {...sizeField}
@@ -44,6 +45,7 @@ export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
                             const { value } = e.target;
                             sizeField.onChange(value);
                         }}
+                        className="w-[220px]"
                     />
                     {maxSize && <p className="text-xs text-muted-foreground mt-1">Max size: {maxSize}</p>}
                     <FieldError errors={[sizeError]} />
@@ -51,7 +53,10 @@ export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
             </Field>
 
             <Field>
-                <InfoBlock title={<LabelWithInfo label="File Mode" />}>
+                <InfoBlock
+                    title={<LabelWithInfo label="File Mode" />}
+                    titleWidth={180}
+                >
                     <Input
                         {...modeField}
                         id="mode"
@@ -65,6 +70,7 @@ export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
                                 modeField.onChange(undefined);
                             }
                         }}
+                        className="w-[220px]"
                     />
                 </InfoBlock>
             </Field>

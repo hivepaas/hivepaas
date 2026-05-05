@@ -1,6 +1,8 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import type { AppStorageMount } from "~/projects/domain";
 
 import { StorageMountForm } from "../form";
@@ -10,6 +12,7 @@ import type { StorageMountFormOutput } from "../schemas";
 import type { StorageMountFormRef } from "../types";
 
 const fnPlaceholder = () => null;
+const errorPlaceholder = (_error: Error) => null;
 
 function mountWithoutId(mount: AppStorageMount & { _id: string }): AppStorageMount {
     const { _id: _unused, ...rest } = mount;
@@ -19,11 +22,12 @@ function mountWithoutId(mount: AppStorageMount & { _id: string }): AppStorageMou
 export function StorageMountDialog() {
     const {
         state,
-        props: { onSubmit = fnPlaceholder, onClose = fnPlaceholder } = {},
+        props: { onSubmit = fnPlaceholder, onClose = fnPlaceholder, onError = errorPlaceholder } = {},
         ...actions
     } = useStorageMountDialogState();
 
     const formRef = useRef<StorageMountFormRef>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const open = state.mode !== "closed";
     const isEdit = state.mode === "edit";
@@ -32,9 +36,17 @@ export function StorageMountDialog() {
     const appLocalKey = state.mode !== "closed" ? state.appLocalKey : undefined;
     const defaultValues = state.mode === "edit" ? mountWithoutId(state.mount) : undefined;
 
-    function handleSubmit(values: StorageMountFormOutput) {
-        onSubmit(formValuesToMount(values));
-        actions.close();
+    async function handleSubmit(values: StorageMountFormOutput) {
+        try {
+            setIsSubmitting(true);
+            await onSubmit(formValuesToMount(values));
+            actions.close();
+        } catch (error) {
+            const handledError = error instanceof Error ? error : new Error("Failed to save storage mount");
+            onError(handledError);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     function handleClose() {
@@ -51,21 +63,28 @@ export function StorageMountDialog() {
                 }
             }}
         >
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="min-w-[390px] w-[680px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{isEdit ? "Edit Storage Mount" : "Add Storage Mount"}</DialogTitle>
+                    <DialogTitle>{isEdit ? "Edit storage" : "Add a new storage to the app"}</DialogTitle>
                 </DialogHeader>
 
                 {open && (
-                    <StorageMountForm
-                        ref={formRef}
-                        isPending={false}
-                        onSubmit={handleSubmit}
-                        defaultValues={defaultValues}
-                        projectRules={projectRules}
-                        projectKey={projectKey}
-                        appLocalKey={appLocalKey}
-                    />
+                    <>
+                        <div className={cn(dashedBorderBox, "text-[12px] text-center")}>
+                            <span className="font-bold text-orange-500">Important:</span> If your cluster consists of
+                            more than 1 node, you need to ensure that the directories or volumes are accessible from all
+                            nodes. Otherwise, your apps may not function properly.
+                        </div>
+                        <StorageMountForm
+                            ref={formRef}
+                            isPending={isSubmitting}
+                            onSubmit={values => void handleSubmit(values)}
+                            defaultValues={defaultValues}
+                            projectRules={projectRules}
+                            projectKey={projectKey}
+                            appLocalKey={appLocalKey}
+                        />
+                    </>
                 )}
             </DialogContent>
         </Dialog>

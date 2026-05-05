@@ -14,15 +14,16 @@ function createHook() {
                     options?: {
                         projectKey?: string;
                         appLocalKey?: string;
-                        onSubmit?: (mount: AppStorageMount) => void;
+                        onSubmit?: (mount: AppStorageMount) => Promise<void>;
                         onClose?: () => void;
+                        onError?: (error: Error) => void;
                     },
                 ) => {
-                    const { onSubmit, onClose, projectKey, appLocalKey } = options ?? {};
+                    const { onSubmit, onClose, onError, projectKey, appLocalKey } = options ?? {};
                     state.open(projectRules, {
                         projectKey,
                         appLocalKey,
-                        props: { onSubmit, onClose },
+                        props: { onSubmit, onClose, onError },
                     });
                 },
                 openEdit: (
@@ -31,15 +32,16 @@ function createHook() {
                     options?: {
                         projectKey?: string;
                         appLocalKey?: string;
-                        onSubmit?: (mount: AppStorageMount) => void;
+                        onSubmit?: (mount: AppStorageMount) => Promise<void>;
                         onClose?: () => void;
+                        onError?: (error: Error) => void;
                     },
                 ) => {
-                    const { onSubmit, onClose, projectKey, appLocalKey } = options ?? {};
+                    const { onSubmit, onClose, onError, projectKey, appLocalKey } = options ?? {};
                     state.openEdit(mount, projectRules, {
                         projectKey,
                         appLocalKey,
-                        props: { onSubmit, onClose },
+                        props: { onSubmit, onClose, onError },
                     });
                 },
                 close: () => {

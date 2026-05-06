@@ -93,9 +93,24 @@ export function createDefaultCompressionConfig(): z.infer<typeof HttpCompression
     return {
         enabled: false,
         excludedContentTypes: "",
-        includedContentTypes: "",
-        minResponseBody: "",
-        defaultEncoding: "",
+        includedContentTypes: `text/plain
+text/html
+text/css
+text/javascript
+text/xml
+application/javascript
+application/json
+application/xml
+application/xml+rss
+application/manifest+json
+application/vnd.api+json
+image/svg+xml
+image/x-icon
+font/eot
+font/otf
+font/ttf`,
+        minResponseBody: "1kb",
+        defaultEncoding: "br",
     };
 }
 
@@ -114,7 +129,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
     domain: "",
     containerPort: 80,
     domainRedirect: "",
-    forceHttps: false,
+    forceHttps: true,
     paths: [],
 };
 

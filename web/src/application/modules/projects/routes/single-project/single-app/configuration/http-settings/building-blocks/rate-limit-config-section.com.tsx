@@ -57,23 +57,25 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Rate Limit Configuration
+                        Rate Limit Configuration (docs
                         <a
                             className="text-xs text-blue-500 hover:text-blue-600"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            (docs 1)
-                        </a>
+                            [1]
+                        </a>{" "}
+                        ,
                         <a
                             className="text-xs text-blue-500 hover:text-blue-600"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            (docs 2)
-                        </a>
+                            [2]
+                        </a>{" "}
+                        )
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (

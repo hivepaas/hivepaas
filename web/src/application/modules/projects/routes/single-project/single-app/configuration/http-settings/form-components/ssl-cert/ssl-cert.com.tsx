@@ -48,7 +48,11 @@ function View({ domainIndex }: SslCertProps) {
         isFetching,
         refetch,
         isRefetching,
-    } = ProjectSslCertQueries.useFindManyPaginated({ projectID: projectId, search: searchQuery });
+    } = ProjectSslCertQueries.useFindManyPaginated({
+        projectID: projectId,
+        search: searchQuery,
+        domain: domainValue.trim() || undefined,
+    });
 
     const { data: sslCertDetail, isFetching: isSslInfoLoading } = ProjectSslCertQueries.useFindOneById(
         { projectID: projectId, id: selectedSslId ?? "" },

@@ -97,6 +97,7 @@ var (
 // Errors for cluster
 var (
 	ErrNodeRequiredByLocalPaaSApp = errors.New("ERR_NODE_REQUIRED_BY_LOCALPAAS_APP")
+	ErrServiceNotRunning          = errors.New("ERR_SERVICE_NOT_RUNNING")
 )
 
 // nolint Errors from infrastructure
@@ -200,6 +201,7 @@ var errorStatusMap = map[error]int{
 
 	// Cluster errors
 	ErrNodeRequiredByLocalPaaSApp: http.StatusUnprocessableEntity,
+	ErrServiceNotRunning:          http.StatusUnprocessableEntity,
 
 	// Errors from infrastructure
 	ErrInfra:                   http.StatusInternalServerError,

@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
@@ -140,13 +141,9 @@ func (e *Executor) execute(
 	}
 
 	defer func() {
-		if err == nil {
-			if r := recover(); r != nil {
-				err = apperrors.NewPanic(fmt.Sprintf("%v", r))
-			}
-		}
 		_ = e.saveLogs(ctx, db, data, true)
 	}()
+	defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
 
 	switch data.CronJob.CronType {
 	case base.CronJobTypeContainerCommand:

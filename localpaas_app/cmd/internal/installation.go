@@ -34,11 +34,11 @@ func CompleteInstallation(
 	logger logging.Logger,
 ) {
 	stepEnabled := cfg.RunMode != config.RunModeUpdater
+	if !stepEnabled {
+		return
+	}
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			if !stepEnabled {
-				return nil
-			}
 			sysStatus, err := sysStatusRepo.Get(ctx, db)
 			if err != nil {
 				return fmt.Errorf("failed to load system status: %w", err)
@@ -56,9 +56,6 @@ func CompleteInstallation(
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			if !stepEnabled {
-				return nil
-			}
 			return nil
 		},
 	})

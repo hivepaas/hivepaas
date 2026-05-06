@@ -137,8 +137,10 @@ type Manager interface {
 	ServiceLogs(ctx context.Context, serviceID string, options ...ServiceLogsOption) (
 		client.ServiceLogsResult, error)
 
+	ServiceUpdateWait(ctx context.Context, serviceID string, inspectInterval time.Duration) (
+		*swarm.Service, error)
 	ServiceWaitUntilRunning(ctx context.Context, serviceID string, requireAllReplicas bool,
-		requireRunningDuration time.Duration, checkInterval time.Duration, timeout time.Duration) (bool, error)
+		requireRunningDuration time.Duration, checkInterval time.Duration) (bool, error)
 
 	// Swarm
 	SwarmInspect(ctx context.Context, options ...SwarmInspectOption) (
@@ -151,7 +153,7 @@ type Manager interface {
 	// Tasks
 	TaskList(ctx context.Context, options ...TaskListOption) (
 		*client.TaskListResult, error)
-	ServiceTaskList(ctx context.Context, serviceID string, options ...TaskListOption) (
+	ServiceTaskList(ctx context.Context, serviceID string, desiredState string, options ...TaskListOption) (
 		*client.TaskListResult, error)
 
 	// Volumes

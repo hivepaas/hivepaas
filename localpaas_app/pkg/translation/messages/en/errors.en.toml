@@ -75,6 +75,7 @@ ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquir
 
 # Cluster error
 ERR_NODE_REQUIRED_BY_LOCALPAAS_APP = "Node is required to be an active manager as LocalPaaS app is running in it"
+ERR_SERVICE_NOT_RUNNING = "Service {{.Name}} is not running"
 
 # Infra errors
 ERR_INFRA = "{{.Error}}"

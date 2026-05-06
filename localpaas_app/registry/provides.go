@@ -51,7 +51,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskcronjobexec"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskdummy"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskhealthcheck"
-	"github.com/localpaas/localpaas/localpaas_app/tasks/tasksystemupdate"
+	"github.com/localpaas/localpaas/localpaas_app/updater/tasksystemupdate"
+	"github.com/localpaas/localpaas/localpaas_app/updater/updaterimpl"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc"
@@ -127,6 +128,9 @@ var Provides = []any{
 	taskappdeploy.NewExecutor,
 	taskcronjobexec.NewExecutor,
 	taskhealthcheck.NewExecutor,
+
+	// Updater
+	updaterimpl.New,
 	tasksystemupdate.NewExecutor,
 
 	// Route handler

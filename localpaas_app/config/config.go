@@ -73,6 +73,9 @@ func (cfg *Config) IsProdEnv() bool { return cfg.Env == EnvProd }
 /// LOAD CONFIG
 
 func LoadConfig() (*Config, error) {
+	if Current != nil {
+		return Current, nil
+	}
 	cfg, err := loadConfig("")
 	if err != nil {
 		return nil, tracerr.Wrap(err)

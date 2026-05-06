@@ -82,7 +82,7 @@ func (e *Executor) getDefaultNotification(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	data.AddRefObjects(refObjects)
+	data.RefObjects.AddRefObjects(refObjects)
 	data.RefObjects.RefSettings[setting.ID] = setting
 
 	return notification, nil

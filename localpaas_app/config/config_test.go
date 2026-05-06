@@ -11,6 +11,7 @@ func Test_LoadConfig(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		_ = os.Setenv("LP_CONFIG_FILE", "testdata/config.myenv.toml")
 
+		Current = nil
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -21,6 +22,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Setenv("LP_CONFIG_FILE", "testdata/config.myenv.toml")
 		_ = os.Setenv("LP_APP_NAME", "overridden")
 
+		Current = nil
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -31,6 +33,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("LP_ENV")
 		_ = os.Unsetenv("LP_CONFIG_FILE")
 
+		Current = nil
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileUnset)
 	})
@@ -39,6 +42,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("LP_ENV")
 		_ = os.Setenv("LP_CONFIG_FILE", "notexist/config.myenv.toml")
 
+		Current = nil
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileNotFound)
 	})
@@ -47,6 +51,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("LP_ENV")
 		_ = os.Setenv("LP_CONFIG_FILE", "testdata/config-malformed.toml")
 
+		Current = nil
 		_, err := LoadConfig()
 		assert.NotNil(t, err)
 	})

@@ -29,3 +29,21 @@ func (s *service) RestartLpUpdaterSwarmService(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (s *service) ShutdownLpUpdaterSwarmService(ctx context.Context) error {
+	service, err := s.GetLpUpdaterSwarmService(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	if service.Spec.Mode.Replicated == nil || *service.Spec.Mode.Replicated.Replicas == 0 {
+		return nil
+	}
+	service.Spec.Mode.Replicated.Replicas = new(uint64(0))
+
+	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}

@@ -2,10 +2,17 @@ package tasksystemupdate
 
 import (
 	"context"
+	"time"
+
+	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+)
+
+const (
+	traefikServiceUpdateCheckInterval = time.Second * 5
 )
 
 func (e *Executor) updateTraefikService(
@@ -36,9 +43,24 @@ func (e *Executor) updateTraefikService(
 	}
 
 	traefikSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.TraefikImage
+	if traefikSvc.Spec.UpdateConfig == nil {
+		traefikSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	traefikSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	traefikSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
+
 	_, err = e.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
+	}
+
+	// Wait for the update to finish
+	traefikSvc, err = e.dockerManager.ServiceUpdateWait(ctx, traefikSvc.ID, traefikServiceUpdateCheckInterval)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if traefikSvc.UpdateStatus != nil && traefikSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
+		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service traefik is rolled back")
 	}
 
 	return nil

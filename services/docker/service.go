@@ -6,6 +6,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
@@ -239,44 +240,104 @@ func (m *manager) ServiceLogs(
 	return resp, nil
 }
 
+func (m *manager) ServiceUpdateWait(
+	ctx context.Context,
+	serviceID string,
+	inspectInterval time.Duration,
+) (*swarm.Service, error) {
+	if serviceID == "" {
+		return nil, nil
+	}
+	for {
+		// Check context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, apperrors.NewInfra(err)
+		}
+
+		inspectResp, err := gofn.ExecRetryCtx2(ctx, func() (*client.ServiceInspectResult, error) {
+			return m.ServiceInspect(ctx, serviceID)
+		}, 2, time.Second*3) //nolint:mnd
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+
+		service := &inspectResp.Service
+		if service.UpdateStatus == nil ||
+			service.UpdateStatus.State == swarm.UpdateStateCompleted ||
+			service.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
+			return service, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, apperrors.Wrap(ctx.Err())
+		case <-time.After(inspectInterval):
+		}
+	}
+}
+
 func (m *manager) ServiceWaitUntilRunning(
 	ctx context.Context,
 	serviceID string,
 	requireAllReplicas bool,
 	requireRunningDuration time.Duration,
 	checkInterval time.Duration,
-	timeout time.Duration,
 ) (bool, error) {
 	if serviceID == "" {
 		return false, nil
 	}
-	start := time.Now()
+
+	inspectResp, err := gofn.ExecRetry2(func() (*client.ServiceInspectResult, error) {
+		return m.ServiceInspect(ctx, serviceID)
+	}, 2, time.Second*3) //nolint:mnd
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+	// Service must be a replicated one
+	service := &inspectResp.Service
+	if service.Spec.Mode.Replicated == nil {
+		return false, nil
+	}
+	desiredTasks := int(*service.Spec.Mode.Replicated.Replicas) //nolint:gosec
+	if desiredTasks == 0 {
+		return false, nil
+	}
+
 	var isRunningFrom time.Time
-	for time.Since(start) <= timeout {
-		inspectResp, err := m.client.ServiceInspect(ctx, serviceID, client.ServiceInspectOptions{})
-		if err != nil {
+	for {
+		// Check context cancellation
+		if err := ctx.Err(); err != nil {
 			return false, apperrors.NewInfra(err)
 		}
-		service := &inspectResp.Service
-		if service.Spec.Mode.Replicated == nil || *service.Spec.Mode.Replicated.Replicas == 0 {
-			return false, nil
+
+		taskListResp, err := gofn.ExecRetry2(func() (*client.TaskListResult, error) {
+			return m.ServiceTaskList(ctx, serviceID, "running")
+		}, 2, time.Second*3) //nolint:mnd
+		if err != nil {
+			return false, apperrors.Wrap(err)
 		}
-		if service.ServiceStatus == nil {
-			return false, nil
-		}
-		if (requireAllReplicas && service.ServiceStatus.RunningTasks < service.ServiceStatus.DesiredTasks) ||
-			(!requireAllReplicas && service.ServiceStatus.RunningTasks == 0) {
+
+		runningTasks := len(taskListResp.Items)
+		if (requireAllReplicas && runningTasks < desiredTasks) || (!requireAllReplicas && runningTasks == 0) {
 			isRunningFrom = time.Time{}
-			time.Sleep(checkInterval)
+			select {
+			case <-ctx.Done():
+				return false, apperrors.Wrap(ctx.Err())
+			case <-time.After(checkInterval):
+			}
 			continue
 		}
 		if isRunningFrom.IsZero() {
 			isRunningFrom = time.Now()
 		}
-		if time.Since(isRunningFrom) >= requireRunningDuration {
+		if requireRunningDuration <= 0 || time.Since(isRunningFrom) >= requireRunningDuration {
 			return true, nil
 		}
-	}
 
-	return false, nil
+		select {
+		case <-ctx.Done():
+			return false, apperrors.Wrap(ctx.Err())
+		case <-time.After(checkInterval):
+		}
+	}
 }

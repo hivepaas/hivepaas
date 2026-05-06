@@ -6,7 +6,6 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
@@ -23,7 +22,8 @@ func (q *taskQueue) findSchedulingTasks(
 	scanFrom := timeNow.Add(-missedTaskPeriod)
 	scanTo := timeNow.Add(q.config.Tasks.Queue.TaskCheckInterval)
 	tasks, _, err := q.taskRepo.List(ctx, q.db, "", nil,
-		bunex.SelectWhere("task.type != ?", base.TaskTypeHealthcheck), // special tasks no need scheduling
+		bunex.SelectWhere("task.type != ?", base.TaskTypeHealthcheck),  // special tasks no need scheduling
+		bunex.SelectWhere("task.type != ?", base.TaskTypeSystemUpdate), // special tasks
 		bunex.SelectWhereGroup(
 			// Not-started tasks
 			bunex.SelectWhereGroup(
@@ -89,9 +89,8 @@ func (q *taskQueue) shouldScheduleMissedTask(
 }
 
 func (q *taskQueue) canScheduleTask(task *entity.Task) bool {
-	// System update task requires run mode `updater`
-	if task.Type == base.TaskTypeSystemUpdate {
-		return config.Current.RunMode == config.RunModeUpdater
+	if task.Type == base.TaskTypeSystemUpdate { // System update task is run in the updater service
+		return false
 	}
 	return true
 }

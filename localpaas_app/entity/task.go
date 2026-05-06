@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -90,6 +91,13 @@ func (t *Task) CanCancel() bool {
 
 func (t *Task) CanRetry() bool {
 	return t.Status == base.TaskStatusFailed && t.Config.MaxRetry > t.Config.Retry
+}
+
+func (t *Task) CreateTimeoutCtx(ctx context.Context) (context.Context, context.CancelFunc) {
+	if t.Config.Timeout > 0 {
+		return context.WithTimeout(ctx, t.Config.Timeout.ToDuration())
+	}
+	return ctx, func() {}
 }
 
 func (t *Task) GetDuration() time.Duration {

@@ -6,6 +6,7 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/initializer"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
@@ -13,10 +14,15 @@ import (
 
 func InitTaskQueue(
 	lc fx.Lifecycle,
+	cfg *config.Config,
 	taskQueue queue.TaskQueue,
 	_ *initializer.WorkerInitializer,
 	logger logging.Logger,
 ) {
+	stepEnabled := cfg.RunMode != config.RunModeUpdater
+	if !stepEnabled {
+		return
+	}
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Infof("initializing task queue...")

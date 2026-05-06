@@ -12,13 +12,18 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/server"
 )
 
-func InitHTTPServer(lc fx.Lifecycle, cfg *config.Config, srv server.Server, logger logging.Logger) {
+func InitHTTPServer(
+	lc fx.Lifecycle,
+	cfg *config.Config,
+	srv server.Server,
+	logger logging.Logger,
+) {
 	stepEnabled := cfg.RunMode == config.RunModeApp || cfg.RunMode == config.RunModeAppAndWorker
+	if !stepEnabled {
+		return
+	}
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
-			if !stepEnabled {
-				return nil
-			}
 			logger.Info("starting HTTP server ...")
 			go func() {
 				if err := srv.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -29,9 +34,6 @@ func InitHTTPServer(lc fx.Lifecycle, cfg *config.Config, srv server.Server, logg
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			if !stepEnabled {
-				return nil
-			}
 			logger.Info("stopping HTTP server ...")
 			return srv.Stop(ctx)
 		},

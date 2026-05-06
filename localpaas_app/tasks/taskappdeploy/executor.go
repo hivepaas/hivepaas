@@ -17,6 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
@@ -111,14 +112,10 @@ func (e *Executor) execute(
 	}
 
 	defer func() {
-		if err == nil {
-			if r := recover(); r != nil {
-				err = apperrors.NewPanic(fmt.Sprintf("%v", r))
-			}
-		}
 		_ = e.deploymentInfoRepo.Del(ctx, data.Deployment.ID)
 		_ = e.saveLogs(ctx, db, data, true)
 	}()
+	defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
 
 	var depErr error
 	depSettings := data.Deployment.Settings

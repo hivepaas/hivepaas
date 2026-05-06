@@ -3,10 +3,18 @@ package tasksystemupdate
 import (
 	"context"
 	"errors"
+	"time"
+
+	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+)
+
+const (
+	mainAppServiceUpdateCheckInterval = time.Second * 5
+	workerServiceUpdateCheckInterval  = time.Second * 5
 )
 
 func (e *Executor) scaleMainAppService(
@@ -90,6 +98,16 @@ func (e *Executor) updateMainAppService(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+
+	// Wait for the update to finish
+	appSvc, err = e.dockerManager.ServiceUpdateWait(ctx, appSvc.ID, mainAppServiceUpdateCheckInterval)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if appSvc.UpdateStatus != nil && appSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
+		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service localpaas is rolled back")
+	}
+
 	return nil
 }
 
@@ -127,5 +145,15 @@ func (e *Executor) updateWorkerService(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+
+	// Wait for the update to finish
+	workerSvc, err = e.dockerManager.ServiceUpdateWait(ctx, workerSvc.ID, workerServiceUpdateCheckInterval)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if workerSvc.UpdateStatus != nil && workerSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
+		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service localpaas worker is rolled back")
+	}
+
 	return nil
 }

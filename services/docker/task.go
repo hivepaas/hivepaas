@@ -28,10 +28,14 @@ func (m *manager) TaskList(
 func (m *manager) ServiceTaskList(
 	ctx context.Context,
 	serviceID string,
+	desiredState string, // running | shutdown | accepted
 	options ...TaskListOption,
 ) (*client.TaskListResult, error) {
 	options = append(options, func(opts *client.TaskListOptions) {
 		FilterAdd(&opts.Filters, "service", serviceID)
+		if desiredState != "" {
+			FilterAdd(&opts.Filters, "desired-state", desiredState)
+		}
 	})
 	return m.TaskList(ctx, options...)
 }

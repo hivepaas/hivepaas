@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
@@ -80,17 +81,13 @@ func (e *Executor) execute(
 
 	var testErr error
 	defer func() {
-		r := recover()
-		if err == nil && r != nil {
-			err = apperrors.NewPanic(fmt.Sprintf("%v", r))
-		}
-
 		task.Status = gofn.If(testErr == nil, base.TaskStatusDone, base.TaskStatusFailed)
 		task.EndedAt = timeutil.NowUTC()
 		task.MustSetOutput(data.Output)
 
 		err = e.sendNotification(ctx, e.db, data)
 	}()
+	defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
 
 	retries := 0
 	startTime := time.Now()

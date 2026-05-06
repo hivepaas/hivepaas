@@ -17,6 +17,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/infra/gocronqueue"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/redishelper"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
@@ -92,33 +93,27 @@ func (q *taskQueue) executeTask(
 		var execErr error
 		defer func() {
 			taskData.Done = true
-			if err == nil {
-				if r := recover(); r != nil { // recover from panic
-					err = apperrors.NewPanic(fmt.Sprintf("%v", r))
-				}
-			}
 			if err != nil {
 				return
 			}
-			timeNow := timeutil.NowUTC()
+			task.EndedAt = timeutil.NowUTC()
 			if execErr != nil {
 				task.Status = base.TaskStatusFailed
 				if taskData.NonRetryable {
 					task.Config.MaxRetry = task.Config.Retry
 				}
 				if task.CanRetry() {
-					task.RetryAt = timeNow.Add(calcExpBackoffRetry(task))
+					task.RetryAt = task.EndedAt.Add(calcExpBackoffRetry(task))
 					rescheduleAt = &task.RetryAt
 				} else {
 					task.RetryAt = time.Time{}
 				}
 				_ = task.AddRun(&entity.TaskRun{
 					StartedAt: task.StartedAt,
-					EndedAt:   timeNow,
+					EndedAt:   task.EndedAt,
 					Error:     execErr.Error(),
 				})
 			} else {
-				task.EndedAt = timeNow
 				task.Status = gofn.If(taskData.Canceled, base.TaskStatusCanceled, base.TaskStatusDone)
 			}
 			// Post execution event
@@ -130,6 +125,7 @@ func (q *taskQueue) executeTask(
 			// Save tasks in DB
 			err = q.taskRepo.Update(ctx, db, task)
 		}()
+		defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
 
 		execErr = executorFunc(ctx, db, taskData)
 		return err //nolint:wrapcheck

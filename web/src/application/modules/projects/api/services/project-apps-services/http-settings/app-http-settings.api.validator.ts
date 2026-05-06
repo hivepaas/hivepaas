@@ -5,10 +5,11 @@ import {
     type AppHttpCompressionConfig,
     type AppHttpDomain,
     type AppHttpHeaderConfig,
+    type AppHttpLBConfig,
     type AppHttpPathConfig,
     type AppHttpRateLimitConfig,
 } from "~/projects/domain";
-import { EHttpPathMode } from "~/projects/module-shared/enums";
+import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -51,6 +52,10 @@ const HttpRateLimitConfigSchema = z.object({
     maxInFlightReq: z.number(),
 });
 
+const HttpLBConfigSchema = z.object({
+    strategy: z.nativeEnum(ELBStrategy),
+});
+
 const HttpPathConfigSchema = z.object({
     path: z.string(),
     mode: z.nativeEnum(EHttpPathMode),
@@ -67,6 +72,7 @@ const DomainSchema = z.object({
     containerPort: z.number(),
     forceHttps: z.boolean().optional(),
     basicAuth: SettingRefSchema.nullish(),
+    lbConfig: HttpLBConfigSchema.nullish(),
     clientConfig: HttpClientConfigSchema.nullish(),
     headerConfig: HttpHeaderConfigSchema.nullish(),
     compressionConfig: HttpCompressionConfigSchema.nullish(),
@@ -141,6 +147,15 @@ function mapRateLimitConfig(
     };
 }
 
+function mapLBConfig(raw: z.infer<typeof HttpLBConfigSchema> | null | undefined): AppHttpLBConfig | null {
+    if (raw == null) {
+        return null;
+    }
+    return {
+        strategy: raw.strategy,
+    };
+}
+
 function mapSettingRef(raw: z.infer<typeof SettingRefSchema> | null | undefined): { id: string; name: string } | null {
     if (raw == null) {
         return null;
@@ -167,6 +182,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppHttpDomain {
         containerPort: raw.containerPort,
         forceHttps: raw.forceHttps,
         basicAuth: mapSettingRef(raw.basicAuth ?? undefined),
+        lbConfig: mapLBConfig(raw.lbConfig ?? undefined),
         clientConfig: mapClientConfig(raw.clientConfig ?? undefined),
         headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),

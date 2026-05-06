@@ -1,11 +1,15 @@
 import { type AppHttpDomain, type AppHttpSettings, type AppHttpSettingsUpdatePayload } from "~/projects/domain";
-import { type EHttpPathMode } from "~/projects/module-shared/enums";
+import { type EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
 
 import {
     type AppConfigHttpSettingsFormSchemaInput,
     type AppConfigHttpSettingsFormSchemaOutput,
     emptyDomain,
 } from "../schemas";
+
+function isLBStrategy(value: string): value is (typeof ELBStrategy)[keyof typeof ELBStrategy] {
+    return Object.values(ELBStrategy).some(item => item === value);
+}
 
 function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormSchemaInput["domains"][number] {
     return {
@@ -16,6 +20,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
         forceHttps: domain.forceHttps ?? false,
         basicAuth: domain.basicAuth?.id ? { id: domain.basicAuth.id, name: domain.basicAuth.name } : undefined,
+        lbConfig: domain.lbConfig ? { strategy: domain.lbConfig.strategy } : undefined,
         clientConfig: domain.clientConfig
             ? {
                   enabled: domain.clientConfig.enabled,
@@ -99,6 +104,10 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
             sslCert: { id: domain.sslCert?.id ?? "" },
             forceHttps: domain.forceHttps,
             basicAuth: { id: domain.basicAuth?.id ?? "" },
+            lbConfig:
+                domain.lbConfig && isLBStrategy(domain.lbConfig.strategy)
+                    ? { strategy: domain.lbConfig.strategy }
+                    : null,
             clientConfig: domain.clientConfig
                 ? {
                       enabled: domain.clientConfig.enabled,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EHttpPathMode } from "~/projects/module-shared/enums";
+import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
 
 export const HttpSettingsRefSchema = z.object({
     id: z.string(),
@@ -18,6 +18,10 @@ export const HttpHeaderConfigSchema = z.object({
     toRemoveFromRequests: z.array(z.object({ value: z.string() })),
     toAddToResponses: z.array(z.object({ key: z.string(), value: z.string() })),
     toRemoveFromResponses: z.array(z.object({ value: z.string() })),
+});
+
+export const HttpLBConfigSchema = z.object({
+    strategy: z.union([z.literal(""), z.nativeEnum(ELBStrategy)]),
 });
 
 export const HttpCompressionConfigSchema = z.object({
@@ -52,6 +56,7 @@ export const DomainFormSchema = z.object({
     sslCert: HttpSettingsRefSchema.optional(),
     forceHttps: z.boolean(),
     basicAuth: HttpSettingsRefSchema.optional(),
+    lbConfig: HttpLBConfigSchema.optional(),
     clientConfig: HttpClientConfigSchema.optional(),
     headerConfig: HttpHeaderConfigSchema.optional(),
     compressionConfig: HttpCompressionConfigSchema.optional(),
@@ -69,6 +74,10 @@ export type AppConfigHttpSettingsFormSchemaOutput = z.output<typeof AppConfigHtt
 
 export function createDefaultBasicAuthRef(): z.infer<typeof HttpSettingsRefSchema> {
     return { id: "", name: "" };
+}
+
+export function createDefaultLBConfig(): z.infer<typeof HttpLBConfigSchema> {
+    return { strategy: "" };
 }
 
 export function createDefaultClientConfig(): z.infer<typeof HttpClientConfigSchema> {
@@ -93,9 +102,24 @@ export function createDefaultCompressionConfig(): z.infer<typeof HttpCompression
     return {
         enabled: false,
         excludedContentTypes: "",
-        includedContentTypes: "",
-        minResponseBody: "",
-        defaultEncoding: "",
+        includedContentTypes: `text/plain
+text/html
+text/css
+text/javascript
+text/xml
+application/javascript
+application/json
+application/xml
+application/xml+rss
+application/manifest+json
+application/vnd.api+json
+image/svg+xml
+image/x-icon
+font/eot
+font/otf
+font/ttf`,
+        minResponseBody: "1kb",
+        defaultEncoding: "br",
     };
 }
 
@@ -114,7 +138,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
     domain: "",
     containerPort: 80,
     domainRedirect: "",
-    forceHttps: false,
+    forceHttps: true,
     paths: [],
 };
 

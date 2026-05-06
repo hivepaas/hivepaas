@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
@@ -11,11 +11,17 @@ import { type AppConfigHttpSettingsFormSchemaInput } from "../schemas";
 
 interface HeaderConfigSectionProps {
     prefix: string;
+    autoExpandToken?: number;
     onRemove?: () => void;
 }
 
-export function HeaderConfigSection({ prefix, onRemove }: HeaderConfigSectionProps) {
+export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: HeaderConfigSectionProps) {
     const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (autoExpandToken !== undefined) {
+            setOpen(true);
+        }
+    }, [autoExpandToken]);
 
     return (
         <Collapsible

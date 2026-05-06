@@ -1,4 +1,4 @@
-import type { EHttpPathMode } from "~/projects/module-shared/enums";
+import type { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
 import type { SettingsBaseEntity } from "~/settings/domain";
 
 export type AppHttpSettings = {
@@ -24,6 +24,10 @@ export type AppHttpSslCert = SettingsBaseEntity & {
     notification?: unknown;
 };
 
+export type AppHttpLBConfig = {
+    strategy: ELBStrategy;
+};
+
 export type AppHttpDomain = {
     enabled: boolean;
     domain: string;
@@ -32,6 +36,7 @@ export type AppHttpDomain = {
     containerPort: number;
     forceHttps?: boolean;
     basicAuth?: { id: string; name: string } | null;
+    lbConfig?: AppHttpLBConfig | null;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
@@ -89,6 +94,7 @@ export type AppHttpSettingsUpdateDomain = {
     containerPort: number;
     forceHttps: boolean;
     basicAuth: AppHttpSettingsObjectIdReq;
+    lbConfig?: AppHttpLBConfig | null;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;

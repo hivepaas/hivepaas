@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button, Checkbox } from "@components/ui";
-import { Plus } from "lucide-react";
+import { EyeIcon, Plus } from "lucide-react";
 import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -65,6 +65,12 @@ export function DomainSelector({
     }
 
     function handleAddDomain() {
+        const firstPort = domainValues[0]?.containerPort;
+        const containerPort =
+            typeof firstPort === "number" && Number.isInteger(firstPort) && firstPort >= 1 && firstPort <= 65535
+                ? firstPort
+                : emptyDomain.containerPort;
+
         const trimmedDraft = draft.trim();
         if (trimmedDraft.length > 0) {
             const hasDuplicateDomain = domainValues.some(
@@ -74,14 +80,14 @@ export function DomainSelector({
                 setDuplicateDomainError("Domain already exists.");
                 return;
             }
-            append({ ...emptyDomain, domain: trimmedDraft });
+            append({ ...emptyDomain, domain: trimmedDraft, containerPort });
             setActiveDomainIndex(fields.length);
             setDraft(trimmedDraft);
             setDuplicateDomainError(null);
             return;
         }
 
-        append({ ...emptyDomain });
+        append({ ...emptyDomain, containerPort });
         setActiveDomainIndex(fields.length);
         setDraft("");
         setDuplicateDomainError(null);
@@ -124,7 +130,7 @@ export function DomainSelector({
                         />
                     }
                 >
-                    <div className="flex items-center gap-2 max-w-[500px]">
+                    <div className="flex items-center gap-2 ">
                         <EditableCombobox
                             options={domainNames}
                             value={draft}
@@ -136,17 +142,33 @@ export function DomainSelector({
                             onRefresh={undefined}
                             placeholder="e.g. app.example.com"
                             emptyText="No domains configured"
-                            className="flex-1"
+                            className="max-w-[400px]"
                             disableFilter
                         />
+                        <div className="w-[74px]">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                title="Add domain"
+                                onClick={handleAddDomain}
+                            >
+                                <Plus className="size-4" /> Add
+                            </Button>
+                        </div>
                         <Button
                             type="button"
                             variant="outline"
-                            size="icon"
-                            title="Add domain"
-                            onClick={handleAddDomain}
+                            title="Quick Install"
+                            onClick={() => {
+                                const selectedDomain = draft.trim();
+                                if (!selectedDomain) return;
+                                const url = /^https?:\/\//i.test(selectedDomain)
+                                    ? selectedDomain
+                                    : `https://${selectedDomain}`;
+                                window.open(url, "_blank", "noopener,noreferrer");
+                            }}
                         >
-                            <Plus className="size-4" />
+                            <EyeIcon className="size-4" /> View
                         </Button>
                     </div>
                     {duplicateDomainError ? <p className="text-destructive text-sm">{duplicateDomainError}</p> : null}

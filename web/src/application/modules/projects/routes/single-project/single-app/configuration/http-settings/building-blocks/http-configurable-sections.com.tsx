@@ -1,12 +1,15 @@
+import { useState } from "react";
+
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
-import { AddConfigurationDropdown } from "./add-configuration-dropdown.com";
+import { AddConfigurationDropdown, type ConfigSectionKey } from "./add-configuration-dropdown.com";
 import { BasicAuthSection } from "./basic-auth-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
 import { CompressionConfigSection } from "./compression-config-section.com";
 import { HeaderConfigSection } from "./header-config-section.com";
+import { LBConfigSection } from "./lb-config-section.com";
 import { RateLimitConfigSection } from "./rate-limit-config-section.com";
 
 interface HttpConfigurableSectionsProps {
@@ -21,6 +24,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
     >();
     const segment = useWatch({ control, name: basePath as never }) as Record<string, unknown> | undefined;
     const setFormValue = setValue as (name: string, value: unknown, opts?: object) => void;
+    const [expandSignal, setExpandSignal] = useState<{ key: ConfigSectionKey; seq: number } | null>(null);
 
     const removeSection = (fieldPath: string) => {
         setFormValue(fieldPath, undefined, { shouldDirty: true, shouldValidate: true });
@@ -41,8 +45,19 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["clientConfig"] != null && (
                 <ClientConfigSection
                     prefix={`${basePath}.clientConfig`}
+                    autoExpandToken={expandSignal?.key === "clientConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.clientConfig`);
+                    }}
+                />
+            )}
+
+            {segment?.["lbConfig"] != null && (
+                <LBConfigSection
+                    prefix={`${basePath}.lbConfig`}
+                    autoExpandToken={expandSignal?.key === "lbConfig" ? expandSignal.seq : undefined}
+                    onRemove={() => {
+                        removeSection(`${basePath}.lbConfig`);
                     }}
                 />
             )}
@@ -50,6 +65,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["compressionConfig"] != null && (
                 <CompressionConfigSection
                     prefix={`${basePath}.compressionConfig`}
+                    autoExpandToken={expandSignal?.key === "compressionConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.compressionConfig`);
                     }}
@@ -59,6 +75,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["headerConfig"] != null && (
                 <HeaderConfigSection
                     prefix={`${basePath}.headerConfig`}
+                    autoExpandToken={expandSignal?.key === "headerConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.headerConfig`);
                     }}
@@ -68,13 +85,19 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["rateLimitConfig"] != null && (
                 <RateLimitConfigSection
                     prefix={`${basePath}.rateLimitConfig`}
+                    autoExpandToken={expandSignal?.key === "rateLimitConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.rateLimitConfig`);
                     }}
                 />
             )}
 
-            <AddConfigurationDropdown basePath={basePath} />
+            <AddConfigurationDropdown
+                basePath={basePath}
+                onSectionAdded={key => {
+                    setExpandSignal(prev => ({ key, seq: (prev?.seq ?? 0) + 1 }));
+                }}
+            />
         </div>
     );
 }

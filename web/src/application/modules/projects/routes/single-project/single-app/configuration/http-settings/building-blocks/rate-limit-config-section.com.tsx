@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
@@ -12,11 +12,17 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 interface RateLimitConfigSectionProps {
     prefix: string;
+    autoExpandToken?: number;
     onRemove?: () => void;
 }
 
-export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSectionProps) {
+export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: RateLimitConfigSectionProps) {
     const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (autoExpandToken !== undefined) {
+            setOpen(true);
+        }
+    }, [autoExpandToken]);
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -57,23 +63,25 @@ export function RateLimitConfigSection({ prefix, onRemove }: RateLimitConfigSect
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Rate Limit Configuration
+                        Rate Limit Configuration (docs
                         <a
                             className="text-xs text-blue-500 hover:text-blue-600"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            (docs 1)
-                        </a>
+                            [1]
+                        </a>{" "}
+                        ,
                         <a
                             className="text-xs text-blue-500 hover:text-blue-600"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            (docs 2)
-                        </a>
+                            [2]
+                        </a>{" "}
+                        )
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (

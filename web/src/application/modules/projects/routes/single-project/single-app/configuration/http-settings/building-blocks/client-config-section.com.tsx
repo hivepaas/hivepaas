@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
@@ -12,11 +12,17 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 interface ClientConfigSectionProps {
     prefix: string;
+    autoExpandToken?: number;
     onRemove?: () => void;
 }
 
-export function ClientConfigSection({ prefix, onRemove }: ClientConfigSectionProps) {
+export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: ClientConfigSectionProps) {
     const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (autoExpandToken !== undefined) {
+            setOpen(true);
+        }
+    }, [autoExpandToken]);
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,

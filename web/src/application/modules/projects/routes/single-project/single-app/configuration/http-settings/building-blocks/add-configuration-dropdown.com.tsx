@@ -12,15 +12,24 @@ import {
     createDefaultClientConfig,
     createDefaultCompressionConfig,
     createDefaultHeaderConfig,
+    createDefaultLBConfig,
     createDefaultRateLimitConfig,
 } from "../schemas";
 
-type ConfigKeyDomain = "basicAuth" | "clientConfig" | "compressionConfig" | "headerConfig" | "rateLimitConfig";
+type ConfigKeyDomain =
+    | "basicAuth"
+    | "clientConfig"
+    | "compressionConfig"
+    | "headerConfig"
+    | "lbConfig"
+    | "rateLimitConfig";
 type ConfigKeyPath = "basicAuth" | "clientConfig" | "rateLimitConfig";
+export type ConfigSectionKey = ConfigKeyDomain | ConfigKeyPath;
 
 const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "basicAuth", label: "Basic Auth" },
     { key: "clientConfig", label: "Client Configuration" },
+    { key: "lbConfig", label: "Load Balancing Configuration" },
     { key: "compressionConfig", label: "Compression Configuration" },
     { key: "headerConfig", label: "Header Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
@@ -42,9 +51,10 @@ function segmentAtPath(
 
 interface AddConfigurationDropdownProps {
     basePath: string;
+    onSectionAdded?: (key: ConfigSectionKey) => void;
 }
 
-export function AddConfigurationDropdown({ basePath }: AddConfigurationDropdownProps) {
+export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfigurationDropdownProps) {
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -56,7 +66,7 @@ export function AddConfigurationDropdown({ basePath }: AddConfigurationDropdownP
     const values = useWatch({ control }) as AppConfigHttpSettingsFormSchemaInput | undefined;
     const segment = useMemo(() => segmentAtPath(values, basePath), [values, basePath]);
 
-    function add(key: ConfigKeyDomain | ConfigKeyPath) {
+    function add(key: ConfigSectionKey) {
         const fieldPath = `${basePath}.${key}`;
         switch (key) {
             case "basicAuth":
@@ -64,6 +74,9 @@ export function AddConfigurationDropdown({ basePath }: AddConfigurationDropdownP
                 break;
             case "clientConfig":
                 setFormValue(fieldPath, createDefaultClientConfig(), { shouldDirty: true, shouldValidate: true });
+                break;
+            case "lbConfig":
+                setFormValue(fieldPath, createDefaultLBConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
             case "compressionConfig":
                 setFormValue(fieldPath, createDefaultCompressionConfig(), { shouldDirty: true, shouldValidate: true });
@@ -77,6 +90,7 @@ export function AddConfigurationDropdown({ basePath }: AddConfigurationDropdownP
             default:
                 break;
         }
+        onSectionAdded?.(key);
     }
 
     return (

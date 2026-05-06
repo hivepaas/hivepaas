@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button, FieldError, Input } from "@components/ui";
 import { Badge } from "@components/ui/badge";
@@ -22,12 +22,12 @@ interface PathsSectionProps {
 interface PathRowProps {
     domainIndex: number;
     pathIndex: number;
+    expandedPaths: ReadonlySet<string>;
+    onExpandedChange: (pathKey: string, open: boolean) => void;
     onRemove: () => void;
 }
 
-function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
-    const [expanded, setExpanded] = useState(false);
-
+function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRemove }: PathRowProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -44,10 +44,14 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
 
     const { field: mode } = useController({ control, name: `${pathPrefix}.mode` as never });
 
+    const expanded = expandedPaths.has(path.value);
+
     return (
         <Collapsible
             open={expanded}
-            onOpenChange={setExpanded}
+            onOpenChange={open => {
+                onExpandedChange(path.value, open);
+            }}
         >
             <div className="flex items-center gap-2 rounded-md border p2 bg-accent">
                 <CollapsibleTrigger asChild>
@@ -125,6 +129,11 @@ function PathRow({ domainIndex, pathIndex, onRemove }: PathRowProps) {
 export function PathsSection({ domainIndex }: PathsSectionProps) {
     const [newPath, setNewPath] = useState("");
     const [newMode, setNewMode] = useState<EHttpPathMode>(EHttpPathMode.Prefix);
+    const [expandedPaths, setExpandedPaths] = useState(() => new Set<string>());
+
+    useEffect(() => {
+        setExpandedPaths(new Set());
+    }, [domainIndex]);
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -200,6 +209,18 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
                         key={field.id}
                         domainIndex={domainIndex}
                         pathIndex={index}
+                        expandedPaths={expandedPaths}
+                        onExpandedChange={(pathKey, open) => {
+                            setExpandedPaths(prev => {
+                                const next = new Set(prev);
+                                if (open) {
+                                    next.add(pathKey);
+                                } else {
+                                    next.delete(pathKey);
+                                }
+                                return next;
+                            });
+                        }}
                         onRemove={() => {
                             remove(index);
                         }}

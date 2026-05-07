@@ -7,7 +7,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/osutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 )
 
 const (
@@ -37,10 +37,10 @@ type SwarmSecretRef struct {
 }
 
 type SwarmRefFileTarget struct {
-	Name string          `json:"name,omitempty"`
-	UID  string          `json:"uid,omitempty"`
-	GID  string          `json:"gid,omitempty"`
-	Mode osutil.FileMode `json:"mode,omitempty"`
+	Name string            `json:"name,omitempty"`
+	UID  string            `json:"uid,omitempty"`
+	GID  string            `json:"gid,omitempty"`
+	Mode fileutil.FileMode `json:"mode,omitempty"`
 }
 
 func (s *Secret) GetType() base.SettingType {

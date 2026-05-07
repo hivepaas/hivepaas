@@ -6,7 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/osutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
@@ -71,10 +71,10 @@ func (req *SwarmSecretRefReq) validate(field string) (res []vld.Validator) {
 }
 
 type SwarmRefFileTargetReq struct {
-	Name string          `json:"name"`
-	UID  string          `json:"uid"`
-	GID  string          `json:"gid"`
-	Mode osutil.FileMode `json:"mode"`
+	Name string            `json:"name"`
+	UID  string            `json:"uid"`
+	GID  string            `json:"gid"`
+	Mode fileutil.FileMode `json:"mode"`
 }
 
 func (req *SwarmRefFileTargetReq) ToEntity() *entity.SwarmRefFileTarget {

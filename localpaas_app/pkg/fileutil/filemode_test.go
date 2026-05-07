@@ -1,4 +1,4 @@
-package osutil
+package fileutil
 
 import (
 	"encoding/json"

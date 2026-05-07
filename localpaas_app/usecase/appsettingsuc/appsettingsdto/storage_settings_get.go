@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/osutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 )
@@ -82,9 +82,9 @@ type VolumeDriver struct {
 }
 
 type TmpfsOptions struct {
-	Size    unit.DataSize   `json:"size" copy:"SizeBytes"`
-	Mode    osutil.FileMode `json:"mode"`
-	Options [][]string      `json:"options"`
+	Size    unit.DataSize     `json:"size" copy:"SizeBytes"`
+	Mode    fileutil.FileMode `json:"mode"`
+	Options [][]string        `json:"options"`
 }
 
 type ClusterOptions struct {

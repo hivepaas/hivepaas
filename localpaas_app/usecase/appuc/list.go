@@ -11,6 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
+	"github.com/localpaas/localpaas/services/docker"
 )
 
 func (uc *UC) ListApp(
@@ -75,22 +76,12 @@ func (uc *UC) loadAppSwarmServices(
 	projectKey string,
 	apps []*entity.App,
 ) (map[string]*swarm.Service, error) {
-	// Special case: only one app
-	if len(apps) == 1 {
-		app := apps[0]
-		if app.ServiceID == "" {
-			return nil, nil
-		}
-		inspect, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
-		return map[string]*swarm.Service{app.ID: &inspect.Service}, nil
-	}
-
 	// Load all services of the project
 	listResp, err := uc.dockerManager.ServiceListByStack(ctx, projectKey, func(opts *client.ServiceListOptions) {
 		opts.Status = true
+		if len(apps) == 1 && apps[0].ServiceID != "" {
+			docker.FilterAdd(&opts.Filters, "id", apps[0].ServiceID)
+		}
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -99,7 +90,13 @@ func (uc *UC) loadAppSwarmServices(
 	services := listResp.Items
 	serviceMap := make(map[string]*swarm.Service, len(services))
 	for i := range services {
-		serviceMap[services[i].ID] = &services[i]
+		svc := &services[i]
+		serviceMap[svc.ID] = svc
+
+		// NOTE: If no `task status` returned, assign 0 to avoid no data returned to client
+		if svc.ServiceStatus == nil {
+			svc.ServiceStatus = &swarm.ServiceStatus{}
+		}
 	}
 
 	resp := make(map[string]*swarm.Service, len(apps))

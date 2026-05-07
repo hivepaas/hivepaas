@@ -3,6 +3,7 @@ package applog
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 
@@ -32,8 +33,18 @@ func (c *Consumer) StartConsuming(
 ) (<-chan []*LogFrame, func() error, error) {
 	batchChan := batchrecvchan.NewChan[*LogFrame](options)
 	pubSub := c.redisClient.Subscribe(ctx, c.key)
-	closeAllFunc := func() error {
-		return errors.Join(pubSub.Unsubscribe(ctx), pubSub.Close(), batchChan.Close())
+	var closeOnce sync.Once
+	var closeErr error
+
+	closeAllFunc := func() error { //nolint:contextcheck
+		closeOnce.Do(func() {
+			closeErr = errors.Join(
+				pubSub.Unsubscribe(context.Background()), // `ctx` may expire at this point
+				pubSub.Close(),
+				batchChan.Close(),
+			)
+		})
+		return closeErr
 	}
 
 	go func() {
@@ -58,7 +69,7 @@ func (c *Consumer) StartConsuming(
 						Type: LogTypeErr,
 						Data: "failed to get log data: " + err.Error(),
 					})
-					return
+					continue
 				}
 				batchChan.Send(frames...)
 

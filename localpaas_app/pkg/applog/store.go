@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -21,7 +22,7 @@ type Store struct {
 	Key               string
 	storeLocal        bool
 	storeRemote       bool
-	remoteInitialized bool
+	remoteInitialized atomic.Bool
 	mu                sync.RWMutex
 	frames            []*LogFrame
 }
@@ -40,9 +41,8 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 			return apperrors.New(err).WithMsgLog("failed to push log frames to redis")
 		}
 
-		if !s.remoteInitialized {
-			s.redisClient.ExpireXX(ctx, s.Key, storeExpiration)
-			s.remoteInitialized = true
+		if s.remoteInitialized.CompareAndSwap(false, true) {
+			s.redisClient.Expire(ctx, s.Key, storeExpiration)
 		}
 
 		// Notify consumers about the new data

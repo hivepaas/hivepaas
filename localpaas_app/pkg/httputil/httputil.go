@@ -20,6 +20,12 @@ func ParseRequestLang(acceptLang string) translation.Lang {
 		if ok := translation.IsAvailable(lang); ok {
 			return lang
 		}
+
+		base, _ := tag.Base()
+		baseLang := translation.Lang(base.String())
+		if ok := translation.IsAvailable(baseLang); ok {
+			return baseLang
+		}
 	}
 	return translation.GetDefaultLang()
 }

@@ -2,10 +2,16 @@ package httputil
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tracerr"
+)
+
+var (
+	ErrHTTPStatus = errors.New("http status error")
 )
 
 type RequestSetupFunc func(r *http.Request)
@@ -22,6 +28,10 @@ func HTTPGet(ctx context.Context, url string) ([]byte, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode >= 400 { //nolint:mnd
+		return nil, tracerr.Wrap(fmt.Errorf("%w: %s", ErrHTTPStatus, res.Status))
+	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -52,6 +62,10 @@ func HTTPPost(
 		return nil, tracerr.Wrap(err)
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode >= 400 { //nolint:mnd
+		return nil, tracerr.Wrap(fmt.Errorf("%w: %s", ErrHTTPStatus, res.Status))
+	}
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {

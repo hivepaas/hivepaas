@@ -1,4 +1,5 @@
 export const ESettingType = {
+    None: "",
     Project: "project",
     App: "app",
     AppDeployment: "app-deployment",

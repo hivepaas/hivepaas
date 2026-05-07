@@ -4,10 +4,7 @@ import { EEndpointResolutionMode, EPortConfigProtocol, EPortConfigPublishMode } 
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppNetworkSettings_FindOne_Res,
-    type AppNetworkSettings_UpdateOne_Res,
-} from "./app-network-settings.api.contracts";
+import { type AppNetworkSettings_FindOne_Res } from "./app-network-settings.api.contracts";
 
 const NetworkAttachmentSchema = z.object({
     id: z.string(),
@@ -51,11 +48,6 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 export class AppNetworkSettingsApiValidator {
     findOne = (response: AxiosResponse): AppNetworkSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
@@ -95,9 +87,5 @@ export class AppNetworkSettingsApiValidator {
             },
             meta,
         };
-    };
-
-    updateOne = (response: AxiosResponse): AppNetworkSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

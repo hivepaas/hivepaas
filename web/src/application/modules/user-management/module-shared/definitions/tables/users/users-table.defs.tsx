@@ -54,10 +54,6 @@ const columns: ColumnDef<UserBase>[] = [
         },
     },
     {
-        header: "Position",
-        cell: ({ row }) => <span>{row.original.position}</span>,
-    },
-    {
         // accessorKey: "securityOption",
         header: "Security",
         cell: ({ row }) => <UserSecurityBadge securityOption={row.original.securityOption} />,

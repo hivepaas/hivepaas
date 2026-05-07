@@ -1,4 +1,5 @@
 export const ESettingStatus = {
+    None: "",
     Active: "active",
     Pending: "pending",
     Disabled: "disabled",

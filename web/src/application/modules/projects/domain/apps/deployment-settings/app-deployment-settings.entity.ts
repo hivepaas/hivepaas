@@ -20,7 +20,7 @@ export type ImageMethod = BaseDeploymentSettings & {
     activeMethod: typeof EAppDeploymentMethod.Image;
     imageSource: {
         image: string;
-        registryAuth: SettingsBaseEntity;
+        registryAuth: SettingsBaseEntity | null;
     };
 };
 

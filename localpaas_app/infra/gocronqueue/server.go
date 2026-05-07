@@ -25,16 +25,18 @@ const (
 )
 
 var (
-	ErrTaskProcessorNotFound = errors.New("task processor not found")
+	ErrTaskExecutorNotFound = errors.New("task executor not found")
 )
 
 type TaskExecFunc func(taskID string, payload string) *time.Time
 
 type Server struct {
-	config    *Config
-	scheduler gocron.Scheduler
-	jobMap    map[string]*jobData // task.ID -> job data
-	mu        sync.RWMutex
+	config     *Config
+	scheduler  gocron.Scheduler
+	jobMap     map[string]*jobData // task.ID -> job data
+	mu         sync.RWMutex
+	cancelFunc context.CancelFunc
+	wg         sync.WaitGroup
 }
 
 type Config struct {
@@ -80,39 +82,70 @@ func NewServer(config *Config) (*Server, error) {
 func (s *Server) Start() error {
 	s.scheduler.Start()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancelFunc = cancel
+
 	// Start a job to periodically check scheduling messages in redis
-	go func() {
+	s.wg.Go(func() {
 		for {
-			s.listenToSchedMessages(context.Background())
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			s.listenToSchedMessages(ctx)
 		}
-	}()
+	})
 
 	// Start a job to periodically create new tasks from cron jobs
-	go func() {
-		for range time.Tick(s.config.TaskCreateInterval) {
-			s.createTasks()
+	s.wg.Go(func() {
+		ticker := time.NewTicker(s.config.TaskCreateInterval)
+		defer ticker.Stop()
+		s.createTasks(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.createTasks(ctx)
+			}
 		}
-	}()
-	s.createTasks()
+	})
 
 	// Start a job to periodically scan for new tasks from DB
-	go func() {
-		for range time.Tick(s.config.TaskCheckInterval) {
-			s.scanTasks()
+	s.wg.Go(func() {
+		ticker := time.NewTicker(s.config.TaskCheckInterval)
+		defer ticker.Stop()
+		s.scanTasks(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.scanTasks(ctx)
+			}
 		}
-	}()
-	s.scanTasks()
+	})
 
 	// Start a job to periodically do health check
-	go func() {
+	s.wg.Go(func() {
 		interval := s.config.HealthcheckBaseInterval
 		timeNow := time.Now()
 		wait := timeNow.Truncate(interval).Add(interval).Sub(timeNow)
-		time.Sleep(wait)
+
+		timer := time.NewTimer(wait)
+		defer timer.Stop()
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+		}
+
 		_, err := s.scheduler.NewJob(
 			gocron.DurationJob(interval),
 			gocron.NewTask(func() {
-				err := s.config.HealthcheckFunc(context.Background())
+				err := s.config.HealthcheckFunc(ctx)
 				if err != nil {
 					s.config.Logger.Errorf("failed to execute healthcheck task: %v", err)
 				}
@@ -121,7 +154,7 @@ func (s *Server) Start() error {
 		if err != nil {
 			s.config.Logger.Errorf("failed to schedule healthcheck task: %v", err)
 		}
-	}()
+	})
 
 	return nil
 }
@@ -135,7 +168,13 @@ func (s *Server) listenToSchedMessages(ctx context.Context) {
 	schedMsg, err := redishelper.BLPopOne[*SchedMessage](ctx, s.config.RedisClient,
 		taskQueueSchedKey, taskQueueSchedReadTimeout)
 	if err != nil {
-		time.Sleep(10 * time.Second) //nolint:mnd
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+		select {
+		case <-ctx.Done():
+		case <-time.After(10 * time.Second): //nolint:mnd
+		}
 		return
 	}
 	if len(schedMsg.SchedTasks) > 0 {
@@ -154,26 +193,26 @@ func (s *Server) listenToSchedMessages(ctx context.Context) {
 	}
 }
 
-func (s *Server) createTasks() {
+func (s *Server) createTasks(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			s.config.Logger.Errorf("panic when create new tasks: %v", r)
 		}
 	}()
-	err := s.config.TaskCreateFunc(context.Background())
+	err := s.config.TaskCreateFunc(ctx)
 	if err != nil {
 		s.config.Logger.Errorf("failed to create new tasks: %v", err)
 	}
 }
 
-func (s *Server) scanTasks() {
+func (s *Server) scanTasks(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			s.config.Logger.Errorf("panic when scan tasks for running: %v", r)
 		}
 	}()
 
-	tasks, err := s.config.TaskCheckFunc(context.Background())
+	tasks, err := s.config.TaskCheckFunc(ctx)
 	if err != nil {
 		s.config.Logger.Errorf("failed to scan new tasks: %v", err)
 		return
@@ -257,18 +296,24 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 		}
 	}
 
+	var rescheduled bool
 	defer func() {
-		s.removeJob(task.ID, false)
+		if !rescheduled {
+			s.removeJob(task.ID, false)
+		}
 	}()
 
 	execFunc := s.config.TaskMap[task.Type]
 	if execFunc == nil {
-		return fmt.Errorf("%w: task processor func not found for task type '%v'",
-			ErrTaskProcessorNotFound, task.Type)
+		return fmt.Errorf("%w: task executor func not found for task type '%v'",
+			ErrTaskExecutorNotFound, task.Type)
 	}
 	rescheduleAt := execFunc(task.ID, task.Args)
 	if rescheduleAt != nil {
 		err := s.scheduleTask(task, *rescheduleAt)
+		if err == nil {
+			rescheduled = true
+		}
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -326,6 +371,11 @@ func (s *Server) ScheduleNextTask(task *entity.Task, _ time.Time) error {
 }
 
 func (s *Server) Shutdown() error {
+	if s.cancelFunc != nil {
+		s.cancelFunc()
+	}
+	s.wg.Wait()
+
 	if s.scheduler != nil {
 		err := s.scheduler.Shutdown()
 		if err != nil {

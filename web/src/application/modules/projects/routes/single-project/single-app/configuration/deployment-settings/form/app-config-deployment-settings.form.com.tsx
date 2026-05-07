@@ -65,7 +65,9 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
         activeMethod: EAppDeploymentMethod.Image,
         imageSource: {
             image: data.imageSource.image,
-            registryAuth: { id: data.imageSource.registryAuth.id, name: data.imageSource.registryAuth.name },
+            registryAuth: data.imageSource.registryAuth
+                ? { id: data.imageSource.registryAuth.id, name: data.imageSource.registryAuth.name }
+                : undefined,
         },
     };
 }

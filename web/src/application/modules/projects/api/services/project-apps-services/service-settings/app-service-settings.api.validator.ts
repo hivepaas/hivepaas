@@ -4,10 +4,7 @@ import { EAppServicePlacement, EServiceMode } from "~/projects/module-shared/enu
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppServiceSettings_FindOne_Res,
-    type AppServiceSettings_UpdateOne_Res,
-} from "./app-service-settings.api.contracts";
+import type { AppServiceSettings_FindOne_Res } from "./app-service-settings.api.contracts";
 
 const ServiceModeSpecSchema = z.discriminatedUnion("mode", [
     z.object({ mode: z.literal(EServiceMode.Global) }),
@@ -50,11 +47,6 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 export class AppServiceSettingsApiValidator {
     findOne = (response: AxiosResponse): AppServiceSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
@@ -71,9 +63,5 @@ export class AppServiceSettingsApiValidator {
             },
             meta,
         };
-    };
-
-    updateOne = (response: AxiosResponse): AppServiceSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

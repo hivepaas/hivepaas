@@ -6,10 +6,7 @@ import { SettingsBaseEntitySchema } from "@application/modules/settings/module-s
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppDeploymentSettings_FindOne_Res,
-    type AppDeploymentSettings_UpdateOne_Res,
-} from "./app-deployment-settings.api.contracts";
+import type { AppDeploymentSettings_FindOne_Res } from "./app-deployment-settings.api.contracts";
 
 const BaseDeploymentSettingsSchema = z.object({
     command: z.string().optional(),
@@ -67,17 +64,8 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 export class AppDeploymentSettingsApiValidator {
     findOne = (response: AxiosResponse): AppDeploymentSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
-    };
-
-    updateOne = (response: AxiosResponse): AppDeploymentSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

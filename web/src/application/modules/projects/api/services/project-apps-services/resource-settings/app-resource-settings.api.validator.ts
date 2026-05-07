@@ -3,10 +3,7 @@ import { z } from "zod";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import {
-    type AppResourceSettings_FindOne_Res,
-    type AppResourceSettings_UpdateOne_Res,
-} from "./app-resource-settings.api.contracts";
+import type { AppResourceSettings_FindOne_Res } from "./app-resource-settings.api.contracts";
 
 const GenericResourceSchema = z.object({
     kind: z.string(),
@@ -53,11 +50,6 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const UpdateOneSchema = z.object({
-    data: z.object({ type: z.literal("success") }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 export class AppResourceSettingsApiValidator {
     findOne = (response: AxiosResponse): AppResourceSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
@@ -100,9 +92,5 @@ export class AppResourceSettingsApiValidator {
             },
             meta,
         };
-    };
-
-    updateOne = (response: AxiosResponse): AppResourceSettings_UpdateOne_Res => {
-        return parseApiResponse({ response, schema: UpdateOneSchema });
     };
 }

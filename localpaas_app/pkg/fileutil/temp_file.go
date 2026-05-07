@@ -18,17 +18,25 @@ func WriteTempFile(dir, pattern string, perm os.FileMode, data []byte) (
 	}
 	if dir == "" {
 		dir, err = CreateTempDir("", "", defaultDirMode)
+		if err != nil {
+			return "", nil, apperrors.Wrap(err)
+		}
 	}
 	fh, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return "", nil, apperrors.Wrap(err)
 	}
 	path = fh.Name()
+
+	// 1. Remove the file if an error occurs (runs AFTER fh.Close())
 	defer func() {
 		if err != nil && path != "" {
 			_ = os.Remove(path)
 		}
 	}()
+
+	// 2. Always close the file descriptor to prevent leaks (runs FIRST)
+	defer fh.Close()
 
 	// Set the permissions
 	if perm != 0o600 { //nolint:mnd
@@ -41,7 +49,6 @@ func WriteTempFile(dir, pattern string, perm os.FileMode, data []byte) (
 	if err != nil {
 		return "", nil, apperrors.Wrap(err)
 	}
-	_ = fh.Close()
 
 	return path, func() error { return os.Remove(path) }, nil
 }

@@ -23,11 +23,6 @@ func CreateTempDir(baseDir, pattern string, perm os.FileMode) (dir string, err e
 	if err != nil {
 		return "", apperrors.Wrap(err)
 	}
-	defer func() {
-		if err != nil && dir != "" {
-			_ = os.RemoveAll(dir)
-		}
-	}()
 
 	if pattern != "" {
 		dir, err = os.MkdirTemp(dir, pattern)

@@ -47,7 +47,7 @@ func (s *service) Deploy(
 	}
 	logStoreKey := fmt.Sprintf("task:%s:log", req.Task.ID)
 	data.LogStore = applog.NewRemoteStore(logStoreKey, true, s.redisClient)
-	data.OnPostTransaction = func() { s.onPostTransaction(data) } //nolint:contextcheck
+	data.OnPostTransaction = func() { s.onPostTransaction(context.Background(), data) } //nolint:contextcheck
 
 	err = s.loadDeploymentData(ctx, db, data)
 	if err != nil {
@@ -222,14 +222,10 @@ func (s *service) addStepEndLog(
 }
 
 func (s *service) onPostTransaction(
+	ctx context.Context,
 	data *appDeploymentData,
 ) {
-	ctx := context.Background()
 	db := s.db
-
-	// NOTE: We are now outside the transaction, need to reset some data before using them again
-	data.LogStore = applog.NewLocalStore(data.LogStore.Key)
-
 	defer func() {
 		_ = s.saveLogs(ctx, db, data, false)
 	}()

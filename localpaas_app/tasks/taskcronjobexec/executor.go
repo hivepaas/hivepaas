@@ -11,115 +11,51 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
-	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
-	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
-	"github.com/localpaas/localpaas/services/docker"
 )
 
 type Executor struct {
-	logger      logging.Logger
-	db          *database.DB
-	redisClient rediscache.Client
-
-	userRepo                 repository.UserRepo
-	aclPermissionRepo        repository.ACLPermissionRepo
-	projectRepo              repository.ProjectRepo
-	projectTagRepo           repository.ProjectTagRepo
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo
-	appRepo                  repository.AppRepo
-	appTagRepo               repository.AppTagRepo
-	deploymentRepo           repository.DeploymentRepo
-	taskLogRepo              repository.TaskLogRepo
-	settingRepo              repository.SettingRepo
-	taskRepo                 repository.TaskRepo
-	sysErrorRepo             repository.SysErrorRepo
-	loginTrustedDeviceRepo   repository.LoginTrustedDeviceRepo
-
-	cronJobService      cronjobservice.Service
-	appService          appservice.Service
-	settingService      settingservice.Service
-	sslService          sslservice.Service
-	userService         userservice.Service
-	notificationService notificationservice.Service
-	traefikService      traefikservice.Service
-	sysBackupService    sysbackupservice.Service
-	sysCleanupService   syscleanupservice.Service
-	sslRenewalService   sslrenewalservice.Service
-	dockerManager       docker.Manager
+	logger               logging.Logger
+	db                   *database.DB
+	taskLogRepo          repository.TaskLogRepo
+	settingService       settingservice.Service
+	notificationService  notificationservice.Service
+	containerExecService containerexecservice.Service
+	sysBackupService     sysbackupservice.Service
+	sysCleanupService    syscleanupservice.Service
+	sslRenewalService    sslrenewalservice.Service
 }
 
 func NewExecutor(
 	logger logging.Logger,
 	db *database.DB,
 	taskQueue queue.TaskQueue,
-	redisClient rediscache.Client,
-	userRepo repository.UserRepo,
-	aclPermissionRepo repository.ACLPermissionRepo,
-	projectRepo repository.ProjectRepo,
-	projectTagRepo repository.ProjectTagRepo,
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
-	appRepo repository.AppRepo,
-	appTagRepo repository.AppTagRepo,
-	deploymentRepo repository.DeploymentRepo,
 	taskLogRepo repository.TaskLogRepo,
-	settingRepo repository.SettingRepo,
-	taskRepo repository.TaskRepo,
-	sysErrorRepo repository.SysErrorRepo,
-	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
-	cronJobService cronjobservice.Service,
-	appService appservice.Service,
 	settingService settingservice.Service,
-	sslService sslservice.Service,
-	userService userservice.Service,
-	notificationService notificationservice.Service,
-	traefikService traefikservice.Service,
+	containerExecService containerexecservice.Service,
 	sysBackupService sysbackupservice.Service,
 	sysCleanupService syscleanupservice.Service,
 	sslRenewalService sslrenewalservice.Service,
-	dockerManager docker.Manager,
 ) *Executor {
 	e := &Executor{
-		logger:                   logger,
-		db:                       db,
-		redisClient:              redisClient,
-		userRepo:                 userRepo,
-		aclPermissionRepo:        aclPermissionRepo,
-		projectRepo:              projectRepo,
-		projectTagRepo:           projectTagRepo,
-		projectSharedSettingRepo: projectSharedSettingRepo,
-		appRepo:                  appRepo,
-		appTagRepo:               appTagRepo,
-		deploymentRepo:           deploymentRepo,
-		taskLogRepo:              taskLogRepo,
-		settingRepo:              settingRepo,
-		taskRepo:                 taskRepo,
-		sysErrorRepo:             sysErrorRepo,
-		loginTrustedDeviceRepo:   loginTrustedDeviceRepo,
-		cronJobService:           cronJobService,
-		appService:               appService,
-		settingService:           settingService,
-		sslService:               sslService,
-		userService:              userService,
-		notificationService:      notificationService,
-		traefikService:           traefikService,
-		sysBackupService:         sysBackupService,
-		sysCleanupService:        sysCleanupService,
-		sslRenewalService:        sslRenewalService,
-		dockerManager:            dockerManager,
+		logger:               logger,
+		db:                   db,
+		taskLogRepo:          taskLogRepo,
+		settingService:       settingService,
+		containerExecService: containerExecService,
+		sysBackupService:     sysBackupService,
+		sysCleanupService:    sysCleanupService,
+		sslRenewalService:    sslRenewalService,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeCronJobExec, e.execute)
 	return e
@@ -145,7 +81,7 @@ func (e *Executor) execute(
 		CronJob:      task.Task.TargetJob,
 	}
 	data.LogStore = applog.NewLocalStore(fmt.Sprintf("cron:%s:exec", data.CronJob.ID))
-	data.OnPostTransaction = func() { e.onPostTransaction(data) } //nolint:contextcheck
+	data.OnPostTransaction = func() { e.onPostTransaction(context.Background(), data) } //nolint:contextcheck
 
 	err = e.loadCronJobData(ctx, db, data)
 	if err != nil {
@@ -160,10 +96,16 @@ func (e *Executor) execute(
 	cronJob := data.CronJob.MustAsCronJob()
 	switch cronJob.CronType {
 	case base.CronJobTypeContainerCommand:
-		err = e.cronExecContainerCmd(ctx, db, data)
+		resp, err := e.containerExecService.ContainerExec(ctx, db, &containerexecservice.ContainerExecReq{
+			TaskExecData: data.TaskExecData,
+			CronJob:      data.CronJob,
+			Project:      data.Project,
+			App:          data.App,
+		})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.CronJobTypeSystemCleanup:
 		resp, err := e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
@@ -201,7 +143,7 @@ func (e *Executor) execute(
 
 func (e *Executor) loadCronJobData(
 	ctx context.Context,
-	db database.Tx,
+	db database.IDB,
 	data *taskData,
 ) (err error) {
 	cronJob := data.CronJob.MustAsCronJob()
@@ -267,11 +209,10 @@ func (e *Executor) saveLogs(
 }
 
 func (e *Executor) onPostTransaction(
+	ctx context.Context,
 	data *taskData,
 ) {
-	ctx := context.Background()
 	db := e.db
-
 	defer func() {
 		_ = e.saveLogs(ctx, db, data, false)
 	}()

@@ -1,12 +1,12 @@
-package taskcronjobexec
+package syscleanupserviceimpl
 
 import (
 	"context"
 )
 
-func (e *Executor) sysCleanupFiles(
+func (s *service) sysCleanupFiles(
 	_ context.Context,
-	data *sysCleanupTaskData,
+	data *sysCleanupData,
 ) (err error) {
 	defer func() {
 		if err != nil {

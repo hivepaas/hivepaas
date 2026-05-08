@@ -1,4 +1,4 @@
-package taskcronjobexec
+package syscleanupserviceimpl
 
 import (
 	"context"
@@ -78,12 +78,12 @@ type sysCleanupDBModel struct {
 	NoSoftDelete bool
 }
 
-func (e *Executor) sysCleanupDB(
+func (s *service) sysCleanupDB(
 	ctx context.Context,
 	db database.IDB,
-	retentionSetting *entity.DBObjectRetention,
-	data *sysCleanupTaskData,
+	data *sysCleanupData,
 ) (err error) {
+	retentionSetting := data.SysCleanupSettings.DBObjectRetention
 	if retentionSetting == nil || !retentionSetting.Enabled {
 		return nil
 	}
@@ -95,25 +95,25 @@ func (e *Executor) sysCleanupDB(
 	}()
 
 	// Hard delete all old deleted objects from the DB
-	err = e.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
+	err = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old tasks and their logs from the DB
-	err = e.sysCleanupDBOldTasks(ctx, db, retentionSetting, timeNow)
+	err = s.sysCleanupDBOldTasks(ctx, db, retentionSetting, timeNow)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old deployments from the DB
-	err = e.sysCleanupDBOldDeployments(ctx, db, retentionSetting, timeNow)
+	err = s.sysCleanupDBOldDeployments(ctx, db, retentionSetting, timeNow)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old sys-errors from the DB
-	err = e.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
+	err = s.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -121,7 +121,7 @@ func (e *Executor) sysCleanupDB(
 	return nil
 }
 
-func (e *Executor) sysCleanupDBOldDeletedObjects(
+func (s *service) sysCleanupDBOldDeletedObjects(
 	ctx context.Context,
 	db database.IDB,
 	retentionSetting *entity.DBObjectRetention,
@@ -153,7 +153,7 @@ func (e *Executor) sysCleanupDBOldDeletedObjects(
 	return nil
 }
 
-func (e *Executor) sysCleanupDBOldTasks(
+func (s *service) sysCleanupDBOldTasks(
 	ctx context.Context,
 	db database.IDB,
 	retentionSetting *entity.DBObjectRetention,
@@ -165,7 +165,7 @@ func (e *Executor) sysCleanupDBOldTasks(
 
 	oldestTs := timeNow.Add(-retentionSetting.Tasks.ToDuration())
 
-	err = e.taskLogRepo.DeleteHard(ctx, db,
+	err = s.taskLogRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("EXISTS(SELECT 1 FROM tasks WHERE tasks.id = task_log.task_id AND "+
 			"tasks.updated_at < ?)", oldestTs),
 	)
@@ -173,7 +173,7 @@ func (e *Executor) sysCleanupDBOldTasks(
 		return apperrors.Wrap(err)
 	}
 
-	err = e.taskRepo.DeleteHard(ctx, db,
+	err = s.taskRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 		bunex.DeleteWithDeleted(),
 	)
@@ -184,7 +184,7 @@ func (e *Executor) sysCleanupDBOldTasks(
 	return nil
 }
 
-func (e *Executor) sysCleanupDBOldDeployments(
+func (s *service) sysCleanupDBOldDeployments(
 	ctx context.Context,
 	db database.IDB,
 	retentionSetting *entity.DBObjectRetention,
@@ -196,7 +196,7 @@ func (e *Executor) sysCleanupDBOldDeployments(
 
 	oldestTs := timeNow.Add(-retentionSetting.Deployments.ToDuration())
 
-	err = e.deploymentRepo.DeleteHard(ctx, db,
+	err = s.deploymentRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 	)
 	if err != nil {
@@ -206,7 +206,7 @@ func (e *Executor) sysCleanupDBOldDeployments(
 	return nil
 }
 
-func (e *Executor) sysCleanupDBOldSysErrors(
+func (s *service) sysCleanupDBOldSysErrors(
 	ctx context.Context,
 	db database.IDB,
 	retentionSetting *entity.DBObjectRetention,
@@ -218,7 +218,7 @@ func (e *Executor) sysCleanupDBOldSysErrors(
 
 	oldestTs := timeNow.Add(-retentionSetting.SysErrors.ToDuration())
 
-	err = e.sysErrorRepo.DeleteHard(ctx, db,
+	err = s.sysErrorRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("created_at < ?", oldestTs),
 	)
 	if err != nil {

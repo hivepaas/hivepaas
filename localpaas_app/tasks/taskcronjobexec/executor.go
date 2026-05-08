@@ -22,6 +22,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
@@ -55,6 +56,7 @@ type Executor struct {
 	notificationService notificationservice.Service
 	traefikService      traefikservice.Service
 	sysBackupService    sysbackupservice.Service
+	sysCleanupService   syscleanupservice.Service
 	dockerManager       docker.Manager
 }
 
@@ -84,6 +86,7 @@ func NewExecutor(
 	notificationService notificationservice.Service,
 	traefikService traefikservice.Service,
 	sysBackupService sysbackupservice.Service,
+	sysCleanupService syscleanupservice.Service,
 	dockerManager docker.Manager,
 ) *Executor {
 	e := &Executor{
@@ -111,6 +114,7 @@ func NewExecutor(
 		notificationService:      notificationService,
 		traefikService:           traefikService,
 		sysBackupService:         sysBackupService,
+		sysCleanupService:        sysCleanupService,
 		dockerManager:            dockerManager,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeCronJobExec, e.execute)
@@ -152,7 +156,10 @@ func (e *Executor) execute(
 	case base.CronJobTypeContainerCommand:
 		err = e.cronExecContainerCmd(ctx, db, data)
 	case base.CronJobTypeSystemCleanup:
-		err = e.cronExecSystemCleanup(ctx, db, data)
+		_, err = e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
+			TaskExecData: data.TaskExecData,
+			CronJob:      data.CronJob,
+		})
 	case base.CronJobTypeSystemBackup:
 		_, err = e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
 			TaskExecData: data.TaskExecData,

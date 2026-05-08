@@ -1,18 +1,17 @@
-package taskcronjobexec
+package syscleanupserviceimpl
 
 import (
 	"context"
 	"errors"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
 )
 
-func (e *Executor) sysCleanupCluster(
+func (s *service) sysCleanupCluster(
 	ctx context.Context,
-	clusterCleanup *entity.ClusterCleanup,
-	data *sysCleanupTaskData,
+	data *sysCleanupData,
 ) (err error) {
+	clusterCleanup := data.SysCleanupSettings.ClusterCleanup
 	if clusterCleanup == nil || !clusterCleanup.Enabled {
 		return nil
 	}
@@ -20,7 +19,7 @@ func (e *Executor) sysCleanupCluster(
 	objectsOlderThan := clusterCleanup.OnlyObjectsOlderThan.ToDuration()
 
 	if clusterCleanup.PruneContainers {
-		resp, e := e.dockerManager.ContainerPrune(ctx, objectsOlderThan)
+		resp, e := s.dockerManager.ContainerPrune(ctx, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ContainersPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -32,7 +31,7 @@ func (e *Executor) sysCleanupCluster(
 	}
 
 	if clusterCleanup.PruneImages {
-		resp, e := e.dockerManager.ImagePrune(ctx, false, objectsOlderThan)
+		resp, e := s.dockerManager.ImagePrune(ctx, false, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ImagesPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -44,7 +43,7 @@ func (e *Executor) sysCleanupCluster(
 	}
 
 	if clusterCleanup.PruneVolumes {
-		resp, e := e.dockerManager.VolumePrune(ctx, true)
+		resp, e := s.dockerManager.VolumePrune(ctx, true)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.VolumesPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -56,7 +55,7 @@ func (e *Executor) sysCleanupCluster(
 	}
 
 	if clusterCleanup.PruneNetworks {
-		resp, e := e.dockerManager.NetworkPrune(ctx, objectsOlderThan)
+		resp, e := s.dockerManager.NetworkPrune(ctx, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.NetworksPruneError = e.Error()
 			err = errors.Join(err, e)

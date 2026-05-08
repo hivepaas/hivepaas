@@ -2,17 +2,44 @@ package emailservice
 
 import "github.com/localpaas/localpaas/localpaas_app/entity"
 
+type TemplateName string
+
+const (
+	TemplateNamePasswordReset TemplateName = "password-reset"
+	TemplateNameUserInvite    TemplateName = "user-invite"
+)
+
+type TemplateData interface {
+	GetEmail() *entity.Email
+	GetRecipients() []string
+	GetSubject() string
+}
+
+type BaseTemplateData struct {
+	Email      *entity.Email
+	Recipients []string
+	Subject    string
+}
+
+func (d *BaseTemplateData) GetEmail() *entity.Email {
+	return d.Email
+}
+
+func (d *BaseTemplateData) GetRecipients() []string {
+	return d.Recipients
+}
+
+func (d *BaseTemplateData) GetSubject() string {
+	return d.Subject
+}
+
 type EmailDataPasswordReset struct {
-	Email             *entity.Email
-	Recipients        []string
-	Subject           string
+	BaseTemplateData
 	ResetPasswordLink string
 }
 
 type EmailDataUserInvite struct {
-	Email          *entity.Email
-	Recipients     []string
-	Subject        string
+	BaseTemplateData
 	InviterName    string
 	UserSignupLink string
 }

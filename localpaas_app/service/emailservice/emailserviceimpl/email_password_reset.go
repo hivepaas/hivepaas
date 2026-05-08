@@ -1,7 +1,6 @@
 package emailserviceimpl
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/tiendc/gofn"
@@ -12,23 +11,24 @@ import (
 	"github.com/localpaas/localpaas/services/email"
 )
 
-func (s *service) SendMailUserInvite(
+func (s *service) SendMailPasswordReset(
 	ctx context.Context,
 	db database.IDB,
-	data *emailservice.EmailDataUserInvite,
+	data *emailservice.EmailDataPasswordReset,
 ) error {
-	template, err := s.GetTemplate(ctx, db, TemplateTypeUserInvite)
+	template, err := s.GetTemplate(ctx, db, emailservice.TemplateNamePasswordReset)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	buf := bytes.NewBuffer(make([]byte, 0, buffSizeMd))
-	err = template.Execute(buf, *data)
+	buf, cleanup := s.getBuildBuf()
+	defer cleanup()
+	err = template.Execute(buf, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	subject := gofn.Coalesce(data.Subject, "You’ve been invited to join LocalPaaS")
+	subject := gofn.Coalesce(data.Subject, "[LocalPaaS] Password reset")
 	err = email.SendMail(ctx, data.Email, data.Recipients, subject, buf.String())
 	if err != nil {
 		return apperrors.Wrap(err)

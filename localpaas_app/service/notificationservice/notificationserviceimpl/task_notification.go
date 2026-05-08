@@ -114,7 +114,7 @@ func (s *service) notifyForTaskResultViaEmail(
 		return apperrors.Wrap(err)
 	}
 
-	buf, cleanup := getEmailBuildBuf()
+	buf, cleanup := s.getEmailBuildBuf()
 	defer cleanup()
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
@@ -157,7 +157,7 @@ func (s *service) notifyForTaskResultViaSlack(
 		return apperrors.Wrap(err)
 	}
 
-	buf, cleanup := getSlackBuildBuf()
+	buf, cleanup := s.getSlackBuildBuf()
 	defer cleanup()
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *service) notifyForTaskResultViaDiscord(
 		return apperrors.Wrap(err)
 	}
 
-	buf, cleanup := getDiscordBuildBuf()
+	buf, cleanup := s.getDiscordBuildBuf()
 	defer cleanup()
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {

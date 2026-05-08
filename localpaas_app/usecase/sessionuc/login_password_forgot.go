@@ -46,8 +46,11 @@ func (uc *UC) LoginPasswordForgot(
 	}
 
 	err = uc.emailService.SendMailPasswordReset(ctx, uc.db, &emailservice.EmailDataPasswordReset{
-		Email:             email,
-		Recipients:        []string{user.Email},
+		BaseTemplateData: emailservice.BaseTemplateData{
+			Email:      email,
+			Recipients: []string{user.Email},
+			Subject:    "[LocalPaaS] Password reset",
+		},
 		ResetPasswordLink: resetLink,
 	})
 	if err != nil {

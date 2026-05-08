@@ -47,8 +47,11 @@ func (uc *UC) InviteUser(
 
 	if req.SendInviteEmail {
 		err = uc.emailService.SendMailUserInvite(ctx, uc.db, &emailservice.EmailDataUserInvite{
-			Email:          inviteData.SystemEmail,
-			Recipients:     []string{inviteData.User.Email},
+			BaseTemplateData: emailservice.BaseTemplateData{
+				Email:      inviteData.SystemEmail,
+				Recipients: []string{inviteData.User.Email},
+				Subject:    "You’ve been invited to join LocalPaaS",
+			},
 			InviterName:    gofn.Coalesce(auth.User.FullName, auth.User.Username),
 			UserSignupLink: inviteData.InviteLink,
 		})

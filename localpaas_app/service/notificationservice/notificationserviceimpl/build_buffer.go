@@ -11,12 +11,6 @@ const (
 )
 
 var (
-	emailBufPool = sync.Pool{
-		New: func() any {
-			return bytes.NewBuffer(make([]byte, 0, buffSize))
-		},
-	}
-
 	slackBufPool = sync.Pool{
 		New: func() any {
 			return bytes.NewBuffer(make([]byte, 0, buffSize))
@@ -30,17 +24,11 @@ var (
 	}
 )
 
-func getEmailBuildBuf() (buf *bytes.Buffer, cleanup func()) {
-	buf = emailBufPool.Get().(*bytes.Buffer) //nolint:forcetypeassert
-	buf.Reset()
-	return buf, func() {
-		if buf.Cap() <= buffSizeMax {
-			emailBufPool.Put(buf)
-		}
-	}
+func (s *service) getEmailBuildBuf() (buf *bytes.Buffer, cleanup func()) {
+	return s.emailService.GetBuildBuf()
 }
 
-func getSlackBuildBuf() (buf *bytes.Buffer, cleanup func()) {
+func (s *service) getSlackBuildBuf() (buf *bytes.Buffer, cleanup func()) {
 	buf = slackBufPool.Get().(*bytes.Buffer) //nolint:forcetypeassert
 	buf.Reset()
 	return buf, func() {
@@ -50,7 +38,7 @@ func getSlackBuildBuf() (buf *bytes.Buffer, cleanup func()) {
 	}
 }
 
-func getDiscordBuildBuf() (buf *bytes.Buffer, cleanup func()) {
+func (s *service) getDiscordBuildBuf() (buf *bytes.Buffer, cleanup func()) {
 	buf = discordBufPool.Get().(*bytes.Buffer) //nolint:forcetypeassert
 	buf.Reset()
 	return buf, func() {

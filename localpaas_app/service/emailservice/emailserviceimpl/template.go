@@ -7,42 +7,36 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
-)
-
-type TemplateType string
-
-const (
-	TemplateTypePasswordReset TemplateType = "password-reset"
-	TemplateTypeUserInvite    TemplateType = "user-invite"
+	"github.com/localpaas/localpaas/localpaas_app/service/emailservice"
 )
 
 var (
-	templateMap = map[TemplateType]*template.Template{}
+	templateMap = map[emailservice.TemplateName]*template.Template{}
 	mu          sync.Mutex
 )
 
 func (s *service) GetTemplate(
 	_ context.Context,
 	_ database.IDB,
-	typ TemplateType,
+	name emailservice.TemplateName,
 ) (tpl *template.Template, err error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if tpl, exists := templateMap[typ]; exists {
+	if tpl, exists := templateMap[name]; exists {
 		return tpl, nil
 	}
 
-	switch typ { //nolint
-	case TemplateTypePasswordReset:
+	switch name { //nolint
+	case emailservice.TemplateNamePasswordReset:
 		tpl, err = template.ParseFiles("config/email/templates/password_reset.html")
-	case TemplateTypeUserInvite:
+	case emailservice.TemplateNameUserInvite:
 		tpl, err = template.ParseFiles("config/email/templates/user_invite.html")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	templateMap[typ] = tpl
+	templateMap[name] = tpl
 
 	return tpl, nil
 }

@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -12,14 +12,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
 
-func (e *Executor) sslNotifyOfExpiration(
+func (s *service) sslNotifyForExpiration(
 	ctx context.Context,
 	db database.IDB,
-	item *sslRenewalTaskItem,
-	data *sslRenewalTaskData,
+	item *sslRenewalDataItem,
+	data *sslRenewalData,
 ) (err error) {
 	isSucceeded := false
-	notification, err := e.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
+	notification, err := s.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -27,11 +27,11 @@ func (e *Executor) sslNotifyOfExpiration(
 		return nil
 	}
 
-	e.sslBuildExpiringNotificationMsgData(item, data)
-	_, err = e.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
+	s.sslBuildExpiringNotificationMsgData(item, data)
+	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		ScopeProject:    data.Project,
-		ScopeApp:        data.App,
+		ScopeProject:    item.Setting.BelongToProject,
+		ScopeApp:        item.Setting.BelongToApp,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSSLExpiringNotification,
@@ -43,14 +43,16 @@ func (e *Executor) sslNotifyOfExpiration(
 	return nil
 }
 
-func (e *Executor) sslBuildExpiringNotificationMsgData(
-	item *sslRenewalTaskItem,
-	data *sslRenewalTaskData,
+func (s *service) sslBuildExpiringNotificationMsgData(
+	item *sslRenewalDataItem,
+	data *sslRenewalData,
 ) {
 	ssl := item.Setting.MustAsSSLCert()
+	project := item.Setting.BelongToProject
+	app := item.Setting.BelongToApp
 	msgData := &notificationservice.TemplateDataSSLExpiring{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: e.notificationService.BuildTitlePrefix(data.Project, data.App, nil) +
+			Title: s.notificationService.BuildTitlePrefix(project, app, nil) +
 				fmt.Sprintf(" Your SSL expiring in %v", item.ExpiringNotifMsgData.ExpireIn),
 		},
 		SSLName:   item.Setting.Name,
@@ -60,14 +62,13 @@ func (e *Executor) sslBuildExpiringNotificationMsgData(
 		ExpireAt:  ssl.ExpireAt,
 		ExpireIn:  timeutil.Duration(ssl.ExpireAt.Sub(timeutil.NowUTC()).Truncate(time.Hour)),
 	}
-	project := item.Setting.BelongToProject
-	app := item.Setting.BelongToApp
 	if project != nil {
 		msgData.ProjectName = project.Name
 	}
 	if app != nil {
 		msgData.AppName = app.Name
 	}
+
 	switch {
 	case app != nil:
 		msgData.DashboardLink = config.Current.DashboardAppCronTaskDetailsURL(app.ID, app.ProjectID,

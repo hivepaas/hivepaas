@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -15,9 +15,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/entityutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice"
 	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
 )
 
@@ -26,14 +28,15 @@ const (
 	sslHandlingConcurrentTasks = 5
 )
 
-type sslRenewalTaskData struct {
-	*taskData
-	TaskOutput *entity.TaskSSLRenewalOutput
-	LeClients  map[string]*letsencrypt.Client
-	Mu         *sync.Mutex
+type sslRenewalData struct {
+	*sslrenewalservice.SSLRenewalReq
+	RenewalSettings *entity.SSLRenewal
+	TaskOutput      *entity.TaskSSLRenewalOutput
+	LeClients       map[string]*letsencrypt.Client
+	Mu              *sync.Mutex
 }
 
-type sslRenewalTaskItem struct {
+type sslRenewalDataItem struct {
 	Setting              *entity.Setting
 	Renewal              bool
 	ExpiringNotifyOnly   bool
@@ -43,99 +46,49 @@ type sslRenewalTaskItem struct {
 	RenewalNotifMsgData  *notificationservice.TemplateDataSSLRenewal
 }
 
-//nolint:gocognit
-func (e *Executor) cronExecSSLRenew(
+func (s *service) SSLRenew(
 	ctx context.Context,
-	db database.IDB,
-	data *taskData,
-) error {
+	db database.Tx,
+	req *sslrenewalservice.SSLRenewalReq,
+) (resp *sslrenewalservice.SSLRenewalResp, err error) {
+	defer funcutil.EnsureNoPanic(&err)
+
+	resp = &sslrenewalservice.SSLRenewalResp{
+		SkipResultNotification: true,
+	}
+	data := &sslRenewalData{
+		SSLRenewalReq: req,
+		TaskOutput:    &entity.TaskSSLRenewalOutput{},
+		LeClients:     make(map[string]*letsencrypt.Client),
+		Mu:            &sync.Mutex{},
+	}
+
 	cronJob := data.CronJob.MustAsCronJob()
-	renewConfig := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
-	if renewConfig == nil {
-		return apperrors.NewNotFound("SSL renew settings")
+	setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
+	if setting == nil {
+		return nil, apperrors.NewNotFound("SSL renewal settings")
 	}
+	data.RenewalSettings = setting.MustAsSSLRenewal()
 
-	taskData := &sslRenewalTaskData{
-		taskData:   data,
-		TaskOutput: &entity.TaskSSLRenewalOutput{},
-		LeClients:  make(map[string]*letsencrypt.Client),
-		Mu:         &sync.Mutex{},
-	}
+	renewalArgs := gofn.Coalesce(gofn.Must(data.Task.ArgsAsSSLRenewal()), &entity.TaskSSLRenewalArgs{})
 	timeNow := timeutil.NowUTC()
-
-	taskArgs := gofn.Coalesce(gofn.Must(data.Task.ArgsAsSSLRenewal()), &entity.TaskSSLRenewalArgs{})
 	offset, limit := 0, sslHandlingBatchSize
 	for {
-		listOpts := []bunex.SelectQueryOption{
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeSSLCert),
-			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-			bunex.SelectWhereGroup(
-				bunex.SelectWhereGroup(
-					bunex.SelectWhere("(setting.data->'autoRenew')::BOOL = TRUE"),
-					bunex.SelectWhereGroup(
-						bunex.SelectWhere("setting.data->>'renewableFrom' IS NULL"),
-						bunex.SelectWhereOr("(setting.data->>'renewableFrom')::TIMESTAMPTZ < ?", timeNow),
-					),
-				),
-				bunex.SelectWhereOrGroup(
-					bunex.SelectWhere("(setting.data->'autoRenew')::BOOL != TRUE"),
-					bunex.SelectWhere("(setting.data->>'notifyFrom')::TIMESTAMPTZ < ?", timeNow),
-				),
-			),
-			bunex.SelectRelation("BelongToProject",
-				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			),
-			bunex.SelectRelation("BelongToApp",
-				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			),
-			bunex.SelectRelation("BelongToApp.Project",
-				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			),
-		}
-		if len(taskArgs.TargetSSLs) > 0 {
-			listOpts = append(listOpts,
-				bunex.SelectWhereIn("setting.id IN (?)", taskArgs.TargetSSLs.ToIDStringSlice()...))
-		} else {
-			listOpts = append(listOpts,
-				bunex.SelectOffset(offset), bunex.SelectLimit(limit))
-		}
-
-		sslSettings, _, err := e.settingRepo.List(ctx, db, nil, nil, listOpts...)
+		taskItems, err := s.loadSSLSettings(ctx, db, renewalArgs, offset, limit, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if len(sslSettings) == 0 {
-			break
+			return nil, apperrors.Wrap(err)
 		}
 		offset += limit
 
-		taskItems := make([]*sslRenewalTaskItem, 0, len(sslSettings))
-		for _, setting := range sslSettings {
-			if setting.BelongToApp != nil {
-				setting.BelongToProject = setting.BelongToApp.Project
-			}
-			project := setting.BelongToProject
-			app := setting.BelongToApp
-			if app != nil && app.Status != base.AppStatusActive {
-				continue
-			}
-			if project != nil && project.Status != base.ProjectStatusActive {
-				continue
-			}
-			taskItems = append(taskItems, &sslRenewalTaskItem{
-				Setting: setting,
-			})
-		}
-
 		_ = gofn.ExecTaskFuncEx(ctx, sslHandlingConcurrentTasks, false,
-			func(ctx context.Context, taskItem *sslRenewalTaskItem) error {
+			func(ctx context.Context, taskItem *sslRenewalDataItem) error {
 				ssl := taskItem.Setting.MustAsSSLCert()
 				switch {
-				case e.sslShouldNotifyOfExpiration(ssl, timeNow):
+				case s.sslShouldNotifyOfExpiration(ssl, timeNow):
 					taskItem.ExpiringNotifyOnly = true
-				case e.sslShouldRenew(ssl, timeNow):
+				case s.sslShouldRenew(ssl, timeNow):
 					taskItem.Renewal = true
-					taskItem.RenewalError = e.sslRenew(ctx, taskItem.Setting, taskData)
+					taskItem.RenewalError = s.sslRenew(ctx, taskItem.Setting, data)
 					if taskItem.RenewalError != nil {
 						return apperrors.Wrap(taskItem.RenewalError)
 					}
@@ -145,28 +98,96 @@ func (e *Executor) cronExecSSLRenew(
 			taskItems...)
 
 		// NOTE: Ignore the error of the current processing batch to continue with remaining SSLs
-		_ = e.sslSaveUpdatedSettings(ctx, taskItems, timeNow, taskData)
+		_ = s.sslSaveUpdatedSettings(ctx, taskItems, timeNow, data)
 
 		// Send notifications for the result
-		_ = e.sslNotifyOfResult(ctx, db, taskItems, taskData)
+		_ = s.sslNotifyOfResult(ctx, db, taskItems, data)
 
-		if len(taskArgs.TargetSSLs) > 0 {
+		if len(renewalArgs.TargetSSLs) > 0 {
 			break
 		}
 	}
 
 	// Assign back the result output
-	data.Task.MustSetOutput(taskData.TaskOutput)
+	data.Task.MustSetOutput(data.TaskOutput)
 
 	// Reload traefik config
-	if len(taskData.TaskOutput.RenewedSSLs) > 0 {
-		_ = e.traefikService.ReloadTraefikConfig(ctx, true)
+	if len(data.TaskOutput.RenewedSSLs) > 0 {
+		_ = s.traefikService.ReloadTraefikConfig(ctx, true)
 	}
 
-	return nil
+	return resp, nil
 }
 
-func (e *Executor) sslShouldRenew(
+func (s *service) loadSSLSettings(
+	ctx context.Context,
+	db database.IDB,
+	renewalArgs *entity.TaskSSLRenewalArgs,
+	offset, limit int,
+	timeNow time.Time,
+) (_ []*sslRenewalDataItem, err error) {
+	listOpts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeSSLCert),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhereGroup(
+			bunex.SelectWhereGroup(
+				bunex.SelectWhere("(setting.data->'autoRenew')::BOOL = TRUE"),
+				bunex.SelectWhereGroup(
+					bunex.SelectWhere("setting.data->>'renewableFrom' IS NULL"),
+					bunex.SelectWhereOr("(setting.data->>'renewableFrom')::TIMESTAMPTZ < ?", timeNow),
+				),
+			),
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("(setting.data->'autoRenew')::BOOL != TRUE"),
+				bunex.SelectWhere("(setting.data->>'notifyFrom')::TIMESTAMPTZ < ?", timeNow),
+			),
+		),
+		bunex.SelectRelation("BelongToProject",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("BelongToApp",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("BelongToApp.Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	}
+	if len(renewalArgs.TargetSSLs) > 0 {
+		listOpts = append(listOpts,
+			bunex.SelectWhereIn("setting.id IN (?)", renewalArgs.TargetSSLs.ToIDStringSlice()...))
+	} else {
+		listOpts = append(listOpts, bunex.SelectOffset(offset), bunex.SelectLimit(limit))
+	}
+
+	sslSettings, _, err := s.settingRepo.List(ctx, db, nil, nil, listOpts...)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	if len(sslSettings) == 0 {
+		return nil, nil
+	}
+
+	taskItems := make([]*sslRenewalDataItem, 0, len(sslSettings))
+	for _, setting := range sslSettings {
+		if setting.BelongToApp != nil {
+			setting.BelongToProject = setting.BelongToApp.Project
+		}
+		project := setting.BelongToProject
+		app := setting.BelongToApp
+		if app != nil && app.Status != base.AppStatusActive {
+			continue
+		}
+		if project != nil && project.Status != base.ProjectStatusActive {
+			continue
+		}
+		taskItems = append(taskItems, &sslRenewalDataItem{
+			Setting: setting,
+		})
+	}
+	return taskItems, nil
+}
+
+func (s *service) sslShouldRenew(
 	ssl *entity.SSLCert,
 	timeNow time.Time,
 ) bool {
@@ -175,10 +196,10 @@ func (e *Executor) sslShouldRenew(
 			ssl.RenewableFrom.IsZero())
 }
 
-func (e *Executor) sslRenew(
+func (s *service) sslRenew(
 	ctx context.Context,
 	setting *entity.Setting,
-	data *sslRenewalTaskData,
+	data *sslRenewalData,
 ) (err error) {
 	ssl := setting.MustAsSSLCert()
 
@@ -198,9 +219,9 @@ func (e *Executor) sslRenew(
 
 	switch ssl.CertType { //nolint:exhaustive
 	case base.SSLCertTypeLetsEncrypt:
-		err = e.sslRenewByLetsEncrypt(ctx, ssl, data)
+		err = s.sslRenewByLetsEncrypt(ctx, ssl, data)
 	case base.SSLCertTypeSelfSigned:
-		err = e.sslRenewSelfSignedCert(ctx, ssl, data)
+		err = s.sslRenewSelfSignedCert(ctx, ssl, data)
 	default:
 		return apperrors.NewUnsupported(fmt.Sprintf("SSL type '%v'", ssl.CertType))
 	}
@@ -212,7 +233,7 @@ func (e *Executor) sslRenew(
 	return nil
 }
 
-func (e *Executor) sslShouldNotifyOfExpiration(
+func (s *service) sslShouldNotifyOfExpiration(
 	ssl *entity.SSLCert,
 	timeNow time.Time,
 ) bool {
@@ -220,11 +241,11 @@ func (e *Executor) sslShouldNotifyOfExpiration(
 		timeNow.After(ssl.NotifyFrom) && timeNow.Before(ssl.ExpireAt)
 }
 
-func (e *Executor) sslSaveUpdatedSettings(
+func (s *service) sslSaveUpdatedSettings(
 	ctx context.Context,
-	taskItems []*sslRenewalTaskItem,
+	taskItems []*sslRenewalDataItem,
 	timeNow time.Time,
-	data *sslRenewalTaskData,
+	data *sslRenewalData,
 ) (err error) {
 	sslSettings := make([]*entity.Setting, 0, len(taskItems))
 	for _, taskItem := range taskItems {
@@ -238,9 +259,9 @@ func (e *Executor) sslSaveUpdatedSettings(
 	}
 	var persistingSettings []*entity.Setting
 	// Open a new transaction to save updated settings
-	err = transaction.Execute(ctx, e.db, func(db database.Tx) error {
+	err = transaction.Execute(ctx, s.db, func(db database.Tx) error {
 		// Reloads SSL settings to see if we should update them with the renewed cert
-		reloadedSettings, err := e.settingRepo.ListByIDs(ctx, db, nil, settingIDs, true,
+		reloadedSettings, err := s.settingRepo.ListByIDs(ctx, db, nil, settingIDs, true,
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
@@ -262,7 +283,7 @@ func (e *Executor) sslSaveUpdatedSettings(
 			continue
 		}
 
-		err = e.settingRepo.UpsertMulti(ctx, db, persistingSettings,
+		err = s.settingRepo.UpsertMulti(ctx, db, persistingSettings,
 			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -273,7 +294,7 @@ func (e *Executor) sslSaveUpdatedSettings(
 		return apperrors.Wrap(err)
 	}
 
-	err = e.sslService.WriteCertFiles(true, persistingSettings...)
+	err = s.sslService.WriteCertFiles(true, persistingSettings...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -286,16 +307,16 @@ func (e *Executor) sslSaveUpdatedSettings(
 }
 
 //nolint:unparam
-func (e *Executor) sslNotifyOfResult(
+func (s *service) sslNotifyOfResult(
 	ctx context.Context,
 	db database.IDB,
-	taskItems []*sslRenewalTaskItem,
-	data *sslRenewalTaskData,
+	taskItems []*sslRenewalDataItem,
+	data *sslRenewalData,
 ) (err error) {
 	_ = gofn.ExecTaskFuncEx(ctx, sslHandlingConcurrentTasks, false,
-		func(ctx context.Context, item *sslRenewalTaskItem) error {
+		func(ctx context.Context, item *sslRenewalDataItem) error {
 			if item.ExpiringNotifyOnly {
-				err := e.sslNotifyOfExpiration(ctx, db, item, data)
+				err := s.sslNotifyForExpiration(ctx, db, item, data)
 				if err != nil {
 					_ = data.LogStore.Add(ctx, applog.NewWarnFrame(fmt.Sprintf(
 						"Notifying of expiring SSL %v failed with error: %v",
@@ -305,7 +326,7 @@ func (e *Executor) sslNotifyOfResult(
 				return nil
 			}
 			if item.Renewal {
-				err := e.sslNotifyOfRenewal(ctx, db, item, data)
+				err := s.sslNotifyForRenewal(ctx, db, item, data)
 				if err != nil {
 					_ = data.LogStore.Add(ctx, applog.NewWarnFrame(fmt.Sprintf(
 						"Notifying of renewed SSL %v failed with error: %v",

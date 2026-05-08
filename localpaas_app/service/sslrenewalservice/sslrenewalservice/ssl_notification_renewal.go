@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -13,14 +13,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
 
-func (e *Executor) sslNotifyOfRenewal(
+func (s *service) sslNotifyForRenewal(
 	ctx context.Context,
 	db database.IDB,
-	item *sslRenewalTaskItem,
-	data *sslRenewalTaskData,
+	item *sslRenewalDataItem,
+	data *sslRenewalData,
 ) (err error) {
 	isSucceeded := item.RenewalError == nil
-	notification, err := e.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
+	notification, err := s.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -28,11 +28,11 @@ func (e *Executor) sslNotifyOfRenewal(
 		return nil
 	}
 
-	e.sslBuildRenewalNotificationMsgData(item, data)
-	_, err = e.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
+	s.sslBuildRenewalNotificationMsgData(item, data)
+	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		ScopeProject:    data.Project,
-		ScopeApp:        data.App,
+		ScopeProject:    item.Setting.BelongToProject,
+		ScopeApp:        item.Setting.BelongToApp,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSSLRenewalNotification,
@@ -44,16 +44,19 @@ func (e *Executor) sslNotifyOfRenewal(
 	return nil
 }
 
-func (e *Executor) sslBuildRenewalNotificationMsgData(
-	item *sslRenewalTaskItem,
-	data *sslRenewalTaskData,
+func (s *service) sslBuildRenewalNotificationMsgData(
+	item *sslRenewalDataItem,
+	data *sslRenewalData,
 ) {
 	ssl := item.Setting.MustAsSSLCert()
+	project := item.Setting.BelongToProject
+	app := item.Setting.BelongToApp
 	timeNow := timeutil.NowUTC()
 	isSucceeded := item.RenewalError == nil
+
 	msgData := &notificationservice.TemplateDataSSLRenewal{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: e.notificationService.BuildTitlePrefix(data.Project, data.App, nil) +
+			Title: s.notificationService.BuildTitlePrefix(project, app, nil) +
 				gofn.If(isSucceeded, " SSL renewal succeeded", " SSL renewal failed"),
 		},
 		Succeeded: isSucceeded,
@@ -63,17 +66,17 @@ func (e *Executor) sslBuildRenewalNotificationMsgData(
 		CreatedAt: item.Setting.CreatedAt,
 		ExpireAt:  ssl.ExpireAt,
 	}
-	project := item.Setting.BelongToProject
-	app := item.Setting.BelongToApp
 	if project != nil {
 		msgData.ProjectName = project.Name
 	}
 	if app != nil {
 		msgData.AppName = app.Name
 	}
+
 	if !ssl.RenewableFrom.IsZero() && ssl.RenewableFrom.After(timeNow) {
 		msgData.NextRenewalIn = timeutil.Duration(ssl.RenewableFrom.Sub(timeNow).Truncate(time.Hour))
 	}
+
 	switch {
 	case app != nil:
 		msgData.DashboardLink = config.Current.DashboardAppCronTaskDetailsURL(app.ID, app.ProjectID,

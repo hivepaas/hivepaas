@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -9,16 +9,16 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-func (e *Executor) sslRenewByLetsEncrypt(
+func (s *service) sslRenewByLetsEncrypt(
 	ctx context.Context,
 	ssl *entity.SSLCert,
-	data *sslRenewalTaskData,
+	data *sslRenewalData,
 ) (err error) {
 	if !ssl.AutoRenew {
 		return nil
 	}
 
-	leClient, err := e.sslGetLeClient(ssl, data)
+	leClient, err := s.sslGetLeClient(ssl, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

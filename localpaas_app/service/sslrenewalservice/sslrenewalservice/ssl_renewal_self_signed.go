@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-func (e *Executor) sslRenewSelfSignedCert(
+func (s *service) sslRenewSelfSignedCert(
 	_ context.Context,
 	ssl *entity.SSLCert,
-	_ *sslRenewalTaskData,
+	_ *sslRenewalData,
 ) (err error) {
 	if !ssl.AutoRenew {
 		return nil
@@ -23,7 +23,7 @@ func (e *Executor) sslRenewSelfSignedCert(
 	notBefore := timeutil.NowUTC()
 	notAfter := notBefore.Add(ssl.ValidPeriod.ToDuration())
 
-	certBytes, keyBytes, err := e.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: ssl.Domain}, ssl.KeyType,
+	certBytes, keyBytes, err := s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: ssl.Domain}, ssl.KeyType,
 		notBefore, notAfter, false)
 	if err != nil {
 		return apperrors.Wrap(err)

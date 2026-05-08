@@ -1,4 +1,4 @@
-package taskcronjobexec
+package sslrenewalserviceimpl
 
 import (
 	"context"
@@ -14,9 +14,9 @@ import (
 	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
 )
 
-func (e *Executor) sslGetLeClient(
+func (s *service) sslGetLeClient(
 	ssl *entity.SSLCert,
-	data *sslRenewalTaskData,
+	data *sslRenewalData,
 ) (*letsencrypt.Client, error) {
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
@@ -38,12 +38,12 @@ func (e *Executor) sslGetLeClient(
 	return client, nil
 }
 
-func (e *Executor) sslGetNotification(
+func (s *service) sslGetNotification(
 	ctx context.Context,
 	db database.IDB,
 	sslSetting *entity.Setting,
 	eventIsSuccess bool,
-	data *sslRenewalTaskData,
+	data *sslRenewalData,
 ) (_ *entity.Notification, err error) {
 	ssl := sslSetting.MustAsSSLCert()
 	if ssl.Notification == nil {
@@ -63,7 +63,7 @@ func (e *Executor) sslGetNotification(
 		scope = base.NewSettingScopeGlobal()
 	}
 
-	notification, err := e.notificationService.GetNotificationForEvent(ctx, db,
+	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		scope, ssl.Notification, eventIsSuccess, data.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

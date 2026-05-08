@@ -42,6 +42,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice/notificationserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice/projectserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice/settingserviceimpl"
+	sslrenewalserviceimpl "github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice/sslrenewalservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice/sslserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice/sysbackupserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice/syscleanupserviceimpl"
@@ -224,6 +225,7 @@ var Provides = []any{
 	appdeploymentserviceimpl.New,
 	sysbackupserviceimpl.New,
 	syscleanupserviceimpl.New,
+	sslrenewalserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

@@ -20,6 +20,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
@@ -57,6 +58,7 @@ type Executor struct {
 	traefikService      traefikservice.Service
 	sysBackupService    sysbackupservice.Service
 	sysCleanupService   syscleanupservice.Service
+	sslRenewalService   sslrenewalservice.Service
 	dockerManager       docker.Manager
 }
 
@@ -87,6 +89,7 @@ func NewExecutor(
 	traefikService traefikservice.Service,
 	sysBackupService sysbackupservice.Service,
 	sysCleanupService syscleanupservice.Service,
+	sslRenewalService sslrenewalservice.Service,
 	dockerManager docker.Manager,
 ) *Executor {
 	e := &Executor{
@@ -115,6 +118,7 @@ func NewExecutor(
 		traefikService:           traefikService,
 		sysBackupService:         sysBackupService,
 		sysCleanupService:        sysCleanupService,
+		sslRenewalService:        sslRenewalService,
 		dockerManager:            dockerManager,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeCronJobExec, e.execute)
@@ -123,10 +127,12 @@ func NewExecutor(
 
 type taskData struct {
 	*queue.TaskExecData
-	CronJob      *entity.Setting
-	Project      *entity.Project
-	App          *entity.App
-	NotifMsgData *notificationservice.TemplateDataCronTask
+	CronJob *entity.Setting
+	Project *entity.Project
+	App     *entity.App
+
+	SkipResultNotification bool
+	NotifMsgData           *notificationservice.TemplateDataCronTask
 }
 
 func (e *Executor) execute(
@@ -155,21 +161,39 @@ func (e *Executor) execute(
 	switch cronJob.CronType {
 	case base.CronJobTypeContainerCommand:
 		err = e.cronExecContainerCmd(ctx, db, data)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
 	case base.CronJobTypeSystemCleanup:
-		_, err = e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
+		resp, err := e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
 			TaskExecData: data.TaskExecData,
 			CronJob:      data.CronJob,
 		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.SkipResultNotification = resp.SkipResultNotification
+
 	case base.CronJobTypeSystemBackup:
-		_, err = e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
+		resp, err := e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
 			TaskExecData: data.TaskExecData,
 			CronJob:      data.CronJob,
 		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.SkipResultNotification = resp.SkipResultNotification
+
 	case base.CronJobTypeSSLRenewal:
-		err = e.cronExecSSLRenew(ctx, db, data)
-	}
-	if err != nil {
-		return apperrors.Wrap(err)
+		resp, err := e.sslRenewalService.SSLRenew(ctx, db, &sslrenewalservice.SSLRenewalReq{
+			TaskExecData: data.TaskExecData,
+			CronJob:      data.CronJob,
+		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.SkipResultNotification = resp.SkipResultNotification
 	}
 
 	return nil
@@ -252,7 +276,7 @@ func (e *Executor) onPostTransaction(
 		_ = e.saveLogs(ctx, db, data, false)
 	}()
 
-	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
+	if !data.SkipResultNotification && (data.Task.IsDone() || data.Task.IsFailedCompletely()) {
 		err := e.sendNotification(ctx, db, data)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Failed to send result notification"+

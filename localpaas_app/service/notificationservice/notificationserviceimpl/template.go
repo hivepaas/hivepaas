@@ -9,6 +9,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
 
 const (
@@ -17,46 +18,27 @@ const (
 	discordTemplateDir = "config/discord/templates/"
 )
 
-type TemplateType string
-
-const (
-	TemplateTypeEmail   TemplateType = "email"
-	TemplateTypeSlack   TemplateType = "slack"
-	TemplateTypeDiscord TemplateType = "discord"
-)
-
-type TemplateName string
-
-const (
-	TemplateAppDeploymentNotification TemplateName = "app-deployment-notification"
-	TemplateCronTaskNotification      TemplateName = "cron-job-notification"
-	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
-	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
-	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
-	TemplateSystemUpdateNotification  TemplateName = "system-update-notification"
-)
-
 type Template interface {
 	Execute(wr io.Writer, data any) error
 }
 
 var (
-	templateMap = map[TemplateType]map[TemplateName]Template{}
+	templateMap = map[notificationservice.TemplateType]map[notificationservice.TemplateName]Template{}
 	mu          sync.Mutex
 )
 
 func (s *service) GetTemplate(
 	ctx context.Context,
 	db database.IDB,
-	typ TemplateType,
-	name TemplateName,
+	typ notificationservice.TemplateType,
+	name notificationservice.TemplateName,
 ) (tpl Template, err error) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	mapTplByName, exists := templateMap[typ]
 	if !exists {
-		mapTplByName = make(map[TemplateName]Template, 5) //nolint:mnd
+		mapTplByName = make(map[notificationservice.TemplateName]Template, 5) //nolint:mnd
 		templateMap[typ] = mapTplByName
 	}
 
@@ -66,11 +48,11 @@ func (s *service) GetTemplate(
 	}
 
 	switch typ {
-	case TemplateTypeEmail:
+	case notificationservice.TemplateTypeEmail:
 		tpl, err = s.loadEmailTemplate(ctx, db, name)
-	case TemplateTypeSlack:
+	case notificationservice.TemplateTypeSlack:
 		tpl, err = s.loadSlackTemplate(ctx, db, name)
-	case TemplateTypeDiscord:
+	case notificationservice.TemplateTypeDiscord:
 		tpl, err = s.loadDiscordTemplate(ctx, db, name)
 	}
 	if err != nil {
@@ -84,20 +66,20 @@ func (s *service) GetTemplate(
 func (s *service) loadEmailTemplate(
 	_ context.Context,
 	_ database.IDB,
-	name TemplateName,
+	name notificationservice.TemplateName,
 ) (tpl Template, err error) {
 	switch name {
-	case TemplateAppDeploymentNotification:
+	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "app_deployment_notification.html")
-	case TemplateCronTaskNotification:
+	case notificationservice.TemplateCronTaskNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "cron_task_notification.html")
-	case TemplateHealthcheckNotification:
+	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "healthcheck_notification.html")
-	case TemplateSSLExpiringNotification:
+	case notificationservice.TemplateSSLExpiringNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_expiring_notification.html")
-	case TemplateSSLRenewalNotification:
+	case notificationservice.TemplateSSLRenewalNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "ssl_renewal_notification.html")
-	case TemplateSystemUpdateNotification:
+	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "system_update_notification.html")
 	}
 	if err != nil {
@@ -110,20 +92,20 @@ func (s *service) loadEmailTemplate(
 func (s *service) loadSlackTemplate(
 	_ context.Context,
 	_ database.IDB,
-	name TemplateName,
+	name notificationservice.TemplateName,
 ) (tpl Template, err error) {
 	switch name {
-	case TemplateAppDeploymentNotification:
+	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "app_deployment_notification.tpl")
-	case TemplateCronTaskNotification:
+	case notificationservice.TemplateCronTaskNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "cron_task_notification.tpl")
-	case TemplateHealthcheckNotification:
+	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "healthcheck_notification.tpl")
-	case TemplateSSLExpiringNotification:
+	case notificationservice.TemplateSSLExpiringNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_expiring_notification.tpl")
-	case TemplateSSLRenewalNotification:
+	case notificationservice.TemplateSSLRenewalNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "ssl_renewal_notification.tpl")
-	case TemplateSystemUpdateNotification:
+	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
@@ -136,20 +118,20 @@ func (s *service) loadSlackTemplate(
 func (s *service) loadDiscordTemplate(
 	_ context.Context,
 	_ database.IDB,
-	name TemplateName,
+	name notificationservice.TemplateName,
 ) (tpl Template, err error) {
 	switch name {
-	case TemplateAppDeploymentNotification:
+	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "app_deployment_notification.tpl")
-	case TemplateCronTaskNotification:
+	case notificationservice.TemplateCronTaskNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "cron_task_notification.tpl")
-	case TemplateHealthcheckNotification:
+	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "healthcheck_notification.tpl")
-	case TemplateSSLExpiringNotification:
+	case notificationservice.TemplateSSLExpiringNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_expiring_notification.tpl")
-	case TemplateSSLRenewalNotification:
+	case notificationservice.TemplateSSLRenewalNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "ssl_renewal_notification.tpl")
-	case TemplateSystemUpdateNotification:
+	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {

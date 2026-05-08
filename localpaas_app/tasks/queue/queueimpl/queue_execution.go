@@ -117,8 +117,8 @@ func (q *taskQueue) executeTask(
 				task.Status = gofn.If(taskData.Canceled, base.TaskStatusCanceled, base.TaskStatusDone)
 			}
 			// Post execution event
-			if taskData.OnPostExec != nil {
-				taskData.OnPostExec()
+			if taskData.OnEndTransaction != nil {
+				taskData.OnEndTransaction()
 			}
 			// Delete data in cache
 			_ = q.taskInfoRepo.Del(ctx, task.ID)

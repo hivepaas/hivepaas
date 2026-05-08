@@ -36,7 +36,7 @@ func (s *service) LoadReferenceObjectsByIDs(
 	errorIfUnavail bool,
 	refIDs *entity.RefObjectIDs,
 ) (refObjects *entity.RefObjects, err error) {
-	refObjects = &entity.RefObjects{}
+	refObjects = entity.NewRefObjects()
 
 	if refIDs == nil || !refIDs.HasData() {
 		return refObjects, nil

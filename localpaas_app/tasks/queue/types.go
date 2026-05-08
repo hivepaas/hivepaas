@@ -22,7 +22,7 @@ type TaskExecData struct {
 
 	// Callback functions
 	OnCommand         func(base.TaskCommand, ...any)
-	OnPostExec        func()
+	OnEndTransaction  func()
 	OnPostTransaction func()
 }
 
@@ -32,19 +32,6 @@ func (t *TaskExecData) IsCanceled() bool {
 
 func (t *TaskExecData) IsDone() bool {
 	return t.Done
-}
-
-func (t *TaskExecData) SetOnCommand(fn func(base.TaskCommand, ...any)) {
-	// NOTE: do we need to use mutex?
-	t.OnCommand = fn
-}
-
-func (t *TaskExecData) SetOnPostExec(fn func()) {
-	t.OnPostExec = fn
-}
-
-func (t *TaskExecData) SetOnPostTransaction(fn func()) {
-	t.OnPostTransaction = fn
 }
 
 func (t *TaskExecData) AddRefObjects(refObjects *entity.RefObjects) {

@@ -29,6 +29,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/permission/permissionimpl"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
+	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice/appserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice/clusterserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice/cronjobserviceimpl"
@@ -218,6 +219,7 @@ var Provides = []any{
 	fileserviceimpl.New,
 	sslserviceimpl.New,
 	appserviceimpl.New,
+	appdeploymentserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

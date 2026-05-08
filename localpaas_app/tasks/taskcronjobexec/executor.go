@@ -120,7 +120,7 @@ type taskData struct {
 	Project        *entity.Project
 	App            *entity.App
 	LogStore       *applog.Store
-	NotifMsgData   *notificationservice.BaseMsgDataCronTaskNotification
+	NotifMsgData   *notificationservice.TemplateDataCronTask
 }
 
 func (e *Executor) execute(
@@ -133,7 +133,7 @@ func (e *Executor) execute(
 		CronJobSetting: task.Task.TargetJob,
 		CronJob:        task.Task.TargetJob.MustAsCronJob(),
 	}
-	data.SetOnPostTransaction(func() { e.onPostTransaction(data) }) //nolint
+	data.OnPostTransaction = func() { e.onPostTransaction(data) } //nolint:contextcheck
 
 	err = e.loadCronJobData(ctx, db, data)
 	if err != nil {

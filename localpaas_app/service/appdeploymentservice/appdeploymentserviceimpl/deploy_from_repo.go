@@ -1,4 +1,4 @@
-package taskappdeploy
+package appdeploymentserviceimpl
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -34,34 +35,36 @@ const (
 )
 
 type repoDeployTaskData struct {
-	*taskData
+	*appdeploymentservice.DeploymentData
 	CredSetting   *entity.Setting
 	CheckoutPath  string
 	RepoURLInfo   *vcsurl.VCS
 	RegAuthHeader string
 }
 
-func (e *Executor) deployFromRepo(
+func (s *service) deployFromRepo(
 	ctx context.Context,
 	db database.Tx,
-	taskData *taskData,
+	taskData *appdeploymentservice.DeploymentData,
 ) error {
-	data := &repoDeployTaskData{taskData: taskData}
-	data.SetOnCommand(func(cmd base.TaskCommand, args ...any) { e.onRepoDeployCommand(ctx, data, cmd, args...) })
+	data := &repoDeployTaskData{DeploymentData: taskData}
+	data.OnCommand = func(cmd base.TaskCommand, args ...any) {
+		s.onRepoDeployCommand(ctx, data, cmd, args...)
+	}
 
 	// 0. Prepare
-	err := e.repoDeployStepPrepare(ctx, data)
+	err := s.repoDeployStepPrepare(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	defer e.repoDeployStepCleanup(ctx, data) //nolint:errcheck
+	defer s.repoDeployStepCleanup(ctx, data) //nolint:errcheck
 
 	if data.IsCanceled() {
 		return nil
 	}
 
 	// 1. Repo checkout
-	err = e.repoDeployStepSourceCheckout(ctx, data)
+	err = s.repoDeployStepSourceCheckout(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -71,7 +74,7 @@ func (e *Executor) deployFromRepo(
 	}
 
 	// 2. Build image
-	err = e.repoDeployStepImageBuild(ctx, db, data)
+	err = s.repoDeployStepImageBuild(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -81,7 +84,7 @@ func (e *Executor) deployFromRepo(
 	}
 
 	// 3. Push image to a registry if configured
-	err = e.repoDeployStepImagePush(ctx, data)
+	err = s.repoDeployStepImagePush(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -91,19 +94,19 @@ func (e *Executor) deployFromRepo(
 	}
 
 	// 4. Pre-deployment command execution
-	err = e.deployStepExecCmd(ctx, data.taskData, true)
+	err = s.deployStepExecCmd(ctx, data.DeploymentData, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// 5. Apply image to service
-	err = e.repoDeployStepServiceApply(ctx, data)
+	err = s.repoDeployStepServiceApply(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// 6. Post-deployment command execution
-	err = e.deployStepExecCmd(ctx, data.taskData, false)
+	err = s.deployStepExecCmd(ctx, data.DeploymentData, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -111,7 +114,7 @@ func (e *Executor) deployFromRepo(
 	return nil
 }
 
-func (e *Executor) repoDeployStepSourceCheckout(
+func (s *service) repoDeployStepSourceCheckout(
 	ctx context.Context,
 	data *repoDeployTaskData,
 ) (err error) {
@@ -125,10 +128,10 @@ func (e *Executor) repoDeployStepSourceCheckout(
 			WithExtraDetail("Repo type %s is unsupported", repoSource.RepoType)
 	}
 
-	e.addStepStartLog(ctx, data.taskData, "Start cloning Git repository...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Start cloning Git repository...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
-	authMethod, err := e.calcGitAuthMethod(ctx, data)
+	authMethod, err := s.calcGitAuthMethod(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -168,7 +171,7 @@ func (e *Executor) repoDeployStepSourceCheckout(
 }
 
 //nolint:gocognit
-func (e *Executor) repoDeployStepImageBuild(
+func (s *service) repoDeployStepImageBuild(
 	ctx context.Context,
 	db database.Tx,
 	data *repoDeployTaskData,
@@ -177,29 +180,29 @@ func (e *Executor) repoDeployStepImageBuild(
 	deployment := data.Deployment
 	repoSource := deployment.Settings.RepoSource
 
-	e.addStepStartLog(ctx, data.taskData, "Start building image...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Start building image...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
 	// TODO: check dockerfile existence
 	dockerfile := gofn.Coalesce(repoSource.DockerfilePath, "Dockerfile")
 
-	buildSetting, err := e.getBuildSetting(ctx, db, data)
+	buildSetting, err := s.getBuildSetting(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	imageTags, err := e.calcBuildImageTags(repoSource.ImageTags, data)
+	imageTags, err := s.calcBuildImageTags(repoSource.ImageTags, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.DeploymentOutput.ImageTags = imageTags
 
-	envVars, err := e.calcBuildEnvVars(ctx, db, data)
+	envVars, err := s.calcBuildEnvVars(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	authConfigs, err := e.calcBuildRegistryAuths(ctx, db, data)
+	authConfigs, err := s.calcBuildRegistryAuths(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -212,7 +215,7 @@ func (e *Executor) repoDeployStepImageBuild(
 	defer tar.Close()
 
 	// Build the image
-	resp, err := e.dockerManager.ImageBuild(ctx, tar, func(opts *client.ImageBuildOptions) {
+	resp, err := s.dockerManager.ImageBuild(ctx, tar, func(opts *client.ImageBuildOptions) {
 		opts.Version = build.BuilderV1
 		opts.BuildID = data.Task.ID
 		opts.Dockerfile = dockerfile
@@ -264,7 +267,7 @@ func (e *Executor) repoDeployStepImageBuild(
 	return nil
 }
 
-func (e *Executor) repoDeployStepImagePush(
+func (s *service) repoDeployStepImagePush(
 	ctx context.Context,
 	data *repoDeployTaskData,
 ) (err error) {
@@ -275,8 +278,8 @@ func (e *Executor) repoDeployStepImagePush(
 	}
 	data.Step = stepImagePush
 
-	e.addStepStartLog(ctx, data.taskData, "Start pushing image to registry...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Start pushing image to registry...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
 	regAuth := data.RefObjects.RefSettings[repoSource.PushToRegistry.ID]
 	data.RegAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
@@ -288,7 +291,7 @@ func (e *Executor) repoDeployStepImagePush(
 		if !strings.Contains(tag, "/") { // only push tag containing `/` in it
 			continue
 		}
-		logsReader, err := e.dockerManager.ImagePush(ctx, tag, func(options *client.ImagePushOptions) {
+		logsReader, err := s.dockerManager.ImagePush(ctx, tag, func(options *client.ImagePushOptions) {
 			options.RegistryAuth = data.RegAuthHeader
 		})
 		if err != nil {
@@ -316,17 +319,17 @@ func (e *Executor) repoDeployStepImagePush(
 	return nil
 }
 
-func (e *Executor) repoDeployStepServiceApply(
+func (s *service) repoDeployStepServiceApply(
 	ctx context.Context,
 	data *repoDeployTaskData,
 ) (err error) {
 	data.Step = stepServiceApply
 	deployment := data.Deployment
 
-	e.addStepStartLog(ctx, data.taskData, "Applying changes to service...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Applying changes to service...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
-	inspect, err := e.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
+	inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -337,7 +340,7 @@ func (e *Executor) repoDeployStepServiceApply(
 	contSpec.Dir = deployment.Settings.WorkingDir
 	docker.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
+	_, err = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 		func(options *client.ServiceUpdateOptions) {
 			options.EncodedRegistryAuth = data.RegAuthHeader
 		})
@@ -348,7 +351,7 @@ func (e *Executor) repoDeployStepServiceApply(
 	return nil
 }
 
-func (e *Executor) repoDeployStepPrepare(
+func (s *service) repoDeployStepPrepare(
 	_ context.Context,
 	data *repoDeployTaskData,
 ) (err error) {
@@ -377,7 +380,7 @@ func (e *Executor) repoDeployStepPrepare(
 }
 
 //nolint:unparam
-func (e *Executor) repoDeployStepCleanup(
+func (s *service) repoDeployStepCleanup(
 	_ context.Context,
 	data *repoDeployTaskData,
 ) (err error) {
@@ -388,14 +391,14 @@ func (e *Executor) repoDeployStepCleanup(
 	return nil
 }
 
-func (e *Executor) onRepoDeployCommand(
+func (s *service) onRepoDeployCommand(
 	ctx context.Context,
 	taskData *repoDeployTaskData,
 	cmd base.TaskCommand,
 	_ ...any,
 ) {
 	if cmd == base.TaskCommandCancel && taskData.Step == stepImageBuild {
-		_, err := e.dockerManager.ImageBuildCancel(ctx, taskData.Task.ID)
+		_, err := s.dockerManager.ImageBuildCancel(ctx, taskData.Task.ID)
 		if err != nil {
 			_ = taskData.LogStore.Add(ctx, applog.NewErrFrame("failed to cancel image build: "+
 				err.Error(), applog.TsNow))

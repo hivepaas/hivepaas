@@ -87,7 +87,7 @@ type taskData struct {
 	CurrentWorkerReplicas *uint64
 
 	LogStore     *applog.Store
-	NotifMsgData *notificationservice.BaseMsgDataSystemUpdateNotification
+	NotifMsgData *notificationservice.TemplateDataSystemUpdate
 }
 
 func (e *Executor) Execute(

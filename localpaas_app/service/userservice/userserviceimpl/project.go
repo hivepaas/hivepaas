@@ -11,7 +11,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 )
 
-func (s *service) LoadProjectUsers(
+func (s *service) LoadNotificationUsers(
 	ctx context.Context,
 	db database.IDB,
 	project *entity.Project,

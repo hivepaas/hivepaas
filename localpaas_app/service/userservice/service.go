@@ -40,6 +40,6 @@ type Service interface {
 	ParsePasswordResetToken(token string) (*appentity.PasswordResetTokenClaims, error)
 
 	// Project users
-	LoadProjectUsers(ctx context.Context, db database.IDB, project *entity.Project,
+	LoadNotificationUsers(ctx context.Context, db database.IDB, project *entity.Project,
 		loadMembers bool, loadOwners bool, loadAdmins bool) (map[string]*entity.User, error)
 }

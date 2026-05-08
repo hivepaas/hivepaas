@@ -1,4 +1,4 @@
-package taskappdeploy
+package appdeploymentserviceimpl
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -18,19 +19,19 @@ const (
 )
 
 type imageDeployTaskData struct {
-	*taskData
+	*appdeploymentservice.DeploymentData
 	RegAuthHeader string
 	Step          string
 }
 
-func (e *Executor) deployFromImage(
+func (s *service) deployFromImage(
 	ctx context.Context,
-	taskData *taskData,
+	taskData *appdeploymentservice.DeploymentData,
 ) error {
-	data := &imageDeployTaskData{taskData: taskData}
+	data := &imageDeployTaskData{DeploymentData: taskData}
 
 	// 1. Pull image from the registry
-	err := e.imageDeployStepImagePull(ctx, data)
+	err := s.imageDeployStepImagePull(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -40,19 +41,19 @@ func (e *Executor) deployFromImage(
 	}
 
 	// 2. Pre-deployment command execution
-	err = e.deployStepExecCmd(ctx, data.taskData, true)
+	err = s.deployStepExecCmd(ctx, data.DeploymentData, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// 3. Apply image to service
-	err = e.imageDeployStepServiceApply(ctx, data)
+	err = s.imageDeployStepServiceApply(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// 4. Post-deployment command execution
-	err = e.deployStepExecCmd(ctx, data.taskData, false)
+	err = s.deployStepExecCmd(ctx, data.DeploymentData, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -60,15 +61,15 @@ func (e *Executor) deployFromImage(
 	return nil
 }
 
-func (e *Executor) imageDeployStepImagePull(
+func (s *service) imageDeployStepImagePull(
 	ctx context.Context,
 	data *imageDeployTaskData,
 ) (err error) {
 	data.Step = stepImagePull
 	imageSource := data.Deployment.Settings.ImageSource
 
-	e.addStepStartLog(ctx, data.taskData, "Start pulling image...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Start pulling image...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
 	if imageSource.RegistryAuth.ID != "" {
 		regAuth := data.RefObjects.RefSettings[imageSource.RegistryAuth.ID]
@@ -78,7 +79,7 @@ func (e *Executor) imageDeployStepImagePull(
 		}
 	}
 
-	logsReader, err := e.dockerManager.ImagePull(ctx, imageSource.Image, func(options *client.ImagePullOptions) {
+	logsReader, err := s.dockerManager.ImagePull(ctx, imageSource.Image, func(options *client.ImagePullOptions) {
 		options.RegistryAuth = data.RegAuthHeader
 	})
 	if err != nil {
@@ -105,7 +106,7 @@ func (e *Executor) imageDeployStepImagePull(
 	return nil
 }
 
-func (e *Executor) imageDeployStepServiceApply(
+func (s *service) imageDeployStepServiceApply(
 	ctx context.Context,
 	data *imageDeployTaskData,
 ) (err error) {
@@ -113,10 +114,10 @@ func (e *Executor) imageDeployStepServiceApply(
 	deployment := data.Deployment
 	imageSource := deployment.Settings.ImageSource
 
-	e.addStepStartLog(ctx, data.taskData, "Applying changes to service...")
-	defer e.addStepEndLog(ctx, data.taskData, timeutil.NowUTC(), err)
+	s.addStepStartLog(ctx, data.DeploymentData, "Applying changes to service...")
+	defer s.addStepEndLog(ctx, data.DeploymentData, timeutil.NowUTC(), err)
 
-	inspect, err := e.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
+	inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -128,7 +129,7 @@ func (e *Executor) imageDeployStepServiceApply(
 	contSpec.Dir = deployment.Settings.WorkingDir
 	docker.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
+	_, err = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 		func(options *client.ServiceUpdateOptions) {
 			options.EncodedRegistryAuth = data.RegAuthHeader
 		})

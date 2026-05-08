@@ -10,7 +10,7 @@ import (
 type WorkerInitializer struct {
 }
 
-// NOTE: these injections are required to make the task executor be available
+// NOTE: these injections are required to make the task executors be available
 func NewWorkerInitializer(
 	_ *taskdummy.Executor,
 	_ *taskappdeploy.Executor,

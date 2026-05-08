@@ -1,4 +1,4 @@
-package taskappdeploy
+package appdeploymentserviceimpl
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"github.com/localpaas/localpaas/services/git/github"
 )
 
-func (e *Executor) calcGitAuthMethod(
+func (s *service) calcGitAuthMethod(
 	ctx context.Context,
 	data *repoDeployTaskData,
 ) (auth transport.AuthMethod, err error) {
@@ -71,7 +71,7 @@ func (e *Executor) calcGitAuthMethod(
 	return auth, nil
 }
 
-func (e *Executor) calcBuildImageTags(
+func (s *service) calcBuildImageTags(
 	imageTags []string,
 	data *repoDeployTaskData,
 ) ([]string, error) {
@@ -105,12 +105,12 @@ func (e *Executor) calcBuildImageTags(
 	return imageTags, nil
 }
 
-func (e *Executor) calcBuildEnvVars(
+func (s *service) calcBuildEnvVars(
 	ctx context.Context,
 	db database.Tx,
 	data *repoDeployTaskData,
 ) (map[string]*string, error) {
-	envVars, err := e.envVarService.BuildAppEnvVars(ctx, db, data.App, true)
+	envVars, err := s.envVarService.BuildAppEnvVars(ctx, db, data.App, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -123,14 +123,14 @@ func (e *Executor) calcBuildEnvVars(
 	return result, nil
 }
 
-func (e *Executor) calcBuildRegistryAuths(
+func (s *service) calcBuildRegistryAuths(
 	ctx context.Context,
 	db database.Tx,
 	data *repoDeployTaskData,
 ) (map[string]registry.AuthConfig, error) {
 	app := data.App
 
-	settings, _, err := e.settingRepo.List(ctx, db, base.NewSettingScopeProject(app.ProjectID), nil,
+	settings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeProject(app.ProjectID), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
@@ -158,13 +158,13 @@ func (e *Executor) calcBuildRegistryAuths(
 	return result, nil
 }
 
-func (e *Executor) getBuildSetting(
+func (s *service) getBuildSetting(
 	ctx context.Context,
 	db database.Tx,
 	data *repoDeployTaskData,
 ) (*entity.ImageBuildSettings, error) {
 	app := data.App
-	setting, err := e.settingRepo.GetSingle(ctx, db, base.NewSettingScopeProject(app.ProjectID),
+	setting, err := s.settingRepo.GetSingle(ctx, db, base.NewSettingScopeProject(app.ProjectID),
 		base.SettingTypeImageBuildSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return nil, apperrors.Wrap(err)

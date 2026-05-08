@@ -2,6 +2,14 @@ package entity
 
 import "github.com/tiendc/gofn"
 
+func NewRefObjects() *RefObjects {
+	return &RefObjects{
+		RefSettings: make(map[string]*Setting),
+		RefApps:     make(map[string]*App),
+		RefUsers:    make(map[string]*User),
+	}
+}
+
 type RefObjects struct {
 	RefSettings map[string]*Setting
 	RefApps     map[string]*App

@@ -1,4 +1,4 @@
-package taskappdeploy
+package appdeploymentserviceimpl
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -26,9 +27,9 @@ const (
 	postDeploymentContainerFindRetryDelay = time.Second * 10
 )
 
-func (e *Executor) deployStepExecCmd(
+func (s *service) deployStepExecCmd(
 	ctx context.Context,
-	data *taskData,
+	data *appdeploymentservice.DeploymentData,
 	preDeployment bool,
 ) (err error) {
 	deployment := data.Deployment
@@ -43,9 +44,9 @@ func (e *Executor) deployStepExecCmd(
 		data.Step = stepPostDeployCmd
 	}
 
-	e.addStepStartLog(ctx, data, fmt.Sprintf("Start executing %s-deployment command...",
+	s.addStepStartLog(ctx, data, fmt.Sprintf("Start executing %s-deployment command...",
 		gofn.If(preDeployment, "pre", "post")))
-	defer e.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
+	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
 
 	var maxRetry int
 	var retryDelay time.Duration
@@ -57,7 +58,7 @@ func (e *Executor) deployStepExecCmd(
 		retryDelay = postDeploymentContainerFindRetryDelay
 	}
 
-	contSum, _, err := e.dockerManager.ServiceContainerGetActive(ctx, data.App.ServiceID,
+	contSum, _, err := s.dockerManager.ServiceContainerGetActive(ctx, data.App.ServiceID,
 		maxRetry, retryDelay)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -75,7 +76,7 @@ func (e *Executor) deployStepExecCmd(
 		cmdStr = deployment.Settings.PostDeploymentCommand
 	}
 
-	execInfo, logs, err := e.dockerManager.ContainerExecWait(ctx, contSum.ID, func(opts *client.ExecCreateOptions) {
+	execInfo, logs, err := s.dockerManager.ContainerExecWait(ctx, contSum.ID, func(opts *client.ExecCreateOptions) {
 		opts.AttachStdout = true
 		opts.AttachStderr = true
 		opts.Cmd = gofn.Must(shellutil.CmdSplit(cmdStr))

@@ -2,7 +2,6 @@ package taskcronjobexec
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/tiendc/gofn"
@@ -12,7 +11,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
 )
 
@@ -46,7 +44,7 @@ func (e *Executor) sslGetNotification(
 	sslSetting *entity.Setting,
 	eventIsSuccess bool,
 	data *sslRenewalTaskData,
-) (notifSetting *entity.Setting, err error) {
+) (_ *entity.Notification, err error) {
 	ssl := sslSetting.MustAsSSLCert()
 	if ssl.Notification == nil {
 		return nil, nil
@@ -54,17 +52,6 @@ func (e *Executor) sslGetNotification(
 
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
-
-	notifID := gofn.If(eventIsSuccess, ssl.Notification.Success.ID, ssl.Notification.Failure.ID)
-	if notifID != "" {
-		notifSetting = data.RefObjects.RefSettings[notifID]
-		if notifSetting != nil {
-			return notifSetting, nil
-		}
-	} else if (eventIsSuccess && !ssl.Notification.SuccessUseDefault) ||
-		(!eventIsSuccess && !ssl.Notification.FailureUseDefault) {
-		return nil, nil
-	}
 
 	var scope *base.SettingScope
 	switch {
@@ -76,28 +63,14 @@ func (e *Executor) sslGetNotification(
 		scope = base.NewSettingScopeGlobal()
 	}
 
-	if notifID != "" {
-		notifSetting, err = e.settingRepo.GetByID(ctx, db, scope, base.SettingTypeNotification, notifID, true)
-	} else {
-		notifSetting, err = e.settingRepo.GetSingle(ctx, db, scope, base.SettingTypeNotification, true,
-			bunex.SelectWhere("setting.is_default = TRUE"),
-		)
-	}
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
-	}
-	if notifSetting == nil {
-		return nil, nil
-	}
-
-	// Load ref objects of the setting (otherwise we will have error of missing ref objects)
-	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope, true,
-		false, notifSetting)
+	notification, err := e.notificationService.GetNotificationForEvent(ctx, db,
+		scope, ssl.Notification, eventIsSuccess, data.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	data.AddRefObjects(refObjects)
-	data.RefObjects.RefSettings[notifSetting.ID] = notifSetting
+	if notification == nil {
+		return nil, nil
+	}
 
-	return notifSetting, nil
+	return notification, nil
 }

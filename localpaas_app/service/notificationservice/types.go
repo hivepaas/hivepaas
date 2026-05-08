@@ -8,11 +8,67 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
+type TemplateType string
+
+const (
+	TemplateTypeEmail   TemplateType = "email"
+	TemplateTypeSlack   TemplateType = "slack"
+	TemplateTypeDiscord TemplateType = "discord"
+)
+
+type TemplateName string
+
+const (
+	TemplateAppDeploymentNotification TemplateName = "app-deployment-notification"
+	TemplateCronTaskNotification      TemplateName = "cron-job-notification"
+	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
+	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
+	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
+	TemplateSystemUpdateNotification  TemplateName = "system-update-notification"
+)
+
+type TemplateData interface {
+	GetTitle() string
+}
+
+type BaseTemplateData struct {
+	Title string
+}
+
+func (d *BaseTemplateData) GetTitle() string {
+	return d.Title
+}
+
+type TaskResultNotificationReq struct {
+	ActionSucceeded bool
+	ScopeProject    *entity.Project
+	ScopeApp        *entity.App
+	ScopeUser       *entity.User
+	RefObjects      *entity.RefObjects
+
+	Notification *entity.Notification
+	TemplateName TemplateName
+	TemplateData TemplateData
+
+	LastSendEvent     string // `success`, `failure`
+	LastSendTimestamp time.Time
+	LastEmailSent     bool
+	LastSlackSent     bool
+	LastDiscordSent   bool
+}
+
+type TaskResultNotificationResp struct {
+	EmailSent   bool
+	SlackSent   bool
+	DiscordSent bool
+}
+
 //
 // APP DEPLOYMENT
 //
 
-type BaseMsgDataAppDeploymentNotification struct {
+type TemplateDataAppDeployment struct {
+	BaseTemplateData
 	ProjectName   string
 	AppName       string
 	Succeeded     bool
@@ -26,28 +82,12 @@ type BaseMsgDataAppDeploymentNotification struct {
 	DashboardLink string
 }
 
-type EmailMsgDataAppDeploymentNotification struct {
-	*BaseMsgDataAppDeploymentNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataAppDeploymentNotification struct {
-	*BaseMsgDataAppDeploymentNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataAppDeploymentNotification struct {
-	*BaseMsgDataAppDeploymentNotification
-	Setting *entity.Discord
-}
-
 //
 // CRON TASK
 //
 
-type BaseMsgDataCronTaskNotification struct {
+type TemplateDataCronTask struct {
+	BaseTemplateData
 	ProjectName   string
 	AppName       string
 	Succeeded     bool
@@ -60,28 +100,12 @@ type BaseMsgDataCronTaskNotification struct {
 	DashboardLink string
 }
 
-type EmailMsgDataCronTaskNotification struct {
-	*BaseMsgDataCronTaskNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataCronTaskNotification struct {
-	*BaseMsgDataCronTaskNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataCronTaskNotification struct {
-	*BaseMsgDataCronTaskNotification
-	Setting *entity.Discord
-}
-
 //
 // HEALTH CHECK
 //
 
-type BaseMsgDataHealthcheckNotification struct {
+type TemplateDataHealthcheck struct {
+	BaseTemplateData
 	ProjectName     string
 	AppName         string
 	Succeeded       bool
@@ -95,28 +119,12 @@ type BaseMsgDataHealthcheckNotification struct {
 	DashboardLink   string
 }
 
-type EmailMsgDataHealthcheckNotification struct {
-	*BaseMsgDataHealthcheckNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataHealthcheckNotification struct {
-	*BaseMsgDataHealthcheckNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataHealthcheckNotification struct {
-	*BaseMsgDataHealthcheckNotification
-	Setting *entity.Discord
-}
-
 //
 // SSL EXPIRING
 //
 
-type BaseMsgDataSSLExpiringNotification struct {
+type TemplateDataSSLExpiring struct {
+	BaseTemplateData
 	ProjectName   string
 	AppName       string
 	SSLName       string
@@ -128,28 +136,12 @@ type BaseMsgDataSSLExpiringNotification struct {
 	DashboardLink string
 }
 
-type EmailMsgDataSSLExpiringNotification struct {
-	*BaseMsgDataSSLExpiringNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataSSLExpiringNotification struct {
-	*BaseMsgDataSSLExpiringNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataSSLExpiringNotification struct {
-	*BaseMsgDataSSLExpiringNotification
-	Setting *entity.Discord
-}
-
 //
 // SSL RENEWAL
 //
 
-type BaseMsgDataSSLRenewalNotification struct {
+type TemplateDataSSLRenewal struct {
+	BaseTemplateData
 	ProjectName   string
 	AppName       string
 	Succeeded     bool
@@ -162,49 +154,16 @@ type BaseMsgDataSSLRenewalNotification struct {
 	DashboardLink string
 }
 
-type EmailMsgDataSSLRenewalNotification struct {
-	*BaseMsgDataSSLRenewalNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataSSLRenewalNotification struct {
-	*BaseMsgDataSSLRenewalNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataSSLRenewalNotification struct {
-	*BaseMsgDataSSLRenewalNotification
-	Setting *entity.Discord
-}
-
 //
 // SYSTEM UPDATE
 //
 
-type BaseMsgDataSystemUpdateNotification struct {
+type TemplateDataSystemUpdate struct {
+	BaseTemplateData
 	Succeeded      bool
 	CurrentVersion string
 	TargetVersion  string
 	StartedAt      time.Time
 	Duration       time.Duration
 	DashboardLink  string
-}
-
-type EmailMsgDataSystemUpdateNotification struct {
-	*BaseMsgDataSystemUpdateNotification
-	Email      *entity.Email
-	Recipients []string
-	Subject    string
-}
-
-type SlackMsgDataSystemUpdateNotification struct {
-	*BaseMsgDataSystemUpdateNotification
-	Setting *entity.Slack
-}
-
-type DiscordMsgDataSystemUpdateNotification struct {
-	*BaseMsgDataSystemUpdateNotification
-	Setting *entity.Discord
 }

@@ -39,8 +39,8 @@ type sslRenewalTaskItem struct {
 	ExpiringNotifyOnly   bool
 	RenewalError         error
 	SettingSavedToDB     bool
-	ExpiringNotifMsgData *notificationservice.BaseMsgDataSSLExpiringNotification
-	RenewalNotifMsgData  *notificationservice.BaseMsgDataSSLRenewalNotification
+	ExpiringNotifMsgData *notificationservice.TemplateDataSSLExpiring
+	RenewalNotifMsgData  *notificationservice.TemplateDataSSLRenewal
 }
 
 //nolint:gocognit

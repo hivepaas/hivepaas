@@ -66,7 +66,7 @@ func NewExecutor(
 type taskData struct {
 	*queue.HealthcheckExecData
 	Output       *entity.TaskHealthcheckOutput
-	NotifMsgData *notificationservice.BaseMsgDataHealthcheckNotification
+	NotifMsgData *notificationservice.TemplateDataHealthcheck
 }
 
 func (e *Executor) execute(

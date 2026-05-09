@@ -7,7 +7,7 @@ import (
 
 type SysCleanupReq struct {
 	*queue.TaskExecData
-	CronJob *entity.Setting
+	SysCleanupSettings *entity.SystemCleanup
 }
 
 type SysCleanupResp struct {

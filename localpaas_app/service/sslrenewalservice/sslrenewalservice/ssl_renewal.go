@@ -30,10 +30,9 @@ const (
 
 type sslRenewalData struct {
 	*sslrenewalservice.SSLRenewalReq
-	RenewalSettings *entity.SSLRenewal
-	TaskOutput      *entity.TaskSSLRenewalOutput
-	LeClients       map[string]*letsencrypt.Client
-	Mu              *sync.Mutex
+	TaskOutput *entity.TaskSSLRenewalOutput
+	LeClients  map[string]*letsencrypt.Client
+	Mu         *sync.Mutex
 }
 
 type sslRenewalDataItem struct {
@@ -62,13 +61,6 @@ func (s *service) SSLRenew(
 		LeClients:     make(map[string]*letsencrypt.Client),
 		Mu:            &sync.Mutex{},
 	}
-
-	cronJob := data.CronJob.MustAsCronJob()
-	setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
-	if setting == nil {
-		return nil, apperrors.NewNotFound("SSL renewal settings")
-	}
-	data.RenewalSettings = setting.MustAsSSLRenewal()
 
 	renewalArgs := gofn.Coalesce(gofn.Must(data.Task.ArgsAsSSLRenewal()), &entity.TaskSSLRenewalArgs{})
 	timeNow := timeutil.NowUTC()

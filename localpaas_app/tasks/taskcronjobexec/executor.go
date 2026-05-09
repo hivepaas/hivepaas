@@ -108,9 +108,13 @@ func (e *Executor) execute(
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.CronJobTypeSystemCleanup:
+		setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
+		if setting == nil {
+			return apperrors.NewNotFound("System cleanup settings")
+		}
 		resp, err := e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
-			TaskExecData: data.TaskExecData,
-			CronJob:      data.CronJob,
+			TaskExecData:       data.TaskExecData,
+			SysCleanupSettings: setting.MustAsSystemCleanup(),
 		})
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -118,9 +122,13 @@ func (e *Executor) execute(
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.CronJobTypeSystemBackup:
+		setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
+		if setting == nil {
+			return apperrors.NewNotFound("System backup settings")
+		}
 		resp, err := e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
-			TaskExecData: data.TaskExecData,
-			CronJob:      data.CronJob,
+			TaskExecData:      data.TaskExecData,
+			SysBackupSettings: setting.MustAsSystemBackup(),
 		})
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -128,9 +136,14 @@ func (e *Executor) execute(
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.CronJobTypeSSLRenewal:
+		setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
+		if setting == nil {
+			return apperrors.NewNotFound("SSL renewal settings")
+		}
 		resp, err := e.sslRenewalService.SSLRenew(ctx, db, &sslrenewalservice.SSLRenewalReq{
-			TaskExecData: data.TaskExecData,
-			CronJob:      data.CronJob,
+			TaskExecData:    data.TaskExecData,
+			CronJob:         data.CronJob,
+			RenewalSettings: setting.MustAsSSLRenewal(),
 		})
 		if err != nil {
 			return apperrors.Wrap(err)

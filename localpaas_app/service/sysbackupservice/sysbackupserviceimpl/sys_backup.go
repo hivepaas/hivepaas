@@ -31,15 +31,14 @@ const (
 
 type sysBackupData struct {
 	*sysbackupservice.SysBackupReq
-	SysBackupSettings *entity.SystemBackup
-	TaskOutput        *entity.TaskSystemBackupOutput
-	BackupRootDir     string
-	BackupSaveDir     string
-	OutFileName       string
-	OutFilePath       string
-	TimeNow           time.Time
-	LocalOutFile      *entity.Setting
-	RemoteOutFile     *entity.Setting
+	TaskOutput    *entity.TaskSystemBackupOutput
+	BackupRootDir string
+	BackupSaveDir string
+	OutFileName   string
+	OutFilePath   string
+	TimeNow       time.Time
+	LocalOutFile  *entity.Setting
+	RemoteOutFile *entity.Setting
 }
 
 func (s *service) Backup(
@@ -57,13 +56,6 @@ func (s *service) Backup(
 		},
 		TimeNow: timeutil.NowUTC(),
 	}
-
-	cronJob := data.CronJob.MustAsCronJob()
-	setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
-	if setting == nil {
-		return nil, apperrors.NewNotFound("System backup settings")
-	}
-	data.SysBackupSettings = setting.MustAsSystemBackup()
 
 	// Backup DB
 	err = s.sysBackup(ctx, db, data)

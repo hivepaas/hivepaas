@@ -7,7 +7,7 @@ import (
 
 type SysBackupReq struct {
 	*queue.TaskExecData
-	CronJob *entity.Setting
+	SysBackupSettings *entity.SystemBackup
 }
 
 type SysBackupResp struct {

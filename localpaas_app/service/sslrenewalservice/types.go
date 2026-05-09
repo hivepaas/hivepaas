@@ -7,7 +7,8 @@ import (
 
 type SSLRenewalReq struct {
 	*queue.TaskExecData
-	CronJob *entity.Setting
+	CronJob         *entity.Setting
+	RenewalSettings *entity.SSLRenewal
 }
 
 type SSLRenewalResp struct {

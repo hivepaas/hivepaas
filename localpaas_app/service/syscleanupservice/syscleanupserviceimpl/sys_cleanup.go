@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
@@ -13,8 +12,7 @@ import (
 
 type sysCleanupData struct {
 	*syscleanupservice.SysCleanupReq
-	SysCleanupSettings *entity.SystemCleanup
-	TaskOutput         *entity.TaskSystemCleanupOutput
+	TaskOutput *entity.TaskSystemCleanupOutput
 }
 
 func (s *service) Cleanup(
@@ -33,13 +31,6 @@ func (s *service) Cleanup(
 			FileCleanup:    &entity.FileCleanupOutput{},
 		},
 	}
-
-	cronJob := data.CronJob.MustAsCronJob()
-	setting := data.RefObjects.RefSettings[cronJob.TargetSetting.ID]
-	if setting == nil {
-		return nil, apperrors.NewNotFound("System cleanup settings")
-	}
-	data.SysCleanupSettings = setting.MustAsSystemCleanup()
 
 	// Cleanup DB objects
 	err1 := s.sysCleanupDB(ctx, db, data)

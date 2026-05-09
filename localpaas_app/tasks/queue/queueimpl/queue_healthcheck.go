@@ -3,13 +3,13 @@ package queueimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/entity/cacheentity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
@@ -20,8 +20,7 @@ import (
 )
 
 const (
-	taskHealthcheckLockKey      = "task:healthcheck:lock"
-	taskHealthcheckLockMaxRetry = 3
+	taskHealthcheckLockKey      = "task:healthcheck:%v:lock"
 	cacheHealthcheckSettingsExp = 5 * time.Minute
 )
 
@@ -35,17 +34,7 @@ func (q *taskQueue) RegisterHealthcheckExecutor(execFunc queue.HealthcheckExecFu
 func (q *taskQueue) doHealthcheck(
 	ctx context.Context,
 ) error {
-	// Make sure only one worker processes this task at a time
-	success, _, err := q.healthcheckTaskLock(ctx)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	if !success { // another worker is doing this task
-		return nil
-	}
-
-	executorFunc := q.healthcheckExecutor
-	if executorFunc == nil {
+	if q.healthcheckExecutor == nil {
 		return apperrors.NewUnavailable("Task executor function for healthcheck")
 	}
 
@@ -84,16 +73,13 @@ func (q *taskQueue) doHealthcheck(
 			RefObjects:    baseData.RefObjects,
 			NotifEventMap: baseData.NotifEventMap,
 		}
-		if healthcheck.SaveResultTasks {
-			savingTasks = append(savingTasks, healthcheckData.Task)
-		}
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
-			return executorFunc(ctx, healthcheckData) //nolint:wrapcheck
+			return q.doHealthcheckItem(ctx, healthcheck, healthcheckData, &savingTasks)
 		})
 	}
 
 	// Execute all health check tasks concurrently
-	_ = gofn.ExecTasksEx(ctx, 20, false, execFuncs...) //nolint:mnd
+	_ = gofn.ExecTasksEx(ctx, 100, false, execFuncs...) //nolint:mnd
 
 	// Save tasks in DB
 	err = q.taskRepo.UpsertMulti(ctx, q.db, savingTasks,
@@ -105,23 +91,27 @@ func (q *taskQueue) doHealthcheck(
 	return nil
 }
 
-func (q *taskQueue) healthcheckTaskLock(ctx context.Context) (bool, func(), error) {
-	interval := config.Current.Tasks.Healthcheck.BaseInterval
-	retries := 0
-	wait := time.Duration(0)
-	for {
-		success, releaser, err := q.taskService.CreateRedisLock(ctx, taskHealthcheckLockKey, interval-time.Second)
-		if err != nil {
-			if retries >= taskHealthcheckLockMaxRetry {
-				return false, nil, apperrors.Wrap(err)
-			}
-			retries++
-			wait += time.Second
-			time.Sleep(wait)
-			continue
-		}
-		return success, releaser, nil
+func (q *taskQueue) doHealthcheckItem(
+	ctx context.Context,
+	healthcheck *entity.Healthcheck,
+	healthcheckData *queue.HealthcheckExecData,
+	savingTasks *[]*entity.Task,
+) error {
+	lockKey := fmt.Sprintf(taskHealthcheckLockKey, healthcheckData.HealthcheckSetting.ID)
+	success, releaser, err := q.taskService.CreateRedisLock(ctx, lockKey, time.Minute)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
+	if !success {
+		return nil
+	}
+	defer releaser()
+
+	err = q.healthcheckExecutor(ctx, healthcheckData)
+	if healthcheck.SaveResultTasks {
+		*savingTasks = append(*savingTasks, healthcheckData.Task)
+	}
+	return apperrors.Wrap(err)
 }
 
 func (q *taskQueue) loadHealthcheckData(

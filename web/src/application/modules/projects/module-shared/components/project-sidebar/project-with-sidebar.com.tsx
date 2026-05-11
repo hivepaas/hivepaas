@@ -30,6 +30,26 @@ function View({ projectId, children }: Props) {
             label: "Secrets",
             route: ROUTE.projects.single.configuration.secrets.$route(projectId),
         },
+        {
+            label: "Basic auth",
+            route: ROUTE.projects.single.configuration.basicAuth.$route(projectId),
+        },
+        {
+            label: "Registry auth",
+            route: ROUTE.projects.single.configuration.registryAuth.$route(projectId),
+        },
+        {
+            label: "SSL certificates",
+            route: ROUTE.projects.single.configuration.sslCertificates.$route(projectId),
+        },
+        {
+            label: "Email accounts",
+            route: ROUTE.projects.single.configuration.emailAccounts.$route(projectId),
+        },
+        {
+            label: "IM platforms",
+            route: ROUTE.projects.single.configuration.imPlatforms.$route(projectId),
+        },
     ];
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;

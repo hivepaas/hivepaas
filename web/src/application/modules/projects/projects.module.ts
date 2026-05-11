@@ -5,8 +5,13 @@ export {
     ProjectsRoute,
     ProjectGeneralRoute,
     ProjectAppsRoute,
+    ProjectBasicAuthRoute,
+    ProjectEmailAccountsRoute,
     ProjectEnvVariablesRoute,
+    ProjectImPlatformsRoute,
     ProjectSecretsRoute,
+    ProjectRegistryAuthRoute,
+    ProjectSslCertificatesRoute,
     SingleAppRoute,
     // Single App Tabs
     AppDeploymentsRoute,

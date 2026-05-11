@@ -20,6 +20,12 @@ import {
     useQuickInstallSslCertDialogState,
 } from "~/projects/dialogs/quick-install-ssl-cert";
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
+import {
+    CreateOrEditBasicAuthDialog,
+    UpdateBasicAuthStatusDialog,
+    useCreateOrEditBasicAuthDialogState,
+    useUpdateBasicAuthStatusDialogState,
+} from "~/settings/dialogs";
 
 function View() {
     const location = useLocation();
@@ -30,6 +36,8 @@ function View() {
     const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
+    const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
+    const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -39,6 +47,8 @@ function View() {
         createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
+        createOrEditBasicAuthDialog.destroy();
+        updateBasicAuthStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -50,6 +60,8 @@ function View() {
             <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
             <StorageMountDialog />
+            <CreateOrEditBasicAuthDialog />
+            <UpdateBasicAuthStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

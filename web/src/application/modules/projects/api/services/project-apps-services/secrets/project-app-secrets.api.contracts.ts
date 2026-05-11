@@ -35,6 +35,8 @@ export type AppSecrets_CreateOne_Req = ApiRequestBase<{
     appID: string;
     name: string;
     value: string;
+    base64: boolean;
+    swarmRef?: AppSecret["swarmRef"];
 }>;
 
 export type AppSecrets_CreateOne_Res = ApiResponseBase<{

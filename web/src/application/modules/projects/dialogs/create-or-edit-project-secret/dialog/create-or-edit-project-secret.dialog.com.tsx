@@ -97,6 +97,7 @@ export function CreateOrEditProjectSecretDialog() {
                     appID: appId,
                     name: values.name,
                     value: values.value,
+                    base64: false,
                 });
             }
         }

@@ -23,11 +23,25 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
             },
         },
         {
-            accessorKey: "updatedAt",
-            header: "Last Updated",
+            header: "Type",
             cell: ({ row: { original } }) => {
-                const updatedAt = original.updatedAt ?? original.createdAt;
-                return format(updatedAt, "yyyy-MM-dd HH:mm:ss");
+                return original.base64 ? "binary" : "text";
+            },
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+
+        {
+            accessorKey: "expireAt",
+            header: "Expire At",
+            cell: ({ row: { original } }) => {
+                if (!original.expireAt) {
+                    return "-";
+                }
+
+                return format(original.expireAt, "yyyy-MM-dd HH:mm:ss");
             },
         },
         {

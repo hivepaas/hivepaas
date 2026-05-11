@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { ProjectAppSecretsQueries } from "~/projects/data/queries";
-import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret/hooks";
+import { useCreateOrEditAppSecretDialog } from "~/projects/dialogs/create-or-edit-app-secret/hooks";
 import { AppSecretsTableDefs } from "~/projects/module-shared/definitions/tables/app-secrets";
 
 import { TableActions } from "@application/shared/components";
@@ -20,7 +20,7 @@ export function AppConfigSecretsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { actions: secretDialogActions } = useCreateOrEditProjectSecretDialog();
+    const { actions: secretDialogActions } = useCreateOrEditAppSecretDialog();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: secrets, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
@@ -44,7 +44,7 @@ export function AppConfigSecretsRoute() {
                 renderActions={
                     <Button
                         onClick={() => {
-                            secretDialogActions.openForApp(projectId, appId);
+                            secretDialogActions.open(projectId, appId);
                         }}
                     >
                         <Plus className="mr-2 h-4 w-4" /> New Secret

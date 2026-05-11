@@ -2,6 +2,10 @@ import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
+    CreateOrEditAppSecretDialog,
+    useCreateOrEditAppSecretDialogState,
+} from "~/projects/dialogs/create-or-edit-app-secret";
+import {
     CreateOrEditProjectSecretDialog,
     useCreateOrEditProjectSecretDialogState,
 } from "~/projects/dialogs/create-or-edit-project-secret";
@@ -18,6 +22,7 @@ function View() {
     const createProjectDialog = useCreateProjectDialogState();
     const createProjectAppDialog = useCreateProjectAppDialogState();
     const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
+    const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
 
@@ -25,6 +30,7 @@ function View() {
         createProjectDialog.destroy();
         createProjectAppDialog.destroy();
         createOrEditProjectSecretDialog.destroy();
+        createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
     }, [location]);
@@ -34,6 +40,7 @@ function View() {
             <CreateProjectDialog />
             <CreateProjectAppDialog />
             <CreateOrEditProjectSecretDialog />
+            <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
             <StorageMountDialog />
             {/* TODO: Add other dialogs here */}

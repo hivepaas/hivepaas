@@ -5,6 +5,7 @@ export interface ProjectSecret {
     name: string;
     updateVer: number;
     key: string;
+    base64: boolean;
     status: EProjectSecretStatus;
 
     createdAt: Date;

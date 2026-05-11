@@ -1,2 +1,1 @@
-export {};
-// export * from "./settings.router";
+export * from "./settings.router";

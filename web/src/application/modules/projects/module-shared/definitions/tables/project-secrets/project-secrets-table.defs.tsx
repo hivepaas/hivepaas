@@ -23,6 +23,12 @@ function createColumns(projectId: string): ColumnDef<ProjectSecret>[] {
             },
         },
         {
+            header: "Type",
+            cell: ({ row: { original } }) => {
+                return original.base64 ? "binary" : "text";
+            },
+        },
+        {
             accessorKey: "updatedAt",
             header: "Last Updated",
             cell: ({ row: { original } }) => {

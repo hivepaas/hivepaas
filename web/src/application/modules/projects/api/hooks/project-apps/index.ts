@@ -1,3 +1,4 @@
+export * from "./use-app-config-files.api";
 export * from "./use-project-apps.api";
 export * from "./use-project-app-env-vars.api";
 export * from "./use-project-app-secrets.api";

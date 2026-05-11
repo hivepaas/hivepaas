@@ -85,6 +85,38 @@ export const ROUTE = {
     },
 
     /**
+     * Settings
+     */
+    settings: {
+        $pattern: "settings",
+
+        basicAuth: {
+            $pattern: "settings/basic-auth",
+            $route: "/settings/basic-auth/",
+        },
+
+        registryAuth: {
+            $pattern: "settings/registry-auth",
+            $route: "/settings/registry-auth/",
+        },
+
+        sslCertificates: {
+            $pattern: "settings/ssl-certificates",
+            $route: "/settings/ssl-certificates/",
+        },
+
+        emailAccounts: {
+            $pattern: "settings/email-accounts",
+            $route: "/settings/email-accounts/",
+        },
+
+        imPlatforms: {
+            $pattern: "settings/im-platforms",
+            $route: "/settings/im-platforms/",
+        },
+    },
+
+    /**
      * Projects
      */
     projects: {
@@ -136,6 +168,11 @@ export const ROUTE = {
                         secrets: {
                             $pattern: "projects/:id/apps/:appId/secrets",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/`,
+                        },
+
+                        configFiles: {
+                            $pattern: "projects/:id/apps/:appId/config-files",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/config-files/`,
                         },
 
                         availabilityAndScaling: {
@@ -198,6 +235,31 @@ export const ROUTE = {
                 secrets: {
                     $pattern: "projects/:id/configuration/secrets",
                     $route: (id: string) => `/projects/${id}/configuration/secrets/`,
+                },
+
+                basicAuth: {
+                    $pattern: "projects/:id/configuration/basic-auth",
+                    $route: (id: string) => `/projects/${id}/configuration/basic-auth/`,
+                },
+
+                registryAuth: {
+                    $pattern: "projects/:id/configuration/registry-auth",
+                    $route: (id: string) => `/projects/${id}/configuration/registry-auth/`,
+                },
+
+                sslCertificates: {
+                    $pattern: "projects/:id/configuration/ssl-certificates",
+                    $route: (id: string) => `/projects/${id}/configuration/ssl-certificates/`,
+                },
+
+                emailAccounts: {
+                    $pattern: "projects/:id/configuration/email-accounts",
+                    $route: (id: string) => `/projects/${id}/configuration/email-accounts/`,
+                },
+
+                imPlatforms: {
+                    $pattern: "projects/:id/configuration/im-platforms",
+                    $route: (id: string) => `/projects/${id}/configuration/im-platforms/`,
                 },
             },
         },

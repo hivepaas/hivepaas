@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { ProjectRegistryAuthApiValidator } from "./project-registry-auth.api.validator";
 import type {
     ProjectRegistryAuth_CreateOne_Req,
     ProjectRegistryAuth_CreateOne_Res,
@@ -18,6 +17,7 @@ import type {
     ProjectRegistryAuth_UpdateOne_Req,
     ProjectRegistryAuth_UpdateOne_Res,
 } from "./project-registry-auth.api.contracts";
+import type { ProjectRegistryAuthApiValidator } from "./project-registry-auth.api.validator";
 
 export class ProjectRegistryAuthApi extends BaseApi {
     public constructor(private readonly validator: ProjectRegistryAuthApiValidator) {
@@ -111,7 +111,7 @@ export class ProjectRegistryAuthApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/registry-auth/${id}/meta`, payload, {
+                this.client.v1.put(`/projects/${projectID}/registry-auth/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

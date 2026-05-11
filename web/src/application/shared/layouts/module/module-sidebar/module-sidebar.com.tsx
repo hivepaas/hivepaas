@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Container, LayoutGrid, type LucideIcon, PawPrint, Users } from "lucide-react";
+import { Container, LayoutGrid, type LucideIcon, PawPrint, Settings, Users } from "lucide-react";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -24,7 +24,6 @@ interface SidebarItem {
 }
 
 const navMain: SidebarItem[] = [
-
     {
         title: "Projects",
         route: ROUTE.projects.list.$route,
@@ -49,6 +48,39 @@ const navMain: SidebarItem[] = [
         route: ROUTE.userManagement.users.$route,
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
+    },
+    {
+        title: "Settings",
+        route: "#",
+        pattern: ROUTE.settings.$pattern,
+        icon: Settings,
+        items: [
+            {
+                title: "Basic auth",
+                route: ROUTE.settings.basicAuth.$route,
+                pattern: ROUTE.settings.basicAuth.$pattern,
+            },
+            {
+                title: "Registry auth",
+                route: ROUTE.settings.registryAuth.$route,
+                pattern: ROUTE.settings.registryAuth.$pattern,
+            },
+            {
+                title: "SSL certificates",
+                route: ROUTE.settings.sslCertificates.$route,
+                pattern: ROUTE.settings.sslCertificates.$pattern,
+            },
+            {
+                title: "Email accounts",
+                route: ROUTE.settings.emailAccounts.$route,
+                pattern: ROUTE.settings.emailAccounts.$pattern,
+            },
+            {
+                title: "IM platforms",
+                route: ROUTE.settings.imPlatforms.$route,
+                pattern: ROUTE.settings.imPlatforms.$pattern,
+            },
+        ],
     },
 ];
 

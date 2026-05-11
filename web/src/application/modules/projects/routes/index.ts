@@ -2,8 +2,13 @@ export { ProjectsRoute } from "./projects";
 export {
     ProjectGeneralRoute,
     ProjectAppsRoute,
+    ProjectBasicAuthRoute,
+    ProjectEmailAccountsRoute,
     ProjectEnvVariablesRoute,
+    ProjectImPlatformsRoute,
     ProjectSecretsRoute,
+    ProjectRegistryAuthRoute,
+    ProjectSslCertificatesRoute,
     SingleAppRoute,
     // Single App Tabs
     AppDeploymentsRoute,
@@ -16,6 +21,7 @@ export {
     AppConfigHttpSettingsRoute,
     AppConfigEnvVariablesRoute,
     AppConfigSecretsRoute,
+    AppConfigFilesRoute,
     AppConfigAvailabilityRoute,
     AppConfigStorageRoute,
     AppConfigNetworksRoute,

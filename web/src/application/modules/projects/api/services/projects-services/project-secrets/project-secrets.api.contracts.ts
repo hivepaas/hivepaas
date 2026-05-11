@@ -22,6 +22,7 @@ export type ProjectSecrets_CreateOne_Req = ApiRequestBase<{
     projectID: string;
     name: string;
     value: string;
+    base64: boolean;
 }>;
 
 export type ProjectSecrets_CreateOne_Res = ApiResponseBase<{

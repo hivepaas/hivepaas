@@ -46,6 +46,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
         },
         {
+            label: "Config Files",
+            route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
+        },
+        {
             label: "Secrets",
             route: ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
         },
@@ -79,7 +83,7 @@ function View({ children }: PropsWithChildren) {
                 <div className="sticky top-4">
                     <div className="bg-background rounded-lg py-4">
                         <Tabs
-                            defaultValue={activeKey}
+                            value={activeKey}
                             className="flex-row"
                         >
                             <TabsList className="bg-background h-full flex-col w-full rounded-none p-0">

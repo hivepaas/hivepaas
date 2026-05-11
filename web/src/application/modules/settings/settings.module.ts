@@ -1,7 +1,18 @@
 /**
  * Settings
  */
-// export { ... } from "./routes";
+export {
+    SettingsBasicAuthRoute,
+    SettingsEmailAccountsRoute,
+    SettingsImPlatformsRoute,
+    SettingsRegistryAuthRoute,
+    SettingsSslCertificatesRoute,
+} from "./routes";
+
+/**
+ * Components
+ */
+export { SettingsDialogsContainer } from "./dialogs-container";
 
 /**
  * Layouts
@@ -11,4 +22,4 @@
 /**
  * Dialogs
  */
-// export { ... } from "./dialogs-container";
+export * from "./dialogs";

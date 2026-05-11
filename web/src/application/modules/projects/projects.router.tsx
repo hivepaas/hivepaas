@@ -94,6 +94,56 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.projects.single.configuration.basicAuth.$pattern,
+                    lazy: async () => {
+                        const { ProjectBasicAuthRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectBasicAuthRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.registryAuth.$pattern,
+                    lazy: async () => {
+                        const { ProjectRegistryAuthRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectRegistryAuthRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.sslCertificates.$pattern,
+                    lazy: async () => {
+                        const { ProjectSslCertificatesRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectSslCertificatesRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.emailAccounts.$pattern,
+                    lazy: async () => {
+                        const { ProjectEmailAccountsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectEmailAccountsRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.imPlatforms.$pattern,
+                    lazy: async () => {
+                        const { ProjectImPlatformsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectImPlatformsRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.apps.$pattern,
                     lazy: async () => {
                         const { ProjectAppsRoute } = await getLazyComponents();
@@ -232,6 +282,14 @@ export const projectsRouter: RouteObject = {
                                 const { AppConfigSecretsRoute } = await getLazyComponents();
 
                                 return { Component: AppConfigSecretsRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.configFiles.$pattern,
+                            lazy: async () => {
+                                const { AppConfigFilesRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigFilesRoute };
                             },
                         },
                         {

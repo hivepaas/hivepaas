@@ -17,6 +17,7 @@ const ProjectSecretSchema = z.object({
     name: z.string(),
     updateVer: z.number(),
     key: z.string(),
+    base64: z.boolean().optional().default(false),
     status: z.nativeEnum(EProjectSecretStatus),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),

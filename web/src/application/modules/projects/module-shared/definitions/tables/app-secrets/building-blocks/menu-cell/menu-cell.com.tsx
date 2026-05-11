@@ -5,14 +5,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@compone
 import { Edit2Icon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
-import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret/hooks";
+import { useCreateOrEditAppSecretDialog } from "~/projects/dialogs/create-or-edit-app-secret/hooks";
 import type { AppSecret } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
 
 function View({ projectId, appId, secret }: Props) {
     const [open, setOpen] = useState(false);
-    const { actions: secretDialogActions } = useCreateOrEditProjectSecretDialog();
+    const { actions: secretDialogActions } = useCreateOrEditAppSecretDialog();
 
     const { mutate: deleteOne, isPending: isDeleting } = ProjectAppSecretsCommands.useDeleteOne({
         onSuccess: () => {
@@ -45,7 +45,7 @@ function View({ projectId, appId, secret }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         onClick={() => {
-                            secretDialogActions.openEditForApp(projectId, appId, secret);
+                            secretDialogActions.openEdit(projectId, appId, secret);
                             setOpen(false);
                         }}
                     >

@@ -24,6 +24,7 @@ func (uc *UC) GetApp(
 			bunex.SelectOrder("display_order"),
 		),
 		bunex.SelectRelation("Settings",
+			// NOTE: for now, we only need to load app Http settings
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 		),
 	)

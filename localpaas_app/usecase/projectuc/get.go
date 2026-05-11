@@ -21,7 +21,10 @@ func (uc *UC) GetProject(
 			bunex.SelectOrder("display_order"),
 		),
 		bunex.SelectRelation("Owner"),
-		bunex.SelectRelation("Settings"),
+		bunex.SelectRelation("Settings",
+			// NOTE: for now, we only need to load Envs settings
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeProjectEnvs),
+		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

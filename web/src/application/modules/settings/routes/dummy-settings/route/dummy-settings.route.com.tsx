@@ -1,6 +1,6 @@
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { SettingsBasicAuthTable } from "~/settings/module-shared/components";
+import { SettingsBasicAuthTable, SettingsRegistryAuthTable } from "~/settings/module-shared/components";
 
 function SettingsDummyPage({ title }: Props) {
     return (
@@ -26,7 +26,11 @@ export function SettingsBasicAuthRoute() {
 }
 
 export function SettingsRegistryAuthRoute() {
-    return <SettingsDummyPage title="Registry auth" />;
+    return (
+        <div className={cn(listBox)}>
+            <SettingsRegistryAuthTable />
+        </div>
+    );
 }
 
 export function SettingsSslCertificatesRoute() {

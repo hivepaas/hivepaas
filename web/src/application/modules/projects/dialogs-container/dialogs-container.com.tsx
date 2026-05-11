@@ -22,9 +22,13 @@ import {
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
     CreateOrEditBasicAuthDialog,
+    CreateOrEditRegistryAuthDialog,
     UpdateBasicAuthStatusDialog,
+    UpdateRegistryAuthStatusDialog,
     useCreateOrEditBasicAuthDialogState,
+    useCreateOrEditRegistryAuthDialogState,
     useUpdateBasicAuthStatusDialogState,
+    useUpdateRegistryAuthStatusDialogState,
 } from "~/settings/dialogs";
 
 function View() {
@@ -38,6 +42,8 @@ function View() {
     const storageMountDialog = useStorageMountDialogState();
     const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
+    const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
+    const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -49,6 +55,8 @@ function View() {
         storageMountDialog.destroy();
         createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
+        createOrEditRegistryAuthDialog.destroy();
+        updateRegistryAuthStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -62,6 +70,8 @@ function View() {
             <StorageMountDialog />
             <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
+            <CreateOrEditRegistryAuthDialog />
+            <UpdateRegistryAuthStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

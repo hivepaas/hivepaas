@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { RegistryAuthApiValidator } from "./registry-auth.api.validator";
 import type {
     RegistryAuth_CreateOne_Req,
     RegistryAuth_CreateOne_Res,
@@ -20,6 +19,7 @@ import type {
     RegistryAuth_UpdateOne_Req,
     RegistryAuth_UpdateOne_Res,
 } from "./registry-auth.api.contracts";
+import type { RegistryAuthApiValidator } from "./registry-auth.api.validator";
 
 export class RegistryAuthApi extends BaseApi {
     public constructor(private readonly validator: RegistryAuthApiValidator) {
@@ -113,7 +113,7 @@ export class RegistryAuthApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/settings/registry-auth/${id}/meta`, payload, {
+                this.client.v1.put(`/settings/registry-auth/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

@@ -16,6 +16,7 @@ export {
     AppConfigHttpSettingsRoute,
     AppConfigEnvVariablesRoute,
     AppConfigSecretsRoute,
+    AppConfigFilesRoute,
     AppConfigAvailabilityRoute,
     AppConfigStorageRoute,
     AppConfigNetworksRoute,

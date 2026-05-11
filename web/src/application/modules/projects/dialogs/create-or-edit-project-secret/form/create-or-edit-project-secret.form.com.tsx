@@ -1,22 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { UploadIcon } from "lucide-react";
+import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Button, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
-import type {
-    CreateOrEditProjectSecretFormInput,
-    CreateOrEditProjectSecretFormOutput,
-} from "../schemas";
+import type { CreateOrEditProjectSecretFormInput, CreateOrEditProjectSecretFormOutput } from "../schemas";
 import { CreateOrEditProjectSecretFormSchema } from "../schemas";
 
 export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChanges, isEditMode, initialValues }: Props) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const {
         handleSubmit,
         control,
@@ -24,11 +22,17 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
     } = useForm<CreateOrEditProjectSecretFormInput, unknown, CreateOrEditProjectSecretFormOutput>({
         defaultValues: {
             name: initialValues?.name ?? "",
-            value: "",
+            valueType: initialValues?.valueType ?? "text",
+            isEditMode,
+            textValue: "",
+            binaryFile: null,
         },
         resolver: zodResolver(CreateOrEditProjectSecretFormSchema),
         mode: "onSubmit",
     });
+
+    const valueType = useWatch({ control, name: "valueType" });
+    const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
         onHasChanges?.(isDirty);
@@ -43,10 +47,20 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
     });
 
     const {
-        field: value,
-        fieldState: { invalid: isValueInvalid },
+        field: textValue,
+        fieldState: { invalid: isTextValueInvalid },
     } = useController({
-        name: "value",
+        name: "textValue",
+        control,
+    });
+
+    const { field: valueTypeField } = useController({
+        name: "valueType",
+        control,
+    });
+
+    const { field: binaryFileField } = useController({
+        name: "binaryFile",
         control,
     });
 
@@ -56,76 +70,139 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
 
     function onInvalid(_errors: FieldErrors<CreateOrEditProjectSecretFormOutput>) {
         console.error(_errors);
-        // Optional: log errors or show notification
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-                className="flex flex-col gap-6"
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="flex flex-col gap-6"
+        >
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Name"
+                        isRequired
+                    />
+                }
             >
-                <InfoBlock
-                    titleWidth={150}
-                    title={
-                        <LabelWithInfo
-                            label="Name"
-                            isRequired
+                <FieldGroup>
+                    <Field>
+                        <Input
+                            id="project-secret-name"
+                            {...name}
+                            placeholder="SECRET_NAME"
+                            aria-invalid={isNameInvalid}
+                            disabled={isEditMode}
                         />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                id="name"
-                                {...name}
-                                placeholder="Enter secret name"
-                                aria-invalid={isNameInvalid}
-                                disabled={isEditMode}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                        <FieldError errors={[errors.name]} />
+                    </Field>
+                </FieldGroup>
+            </InfoBlock>
 
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Value Type"
+                        isRequired
+                    />
+                }
+            >
+                <Tabs
+                    value={valueType}
+                    onValueChange={nextValue => {
+                        valueTypeField.onChange(nextValue);
+                    }}
+                >
+                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                        <TabsTrigger value="text">Text</TabsTrigger>
+                        <TabsTrigger value="binary">Binary</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </InfoBlock>
+
+            {valueType === "text" ? (
                 <InfoBlock
-                    titleWidth={150}
+                    titleWidth={220}
                     title={
                         <LabelWithInfo
                             label="Value"
-                            isRequired
+                            isRequired={!isEditMode}
                         />
                     }
                 >
                     <FieldGroup>
                         <Field>
                             <Textarea
-                                id="value"
-                                {...value}
-                                placeholder="Enter secret value"
-                                rows={6}
-                                aria-invalid={isValueInvalid}
+                                id="project-secret-text-value"
+                                {...textValue}
+                                placeholder={isEditMode ? "Leave empty to keep current value" : "Enter secret value"}
+                                rows={8}
+                                aria-invalid={isTextValueInvalid}
                             />
-                            <FieldError errors={[errors.value]} />
+                            <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                            <FieldError errors={[errors.textValue]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
+            ) : (
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Value"
+                            isRequired={!isEditMode}
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        fileInputRef.current?.click();
+                                    }}
+                                >
+                                    <UploadIcon className="size-4" />
+                                    Choose File
+                                </Button>
+                                <span className="truncate text-sm text-muted-foreground">
+                                    {selectedFile?.name ?? (isEditMode ? "Leave empty to keep current value" : "")}
+                                </span>
+                            </div>
+                            <Input
+                                id="project-secret-binary-value"
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                onChange={event => {
+                                    binaryFileField.onChange(event.target.files?.[0] ?? null);
+                                }}
+                            />
+                            <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                            <FieldError errors={[errors.binaryFile]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+            )}
 
-                <Field>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            {isEditMode ? "Update Secret" : "Create Secret"}
-                        </Button>
-                    </div>
-                </Field>
-            </form>
-        </div>
+            <Field>
+                <div className="flex justify-end">
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                    >
+                        Save
+                    </Button>
+                </div>
+            </Field>
+        </form>
     );
 }
 
@@ -134,5 +211,5 @@ interface Props {
     onSubmit: (values: CreateOrEditProjectSecretFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
     isEditMode: boolean;
-    initialValues?: CreateOrEditProjectSecretFormInput;
+    initialValues?: Partial<CreateOrEditProjectSecretFormInput>;
 }

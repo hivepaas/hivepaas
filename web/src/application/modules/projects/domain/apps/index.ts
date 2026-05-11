@@ -1,4 +1,5 @@
 export * from "./base";
+export * from "./config-file";
 export * from "./container-settings";
 export * from "./deployment-settings";
 export * from "./secret";

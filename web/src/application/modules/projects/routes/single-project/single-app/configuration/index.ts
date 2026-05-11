@@ -4,6 +4,7 @@ export * from "./container-settings";
 export * from "./http-settings";
 export * from "./env-variables";
 export * from "./secrets";
+export * from "./config-files";
 export * from "./availability-and-scaling";
 export * from "./presistent-storage";
 export * from "./networks";

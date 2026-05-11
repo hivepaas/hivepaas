@@ -138,6 +138,11 @@ export const ROUTE = {
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/`,
                         },
 
+                        configFiles: {
+                            $pattern: "projects/:id/apps/:appId/config-files",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/config-files/`,
+                        },
+
                         availabilityAndScaling: {
                             $pattern: "projects/:id/apps/:appId/availability-and-scaling",
                             $route: (id: string, appId: string) =>

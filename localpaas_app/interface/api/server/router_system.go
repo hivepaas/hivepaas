@@ -47,6 +47,12 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) (*gin.Route
 	systemSettingGroup := systemGroup.Group("/settings")
 	systemSettingsHandler := s.handlerRegistry.systemSettingsHandler
 
+	{ // LocalPaaS group
+		localpaasGroup := systemSettingGroup.Group("/localpaas")
+		localpaasGroup.GET("", systemSettingsHandler.GetLocalPaaSSettings)
+		localpaasGroup.PUT("", systemSettingsHandler.UpdateLocalPaaSSettings)
+	}
+
 	{ // Cleanup group
 		cleanupGroup := systemSettingGroup.Group("/cleanup")
 		cleanupGroup.GET("", systemSettingsHandler.GetCleanupSettings)

@@ -28,6 +28,16 @@ func (s *service) InitDefaults(
 
 	timeNow := timeutil.NowUTC()
 
+	// LocalPaaS settings
+	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
+		return item.Type == base.SettingTypeLocalPaaSSettings
+	}) {
+		err = s.initDefaultLocalPaaSSettings(ctx, db, timeNow)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
 	// Image build settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
 		return item.Type == base.SettingTypeImageBuildSettings

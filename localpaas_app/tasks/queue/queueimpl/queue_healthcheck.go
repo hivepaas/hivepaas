@@ -43,6 +43,9 @@ func (q *taskQueue) doHealthcheck(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+	if len(jobSettings) == 0 {
+		return nil
+	}
 
 	timeNow := timeutil.NowUTC()
 	savingTasks := make([]*entity.Task, 0, len(jobSettings))
@@ -144,10 +147,10 @@ func (q *taskQueue) loadHealthcheckData(
 	validJobSettings := make([]*entity.Setting, 0, len(healthcheckSettings.Settings))
 	for _, jobSetting := range healthcheckSettings.Settings {
 		healthcheck := jobSetting.MustAsHealthcheck()
-		if timeNowSecs%int64(healthcheck.Interval.ToDuration().Seconds()) > 5 { //nolint:mnd
-			continue
+		interval := int64(healthcheck.Interval.ToDuration().Seconds())
+		if timeNowSecs%interval < min(interval, 5) { //nolint:mnd
+			validJobSettings = append(validJobSettings, jobSetting)
 		}
-		validJobSettings = append(validJobSettings, jobSetting)
 	}
 	if len(validJobSettings) == 0 {
 		return nil, nil

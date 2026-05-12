@@ -23,6 +23,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/lpappservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/services/docker"
@@ -41,6 +42,7 @@ type Executor struct {
 	traefikService      traefikservice.Service
 	dbService           dbservice.Service
 	userService         userservice.Service
+	taskService         taskservice.Service
 	notificationService notificationservice.Service
 }
 
@@ -57,6 +59,7 @@ func NewExecutor(
 	traefikService traefikservice.Service,
 	dbService dbservice.Service,
 	userService userservice.Service,
+	taskService taskservice.Service,
 	notificationService notificationservice.Service,
 ) *Executor {
 	e := &Executor{
@@ -72,6 +75,7 @@ func NewExecutor(
 		traefikService:      traefikService,
 		dbService:           dbService,
 		userService:         userService,
+		taskService:         taskService,
 		notificationService: notificationService,
 	}
 	return e
@@ -139,7 +143,7 @@ func (e *Executor) Execute(
 
 	err = transaction.Execute(ctx, db, func(db database.Tx) error {
 		// Lock all pending tasks from execution by the app and workers
-		err = e.lockAllPendingTasks(ctx, db)
+		_, err = e.taskService.LockAllPendingTasks(ctx, db, 0)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -180,27 +184,6 @@ func (e *Executor) Execute(
 		return apperrors.Wrap(err)
 	}
 
-	return nil
-}
-
-func (e *Executor) lockAllPendingTasks(
-	ctx context.Context,
-	db database.Tx,
-) error {
-	// Lock all pending tasks from execution by the app and workers
-	for {
-		_, _, err := e.taskRepo.List(ctx, db, "", nil,
-			bunex.SelectFor("UPDATE OF task"),
-			bunex.SelectWhereIn("task.status IN (?)", base.TaskStatusNotStarted, base.TaskStatusInProgress),
-			bunex.SelectColumns("id"),
-		)
-		if err == nil {
-			break
-		}
-		if !transaction.IsErrorDeadLock(err) {
-			return apperrors.Wrap(err)
-		}
-	}
 	return nil
 }
 

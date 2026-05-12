@@ -85,7 +85,7 @@ func (s *Server) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancelFunc = cancel
 
-	// Start a job to periodically check scheduling messages in redis
+	// Start a job to periodically check controlling messages in redis
 	s.wg.Go(func() {
 		for {
 			select {
@@ -93,7 +93,7 @@ func (s *Server) Start() error {
 				return
 			default:
 			}
-			s.listenToSchedMessages(ctx)
+			s.listenToCtrlMessages(ctx)
 		}
 	})
 
@@ -159,14 +159,14 @@ func (s *Server) Start() error {
 	return nil
 }
 
-func (s *Server) listenToSchedMessages(ctx context.Context) {
+func (s *Server) listenToCtrlMessages(ctx context.Context) {
 	defer func() {
 		_ = recover()
 	}()
 
 	// TODO: use BLMOVE to handle the case we fail to process the msg?
-	schedMsg, err := redishelper.BLPopOne[*SchedMessage](ctx, s.config.RedisClient,
-		taskQueueSchedKey, taskQueueSchedReadTimeout)
+	ctrlMsg, err := redishelper.BLPopOne[*Message](ctx, s.config.RedisClient,
+		taskQueueCtrlKey, taskQueueCtrlReadTimeout)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return
@@ -177,15 +177,28 @@ func (s *Server) listenToSchedMessages(ctx context.Context) {
 		}
 		return
 	}
-	if len(schedMsg.SchedTasks) > 0 {
-		err := s.ScheduleTask(ctx, schedMsg.SchedTasks...)
+
+	if ctrlMsg.StartScheduler {
+		s.scheduler.Start()
+		return
+	}
+	if ctrlMsg.StopScheduler {
+		err := s.scheduler.StopJobs()
+		if err != nil {
+			s.config.Logger.Errorf("failed to stop scheduler: %v", err)
+		}
+		return
+	}
+
+	if len(ctrlMsg.SchedTasks) > 0 {
+		err := s.ScheduleTask(ctx, ctrlMsg.SchedTasks...)
 		if err != nil {
 			s.config.Logger.Errorf("failed to schedule tasks from redis message: %v", err)
 		}
 		return
 	}
-	if len(schedMsg.UnschedTaskIDs) > 0 {
-		err := s.UnscheduleTask(ctx, schedMsg.UnschedTaskIDs...)
+	if len(ctrlMsg.UnschedTaskIDs) > 0 {
+		err := s.UnscheduleTask(ctx, ctrlMsg.UnschedTaskIDs...)
 		if err != nil {
 			s.config.Logger.Errorf("failed to unschedule tasks from redis message: %v", err)
 		}
@@ -379,6 +392,22 @@ func (s *Server) Shutdown() error {
 	if s.scheduler != nil {
 		err := s.scheduler.Shutdown()
 		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+func (s *Server) StartScheduler() error {
+	if s.scheduler != nil {
+		s.scheduler.Start()
+	}
+	return nil
+}
+
+func (s *Server) StopScheduler() error {
+	if s.scheduler != nil {
+		if err := s.scheduler.StopJobs(); err != nil {
 			return apperrors.Wrap(err)
 		}
 	}

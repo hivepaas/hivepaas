@@ -95,6 +95,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/localpaassettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc"
@@ -206,6 +207,7 @@ var Provides = []any{
 	fileuc.New,
 	storagesettingsuc.New,
 	devhelperuc.New,
+	localpaassettingsuc.New,
 
 	// Service
 	clusterserviceimpl.New,

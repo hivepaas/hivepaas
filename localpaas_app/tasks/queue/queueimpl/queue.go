@@ -1,6 +1,8 @@
 package queueimpl
 
 import (
+	"context"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/config"
@@ -67,20 +69,40 @@ func New(
 }
 
 func (q *taskQueue) Start() (err error) {
+	ctx := context.Background()
+	lpSttg, _ := q.settingRepo.GetSingle(ctx, q.db, nil, base.SettingTypeLocalPaaSSettings, true)
+
+	runWorker := q.isWorkerMode()
+	taskConcurrency := q.config.Tasks.Queue.Concurrency
+	taskCheckInterval := q.config.Tasks.Queue.TaskCheckInterval
+	taskCreateInterval := q.config.Tasks.Queue.TaskCreateInterval
+	healthcheckBaseInterval := q.config.Tasks.Healthcheck.BaseInterval
+
+	if lpSttg != nil {
+		lpSettings := lpSttg.MustAsLocalPaaSSettings()
+		if q.isAppMode() {
+			runWorker = lpSettings.WorkerSettings.RunWorkerInMainApp
+		}
+		taskConcurrency = lpSettings.WorkerSettings.Concurrency
+		taskCheckInterval = lpSettings.TaskSettings.TaskCheckInterval.ToDuration()
+		taskCreateInterval = lpSettings.TaskSettings.TaskCreateInterval.ToDuration()
+		healthcheckBaseInterval = lpSettings.HealthcheckSettings.BaseInterval.ToDuration()
+	}
+
 	// Initialize task queue worker if configured
-	if q.isWorkerMode() {
-		q.logger.Infof("starting task queue server...")
+	if runWorker {
+		q.logger.Infof("starting task queue worker...")
 		q.server, err = gocronqueue.NewServer(&gocronqueue.Config{
 			TaskMap:                 q.taskExecutorMap,
 			RedisClient:             q.redisClient,
 			Logger:                  q.logger,
-			Concurrency:             q.config.Tasks.Queue.Concurrency,
-			TaskCheckInterval:       q.config.Tasks.Queue.TaskCheckInterval,
+			Concurrency:             taskConcurrency,
+			TaskCheckInterval:       taskCheckInterval,
 			TaskCheckFunc:           q.findSchedulingTasks,
-			TaskCreateInterval:      q.config.Tasks.Queue.TaskCreateInterval,
+			TaskCreateInterval:      taskCreateInterval,
 			TaskCreateFunc:          q.doCreateTasksForJobs,
 			TaskCanScheduleFunc:     q.canScheduleTask,
-			HealthcheckBaseInterval: q.config.Tasks.Healthcheck.BaseInterval,
+			HealthcheckBaseInterval: healthcheckBaseInterval,
 			HealthcheckFunc:         q.doHealthcheck,
 		})
 		if err != nil {
@@ -89,7 +111,7 @@ func (q *taskQueue) Start() (err error) {
 
 		go func() {
 			if err = q.server.Start(); err != nil {
-				q.logger.Errorf("failed to start task queue server: %v", err)
+				q.logger.Errorf("failed to start task queue worker: %v", err)
 			}
 		}()
 	}
@@ -121,6 +143,46 @@ func (q *taskQueue) Shutdown() error {
 		}
 	}
 	return nil
+}
+
+func (q *taskQueue) StartScheduler() error {
+	if q.server != nil {
+		if err := q.server.StartScheduler(); err != nil {
+			q.logger.Errorf("failed to start scheduler in task queue server: %v", err)
+			return apperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+func (q *taskQueue) StartAllSchedulers() error {
+	if q.client != nil {
+		if err := q.client.StartScheduler(context.Background()); err != nil {
+			q.logger.Errorf("failed to send start scheduler message to servers: %v", err)
+			return apperrors.Wrap(err)
+		}
+	}
+	return q.StartScheduler()
+}
+
+func (q *taskQueue) StopScheduler() error {
+	if q.server != nil {
+		if err := q.server.StopScheduler(); err != nil {
+			q.logger.Errorf("failed to stop scheduler in task queue server: %v", err)
+			return apperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+func (q *taskQueue) StopAllSchedulers() error {
+	if q.client != nil {
+		if err := q.client.StopScheduler(context.Background()); err != nil {
+			q.logger.Errorf("failed to send stop scheduler message to servers: %v", err)
+			return apperrors.Wrap(err)
+		}
+	}
+	return q.StopScheduler()
 }
 
 func (q *taskQueue) isAppMode() bool {

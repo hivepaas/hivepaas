@@ -20,6 +20,7 @@ type Service interface {
 
 	GetLpWorkerSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartLpWorkerSwarmService(ctx context.Context) error
+	SyncLpWorkerSwarmServiceConfig(mainAppSvc, workerSvc *swarm.Service)
 
 	GetLpUpdaterSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartLpUpdaterSwarmService(ctx context.Context) error

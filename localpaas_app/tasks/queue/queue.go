@@ -11,6 +11,12 @@ import (
 type TaskQueue interface {
 	Start() error
 	Shutdown() error
+
+	StartScheduler() error     // resume from pause
+	StartAllSchedulers() error // resume from pause
+	StopScheduler() error      // pause the scheduler
+	StopAllSchedulers() error  // pause the scheduler
+
 	RegisterExecutor(typ base.TaskType, execFunc TaskExecFunc)
 	RegisterHealthcheckExecutor(execFunc HealthcheckExecFunc)
 

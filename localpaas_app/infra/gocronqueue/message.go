@@ -7,11 +7,14 @@ import (
 )
 
 const (
-	taskQueueSchedKey         = "task:queue:sched"
-	taskQueueSchedReadTimeout = 10 * time.Minute
+	taskQueueCtrlKey         = "task:queue:ctrl"
+	taskQueueCtrlReadTimeout = 10 * time.Minute
 )
 
-type SchedMessage struct {
+type Message struct {
+	StartScheduler bool `json:"startScheduler,omitempty"`
+	StopScheduler  bool `json:"stopScheduler,omitempty"`
+
 	SchedTasks     []*entity.Task `json:"schedTasks,omitempty"`
 	UnschedTaskIDs []string       `json:"unschedTaskIds,omitempty"`
 }

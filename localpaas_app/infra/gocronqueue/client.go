@@ -31,8 +31,28 @@ func (c *Client) Close() error {
 	return nil
 }
 
+func (c *Client) StartScheduler(ctx context.Context) error {
+	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+		StartScheduler: true,
+	})
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (c *Client) StopScheduler(ctx context.Context) error {
+	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+		StopScheduler: true,
+	})
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error {
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueSchedKey, &SchedMessage{
+	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
 		SchedTasks: tasks,
 	})
 	if err != nil {
@@ -42,7 +62,7 @@ func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 }
 
 func (c *Client) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueSchedKey, &SchedMessage{
+	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
 		UnschedTaskIDs: taskIDs,
 	})
 	if err != nil {

@@ -37,14 +37,14 @@ func TestClient_ScheduleTask(t *testing.T) {
 	err := client.ScheduleTask(ctx, task)
 	assert.NoError(t, err)
 
-	assert.Equal(t, taskQueueSchedKey, mr.rpushKey)
+	assert.Equal(t, taskQueueCtrlKey, mr.rpushKey)
 	assert.Len(t, mr.rpushValues, 1)
 
 	// The value is marshaled as JSON string by redishelper.RPush
 	jsonStr, ok := mr.rpushValues[0].(string)
 	assert.True(t, ok)
 
-	var msg SchedMessage
+	var msg Message
 	err = json.Unmarshal([]byte(jsonStr), &msg)
 	assert.NoError(t, err)
 	assert.Len(t, msg.SchedTasks, 1)
@@ -62,13 +62,13 @@ func TestClient_UnscheduleTask(t *testing.T) {
 	err := client.UnscheduleTask(ctx, taskID)
 	assert.NoError(t, err)
 
-	assert.Equal(t, taskQueueSchedKey, mr.rpushKey)
+	assert.Equal(t, taskQueueCtrlKey, mr.rpushKey)
 	assert.Len(t, mr.rpushValues, 1)
 
 	jsonStr, ok := mr.rpushValues[0].(string)
 	assert.True(t, ok)
 
-	var msg SchedMessage
+	var msg Message
 	err = json.Unmarshal([]byte(jsonStr), &msg)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{taskID}, msg.UnschedTaskIDs)

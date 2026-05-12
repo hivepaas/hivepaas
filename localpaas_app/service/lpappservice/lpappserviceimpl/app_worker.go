@@ -29,3 +29,16 @@ func (s *service) RestartLpWorkerSwarmService(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (s *service) SyncLpWorkerSwarmServiceConfig(
+	mainAppSvc, workerSvc *swarm.Service,
+) {
+	workerSvc.Spec.TaskTemplate.ContainerSpec.Image = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Image
+	workerSvc.Spec.TaskTemplate.ContainerSpec.Command = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Command
+	workerSvc.Spec.TaskTemplate.ContainerSpec.Args = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Args
+
+	// TODO: sync Envs
+
+	// Make sure the worker service has the same storages as the main service
+	workerSvc.Spec.TaskTemplate.ContainerSpec.Mounts = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Mounts
+}

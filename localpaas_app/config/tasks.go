@@ -14,6 +14,5 @@ type TaskQueue struct {
 }
 
 type Healthcheck struct {
-	Enabled      bool          `toml:"enabled" env:"LP_TASKS_HEALTHCHECK_ENABLED" default:"true"`
 	BaseInterval time.Duration `toml:"base_interval" env:"LP_TASKS_HEALTHCHECK_BASE_INTERVAL" default:"15s"`
 }

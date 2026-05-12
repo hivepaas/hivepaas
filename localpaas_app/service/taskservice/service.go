@@ -21,6 +21,8 @@ type Service interface {
 	// Locking
 	CreateDBLock(ctx context.Context, db database.Tx, id, selectFor string) (*entity.Lock, error)
 	CreateRedisLock(ctx context.Context, key string, exp time.Duration) (success bool, releaser func(), err error)
+	LockAllPendingTasks(ctx context.Context, db database.Tx, maxWait time.Duration,
+		extraOpts ...bunex.SelectQueryOption) ([]*entity.Task, error)
 
 	// Cancel a task
 	CancelTask(ctx context.Context, db database.Tx, taskID string) error

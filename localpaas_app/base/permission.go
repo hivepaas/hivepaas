@@ -50,6 +50,7 @@ const (
 	ResourceTypeDomainSettings     ResourceType = "domain-settings"
 	ResourceTypeStorageSettings    ResourceType = "storage-settings"
 	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"
+	ResourceTypeLocalPaaSSettings  ResourceType = "localpaas-settings"
 )
 
 type ResourceModule string

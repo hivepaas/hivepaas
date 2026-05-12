@@ -116,13 +116,11 @@ func (q *taskQueue) Start() (err error) {
 		}()
 	}
 
-	// Initialize task queue client if configured
-	if q.isAppMode() {
-		q.logger.Infof("starting task queue client...")
-		q.client, err = gocronqueue.NewClient(q.redisClient, q.logger)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+	// Initialize task queue client (always init a task queue client)
+	q.logger.Infof("starting task queue client...")
+	q.client, err = gocronqueue.NewClient(q.redisClient, q.logger)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -146,11 +144,13 @@ func (q *taskQueue) Shutdown() error {
 }
 
 func (q *taskQueue) StartScheduler() error {
-	if q.server != nil {
-		if err := q.server.StartScheduler(); err != nil {
-			q.logger.Errorf("failed to start scheduler in task queue server: %v", err)
-			return apperrors.Wrap(err)
-		}
+	if q.server == nil {
+		q.logger.Error("task queue server is not running")
+		return apperrors.New(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
+	}
+	if err := q.server.StartScheduler(); err != nil {
+		q.logger.Errorf("failed to start scheduler in task queue server: %v", err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -162,15 +162,20 @@ func (q *taskQueue) StartAllSchedulers() error {
 			return apperrors.Wrap(err)
 		}
 	}
-	return q.StartScheduler()
+	if q.server != nil {
+		return q.StartScheduler()
+	}
+	return nil
 }
 
 func (q *taskQueue) StopScheduler() error {
-	if q.server != nil {
-		if err := q.server.StopScheduler(); err != nil {
-			q.logger.Errorf("failed to stop scheduler in task queue server: %v", err)
-			return apperrors.Wrap(err)
-		}
+	if q.server == nil {
+		q.logger.Error("task queue server is not running")
+		return apperrors.New(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
+	}
+	if err := q.server.StopScheduler(); err != nil {
+		q.logger.Errorf("failed to stop scheduler in task queue server: %v", err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -182,7 +187,10 @@ func (q *taskQueue) StopAllSchedulers() error {
 			return apperrors.Wrap(err)
 		}
 	}
-	return q.StopScheduler()
+	if q.server != nil {
+		return q.StopScheduler()
+	}
+	return nil
 }
 
 func (q *taskQueue) isAppMode() bool {

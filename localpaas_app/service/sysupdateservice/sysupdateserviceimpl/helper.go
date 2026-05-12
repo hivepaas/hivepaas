@@ -1,4 +1,4 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
-func (e *Executor) scaleServiceReplicas(
+func (s *service) scaleServiceReplicas(
 	ctx context.Context,
 	service *swarm.Service,
 	replicas uint64,
@@ -20,7 +20,7 @@ func (e *Executor) scaleServiceReplicas(
 		return nil
 	}
 	service.Spec.Mode.Replicated.Replicas = &replicas
-	_, err := e.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	_, err := s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

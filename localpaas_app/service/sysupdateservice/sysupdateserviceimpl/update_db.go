@@ -1,4 +1,4 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/config"
@@ -23,9 +24,9 @@ const (
 	dbServiceRequiredRunningDuration = time.Second * 10
 )
 
-func (e *Executor) migrateDBSchema(
+func (s *service) migrateDBSchema(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
 	cfg := config.Current
 	start := timeutil.NowUTC()
@@ -76,10 +77,10 @@ func (e *Executor) migrateDBSchema(
 	return apperrors.Wrap(err)
 }
 
-func (e *Executor) migrateDBData(
+func (s *service) migrateDBData(
 	ctx context.Context,
 	db database.IDB,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
 	start := timeutil.NowUTC()
 	_ = data.LogStore.Add(ctx, applog.NewOutFrame("Start migrating db data...", applog.TsNow))
@@ -94,16 +95,16 @@ func (e *Executor) migrateDBData(
 		}
 	}()
 
-	err = e.dbService.MigrateData(ctx, db)
+	err = s.dbService.MigrateData(ctx, db)
 	return apperrors.Wrap(err)
 }
 
-func (e *Executor) updateDbService(
+func (s *service) updateDbService(
 	ctx context.Context,
 	db database.IDB,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 	if args.TargetVersion.DbImage == "" {
 		return nil
 	}
@@ -121,7 +122,7 @@ func (e *Executor) updateDbService(
 		}
 	}()
 
-	dbSvc, err := e.lpAppService.GetLpDbSwarmService(ctx)
+	dbSvc, err := s.lpAppService.GetLpDbSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -134,22 +135,24 @@ func (e *Executor) updateDbService(
 	dbSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
 	dbSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, dbSvc.ID, &dbSvc.Version, &dbSvc.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, dbSvc.ID, &dbSvc.Version, &dbSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
-	dbSvc, err = e.dockerManager.ServiceUpdateWait(ctx, dbSvc.ID, dbServiceUpdateCheckInterval)
+	dbSvc, err = s.dockerManager.ServiceUpdateWait(ctx, dbSvc.ID, dbServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if dbSvc.UpdateStatus != nil && dbSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service db is rolled back")
+		_ = data.LogStore.Add(ctx, applog.NewWarnFrame("service db is rolled back",
+			applog.TsNow))
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	// Wait for the service up and running
-	running, err := e.dockerManager.ServiceWaitUntilRunning(ctx, dbSvc.ID, true,
+	running, err := s.dockerManager.ServiceWaitUntilRunning(ctx, dbSvc.ID, true,
 		dbServiceRequiredRunningDuration, dbServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -159,13 +162,13 @@ func (e *Executor) updateDbService(
 	}
 
 	// Migrate DB schema
-	err = e.migrateDBSchema(ctx, data)
+	err = s.migrateDBSchema(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Migrate DB data
-	err = e.migrateDBData(ctx, db, data)
+	err = s.migrateDBData(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

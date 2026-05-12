@@ -1,10 +1,11 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
@@ -15,11 +16,11 @@ const (
 	traefikServiceUpdateCheckInterval = time.Second * 5
 )
 
-func (e *Executor) updateTraefikService(
+func (s *service) updateTraefikService(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 	if args.TargetVersion.TraefikImage == "" {
 		return nil
 	}
@@ -37,7 +38,7 @@ func (e *Executor) updateTraefikService(
 		}
 	}()
 
-	traefikSvc, err := e.traefikService.GetTraefikSwarmService(ctx)
+	traefikSvc, err := s.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -49,18 +50,20 @@ func (e *Executor) updateTraefikService(
 	traefikSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
 	traefikSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
-	traefikSvc, err = e.dockerManager.ServiceUpdateWait(ctx, traefikSvc.ID, traefikServiceUpdateCheckInterval)
+	traefikSvc, err = s.dockerManager.ServiceUpdateWait(ctx, traefikSvc.ID, traefikServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if traefikSvc.UpdateStatus != nil && traefikSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service traefik is rolled back")
+		_ = data.LogStore.Add(ctx, applog.NewWarnFrame("service traefik is rolled back",
+			applog.TsNow))
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil

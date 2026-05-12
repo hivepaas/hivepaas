@@ -1,10 +1,11 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
@@ -15,11 +16,11 @@ const (
 	redisServiceUpdateCheckInterval = time.Second * 5
 )
 
-func (e *Executor) updateRedisService(
+func (s *service) updateRedisService(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 	if args.TargetVersion.RedisImage == "" {
 		return nil
 	}
@@ -37,7 +38,7 @@ func (e *Executor) updateRedisService(
 		}
 	}()
 
-	redisSvc, err := e.lpAppService.GetLpCacheSwarmService(ctx)
+	redisSvc, err := s.lpAppService.GetLpCacheSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -50,18 +51,20 @@ func (e *Executor) updateRedisService(
 	redisSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
 	redisSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, redisSvc.ID, &redisSvc.Version, &redisSvc.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, redisSvc.ID, &redisSvc.Version, &redisSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
-	redisSvc, err = e.dockerManager.ServiceUpdateWait(ctx, redisSvc.ID, redisServiceUpdateCheckInterval)
+	redisSvc, err = s.dockerManager.ServiceUpdateWait(ctx, redisSvc.ID, redisServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if redisSvc.UpdateStatus != nil && redisSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service redis is rolled back")
+		_ = data.LogStore.Add(ctx, applog.NewWarnFrame("service redis is rolled back",
+			applog.TsNow))
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil

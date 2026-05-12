@@ -1,4 +1,4 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
@@ -12,12 +12,12 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
 
-func (e *Executor) notifyForSystemUpdate(
+func (s *service) notifyForSystemUpdate(
 	ctx context.Context,
 	db database.IDB,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	notification, err := e.notificationService.GetDefaultNotification(ctx, db, base.NewSettingScopeGlobal(),
+	notification, err := s.notificationService.GetDefaultNotification(ctx, db, base.NewSettingScopeGlobal(),
 		data.RefObjects, false)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -26,8 +26,8 @@ func (e *Executor) notifyForSystemUpdate(
 		return nil
 	}
 
-	e.buildSystemUpdateNotifMsgData(data)
-	_, err = e.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
+	s.buildSystemUpdateNotifMsgData(data)
+	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: data.Task.IsDone(),
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
@@ -40,8 +40,8 @@ func (e *Executor) notifyForSystemUpdate(
 	return nil
 }
 
-func (e *Executor) buildSystemUpdateNotifMsgData(
-	data *taskData,
+func (s *service) buildSystemUpdateNotifMsgData(
+	data *sysUpdateData,
 ) {
 	task := data.Task
 	args := gofn.Must(task.ArgsAsSystemUpdate())

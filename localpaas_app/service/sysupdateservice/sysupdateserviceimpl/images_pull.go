@@ -1,4 +1,4 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
@@ -14,24 +14,24 @@ import (
 )
 
 //nolint:unused
-func (e *Executor) pullAllImages(
+func (s *service) pullAllImages(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
 	errMap := gofn.ExecTasksEx(ctx, 0, true,
 		func(ctx context.Context) error {
-			return e.pullImage(ctx, args.TargetVersion.AppImage, data)
+			return s.pullImage(ctx, args.TargetVersion.AppImage, data)
 		},
 		func(ctx context.Context) error {
-			return e.pullImage(ctx, args.TargetVersion.RedisImage, data)
+			return s.pullImage(ctx, args.TargetVersion.RedisImage, data)
 		},
 		func(ctx context.Context) error {
-			return e.pullImage(ctx, args.TargetVersion.DbImage, data)
+			return s.pullImage(ctx, args.TargetVersion.DbImage, data)
 		},
 		func(ctx context.Context) error {
-			return e.pullImage(ctx, args.TargetVersion.TraefikImage, data)
+			return s.pullImage(ctx, args.TargetVersion.TraefikImage, data)
 		},
 	)
 	for _, err := range errMap {
@@ -41,10 +41,10 @@ func (e *Executor) pullAllImages(
 }
 
 //nolint:unused
-func (e *Executor) pullImage(
+func (s *service) pullImage(
 	ctx context.Context,
 	image string,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
 	if image == "" {
 		return nil
@@ -63,7 +63,7 @@ func (e *Executor) pullImage(
 		}
 	}()
 
-	logsReader, err := e.dockerManager.ImagePull(ctx, image)
+	logsReader, err := s.dockerManager.ImagePull(ctx, image)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

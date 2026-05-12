@@ -1,4 +1,4 @@
-package tasksystemupdate
+package sysupdateserviceimpl
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/applog"
@@ -17,12 +18,12 @@ const (
 	workerServiceUpdateCheckInterval  = time.Second * 5
 )
 
-func (e *Executor) scaleMainAppService(
+func (s *service) scaleMainAppService(
 	ctx context.Context,
 	replicas uint64,
-	data *taskData,
+	data *sysUpdateData,
 ) error {
-	mainAppSvc, err := e.lpAppService.GetLpAppSwarmService(ctx)
+	mainAppSvc, err := s.lpAppService.GetLpAppSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -33,19 +34,19 @@ func (e *Executor) scaleMainAppService(
 		return nil
 	}
 
-	err = e.scaleServiceReplicas(ctx, mainAppSvc, replicas)
+	err = s.scaleServiceReplicas(ctx, mainAppSvc, replicas)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	return nil
 }
 
-func (e *Executor) scaleWorkerService(
+func (s *service) scaleWorkerService(
 	ctx context.Context,
 	replicas uint64,
-	data *taskData,
+	data *sysUpdateData,
 ) error {
-	workerSvc, err := e.lpAppService.GetLpWorkerSwarmService(ctx)
+	workerSvc, err := s.lpAppService.GetLpWorkerSwarmService(ctx)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
@@ -60,33 +61,33 @@ func (e *Executor) scaleWorkerService(
 		return nil
 	}
 
-	err = e.scaleServiceReplicas(ctx, workerSvc, replicas)
+	err = s.scaleServiceReplicas(ctx, workerSvc, replicas)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	return nil
 }
 
-func (e *Executor) updateMainAppService(
+func (s *service) updateMainAppService(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
 	start := timeutil.NowUTC()
 	_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas service...", applog.TsNow))
 	defer func() {
 		duration := timeutil.NowUTC().Sub(start)
 		if err != nil {
-			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas service finished in "+duration.String()+
-				" with error: "+err.Error(), applog.TsNow))
+			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas service finished in "+
+				duration.String()+" with error: "+err.Error(), applog.TsNow))
 		} else {
-			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas service finished in "+duration.String(),
-				applog.TsNow))
+			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas service finished in "+
+				duration.String(), applog.TsNow))
 		}
 	}()
 
-	appSvc, err := e.lpAppService.GetLpAppSwarmService(ctx)
+	appSvc, err := s.lpAppService.GetLpAppSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -94,43 +95,45 @@ func (e *Executor) updateMainAppService(
 	appSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.AppImage
 	appSvc.Spec.Mode.Replicated.Replicas = data.CurrentAppReplicas
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
-	appSvc, err = e.dockerManager.ServiceUpdateWait(ctx, appSvc.ID, mainAppServiceUpdateCheckInterval)
+	appSvc, err = s.dockerManager.ServiceUpdateWait(ctx, appSvc.ID, mainAppServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if appSvc.UpdateStatus != nil && appSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service localpaas is rolled back")
+		_ = data.LogStore.Add(ctx, applog.NewWarnFrame("service localpaas is rolled back",
+			applog.TsNow))
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil
 }
 
-func (e *Executor) updateWorkerService(
+func (s *service) updateWorkerService(
 	ctx context.Context,
-	data *taskData,
+	data *sysUpdateData,
 ) (err error) {
-	args := data.UpdateArgs
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
 	start := timeutil.NowUTC()
-	_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating worker service...", applog.TsNow))
+	_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas worker service...", applog.TsNow))
 	defer func() {
 		duration := timeutil.NowUTC().Sub(start)
 		if err != nil {
-			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating worker service finished in "+duration.String()+
-				" with error: "+err.Error(), applog.TsNow))
+			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas worker service finished in "+
+				duration.String()+" with error: "+err.Error(), applog.TsNow))
 		} else {
-			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating worker service finished in "+duration.String(),
-				applog.TsNow))
+			_ = data.LogStore.Add(ctx, applog.NewOutFrame("Updating localpaas worker service finished in "+
+				duration.String(), applog.TsNow))
 		}
 	}()
 
-	workerSvc, err := e.lpAppService.GetLpWorkerSwarmService(ctx)
+	workerSvc, err := s.lpAppService.GetLpWorkerSwarmService(ctx)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
@@ -141,18 +144,20 @@ func (e *Executor) updateWorkerService(
 	workerSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.AppImage
 	workerSvc.Spec.Mode.Replicated.Replicas = data.CurrentWorkerReplicas
 
-	_, err = e.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
-	workerSvc, err = e.dockerManager.ServiceUpdateWait(ctx, workerSvc.ID, workerServiceUpdateCheckInterval)
+	workerSvc, err = s.dockerManager.ServiceUpdateWait(ctx, workerSvc.ID, workerServiceUpdateCheckInterval)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if workerSvc.UpdateStatus != nil && workerSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		return apperrors.New(apperrors.ErrActionFailed).WithMsgLog("service localpaas worker is rolled back")
+		_ = data.LogStore.Add(ctx, applog.NewWarnFrame("service localpaas worker is rolled back",
+			applog.TsNow))
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil

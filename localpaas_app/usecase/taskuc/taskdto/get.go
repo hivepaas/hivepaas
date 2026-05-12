@@ -36,7 +36,7 @@ type TaskResp struct {
 	ID        string            `json:"id"`
 	Type      base.TaskType     `json:"type"`
 	Status    base.TaskStatus   `json:"status"`
-	Config    entity.TaskConfig `json:"config"`
+	Config    entity.TaskConfig `json:"config"` // NOTE: use entity's type directly here, may need refactor
 	UpdateVer int               `json:"updateVer"`
 
 	RunAt     *time.Time `json:"runAt" copy:",nilonzero"`

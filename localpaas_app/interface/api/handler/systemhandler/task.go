@@ -98,52 +98,6 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// UpdateTaskStatus Updates task status
-// @Summary Updates task status
-// @Description Updates task status
-// @Tags    system_tasks
-// @Produce json
-// @Id      updateTaskStatus
-// @Param   taskID path string true "task ID"
-// @Param   body body taskdto.UpdateTaskStatusReq true "request data"
-// @Success 200 {object} taskdto.UpdateTaskStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /system/tasks/{taskID}/status [put]
-func (h *Handler) UpdateTaskStatus(ctx *gin.Context) {
-	taskID, err := h.ParseStringParam(ctx, "taskID")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		ResourceID:     taskID,
-		Action:         base.ActionTypeWrite,
-	})
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := taskdto.NewUpdateTaskStatusReq()
-	req.ID = taskID
-	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.taskUC.UpdateTaskStatus(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-
 // CancelTask Cancels a task
 // @Summary Cancels a task
 // @Description Cancels a task

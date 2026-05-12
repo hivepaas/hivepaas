@@ -16,24 +16,27 @@ func New(
 	settingRepo repository.SettingRepo,
 	lockRepo repository.LockRepo,
 	taskInfoRepo cacherepository.TaskInfoRepo,
+	taskControlRepo cacherepository.TaskControlRepo,
 ) taskservice.Service {
 	return &service{
-		db:           db,
-		redisClient:  redisClient,
-		taskRepo:     taskRepo,
-		taskLogRepo:  taskLogRepo,
-		settingRepo:  settingRepo,
-		lockRepo:     lockRepo,
-		taskInfoRepo: taskInfoRepo,
+		db:              db,
+		redisClient:     redisClient,
+		taskRepo:        taskRepo,
+		taskLogRepo:     taskLogRepo,
+		settingRepo:     settingRepo,
+		lockRepo:        lockRepo,
+		taskInfoRepo:    taskInfoRepo,
+		taskControlRepo: taskControlRepo,
 	}
 }
 
 type service struct {
-	db           *database.DB
-	redisClient  rediscache.Client
-	taskRepo     repository.TaskRepo
-	taskLogRepo  repository.TaskLogRepo
-	settingRepo  repository.SettingRepo
-	lockRepo     repository.LockRepo
-	taskInfoRepo cacherepository.TaskInfoRepo
+	db              *database.DB
+	redisClient     rediscache.Client
+	taskRepo        repository.TaskRepo
+	taskLogRepo     repository.TaskLogRepo
+	settingRepo     repository.SettingRepo
+	lockRepo        repository.LockRepo
+	taskInfoRepo    cacherepository.TaskInfoRepo
+	taskControlRepo cacherepository.TaskControlRepo
 }

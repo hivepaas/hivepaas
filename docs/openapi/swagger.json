@@ -20233,67 +20233,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/system/tasks/{taskID}/status" : {
-      "put" : {
-        "description" : "Updates task status",
-        "operationId" : "updateTaskStatus",
-        "parameters" : [ {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates task status",
-        "tags" : [ "system_tasks" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/system/traefik/config/reload" : {
       "post" : {
         "description" : "Reloads traefik config files",
@@ -21801,9 +21740,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -22386,6 +22325,9 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_entity.TaskConfig" : {
         "properties" : {
+          "controlDisabled" : {
+            "type" : "boolean"
+          },
           "maxRetry" : {
             "type" : "integer"
           },
@@ -22426,7 +22368,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -22437,7 +22379,7 @@
           "ModeExclusive" : "l: exclusive use",
           "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
           "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits",
+          "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
           "ModeSocket" : "S: Unix domain socket",
@@ -22445,7 +22387,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits" ],
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
         "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
@@ -27233,6 +27175,9 @@
           "command" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.ContainerCommandReq"
           },
+          "controlDisabled" : {
+            "type" : "boolean"
+          },
           "cronType" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.CronJobType"
           },
@@ -27261,7 +27206,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "cronType", "default", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "timeout" ],
+        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "cronType", "default", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "timeout" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.CreateCronJobResp" : {
@@ -27320,6 +27265,9 @@
           "command" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.ContainerCommandResp"
           },
+          "controlDisabled" : {
+            "type" : "boolean"
+          },
           "createdAt" : {
             "type" : "string"
           },
@@ -27375,7 +27323,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "createdAt", "cronType", "id", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "controlDisabled", "createdAt", "cronType", "id", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.CronJobTaskLogsDataResp" : {
@@ -27532,6 +27480,9 @@
           "command" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.ContainerCommandReq"
           },
+          "controlDisabled" : {
+            "type" : "boolean"
+          },
           "cronType" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.CronJobType"
           },
@@ -27563,7 +27514,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "cronType", "default", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "timeout", "updateVer" ],
+        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "cronType", "default", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "timeout", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cronjobuc_cronjobdto.UpdateCronJobResp" : {
@@ -32121,7 +32072,11 @@
       "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.TaskResp" : {
         "properties" : {
           "config" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_entity.TaskConfig"
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_entity.TaskConfig"
+            } ],
+            "description" : "NOTE: use entity's type directly here, may need refactor",
+            "type" : "object"
           },
           "createdAt" : {
             "type" : "string"
@@ -32155,27 +32110,6 @@
           }
         },
         "required" : [ "config", "createdAt", "endedAt", "id", "retryAt", "runAt", "startedAt", "status", "type", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusReq" : {
-        "properties" : {
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.TaskStatus"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "status", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_taskuc_taskdto.UpdateTaskStatusResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.APIKeyDataResp" : {

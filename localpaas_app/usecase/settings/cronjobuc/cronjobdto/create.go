@@ -27,28 +27,30 @@ type CreateCronJobReq struct {
 }
 
 type CronJobBaseReq struct {
-	Name         string                            `json:"name"`
-	CronType     base.CronJobType                  `json:"cronType"`
-	Schedule     *ScheduleReq                      `json:"schedule"`
-	App          basedto.ObjectIDReq               `json:"app"`
-	Priority     base.TaskPriority                 `json:"priority"`
-	MaxRetry     int                               `json:"maxRetry"`
-	RetryDelay   timeutil.Duration                 `json:"retryDelay"`
-	Timeout      timeutil.Duration                 `json:"timeout"`
-	Command      *ContainerCommandReq              `json:"command"`
-	Notification *basedto.BaseEventNotificationReq `json:"notification"`
+	Name            string                            `json:"name"`
+	CronType        base.CronJobType                  `json:"cronType"`
+	Schedule        *ScheduleReq                      `json:"schedule"`
+	App             basedto.ObjectIDReq               `json:"app"`
+	Priority        base.TaskPriority                 `json:"priority"`
+	MaxRetry        int                               `json:"maxRetry"`
+	RetryDelay      timeutil.Duration                 `json:"retryDelay"`
+	Timeout         timeutil.Duration                 `json:"timeout"`
+	ControlDisabled bool                              `json:"controlDisabled"`
+	Command         *ContainerCommandReq              `json:"command"`
+	Notification    *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *CronJobBaseReq) ToEntity() *entity.CronJob {
 	res := &entity.CronJob{
-		CronType:     req.CronType,
-		Schedule:     req.Schedule.ToEntity(),
-		App:          entity.ObjectID{ID: req.App.ID},
-		Priority:     req.Priority,
-		MaxRetry:     req.MaxRetry,
-		RetryDelay:   req.RetryDelay,
-		Timeout:      req.Timeout,
-		Notification: req.Notification.ToEntity(),
+		CronType:        req.CronType,
+		Schedule:        req.Schedule.ToEntity(),
+		App:             entity.ObjectID{ID: req.App.ID},
+		Priority:        req.Priority,
+		MaxRetry:        req.MaxRetry,
+		RetryDelay:      req.RetryDelay,
+		Timeout:         req.Timeout,
+		ControlDisabled: req.ControlDisabled,
+		Notification:    req.Notification.ToEntity(),
 	}
 	if req.CronType == base.CronJobTypeContainerCommand {
 		res.Command = req.Command.ToEntity()

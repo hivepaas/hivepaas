@@ -7,7 +7,8 @@ import (
 )
 
 type TaskInfo struct {
-	ID        string          `json:"id"`
-	Status    base.TaskStatus `json:"status"`
-	StartedAt time.Time       `json:"startedAt"`
+	ID              string          `json:"id"`
+	Status          base.TaskStatus `json:"status"`
+	ControlDisabled bool            `json:"controlDisabled,omitempty"`
+	StartedAt       time.Time       `json:"startedAt"`
 }

@@ -76,14 +76,17 @@ func (q *taskQueue) executeTask(
 			task.Config.Retry++
 		}
 
-		// Check for commands from other processes
-		go q.taskControlCheck(ctx, taskData)
+		// Check for control commands from users and other processing
+		if !task.Config.ControlDisabled {
+			go q.taskControlCheck(ctx, taskData)
+		}
 
 		// Mark the task as `in-progress` by inserting a new record in to redis
 		taskInfo := &cacheentity.TaskInfo{
-			ID:        task.ID,
-			Status:    base.TaskStatusInProgress,
-			StartedAt: task.StartedAt,
+			ID:              task.ID,
+			Status:          base.TaskStatusInProgress,
+			ControlDisabled: task.Config.ControlDisabled,
+			StartedAt:       task.StartedAt,
 		}
 		err = q.taskInfoRepo.Set(ctx, task.ID, taskInfo, taskInfoCacheExp)
 		if err != nil {
@@ -199,15 +202,9 @@ func (q *taskQueue) taskControlCheck(
 	}()
 
 	for {
-		if taskData.Done || taskData.Canceled {
+		if taskData.Done || taskData.Canceled || ctx.Err() != nil {
 			return
 		}
-		select {
-		case <-ctx.Done(): // context is done, returns
-			return
-		default:
-		}
-
 		taskControl, err := redishelper.BLPopOne[*cacheentity.TaskControl](ctx, q.redisClient,
 			key, taskControlCheckTimeout)
 		if err != nil {
@@ -217,7 +214,7 @@ func (q *taskQueue) taskControlCheck(
 		if taskData.OnCommand != nil {
 			taskData.OnCommand(cmd)
 		}
-		if taskData.NonCancelable && cmd == base.TaskCommandCancel {
+		if !taskData.NonCancelable && cmd == base.TaskCommandCancel {
 			taskData.Canceled = true
 			return
 		}

@@ -29,16 +29,17 @@ var (
 )
 
 type CronJob struct {
-	CronType      base.CronJobType         `json:"cronType"`
-	Schedule      *CronJobSchedule         `json:"schedule"`
-	App           ObjectID                 `json:"app,omitzero"`
-	TargetSetting ObjectID                 `json:"targetSetting,omitzero"`
-	Priority      base.TaskPriority        `json:"priority,omitempty"`
-	MaxRetry      int                      `json:"maxRetry,omitempty"`
-	RetryDelay    timeutil.Duration        `json:"retryDelay,omitempty"`
-	Timeout       timeutil.Duration        `json:"timeout,omitempty"`
-	Command       *CronJobContainerCommand `json:"command,omitempty"`
-	Notification  *BaseEventNotification   `json:"notification,omitempty"`
+	CronType        base.CronJobType         `json:"cronType"`
+	Schedule        *CronJobSchedule         `json:"schedule"`
+	App             ObjectID                 `json:"app,omitzero"`
+	TargetSetting   ObjectID                 `json:"targetSetting,omitzero"`
+	Priority        base.TaskPriority        `json:"priority,omitempty"`
+	MaxRetry        int                      `json:"maxRetry,omitempty"`
+	RetryDelay      timeutil.Duration        `json:"retryDelay,omitempty"`
+	Timeout         timeutil.Duration        `json:"timeout,omitempty"`
+	ControlDisabled bool                     `json:"controlDisabled,omitempty"`
+	Command         *CronJobContainerCommand `json:"command,omitempty"`
+	Notification    *BaseEventNotification   `json:"notification,omitempty"`
 }
 
 type CronJobSchedule struct {

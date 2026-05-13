@@ -22,13 +22,21 @@ import {
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
     CreateOrEditBasicAuthDialog,
+    CreateOrEditImPlatformDialog,
     CreateOrEditRegistryAuthDialog,
+    CreateOrEditSslCertDialog,
     UpdateBasicAuthStatusDialog,
+    UpdateImPlatformStatusDialog,
     UpdateRegistryAuthStatusDialog,
+    UpdateSslCertStatusDialog,
     useCreateOrEditBasicAuthDialogState,
+    useCreateOrEditImPlatformDialogState,
     useCreateOrEditRegistryAuthDialogState,
+    useCreateOrEditSslCertDialogState,
     useUpdateBasicAuthStatusDialogState,
+    useUpdateImPlatformStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
+    useUpdateSslCertStatusDialogState,
 } from "~/settings/dialogs";
 
 function View() {
@@ -44,6 +52,10 @@ function View() {
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
+    const createOrEditSslCertDialog = useCreateOrEditSslCertDialogState();
+    const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
+    const createOrEditImPlatformDialog = useCreateOrEditImPlatformDialogState();
+    const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -57,6 +69,10 @@ function View() {
         updateBasicAuthStatusDialog.destroy();
         createOrEditRegistryAuthDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
+        createOrEditSslCertDialog.destroy();
+        updateSslCertStatusDialog.destroy();
+        createOrEditImPlatformDialog.destroy();
+        updateImPlatformStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -72,6 +88,10 @@ function View() {
             <UpdateBasicAuthStatusDialog />
             <CreateOrEditRegistryAuthDialog />
             <UpdateRegistryAuthStatusDialog />
+            <CreateOrEditSslCertDialog />
+            <UpdateSslCertStatusDialog />
+            <CreateOrEditImPlatformDialog />
+            <UpdateImPlatformStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

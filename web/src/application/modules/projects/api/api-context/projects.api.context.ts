@@ -25,6 +25,8 @@ import {
     ProjectEnvVarsApiValidator,
     ProjectGitCredentialsApi,
     ProjectGitCredentialsApiValidator,
+    ProjectImServiceApi,
+    ProjectImServiceApiValidator,
     ProjectNetworksApi,
     ProjectNetworksApiValidator,
     ProjectNotificationApi,
@@ -85,6 +87,7 @@ function createApi() {
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
     const projectSslCertApiValidator = new ProjectSslCertApiValidator();
+    const projectImServiceApiValidator = new ProjectImServiceApiValidator();
     const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
 
     return {
@@ -149,6 +152,9 @@ function createApi() {
             },
             registryAuth: {
                 $: new ProjectRegistryAuthApi(projectRegistryAuthApiValidator),
+            },
+            imService: {
+                $: new ProjectImServiceApi(projectImServiceApiValidator),
             },
             sslCert: {
                 $: new ProjectSslCertApi(projectSslCertApiValidator),

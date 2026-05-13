@@ -7,6 +7,8 @@ import {
     DomainSettingsApiValidator,
     GitCredentialsApi,
     GitCredentialsApiValidator,
+    ImServiceApi,
+    ImServiceApiValidator,
     NotificationsApi,
     NotificationsApiValidator,
     RegistryAuthApi,
@@ -28,6 +30,7 @@ function createApi() {
     const gitCredentialsValidator = new GitCredentialsApiValidator();
     const registryAuthValidator = new RegistryAuthApiValidator();
     const sslCertValidator = new SslCertApiValidator();
+    const imServiceValidator = new ImServiceApiValidator();
 
     return {
         settings: {
@@ -38,6 +41,7 @@ function createApi() {
             gitCredentials: new GitCredentialsApi(gitCredentialsValidator),
             registryAuth: new RegistryAuthApi(registryAuthValidator),
             sslCert: new SslCertApi(sslCertValidator),
+            imService: new ImServiceApi(imServiceValidator),
         },
     };
 }

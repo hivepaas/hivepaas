@@ -3,6 +3,7 @@ export * from "./notification.entity";
 export * from "./registry-auth.entity";
 export * from "./git-credential.entity";
 export * from "./ssl-cert.entity";
+export * from "./im-service.entity";
 export * from "./domain-settings.entity";
 export * from "./storage-settings.entity";
 export * from "./basic-auth.entity";

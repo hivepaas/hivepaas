@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
@@ -16,12 +15,20 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
 var (
 	supportedMountTypes = []mount.Type{mount.TypeBind, mount.TypeVolume, mount.TypeCluster, mount.TypeTmpfs}
+)
+
+const (
+	mountKeyTypeBind    = "type:%v:src:%v:propagation:%v:target:%v:consistency:%v"
+	mountKeyTypeVolume  = "type:%v:src:%v:subpath:%v:target:%v:consistency:%v"
+	mountKeyTypeCluster = mountKeyTypeVolume
+	mountKeyTypeTmpfs   = "type:%v:size:%v:target:%v:consistency:%v"
 )
 
 func (uc *UC) UpdateAppStorageSettings(
@@ -58,8 +65,10 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App     *entity.App
-	Service *swarm.Service
+	App               *entity.App
+	Service           *swarm.Service
+	ExistingMountKeys map[string]struct{}
+	StorageSettings   *entity.StorageSettings
 }
 
 func (uc *UC) loadAppStorageSettingsForUpdate(
@@ -90,13 +99,20 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
+	// Calculate mount keys of existing mounts to distinguish new changes
+	existingMounts := service.Spec.TaskTemplate.ContainerSpec.Mounts
+	data.ExistingMountKeys = make(map[string]struct{}, len(existingMounts))
+	for i := range existingMounts {
+		data.ExistingMountKeys[uc.calcExistingMountKey(&existingMounts[i])] = struct{}{}
+	}
+
 	// Load project storage settings to make sure these app settings comply with
 	storageSttg, err := uc.settingRepo.GetSingle(ctx, db, base.NewSettingScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	storageSettings := storageSttg.MustAsStorageSettings()
+	data.StorageSettings = storageSttg.MustAsStorageSettings()
 
 	for _, reqMnt := range req.Mounts {
 		if !gofn.Contain(supportedMountTypes, reqMnt.Type) {
@@ -104,13 +120,13 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		}
 		switch reqMnt.Type { //nolint:exhaustive
 		case mount.TypeBind:
-			err = uc.validateStorageSettingsBindMount(app, reqMnt, storageSettings)
+			err = uc.validateStorageSettingsBindMount(app, reqMnt, data)
 		case mount.TypeVolume:
-			err = uc.validateStorageSettingsVolumeMount(app, reqMnt, storageSettings)
+			err = uc.validateStorageSettingsVolumeMount(app, reqMnt, data)
 		case mount.TypeCluster:
-			err = uc.validateStorageSettingsClusterVolumeMount(app, reqMnt, storageSettings)
+			err = uc.validateStorageSettingsClusterVolumeMount(app, reqMnt, data)
 		case mount.TypeTmpfs:
-			err = uc.validateStorageSettingsTmpfsMount(reqMnt, storageSettings)
+			err = uc.validateStorageSettingsTmpfsMount(reqMnt, data)
 		}
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -120,25 +136,111 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	return nil
 }
 
+func (uc *UC) calcExistingMountKey(currMnt *mount.Mount) string {
+	var key string
+	switch currMnt.Type { //nolint:exhaustive
+	case mount.TypeBind:
+		propagation := ""
+		if currMnt.BindOptions != nil {
+			propagation = string(currMnt.BindOptions.Propagation)
+		}
+		key = fmt.Sprintf(mountKeyTypeBind, currMnt.Type, currMnt.Source, propagation,
+			currMnt.Target, currMnt.Consistency)
+	case mount.TypeVolume:
+		subpath := ""
+		if currMnt.VolumeOptions != nil {
+			subpath = currMnt.VolumeOptions.Subpath
+		}
+		key = fmt.Sprintf(mountKeyTypeVolume, currMnt.Type, currMnt.Source, subpath,
+			currMnt.Target, currMnt.Consistency)
+	case mount.TypeCluster:
+		subpath := ""
+		if currMnt.VolumeOptions != nil {
+			subpath = currMnt.VolumeOptions.Subpath
+		}
+		key = fmt.Sprintf(mountKeyTypeCluster, currMnt.Type, currMnt.Source, subpath,
+			currMnt.Target, currMnt.Consistency)
+	case mount.TypeTmpfs:
+		size := int64(0)
+		if currMnt.TmpfsOptions != nil {
+			size = currMnt.TmpfsOptions.SizeBytes
+		}
+		key = fmt.Sprintf(mountKeyTypeTmpfs, currMnt.Type, size,
+			currMnt.Target, currMnt.Consistency)
+	}
+	return key
+}
+
+func (uc *UC) calcRequestingMountKey(mnt *appsettingsdto.Mount) string {
+	var key string
+	switch mnt.Type { //nolint:exhaustive
+	case mount.TypeBind:
+		source := filepath.Join(mnt.BindOptions.BaseDir, mnt.BindOptions.Subpath)
+		propagation := ""
+		if mnt.BindOptions != nil {
+			propagation = string(mnt.BindOptions.Propagation)
+		}
+		key = fmt.Sprintf(mountKeyTypeBind, mnt.Type, source, propagation,
+			mnt.Target, mnt.Consistency)
+	case mount.TypeVolume:
+		volume := ""
+		subpath := ""
+		if mnt.VolumeOptions != nil {
+			volume = mnt.VolumeOptions.Volume
+			subpath = mnt.VolumeOptions.Subpath
+		}
+		key = fmt.Sprintf(mountKeyTypeVolume, mnt.Type, volume, subpath,
+			mnt.Target, mnt.Consistency)
+	case mount.TypeCluster:
+		volume := ""
+		subpath := ""
+		if mnt.ClusterOptions != nil {
+			volume = mnt.ClusterOptions.Volume
+			subpath = mnt.ClusterOptions.Subpath
+		}
+		key = fmt.Sprintf(mountKeyTypeCluster, mnt.Type, volume, subpath,
+			mnt.Target, mnt.Consistency)
+	case mount.TypeTmpfs:
+		size := int64(0)
+		if mnt.TmpfsOptions != nil {
+			size = mnt.TmpfsOptions.Size.Bytes()
+		}
+		key = fmt.Sprintf(mountKeyTypeTmpfs, mnt.Type, size,
+			mnt.Target, mnt.Consistency)
+	}
+	return key
+}
+
 func (uc *UC) validateStorageSettingsBindMount(
 	app *entity.App,
 	mnt *appsettingsdto.Mount,
-	storageSettings *entity.StorageSettings,
+	data *updateAppStorageSettingsData,
 ) error {
-	bindSettings := storageSettings.BindSettings
+	// If the requesting mount exists and no change, keep it
+	if _, exists := data.ExistingMountKeys[uc.calcRequestingMountKey(mnt)]; exists {
+		return nil
+	}
+
+	bindSettings := data.StorageSettings.BindSettings
 	if bindSettings == nil || !bindSettings.Enabled {
 		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Bind settings")
 	}
 
-	if len(bindSettings.BaseDirs) > 0 && !gofn.Contain(bindSettings.BaseDirs, mnt.BindOptions.BaseDir) {
-		return apperrors.New(apperrors.ErrSettingViolated).
-			WithParam("Name", fmt.Sprintf("Use of base dir '%v'", mnt.BindOptions.BaseDir))
+	if len(bindSettings.BaseDirs) > 0 {
+		contain, _ := fileutil.PathContain(bindSettings.BaseDirs, mnt.BindOptions.BaseDir)
+		if !contain {
+			return apperrors.New(apperrors.ErrSettingViolated).
+				WithParam("Name", fmt.Sprintf("Use of base dir '%v'", mnt.BindOptions.BaseDir))
+		}
 	}
 
 	subpathRequired := bindSettings.CaclRequiredSubpath(app)
-	if subpathRequired != "" && !strings.HasPrefix(mnt.BindOptions.Subpath, subpathRequired) {
-		return apperrors.New(apperrors.ErrSettingViolated).
-			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.BindOptions.Subpath))
+	if subpathRequired != "" {
+		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.BindOptions.Subpath)
+		if !isSubpath {
+			return apperrors.New(apperrors.ErrSettingViolated).
+				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.BindOptions.Subpath))
+		}
 	}
 
 	return nil
@@ -147,9 +249,14 @@ func (uc *UC) validateStorageSettingsBindMount(
 func (uc *UC) validateStorageSettingsVolumeMount(
 	app *entity.App,
 	mnt *appsettingsdto.Mount,
-	storageSettings *entity.StorageSettings,
+	data *updateAppStorageSettingsData,
 ) error {
-	volumeSettings := storageSettings.VolumeSettings
+	// If the requesting mount exists and no change, keep it
+	if _, exists := data.ExistingMountKeys[uc.calcRequestingMountKey(mnt)]; exists {
+		return nil
+	}
+
+	volumeSettings := data.StorageSettings.VolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
 		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Volume settings")
 	}
@@ -161,9 +268,12 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 	}
 
 	subpathRequired := volumeSettings.CaclRequiredSubpath(app)
-	if subpathRequired != "" && !strings.HasPrefix(mnt.VolumeOptions.Subpath, subpathRequired) {
-		return apperrors.New(apperrors.ErrSettingViolated).
-			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.VolumeOptions.Subpath))
+	if subpathRequired != "" {
+		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.VolumeOptions.Subpath)
+		if !isSubpath {
+			return apperrors.New(apperrors.ErrSettingViolated).
+				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.VolumeOptions.Subpath))
+		}
 	}
 
 	return nil
@@ -172,9 +282,14 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 func (uc *UC) validateStorageSettingsClusterVolumeMount(
 	app *entity.App,
 	mnt *appsettingsdto.Mount,
-	storageSettings *entity.StorageSettings,
+	data *updateAppStorageSettingsData,
 ) error {
-	volumeSettings := storageSettings.ClusterVolumeSettings
+	// If the requesting mount exists and no change, keep it
+	if _, exists := data.ExistingMountKeys[uc.calcRequestingMountKey(mnt)]; exists {
+		return nil
+	}
+
+	volumeSettings := data.StorageSettings.ClusterVolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
 		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Cluster volume settings")
 	}
@@ -186,9 +301,12 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 	}
 
 	subpathRequired := volumeSettings.CaclRequiredSubpath(app)
-	if subpathRequired != "" && !strings.HasPrefix(mnt.ClusterOptions.Subpath, subpathRequired) {
-		return apperrors.New(apperrors.ErrSettingViolated).
-			WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.ClusterOptions.Subpath))
+	if subpathRequired != "" {
+		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.ClusterOptions.Subpath)
+		if !isSubpath {
+			return apperrors.New(apperrors.ErrSettingViolated).
+				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.ClusterOptions.Subpath))
+		}
 	}
 
 	return nil
@@ -196,9 +314,14 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 
 func (uc *UC) validateStorageSettingsTmpfsMount(
 	mnt *appsettingsdto.Mount,
-	storageSettings *entity.StorageSettings,
+	data *updateAppStorageSettingsData,
 ) error {
-	tmpfsSettings := storageSettings.TmpfsSettings
+	// If the requesting mount exists and no change, keep it
+	if _, exists := data.ExistingMountKeys[uc.calcRequestingMountKey(mnt)]; exists {
+		return nil
+	}
+
+	tmpfsSettings := data.StorageSettings.TmpfsSettings
 	if tmpfsSettings == nil || !tmpfsSettings.Enabled {
 		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Tmpfs settings")
 	}

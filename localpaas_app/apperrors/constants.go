@@ -72,15 +72,16 @@ var (
 
 // Errors for settings
 var (
-	ErrUnconfigured              = errors.New("ERR_UNCONFIGURED")
-	ErrSettingInactive           = errors.New("ERR_SETTING_INACTIVE")
-	ErrSettingMissing            = errors.New("ERR_SETTING_MISSING")
-	ErrSettingViolated           = errors.New("ERR_SETTING_VIOLATED")
-	ErrSettingUnallowed          = errors.New("ERR_SETTING_UNALLOWED")
-	ErrGlobalSettingRequired     = errors.New("ERR_GLOBAL_SETTING_REQUIRED")
-	ErrOwnSettingRequired        = errors.New("ERR_OWN_SETTING_REQUIRED")
-	ErrSettingTypeInvalid        = errors.New("ERR_SETTING_TYPE_INVALID")
-	ErrDataVerNewerThanSystemVer = errors.New("ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
+	ErrUnconfigured                 = errors.New("ERR_UNCONFIGURED")
+	ErrSettingInactive              = errors.New("ERR_SETTING_INACTIVE")
+	ErrSettingMissing               = errors.New("ERR_SETTING_MISSING")
+	ErrSettingViolated              = errors.New("ERR_SETTING_VIOLATED")
+	ErrSettingUnallowed             = errors.New("ERR_SETTING_UNALLOWED")
+	ErrGlobalSettingRequired        = errors.New("ERR_GLOBAL_SETTING_REQUIRED")
+	ErrScopeSettingRequired         = errors.New("ERR_SCOPE_SETTING_REQUIRED")
+	ErrInheritedSettingNonUpdatable = errors.New("ERR_INHERITED_SETTING_NON_UPDATABLE")
+	ErrSettingTypeInvalid           = errors.New("ERR_SETTING_TYPE_INVALID")
+	ErrDataVerNewerThanSystemVer    = errors.New("ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
 
 // Errors for projects
@@ -182,15 +183,16 @@ var errorStatusMap = map[error]int{
 	ErrAPIKeyInvalid:    http.StatusUnauthorized,
 
 	// Settings errors
-	ErrUnconfigured:              http.StatusUnprocessableEntity,
-	ErrSettingInactive:           http.StatusUnprocessableEntity,
-	ErrSettingMissing:            http.StatusUnprocessableEntity,
-	ErrSettingViolated:           http.StatusUnprocessableEntity,
-	ErrSettingUnallowed:          http.StatusUnprocessableEntity,
-	ErrGlobalSettingRequired:     http.StatusUnprocessableEntity,
-	ErrOwnSettingRequired:        http.StatusUnprocessableEntity,
-	ErrSettingTypeInvalid:        http.StatusUnprocessableEntity,
-	ErrDataVerNewerThanSystemVer: http.StatusUnprocessableEntity,
+	ErrUnconfigured:                 http.StatusUnprocessableEntity,
+	ErrSettingInactive:              http.StatusUnprocessableEntity,
+	ErrSettingMissing:               http.StatusUnprocessableEntity,
+	ErrSettingViolated:              http.StatusUnprocessableEntity,
+	ErrSettingUnallowed:             http.StatusUnprocessableEntity,
+	ErrGlobalSettingRequired:        http.StatusUnprocessableEntity,
+	ErrScopeSettingRequired:         http.StatusUnprocessableEntity,
+	ErrInheritedSettingNonUpdatable: http.StatusUnprocessableEntity,
+	ErrSettingTypeInvalid:           http.StatusUnprocessableEntity,
+	ErrDataVerNewerThanSystemVer:    http.StatusUnprocessableEntity,
 
 	// Project errors
 	ErrProjectInactive: http.StatusUnprocessableEntity,

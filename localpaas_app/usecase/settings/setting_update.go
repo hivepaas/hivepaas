@@ -145,8 +145,7 @@ func (uc *BaseUC) loadSettingForUpdate(
 	}
 
 	if setting.ObjectID != req.Scope.MainObjectID() {
-		return apperrors.New(apperrors.ErrOwnSettingRequired).
-			WithMsgLog("imported or inherited setting is not allowed to update")
+		return apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
 	}
 
 	// If name changes, validate the new one

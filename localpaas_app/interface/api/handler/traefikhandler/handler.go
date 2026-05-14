@@ -1,29 +1,25 @@
-package systemhandler
+package traefikhandler
 
 import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc"
 )
 
 type Handler struct {
 	*handler.BaseHandler
 	authHandler *authhandler.Handler
-	sysErrorUC  *syserroruc.UC
-	taskUC      *taskuc.UC
+	traefikUC   *traefikuc.UC
 }
 
 func New(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.Handler,
-	sysErrorUC *syserroruc.UC,
-	taskUC *taskuc.UC,
+	traefikUC *traefikuc.UC,
 ) *Handler {
 	return &Handler{
 		BaseHandler: baseHandler,
 		authHandler: authHandler,
-		sysErrorUC:  sysErrorUC,
-		taskUC:      taskUC,
+		traefikUC:   traefikUC,
 	}
 }

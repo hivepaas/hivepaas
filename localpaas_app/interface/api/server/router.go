@@ -15,12 +15,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/devhelperhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/localpaashandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/sessionhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/settinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemsettingshandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/traefikhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/userhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/usersettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/webhookhandler"
@@ -45,6 +47,8 @@ type HandlerRegistry struct {
 	userSettingsHandler    *usersettingshandler.Handler
 	systemHandler          *systemhandler.Handler
 	systemSettingsHandler  *systemsettingshandler.Handler
+	localpaasHandler       *localpaashandler.Handler
+	traefikHandler         *traefikhandler.Handler
 	webhookHandler         *webhookhandler.Handler
 	fileHandler            *filehandler.Handler
 	devHelperHandler       *devhelperhandler.Handler
@@ -64,6 +68,8 @@ func NewHandlerRegistry(
 	userSettingsHandler *usersettingshandler.Handler,
 	systemHandler *systemhandler.Handler,
 	systemSettingsHandler *systemsettingshandler.Handler,
+	localpaasHandler *localpaashandler.Handler,
+	traefikHandler *traefikhandler.Handler,
 	webhookHandler *webhookhandler.Handler,
 	fileHandler *filehandler.Handler,
 	devHelperHandler *devhelperhandler.Handler,
@@ -82,6 +88,8 @@ func NewHandlerRegistry(
 		userSettingsHandler:    userSettingsHandler,
 		systemHandler:          systemHandler,
 		systemSettingsHandler:  systemSettingsHandler,
+		localpaasHandler:       localpaasHandler,
+		traefikHandler:         traefikHandler,
 		webhookHandler:         webhookHandler,
 		fileHandler:            fileHandler,
 		devHelperHandler:       devHelperHandler,
@@ -127,8 +135,7 @@ func (s *HTTPServer) registerRoutes() {
 
 	_, _ = s.registerSessionRoutes(apiGroup)
 	_, _ = s.registerUserRoutes(apiGroup)
-	projectGroup := s.registerProjectRoutes(apiGroup)
-	_ = s.registerAppRoutes(projectGroup)
+	_ = s.registerProjectRoutes(apiGroup)
 	_ = s.registerSettingRoutes(apiGroup)
 	_, _ = s.registerSystemRoutes(apiGroup)
 	_ = s.registerClusterRoutes(apiGroup)

@@ -1,11 +1,11 @@
-package systemhandler
+package localpaashandler
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc/lpappdto"
@@ -14,7 +14,7 @@ import (
 // ReloadLocalPaaSAppConfig Reloads LocalPaaS config files
 // @Summary Reloads LocalPaaS config files
 // @Description Reloads LocalPaaS config files
-// @Tags    system_localpaas_app
+// @Tags    system_localpaas
 // @Produce json
 // @Id      reloadLocalPaaSAppConfig
 // @Param   body body lpappdto.ReloadLpAppConfigReq true "request data"
@@ -29,6 +29,11 @@ func (h *Handler) ReloadLocalPaaSAppConfig(ctx *gin.Context) {
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Reload localpaas config").
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 
@@ -50,7 +55,7 @@ func (h *Handler) ReloadLocalPaaSAppConfig(ctx *gin.Context) {
 // RestartLocalPaaSApp Restarts localpaas app containers
 // @Summary Restarts localpaas app containers
 // @Description Restarts localpaas app containers
-// @Tags    system_localpaas_app
+// @Tags    system_localpaas
 // @Produce json
 // @Id      restartLocalPaaSApp
 // @Param   body body lpappdto.RestartLpAppReq true "request data"
@@ -65,6 +70,11 @@ func (h *Handler) RestartLocalPaaSApp(ctx *gin.Context) {
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Restart localpaas service").
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
 	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/startupservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
 )
@@ -33,6 +34,7 @@ type taskQueue struct {
 	cronJobService            cronjobservice.Service
 	taskService               taskservice.Service
 	settingService            settingservice.Service
+	startupService            startupservice.Service
 
 	taskExecutorMap     map[base.TaskType]gocronqueue.TaskExecFunc
 	healthcheckExecutor queue.HealthcheckExecFunc
@@ -51,6 +53,7 @@ func New(
 	cronJobService cronjobservice.Service,
 	taskService taskservice.Service,
 	settingService settingservice.Service,
+	startupService startupservice.Service,
 ) queue.TaskQueue {
 	return &taskQueue{
 		db:                        db,
@@ -65,28 +68,21 @@ func New(
 		cronJobService:            cronJobService,
 		taskService:               taskService,
 		settingService:            settingService,
+		startupService:            startupService,
 	}
 }
 
 func (q *taskQueue) Start() (err error) {
 	ctx := context.Background()
-	lpSttg, _ := q.settingRepo.GetSingle(ctx, q.db, nil, base.SettingTypeLocalPaaSSettings, true)
+	lpSttg, err := q.startupService.LoadLocalPaaSServiceSetting(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	lpSettings := lpSttg.MustAsLocalPaaSService()
 
 	runWorker := q.isWorkerMode()
-	taskConcurrency := q.config.Tasks.Queue.Concurrency
-	taskCheckInterval := q.config.Tasks.Queue.TaskCheckInterval
-	taskCreateInterval := q.config.Tasks.Queue.TaskCreateInterval
-	healthcheckBaseInterval := q.config.Tasks.Healthcheck.BaseInterval
-
-	if lpSttg != nil {
-		lpSettings := lpSttg.MustAsLocalPaaSSettings()
-		if q.isAppMode() {
-			runWorker = lpSettings.WorkerSettings.RunWorkerInMainApp
-		}
-		taskConcurrency = lpSettings.WorkerSettings.Concurrency
-		taskCheckInterval = lpSettings.TaskSettings.TaskCheckInterval.ToDuration()
-		taskCreateInterval = lpSettings.TaskSettings.TaskCreateInterval.ToDuration()
-		healthcheckBaseInterval = lpSettings.HealthcheckSettings.BaseInterval.ToDuration()
+	if q.isAppMode() {
+		runWorker = lpSettings.WorkerSettings.RunWorkerInMainApp
 	}
 
 	// Initialize task queue worker if configured
@@ -96,13 +92,13 @@ func (q *taskQueue) Start() (err error) {
 			TaskMap:                 q.taskExecutorMap,
 			RedisClient:             q.redisClient,
 			Logger:                  q.logger,
-			Concurrency:             taskConcurrency,
-			TaskCheckInterval:       taskCheckInterval,
+			Concurrency:             lpSettings.WorkerSettings.Concurrency,
+			TaskCheckInterval:       lpSettings.TaskSettings.TaskCheckInterval.ToDuration(),
 			TaskCheckFunc:           q.findSchedulingTasks,
-			TaskCreateInterval:      taskCreateInterval,
+			TaskCreateInterval:      lpSettings.TaskSettings.TaskCreateInterval.ToDuration(),
 			TaskCreateFunc:          q.doCreateTasksForJobs,
 			TaskCanScheduleFunc:     q.canScheduleTask,
-			HealthcheckBaseInterval: healthcheckBaseInterval,
+			HealthcheckBaseInterval: lpSettings.HealthcheckSettings.BaseInterval.ToDuration(),
 			HealthcheckFunc:         q.doHealthcheck,
 		})
 		if err != nil {

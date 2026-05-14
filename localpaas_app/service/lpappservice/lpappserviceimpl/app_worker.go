@@ -23,7 +23,8 @@ func (s *service) RestartLpWorkerSwarmService(ctx context.Context) error {
 		return apperrors.Wrap(err)
 	}
 
-	err = s.dockerManager.ServiceForceUpdate(ctx, service.ID)
+	service.Spec.TaskTemplate.ForceUpdate++
+	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

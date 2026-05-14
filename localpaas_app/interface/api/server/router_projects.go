@@ -226,5 +226,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 		volumeGroup.DELETE("/:volumeID", projectSettingsHandler.DeleteDockerVolume)
 	}
 
+	_ = s.registerAppRoutes(projectGroup)
+
 	return projectGroup
 }

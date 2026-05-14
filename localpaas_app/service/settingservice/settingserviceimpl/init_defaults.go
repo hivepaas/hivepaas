@@ -18,25 +18,13 @@ func (s *service) InitDefaults(
 	db database.IDB,
 ) (err error) {
 	settings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeGlobal(), nil,
-		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeImageBuildSettings,
-			base.SettingTypeSystemCleanup, base.SettingTypeSystemBackup, base.SettingTypeSSLRenewal),
-		bunex.SelectExcludeColumns("data"),
+		bunex.SelectColumns("id", "type", "status"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	timeNow := timeutil.NowUTC()
-
-	// LocalPaaS settings
-	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
-		return item.Type == base.SettingTypeLocalPaaSSettings
-	}) {
-		err = s.initDefaultLocalPaaSSettings(ctx, db, timeNow)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
 
 	// Image build settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {

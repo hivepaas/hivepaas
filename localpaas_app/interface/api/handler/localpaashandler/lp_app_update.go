@@ -1,4 +1,4 @@
-package systemhandler
+package localpaashandler
 
 import (
 	"net/http"
@@ -7,29 +7,32 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
+	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc/lpappdto"
 )
 
-// GetLocalPaaSReleaseInfo Gets release info of the app
+// GetAppReleaseInfo Gets release info of the app
 // @Summary Gets release info of the app
 // @Description Gets release info of the app
-// @Tags    system_localpaas_app
+// @Tags    system_localpaas
 // @Produce json
 // @Id      getLocalPaaSReleaseInfo
 // @Success 200 {object} lpappdto.GetLpAppReleaseInfoResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/localpaas/release-info [get]
-func (h *Handler) GetLocalPaaSReleaseInfo(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
+func (h *Handler) GetAppReleaseInfo(ctx *gin.Context) {
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSystem,
+		Action:         base.ActionTypeWrite,
+	})
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
 		h.RenderError(ctx, apperrors.NewForbidden("Getting release info").
-			WithMsgLog("only admin can get release info"))
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 
@@ -48,10 +51,10 @@ func (h *Handler) GetLocalPaaSReleaseInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// UpdateLocalPaaSAppVersion Updates LocalPaaS app
+// UpdateAppVersion Updates LocalPaaS app
 // @Summary Updates LocalPaaS app
 // @Description Updates LocalPaaS app
-// @Tags    system_localpaas_app
+// @Tags    system_localpaas
 // @Produce json
 // @Id      updateLocalPaaSAppVersion
 // @Param   body body lpappdto.UpdateLpAppReq true "request data"
@@ -59,15 +62,18 @@ func (h *Handler) GetLocalPaaSReleaseInfo(ctx *gin.Context) {
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/localpaas/update-version [post]
-func (h *Handler) UpdateLocalPaaSAppVersion(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
+func (h *Handler) UpdateAppVersion(ctx *gin.Context) {
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSystem,
+		Action:         base.ActionTypeWrite,
+	})
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
 		h.RenderError(ctx, apperrors.NewForbidden("Update app version").
-			WithMsgLog("only admin can update app version"))
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 

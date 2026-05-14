@@ -118,6 +118,36 @@ func (s *service) initRootAppLocalpaas(
 	timeNow := timeutil.NowUTC()
 	cfg := config.Current
 
+	// Add service settings for the app
+	dbServiceSetting := &entity.Setting{
+		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.SettingScopeGlobal,
+		Type:      base.SettingTypeLocalPaaSService,
+		Status:    base.SettingStatusActive,
+		Name:      "Service settings",
+		Version:   entity.CurrentLocalPaaSServiceVersion,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	}
+	serviceSetting := &entity.LocalPaaSService{
+		AppSettings: entity.LocalPaaSAppSettings{
+			Replicas: 1,
+		},
+		WorkerSettings: entity.LocalPaaSWorkerSettings{
+			Replicas:           0,
+			Concurrency:        cfg.Tasks.Queue.Concurrency,
+			RunWorkerInMainApp: true,
+		},
+		TaskSettings: entity.LocalPaaSTaskSettings{
+			TaskCheckInterval:  timeutil.Duration(cfg.Tasks.Queue.TaskCheckInterval),
+			TaskCreateInterval: timeutil.Duration(cfg.Tasks.Queue.TaskCreateInterval),
+		},
+		HealthcheckSettings: entity.LocalPaaSHealthcheckSettings{
+			BaseInterval: timeutil.Duration(cfg.Tasks.Healthcheck.BaseInterval),
+		},
+	}
+	dbServiceSetting.MustSetData(serviceSetting)
+
 	// Add HTTP settings for the main app
 	dbHttpSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
@@ -175,7 +205,7 @@ func (s *service) initRootAppLocalpaas(
 	dbEnvVarsSetting.MustSetData(envVars)
 
 	// Insert the settings into DB
-	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbHttpSetting, dbEnvVarsSetting})
+	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbHttpSetting, dbEnvVarsSetting})
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}

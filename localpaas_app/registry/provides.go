@@ -15,6 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/clusterhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/devhelperhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/filehandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/localpaashandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectbasehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projecthandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/projectsettingshandler"
@@ -22,6 +23,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/settinghandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/systemsettingshandler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/traefikhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/userhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/usersettingshandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/webhookhandler"
@@ -46,6 +48,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice/settingserviceimpl"
 	sslrenewalserviceimpl "github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice/sslrenewalservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice/sslserviceimpl"
+	"github.com/localpaas/localpaas/localpaas_app/service/startupservice/startupserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice/sysbackupserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice/syscleanupserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysupdateservice/sysupdateserviceimpl"
@@ -93,10 +96,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/localpaassettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systemcleanupuc"
@@ -160,6 +163,8 @@ var Provides = []any{
 	usersettingshandler.New,
 	systemhandler.New,
 	systemsettingshandler.New,
+	localpaashandler.New,
+	traefikhandler.New,
 	webhookhandler.New,
 	filehandler.New,
 	devhelperhandler.New,
@@ -208,7 +213,7 @@ var Provides = []any{
 	fileuc.New,
 	storagesettingsuc.New,
 	devhelperuc.New,
-	localpaassettingsuc.New,
+	lpappsettingsuc.New,
 
 	// Service
 	clusterserviceimpl.New,
@@ -234,6 +239,7 @@ var Provides = []any{
 	sslrenewalserviceimpl.New,
 	containerexecserviceimpl.New,
 	healthcheckserviceimpl.New,
+	startupserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

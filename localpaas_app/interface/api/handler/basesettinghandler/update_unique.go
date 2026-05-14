@@ -11,7 +11,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/localpaassettingsuc/localpaassettingsdto"
 )
 
 type UpdateUniqueSettingOptions struct {
@@ -78,11 +77,6 @@ func (h *Handler) UpdateUniqueSetting(
 		r := storagesettingsdto.NewUpdateUniqueStorageSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateUniqueStorageSettings(reqCtx, auth, r) }
-
-	case base.ResourceTypeLocalPaaSSettings:
-		r := localpaassettingsdto.NewUpdateLocalPaaSSettingsReq()
-		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.LocalPaaSSettingsUC.UpdateLocalPaaSSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

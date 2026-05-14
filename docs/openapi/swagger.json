@@ -19354,7 +19354,7 @@
           }
         },
         "summary" : "Reloads LocalPaaS config files",
-        "tags" : [ "system_localpaas_app" ],
+        "tags" : [ "system_localpaas" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19395,7 +19395,7 @@
           }
         },
         "summary" : "Gets release info of the app",
-        "tags" : [ "system_localpaas_app" ]
+        "tags" : [ "system_localpaas" ]
       }
     },
     "/system/localpaas/restart" : {
@@ -19446,7 +19446,97 @@
           }
         },
         "summary" : "Restarts localpaas app containers",
-        "tags" : [ "system_localpaas_app" ],
+        "tags" : [ "system_localpaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/localpaas/service-settings" : {
+      "get" : {
+        "description" : "Gets LocalPaaS service settings",
+        "operationId" : "getLocalPaaSServiceSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.GetServiceSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets LocalPaaS service settings",
+        "tags" : [ "system_localpaas" ]
+      },
+      "put" : {
+        "description" : "Updates LocalPaaS service settings",
+        "operationId" : "updateLocalPaaSServiceSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.UpdateServiceSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.UpdateServiceSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates LocalPaaS service settings",
+        "tags" : [ "system_localpaas" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19498,7 +19588,7 @@
           }
         },
         "summary" : "Updates LocalPaaS app",
-        "tags" : [ "system_localpaas_app" ],
+        "tags" : [ "system_localpaas" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19943,96 +20033,6 @@
           }
         },
         "summary" : "Executes the cleanup",
-        "tags" : [ "system_settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/system/settings/localpaas" : {
-      "get" : {
-        "description" : "Gets LocalPaaS settings",
-        "operationId" : "getSystemLocalPaaSSettings",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.GetLocalPaaSSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets LocalPaaS settings",
-        "tags" : [ "system_settings" ]
-      },
-      "put" : {
-        "description" : "Updates LocalPaaS settings",
-        "operationId" : "updateSystemLocalPaaSSettings",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.UpdateLocalPaaSSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.UpdateLocalPaaSSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates LocalPaaS settings",
         "tags" : [ "system_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -21830,9 +21830,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -22018,9 +22018,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingType" : {
-        "enum" : [ "project", "project-envs", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "system-cleanup", "system-backup", "ssl-renewal", "file", "domain-settings", "storage-settings", "image-build-settings", "localpaas-settings" ],
+        "enum" : [ "project", "project-envs", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "github-app", "access-token", "cron-job", "healthcheck", "email", "repo-webhook", "notification", "system-cleanup", "system-backup", "ssl-renewal", "file", "domain-settings", "storage-settings", "image-build-settings", "localpaas-service" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeProjectEnvs", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeFile", "SettingTypeDomainSettings", "SettingTypeStorageSettings", "SettingTypeImageBuildSettings", "SettingTypeLocalPaaSSettings" ]
+        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeProjectEnvs", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeCronJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeFile", "SettingTypeDomainSettings", "SettingTypeStorageSettings", "SettingTypeImageBuildSettings", "SettingTypeLocalPaaSService" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.TaskPriority" : {
         "enum" : [ "low", "default", "critical" ],
@@ -22458,7 +22458,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -22469,7 +22469,7 @@
           "ModeExclusive" : "l: exclusive use",
           "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
           "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits, 0o777",
+          "ModePerm" : "Unix permission bits",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
           "ModeSocket" : "S: Unix domain socket",
@@ -22477,7 +22477,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits" ],
         "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
@@ -31165,11 +31165,14 @@
             },
             "type" : "array"
           },
+          "baseSubpath" : {
+            "type" : "string"
+          },
           "enabled" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "appsMustUseSubPaths", "baseDirs", "enabled" ],
+        "required" : [ "appsMustUseSubPaths", "baseDirs", "baseSubpath", "enabled" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageBindSettingsResp" : {
@@ -31198,6 +31201,9 @@
           "appsMustUseSubPaths" : {
             "type" : "boolean"
           },
+          "baseSubpath" : {
+            "type" : "string"
+          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -31208,7 +31214,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "appsMustUseSubPaths", "enabled", "volumes" ],
+        "required" : [ "appsMustUseSubPaths", "baseSubpath", "enabled", "volumes" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageClusterVolumeSettingsResp" : {
@@ -31315,6 +31321,9 @@
           "appsMustUseSubPaths" : {
             "type" : "boolean"
           },
+          "baseSubpath" : {
+            "type" : "string"
+          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -31325,7 +31334,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "appsMustUseSubPaths", "enabled", "volumes" ],
+        "required" : [ "appsMustUseSubPaths", "baseSubpath", "enabled", "volumes" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsResp" : {
@@ -31407,6 +31416,192 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.GetServiceSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.ServiceSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSAppSettingsReq" : {
+        "properties" : {
+          "replicas" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "replicas" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSAppSettingsResp" : {
+        "properties" : {
+          "replicas" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "replicas" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSHealthcheckSettingsReq" : {
+        "properties" : {
+          "baseInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "baseInterval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSHealthcheckSettingsResp" : {
+        "properties" : {
+          "baseInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "baseInterval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSTaskSettingsReq" : {
+        "properties" : {
+          "taskCheckInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
+          "taskCreateInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "taskCheckInterval", "taskCreateInterval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSTaskSettingsResp" : {
+        "properties" : {
+          "taskCheckInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          },
+          "taskCreateInterval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "taskCheckInterval", "taskCreateInterval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSWorkerSettingsReq" : {
+        "properties" : {
+          "concurrency" : {
+            "type" : "integer"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "runWorkerInMainApp" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "concurrency", "replicas", "runWorkerInMainApp" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSWorkerSettingsResp" : {
+        "properties" : {
+          "concurrency" : {
+            "type" : "integer"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "runWorkerInMainApp" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "concurrency", "replicas", "runWorkerInMainApp" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.ServiceSettingsResp" : {
+        "properties" : {
+          "appSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSAppSettingsResp"
+          },
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "healthcheckSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSHealthcheckSettingsResp"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
+          },
+          "taskSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSTaskSettingsResp"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          },
+          "workerSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSWorkerSettingsResp"
+          }
+        },
+        "required" : [ "appSettings", "createdAt", "healthcheckSettings", "id", "name", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.UpdateServiceSettingsReq" : {
+        "properties" : {
+          "appSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSAppSettingsReq"
+          },
+          "healthcheckSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSHealthcheckSettingsReq"
+          },
+          "taskSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSTaskSettingsReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "workerSettings" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSWorkerSettingsReq"
+          }
+        },
+        "required" : [ "appSettings", "healthcheckSettings", "taskSettings", "updateVer", "workerSettings" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.UpdateServiceSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -31590,172 +31785,6 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_system_traefikuc_traefikdto.RestartTraefikResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.GetLocalPaaSSettingsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSSettingsResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSHealthcheckSettingsReq" : {
-        "properties" : {
-          "baseInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          }
-        },
-        "required" : [ "baseInterval" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSHealthcheckSettingsResp" : {
-        "properties" : {
-          "baseInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          }
-        },
-        "required" : [ "baseInterval" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSSettingsResp" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "healthcheckSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSHealthcheckSettingsResp"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "inherited" : {
-            "type" : "boolean"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "taskSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSTaskSettingsResp"
-          },
-          "type" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "updatedAt" : {
-            "type" : "string"
-          },
-          "workerSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSWorkerSettingsResp"
-          }
-        },
-        "required" : [ "createdAt", "healthcheckSettings", "id", "name", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSTaskSettingsReq" : {
-        "properties" : {
-          "taskCheckInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          },
-          "taskCreateInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          }
-        },
-        "required" : [ "taskCheckInterval", "taskCreateInterval" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSTaskSettingsResp" : {
-        "properties" : {
-          "taskCheckInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          },
-          "taskCreateInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
-          }
-        },
-        "required" : [ "taskCheckInterval", "taskCreateInterval" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSWorkerSettingsReq" : {
-        "properties" : {
-          "concurrency" : {
-            "type" : "integer"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "runWorkerInMainApp" : {
-            "type" : "boolean"
-          }
-        },
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSWorkerSettingsResp" : {
-        "properties" : {
-          "concurrency" : {
-            "type" : "integer"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "runWorkerInMainApp" : {
-            "type" : "boolean"
-          }
-        },
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.UpdateLocalPaaSSettingsReq" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "healthcheckSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSHealthcheckSettingsReq"
-          },
-          "taskSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSTaskSettingsReq"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "workerSettings" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.LocalPaaSWorkerSettingsReq"
-          }
-        },
-        "required" : [ "availableInProjects", "default", "healthcheckSettings", "taskSettings", "updateVer", "workerSettings" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_localpaassettingsuc_localpaassettingsdto.UpdateLocalPaaSSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"

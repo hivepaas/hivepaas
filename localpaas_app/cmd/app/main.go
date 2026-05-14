@@ -27,12 +27,13 @@ func main() {
 		fx.Invoke(internal.InitConfig),
 		fx.Invoke(internal.InitDBConnection),
 		fx.Invoke(internal.InitCache),
-		fx.Invoke(internal.InitTaskQueue),
 		fx.Invoke(internal.InitDockerManager),
 		fx.Invoke(internal.CompleteInstallation),
+		fx.Invoke(internal.InitTaskQueue),
 		fx.Invoke(internal.InitJWTSession),
 		fx.Invoke(internal.InitHTTPServer),
 		fx.Invoke(internal.InitUpdater),
+		fx.Invoke(internal.FinalizeStartup),
 	)
 
 	app.Run()

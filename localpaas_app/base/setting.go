@@ -39,7 +39,7 @@ const (
 	SettingTypeDomainSettings     SettingType = "domain-settings"
 	SettingTypeStorageSettings    SettingType = "storage-settings"
 	SettingTypeImageBuildSettings SettingType = "image-build-settings"
-	SettingTypeLocalPaaSSettings  SettingType = "localpaas-settings"
+	SettingTypeLocalPaaSService   SettingType = "localpaas-service"
 )
 
 var (

@@ -1,11 +1,11 @@
-package systemhandler
+package traefikhandler
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/traefikuc/traefikdto"
@@ -29,6 +29,11 @@ func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Reload traefik config").
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 
@@ -67,6 +72,11 @@ func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 		h.RenderError(ctx, err)
 		return
 	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Reset traefik config").
+			WithMsgLog("only admin can perform this action"))
+		return
+	}
 
 	req := traefikdto.NewResetTraefikConfigReq()
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
@@ -101,6 +111,11 @@ func (h *Handler) RestartTraefik(ctx *gin.Context) {
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, apperrors.NewForbidden("Restart traefik service").
+			WithMsgLog("only admin can perform this action"))
 		return
 	}
 

@@ -22,36 +22,9 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) (*gin.Route
 		errorGroup.DELETE("/:errorID", systemHandler.DeleteSysError)
 	}
 
-	{ // traefik group
-		traefikGroup := systemGroup.Group("/traefik")
-		// Process
-		traefikGroup.POST("/restart", systemHandler.RestartTraefik)
-		// Config
-		traefikGroup.POST("/config/reload", systemHandler.ReloadTraefikConfig)
-		traefikGroup.POST("/config/reset", systemHandler.ResetTraefikConfig)
-	}
-
-	{ // localpaas app group
-		lpAppGroup := systemGroup.Group("/localpaas")
-		// Process
-		lpAppGroup.POST("/restart", systemHandler.RestartLocalPaaSApp)
-		// Config
-		lpAppGroup.POST("/config/reload", systemHandler.ReloadLocalPaaSAppConfig)
-		// Release info
-		lpAppGroup.GET("/release-info", systemHandler.GetLocalPaaSReleaseInfo)
-		// Update app version
-		lpAppGroup.POST("/update-version", systemHandler.UpdateLocalPaaSAppVersion)
-	}
-
 	// System settings group
 	systemSettingGroup := systemGroup.Group("/settings")
 	systemSettingsHandler := s.handlerRegistry.systemSettingsHandler
-
-	{ // LocalPaaS group
-		localpaasGroup := systemSettingGroup.Group("/localpaas")
-		localpaasGroup.GET("", systemSettingsHandler.GetLocalPaaSSettings)
-		localpaasGroup.PUT("", systemSettingsHandler.UpdateLocalPaaSSettings)
-	}
 
 	{ // Cleanup group
 		cleanupGroup := systemSettingGroup.Group("/cleanup")
@@ -78,6 +51,9 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) (*gin.Route
 		sslRenewalGroup.PUT("", systemSettingsHandler.UpdateSSLRenewalSettings)
 		sslRenewalGroup.POST("/exec", systemSettingsHandler.ExecuteSSLRenewal)
 	}
+
+	_ = s.registerLocalPaaSRoutes(systemGroup)
+	_ = s.registerTraefikRoutes(systemGroup)
 
 	return systemGroup, systemSettingGroup
 }

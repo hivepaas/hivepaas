@@ -41,6 +41,40 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
 }
 
+// GetSecretDownloadToken Gets secret download token
+// @Summary Gets secret download token
+// @Description Gets secret download token
+// @Tags    apps
+// @Produce json
+// @Id      getAppSecretDownloadToken
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} secretdto.GetDownloadTokenResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download-token [get]
+func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
+	h.GetDownloadToken(ctx, base.ResourceTypeSecret, base.SettingScopeApp, "", 0)
+}
+
+// DownloadSecret Download a secret as a file
+// @Summary Download a secret as a file
+// @Description Download a secret as a file
+// @Tags    apps
+// @Produce json
+// @Id      downloadAppSecret
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} secretdto.DownloadSecretResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download [get]
+func (h *Handler) DownloadSecret(ctx *gin.Context) {
+	h.Download(ctx, base.ResourceTypeSecret, base.SettingScopeApp, "")
+}
+
 // CreateSecret Creates an app secret
 // @Summary Creates an app secret
 // @Description Creates an app secret

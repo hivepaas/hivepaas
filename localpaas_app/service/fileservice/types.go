@@ -11,6 +11,7 @@ type GetDownloadURLReq struct {
 	RequireLogin bool
 	Expiration   time.Duration
 	CloudPresign bool
+	URLPath      string // if empty, `download` is used
 	ViewInline   bool
 }
 

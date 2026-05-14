@@ -65,6 +65,9 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		secretGroup.PUT("/:itemID", appSettingsHandler.UpdateSecret)
 		secretGroup.PUT("/:itemID/status", appSettingsHandler.UpdateSecretStatus)
 		secretGroup.DELETE("/:itemID", appSettingsHandler.DeleteSecret)
+		// Download as file
+		secretGroup.GET("/:itemID/download-token", appSettingsHandler.GetSecretDownloadToken)
+		secretGroup.GET("/:itemID/download", appSettingsHandler.DownloadSecret)
 	}
 
 	{ // Config files
@@ -75,6 +78,9 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		configFileGroup.PUT("/:itemID", appSettingsHandler.UpdateConfigFile)
 		configFileGroup.PUT("/:itemID/status", appSettingsHandler.UpdateConfigFileStatus)
 		configFileGroup.DELETE("/:itemID", appSettingsHandler.DeleteConfigFile)
+		// Download as file
+		configFileGroup.GET("/:itemID/download-token", appSettingsHandler.GetConfigFileDownloadToken)
+		configFileGroup.GET("/:itemID/download", appSettingsHandler.DownloadConfigFile)
 	}
 
 	{ // Cron jobs

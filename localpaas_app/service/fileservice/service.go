@@ -2,6 +2,7 @@ package fileservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity/appentity"
@@ -11,5 +12,8 @@ import (
 type Service interface {
 	GetDownloadURL(ctx context.Context, db database.IDB, auth *basedto.Auth, req *GetDownloadURLReq) (
 		*GetDownloadURLResp, error)
-	ParseFileDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error)
+
+	GenerateDownloadToken(userID string, fileOrSettingID string, requireLogin bool,
+		expiration time.Duration) (string, error)
+	ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error)
 }

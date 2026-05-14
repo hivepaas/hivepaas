@@ -31,7 +31,7 @@ func (uc *UC) DownloadFile(
 
 	needParseToken := req.Token != "" || auth == nil || auth.User.Role != base.UserRoleAdmin
 	if needParseToken {
-		tokenClaims, err := uc.FileService.ParseFileDownloadToken(req.Token)
+		tokenClaims, err := uc.FileService.ParseDownloadToken(req.Token)
 		if err != nil {
 			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 		}

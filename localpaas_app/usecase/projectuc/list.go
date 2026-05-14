@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
@@ -36,6 +38,12 @@ func (uc *UC) ListProject(
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
 			bunex.SelectWhere("project.id IN (?)", bunex.List(auth.AllowObjectIDs)),
+		)
+	}
+
+	if !config.Current.IsDevEnv() {
+		listOpts = append(listOpts,
+			bunex.SelectWhere("project.key != ?", base.LocalpaasProjectKey),
 		)
 	}
 

@@ -41,6 +41,40 @@ func (h *Handler) GetConfigFile(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
 }
 
+// GetConfigFileDownloadToken Gets config file download token
+// @Summary Gets config file download token
+// @Description Gets config file download token
+// @Tags    apps
+// @Produce json
+// @Id      getAppConfigFileDownloadToken
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} configfiledto.GetDownloadTokenResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID}/download-token [get]
+func (h *Handler) GetConfigFileDownloadToken(ctx *gin.Context) {
+	h.GetDownloadToken(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp, "", 0)
+}
+
+// DownloadConfigFile Download a config file
+// @Summary Download a config file
+// @Description Download a config file
+// @Tags    apps
+// @Produce json
+// @Id      downloadAppConfigFile
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} configfiledto.DownloadConfigFileResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID}/download [get]
+func (h *Handler) DownloadConfigFile(ctx *gin.Context) {
+	h.Download(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp, "")
+}
+
 // CreateConfigFile Creates an app config file
 // @Summary Creates an app config file
 // @Description Creates an app config file

@@ -9,9 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/config"
-	"github.com/localpaas/localpaas/localpaas_app/entity/appentity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/jwtsession"
 	"github.com/localpaas/localpaas/localpaas_app/service/fileservice"
 	"github.com/localpaas/localpaas/services/aws/s3"
 )
@@ -28,7 +26,7 @@ func (s *service) GetDownloadURL(
 
 	file := req.File.MustAsFile()
 	if file.StorageType == base.FileStorageLocal || !req.CloudPresign {
-		token, err := s.generateFileDownloadToken(auth.User.ID, req)
+		token, err := s.GenerateDownloadToken(auth.User.ID, req.File.ID, req.RequireLogin, req.Expiration)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -66,27 +64,4 @@ func (s *service) GetDownloadURL(
 	default:
 		return nil, apperrors.NewUnsupported("File storage type")
 	}
-}
-
-func (s *service) generateFileDownloadToken(
-	userID string,
-	req *fileservice.GetDownloadURLReq,
-) (string, error) {
-	fileToken, err := jwtsession.GenerateToken(&appentity.FileDownloadTokenClaims{
-		UserID:       userID,
-		FileID:       req.File.ID,
-		RequireLogin: req.RequireLogin,
-	}, req.Expiration)
-	if err != nil {
-		return "", apperrors.Wrap(err)
-	}
-	return fileToken, nil
-}
-
-func (s *service) ParseFileDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error) {
-	tokenClaims := &appentity.FileDownloadTokenClaims{}
-	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-	}
-	return tokenClaims, nil
 }

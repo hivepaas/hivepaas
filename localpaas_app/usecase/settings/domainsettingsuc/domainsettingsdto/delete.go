@@ -8,21 +8,21 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type DeleteUniqueDomainSettingsReq struct {
+type DeleteDomainSettingsReq struct {
 	settings.DeleteUniqueSettingReq
 }
 
-func NewDeleteUniqueDomainSettingsReq() *DeleteUniqueDomainSettingsReq {
-	return &DeleteUniqueDomainSettingsReq{}
+func NewDeleteDomainSettingsReq() *DeleteDomainSettingsReq {
+	return &DeleteDomainSettingsReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *DeleteUniqueDomainSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *DeleteDomainSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.DeleteUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type DeleteUniqueDomainSettingsResp struct {
+type DeleteDomainSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type UpdateUniqueStorageSettingsReq struct {
+type UpdateStorageSettingsReq struct {
 	settings.UpdateUniqueSettingReq
 	*StorageSettingsBaseReq
 }
@@ -149,17 +149,17 @@ func (req *StorageTmpfsSettingsReq) validate(field string) (res []vld.Validator)
 	return res
 }
 
-func NewUpdateUniqueStorageSettingsReq() *UpdateUniqueStorageSettingsReq {
-	return &UpdateUniqueStorageSettingsReq{}
+func NewUpdateStorageSettingsReq() *UpdateStorageSettingsReq {
+	return &UpdateStorageSettingsReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateUniqueStorageSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateStorageSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateUniqueStorageSettingsResp struct {
+type UpdateStorageSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

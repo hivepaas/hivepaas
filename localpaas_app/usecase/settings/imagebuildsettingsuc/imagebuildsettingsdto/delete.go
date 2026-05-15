@@ -1,4 +1,4 @@
-package storagesettingsdto
+package imagebuildsettingsdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -8,21 +8,21 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type DeleteUniqueStorageSettingsReq struct {
+type DeleteImageBuildSettingsReq struct {
 	settings.DeleteUniqueSettingReq
 }
 
-func NewDeleteUniqueStorageSettingsReq() *DeleteUniqueStorageSettingsReq {
-	return &DeleteUniqueStorageSettingsReq{}
+func NewDeleteImageBuildSettingsReq() *DeleteImageBuildSettingsReq {
+	return &DeleteImageBuildSettingsReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *DeleteUniqueStorageSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *DeleteImageBuildSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.DeleteUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type DeleteUniqueStorageSettingsResp struct {
+type DeleteImageBuildSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

@@ -25,7 +25,6 @@ func UpdateUniqueSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) e
 	}
 }
 
-//nolint:funlen,gocyclo
 func (h *Handler) UpdateUniqueSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
@@ -64,19 +63,19 @@ func (h *Handler) UpdateUniqueSetting(
 
 	switch resType { //nolint:exhaustive
 	case base.ResourceTypeImageBuildSettings:
-		r := imagebuildsettingsdto.NewUpdateUniqueImageBuildSettingsReq()
+		r := imagebuildsettingsdto.NewUpdateImageBuildSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateUniqueImageBuildSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuildSettings(reqCtx, auth, r) }
 
 	case base.ResourceTypeDomainSettings:
-		r := domainsettingsdto.NewUpdateUniqueDomainSettingsReq()
+		r := domainsettingsdto.NewUpdateDomainSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateUniqueDomainSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateDomainSettings(reqCtx, auth, r) }
 
 	case base.ResourceTypeStorageSettings:
-		r := storagesettingsdto.NewUpdateUniqueStorageSettingsReq()
+		r := storagesettingsdto.NewUpdateStorageSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateUniqueStorageSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateStorageSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

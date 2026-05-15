@@ -1,4 +1,4 @@
-package imagebuildsettingsuc
+package domainsettingsuc
 
 import (
 	"context"
@@ -7,17 +7,17 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 )
 
-func (uc *UC) UpdateUniqueImageBuildSettings(
+func (uc *UC) UpdateDomainSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *imagebuildsettingsdto.UpdateUniqueImageBuildSettingsReq,
-) (*imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp, error) {
+	req *domainsettingsdto.UpdateDomainSettingsReq,
+) (*domainsettingsdto.UpdateDomainSettingsResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
-		Name: string(currentSettingType),
+		Name: "Domain settings",
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,
@@ -35,5 +35,5 @@ func (uc *UC) UpdateUniqueImageBuildSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp{}, nil
+	return &domainsettingsdto.UpdateDomainSettingsResp{}, nil
 }

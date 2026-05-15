@@ -1,4 +1,4 @@
-package storagesettingsuc
+package imagebuildsettingsuc
 
 import (
 	"context"
@@ -6,19 +6,19 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
 
-func (uc *UC) DeleteUniqueStorageSettings(
+func (uc *UC) DeleteImageBuildSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *storagesettingsdto.DeleteUniqueStorageSettingsReq,
-) (*storagesettingsdto.DeleteUniqueStorageSettingsResp, error) {
+	req *imagebuildsettingsdto.DeleteImageBuildSettingsReq,
+) (*imagebuildsettingsdto.DeleteImageBuildSettingsResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.DeleteUniqueSetting(ctx, &req.DeleteUniqueSettingReq, &settings.DeleteUniqueSettingData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &storagesettingsdto.DeleteUniqueStorageSettingsResp{}, nil
+	return &imagebuildsettingsdto.DeleteImageBuildSettingsResp{}, nil
 }

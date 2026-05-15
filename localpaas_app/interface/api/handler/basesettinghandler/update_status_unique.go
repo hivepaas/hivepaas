@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
 
-//nolint:funlen
 func (h *Handler) UpdateUniqueSettingStatus(
 	ctx *gin.Context,
 	resType base.ResourceType,
@@ -52,19 +51,19 @@ func (h *Handler) UpdateUniqueSettingStatus(
 
 	switch resType { //nolint:exhaustive
 	case base.ResourceTypeImageBuildSettings:
-		r := imagebuildsettingsdto.NewUpdateUniqueImageBuildSettingsStatusReq()
+		r := imagebuildsettingsdto.NewUpdateImageBuildSettingsStatusReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateUniqueImageBuildSettingsStatus(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuildSettingsStatus(reqCtx, auth, r) }
 
 	case base.ResourceTypeDomainSettings:
-		r := domainsettingsdto.NewUpdateUniqueDomainSettingsStatusReq()
+		r := domainsettingsdto.NewUpdateDomainSettingsStatusReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateUniqueDomainSettingsStatus(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateDomainSettingsStatus(reqCtx, auth, r) }
 
 	case base.ResourceTypeStorageSettings:
-		r := storagesettingsdto.NewUpdateUniqueStorageSettingsStatusReq()
+		r := storagesettingsdto.NewUpdateStorageSettingsStatusReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateUniqueStorageSettingsStatus(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.UpdateStorageSettingsStatus(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

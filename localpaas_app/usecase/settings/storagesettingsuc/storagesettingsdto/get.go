@@ -13,21 +13,21 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type GetUniqueStorageSettingsReq struct {
+type GetStorageSettingsReq struct {
 	settings.GetUniqueSettingReq
 }
 
-func NewGetUniqueStorageSettingsReq() *GetUniqueStorageSettingsReq {
-	return &GetUniqueStorageSettingsReq{}
+func NewGetStorageSettingsReq() *GetStorageSettingsReq {
+	return &GetStorageSettingsReq{}
 }
 
-func (req *GetUniqueStorageSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetStorageSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetUniqueStorageSettingsResp struct {
+type GetStorageSettingsResp struct {
 	Meta *basedto.Meta        `json:"meta"`
 	Data *StorageSettingsResp `json:"data"`
 }

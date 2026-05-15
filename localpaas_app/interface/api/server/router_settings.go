@@ -123,18 +123,18 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 
 	{ // domain settings group
 		domainSettingsGroup := settingGroup.Group("/domain-settings")
-		domainSettingsGroup.GET("", settingHandler.GetUniqueDomainSettings)
-		domainSettingsGroup.PUT("", settingHandler.UpdateUniqueDomainSettings)
-		domainSettingsGroup.PUT("/status", settingHandler.UpdateUniqueDomainSettingsStatus)
-		domainSettingsGroup.DELETE("", settingHandler.DeleteUniqueDomainSettings)
+		domainSettingsGroup.GET("", settingHandler.GetDomainSettings)
+		domainSettingsGroup.PUT("", settingHandler.UpdateDomainSettings)
+		domainSettingsGroup.PUT("/status", settingHandler.UpdateDomainSettingsStatus)
+		domainSettingsGroup.DELETE("", settingHandler.DeleteDomainSettings)
 	}
 
 	{ // storage settings group
 		storageSettingsGroup := settingGroup.Group("/storage-settings")
-		storageSettingsGroup.GET("", settingHandler.GetUniqueStorageSettings)
-		storageSettingsGroup.PUT("", settingHandler.UpdateUniqueStorageSettings)
-		storageSettingsGroup.PUT("/status", settingHandler.UpdateUniqueStorageSettingsStatus)
-		storageSettingsGroup.DELETE("", settingHandler.DeleteUniqueStorageSettings)
+		storageSettingsGroup.GET("", settingHandler.GetStorageSettings)
+		storageSettingsGroup.PUT("", settingHandler.UpdateStorageSettings)
+		storageSettingsGroup.PUT("/status", settingHandler.UpdateStorageSettingsStatus)
+		storageSettingsGroup.DELETE("", settingHandler.DeleteStorageSettings)
 	}
 
 	{ // email group
@@ -180,10 +180,10 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) *gin.Route
 
 	{ // image-build settings group
 		imageBuildSettingsGroup := settingGroup.Group("/image-build-settings")
-		imageBuildSettingsGroup.GET("", settingHandler.GetUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", settingHandler.UpdateUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateUniqueImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteUniqueImageBuildSettings)
+		imageBuildSettingsGroup.GET("", settingHandler.GetImageBuildSettings)
+		imageBuildSettingsGroup.PUT("", settingHandler.UpdateImageBuildSettings)
+		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
+		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
 	}
 
 	return settingGroup

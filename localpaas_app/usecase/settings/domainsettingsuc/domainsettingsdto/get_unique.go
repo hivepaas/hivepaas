@@ -12,21 +12,21 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type GetUniqueDomainSettingsReq struct {
+type GetDomainSettingsReq struct {
 	settings.GetUniqueSettingReq
 }
 
-func NewGetUniqueDomainSettingsReq() *GetUniqueDomainSettingsReq {
-	return &GetUniqueDomainSettingsReq{}
+func NewGetDomainSettingsReq() *GetDomainSettingsReq {
+	return &GetDomainSettingsReq{}
 }
 
-func (req *GetUniqueDomainSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetDomainSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetUniqueDomainSettingsResp struct {
+type GetDomainSettingsResp struct {
 	Meta *basedto.Meta       `json:"meta"`
 	Data *DomainSettingsResp `json:"data"`
 }

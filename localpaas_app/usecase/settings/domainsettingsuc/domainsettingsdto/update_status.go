@@ -9,22 +9,22 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
-type UpdateUniqueDomainSettingsStatusReq struct {
+type UpdateDomainSettingsStatusReq struct {
 	settings.UpdateUniqueSettingStatusReq
 }
 
-func NewUpdateUniqueDomainSettingsStatusReq() *UpdateUniqueDomainSettingsStatusReq {
-	return &UpdateUniqueDomainSettingsStatusReq{}
+func NewUpdateDomainSettingsStatusReq() *UpdateDomainSettingsStatusReq {
+	return &UpdateDomainSettingsStatusReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateUniqueDomainSettingsStatusReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateDomainSettingsStatusReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateUniqueDomainSettingsStatusResp struct {
+type UpdateDomainSettingsStatusResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

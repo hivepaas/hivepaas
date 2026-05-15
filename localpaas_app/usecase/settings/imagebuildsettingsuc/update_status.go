@@ -9,11 +9,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
 
-func (uc *UC) UpdateUniqueImageBuildSettingsStatus(
+func (uc *UC) UpdateImageBuildSettingsStatus(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq,
-) (*imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp, error) {
+	req *imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq,
+) (*imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
 		&settings.UpdateUniqueSettingStatusData{})
@@ -21,5 +21,5 @@ func (uc *UC) UpdateUniqueImageBuildSettingsStatus(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp{}, nil
+	return &imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp{}, nil
 }

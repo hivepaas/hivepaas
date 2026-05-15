@@ -8867,7 +8867,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteDomainSettingsResp"
                 }
               }
             },
@@ -8914,7 +8914,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetDomainSettingsResp"
                 }
               }
             },
@@ -8960,7 +8960,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsReq"
               }
             }
           },
@@ -8972,7 +8972,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsResp"
                 }
               }
             },
@@ -9021,7 +9021,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusReq"
               }
             }
           },
@@ -9033,7 +9033,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusResp"
                 }
               }
             },
@@ -10737,7 +10737,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteImageBuildSettingsResp"
                 }
               }
             },
@@ -10784,7 +10784,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetImageBuildSettingsResp"
                 }
               }
             },
@@ -10830,7 +10830,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsReq"
               }
             }
           },
@@ -10842,7 +10842,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsResp"
                 }
               }
             },
@@ -10891,7 +10891,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq"
               }
             }
           },
@@ -10903,7 +10903,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp"
                 }
               }
             },
@@ -13419,7 +13419,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteStorageSettingsResp"
                 }
               }
             },
@@ -13466,7 +13466,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetStorageSettingsResp"
                 }
               }
             },
@@ -13512,7 +13512,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsReq"
               }
             }
           },
@@ -13524,7 +13524,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsResp"
                 }
               }
             },
@@ -13573,7 +13573,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusReq"
               }
             }
           },
@@ -13585,7 +13585,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusResp"
                 }
               }
             },
@@ -15360,7 +15360,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteDomainSettingsResp"
                 }
               }
             },
@@ -15398,7 +15398,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetDomainSettingsResp"
                 }
               }
             },
@@ -15435,7 +15435,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsReq"
               }
             }
           },
@@ -15447,7 +15447,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsResp"
                 }
               }
             },
@@ -15487,7 +15487,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusReq"
               }
             }
           },
@@ -15499,7 +15499,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusResp"
                 }
               }
             },
@@ -17021,7 +17021,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteImageBuildSettingsResp"
                 }
               }
             },
@@ -17059,7 +17059,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetImageBuildSettingsResp"
                 }
               }
             },
@@ -17096,7 +17096,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsReq"
               }
             }
           },
@@ -17108,7 +17108,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsResp"
                 }
               }
             },
@@ -17148,7 +17148,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq"
               }
             }
           },
@@ -17160,7 +17160,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp"
                 }
               }
             },
@@ -19216,7 +19216,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteStorageSettingsResp"
                 }
               }
             },
@@ -19254,7 +19254,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetStorageSettingsResp"
                 }
               }
             },
@@ -19291,7 +19291,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsReq"
               }
             }
           },
@@ -19303,7 +19303,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsResp"
                 }
               }
             },
@@ -19343,7 +19343,7 @@
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq"
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusReq"
               }
             }
           },
@@ -19355,7 +19355,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusResp"
                 }
               }
             },
@@ -22090,9 +22090,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -28044,7 +28044,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteUniqueDomainSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DeleteDomainSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28143,7 +28143,7 @@
         "required" : [ "certSettings", "createdAt", "id", "name", "rootDomain", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetUniqueDomainSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetDomainSettingsResp" : {
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.DomainSettingsResp"
@@ -28155,7 +28155,7 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -28176,7 +28176,7 @@
         "required" : [ "availableInProjects", "certSettings", "default", "rootDomain", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -28185,7 +28185,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -28206,7 +28206,7 @@
         "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateUniqueDomainSettingsStatusResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.UpdateDomainSettingsStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -29473,7 +29473,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteUniqueImageBuildSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.DeleteImageBuildSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -29482,7 +29482,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetUniqueImageBuildSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.GetImageBuildSettingsResp" : {
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildSettingsResp"
@@ -29581,7 +29581,7 @@
         "required" : [ "createdAt", "id", "name", "noCache", "noVerbose", "resources", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -29605,7 +29605,7 @@
         "required" : [ "availableInProjects", "default", "noCache", "noVerbose", "resources", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -29614,7 +29614,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -29635,7 +29635,7 @@
         "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateUniqueImageBuildSettingsStatusResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -31585,7 +31585,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteUniqueStorageSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.DeleteStorageSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -31594,7 +31594,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetUniqueStorageSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.GetStorageSettingsResp" : {
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageSettingsResp"
@@ -31810,7 +31810,7 @@
         "required" : [ "appsMustUseSubPaths", "baseSubpath", "volumes" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -31837,7 +31837,7 @@
         "required" : [ "availableInProjects", "bindSettings", "clusterVolumeSettings", "default", "tmpfsSettings", "updateVer", "volumeSettings" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -31846,7 +31846,7 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusReq" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
@@ -31867,7 +31867,7 @@
         "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateUniqueStorageSettingsStatusResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.UpdateStorageSettingsStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"

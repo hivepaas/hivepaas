@@ -12,11 +12,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
 
-func (uc *UC) GetUniqueStorageSettings(
+func (uc *UC) GetStorageSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *storagesettingsdto.GetUniqueStorageSettingsReq,
-) (*storagesettingsdto.GetUniqueStorageSettingsResp, error) {
+	req *storagesettingsdto.GetStorageSettingsReq,
+) (*storagesettingsdto.GetStorageSettingsResp, error) {
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
@@ -52,7 +52,7 @@ func (uc *UC) GetUniqueStorageSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &storagesettingsdto.GetUniqueStorageSettingsResp{
+	return &storagesettingsdto.GetStorageSettingsResp{
 		Data: respData,
 	}, nil
 }

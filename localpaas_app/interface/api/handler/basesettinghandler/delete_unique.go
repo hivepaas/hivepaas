@@ -25,7 +25,6 @@ func DeleteUniqueSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) e
 	}
 }
 
-//nolint:funlen
 func (h *Handler) DeleteUniqueSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
@@ -64,19 +63,19 @@ func (h *Handler) DeleteUniqueSetting(
 
 	switch resType { //nolint:exhaustive
 	case base.ResourceTypeImageBuildSettings:
-		r := imagebuildsettingsdto.NewDeleteUniqueImageBuildSettingsReq()
+		r := imagebuildsettingsdto.NewDeleteImageBuildSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.DeleteUniqueImageBuildSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.DeleteImageBuildSettings(reqCtx, auth, r) }
 
 	case base.ResourceTypeDomainSettings:
-		r := domainsettingsdto.NewDeleteUniqueDomainSettingsReq()
+		r := domainsettingsdto.NewDeleteDomainSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.DeleteUniqueDomainSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.DeleteDomainSettings(reqCtx, auth, r) }
 
 	case base.ResourceTypeStorageSettings:
-		r := storagesettingsdto.NewDeleteUniqueStorageSettingsReq()
+		r := storagesettingsdto.NewDeleteStorageSettingsReq()
 		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.DeleteUniqueStorageSettings(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.DeleteStorageSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

@@ -156,18 +156,18 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 
 	{ // Domain settings group
 		domainSettingsGroup := projectGroup.Group("/:projectID/domain-settings")
-		domainSettingsGroup.GET("", projectSettingsHandler.GetUniqueDomainSettings)
-		domainSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueDomainSettings)
-		domainSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueDomainSettingsStatus)
-		domainSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueDomainSettings)
+		domainSettingsGroup.GET("", projectSettingsHandler.GetDomainSettings)
+		domainSettingsGroup.PUT("", projectSettingsHandler.UpdateDomainSettings)
+		domainSettingsGroup.PUT("/status", projectSettingsHandler.UpdateDomainSettingsStatus)
+		domainSettingsGroup.DELETE("", projectSettingsHandler.DeleteDomainSettings)
 	}
 
 	{ // Storage settings group
 		storageSettingsGroup := projectGroup.Group("/:projectID/storage-settings")
-		storageSettingsGroup.GET("", projectSettingsHandler.GetUniqueStorageSettings)
-		storageSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueStorageSettings)
-		storageSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueStorageSettingsStatus)
-		storageSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueStorageSettings)
+		storageSettingsGroup.GET("", projectSettingsHandler.GetStorageSettings)
+		storageSettingsGroup.PUT("", projectSettingsHandler.UpdateStorageSettings)
+		storageSettingsGroup.PUT("/status", projectSettingsHandler.UpdateStorageSettingsStatus)
+		storageSettingsGroup.DELETE("", projectSettingsHandler.DeleteStorageSettings)
 	}
 
 	{ // Email group
@@ -202,10 +202,10 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) *gin.Route
 
 	{ // Image build settings group
 		imageBuildSettingsGroup := projectGroup.Group("/:projectID/image-build-settings")
-		imageBuildSettingsGroup.GET("", projectSettingsHandler.GetUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", projectSettingsHandler.UpdateUniqueImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", projectSettingsHandler.UpdateUniqueImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", projectSettingsHandler.DeleteUniqueImageBuildSettings)
+		imageBuildSettingsGroup.GET("", projectSettingsHandler.GetImageBuildSettings)
+		imageBuildSettingsGroup.PUT("", projectSettingsHandler.UpdateImageBuildSettings)
+		imageBuildSettingsGroup.PUT("/status", projectSettingsHandler.UpdateImageBuildSettingsStatus)
+		imageBuildSettingsGroup.DELETE("", projectSettingsHandler.DeleteImageBuildSettings)
 	}
 
 	{ // Docker network group

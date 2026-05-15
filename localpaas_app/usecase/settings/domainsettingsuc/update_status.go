@@ -9,16 +9,17 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 )
 
-func (uc *UC) DeleteUniqueDomainSettings(
+func (uc *UC) UpdateDomainSettingsStatus(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *domainsettingsdto.DeleteUniqueDomainSettingsReq,
-) (*domainsettingsdto.DeleteUniqueDomainSettingsResp, error) {
+	req *domainsettingsdto.UpdateDomainSettingsStatusReq,
+) (*domainsettingsdto.UpdateDomainSettingsStatusResp, error) {
 	req.Type = currentSettingType
-	_, err := uc.DeleteUniqueSetting(ctx, &req.DeleteUniqueSettingReq, &settings.DeleteUniqueSettingData{})
+	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
+		&settings.UpdateUniqueSettingStatusData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &domainsettingsdto.DeleteUniqueDomainSettingsResp{}, nil
+	return &domainsettingsdto.UpdateDomainSettingsStatusResp{}, nil
 }

@@ -9,11 +9,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 )
 
-func (uc *UC) GetUniqueDomainSettings(
+func (uc *UC) GetDomainSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *domainsettingsdto.GetUniqueDomainSettingsReq,
-) (*domainsettingsdto.GetUniqueDomainSettingsResp, error) {
+	req *domainsettingsdto.GetDomainSettingsReq,
+) (*domainsettingsdto.GetDomainSettingsResp, error) {
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
@@ -25,7 +25,7 @@ func (uc *UC) GetUniqueDomainSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &domainsettingsdto.GetUniqueDomainSettingsResp{
+	return &domainsettingsdto.GetDomainSettingsResp{
 		Data: respData,
 	}, nil
 }

@@ -70,7 +70,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
             },
         },
         {
+            id: "actions",
             header: "",
+            enableSorting: false,
             cell: ({ row: { original } }) => {
                 // Inherited secrets are read-only
                 if (original.inherited) {
@@ -84,6 +86,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
                         secret={original}
                     />
                 );
+            },
+            meta: {
+                align: "right",
             },
         },
     ];

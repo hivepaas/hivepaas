@@ -11,6 +11,7 @@ function createColumns(scope: RegistryAuthTableScope): ColumnDef<SettingRegistry
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,

@@ -9,6 +9,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,
@@ -71,7 +72,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
             },
         },
         {
+            id: "actions",
             header: "",
+            enableSorting: false,
             cell: ({ row: { original } }) => {
                 if (original.inherited) {
                     return null;
@@ -84,6 +87,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
                         configFile={original}
                     />
                 );
+            },
+            meta: {
+                align: "right",
             },
         },
     ];

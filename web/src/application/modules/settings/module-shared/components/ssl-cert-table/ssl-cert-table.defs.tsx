@@ -37,6 +37,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,

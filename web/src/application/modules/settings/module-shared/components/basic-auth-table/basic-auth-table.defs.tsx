@@ -11,6 +11,7 @@ function createColumns(scope: BasicAuthTableScope): ColumnDef<SettingBasicAuth>[
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,

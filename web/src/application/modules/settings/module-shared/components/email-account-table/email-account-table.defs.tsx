@@ -35,6 +35,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,

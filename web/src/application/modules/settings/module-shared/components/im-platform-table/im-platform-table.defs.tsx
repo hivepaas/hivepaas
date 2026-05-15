@@ -35,6 +35,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
     return [
         {
             id: "view",
+            accessorKey: "inherited",
             header: "",
             enableSorting: false,
             enableHiding: false,

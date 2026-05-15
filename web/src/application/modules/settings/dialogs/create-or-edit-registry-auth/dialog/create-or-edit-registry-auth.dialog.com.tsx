@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
+import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
+import { RegistryAuthQueries } from "~/settings/data/queries";
+
+import { AppLoader } from "@application/shared/components";
 
 import { CreateOrEditRegistryAuthForm } from "../form";
 import { useCreateOrEditRegistryAuthDialogState } from "../hooks";
@@ -66,6 +70,26 @@ export function CreateOrEditRegistryAuthDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "edit" ? state.id : "";
+    const settingDetailQuery = RegistryAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectRegistryAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "edit" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "edit" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const registryAuth = detailQuery.data?.data;
+
     function createPayload(values: CreateOrEditRegistryAuthFormOutput) {
         return {
             availableInProjects:
@@ -86,23 +110,23 @@ export function CreateOrEditRegistryAuthDialog() {
 
         const payload = createPayload(values);
 
-        if (state.mode === "edit") {
+        if (state.mode === "edit" && registryAuth) {
             const updatePayload = {
                 ...payload,
-                updateVer: state.registryAuth.updateVer,
+                updateVer: registryAuth.updateVer,
             };
 
             if (state.scope.type === "project") {
                 updateProjectRegistryAuth({
                     projectID: state.scope.projectId,
-                    id: state.registryAuth.id,
+                    id: registryAuth.id,
                     payload: updatePayload,
                 });
                 return;
             }
 
             updateSettingRegistryAuth({
-                id: state.registryAuth.id,
+                id: registryAuth.id,
                 payload: updatePayload,
             });
             return;
@@ -148,17 +172,17 @@ export function CreateOrEditRegistryAuthDialog() {
     const open = state.mode !== "closed";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "edit"
-            ? {
-                  name: state.registryAuth.name,
-                  address: state.registryAuth.address,
-                  username: state.registryAuth.username,
-                  readonly: state.registryAuth.readonly,
-                  availableInProjects: state.registryAuth.availableInProjects ?? false,
-                  default: state.registryAuth.default ?? false,
-              }
-            : undefined;
+    const initialValues = registryAuth
+        ? {
+              name: registryAuth.name,
+              address: registryAuth.address,
+              username: registryAuth.username,
+              readonly: registryAuth.readonly,
+              availableInProjects: registryAuth.availableInProjects ?? false,
+              default: registryAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "edit" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -169,7 +193,8 @@ export function CreateOrEditRegistryAuthDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update a registry auth</DialogTitle>
                 </DialogHeader>
-                {state.mode !== "closed" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditRegistryAuthForm
                         isPending={isPending}
                         isTesting={isTesting}

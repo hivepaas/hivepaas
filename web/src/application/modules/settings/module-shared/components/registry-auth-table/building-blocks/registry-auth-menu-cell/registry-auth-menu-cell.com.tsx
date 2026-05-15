@@ -2,11 +2,10 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Edit, MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { RegistryAuthCommands } from "~/settings/data/commands";
-import { useCreateOrEditRegistryAuthDialog } from "~/settings/dialogs/create-or-edit-registry-auth";
 import { useUpdateRegistryAuthStatusDialog } from "~/settings/dialogs/update-registry-auth-status";
 import type { SettingRegistryAuth } from "~/settings/domain";
 
@@ -17,7 +16,6 @@ import type { RegistryAuthTableScope } from "../../registry-auth-table.types";
 function View({ scope, registryAuth }: Props) {
     const [open, setOpen] = useState(false);
 
-    const createOrEditDialog = useCreateOrEditRegistryAuthDialog();
     const updateStatusDialog = useUpdateRegistryAuthStatusDialog();
 
     const { mutate: deleteSettingRegistryAuth, isPending: isDeletingSetting } = RegistryAuthCommands.useDeleteOne({
@@ -70,18 +68,7 @@ function View({ scope, registryAuth }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         onClick={() => {
-                            createOrEditDialog.actions.openEdit(scope, registryAuth);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit className="mr-2 size-4" />
-                        Edit
-                    </Button>
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, registryAuth);
+                            updateStatusDialog.actions.open(scope, registryAuth.id);
                             setOpen(false);
                         }}
                     >

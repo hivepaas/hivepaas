@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectBasicAuthCommands } from "~/projects/data/commands";
+import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
+import { BasicAuthQueries } from "~/settings/data/queries";
+
+import { AppLoader } from "@application/shared/components";
 
 import { CreateOrEditBasicAuthForm } from "../form";
 import { useCreateOrEditBasicAuthDialogState } from "../hooks";
@@ -54,6 +58,26 @@ export function CreateOrEditBasicAuthDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "edit" ? state.id : "";
+    const settingDetailQuery = BasicAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectBasicAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "edit" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "edit" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const basicAuth = detailQuery.data?.data;
+
     function onSubmit(values: CreateOrEditBasicAuthFormOutput) {
         if (state.mode === "closed") {
             return;
@@ -68,23 +92,23 @@ export function CreateOrEditBasicAuthDialog() {
             password: values.password,
         };
 
-        if (state.mode === "edit") {
+        if (state.mode === "edit" && basicAuth) {
             const updatePayload = {
                 ...payload,
-                updateVer: state.basicAuth.updateVer,
+                updateVer: basicAuth.updateVer,
             };
 
             if (state.scope.type === "project") {
                 updateProjectBasicAuth({
                     projectID: state.scope.projectId,
-                    id: state.basicAuth.id,
+                    id: basicAuth.id,
                     payload: updatePayload,
                 });
                 return;
             }
 
             updateSettingBasicAuth({
-                id: state.basicAuth.id,
+                id: basicAuth.id,
                 payload: updatePayload,
             });
             return;
@@ -117,15 +141,15 @@ export function CreateOrEditBasicAuthDialog() {
     const open = state.mode !== "closed";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "edit"
-            ? {
-                  name: state.basicAuth.name,
-                  username: state.basicAuth.username,
-                  availableInProjects: state.basicAuth.availableInProjects ?? false,
-                  default: state.basicAuth.default ?? false,
-              }
-            : undefined;
+    const initialValues = basicAuth
+        ? {
+              name: basicAuth.name,
+              username: basicAuth.username,
+              availableInProjects: basicAuth.availableInProjects ?? false,
+              default: basicAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "edit" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -136,7 +160,8 @@ export function CreateOrEditBasicAuthDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update a basic auth</DialogTitle>
                 </DialogHeader>
-                {state.mode !== "closed" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditBasicAuthForm
                         isPending={isPending}
                         onSubmit={onSubmit}

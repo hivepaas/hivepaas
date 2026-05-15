@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingRegistryAuth } from "~/settings/domain";
 import type { RegistryAuthTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditRegistryAuthDialogOptions, CreateOrEditRegistryAuthDialogState } from "../types";
@@ -8,11 +7,7 @@ type State = CreateOrEditRegistryAuthDialogState & CreateOrEditRegistryAuthDialo
 
 interface Actions {
     open: (scope: RegistryAuthTableScope, options?: CreateOrEditRegistryAuthDialogOptions) => void;
-    openEdit: (
-        scope: RegistryAuthTableScope,
-        registryAuth: SettingRegistryAuth,
-        options?: CreateOrEditRegistryAuthDialogOptions,
-    ) => void;
+    openEdit: (scope: RegistryAuthTableScope, id: string, options?: CreateOrEditRegistryAuthDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -35,12 +30,12 @@ export const useCreateOrEditRegistryAuthDialogState = create<State & Actions>()(
         });
     },
 
-    openEdit: (scope, registryAuth, options = {}) => {
+    openEdit: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "edit",
                 scope,
-                registryAuth,
+                id,
             },
             ...options,
         });

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Button } from "@components/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui";
 import { cn } from "@lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 import { type Path, useFieldArray, useFormContext } from "react-hook-form";
@@ -16,6 +16,7 @@ function View<T>({
     valuePlaceholder,
     className,
     checkDuplicates = false,
+    keyOptions,
 }: Props<T>) {
     const { control } = useFormContext<Record<string, { key: string; value: string }[]>>();
     const { fields, append, remove } = useFieldArray({ control, name: name as string });
@@ -44,14 +45,35 @@ function View<T>({
         <div className={cn("flex flex-col gap-3", className)}>
             <div className="flex gap-2">
                 <div className="grid flex-1 grid-cols-2 gap-2">
-                    <InputWithAddOn
-                        addonLeft={keyLabel}
-                        value={keyInput}
-                        onChange={e => {
-                            setKeyInput(e.target.value);
-                        }}
-                        placeholder={keyPlaceholder ?? keyLabel}
-                    />
+                    {keyOptions ? (
+                        <Select
+                            value={keyInput}
+                            onValueChange={setKeyInput}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={keyPlaceholder ?? keyLabel} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {keyOptions.map(option => (
+                                    <SelectItem
+                                        key={option.value}
+                                        value={option.value}
+                                    >
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <InputWithAddOn
+                            addonLeft={keyLabel}
+                            value={keyInput}
+                            onChange={e => {
+                                setKeyInput(e.target.value);
+                            }}
+                            placeholder={keyPlaceholder ?? keyLabel}
+                        />
+                    )}
                     <InputWithAddOn
                         addonLeft={valueLabel}
                         value={valueInput}
@@ -120,6 +142,7 @@ type Props<T> = {
     valuePlaceholder?: string;
     className?: string;
     checkDuplicates?: boolean;
+    keyOptions?: { label: string; value: string }[];
 };
 
 export const KeyValueList = React.memo(View) as typeof View;

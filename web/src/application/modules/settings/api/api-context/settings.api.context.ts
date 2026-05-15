@@ -5,6 +5,8 @@ import {
     BasicAuthApiValidator,
     DomainSettingsApi,
     DomainSettingsApiValidator,
+    EmailApi,
+    EmailApiValidator,
     GitCredentialsApi,
     GitCredentialsApiValidator,
     ImServiceApi,
@@ -31,6 +33,7 @@ function createApi() {
     const registryAuthValidator = new RegistryAuthApiValidator();
     const sslCertValidator = new SslCertApiValidator();
     const imServiceValidator = new ImServiceApiValidator();
+    const emailValidator = new EmailApiValidator();
 
     return {
         settings: {
@@ -42,6 +45,7 @@ function createApi() {
             registryAuth: new RegistryAuthApi(registryAuthValidator),
             sslCert: new SslCertApi(sslCertValidator),
             imService: new ImServiceApi(imServiceValidator),
+            email: new EmailApi(emailValidator),
         },
     };
 }

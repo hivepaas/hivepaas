@@ -1,5 +1,6 @@
 import { memo } from "react";
 
+import { Badge } from "@components/ui/badge";
 import { cn } from "@lib/utils";
 
 import { ESettingStatus } from "@application/shared/enums";
@@ -17,17 +18,16 @@ function View({ status }: Props) {
                   : "-";
 
     return (
-        <span
+        <Badge
             className={cn(
-                "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium",
                 status === ESettingStatus.Active && "bg-green-500 text-white",
-                status === ESettingStatus.Disabled && "bg-muted text-muted-foreground",
-                status === ESettingStatus.Expired && "bg-destructive text-destructive-foreground",
+                status === ESettingStatus.Disabled && "bg-red-600 text-white",
+                status === ESettingStatus.Expired && "bg-red-500 text-white",
                 status === ESettingStatus.Pending && "bg-amber-500 text-white",
             )}
         >
             {label}
-        </span>
+        </Badge>
     );
 }
 

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingBasicAuth } from "~/settings/domain";
 import type { BasicAuthTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateBasicAuthStatusDialogOptions, UpdateBasicAuthStatusDialogState } from "../types";
@@ -7,11 +6,7 @@ import type { UpdateBasicAuthStatusDialogOptions, UpdateBasicAuthStatusDialogSta
 type State = UpdateBasicAuthStatusDialogState & UpdateBasicAuthStatusDialogOptions;
 
 interface Actions {
-    open: (
-        scope: BasicAuthTableScope,
-        basicAuth: SettingBasicAuth,
-        options?: UpdateBasicAuthStatusDialogOptions,
-    ) => void;
+    open: (scope: BasicAuthTableScope, id: string, options?: UpdateBasicAuthStatusDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -24,12 +19,12 @@ export const useUpdateBasicAuthStatusDialogState = create<State & Actions>()(set
 
     props: {},
 
-    open: (scope, basicAuth, options = {}) => {
+    open: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "open",
                 scope,
-                basicAuth,
+                id,
             },
             ...options,
         });

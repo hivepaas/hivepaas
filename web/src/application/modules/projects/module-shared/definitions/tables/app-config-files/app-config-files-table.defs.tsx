@@ -3,10 +3,36 @@ import { format } from "date-fns";
 import type { AppConfigFile } from "~/projects/domain";
 import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
-import { MenuCell } from "./building-blocks";
+import { EditCell, MenuCell } from "./building-blocks";
 
 function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFile>[] {
     return [
+        {
+            id: "view",
+            accessorKey: "inherited",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => {
+                if (original.inherited) {
+                    return null;
+                }
+
+                return (
+                    <EditCell
+                        projectId={projectId}
+                        appId={appId}
+                        configFile={original}
+                    />
+                );
+            },
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",
@@ -46,7 +72,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
             },
         },
         {
-            header: "Actions",
+            id: "actions",
+            header: "",
+            enableSorting: false,
             cell: ({ row: { original } }) => {
                 if (original.inherited) {
                     return null;
@@ -59,6 +87,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
                         configFile={original}
                     />
                 );
+            },
+            meta: {
+                align: "right",
             },
         },
     ];

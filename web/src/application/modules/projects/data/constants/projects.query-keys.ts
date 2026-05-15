@@ -80,6 +80,11 @@ export const QK = {
     "projects.im-service.$.find-many-paginated": "projects.im-service.$.find-many-paginated",
     "projects.im-service.$.find-one-by-id": "projects.im-service.$.find-one-by-id",
     /*
+     * Project Email
+     */
+    "projects.email.$.find-many-paginated": "projects.email.$.find-many-paginated",
+    "projects.email.$.find-one-by-id": "projects.email.$.find-one-by-id",
+    /*
      * Project SSL certs
      */
     "projects.ssl-cert.$.find-many-paginated": "projects.ssl-cert.$.find-many-paginated",

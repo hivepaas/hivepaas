@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingSslCert } from "~/settings/domain";
@@ -5,7 +6,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import { ESslCertType } from "@application/shared/enums";
 
-import { SslCertMenuCell } from "./building-blocks";
+import { SslCertEditCell, SslCertMenuCell } from "./building-blocks";
 import type { SslCertTableScope } from "./ssl-cert-table.types";
 
 function formatCertType(certType: SettingSslCert["certType"]): string {
@@ -13,9 +14,9 @@ function formatCertType(certType: SettingSslCert["certType"]): string {
         case ESslCertType.LetsEncrypt:
             return "Let’s Encrypt";
         case ESslCertType.Custom:
-            return "custom";
+            return "Custom";
         case ESslCertType.SelfSigned:
-            return "self-signed";
+            return "Self-signed";
         default:
             return certType;
     }
@@ -35,6 +36,25 @@ function getCertTypeClassName(certType: SettingSslCert["certType"]): string {
 function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
     return [
         {
+            id: "view",
+            accessorKey: "inherited",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <SslCertEditCell
+                    scope={scope}
+                    id={original.id}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+        {
             accessorKey: "name",
             header: "Name",
             enableSorting: true,
@@ -53,13 +73,9 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${getCertTypeClassName(
-                            original.certType,
-                        )}`}
-                    >
+                    <Badge className={getCertTypeClassName(original.certType)}>
                         {formatCertType(original.certType)}
-                    </span>
+                    </Badge>
                 </div>
             ),
         },
@@ -74,9 +90,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
                     {scope.type === "project" && original.inherited && (
-                        <span className="inline-flex items-center rounded-md bg-purple-500 px-2 py-1 text-xs font-medium text-white">
-                            Inherited
-                        </span>
+                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
                     )}
                 </div>
             ),

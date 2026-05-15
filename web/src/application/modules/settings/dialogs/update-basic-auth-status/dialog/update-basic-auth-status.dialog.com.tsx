@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectBasicAuthCommands } from "~/projects/data/commands";
+import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
+import { BasicAuthQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateBasicAuthStatusForm } from "../form";
@@ -43,13 +46,33 @@ export function UpdateBasicAuthStatusDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = BasicAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectBasicAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const basicAuth = detailQuery.data?.data;
+
     function onSubmit(values: UpdateBasicAuthStatusFormOutput) {
-        if (state.mode !== "open") {
+        if (state.mode !== "open" || !basicAuth) {
             return;
         }
 
         const payload = {
-            updateVer: state.basicAuth.updateVer,
+            updateVer: basicAuth.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
             availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
@@ -59,14 +82,14 @@ export function UpdateBasicAuthStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
-                id: state.basicAuth.id,
+                id: basicAuth.id,
                 payload,
             });
             return;
         }
 
         updateSettingStatus({
-            id: state.basicAuth.id,
+            id: basicAuth.id,
             payload,
         });
     }
@@ -87,18 +110,15 @@ export function UpdateBasicAuthStatusDialog() {
     const open = state.mode !== "closed";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "open"
-            ? {
-                  status:
-                      state.basicAuth.status === ESettingStatus.Disabled
-                          ? ESettingStatus.Disabled
-                          : ESettingStatus.Active,
-                  expireAt: state.basicAuth.expireAt ?? undefined,
-                  availableInProjects: state.basicAuth.availableInProjects ?? false,
-                  default: state.basicAuth.default ?? false,
-              }
-            : undefined;
+    const initialValues = basicAuth
+        ? {
+              status: basicAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: basicAuth.expireAt ?? undefined,
+              availableInProjects: basicAuth.availableInProjects ?? false,
+              default: basicAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -109,7 +129,8 @@ export function UpdateBasicAuthStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {state.mode === "open" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateBasicAuthStatusForm
                         isPending={isPending}
                         onSubmit={onSubmit}

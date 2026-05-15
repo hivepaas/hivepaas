@@ -3,10 +3,35 @@ import { format } from "date-fns";
 import type { AppSecret } from "~/projects/domain";
 import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
-import { MenuCell } from "./building-blocks";
+import { EditCell, MenuCell } from "./building-blocks";
 
 function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[] {
     return [
+        {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => {
+                if (original.inherited) {
+                    return null;
+                }
+
+                return (
+                    <EditCell
+                        projectId={projectId}
+                        appId={appId}
+                        secret={original}
+                    />
+                );
+            },
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",
@@ -45,7 +70,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
             },
         },
         {
-            header: "Actions",
+            id: "actions",
+            header: "",
+            enableSorting: false,
             cell: ({ row: { original } }) => {
                 // Inherited secrets are read-only
                 if (original.inherited) {
@@ -59,6 +86,9 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
                         secret={original}
                     />
                 );
+            },
+            meta: {
+                align: "right",
             },
         },
     ];

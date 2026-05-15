@@ -1,4 +1,3 @@
-import type { SettingImService } from "~/settings/domain";
 import type { ImPlatformTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateImPlatformStatusDialogOptions } from "../types";
@@ -12,8 +11,8 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: ImPlatformTableScope, imPlatform: SettingImService) => {
-                    actions.open(scope, imPlatform, { props });
+                open: (scope: ImPlatformTableScope, id: string) => {
+                    actions.open(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

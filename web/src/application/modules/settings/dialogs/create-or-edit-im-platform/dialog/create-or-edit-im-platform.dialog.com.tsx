@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectImServiceCommands } from "~/projects/data/commands";
+import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
+import { ImServiceQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { EImServiceKind } from "@application/shared/enums";
 
 import { CreateOrEditImPlatformForm } from "../form";
@@ -70,6 +73,26 @@ export function CreateOrEditImPlatformDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "edit" ? state.id : "";
+    const settingDetailQuery = ImServiceQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectImServiceQueries.useFindOneById(
+        {
+            projectID: state.mode === "edit" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "edit" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const imPlatform = detailQuery.data?.data;
+
     function createPayload(values: CreateOrEditImPlatformFormOutput) {
         const isSlack = values.kind === EImServiceKind.Slack;
 
@@ -91,23 +114,23 @@ export function CreateOrEditImPlatformDialog() {
 
         const payload = createPayload(values);
 
-        if (state.mode === "edit") {
+        if (state.mode === "edit" && imPlatform) {
             const updatePayload = {
                 ...payload,
-                updateVer: state.imPlatform.updateVer,
+                updateVer: imPlatform.updateVer,
             };
 
             if (state.scope.type === "project") {
                 updateProjectImPlatform({
                     projectID: state.scope.projectId,
-                    id: state.imPlatform.id,
+                    id: imPlatform.id,
                     payload: updatePayload,
                 });
                 return;
             }
 
             updateSettingImPlatform({
-                id: state.imPlatform.id,
+                id: imPlatform.id,
                 payload: updatePayload,
             });
             return;
@@ -150,19 +173,19 @@ export function CreateOrEditImPlatformDialog() {
     const open = state.mode !== "closed";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "edit"
-            ? {
-                  name: state.imPlatform.name,
-                  kind: state.imPlatform.kind,
-                  webhook:
-                      state.imPlatform.kind === EImServiceKind.Slack
-                          ? (state.imPlatform.slack?.webhook ?? "")
-                          : (state.imPlatform.discord?.webhook ?? ""),
-                  availableInProjects: state.imPlatform.availableInProjects ?? false,
-                  default: state.imPlatform.default ?? false,
-              }
-            : undefined;
+    const initialValues = imPlatform
+        ? {
+              name: imPlatform.name,
+              kind: imPlatform.kind,
+              webhook:
+                  imPlatform.kind === EImServiceKind.Slack
+                      ? (imPlatform.slack?.webhook ?? "")
+                      : (imPlatform.discord?.webhook ?? ""),
+              availableInProjects: imPlatform.availableInProjects ?? false,
+              default: imPlatform.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "edit" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -173,7 +196,8 @@ export function CreateOrEditImPlatformDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update an IM platform</DialogTitle>
                 </DialogHeader>
-                {state.mode !== "closed" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditImPlatformForm
                         isPending={isPending}
                         isTesting={isTesting}

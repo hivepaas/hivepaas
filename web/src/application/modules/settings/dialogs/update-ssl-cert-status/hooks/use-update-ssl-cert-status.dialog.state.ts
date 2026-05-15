@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingSslCert } from "~/settings/domain";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateSslCertStatusDialogOptions, UpdateSslCertStatusDialogState } from "../types";
@@ -7,7 +6,7 @@ import type { UpdateSslCertStatusDialogOptions, UpdateSslCertStatusDialogState }
 type State = UpdateSslCertStatusDialogState & UpdateSslCertStatusDialogOptions;
 
 interface Actions {
-    open: (scope: SslCertTableScope, sslCert: SettingSslCert, options?: UpdateSslCertStatusDialogOptions) => void;
+    open: (scope: SslCertTableScope, id: string, options?: UpdateSslCertStatusDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -20,12 +19,12 @@ export const useUpdateSslCertStatusDialogState = create<State & Actions>()(set =
 
     props: {},
 
-    open: (scope, sslCert, options = {}) => {
+    open: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "open",
                 scope,
-                sslCert,
+                id,
             },
             ...options,
         });

@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingImService } from "~/settings/domain";
@@ -5,7 +6,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import { EImServiceKind } from "@application/shared/enums";
 
-import { ImPlatformMenuCell } from "./building-blocks";
+import { ImPlatformEditCell, ImPlatformMenuCell } from "./building-blocks";
 import type { ImPlatformTableScope } from "./im-platform-table.types";
 
 function formatKind(kind: SettingImService["kind"]): string {
@@ -33,6 +34,25 @@ function getKindClassName(kind: SettingImService["kind"]): string {
 function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>[] {
     return [
         {
+            id: "view",
+            accessorKey: "inherited",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <ImPlatformEditCell
+                    scope={scope}
+                    id={original.id}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+        {
             accessorKey: "name",
             header: "Name",
             enableSorting: true,
@@ -46,13 +66,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${getKindClassName(
-                            original.kind,
-                        )}`}
-                    >
-                        {formatKind(original.kind)}
-                    </span>
+                    <Badge className={getKindClassName(original.kind)}>{formatKind(original.kind)}</Badge>
                 </div>
             ),
         },
@@ -67,9 +81,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
                     {scope.type === "project" && original.inherited && (
-                        <span className="inline-flex items-center rounded-md bg-purple-500 px-2 py-1 text-xs font-medium text-white">
-                            Inherited
-                        </span>
+                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
                     )}
                 </div>
             ),

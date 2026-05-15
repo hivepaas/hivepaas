@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingRegistryAuth } from "~/settings/domain";
 import type { RegistryAuthTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateRegistryAuthStatusDialogOptions, UpdateRegistryAuthStatusDialogState } from "../types";
@@ -7,11 +6,7 @@ import type { UpdateRegistryAuthStatusDialogOptions, UpdateRegistryAuthStatusDia
 type State = UpdateRegistryAuthStatusDialogState & UpdateRegistryAuthStatusDialogOptions;
 
 interface Actions {
-    open: (
-        scope: RegistryAuthTableScope,
-        registryAuth: SettingRegistryAuth,
-        options?: UpdateRegistryAuthStatusDialogOptions,
-    ) => void;
+    open: (scope: RegistryAuthTableScope, id: string, options?: UpdateRegistryAuthStatusDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -24,12 +19,12 @@ export const useUpdateRegistryAuthStatusDialogState = create<State & Actions>()(
 
     props: {},
 
-    open: (scope, registryAuth, options = {}) => {
+    open: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "open",
                 scope,
-                registryAuth,
+                id,
             },
             ...options,
         });

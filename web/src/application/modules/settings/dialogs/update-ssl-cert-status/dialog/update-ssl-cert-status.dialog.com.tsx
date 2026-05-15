@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
+import { ProjectSslCertQueries } from "~/projects/data/queries";
 import { SslCertCommands } from "~/settings/data/commands";
+import { SslCertQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateSslCertStatusForm } from "../form";
@@ -40,13 +43,33 @@ export function UpdateSslCertStatusDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = SslCertQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectSslCertQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const sslCert = detailQuery.data?.data;
+
     function onSubmit(values: UpdateSslCertStatusFormOutput) {
-        if (state.mode !== "open") {
+        if (state.mode !== "open" || !sslCert) {
             return;
         }
 
         const payload = {
-            updateVer: state.sslCert.updateVer,
+            updateVer: sslCert.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
             availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
@@ -56,14 +79,14 @@ export function UpdateSslCertStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
-                id: state.sslCert.id,
+                id: sslCert.id,
                 payload,
             });
             return;
         }
 
         updateSettingStatus({
-            id: state.sslCert.id,
+            id: sslCert.id,
             payload,
         });
     }
@@ -84,18 +107,15 @@ export function UpdateSslCertStatusDialog() {
     const open = state.mode !== "closed";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "open"
-            ? {
-                  status:
-                      state.sslCert.status === ESettingStatus.Disabled
-                          ? ESettingStatus.Disabled
-                          : ESettingStatus.Active,
-                  expireAt: state.sslCert.expireAt ?? undefined,
-                  availableInProjects: state.sslCert.availableInProjects ?? false,
-                  default: state.sslCert.default ?? false,
-              }
-            : undefined;
+    const initialValues = sslCert
+        ? {
+              status: sslCert.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: sslCert.expireAt ?? undefined,
+              availableInProjects: sslCert.availableInProjects ?? false,
+              default: sslCert.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -106,7 +126,8 @@ export function UpdateSslCertStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {state.mode === "open" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateSslCertStatusForm
                         isPending={isPending}
                         onSubmit={onSubmit}

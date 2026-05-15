@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectImServiceCommands } from "~/projects/data/commands";
+import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
+import { ImServiceQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateImPlatformStatusForm } from "../form";
@@ -45,13 +48,33 @@ export function UpdateImPlatformStatusDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = ImServiceQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectImServiceQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const imPlatform = detailQuery.data?.data;
+
     function onSubmit(values: UpdateImPlatformStatusFormOutput) {
-        if (state.mode !== "open") {
+        if (state.mode !== "open" || !imPlatform) {
             return;
         }
 
         const payload = {
-            updateVer: state.imPlatform.updateVer,
+            updateVer: imPlatform.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
             availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
@@ -61,14 +84,14 @@ export function UpdateImPlatformStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
-                id: state.imPlatform.id,
+                id: imPlatform.id,
                 payload,
             });
             return;
         }
 
         updateSettingStatus({
-            id: state.imPlatform.id,
+            id: imPlatform.id,
             payload,
         });
     }
@@ -89,18 +112,15 @@ export function UpdateImPlatformStatusDialog() {
     const open = state.mode !== "closed";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "open"
-            ? {
-                  status:
-                      state.imPlatform.status === ESettingStatus.Disabled
-                          ? ESettingStatus.Disabled
-                          : ESettingStatus.Active,
-                  expireAt: state.imPlatform.expireAt ?? undefined,
-                  availableInProjects: state.imPlatform.availableInProjects ?? false,
-                  default: state.imPlatform.default ?? false,
-              }
-            : undefined;
+    const initialValues = imPlatform
+        ? {
+              status: imPlatform.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: imPlatform.expireAt ?? undefined,
+              availableInProjects: imPlatform.availableInProjects ?? false,
+              default: imPlatform.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -111,7 +131,8 @@ export function UpdateImPlatformStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {state.mode === "open" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateImPlatformStatusForm
                         isPending={isPending}
                         onSubmit={onSubmit}

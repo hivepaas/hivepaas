@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
-import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
+import { ProjectDomainSettingsQueries, ProjectSslCertQueries } from "~/projects/data/queries";
 import type { SslCert_Notification_Payload } from "~/settings/api/services/ssl-cert-services";
-import { DomainSettingsQueries, SslCertCommands } from "~/settings/data";
+import { DomainSettingsQueries, SslCertCommands, SslCertQueries } from "~/settings/data";
 
+import { AppLoader } from "@application/shared/components";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
 import { CreateOrEditSslCertForm } from "../form";
@@ -56,6 +57,26 @@ export function CreateOrEditSslCertDialog() {
             enabled: open && state.mode === "open" && state.scope.type === "project" && !!projectId,
         },
     );
+
+    const detailId = state.mode === "edit" ? state.id : "";
+    const settingDetailQuery = SslCertQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectSslCertQueries.useFindOneById(
+        {
+            projectID: state.mode === "edit" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "edit" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "edit" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const sslCert = detailQuery.data?.data;
 
     const { mutate: createSettingSslCert, isPending: isCreatingSetting } = SslCertCommands.useCreateOne({
         onSuccess: () => {
@@ -129,23 +150,23 @@ export function CreateOrEditSslCertDialog() {
 
         const payload = createPayload(values);
 
-        if (state.mode === "edit") {
+        if (state.mode === "edit" && sslCert) {
             const updatePayload = {
                 ...payload,
-                updateVer: state.sslCert.updateVer,
+                updateVer: sslCert.updateVer,
             };
 
             if (state.scope.type === "project") {
                 updateProjectSslCert({
                     projectID: state.scope.projectId,
-                    id: state.sslCert.id,
+                    id: sslCert.id,
                     payload: updatePayload,
                 });
                 return;
             }
 
             updateSettingSslCert({
-                id: state.sslCert.id,
+                id: sslCert.id,
                 payload: updatePayload,
             });
             return;
@@ -182,24 +203,24 @@ export function CreateOrEditSslCertDialog() {
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues: Partial<CreateOrEditSslCertFormInput> | undefined =
-        state.mode === "edit"
+        state.mode === "edit" && sslCert
             ? {
-                  domain: state.sslCert.domain,
-                  certType: normalizeCertType(state.sslCert.certType),
-                  email: state.sslCert.email,
-                  keyType: state.sslCert.keyType,
-                  autoRenew: state.sslCert.autoRenew,
-                  certificate: state.sslCert.certificate,
-                  privateKey: state.sslCert.privateKey,
-                  expireAt: state.sslCert.expireAt ?? null,
-                  notifyFrom: state.sslCert.notifyFrom ?? null,
-                  availableInProjects: state.sslCert.availableInProjects ?? false,
-                  default: state.sslCert.default ?? false,
+                  domain: sslCert.domain,
+                  certType: normalizeCertType(sslCert.certType),
+                  email: sslCert.email,
+                  keyType: sslCert.keyType,
+                  autoRenew: sslCert.autoRenew,
+                  certificate: sslCert.certificate,
+                  privateKey: sslCert.privateKey,
+                  expireAt: sslCert.expireAt ?? null,
+                  notifyFrom: sslCert.notifyFrom ?? null,
+                  availableInProjects: sslCert.availableInProjects ?? false,
+                  default: sslCert.default ?? false,
                   notification: {
-                      successUseDefault: state.sslCert.notification?.successUseDefault ?? true,
-                      success: state.sslCert.notification?.success ?? undefined,
-                      failureUseDefault: state.sslCert.notification?.failureUseDefault ?? true,
-                      failure: state.sslCert.notification?.failure ?? undefined,
+                      successUseDefault: sslCert.notification?.successUseDefault ?? true,
+                      success: sslCert.notification?.success ?? undefined,
+                      failureUseDefault: sslCert.notification?.failureUseDefault ?? true,
+                      failure: sslCert.notification?.failure ?? undefined,
                   },
               }
             : {
@@ -214,6 +235,8 @@ export function CreateOrEditSslCertDialog() {
                       failureUseDefault: true,
                   },
               };
+    const isDetailLoading = state.mode === "edit" && detailQuery.isFetching;
+    const canRenderForm = state.mode === "open" || (state.mode === "edit" && !!sslCert);
 
     return (
         <Dialog
@@ -224,7 +247,8 @@ export function CreateOrEditSslCertDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update an SSL certificate</DialogTitle>
                 </DialogHeader>
-                {state.mode !== "closed" && (
+                {isDetailLoading && <AppLoader />}
+                {state.mode !== "closed" && !isDetailLoading && canRenderForm && (
                     <CreateOrEditSslCertForm
                         isPending={isPending}
                         onSubmit={onSubmit}

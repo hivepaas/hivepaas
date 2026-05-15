@@ -1,4 +1,3 @@
-import type { SettingBasicAuth } from "~/settings/domain";
 import type { BasicAuthTableScope } from "~/settings/module-shared/components";
 
 export interface UpdateBasicAuthStatusDialogState {
@@ -6,7 +5,7 @@ export interface UpdateBasicAuthStatusDialogState {
         | {
               mode: "open";
               scope: BasicAuthTableScope;
-              basicAuth: SettingBasicAuth;
+              id: string;
           }
         | {
               mode: "closed";

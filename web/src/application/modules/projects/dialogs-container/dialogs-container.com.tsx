@@ -22,18 +22,22 @@ import {
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
     CreateOrEditBasicAuthDialog,
+    CreateOrEditEmailAccountDialog,
     CreateOrEditImPlatformDialog,
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSslCertDialog,
     UpdateBasicAuthStatusDialog,
+    UpdateEmailAccountStatusDialog,
     UpdateImPlatformStatusDialog,
     UpdateRegistryAuthStatusDialog,
     UpdateSslCertStatusDialog,
     useCreateOrEditBasicAuthDialogState,
+    useCreateOrEditEmailAccountDialogState,
     useCreateOrEditImPlatformDialogState,
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSslCertDialogState,
     useUpdateBasicAuthStatusDialogState,
+    useUpdateEmailAccountStatusDialogState,
     useUpdateImPlatformStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
     useUpdateSslCertStatusDialogState,
@@ -56,6 +60,8 @@ function View() {
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
     const createOrEditImPlatformDialog = useCreateOrEditImPlatformDialogState();
     const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
+    const createOrEditEmailAccountDialog = useCreateOrEditEmailAccountDialogState();
+    const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -73,6 +79,8 @@ function View() {
         updateSslCertStatusDialog.destroy();
         createOrEditImPlatformDialog.destroy();
         updateImPlatformStatusDialog.destroy();
+        createOrEditEmailAccountDialog.destroy();
+        updateEmailAccountStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -92,6 +100,8 @@ function View() {
             <UpdateSslCertStatusDialog />
             <CreateOrEditImPlatformDialog />
             <UpdateImPlatformStatusDialog />
+            <CreateOrEditEmailAccountDialog />
+            <UpdateEmailAccountStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

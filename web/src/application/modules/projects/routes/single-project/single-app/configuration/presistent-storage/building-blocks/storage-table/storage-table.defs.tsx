@@ -5,7 +5,7 @@ import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
-import { MoreVertical, PencilIcon, Trash2Icon } from "lucide-react";
+import { EyeIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
 import { EMountType } from "~/projects/module-shared/enums";
 
@@ -83,6 +83,31 @@ export function createStorageTableColumns(
 ): ColumnDef<StorageMountWithId>[] {
     return [
         {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row }) => (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-link hover:opacity-50"
+                    onClick={() => {
+                        onEdit(row.original);
+                    }}
+                >
+                    <EyeIcon className="size-5" />
+                    <span className="sr-only">Edit storage mount</span>
+                </Button>
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+        {
             accessorKey: "type",
             header: "Type",
             cell: ({ row }) => {
@@ -147,17 +172,6 @@ export function createStorageTableColumns(
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <div className="flex flex-col gap-0">
-                            <Button
-                                className="justify-start py-1.5"
-                                variant="ghost"
-                                onClick={() => {
-                                    onEdit(row.original);
-                                }}
-                            >
-                                <PencilIcon className="mr-2 size-4" />
-                                Edit
-                            </Button>
-
                             <PopConfirm
                                 title="Remove Storage Mount"
                                 variant="destructive"

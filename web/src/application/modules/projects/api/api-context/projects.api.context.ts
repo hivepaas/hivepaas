@@ -21,6 +21,8 @@ import {
     ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
     ProjectDomainSettingsApiValidator,
+    ProjectEmailApi,
+    ProjectEmailApiValidator,
     ProjectEnvVarsApi,
     ProjectEnvVarsApiValidator,
     ProjectGitCredentialsApi,
@@ -88,6 +90,7 @@ function createApi() {
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
     const projectSslCertApiValidator = new ProjectSslCertApiValidator();
     const projectImServiceApiValidator = new ProjectImServiceApiValidator();
+    const projectEmailApiValidator = new ProjectEmailApiValidator();
     const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
 
     return {
@@ -155,6 +158,9 @@ function createApi() {
             },
             imService: {
                 $: new ProjectImServiceApi(projectImServiceApiValidator),
+            },
+            email: {
+                $: new ProjectEmailApi(projectEmailApiValidator),
             },
             sslCert: {
                 $: new ProjectSslCertApi(projectSslCertApiValidator),

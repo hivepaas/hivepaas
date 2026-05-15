@@ -8,3 +8,4 @@ export * from "./e.setting-status";
 export * from "./e.ssl-cert-type";
 export * from "./e.ssl-key-type";
 export * from "./e.im-service-kind";
+export * from "./e.email-kind";

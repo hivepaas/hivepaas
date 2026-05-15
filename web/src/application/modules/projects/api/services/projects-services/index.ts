@@ -5,6 +5,7 @@ export * from "./project-git-credentials";
 export * from "./project-networks";
 export * from "./project-registry-auth";
 export * from "./project-im-service";
+export * from "./project-email";
 export * from "./project-notification";
 export * from "./project-ssl-cert";
 export * from "./project-secrets";

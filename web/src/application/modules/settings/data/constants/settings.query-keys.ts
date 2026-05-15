@@ -10,6 +10,8 @@ export const QK = {
     "settings.ssl-cert.find-one-by-id": "settings.ssl-cert.find-one-by-id",
     "settings.im-service.find-many-paginated": "settings.im-service.find-many-paginated",
     "settings.im-service.find-one-by-id": "settings.im-service.find-one-by-id",
+    "settings.email.find-many-paginated": "settings.email.find-many-paginated",
+    "settings.email.find-one-by-id": "settings.email.find-one-by-id",
     "settings.domain-settings.find-one": "settings.domain-settings.find-one",
     "settings.storage-settings.find-one": "settings.storage-settings.find-one",
 } as const;

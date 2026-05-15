@@ -20,7 +20,7 @@ services:
       - "--accesslog=true"
       - "--accesslog.filepath=/var/log/traefik/access.log"
     networks:
-      # Connect to the 'localpaas_net' overlay network for inter-container communication across nodes
+      # Connect to the 'localpaas' overlay network for inter-container communication across nodes
       - localpaas_net
     ports:
       # Expose traefik's entry points to the Swarm
@@ -71,7 +71,7 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - localpaas_db:/var/lib/postgresql
+      - db:/var/lib/postgresql
 
   redis:
     image: redis:8-alpine
@@ -201,5 +201,5 @@ networks:
     attachable: true
 
 volumes:
-  localpaas_db:
+  db:
     driver: local

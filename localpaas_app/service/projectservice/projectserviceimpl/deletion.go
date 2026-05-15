@@ -20,8 +20,8 @@ func (s *service) DeleteProject(ctx context.Context, project *entity.Project) er
 	}
 	wg.Wait()
 
-	// Remove project network
-	err := s.networkService.RemoveProjectNetwork(ctx, project)
+	// Remove all project local networks
+	err := s.networkService.RemoveAllProjectNetworks(ctx, project)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}

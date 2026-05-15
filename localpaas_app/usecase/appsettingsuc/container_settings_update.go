@@ -124,7 +124,7 @@ func (uc *UC) prepareUpdatingAppContainerHealthcheck(
 	service := data.Service
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 
-	if req.Healthcheck == nil {
+	if req.Healthcheck == nil || !req.Healthcheck.Enabled {
 		containerSpec.Healthcheck = nil
 		return
 	}

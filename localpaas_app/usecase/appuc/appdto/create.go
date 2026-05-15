@@ -27,6 +27,7 @@ func (req *AppBaseReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, validateAppName(&req.Name, field+"name")...)
 	res = append(res, basedto.ValidateStrIn(&req.Status, true, base.AllAppStatuses, field+"status")...)
+	res = append(res, validateAppEnv(&req.Env, field+"env")...)
 	res = append(res, validateAppNote(&req.Note, field+"note")...)
 	res = append(res, validateAppTags(req.Tags, field+"tags")...)
 	return res

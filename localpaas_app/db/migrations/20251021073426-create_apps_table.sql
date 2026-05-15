@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS apps
 );
 
 CREATE UNIQUE INDEX idx_uq_apps_name ON apps(project_id, LOWER(name)) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX idx_uq_apps_key ON apps(project_id, LOWER(key)) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_uq_apps_key ON apps(key) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_uq_apps_local_key ON apps(project_id, local_key, COALESCE(env,'')) WHERE deleted_at IS NULL;
 CREATE INDEX idx_apps_project_id ON apps(project_id);
 CREATE INDEX idx_apps_parent_id ON apps(parent_id);
 CREATE INDEX idx_apps_env ON apps(env);

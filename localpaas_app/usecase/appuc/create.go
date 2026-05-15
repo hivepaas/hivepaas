@@ -15,17 +15,13 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/projecthelper"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/slugify"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
-	"github.com/localpaas/localpaas/services/docker"
-)
-
-const (
-	appKeyMaxLen = 100
 )
 
 func (uc *UC) CreateApp(
@@ -75,10 +71,11 @@ func (uc *UC) CreateApp(
 }
 
 type createAppData struct {
-	Project     *entity.Project
-	AppKey      string
-	AppLocalKey string
-	ServiceSpec *swarm.ServiceSpec
+	Project         *entity.Project
+	AppKey          string
+	AppLocalKey     string
+	LocalNetAliases []string
+	ServiceSpec     *swarm.ServiceSpec
 }
 
 func (uc *UC) loadAppData(
@@ -99,8 +96,13 @@ func (uc *UC) loadAppData(
 	}
 	data.Project = project
 
-	data.AppLocalKey = slugify.SlugifyEx(req.Name, nil, appKeyMaxLen)
+	appSlug := slugify.SlugifyAsKey(req.Name)
+	data.AppLocalKey = appSlug
+	if req.Env != "" {
+		data.AppLocalKey += "_" + projecthelper.CalcProjectEnvKey(req.Env)
+	}
 	data.AppKey = project.Key + "_" + data.AppLocalKey
+	data.LocalNetAliases = append(data.LocalNetAliases, appSlug)
 
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByKey(ctx, db, "", data.AppKey, bunex.SelectColumns("id"))
@@ -110,6 +112,12 @@ func (uc *UC) loadAppData(
 	if conflictApp != nil {
 		return apperrors.NewAlreadyExist("App").
 			WithMsgLog("app key '%s' already exists", data.AppKey)
+	}
+
+	// Create local network for the app to attach
+	_, err = uc.networkService.GetOrCreateProjectNetwork(ctx, project, req.Env)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -189,7 +197,9 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 		Annotations: swarm.Annotations{
 			Name: app.Key,
 			Labels: map[string]string{
-				docker.StackLabelNamespace: data.Project.Key,
+				appservice.LabelAppNamespace: data.Project.Key,
+				appservice.LabelAppName:      app.Name,
+				appservice.LabelAppEnv:       app.Env,
 			},
 		},
 		TaskTemplate: swarm.TaskSpec{
@@ -200,8 +210,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 			},
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
-					Target:  data.Project.GetDefaultNetworkName(),
-					Aliases: []string{app.LocalKey},
+					Target:  uc.networkService.GetProjectNetworkName(data.Project, app.Env),
+					Aliases: data.LocalNetAliases,
 				},
 			},
 		},

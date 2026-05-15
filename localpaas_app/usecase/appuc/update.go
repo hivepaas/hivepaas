@@ -93,6 +93,9 @@ func (uc *UC) preparePersistingAppUpdate(
 	app := data.App
 	app.UpdateVer++
 
+	// NOTE: we don't allow to change app env after creation
+	req.Env = app.Env
+
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	persistingData.AppsToDeleteTags = append(persistingData.AppsToDeleteTags, app.ID)
 	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)

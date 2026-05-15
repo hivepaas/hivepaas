@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	cacheKeyGlobalRoutingNetworkID = "network:globalRoutingNetId"
+	cacheKeyGlobalRoutingNetworkID = "network:global-net-id"
 	cacheExpGlobalRoutingNetworkID = 5 * time.Minute
 )
 
-func (s *service) FindGlobalRoutingNetworkID(ctx context.Context) (string, error) {
+func (s *service) GetGlobalRoutingNetworkID(ctx context.Context) (string, error) {
 	if netID, _ := gocache.Global.GetStr(cacheKeyGlobalRoutingNetworkID); netID != "" {
 		return netID, nil
 	}

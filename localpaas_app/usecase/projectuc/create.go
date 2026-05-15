@@ -14,7 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/slugify"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/projecthelper"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
@@ -23,8 +23,6 @@ import (
 )
 
 const (
-	projectKeyMaxLen = 100
-
 	projectWebhookName      = "default"
 	projectWebhookSecretLen = 24
 )
@@ -43,34 +41,19 @@ func (uc *UC) CreateProject(
 	persistingData := &persistingProjectData{}
 	uc.preparePersistingProject(req, projectData, persistingData)
 
-	createdProject := persistingData.UpsertingProjects[0]
-	networkCreated := false
-
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-
-		// Create default network for the project
-		_, err = uc.networkService.CreateProjectNetwork(ctx, createdProject)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		networkCreated = true
-
 		return nil
 	})
 	if err != nil {
-		// If network created, now need to remove it
-		if networkCreated {
-			_ = uc.networkService.RemoveProjectNetwork(ctx, createdProject)
-		}
 		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectdto.CreateProjectResp{
-		Data: &basedto.ObjectIDResp{ID: createdProject.ID},
+		Data: &basedto.ObjectIDResp{ID: persistingData.UpsertingProjects[0].ID},
 	}, nil
 }
 
@@ -85,7 +68,7 @@ func (uc *UC) loadProjectData(
 	req *projectdto.CreateProjectReq,
 	data *createProjectData,
 ) error {
-	data.ProjectKey = slugify.SlugifyEx(req.Name, nil, projectKeyMaxLen)
+	data.ProjectKey = projecthelper.CalcProjectKey(req.Name)
 	if gofn.Contain(base.UnallowedProjectKeys, data.ProjectKey) {
 		return apperrors.NewParamInvalid(fmt.Sprintf("Project name '%v'", req.Name)).
 			WithMsgLog("project name is not allowed")

@@ -17,7 +17,7 @@ func (s *service) UpdateAppGlobalRoutingNetwork(
 	dbHttpSettings *entity.Setting,
 ) error {
 	httpSettings := dbHttpSettings.MustAsAppHttpSettings()
-	globalNetworkID, err := s.FindGlobalRoutingNetworkID(ctx)
+	globalNetworkID, err := s.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

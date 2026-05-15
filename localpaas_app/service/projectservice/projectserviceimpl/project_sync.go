@@ -13,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
+	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 )
 
 func (s *service) SyncProject(
@@ -43,8 +44,16 @@ func (s *service) SyncProject(
 	// Sync the services with the apps, create new apps if need to
 	for _, svc := range services {
 		appKey := svc.Spec.Name
-		appName := strings.TrimLeft(strings.TrimPrefix(appKey, project.Key), "_-")
-		appLocalKey := appName
+		appLocalKey := strings.TrimLeft(strings.TrimPrefix(appKey, project.Key), "_-")
+		appName := svc.Spec.Labels[appservice.LabelAppName]
+		appEnv := svc.Spec.Labels[appservice.LabelAppEnv]
+		if appName == "" {
+			appName = strings.TrimPrefix(appKey, project.Key)
+			if appEnv != "" {
+				appName = strings.TrimSuffix(appName, appEnv)
+			}
+			appName = strings.Trim(appName, "_-")
+		}
 
 		if existingApp, exists := appMapByKey[appKey]; exists {
 			if existingApp.ServiceID != svc.ID {
@@ -59,6 +68,7 @@ func (s *service) SyncProject(
 				Name:      appName,
 				Key:       appKey,
 				LocalKey:  appLocalKey,
+				Env:       appEnv,
 				ProjectID: project.ID,
 				ServiceID: svc.ID,
 				Status:    base.AppStatusActive,

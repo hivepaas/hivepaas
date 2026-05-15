@@ -16,6 +16,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/slugify"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc/appsettingsdto"
 )
@@ -57,9 +58,9 @@ func (uc *UC) UpdateAppNetworkSettings(
 }
 
 type updateAppNetworkSettingsData struct {
-	App                *entity.App
-	Service            *swarm.Service
-	ProjectInternalNet *network.Inspect
+	App          *entity.App
+	Service      *swarm.Service
+	LocalNetwork *network.Inspect
 }
 
 func (uc *UC) loadAppNetworkSettingsForUpdate(
@@ -90,8 +91,8 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	// Loads project internal network
-	data.ProjectInternalNet, err = uc.networkService.GetProjectNetwork(ctx, app.Project)
+	// Loads project local network
+	data.LocalNetwork, err = uc.networkService.GetOrCreateProjectNetwork(ctx, app.Project, app.Env)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
@@ -117,7 +118,7 @@ func (uc *UC) prepareUpdatingAppNetworkAttachments(
 	data *updateAppNetworkSettingsData,
 ) {
 	service := data.Service
-	internalNet := data.ProjectInternalNet
+	localNetwork := data.LocalNetwork
 	taskSpec := &service.Spec.TaskTemplate
 
 	currAttachments := make(map[string]*swarm.NetworkAttachmentConfig, len(taskSpec.Networks))
@@ -136,9 +137,10 @@ func (uc *UC) prepareUpdatingAppNetworkAttachments(
 		}
 		attachment.Aliases = reqNetAttachment.Aliases
 		// Special case: the network is the default project one
-		if internalNet != nil && (reqNetAttachment.ID == internalNet.ID || reqNetAttachment.ID == internalNet.Name) {
-			if !gofn.Contain(attachment.Aliases, data.App.LocalKey) {
-				attachment.Aliases = append([]string{data.App.LocalKey}, attachment.Aliases...)
+		if localNetwork != nil && (reqNetAttachment.ID == localNetwork.ID || reqNetAttachment.ID == localNetwork.Name) {
+			defaultAlias := slugify.SlugifyAsKey(data.App.Name)
+			if !gofn.Contain(attachment.Aliases, defaultAlias) {
+				attachment.Aliases = append([]string{defaultAlias}, attachment.Aliases...)
 			}
 		}
 		taskSpec.Networks = append(taskSpec.Networks, *attachment)

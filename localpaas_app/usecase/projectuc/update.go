@@ -57,7 +57,7 @@ func (uc *UC) loadProjectDataForUpdate(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ID,
 		bunex.SelectFor("UPDATE"),
 		bunex.SelectRelation("Settings",
-			// NOTE: now we only need to update Envs, expand this list in future
+			// NOTE: now we only need to update Envs, expand this list if need more
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeProjectEnvs),
 		),
 	)

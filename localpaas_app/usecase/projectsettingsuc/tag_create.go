@@ -70,3 +70,21 @@ func (uc *UC) loadProjectTagDataForAddNew(
 
 	return nil
 }
+
+func (uc *UC) preparePersistingProjectTags(
+	project *entity.Project,
+	tags []string,
+	startDisplayOrder int,
+	persistingData *persistingProjectData,
+) {
+	displayOrder := startDisplayOrder
+	for _, tag := range tags {
+		persistingData.UpsertingTags = append(persistingData.UpsertingTags,
+			&entity.ProjectTag{
+				ProjectID:    project.ID,
+				Tag:          tag,
+				DisplayOrder: displayOrder,
+			})
+		displayOrder++
+	}
+}

@@ -6,19 +6,25 @@ import (
 	"github.com/mozillazg/go-slugify"
 )
 
+var (
+	defaultReplacements = []string{"-", "_"}
+)
+
 func Slugify(s string) string {
 	return slugify.Slugify(s)
 }
 
 func SlugifyEx(s string, replacements []string, limit int) string {
 	slug := slugify.Slugify(s)
-	i := 0
-	for i < len(replacements)-1 {
-		slug = strings.ReplaceAll(slug, replacements[i], replacements[i+1])
-		i += 2
+	if len(replacements) > 0 {
+		slug = strings.NewReplacer(replacements...).Replace(slug)
 	}
-	if len(slug) <= limit {
+	if limit < 0 || len(slug) <= limit {
 		return slug
 	}
 	return slug[:limit]
+}
+
+func SlugifyAsKey(s string) string {
+	return SlugifyEx(s, defaultReplacements, -1)
 }

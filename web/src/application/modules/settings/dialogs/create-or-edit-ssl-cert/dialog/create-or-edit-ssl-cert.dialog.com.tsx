@@ -7,6 +7,7 @@ import { ProjectDomainSettingsQueries, ProjectSslCertQueries } from "~/projects/
 import type { SslCert_Notification_Payload } from "~/settings/api/services/ssl-cert-services";
 import { DomainSettingsQueries, SslCertCommands, SslCertQueries } from "~/settings/data";
 
+import { AppLoader } from "@application/shared/components";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
 import { CreateOrEditSslCertForm } from "../form";
@@ -246,9 +247,7 @@ export function CreateOrEditSslCertDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update an SSL certificate</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && (
-                    <div className="py-8 text-sm text-muted-foreground">Loading SSL certificate...</div>
-                )}
+                {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && canRenderForm && (
                     <CreateOrEditSslCertForm
                         isPending={isPending}

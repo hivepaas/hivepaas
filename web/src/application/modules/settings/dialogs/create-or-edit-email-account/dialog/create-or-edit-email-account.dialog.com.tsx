@@ -8,6 +8,7 @@ import { EmailCommands } from "~/settings/data/commands";
 import { EmailQueries } from "~/settings/data/queries";
 import type { SettingEmail } from "~/settings/domain";
 
+import { AppLoader } from "@application/shared/components";
 import { EEmailKind } from "@application/shared/enums";
 
 import { CreateOrEditEmailAccountForm } from "../form";
@@ -219,7 +220,7 @@ export function CreateOrEditEmailAccountDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update an e-mail account</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading email account...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditEmailAccountForm
                         isPending={isPending}

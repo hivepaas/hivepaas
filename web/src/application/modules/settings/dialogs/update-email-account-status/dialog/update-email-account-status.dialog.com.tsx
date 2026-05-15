@@ -7,6 +7,7 @@ import { ProjectEmailQueries } from "~/projects/data/queries";
 import { EmailCommands } from "~/settings/data/commands";
 import { EmailQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateEmailAccountStatusForm } from "../form";
@@ -130,7 +131,7 @@ export function UpdateEmailAccountStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading email account...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateEmailAccountStatusForm
                         isPending={isPending}

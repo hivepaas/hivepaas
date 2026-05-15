@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingEmail } from "~/settings/domain";
@@ -5,7 +6,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import { EEmailKind } from "@application/shared/enums";
 
-import { EmailAccountMenuCell } from "./building-blocks";
+import { EmailAccountEditCell, EmailAccountMenuCell } from "./building-blocks";
 import type { EmailAccountTableScope } from "./email-account-table.types";
 
 function formatKind(kind: SettingEmail["kind"]): string {
@@ -33,6 +34,24 @@ function getKindClassName(kind: SettingEmail["kind"]): string {
 function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[] {
     return [
         {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <EmailAccountEditCell
+                    scope={scope}
+                    id={original.id}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+        {
             accessorKey: "name",
             header: "Name",
             enableSorting: true,
@@ -51,13 +70,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <span
-                        className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${getKindClassName(
-                            original.kind,
-                        )}`}
-                    >
-                        {formatKind(original.kind)}
-                    </span>
+                    <Badge className={getKindClassName(original.kind)}>{formatKind(original.kind)}</Badge>
                 </div>
             ),
         },
@@ -72,9 +85,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
                     {scope.type === "project" && original.inherited && (
-                        <span className="inline-flex items-center rounded-md bg-purple-500 px-2 py-1 text-xs font-medium text-white">
-                            Inherited
-                        </span>
+                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
                     )}
                 </div>
             ),

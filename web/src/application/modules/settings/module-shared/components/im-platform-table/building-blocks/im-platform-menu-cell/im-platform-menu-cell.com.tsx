@@ -2,11 +2,10 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Edit, MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectImServiceCommands } from "~/projects/data/commands";
 import { ImServiceCommands } from "~/settings/data/commands";
-import { useCreateOrEditImPlatformDialog } from "~/settings/dialogs/create-or-edit-im-platform";
 import { useUpdateImPlatformStatusDialog } from "~/settings/dialogs/update-im-platform-status";
 import type { SettingImService } from "~/settings/domain";
 
@@ -17,7 +16,6 @@ import type { ImPlatformTableScope } from "../../im-platform-table.types";
 function View({ scope, imPlatform }: Props) {
     const [open, setOpen] = useState(false);
 
-    const createOrEditDialog = useCreateOrEditImPlatformDialog();
     const updateStatusDialog = useUpdateImPlatformStatusDialog();
 
     const { mutate: deleteSettingImPlatform, isPending: isDeletingSetting } = ImServiceCommands.useDeleteOne({
@@ -69,18 +67,7 @@ function View({ scope, imPlatform }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         onClick={() => {
-                            createOrEditDialog.actions.openEdit(scope, imPlatform);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit className="mr-2 size-4" />
-                        Edit
-                    </Button>
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, imPlatform);
+                            updateStatusDialog.actions.open(scope, imPlatform.id);
                             setOpen(false);
                         }}
                     >

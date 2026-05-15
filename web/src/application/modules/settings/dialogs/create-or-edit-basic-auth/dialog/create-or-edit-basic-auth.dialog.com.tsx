@@ -7,6 +7,8 @@ import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
+
 import { CreateOrEditBasicAuthForm } from "../form";
 import { useCreateOrEditBasicAuthDialogState } from "../hooks";
 import type { CreateOrEditBasicAuthFormOutput } from "../schemas";
@@ -158,7 +160,7 @@ export function CreateOrEditBasicAuthDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update a basic auth</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading basic auth...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditBasicAuthForm
                         isPending={isPending}

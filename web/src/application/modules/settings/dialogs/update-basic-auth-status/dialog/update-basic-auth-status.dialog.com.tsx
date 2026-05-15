@@ -7,6 +7,7 @@ import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateBasicAuthStatusForm } from "../form";
@@ -128,7 +129,7 @@ export function UpdateBasicAuthStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading basic auth...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateBasicAuthStatusForm
                         isPending={isPending}

@@ -1,13 +1,32 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingBasicAuth } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import type { BasicAuthTableScope } from "./basic-auth-table.types";
-import { BasicAuthMenuCell } from "./building-blocks";
+import { BasicAuthEditCell, BasicAuthMenuCell } from "./building-blocks";
 
 function createColumns(scope: BasicAuthTableScope): ColumnDef<SettingBasicAuth>[] {
     return [
+        {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <BasicAuthEditCell
+                    scope={scope}
+                    id={original.id}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",
@@ -29,9 +48,7 @@ function createColumns(scope: BasicAuthTableScope): ColumnDef<SettingBasicAuth>[
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
                     {scope.type === "project" && original.inherited && (
-                        <span className="inline-flex items-center rounded-md bg-purple-500 px-2 py-1 text-xs font-medium text-white">
-                            Inherited
-                        </span>
+                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
                     )}
                 </div>
             ),

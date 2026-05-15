@@ -32,7 +32,7 @@ const NodeSchema = z.object({
     resources: z
         .object({
             cpus: z.number(),
-            memoryMB: z.number(),
+            memoryMB: z.number().nullish(),
         })
         .nullable(),
     engineDesc: z
@@ -100,7 +100,10 @@ export class NodesApiValidator {
                 role: node.role,
                 isLeader: node.isLeader,
                 platform: node.platform,
-                resources: node.resources,
+                resources: {
+                    cpus: node.resources?.cpus ?? 0,
+                    memoryMB: node.resources?.memoryMB ?? 0,
+                },
                 engineDesc: node.engineDesc,
                 updateVer: node.updateVer,
                 createdAt: node.createdAt,
@@ -131,7 +134,10 @@ export class NodesApiValidator {
                 role: data.role,
                 isLeader: data.isLeader,
                 platform: data.platform,
-                resources: data.resources,
+                resources: {
+                    cpus: data.resources?.cpus ?? 0,
+                    memoryMB: data.resources?.memoryMB ?? 0,
+                },
                 engineDesc: data.engineDesc,
                 updateVer: data.updateVer,
                 createdAt: data.createdAt,

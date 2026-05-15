@@ -7,6 +7,7 @@ import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { RegistryAuthQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateRegistryAuthStatusForm } from "../form";
@@ -128,7 +129,7 @@ export function UpdateRegistryAuthStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading registry auth...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateRegistryAuthStatusForm
                         isPending={isPending}

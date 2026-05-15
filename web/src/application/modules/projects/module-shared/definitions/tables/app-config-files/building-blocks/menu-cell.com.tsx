@@ -2,11 +2,10 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { DownloadIcon, Edit2Icon, MoreVertical, Trash2Icon } from "lucide-react";
+import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useAppConfigFilesApi } from "~/projects/api/hooks/project-apps";
 import { AppConfigFilesCommands } from "~/projects/data/commands";
-import { useCreateOrEditAppConfigFileDialog } from "~/projects/dialogs/create-or-edit-app-config-file/hooks";
 import type { AppConfigFile } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
@@ -38,7 +37,6 @@ function saveFile(configFile: AppConfigFile) {
 function View({ projectId, appId, configFile }: Props) {
     const [open, setOpen] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const { actions: configFileDialogActions } = useCreateOrEditAppConfigFileDialog();
     const { queries } = useAppConfigFilesApi();
 
     const { mutate: deleteOne, isPending: isDeleting } = AppConfigFilesCommands.useDeleteOne({
@@ -85,17 +83,6 @@ function View({ projectId, appId, configFile }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            configFileDialogActions.openEdit(projectId, appId, configFile);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit2Icon className="mr-2 size-4" />
-                        Edit
-                    </Button>
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"

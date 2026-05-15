@@ -2,11 +2,10 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Edit, MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
-import { useCreateOrEditSslCertDialog } from "~/settings/dialogs/create-or-edit-ssl-cert";
 import { useUpdateSslCertStatusDialog } from "~/settings/dialogs/update-ssl-cert-status";
 import type { SettingSslCert } from "~/settings/domain";
 
@@ -17,7 +16,6 @@ import type { SslCertTableScope } from "../../ssl-cert-table.types";
 function View({ scope, sslCert }: Props) {
     const [open, setOpen] = useState(false);
 
-    const createOrEditDialog = useCreateOrEditSslCertDialog();
     const updateStatusDialog = useUpdateSslCertStatusDialog();
 
     const { mutate: deleteSettingSslCert, isPending: isDeletingSetting } = SslCertCommands.useDeleteOne({
@@ -69,18 +67,7 @@ function View({ scope, sslCert }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         onClick={() => {
-                            createOrEditDialog.actions.openEdit(scope, sslCert);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit className="mr-2 size-4" />
-                        Edit
-                    </Button>
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, sslCert);
+                            updateStatusDialog.actions.open(scope, sslCert.id);
                             setOpen(false);
                         }}
                     >

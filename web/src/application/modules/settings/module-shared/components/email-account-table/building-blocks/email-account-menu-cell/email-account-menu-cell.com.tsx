@@ -2,11 +2,10 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Edit, MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectEmailCommands } from "~/projects/data/commands";
 import { EmailCommands } from "~/settings/data/commands";
-import { useCreateOrEditEmailAccountDialog } from "~/settings/dialogs/create-or-edit-email-account";
 import { useUpdateEmailAccountStatusDialog } from "~/settings/dialogs/update-email-account-status";
 import type { SettingEmail } from "~/settings/domain";
 
@@ -17,7 +16,6 @@ import type { EmailAccountTableScope } from "../../email-account-table.types";
 function View({ scope, emailAccount }: Props) {
     const [open, setOpen] = useState(false);
 
-    const createOrEditDialog = useCreateOrEditEmailAccountDialog();
     const updateStatusDialog = useUpdateEmailAccountStatusDialog();
 
     const { mutate: deleteSettingEmailAccount, isPending: isDeletingSetting } = EmailCommands.useDeleteOne({
@@ -65,17 +63,6 @@ function View({ scope, emailAccount }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            createOrEditDialog.actions.openEdit(scope, emailAccount.id);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit className="mr-2 size-4" />
-                        Edit
-                    </Button>
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"

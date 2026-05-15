@@ -2,11 +2,10 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Edit, MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectBasicAuthCommands } from "~/projects/data/commands";
 import { BasicAuthCommands } from "~/settings/data/commands";
-import { useCreateOrEditBasicAuthDialog } from "~/settings/dialogs/create-or-edit-basic-auth";
 import { useUpdateBasicAuthStatusDialog } from "~/settings/dialogs/update-basic-auth-status";
 import type { SettingBasicAuth } from "~/settings/domain";
 
@@ -17,7 +16,6 @@ import type { BasicAuthTableScope } from "../../basic-auth-table.types";
 function View({ scope, basicAuth }: Props) {
     const [open, setOpen] = useState(false);
 
-    const createOrEditDialog = useCreateOrEditBasicAuthDialog();
     const updateStatusDialog = useUpdateBasicAuthStatusDialog();
 
     const { mutate: deleteSettingBasicAuth, isPending: isDeletingSetting } = BasicAuthCommands.useDeleteOne({
@@ -69,18 +67,7 @@ function View({ scope, basicAuth }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         onClick={() => {
-                            createOrEditDialog.actions.openEdit(scope, basicAuth);
-                            setOpen(false);
-                        }}
-                    >
-                        <Edit className="mr-2 size-4" />
-                        Edit
-                    </Button>
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, basicAuth);
+                            updateStatusDialog.actions.open(scope, basicAuth.id);
                             setOpen(false);
                         }}
                     >

@@ -7,6 +7,7 @@ import { ProjectSslCertQueries } from "~/projects/data/queries";
 import { SslCertCommands } from "~/settings/data/commands";
 import { SslCertQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateSslCertStatusForm } from "../form";
@@ -125,9 +126,7 @@ export function UpdateSslCertStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && (
-                    <div className="py-8 text-sm text-muted-foreground">Loading SSL certificate...</div>
-                )}
+                {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateSslCertStatusForm
                         isPending={isPending}

@@ -7,6 +7,8 @@ import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { RegistryAuthQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
+
 import { CreateOrEditRegistryAuthForm } from "../form";
 import { useCreateOrEditRegistryAuthDialogState } from "../hooks";
 import type { CreateOrEditRegistryAuthFormOutput } from "../schemas";
@@ -191,7 +193,7 @@ export function CreateOrEditRegistryAuthDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update a registry auth</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading registry auth...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditRegistryAuthForm
                         isPending={isPending}

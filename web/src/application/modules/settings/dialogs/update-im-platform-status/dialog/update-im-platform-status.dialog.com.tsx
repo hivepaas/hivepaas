@@ -7,6 +7,7 @@ import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateImPlatformStatusForm } from "../form";
@@ -130,7 +131,7 @@ export function UpdateImPlatformStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading IM platform...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateImPlatformStatusForm
                         isPending={isPending}

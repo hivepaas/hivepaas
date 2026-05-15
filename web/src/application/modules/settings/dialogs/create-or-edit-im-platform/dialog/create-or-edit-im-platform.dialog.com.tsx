@@ -7,6 +7,7 @@ import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { EImServiceKind } from "@application/shared/enums";
 
 import { CreateOrEditImPlatformForm } from "../form";
@@ -195,7 +196,7 @@ export function CreateOrEditImPlatformDialog() {
                 <DialogHeader>
                     <DialogTitle>Create or update an IM platform</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading IM platform...</div>}
+                {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditImPlatformForm
                         isPending={isPending}

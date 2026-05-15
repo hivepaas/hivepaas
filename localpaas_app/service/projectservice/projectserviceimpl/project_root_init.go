@@ -65,21 +65,25 @@ func (s *service) InitRootProject(
 
 	var updatingServices []*swarm.Service
 	for _, app := range newApps {
-		if app.Key == base.LocalpaasAppKey {
-			var svc *swarm.Service
-			for i := range services {
-				if services[i].ID == app.ServiceID {
-					svc = &services[i]
-					break
-				}
+		var svc *swarm.Service
+		for i := range services {
+			if services[i].ID == app.ServiceID {
+				svc = &services[i]
+				break
 			}
-			shouldUpdateService, err := s.initRootProjectMainApp(ctx, db, app, svc)
-			if err != nil {
-				return nil, apperrors.Wrap(err)
-			}
-			if shouldUpdateService {
-				updatingServices = append(updatingServices, svc)
-			}
+		}
+		shouldUpdateService := false
+		switch app.Key {
+		case base.LocalpaasAppKey:
+			shouldUpdateService, err = s.initRootProjectMainApp(ctx, db, app, svc)
+		case base.LocalpaasTraefikAppKey:
+			shouldUpdateService, err = s.initRootProjectTraefikApp(ctx, db, app, svc)
+		}
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		if shouldUpdateService {
+			updatingServices = append(updatingServices, svc)
 		}
 	}
 

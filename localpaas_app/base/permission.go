@@ -51,6 +51,7 @@ const (
 	ResourceTypeStorageSettings    ResourceType = "storage-settings"
 	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"
 	ResourceTypeLocalPaaSService   ResourceType = "localpaas-service"
+	ResourceTypeTraefikService     ResourceType = "traefik-service"
 )
 
 type ResourceModule string

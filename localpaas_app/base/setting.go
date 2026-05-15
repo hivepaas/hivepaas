@@ -40,6 +40,7 @@ const (
 	SettingTypeStorageSettings    SettingType = "storage-settings"
 	SettingTypeImageBuildSettings SettingType = "image-build-settings"
 	SettingTypeLocalPaaSService   SettingType = "localpaas-service"
+	SettingTypeTraefikService     SettingType = "traefik-service"
 )
 
 var (

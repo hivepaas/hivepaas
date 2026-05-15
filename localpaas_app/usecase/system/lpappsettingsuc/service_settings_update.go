@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappsettingsuc/lpappsettingsdto"
 )
@@ -213,6 +214,8 @@ func (uc *UC) prepareUpdatingServiceSettings(
 ) {
 	setting := data.Setting
 	setting.MustSetData(data.NewSettings)
+	setting.UpdateVer++
+	setting.UpdatedAt = timeutil.NowUTC()
 
 	persistingData.Settings = append(persistingData.Settings, setting)
 }

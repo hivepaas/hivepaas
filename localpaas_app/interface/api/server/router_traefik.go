@@ -14,5 +14,9 @@ func (s *HTTPServer) registerTraefikRoutes(systemGroup *gin.RouterGroup) *gin.Ro
 	traefikGroup.POST("/config/reload", traefikHandler.ReloadTraefikConfig)
 	traefikGroup.POST("/config/reset", traefikHandler.ResetTraefikConfig)
 
+	// Service settings
+	traefikGroup.GET("/service-settings", traefikHandler.GetServiceSettings)
+	traefikGroup.PUT("/service-settings", traefikHandler.UpdateServiceSettings)
+
 	return traefikGroup
 }

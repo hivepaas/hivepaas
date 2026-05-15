@@ -88,6 +88,7 @@ func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator)
 	if field != "" {
 		field += "."
 	}
+	// TODO: add implementation
 	return res
 }
 

@@ -1,4 +1,3 @@
-import type { SettingImService } from "~/settings/domain";
 import type { ImPlatformTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditImPlatformDialogOptions } from "../types";
@@ -15,8 +14,8 @@ function createHook() {
                 open: (scope: ImPlatformTableScope) => {
                     actions.open(scope, { props });
                 },
-                openEdit: (scope: ImPlatformTableScope, imPlatform: SettingImService) => {
-                    actions.openEdit(scope, imPlatform, { props });
+                openEdit: (scope: ImPlatformTableScope, id: string) => {
+                    actions.openEdit(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

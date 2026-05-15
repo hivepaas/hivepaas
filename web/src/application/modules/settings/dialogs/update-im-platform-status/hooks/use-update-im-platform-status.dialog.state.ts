@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingImService } from "~/settings/domain";
 import type { ImPlatformTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateImPlatformStatusDialogOptions, UpdateImPlatformStatusDialogState } from "../types";
@@ -7,11 +6,7 @@ import type { UpdateImPlatformStatusDialogOptions, UpdateImPlatformStatusDialogS
 type State = UpdateImPlatformStatusDialogState & UpdateImPlatformStatusDialogOptions;
 
 interface Actions {
-    open: (
-        scope: ImPlatformTableScope,
-        imPlatform: SettingImService,
-        options?: UpdateImPlatformStatusDialogOptions,
-    ) => void;
+    open: (scope: ImPlatformTableScope, id: string, options?: UpdateImPlatformStatusDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -24,12 +19,12 @@ export const useUpdateImPlatformStatusDialogState = create<State & Actions>()(se
 
     props: {},
 
-    open: (scope, imPlatform, options = {}) => {
+    open: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "open",
                 scope,
-                imPlatform,
+                id,
             },
             ...options,
         });

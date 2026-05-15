@@ -1,4 +1,3 @@
-import type { SettingSslCert } from "~/settings/domain";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateSslCertStatusDialogOptions } from "../types";
@@ -12,8 +11,8 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: SslCertTableScope, sslCert: SettingSslCert) => {
-                    actions.open(scope, sslCert, { props });
+                open: (scope: SslCertTableScope, id: string) => {
+                    actions.open(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

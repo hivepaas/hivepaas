@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
+import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
+import { RegistryAuthQueries } from "~/settings/data/queries";
 
 import { ESettingStatus } from "@application/shared/enums";
 
@@ -43,13 +45,33 @@ export function UpdateRegistryAuthStatusDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = RegistryAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectRegistryAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const registryAuth = detailQuery.data?.data;
+
     function onSubmit(values: UpdateRegistryAuthStatusFormOutput) {
-        if (state.mode !== "open") {
+        if (state.mode !== "open" || !registryAuth) {
             return;
         }
 
         const payload = {
-            updateVer: state.registryAuth.updateVer,
+            updateVer: registryAuth.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
             availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
@@ -59,14 +81,14 @@ export function UpdateRegistryAuthStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectMeta({
                 projectID: state.scope.projectId,
-                id: state.registryAuth.id,
+                id: registryAuth.id,
                 payload,
             });
             return;
         }
 
         updateSettingMeta({
-            id: state.registryAuth.id,
+            id: registryAuth.id,
             payload,
         });
     }
@@ -87,18 +109,15 @@ export function UpdateRegistryAuthStatusDialog() {
     const open = state.mode !== "closed";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
-    const initialValues =
-        state.mode === "open"
-            ? {
-                  status:
-                      state.registryAuth.status === ESettingStatus.Disabled
-                          ? ESettingStatus.Disabled
-                          : ESettingStatus.Active,
-                  expireAt: state.registryAuth.expireAt ?? undefined,
-                  availableInProjects: state.registryAuth.availableInProjects ?? false,
-                  default: state.registryAuth.default ?? false,
-              }
-            : undefined;
+    const initialValues = registryAuth
+        ? {
+              status: registryAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: registryAuth.expireAt ?? undefined,
+              availableInProjects: registryAuth.availableInProjects ?? false,
+              default: registryAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
 
     return (
         <Dialog
@@ -109,7 +128,8 @@ export function UpdateRegistryAuthStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {state.mode === "open" && (
+                {isDetailLoading && <div className="py-8 text-sm text-muted-foreground">Loading registry auth...</div>}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateRegistryAuthStatusForm
                         isPending={isPending}
                         onSubmit={onSubmit}

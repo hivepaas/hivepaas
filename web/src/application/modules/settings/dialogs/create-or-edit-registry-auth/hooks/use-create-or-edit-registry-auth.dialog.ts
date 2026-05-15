@@ -1,4 +1,3 @@
-import type { SettingRegistryAuth } from "~/settings/domain";
 import type { RegistryAuthTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditRegistryAuthDialogOptions } from "../types";
@@ -15,8 +14,8 @@ function createHook() {
                 open: (scope: RegistryAuthTableScope) => {
                     actions.open(scope, { props });
                 },
-                openEdit: (scope: RegistryAuthTableScope, registryAuth: SettingRegistryAuth) => {
-                    actions.openEdit(scope, registryAuth, { props });
+                openEdit: (scope: RegistryAuthTableScope, id: string) => {
+                    actions.openEdit(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

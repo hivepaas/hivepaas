@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingBasicAuth } from "~/settings/domain";
 import type { BasicAuthTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditBasicAuthDialogOptions, CreateOrEditBasicAuthDialogState } from "../types";
@@ -8,11 +7,7 @@ type State = CreateOrEditBasicAuthDialogState & CreateOrEditBasicAuthDialogOptio
 
 interface Actions {
     open: (scope: BasicAuthTableScope, options?: CreateOrEditBasicAuthDialogOptions) => void;
-    openEdit: (
-        scope: BasicAuthTableScope,
-        basicAuth: SettingBasicAuth,
-        options?: CreateOrEditBasicAuthDialogOptions,
-    ) => void;
+    openEdit: (scope: BasicAuthTableScope, id: string, options?: CreateOrEditBasicAuthDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -35,12 +30,12 @@ export const useCreateOrEditBasicAuthDialogState = create<State & Actions>()(set
         });
     },
 
-    openEdit: (scope, basicAuth, options = {}) => {
+    openEdit: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "edit",
                 scope,
-                basicAuth,
+                id,
             },
             ...options,
         });

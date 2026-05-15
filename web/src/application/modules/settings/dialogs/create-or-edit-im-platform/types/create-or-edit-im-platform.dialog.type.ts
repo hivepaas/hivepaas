@@ -1,4 +1,3 @@
-import type { SettingImService } from "~/settings/domain";
 import type { ImPlatformTableScope } from "~/settings/module-shared/components";
 
 export interface CreateOrEditImPlatformDialogState {
@@ -10,7 +9,7 @@ export interface CreateOrEditImPlatformDialogState {
         | {
               mode: "edit";
               scope: ImPlatformTableScope;
-              imPlatform: SettingImService;
+              id: string;
           }
         | {
               mode: "closed";

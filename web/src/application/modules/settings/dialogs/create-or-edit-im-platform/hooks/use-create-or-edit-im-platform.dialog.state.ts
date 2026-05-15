@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingImService } from "~/settings/domain";
 import type { ImPlatformTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditImPlatformDialogOptions, CreateOrEditImPlatformDialogState } from "../types";
@@ -8,11 +7,7 @@ type State = CreateOrEditImPlatformDialogState & CreateOrEditImPlatformDialogOpt
 
 interface Actions {
     open: (scope: ImPlatformTableScope, options?: CreateOrEditImPlatformDialogOptions) => void;
-    openEdit: (
-        scope: ImPlatformTableScope,
-        imPlatform: SettingImService,
-        options?: CreateOrEditImPlatformDialogOptions,
-    ) => void;
+    openEdit: (scope: ImPlatformTableScope, id: string, options?: CreateOrEditImPlatformDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -35,12 +30,12 @@ export const useCreateOrEditImPlatformDialogState = create<State & Actions>()(se
         });
     },
 
-    openEdit: (scope, imPlatform, options = {}) => {
+    openEdit: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "edit",
                 scope,
-                imPlatform,
+                id,
             },
             ...options,
         });

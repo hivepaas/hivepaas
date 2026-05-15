@@ -1,4 +1,3 @@
-import type { SettingRegistryAuth } from "~/settings/domain";
 import type { RegistryAuthTableScope } from "~/settings/module-shared/components";
 
 import type { UpdateRegistryAuthStatusDialogOptions } from "../types";
@@ -12,8 +11,8 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: RegistryAuthTableScope, registryAuth: SettingRegistryAuth) => {
-                    actions.open(scope, registryAuth, { props });
+                open: (scope: RegistryAuthTableScope, id: string) => {
+                    actions.open(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

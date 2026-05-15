@@ -1,4 +1,3 @@
-import type { SettingSslCert } from "~/settings/domain";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 
 export interface CreateOrEditSslCertDialogState {
@@ -10,7 +9,7 @@ export interface CreateOrEditSslCertDialogState {
         | {
               mode: "edit";
               scope: SslCertTableScope;
-              sslCert: SettingSslCert;
+              id: string;
           }
         | {
               mode: "closed";

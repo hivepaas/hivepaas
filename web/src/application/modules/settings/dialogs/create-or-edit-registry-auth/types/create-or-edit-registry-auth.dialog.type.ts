@@ -1,4 +1,3 @@
-import type { SettingRegistryAuth } from "~/settings/domain";
 import type { RegistryAuthTableScope } from "~/settings/module-shared/components";
 
 export interface CreateOrEditRegistryAuthDialogState {
@@ -10,7 +9,7 @@ export interface CreateOrEditRegistryAuthDialogState {
         | {
               mode: "edit";
               scope: RegistryAuthTableScope;
-              registryAuth: SettingRegistryAuth;
+              id: string;
           }
         | {
               mode: "closed";

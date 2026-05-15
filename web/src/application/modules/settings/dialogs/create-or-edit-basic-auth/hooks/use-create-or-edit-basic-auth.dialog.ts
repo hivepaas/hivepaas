@@ -1,4 +1,3 @@
-import type { SettingBasicAuth } from "~/settings/domain";
 import type { BasicAuthTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditBasicAuthDialogOptions } from "../types";
@@ -15,8 +14,8 @@ function createHook() {
                 open: (scope: BasicAuthTableScope) => {
                     actions.open(scope, { props });
                 },
-                openEdit: (scope: BasicAuthTableScope, basicAuth: SettingBasicAuth) => {
-                    actions.openEdit(scope, basicAuth, { props });
+                openEdit: (scope: BasicAuthTableScope, id: string) => {
+                    actions.openEdit(scope, id, { props });
                 },
                 close: () => {
                     actions.close();

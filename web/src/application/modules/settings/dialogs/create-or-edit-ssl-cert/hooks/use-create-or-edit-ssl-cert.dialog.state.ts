@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import type { SettingSslCert } from "~/settings/domain";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 
 import type { CreateOrEditSslCertDialogOptions, CreateOrEditSslCertDialogState } from "../types";
@@ -8,7 +7,7 @@ type State = CreateOrEditSslCertDialogState & CreateOrEditSslCertDialogOptions;
 
 interface Actions {
     open: (scope: SslCertTableScope, options?: CreateOrEditSslCertDialogOptions) => void;
-    openEdit: (scope: SslCertTableScope, sslCert: SettingSslCert, options?: CreateOrEditSslCertDialogOptions) => void;
+    openEdit: (scope: SslCertTableScope, id: string, options?: CreateOrEditSslCertDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -31,12 +30,12 @@ export const useCreateOrEditSslCertDialogState = create<State & Actions>()(set =
         });
     },
 
-    openEdit: (scope, sslCert, options = {}) => {
+    openEdit: (scope, id, options = {}) => {
         set({
             state: {
                 mode: "edit",
                 scope,
-                sslCert,
+                id,
             },
             ...options,
         });

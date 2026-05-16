@@ -6,6 +6,10 @@ export const HttpSettingsRefSchema = z.object({
     name: z.string(),
 });
 
+export const HttpBasicAuthConfigSchema = HttpSettingsRefSchema.extend({
+    enabled: z.boolean(),
+});
+
 export const HttpClientConfigSchema = z.object({
     enabled: z.boolean(),
     maxRequestBody: z.string(),
@@ -14,6 +18,7 @@ export const HttpClientConfigSchema = z.object({
 });
 
 export const HttpHeaderConfigSchema = z.object({
+    enabled: z.boolean(),
     toAddToRequests: z.array(z.object({ key: z.string(), value: z.string() })),
     toRemoveFromRequests: z.array(z.object({ value: z.string() })),
     toAddToResponses: z.array(z.object({ key: z.string(), value: z.string() })),
@@ -41,9 +46,10 @@ export const HttpRateLimitConfigSchema = z.object({
 });
 
 export const HttpPathConfigSchema = z.object({
+    enabled: z.boolean(),
     path: z.string().min(1, "Path is required"),
     mode: z.nativeEnum(EHttpPathMode),
-    basicAuth: HttpSettingsRefSchema.optional(),
+    basicAuth: HttpBasicAuthConfigSchema.optional(),
     clientConfig: HttpClientConfigSchema.optional(),
     headerConfig: HttpHeaderConfigSchema.optional(),
     compressionConfig: HttpCompressionConfigSchema.optional(),
@@ -57,7 +63,7 @@ export const DomainFormSchema = z.object({
     domainRedirect: z.string(),
     sslCert: HttpSettingsRefSchema.optional(),
     forceHttps: z.boolean(),
-    basicAuth: HttpSettingsRefSchema.optional(),
+    basicAuth: HttpBasicAuthConfigSchema.optional(),
     lbConfig: HttpLBConfigSchema.optional(),
     clientConfig: HttpClientConfigSchema.optional(),
     headerConfig: HttpHeaderConfigSchema.optional(),
@@ -74,8 +80,8 @@ export const AppConfigHttpSettingsFormSchema = z.object({
 export type AppConfigHttpSettingsFormSchemaInput = z.input<typeof AppConfigHttpSettingsFormSchema>;
 export type AppConfigHttpSettingsFormSchemaOutput = z.output<typeof AppConfigHttpSettingsFormSchema>;
 
-export function createDefaultBasicAuthRef(): z.infer<typeof HttpSettingsRefSchema> {
-    return { id: "", name: "" };
+export function createDefaultBasicAuthRef(): z.infer<typeof HttpBasicAuthConfigSchema> {
+    return { id: "", name: "", enabled: true };
 }
 
 export function createDefaultLBConfig(): z.infer<typeof HttpLBConfigSchema> {
@@ -84,7 +90,7 @@ export function createDefaultLBConfig(): z.infer<typeof HttpLBConfigSchema> {
 
 export function createDefaultClientConfig(): z.infer<typeof HttpClientConfigSchema> {
     return {
-        enabled: false,
+        enabled: true,
         maxRequestBody: "",
         memRequestBody: "",
         allowedIPs: "",
@@ -93,6 +99,7 @@ export function createDefaultClientConfig(): z.infer<typeof HttpClientConfigSche
 
 export function createDefaultHeaderConfig(): z.infer<typeof HttpHeaderConfigSchema> {
     return {
+        enabled: true,
         toAddToRequests: [],
         toRemoveFromRequests: [],
         toAddToResponses: [],
@@ -102,7 +109,7 @@ export function createDefaultHeaderConfig(): z.infer<typeof HttpHeaderConfigSche
 
 export function createDefaultCompressionConfig(): z.infer<typeof HttpCompressionConfigSchema> {
     return {
-        enabled: false,
+        enabled: true,
         excludedContentTypes: "",
         includedContentTypes: `text/plain
 text/html
@@ -127,7 +134,7 @@ font/ttf`,
 
 export function createDefaultRateLimitConfig(): z.infer<typeof HttpRateLimitConfigSchema> {
     return {
-        enabled: false,
+        enabled: true,
         average: 0,
         period: "",
         burst: 0,

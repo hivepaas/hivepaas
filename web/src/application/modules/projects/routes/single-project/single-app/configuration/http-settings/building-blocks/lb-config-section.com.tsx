@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { FieldError } from "@components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { useController, useFormContext } from "react-hook-form";
@@ -7,25 +5,15 @@ import { ELBStrategy } from "~/projects/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { RedirectTo } from "../form-components";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 const DEFAULT_STRATEGY_VALUE = "__default__";
 
 interface LBConfigSectionProps {
     prefix: string;
-    autoExpandToken?: number;
-    onRemove?: () => void;
 }
 
-export function LBConfigSection({ prefix, autoExpandToken, onRemove }: LBConfigSectionProps) {
-    const [open, setOpen] = useState(false);
-    useEffect(() => {
-        if (autoExpandToken !== undefined) {
-            setOpen(true);
-        }
-    }, [autoExpandToken]);
-
+export function LBConfigSection({ prefix }: LBConfigSectionProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,

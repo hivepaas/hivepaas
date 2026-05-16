@@ -22,6 +22,10 @@ const SettingRefSchema = z
     })
     .passthrough();
 
+const BasicAuthConfigSchema = SettingRefSchema.extend({
+    enabled: z.boolean().optional(),
+});
+
 const HttpClientConfigSchema = z.object({
     enabled: z.boolean(),
     maxRequestBody: z.string(),
@@ -30,6 +34,7 @@ const HttpClientConfigSchema = z.object({
 });
 
 const HttpHeaderConfigSchema = z.object({
+    enabled: z.boolean().optional(),
     toAddToRequests: z.record(z.string()).nullish(),
     toRemoveFromRequests: z.array(z.string()).nullish(),
     toAddToResponses: z.record(z.string()).nullish(),
@@ -57,9 +62,10 @@ const HttpLBConfigSchema = z.object({
 });
 
 const HttpPathConfigSchema = z.object({
+    enabled: z.boolean().optional(),
     path: z.string(),
     mode: z.nativeEnum(EHttpPathMode),
-    basicAuth: SettingRefSchema.nullish(),
+    basicAuth: BasicAuthConfigSchema.nullish(),
     clientConfig: HttpClientConfigSchema.nullish(),
     headerConfig: HttpHeaderConfigSchema.nullish(),
     compressionConfig: HttpCompressionConfigSchema.nullish(),
@@ -73,7 +79,7 @@ const DomainSchema = z.object({
     sslCert: SettingRefSchema.nullish(),
     containerPort: z.number(),
     forceHttps: z.boolean().optional(),
-    basicAuth: SettingRefSchema.nullish(),
+    basicAuth: BasicAuthConfigSchema.nullish(),
     lbConfig: HttpLBConfigSchema.nullish(),
     clientConfig: HttpClientConfigSchema.nullish(),
     headerConfig: HttpHeaderConfigSchema.nullish(),
@@ -112,6 +118,7 @@ function mapHeaderConfig(raw: z.infer<typeof HttpHeaderConfigSchema> | null | un
         return null;
     }
     return {
+        enabled: raw.enabled ?? true,
         toAddToRequests: raw.toAddToRequests ?? {},
         toRemoveFromRequests: raw.toRemoveFromRequests ?? [],
         toAddToResponses: raw.toAddToResponses ?? {},
@@ -165,11 +172,21 @@ function mapSettingRef(raw: z.infer<typeof SettingRefSchema> | null | undefined)
     return { id: raw.id, name: raw.name };
 }
 
+function mapBasicAuthConfig(
+    raw: z.infer<typeof BasicAuthConfigSchema> | null | undefined,
+): { id: string; name: string; enabled: boolean } | null {
+    if (raw == null) {
+        return null;
+    }
+    return { id: raw.id, name: raw.name, enabled: raw.enabled ?? true };
+}
+
 function mapPath(raw: z.infer<typeof HttpPathConfigSchema>): AppHttpPathConfig {
     return {
+        enabled: raw.enabled ?? true,
         path: raw.path,
         mode: raw.mode,
-        basicAuth: mapSettingRef(raw.basicAuth ?? undefined),
+        basicAuth: mapBasicAuthConfig(raw.basicAuth ?? undefined),
         clientConfig: mapClientConfig(raw.clientConfig ?? undefined),
         headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
@@ -185,7 +202,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppHttpDomain {
         sslCert: mapSettingRef(raw.sslCert ?? undefined),
         containerPort: raw.containerPort,
         forceHttps: raw.forceHttps,
-        basicAuth: mapSettingRef(raw.basicAuth ?? undefined),
+        basicAuth: mapBasicAuthConfig(raw.basicAuth ?? undefined),
         lbConfig: mapLBConfig(raw.lbConfig ?? undefined),
         clientConfig: mapClientConfig(raw.clientConfig ?? undefined),
         headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),

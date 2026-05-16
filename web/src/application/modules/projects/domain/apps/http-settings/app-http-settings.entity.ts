@@ -28,6 +28,12 @@ export type AppHttpLBConfig = {
     strategy: ELBStrategy;
 };
 
+export type AppHttpBasicAuthConfig = {
+    id: string;
+    name: string;
+    enabled: boolean;
+};
+
 export type AppHttpDomain = {
     enabled: boolean;
     domain: string;
@@ -35,7 +41,7 @@ export type AppHttpDomain = {
     sslCert?: { id: string; name: string } | null;
     containerPort: number;
     forceHttps?: boolean;
-    basicAuth?: { id: string; name: string } | null;
+    basicAuth?: AppHttpBasicAuthConfig | null;
     lbConfig?: AppHttpLBConfig | null;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
@@ -52,6 +58,7 @@ export type AppHttpClientConfig = {
 };
 
 export type AppHttpHeaderConfig = {
+    enabled: boolean;
     toAddToRequests: Record<string, string>;
     toRemoveFromRequests: string[];
     toAddToResponses: Record<string, string>;
@@ -75,9 +82,10 @@ export type AppHttpRateLimitConfig = {
 };
 
 export type AppHttpPathConfig = {
+    enabled: boolean;
     path: string;
     mode: EHttpPathMode;
-    basicAuth?: { id: string; name: string } | null;
+    basicAuth?: AppHttpBasicAuthConfig | null;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
@@ -88,6 +96,10 @@ export type AppHttpSettingsObjectIdReq = {
     id: string;
 };
 
+export type AppHttpBasicAuthConfigReq = AppHttpSettingsObjectIdReq & {
+    enabled: boolean;
+};
+
 export type AppHttpSettingsUpdateDomain = {
     enabled: boolean;
     domain: string;
@@ -95,7 +107,7 @@ export type AppHttpSettingsUpdateDomain = {
     sslCert: AppHttpSettingsObjectIdReq;
     containerPort: number;
     forceHttps: boolean;
-    basicAuth: AppHttpSettingsObjectIdReq;
+    basicAuth: AppHttpBasicAuthConfigReq;
     lbConfig?: AppHttpLBConfig | null;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
@@ -105,9 +117,10 @@ export type AppHttpSettingsUpdateDomain = {
 };
 
 export type AppHttpSettingsUpdatePath = {
+    enabled: boolean;
     path: string;
     mode: EHttpPathMode;
-    basicAuth: AppHttpSettingsObjectIdReq;
+    basicAuth: AppHttpBasicAuthConfigReq;
     clientConfig?: AppHttpClientConfig | null;
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;

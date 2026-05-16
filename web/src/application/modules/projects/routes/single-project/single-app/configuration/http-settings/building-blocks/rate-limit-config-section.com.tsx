@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { InputNumber } from "@components/ui/input-number";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
@@ -46,6 +46,8 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
         field: maxInFlightReq,
         fieldState: { error: maxInFlightReqError, invalid: maxInFlightReqInvalid },
     } = useController({ control, name: `${prefix}.maxInFlightReq` as never });
+    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
 
     return (
         <Collapsible
@@ -99,54 +101,64 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Average">
-                        <InputNumber
-                            value={average.value}
-                            onValueChange={average.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={averageInvalid}
+                    <InfoBlock title="Enabled">
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={enabled.onChange}
                         />
-                        <FieldError errors={[averageError]} />
                     </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            <InfoBlock title="Average">
+                                <InputNumber
+                                    value={average.value}
+                                    onValueChange={average.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={averageInvalid}
+                                />
+                                <FieldError errors={[averageError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Period">
-                        <Input
-                            value={period.value}
-                            onChange={v => {
-                                period.onChange(v);
-                            }}
-                            placeholder="1s"
-                            className="max-w-[100px]"
-                            aria-invalid={periodInvalid}
-                        />
-                        <FieldError errors={[periodError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Period">
+                                <Input
+                                    value={period.value}
+                                    onChange={v => {
+                                        period.onChange(v);
+                                    }}
+                                    placeholder="1s"
+                                    className="max-w-[100px]"
+                                    aria-invalid={periodInvalid}
+                                />
+                                <FieldError errors={[periodError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Burst">
-                        <InputNumber
-                            value={burst.value}
-                            onValueChange={burst.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={burstInvalid}
-                        />
-                        <FieldError errors={[burstError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Burst">
+                                <InputNumber
+                                    value={burst.value}
+                                    onValueChange={burst.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={burstInvalid}
+                                />
+                                <FieldError errors={[burstError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Max In-Flight Requests">
-                        <InputNumber
-                            value={maxInFlightReq.value}
-                            onValueChange={maxInFlightReq.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={maxInFlightReqInvalid}
-                        />
-                        <FieldError errors={[maxInFlightReqError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Max In-Flight Requests">
+                                <InputNumber
+                                    value={maxInFlightReq.value}
+                                    onValueChange={maxInFlightReq.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={maxInFlightReqInvalid}
+                                />
+                                <FieldError errors={[maxInFlightReqError]} />
+                            </InfoBlock>
+                        </>
+                    )}
                 </div>
             </CollapsibleContent>
         </Collapsible>

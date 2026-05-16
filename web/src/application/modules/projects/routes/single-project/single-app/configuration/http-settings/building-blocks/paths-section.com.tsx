@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Badge } from "@components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
@@ -43,6 +43,8 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
     } = useController({ control, name: `${pathPrefix}.path` as never });
 
     const { field: mode } = useController({ control, name: `${pathPrefix}.mode` as never });
+    const { field: enabled } = useController({ control, name: `${pathPrefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
 
     const expanded = expandedPaths.has(path.value);
 
@@ -87,39 +89,49 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Path"
-                                isRequired
-                            />
-                        }
-                    >
-                        <Input
-                            {...path}
-                            value={path.value}
-                            onChange={path.onChange}
-                            placeholder="/api/v1"
-                            className="max-w-[400px]"
+                    <InfoBlock title="Enabled">
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={enabled.onChange}
                         />
-                        <FieldError errors={[pathError]} />
                     </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Path"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <Input
+                                    {...path}
+                                    value={path.value}
+                                    onChange={path.onChange}
+                                    placeholder="/api/v1"
+                                    className="max-w-[400px]"
+                                />
+                                <FieldError errors={[pathError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Match Mode">
-                        <Tabs
-                            value={mode.value}
-                            onValueChange={mode.onChange}
-                            className="w-fit"
-                        >
-                            <TabsList>
-                                <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
-                                <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
-                                <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </InfoBlock>
+                            <InfoBlock title="Match Mode">
+                                <Tabs
+                                    value={mode.value}
+                                    onValueChange={mode.onChange}
+                                    className="w-fit"
+                                >
+                                    <TabsList>
+                                        <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
+                                        <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
+                                        <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                            </InfoBlock>
 
-                    <HttpConfigurableSections basePath={basePath} />
+                            <HttpConfigurableSections basePath={basePath} />
+                        </>
+                    )}
                 </div>
             </CollapsibleContent>
         </Collapsible>
@@ -148,7 +160,7 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
 
     function handleAdd() {
         if (!newPath.trim()) return;
-        append({ path: newPath.trim(), mode: newMode });
+        append({ enabled: true, path: newPath.trim(), mode: newMode });
         setNewPath("");
         setNewMode(EHttpPathMode.Prefix);
     }

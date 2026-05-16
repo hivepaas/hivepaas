@@ -46,7 +46,7 @@ function View() {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 items-center">
                                     <span>Position:</span>
                                     <span className="text-black">{profile.position || "Unknown position"}</span>
                                 </div>
@@ -54,7 +54,7 @@ function View() {
                             <span>•</span>
                             <div className="flex gap-1.5 items-center">
                                 <BadgeCheck className="size-4 text-blue-500" />
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 items-center">
                                     <span>Role:</span>
                                     <UserRoleBadge role={profile.role} />
                                 </div>

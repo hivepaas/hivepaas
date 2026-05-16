@@ -3,14 +3,14 @@
   gap: 6px;
   align-items: center;
   width: fit-content;
-  margin-bottom: 0.5em;
+  // margin-bottom: 0.5em;
 
   .icon {
     display: flex;
     align-items: center;
 
     color: var(--app-color-neutral-6);
-    
+
     svg {
       width: 16px;
       height: 16px;

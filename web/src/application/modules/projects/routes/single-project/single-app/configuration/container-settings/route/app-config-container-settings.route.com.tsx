@@ -5,7 +5,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppContainerSettingsCommands, AppContainerSettingsQueries } from "~/projects/data";
-import { type AppContainerSettings, type Privileges, type RestartPolicy } from "~/projects/domain";
+import { type AppContainerSettings, type Healthcheck, type Privileges, type RestartPolicy } from "~/projects/domain";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
@@ -58,21 +58,45 @@ function buildPrivileges(values: AppConfigContainerSettingsFormSchemaOutput): Pr
     };
 }
 
+function buildLabels(rows: AppConfigContainerSettingsFormSchemaOutput["serviceLabels"]): Record<string, string> {
+    const record: Record<string, string> = {};
+    for (const row of rows) {
+        const key = row.key.trim();
+        if (key) {
+            record[key] = row.value;
+        }
+    }
+    return record;
+}
+
+function buildHealthcheck(values: AppConfigContainerSettingsFormSchemaOutput): Healthcheck | null {
+    const { healthcheck } = values;
+    if (!healthcheck.enabled) {
+        return null;
+    }
+
+    return {
+        enabled: true,
+        mode: healthcheck.mode,
+        command: healthcheck.command,
+        interval: healthcheck.interval,
+        timeout: healthcheck.timeout,
+        startPeriod: healthcheck.startPeriod,
+        startInterval: healthcheck.startInterval,
+        retries: healthcheck.retries ?? 0,
+    };
+}
+
 function mapFormValuesToPayload(
     values: AppConfigContainerSettingsFormSchemaOutput,
     server: AppContainerSettings | undefined,
 ): AppContainerSettings {
-    const labels: Record<string, string> = {};
-    for (const row of values.labels) {
-        const k = row.key.trim();
-        if (k) labels[k] = row.value;
-    }
-
     const g = values.general;
     const groups = g.groups.trim().split(/\s+/).filter(Boolean);
 
     return {
-        labels,
+        serviceLabels: buildLabels(values.serviceLabels),
+        containerLabels: buildLabels(values.containerLabels),
         image: g.image,
         command: g.command,
         workingDir: g.workingDir,
@@ -85,7 +109,7 @@ function mapFormValuesToPayload(
         readOnly: g.readOnly,
         stopGracePeriod: g.stopGracePeriod.trim() === "" ? null : g.stopGracePeriod,
         privileges: buildPrivileges(values),
-        healthcheck: server?.healthcheck ?? null,
+        healthcheck: buildHealthcheck(values),
         restartPolicy: buildRestartPolicy(values),
         updateVer: server?.updateVer ?? 0,
     };

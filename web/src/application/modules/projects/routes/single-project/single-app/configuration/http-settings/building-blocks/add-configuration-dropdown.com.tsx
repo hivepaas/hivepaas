@@ -57,6 +57,8 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
     const values = useWatch({ control }) as AppConfigHttpSettingsFormSchemaInput | undefined;
     const segment = useMemo(() => segmentAtPath(values, basePath), [values, basePath]);
 
+    const availableOptions = useMemo(() => OPTIONS.filter(({ key }) => segment?.[key] == null), [segment]);
+
     function add(key: ConfigSectionKey) {
         const fieldPath = `${basePath}.${key}`;
         switch (key) {
@@ -81,6 +83,10 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
         onSectionAdded?.(key);
     }
 
+    if (availableOptions.length === 0) {
+        return null;
+    }
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -95,21 +101,18 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-                {OPTIONS.map(({ key, label }) => {
-                    const present = segment?.[key] != null;
-                    return (
-                        <DropdownMenuItem
-                            key={key}
-                            disabled={present}
-                            onSelect={e => {
-                                e.preventDefault();
-                                if (!present) add(key);
-                            }}
-                        >
-                            {label}
-                        </DropdownMenuItem>
-                    );
-                })}
+                {availableOptions.map(({ key, label }) => (
+                    <DropdownMenuItem
+                        key={key}
+                        onSelect={() => {
+                            queueMicrotask(() => {
+                                add(key);
+                            });
+                        }}
+                    >
+                        {label}
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
         </DropdownMenu>
     );

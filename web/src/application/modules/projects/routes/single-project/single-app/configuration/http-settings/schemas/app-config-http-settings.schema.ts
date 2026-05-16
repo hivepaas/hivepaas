@@ -45,6 +45,8 @@ export const HttpPathConfigSchema = z.object({
     mode: z.nativeEnum(EHttpPathMode),
     basicAuth: HttpSettingsRefSchema.optional(),
     clientConfig: HttpClientConfigSchema.optional(),
+    headerConfig: HttpHeaderConfigSchema.optional(),
+    compressionConfig: HttpCompressionConfigSchema.optional(),
     rateLimitConfig: HttpRateLimitConfigSchema.optional(),
 });
 
@@ -139,6 +141,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
     containerPort: 80,
     domainRedirect: "",
     forceHttps: true,
+    lbConfig: createDefaultLBConfig(),
     paths: [],
 };
 

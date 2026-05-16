@@ -12,24 +12,15 @@ import {
     createDefaultClientConfig,
     createDefaultCompressionConfig,
     createDefaultHeaderConfig,
-    createDefaultLBConfig,
     createDefaultRateLimitConfig,
 } from "../schemas";
 
-type ConfigKeyDomain =
-    | "basicAuth"
-    | "clientConfig"
-    | "compressionConfig"
-    | "headerConfig"
-    | "lbConfig"
-    | "rateLimitConfig";
-type ConfigKeyPath = "basicAuth" | "clientConfig" | "rateLimitConfig";
-export type ConfigSectionKey = ConfigKeyDomain | ConfigKeyPath;
+type ConfigKeyDomain = "basicAuth" | "clientConfig" | "compressionConfig" | "headerConfig" | "rateLimitConfig";
+export type ConfigSectionKey = ConfigKeyDomain;
 
 const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "basicAuth", label: "Basic Auth" },
     { key: "clientConfig", label: "Client Configuration" },
-    { key: "lbConfig", label: "Load Balancing Configuration" },
     { key: "compressionConfig", label: "Compression Configuration" },
     { key: "headerConfig", label: "Header Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
@@ -74,9 +65,6 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
                 break;
             case "clientConfig":
                 setFormValue(fieldPath, createDefaultClientConfig(), { shouldDirty: true, shouldValidate: true });
-                break;
-            case "lbConfig":
-                setFormValue(fieldPath, createDefaultLBConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
             case "compressionConfig":
                 setFormValue(fieldPath, createDefaultCompressionConfig(), { shouldDirty: true, shouldValidate: true });

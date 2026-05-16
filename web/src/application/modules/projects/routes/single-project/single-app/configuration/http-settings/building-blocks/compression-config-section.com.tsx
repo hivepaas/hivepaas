@@ -116,7 +116,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                             {...excludedContentTypes}
                             value={excludedContentTypes.value}
                             onChange={excludedContentTypes.onChange}
-                            placeholder="text/plain"
+                            placeholder="content types"
                             rows={2}
                             className="resize-y max-w-[400px]"
                             aria-invalid={isExcludedContentTypesInvalid}

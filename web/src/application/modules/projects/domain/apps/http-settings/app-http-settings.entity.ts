@@ -79,6 +79,8 @@ export type AppHttpPathConfig = {
     mode: EHttpPathMode;
     basicAuth?: { id: string; name: string } | null;
     clientConfig?: AppHttpClientConfig | null;
+    headerConfig?: AppHttpHeaderConfig | null;
+    compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
 };
 
@@ -107,6 +109,8 @@ export type AppHttpSettingsUpdatePath = {
     mode: EHttpPathMode;
     basicAuth: AppHttpSettingsObjectIdReq;
     clientConfig?: AppHttpClientConfig | null;
+    headerConfig?: AppHttpHeaderConfig | null;
+    compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
 };
 

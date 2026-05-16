@@ -9,7 +9,6 @@ import { BasicAuthSection } from "./basic-auth-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
 import { CompressionConfigSection } from "./compression-config-section.com";
 import { HeaderConfigSection } from "./header-config-section.com";
-import { LBConfigSection } from "./lb-config-section.com";
 import { RateLimitConfigSection } from "./rate-limit-config-section.com";
 
 interface HttpConfigurableSectionsProps {
@@ -48,16 +47,6 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
                     autoExpandToken={expandSignal?.key === "clientConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.clientConfig`);
-                    }}
-                />
-            )}
-
-            {segment?.["lbConfig"] != null && (
-                <LBConfigSection
-                    prefix={`${basePath}.lbConfig`}
-                    autoExpandToken={expandSignal?.key === "lbConfig" ? expandSignal.seq : undefined}
-                    onRemove={() => {
-                        removeSection(`${basePath}.lbConfig`);
                     }}
                 />
             )}

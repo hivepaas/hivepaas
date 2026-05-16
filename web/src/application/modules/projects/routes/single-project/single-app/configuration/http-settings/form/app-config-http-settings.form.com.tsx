@@ -11,7 +11,13 @@ import { PopConfirm } from "@application/shared/components/pop-confirm";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { DomainConfigurableSections, DomainGeneralFields, DomainSelector, PathsSection } from "../building-blocks";
+import {
+    DomainConfigurableSections,
+    DomainGeneralFields,
+    DomainSelector,
+    LBConfigSection,
+    PathsSection,
+} from "../building-blocks";
 import {
     AppConfigHttpSettingsFormSchema,
     type AppConfigHttpSettingsFormSchemaInput,
@@ -77,6 +83,7 @@ function ConditionalDomainDetailSections({
             </h3>
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields domainIndex={activeDomainIndex} />
+                <LBConfigSection prefix={`domains.${activeDomainIndex}.lbConfig`} />
             </div>
             {!hasRedirect && (
                 <>

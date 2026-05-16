@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 
-import { Button, FieldError } from "@components/ui";
+import { Button, Field, FieldError } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import invariant from "tiny-invariant";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import { ProjectBasicAuthQueries } from "@application/modules/projects/data";
 
@@ -100,33 +100,46 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Credential">
-                        <Combobox
-                            options={comboboxOptions}
-                            value={basicAuthValue?.id ?? null}
-                            onChange={(_, option) => {
-                                if (!option) {
-                                    idField.onChange("");
-                                    nameField.onChange("");
-                                    return;
-                                }
+                    <InfoBlock title="Basic Auth">
+                        <Field className="">
+                            <Combobox
+                                options={comboboxOptions}
+                                value={basicAuthValue?.id ?? null}
+                                onChange={(_, option) => {
+                                    if (!option) {
+                                        idField.onChange("");
+                                        nameField.onChange("");
+                                        return;
+                                    }
 
-                                idField.onChange(option.id);
-                                nameField.onChange(option.name);
-                            }}
-                            onSearch={setSearchQuery}
-                            placeholder="Select basic auth credential"
-                            searchable
-                            closeOnSelect
-                            emptyText="No basic auth credentials available"
-                            className="max-w-[400px]"
-                            valueKey="id"
-                            loading={isFetching}
-                            onRefresh={() => void refetch()}
-                            isRefreshing={isRefetching}
-                            allowClear
-                        />
-                        <FieldError errors={[nameError]} />
+                                    idField.onChange(option.id);
+                                    nameField.onChange(option.name);
+                                }}
+                                onSearch={setSearchQuery}
+                                placeholder="Select basic auth credential"
+                                searchable
+                                closeOnSelect
+                                emptyText="No basic auth credentials available"
+                                className="max-w-[400px]"
+                                valueKey="id"
+                                loading={isFetching}
+                                onRefresh={() => void refetch()}
+                                isRefreshing={isRefetching}
+                                allowClear
+                            />
+                            <FieldError errors={[nameError]} />
+                            <div className="text-xs">
+                                <p>
+                                    Need to add new basic auth?{" "}
+                                    <Link
+                                        to={ROUTE.projects.single.configuration.basicAuth.$route(projectId)}
+                                        className="text-blue-500"
+                                    >
+                                        Click here
+                                    </Link>
+                                </p>
+                            </div>
+                        </Field>
                     </InfoBlock>
                 </div>
             </CollapsibleContent>

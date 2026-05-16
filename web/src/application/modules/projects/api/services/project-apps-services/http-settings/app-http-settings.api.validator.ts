@@ -61,6 +61,8 @@ const HttpPathConfigSchema = z.object({
     mode: z.nativeEnum(EHttpPathMode),
     basicAuth: SettingRefSchema.nullish(),
     clientConfig: HttpClientConfigSchema.nullish(),
+    headerConfig: HttpHeaderConfigSchema.nullish(),
+    compressionConfig: HttpCompressionConfigSchema.nullish(),
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
 });
 
@@ -169,6 +171,8 @@ function mapPath(raw: z.infer<typeof HttpPathConfigSchema>): AppHttpPathConfig {
         mode: raw.mode,
         basicAuth: mapSettingRef(raw.basicAuth ?? undefined),
         clientConfig: mapClientConfig(raw.clientConfig ?? undefined),
+        headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),
+        compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
     };
 }

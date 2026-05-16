@@ -54,11 +54,11 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex w-full items-center gap-1 rounded-md border border-dashed px-1">
+            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />
@@ -81,7 +81,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
                         onClick={onRemove}
                     >

@@ -23,16 +23,19 @@ export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
 
     return (
         <>
-            <ContainerPort domainIndex={domainIndex} />
-            <SslCert domainIndex={domainIndex} />
+            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">General</h3>
+            <div className="flex flex-col gap-6 px-2">
+                <ContainerPort domainIndex={domainIndex} />
+                <SslCert domainIndex={domainIndex} />
 
-            <InfoBlock title="Force HTTPS">
-                <Checkbox
-                    checked={forceHttps.value}
-                    onCheckedChange={forceHttps.onChange}
-                />
-            </InfoBlock>
-            <RedirectTo domainIndex={domainIndex} />
+                <InfoBlock title="Force HTTPS">
+                    <Checkbox
+                        checked={forceHttps.value}
+                        onCheckedChange={forceHttps.onChange}
+                    />
+                </InfoBlock>
+                <RedirectTo domainIndex={domainIndex} />
+            </div>
         </>
     );
 }

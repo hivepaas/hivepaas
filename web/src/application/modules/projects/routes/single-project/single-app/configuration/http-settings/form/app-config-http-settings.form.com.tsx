@@ -74,7 +74,7 @@ function ConditionalDomainDetailSections({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-0"
                         title="Remove domain"
                     >
                         <X className="size-4" />

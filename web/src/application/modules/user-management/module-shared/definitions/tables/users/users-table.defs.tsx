@@ -9,7 +9,7 @@ import { ActionsCell, UserMenuCell } from "./building-blocks";
 const columns: ColumnDef<UserBase>[] = [
     {
         id: "actions",
-        header: "Actions",
+        header: "",
         enableResizing: false,
         enableHiding: false,
         minSize: 80,

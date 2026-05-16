@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { Input } from "@components/ui";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -12,6 +11,9 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
+
+const networkAttachmentsGridClass =
+    "grid flex-1 min-w-0 w-full grid-cols-2 gap-3 max-w-[500px] items-center [&>*]:min-w-0";
 
 type NetworkOptionValue = {
     id: string;
@@ -70,7 +72,7 @@ export function NetworksFields() {
             }
         >
             <FieldListLayout
-                inputsClassName="grid flex-1 grid-cols-2 gap-3 max-w-[500px]"
+                inputsClassName={networkAttachmentsGridClass}
                 inputRow={
                     <>
                         <Combobox<NetworkOptionValue>
@@ -102,17 +104,9 @@ export function NetworksFields() {
                 items={fields.map((field, index) => ({
                     id: field.id,
                     content: (
-                        <div className="grid grid-cols-2 flex-1 gap-3 max-w-[500px]">
-                            <Input
-                                value={field.name || field.id}
-                                disabled
-                                className="max-w-[400px]"
-                            />
-                            <Input
-                                value={field.aliasesText}
-                                disabled
-                                className="max-w-[400px]"
-                            />
+                        <div className={networkAttachmentsGridClass}>
+                            <span className="text-sm wrap-break-word min-w-0">{field.name || field.id}</span>
+                            <span className="text-sm wrap-break-word min-w-0">{field.aliasesText}</span>
                         </div>
                     ),
                     onRemove: () => {

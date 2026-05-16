@@ -114,11 +114,7 @@ export function createStorageTableColumns(
                 const { type } = row.original;
                 if (!type) return <div className="font-medium">-</div>;
 
-                return (
-                    <Badge className={cn("justify-center rounded-full text-sm lowercase", mountTypeColorMap[type])}>
-                        {type}
-                    </Badge>
-                );
+                return <Badge className={cn(mountTypeColorMap[type])}>{type}</Badge>;
             },
             meta: {
                 align: "left",

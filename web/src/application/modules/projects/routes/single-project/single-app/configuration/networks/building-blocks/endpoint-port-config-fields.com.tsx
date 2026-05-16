@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { Input } from "@components/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { dashedBorderBox } from "@lib/styles";
@@ -12,6 +11,8 @@ import { InfoBlock, InputNumberWithAddon, LabelWithInfo } from "@application/sha
 import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
+
+const portFieldsGridClass = "grid flex-1 min-w-0 w-full grid-cols-4 gap-3 items-center";
 
 export function EndpointPortConfigFields() {
     const { control, watch, setValue } = useFormContext<
@@ -77,7 +78,7 @@ export function EndpointPortConfigFields() {
                 <FieldListLayout
                     className="max-w-[800px]"
                     inputRow={
-                        <div className="flex gap-3 items-center flex-1">
+                        <div className={portFieldsGridClass}>
                             <InputNumberWithAddon
                                 addonLeft="Host"
                                 value={published}
@@ -86,7 +87,7 @@ export function EndpointPortConfigFields() {
                                 }}
                                 useGrouping={false}
                                 placeholder="8000"
-                                classNameContainer="col-span-3"
+                                classNameContainer="min-w-0"
                             />
                             <InputNumberWithAddon
                                 addonLeft="Container"
@@ -96,8 +97,9 @@ export function EndpointPortConfigFields() {
                                 }}
                                 useGrouping={false}
                                 placeholder="80"
+                                classNameContainer="min-w-0"
                             />
-                            <div className="flex items-center rounded-md border border-input h-9 flex-1">
+                            <div className="flex min-w-0 items-center rounded-md border border-input h-9">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
                                     Protocol
                                 </span>
@@ -117,7 +119,7 @@ export function EndpointPortConfigFields() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="flex items-center rounded-md border border-input h-9 flex-1">
+                            <div className="flex min-w-0 items-center rounded-md border border-input h-9">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
                                     Mode
                                 </span>
@@ -147,23 +149,11 @@ export function EndpointPortConfigFields() {
                     items={fields.map((field, index) => ({
                         id: field.id,
                         content: (
-                            <div className="flex gap-3 flex-1">
-                                <Input
-                                    value={field.published}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.target}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.protocol}
-                                    disabled
-                                />
-                                <Input
-                                    value={field.publishMode}
-                                    disabled
-                                />
+                            <div className={portFieldsGridClass}>
+                                <span className="text-sm wrap-break-word min-w-0">{field.published}</span>
+                                <span className="text-sm wrap-break-word min-w-0">{field.target}</span>
+                                <span className="text-sm wrap-break-word min-w-0">{field.protocol}</span>
+                                <span className="text-sm wrap-break-word min-w-0">{field.publishMode}</span>
                             </div>
                         ),
                         onRemove: () => {

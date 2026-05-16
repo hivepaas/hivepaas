@@ -9,7 +9,10 @@ const cx = classnames.bind(styles);
 function View({ title, description, children, titleWidth = 270 }: Props) {
     return (
         <div className={cx("info-block")}>
-            <div className={cx("info")} style={{ minWidth: titleWidth }}>
+            <div
+                className={cx("info")}
+                style={{ minWidth: titleWidth }}
+            >
                 <div className={cx("title")}>{title}</div>
 
                 {description && <div className={cx("description")}>{description}</div>}

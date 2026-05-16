@@ -3,17 +3,17 @@ import React from "react";
 import { Input } from "@components/ui";
 import { Field, FieldError } from "@components/ui/field";
 import { useController, useFormContext } from "react-hook-form";
-import type { ProjectStorageSettings } from "~/projects/domain";
+import type { SettingStorageSettings } from "~/settings/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
 
 interface TmpfsFieldsProps {
-    projectRules?: ProjectStorageSettings;
+    storageSettings?: SettingStorageSettings;
 }
 
-export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
+export function TmpfsFields({ storageSettings }: TmpfsFieldsProps) {
     const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
 
     const {
@@ -22,7 +22,7 @@ export function TmpfsFields({ projectRules }: TmpfsFieldsProps) {
     } = useController({ name: "tmpfsOptions.size", control });
     const { field: modeField } = useController({ name: "tmpfsOptions.mode", control });
 
-    const maxSize = projectRules?.tmpfsSettings?.maxSize;
+    const maxSize = storageSettings?.tmpfsSettings?.maxSize;
 
     return (
         <>

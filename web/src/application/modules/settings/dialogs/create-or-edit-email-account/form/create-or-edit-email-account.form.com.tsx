@@ -412,7 +412,7 @@ export function CreateOrEditEmailAccountForm({
                                     items={fieldMapping.fields.map((field, index) => ({
                                         id: field.id,
                                         content: (
-                                            <div className="grid flex-1 grid-cols-2 gap-3">
+                                            <div className="grid flex-1 grid-cols-2 gap-2">
                                                 <div className="break-words text-sm">{field.key}</div>
                                                 <div className="break-words text-sm">{field.value}</div>
                                             </div>

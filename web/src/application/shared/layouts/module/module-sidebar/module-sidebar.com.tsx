@@ -56,27 +56,27 @@ const navMain: SidebarItem[] = [
         icon: Settings,
         items: [
             {
-                title: "Basic auth",
+                title: "Basic Auth",
                 route: ROUTE.settings.basicAuth.$route,
                 pattern: ROUTE.settings.basicAuth.$pattern,
             },
             {
-                title: "Registry auth",
+                title: "Registry Auth",
                 route: ROUTE.settings.registryAuth.$route,
                 pattern: ROUTE.settings.registryAuth.$pattern,
             },
             {
-                title: "SSL certificates",
+                title: "SSL Certificates",
                 route: ROUTE.settings.sslCertificates.$route,
                 pattern: ROUTE.settings.sslCertificates.$pattern,
             },
             {
-                title: "Email accounts",
+                title: "Email Accounts",
                 route: ROUTE.settings.emailAccounts.$route,
                 pattern: ROUTE.settings.emailAccounts.$pattern,
             },
             {
-                title: "IM platforms",
+                title: "IM Platforms",
                 route: ROUTE.settings.imPlatforms.$route,
                 pattern: ROUTE.settings.imPlatforms.$pattern,
             },

@@ -31,23 +31,23 @@ function View({ projectId, children }: Props) {
             route: ROUTE.projects.single.configuration.secrets.$route(projectId),
         },
         {
-            label: "Basic auth",
+            label: "Basic Auth",
             route: ROUTE.projects.single.configuration.basicAuth.$route(projectId),
         },
         {
-            label: "Registry auth",
+            label: "Registry Auth",
             route: ROUTE.projects.single.configuration.registryAuth.$route(projectId),
         },
         {
-            label: "SSL certificates",
+            label: "SSL Certificates",
             route: ROUTE.projects.single.configuration.sslCertificates.$route(projectId),
         },
         {
-            label: "Email accounts",
+            label: "Email Accounts",
             route: ROUTE.projects.single.configuration.emailAccounts.$route(projectId),
         },
         {
-            label: "IM platforms",
+            label: "IM Platforms",
             route: ROUTE.projects.single.configuration.imPlatforms.$route(projectId),
         },
     ];

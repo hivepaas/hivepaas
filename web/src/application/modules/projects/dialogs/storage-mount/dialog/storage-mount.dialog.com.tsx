@@ -31,7 +31,6 @@ export function StorageMountDialog() {
 
     const open = state.mode !== "closed";
     const isEdit = state.mode === "edit";
-    const projectRules = state.mode !== "closed" ? state.projectRules : undefined;
     const projectKey = state.mode !== "closed" ? state.projectKey : undefined;
     const appLocalKey = state.mode !== "closed" ? state.appLocalKey : undefined;
     const defaultValues = state.mode === "edit" ? mountWithoutId(state.mount) : undefined;
@@ -80,7 +79,6 @@ export function StorageMountDialog() {
                             isPending={isSubmitting}
                             onSubmit={values => void handleSubmit(values)}
                             defaultValues={defaultValues}
-                            projectRules={projectRules}
                             projectKey={projectKey}
                             appLocalKey={appLocalKey}
                         />

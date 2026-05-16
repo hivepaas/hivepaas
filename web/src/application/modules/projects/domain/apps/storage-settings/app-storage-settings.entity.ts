@@ -1,7 +1,9 @@
 import type { EMountConsistency, EMountPropagation, EMountType } from "~/projects/module-shared/enums";
+import type { SettingStorageSettings } from "~/settings/domain";
 
 export type AppStorageSettings = {
     mounts: AppStorageMount[];
+    settings: SettingStorageSettings;
     updateVer: number;
 };
 

@@ -1,17 +1,15 @@
-import type { AppStorageMount, ProjectStorageSettings } from "~/projects/domain";
+import type { AppStorageMount } from "~/projects/domain";
 
 export interface StorageMountDialogState {
     state:
         | {
               mode: "open";
-              projectRules?: ProjectStorageSettings;
               projectKey?: string;
               appLocalKey?: string;
           }
         | {
               mode: "edit";
               mount: AppStorageMount & { _id: string };
-              projectRules?: ProjectStorageSettings;
               projectKey?: string;
               appLocalKey?: string;
           }

@@ -46,27 +46,27 @@ export const settingsRouter: RouteObject = {
         };
     },
     children: [
-        createSettingsRoute(ROUTE.settings.basicAuth.$pattern, "Basic auth", async () => {
+        createSettingsRoute(ROUTE.settings.basicAuth.$pattern, "Basic Auth", async () => {
             const { SettingsBasicAuthRoute } = await getLazyComponents();
 
             return SettingsBasicAuthRoute;
         }),
-        createSettingsRoute(ROUTE.settings.registryAuth.$pattern, "Registry auth", async () => {
+        createSettingsRoute(ROUTE.settings.registryAuth.$pattern, "Registry Auth", async () => {
             const { SettingsRegistryAuthRoute } = await getLazyComponents();
 
             return SettingsRegistryAuthRoute;
         }),
-        createSettingsRoute(ROUTE.settings.sslCertificates.$pattern, "SSL certificates", async () => {
+        createSettingsRoute(ROUTE.settings.sslCertificates.$pattern, "SSL Certificates", async () => {
             const { SettingsSslCertificatesRoute } = await getLazyComponents();
 
             return SettingsSslCertificatesRoute;
         }),
-        createSettingsRoute(ROUTE.settings.emailAccounts.$pattern, "Email accounts", async () => {
+        createSettingsRoute(ROUTE.settings.emailAccounts.$pattern, "Email Accounts", async () => {
             const { SettingsEmailAccountsRoute } = await getLazyComponents();
 
             return SettingsEmailAccountsRoute;
         }),
-        createSettingsRoute(ROUTE.settings.imPlatforms.$pattern, "IM platforms", async () => {
+        createSettingsRoute(ROUTE.settings.imPlatforms.$pattern, "IM Platforms", async () => {
             const { SettingsImPlatformsRoute } = await getLazyComponents();
 
             return SettingsImPlatformsRoute;

@@ -5,7 +5,6 @@ import {
     AppStorageSettingsCommands,
     AppStorageSettingsQueries,
     ProjectAppsQueries,
-    ProjectStorageSettingsQueries,
     ProjectsQueries,
 } from "~/projects/data";
 import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
@@ -29,10 +28,6 @@ function AppConfigStorageContent() {
     const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne({
         projectID: projectId,
         appID: appId,
-    });
-
-    const { data: projectRulesData, isLoading: projectRulesLoading } = ProjectStorageSettingsQueries.useFindOne({
-        projectID: projectId,
     });
 
     const { data: projectData, isLoading: projectMetaLoading } = ProjectsQueries.useFindOneById({
@@ -75,7 +70,7 @@ function AppConfigStorageContent() {
     }
 
     const handleAddMount = () => {
-        storageMountDialog.actions.open(projectRulesData?.data, {
+        storageMountDialog.actions.open({
             projectKey,
             appLocalKey,
             onSubmit: async (mount: AppStorageMount) => {
@@ -91,7 +86,7 @@ function AppConfigStorageContent() {
     };
 
     const handleEditMount = (mount: StorageMountWithId) => {
-        storageMountDialog.actions.openEdit(mount, projectRulesData?.data, {
+        storageMountDialog.actions.openEdit(mount, {
             projectKey,
             appLocalKey,
             onSubmit: async (updatedMount: AppStorageMount) => {
@@ -111,7 +106,7 @@ function AppConfigStorageContent() {
         });
     };
 
-    if (appLoading || projectRulesLoading || projectMetaLoading || appDetailsLoading) {
+    if (appLoading || projectMetaLoading || appDetailsLoading) {
         return <AppLoader />;
     }
 

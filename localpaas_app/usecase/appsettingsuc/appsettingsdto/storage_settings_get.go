@@ -21,7 +21,6 @@ import (
 type GetAppStorageSettingsReq struct {
 	ProjectID string `json:"-"`
 	AppID     string `json:"-"`
-	GetMounts bool   `json:"-" mapstructure:"getMounts"`
 }
 
 func NewGetAppStorageSettingsReq() *GetAppStorageSettingsReq {

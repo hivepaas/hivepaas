@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { InputNumber } from "@components/ui/input-number";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
@@ -46,17 +46,19 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
         field: maxInFlightReq,
         fieldState: { error: maxInFlightReqError, invalid: maxInFlightReqInvalid },
     } = useController({ control, name: `${prefix}.maxInFlightReq` as never });
+    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
 
     return (
         <Collapsible
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex w-full items-center gap-1 rounded-md border border-dashed px-1">
+            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />
@@ -89,7 +91,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
                         onClick={onRemove}
                     >
@@ -99,54 +101,64 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Average">
-                        <InputNumber
-                            value={average.value}
-                            onValueChange={average.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={averageInvalid}
+                    <InfoBlock title="Enabled">
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={enabled.onChange}
                         />
-                        <FieldError errors={[averageError]} />
                     </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            <InfoBlock title="Average">
+                                <InputNumber
+                                    value={average.value}
+                                    onValueChange={average.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={averageInvalid}
+                                />
+                                <FieldError errors={[averageError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Period">
-                        <Input
-                            value={period.value}
-                            onChange={v => {
-                                period.onChange(v);
-                            }}
-                            placeholder="1s"
-                            className="max-w-[100px]"
-                            aria-invalid={periodInvalid}
-                        />
-                        <FieldError errors={[periodError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Period">
+                                <Input
+                                    value={period.value}
+                                    onChange={v => {
+                                        period.onChange(v);
+                                    }}
+                                    placeholder="1s"
+                                    className="max-w-[100px]"
+                                    aria-invalid={periodInvalid}
+                                />
+                                <FieldError errors={[periodError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Burst">
-                        <InputNumber
-                            value={burst.value}
-                            onValueChange={burst.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={burstInvalid}
-                        />
-                        <FieldError errors={[burstError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Burst">
+                                <InputNumber
+                                    value={burst.value}
+                                    onValueChange={burst.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={burstInvalid}
+                                />
+                                <FieldError errors={[burstError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Max In-Flight Requests">
-                        <InputNumber
-                            value={maxInFlightReq.value}
-                            onValueChange={maxInFlightReq.onChange}
-                            placeholder="100"
-                            className="max-w-[100px]"
-                            useGrouping={false}
-                            aria-invalid={maxInFlightReqInvalid}
-                        />
-                        <FieldError errors={[maxInFlightReqError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Max In-Flight Requests">
+                                <InputNumber
+                                    value={maxInFlightReq.value}
+                                    onValueChange={maxInFlightReq.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={maxInFlightReqInvalid}
+                                />
+                                <FieldError errors={[maxInFlightReqError]} />
+                            </InfoBlock>
+                        </>
+                    )}
                 </div>
             </CollapsibleContent>
         </Collapsible>

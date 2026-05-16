@@ -4,6 +4,7 @@ import { type EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums"
 import {
     type AppConfigHttpSettingsFormSchemaInput,
     type AppConfigHttpSettingsFormSchemaOutput,
+    createDefaultLBConfig,
     emptyDomain,
 } from "../schemas";
 
@@ -19,8 +20,10 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         domainRedirect: domain.domainRedirect ?? "",
         sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
         forceHttps: domain.forceHttps ?? false,
-        basicAuth: domain.basicAuth?.id ? { id: domain.basicAuth.id, name: domain.basicAuth.name } : undefined,
-        lbConfig: domain.lbConfig ? { strategy: domain.lbConfig.strategy } : undefined,
+        basicAuth: domain.basicAuth?.id
+            ? { id: domain.basicAuth.id, name: domain.basicAuth.name, enabled: domain.basicAuth.enabled }
+            : undefined,
+        lbConfig: domain.lbConfig ? { strategy: domain.lbConfig.strategy } : createDefaultLBConfig(),
         clientConfig: domain.clientConfig
             ? {
                   enabled: domain.clientConfig.enabled,
@@ -31,6 +34,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
             : undefined,
         headerConfig: domain.headerConfig
             ? {
+                  enabled: domain.headerConfig.enabled,
                   toAddToRequests: Object.entries(domain.headerConfig.toAddToRequests).map(([key, value]) => ({
                       key,
                       value,
@@ -62,15 +66,42 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
               }
             : undefined,
         paths: (domain.paths ?? []).map(path => ({
+            enabled: path.enabled,
             path: path.path,
             mode: path.mode,
-            basicAuth: path.basicAuth?.id ? { id: path.basicAuth.id, name: path.basicAuth.name } : undefined,
+            basicAuth: path.basicAuth?.id
+                ? { id: path.basicAuth.id, name: path.basicAuth.name, enabled: path.basicAuth.enabled }
+                : undefined,
             clientConfig: path.clientConfig
                 ? {
                       enabled: path.clientConfig.enabled,
                       maxRequestBody: path.clientConfig.maxRequestBody,
                       memRequestBody: path.clientConfig.memRequestBody,
                       allowedIPs: path.clientConfig.allowedIPs.join(","),
+                  }
+                : undefined,
+            headerConfig: path.headerConfig
+                ? {
+                      enabled: path.headerConfig.enabled,
+                      toAddToRequests: Object.entries(path.headerConfig.toAddToRequests).map(([key, value]) => ({
+                          key,
+                          value,
+                      })),
+                      toRemoveFromRequests: path.headerConfig.toRemoveFromRequests.map(value => ({ value })),
+                      toAddToResponses: Object.entries(path.headerConfig.toAddToResponses).map(([key, value]) => ({
+                          key,
+                          value,
+                      })),
+                      toRemoveFromResponses: path.headerConfig.toRemoveFromResponses.map(value => ({ value })),
+                  }
+                : undefined,
+            compressionConfig: path.compressionConfig
+                ? {
+                      enabled: path.compressionConfig.enabled,
+                      excludedContentTypes: path.compressionConfig.excludedContentTypes.join("\n"),
+                      includedContentTypes: path.compressionConfig.includedContentTypes.join("\n"),
+                      minResponseBody: path.compressionConfig.minResponseBody,
+                      defaultEncoding: path.compressionConfig.defaultEncoding,
                   }
                 : undefined,
             rateLimitConfig: path.rateLimitConfig
@@ -103,7 +134,7 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
             domainRedirect: domain.domainRedirect,
             sslCert: { id: domain.sslCert?.id ?? "" },
             forceHttps: domain.forceHttps,
-            basicAuth: { id: domain.basicAuth?.id ?? "" },
+            basicAuth: { id: domain.basicAuth?.id ?? "", enabled: domain.basicAuth?.enabled ?? false },
             lbConfig:
                 domain.lbConfig && isLBStrategy(domain.lbConfig.strategy)
                     ? { strategy: domain.lbConfig.strategy }
@@ -122,6 +153,7 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                 : null,
             headerConfig: domain.headerConfig
                 ? {
+                      enabled: domain.headerConfig.enabled,
                       toAddToRequests: Object.fromEntries(
                           domain.headerConfig.toAddToRequests.map(({ key, value }) => [key, value]),
                       ),
@@ -163,9 +195,10 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                   }
                 : null,
             paths: domain.paths.map(path => ({
+                enabled: path.enabled,
                 path: path.path,
                 mode: path.mode as EHttpPathMode,
-                basicAuth: { id: path.basicAuth?.id ?? "" },
+                basicAuth: { id: path.basicAuth?.id ?? "", enabled: path.basicAuth?.enabled ?? false },
                 clientConfig: path.clientConfig
                     ? {
                           enabled: path.clientConfig.enabled,
@@ -176,6 +209,40 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                               .split(",")
                               .map(s => s.trim())
                               .filter(Boolean),
+                      }
+                    : null,
+                headerConfig: path.headerConfig
+                    ? {
+                          enabled: path.headerConfig.enabled,
+                          toAddToRequests: Object.fromEntries(
+                              path.headerConfig.toAddToRequests.map(({ key, value }) => [key, value]),
+                          ),
+                          toRemoveFromRequests: path.headerConfig.toRemoveFromRequests
+                              .map(item => item.value)
+                              .filter(Boolean),
+                          toAddToResponses: Object.fromEntries(
+                              path.headerConfig.toAddToResponses.map(({ key, value }) => [key, value]),
+                          ),
+                          toRemoveFromResponses: path.headerConfig.toRemoveFromResponses
+                              .map(item => item.value)
+                              .filter(Boolean),
+                      }
+                    : null,
+                compressionConfig: path.compressionConfig
+                    ? {
+                          enabled: path.compressionConfig.enabled,
+                          excludedContentTypes: path.compressionConfig.excludedContentTypes
+                              .replace(/\n/g, ",")
+                              .split(",")
+                              .map(item => item.trim())
+                              .filter(Boolean),
+                          includedContentTypes: path.compressionConfig.includedContentTypes
+                              .replace(/\n/g, ",")
+                              .split(",")
+                              .map(item => item.trim())
+                              .filter(Boolean),
+                          minResponseBody: path.compressionConfig.minResponseBody,
+                          defaultEncoding: path.compressionConfig.defaultEncoding,
                       }
                     : null,
                 rateLimitConfig: path.rateLimitConfig

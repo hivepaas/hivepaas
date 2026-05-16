@@ -247,78 +247,78 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
                 />
             </InfoBlock>
 
-            <InfoBlock
-                titleWidth={240}
-                title={
-                    <LabelWithInfo
-                        label="File Path"
-                        isRequired={mountIntoFilesystem}
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            id="app-config-file-path"
-                            {...filePath}
-                            placeholder={APP_CONFIG_FILE_DEFAULT_FILE_PATH}
-                            aria-invalid={isFilePathInvalid}
-                            disabled={!mountIntoFilesystem}
-                        />
-                        <FieldError errors={[errors.filePath]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
+            {mountIntoFilesystem && (
+                <>
+                    <InfoBlock
+                        titleWidth={240}
+                        title={
+                            <LabelWithInfo
+                                label="File Path"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    id="app-config-file-path"
+                                    {...filePath}
+                                    placeholder={APP_CONFIG_FILE_DEFAULT_FILE_PATH}
+                                    aria-invalid={isFilePathInvalid}
+                                />
+                                <FieldError errors={[errors.filePath]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-            <InfoBlock
-                titleWidth={240}
-                title={
-                    <LabelWithInfo
-                        label="File Mode"
-                        isRequired={mountIntoFilesystem}
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
+                    <InfoBlock
+                        titleWidth={240}
+                        title={
+                            <LabelWithInfo
+                                label="File Mode"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    id="app-config-file-mode"
+                                    {...fileMode}
+                                    placeholder="default: 0444"
+                                    aria-invalid={isFileModeInvalid}
+                                    className="max-w-[180px]"
+                                />
+                                <FieldError errors={[errors.fileMode]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={240}
+                        title={<LabelWithInfo label="File UID" />}
+                    >
                         <Input
-                            id="app-config-file-mode"
-                            {...fileMode}
-                            placeholder="default: 0444"
-                            aria-invalid={isFileModeInvalid}
+                            id="app-config-file-uid"
+                            {...fileUid}
+                            placeholder="uid"
                             className="max-w-[180px]"
-                            disabled={!mountIntoFilesystem}
                         />
-                        <FieldError errors={[errors.fileMode]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
+                    </InfoBlock>
 
-            <InfoBlock
-                titleWidth={240}
-                title={<LabelWithInfo label="File UID" />}
-            >
-                <Input
-                    id="app-config-file-uid"
-                    {...fileUid}
-                    placeholder="uid"
-                    className="max-w-[180px]"
-                    disabled={!mountIntoFilesystem}
-                />
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={240}
-                title={<LabelWithInfo label="File GID" />}
-            >
-                <Input
-                    id="app-config-file-gid"
-                    {...fileGid}
-                    placeholder="gid"
-                    className="max-w-[180px]"
-                    disabled={!mountIntoFilesystem}
-                />
-            </InfoBlock>
+                    <InfoBlock
+                        titleWidth={240}
+                        title={<LabelWithInfo label="File GID" />}
+                    >
+                        <Input
+                            id="app-config-file-gid"
+                            {...fileGid}
+                            placeholder="gid"
+                            className="max-w-[180px]"
+                        />
+                    </InfoBlock>
+                </>
+            )}
 
             <Field>
                 <div className="flex justify-end">

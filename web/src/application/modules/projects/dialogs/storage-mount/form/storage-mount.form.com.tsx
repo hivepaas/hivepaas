@@ -179,6 +179,23 @@ export function StorageMountForm({
 
                     {storageType === EMountType.Tmpfs && <TmpfsFields projectRules={projectRules} />}
 
+                    {storageType !== EMountType.Tmpfs && (
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Read-only" />}
+                                titleWidth={180}
+                            >
+                                <Checkbox
+                                    id="read-only"
+                                    checked={readOnlyField.value ?? false}
+                                    onCheckedChange={checked => {
+                                        readOnlyField.onChange(checked === true);
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    )}
+
                     <Field>
                         <InfoBlock
                             title={
@@ -198,23 +215,6 @@ export function StorageMountForm({
                             <FieldError errors={[errors.target]} />
                         </InfoBlock>
                     </Field>
-
-                    {storageType !== EMountType.Tmpfs && (
-                        <Field>
-                            <InfoBlock
-                                title={<LabelWithInfo label="Read-only" />}
-                                titleWidth={180}
-                            >
-                                <Checkbox
-                                    id="read-only"
-                                    checked={readOnlyField.value ?? false}
-                                    onCheckedChange={checked => {
-                                        readOnlyField.onChange(checked === true);
-                                    }}
-                                />
-                            </InfoBlock>
-                        </Field>
-                    )}
 
                     <Field>
                         <InfoBlock

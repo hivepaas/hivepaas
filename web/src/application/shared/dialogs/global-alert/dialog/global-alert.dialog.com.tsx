@@ -52,6 +52,7 @@ function View() {
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription
                         className={cn("text-", dashedBorderBox, type === "error" ? "text-red-500" : "text-gray-500")}
+                        style={{ wordBreak: "break-word" }}
                     >
                         {description}
                     </AlertDialogDescription>

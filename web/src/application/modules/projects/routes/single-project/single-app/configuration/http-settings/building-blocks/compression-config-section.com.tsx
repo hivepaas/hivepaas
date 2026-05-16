@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
@@ -48,17 +48,19 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
         field: includedContentTypes,
         fieldState: { error: includedContentTypesError, invalid: isIncludedContentTypesInvalid },
     } = useController({ control, name: `${prefix}.includedContentTypes` as never });
+    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
 
     return (
         <Collapsible
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex w-full items-center gap-1 rounded-md border border-dashed px-1">
+            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />
@@ -81,7 +83,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
                         onClick={onRemove}
                     >
@@ -91,60 +93,70 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Default Encoding">
-                        <Select
-                            value={defaultEncoding.value}
-                            onValueChange={defaultEncoding.onChange}
-                        >
-                            <SelectTrigger
-                                className="max-w-[100px]"
-                                aria-invalid={isDefaultEncodingInvalid}
-                            >
-                                <SelectValue placeholder="..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="br">brotli</SelectItem>
-                                <SelectItem value="zstd">zstd</SelectItem>
-                                <SelectItem value="gzip">gzip</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FieldError errors={[defaultEncodingError]} />
+                    <InfoBlock title="Enabled">
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={enabled.onChange}
+                        />
                     </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            <InfoBlock title="Default Encoding">
+                                <Select
+                                    value={defaultEncoding.value}
+                                    onValueChange={defaultEncoding.onChange}
+                                >
+                                    <SelectTrigger
+                                        className="max-w-[100px]"
+                                        aria-invalid={isDefaultEncodingInvalid}
+                                    >
+                                        <SelectValue placeholder="..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="br">brotli</SelectItem>
+                                        <SelectItem value="zstd">zstd</SelectItem>
+                                        <SelectItem value="gzip">gzip</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[defaultEncodingError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Excluded Content Types">
-                        <Textarea
-                            {...excludedContentTypes}
-                            value={excludedContentTypes.value}
-                            onChange={excludedContentTypes.onChange}
-                            placeholder="text/plain"
-                            rows={2}
-                            className="resize-y max-w-[400px]"
-                            aria-invalid={isExcludedContentTypesInvalid}
-                        />
-                        <FieldError errors={[excludedContentTypesError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Excluded Content Types">
+                                <Textarea
+                                    {...excludedContentTypes}
+                                    value={excludedContentTypes.value}
+                                    onChange={excludedContentTypes.onChange}
+                                    placeholder="content types"
+                                    rows={2}
+                                    className="resize-y max-w-[400px]"
+                                    aria-invalid={isExcludedContentTypesInvalid}
+                                />
+                                <FieldError errors={[excludedContentTypesError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Included Content Types">
-                        <Textarea
-                            {...includedContentTypes}
-                            value={includedContentTypes.value}
-                            onChange={includedContentTypes.onChange}
-                            placeholder="text/html"
-                            rows={2}
-                            className="resize-y max-w-[400px]"
-                            aria-invalid={isIncludedContentTypesInvalid}
-                        />
-                        <FieldError errors={[includedContentTypesError]} />
-                    </InfoBlock>
-                    <InfoBlock title="Min Response Body Size">
-                        <Input
-                            value={minResponseBody.value}
-                            onChange={minResponseBody.onChange}
-                            className="max-w-[100px]"
-                            aria-invalid={isMinResponseBodyInvalid}
-                        />
-                        <FieldError errors={[minResponseBodyError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Included Content Types">
+                                <Textarea
+                                    {...includedContentTypes}
+                                    value={includedContentTypes.value}
+                                    onChange={includedContentTypes.onChange}
+                                    placeholder="text/html"
+                                    rows={2}
+                                    className="resize-y max-w-[400px]"
+                                    aria-invalid={isIncludedContentTypesInvalid}
+                                />
+                                <FieldError errors={[includedContentTypesError]} />
+                            </InfoBlock>
+                            <InfoBlock title="Min Response Body Size">
+                                <Input
+                                    value={minResponseBody.value}
+                                    onChange={minResponseBody.onChange}
+                                    className="max-w-[100px]"
+                                    aria-invalid={isMinResponseBodyInvalid}
+                                />
+                                <FieldError errors={[minResponseBodyError]} />
+                            </InfoBlock>
+                        </>
+                    )}
                 </div>
             </CollapsibleContent>
         </Collapsible>

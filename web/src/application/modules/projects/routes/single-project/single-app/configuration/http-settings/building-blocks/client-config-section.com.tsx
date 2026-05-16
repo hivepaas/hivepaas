@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { Textarea } from "@components/ui/textarea";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
@@ -47,17 +47,19 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
         field: allowedIPs,
         fieldState: { error: allowedIPsError, invalid: isAllowedIPsInvalid },
     } = useController({ control, name: allowedIPsName as never });
+    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
 
     return (
         <Collapsible
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex w-full items-center gap-1 rounded-md border border-dashed px-1">
+            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />
@@ -80,7 +82,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
                         onClick={onRemove}
                     >
@@ -90,39 +92,49 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Max Request Body Size">
-                        <Input
-                            value={maxRequestBody.value}
-                            onChange={maxRequestBody.onChange}
-                            className="max-w-[100px]"
-                            aria-invalid={isMaxRequestBodyInvalid}
+                    <InfoBlock title="Enabled">
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={enabled.onChange}
                         />
-                        <FieldError errors={[maxRequestBodyError]} />
                     </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            <InfoBlock title="Max Request Body Size">
+                                <Input
+                                    value={maxRequestBody.value}
+                                    onChange={maxRequestBody.onChange}
+                                    className="max-w-[100px]"
+                                    aria-invalid={isMaxRequestBodyInvalid}
+                                />
+                                <FieldError errors={[maxRequestBodyError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Mem Request Body Size">
-                        <Input
-                            value={memRequestBody.value}
-                            onChange={memRequestBody.onChange}
-                            className="max-w-[100px]"
-                            aria-invalid={isMemRequestBodyInvalid}
-                        />
-                        <FieldError errors={[memRequestBodyError]} />
-                    </InfoBlock>
+                            <InfoBlock title="Mem Request Body Size">
+                                <Input
+                                    value={memRequestBody.value}
+                                    onChange={memRequestBody.onChange}
+                                    className="max-w-[100px]"
+                                    aria-invalid={isMemRequestBodyInvalid}
+                                />
+                                <FieldError errors={[memRequestBodyError]} />
+                            </InfoBlock>
 
-                    <InfoBlock title="Allowed IPs">
-                        <div className="flex flex-col gap-2 max-w-[400px]">
-                            <Textarea
-                                {...allowedIPs}
-                                onChange={allowedIPs.onChange}
-                                placeholder="192.168.1.0/24"
-                                rows={2}
-                                className="resize-y"
-                                aria-invalid={isAllowedIPsInvalid}
-                            />
-                            <FieldError errors={[allowedIPsError]} />
-                        </div>
-                    </InfoBlock>
+                            <InfoBlock title="Allowed IPs">
+                                <div className="flex flex-col gap-2 max-w-[400px]">
+                                    <Textarea
+                                        {...allowedIPs}
+                                        onChange={allowedIPs.onChange}
+                                        placeholder="192.168.1.0/24"
+                                        rows={2}
+                                        className="resize-y"
+                                        aria-invalid={isAllowedIPsInvalid}
+                                    />
+                                    <FieldError errors={[allowedIPsError]} />
+                                </div>
+                            </InfoBlock>
+                        </>
+                    )}
                 </div>
             </CollapsibleContent>
         </Collapsible>

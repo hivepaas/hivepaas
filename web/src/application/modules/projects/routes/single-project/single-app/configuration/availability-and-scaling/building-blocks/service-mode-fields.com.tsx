@@ -67,7 +67,7 @@ export function ServiceModeFields() {
                         onValueChange={val => {
                             serviceReplicas.onChange(val);
                         }}
-                        className="max-w-[65px]"
+                        className="max-w-[100px]"
                         min={0}
                     />
                     <FieldError errors={[serviceReplicasError]} />
@@ -89,7 +89,7 @@ export function ServiceModeFields() {
                             onValueChange={val => {
                                 jobMaxConcurrent.onChange(val);
                             }}
-                            className="max-w-[65px]"
+                            className="max-w-[100px]"
                             min={0}
                         />
                         <FieldError errors={[jobMaxConcurrentError]} />
@@ -108,7 +108,7 @@ export function ServiceModeFields() {
                             onValueChange={val => {
                                 jobTotalCompletions.onChange(val);
                             }}
-                            className="max-w-[65px]"
+                            className="max-w-[100px]"
                             min={0}
                         />
                         <FieldError errors={[jobTotalCompletionsError]} />

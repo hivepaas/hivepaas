@@ -1,4 +1,4 @@
-import type { AppStorageMount, ProjectStorageSettings } from "~/projects/domain";
+import type { AppStorageMount } from "~/projects/domain";
 
 import { useStorageMountDialogState } from "./use-storage-mount.dialog.state";
 
@@ -9,18 +9,15 @@ function createHook() {
         return {
             state: state.state,
             actions: {
-                open: (
-                    projectRules?: ProjectStorageSettings,
-                    options?: {
-                        projectKey?: string;
-                        appLocalKey?: string;
-                        onSubmit?: (mount: AppStorageMount) => Promise<void>;
-                        onClose?: () => void;
-                        onError?: (error: Error) => void;
-                    },
-                ) => {
+                open: (options?: {
+                    projectKey?: string;
+                    appLocalKey?: string;
+                    onSubmit?: (mount: AppStorageMount) => Promise<void>;
+                    onClose?: () => void;
+                    onError?: (error: Error) => void;
+                }) => {
                     const { onSubmit, onClose, onError, projectKey, appLocalKey } = options ?? {};
-                    state.open(projectRules, {
+                    state.open({
                         projectKey,
                         appLocalKey,
                         props: { onSubmit, onClose, onError },
@@ -28,7 +25,6 @@ function createHook() {
                 },
                 openEdit: (
                     mount: AppStorageMount & { _id: string },
-                    projectRules?: ProjectStorageSettings,
                     options?: {
                         projectKey?: string;
                         appLocalKey?: string;
@@ -38,7 +34,7 @@ function createHook() {
                     },
                 ) => {
                     const { onSubmit, onClose, onError, projectKey, appLocalKey } = options ?? {};
-                    state.openEdit(mount, projectRules, {
+                    state.openEdit(mount, {
                         projectKey,
                         appLocalKey,
                         props: { onSubmit, onClose, onError },

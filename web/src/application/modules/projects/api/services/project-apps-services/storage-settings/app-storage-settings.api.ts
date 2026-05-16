@@ -25,7 +25,7 @@ export class AppStorageSettingsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/storage-settings`, {
+                this.client.v1.get(`/projects/${projectID}/apps/${appID}/storage-settings?getMounts=true`, {
                     params: query.build(),
                     signal,
                 }),

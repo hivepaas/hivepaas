@@ -6,12 +6,16 @@ import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { Link, useParams } from "react-router";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
-import type { AppStorageMount, ProjectStorageSettings } from "~/projects/domain";
+import invariant from "tiny-invariant";
+import { AppStorageSettingsQueries } from "~/projects/data";
+import type { AppStorageMount } from "~/projects/domain";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { Combobox, type ComboboxOption, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -27,20 +31,27 @@ type Props = {
     isPending: boolean;
     defaultValues?: AppStorageMount;
     onSubmit: (values: StorageMountFormOutput) => void;
-    projectRules?: ProjectStorageSettings;
     projectKey?: string;
     appLocalKey?: string;
 };
 
-export function StorageMountForm({
-    ref,
-    isPending,
-    onSubmit,
-    defaultValues,
-    projectRules,
-    projectKey,
-    appLocalKey,
-}: Props) {
+export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Props) {
+    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    invariant(projectId, "projectId must be defined");
+    invariant(appId, "appId must be defined");
+
+    const {
+        data: storageSettingsData,
+        isFetching: isFetchingStorageSettings,
+        refetch: refetchStorageSettings,
+        isRefetching: isRefetchingStorageSettings,
+    } = AppStorageSettingsQueries.useFindOne({
+        projectID: projectId,
+        appID: appId,
+    });
+
+    const storageSettings = storageSettingsData?.data.settings;
+
     const methods = useForm<StorageMountFormInput, unknown, StorageMountFormOutput>({
         defaultValues: defaultValues ? mountToFormInput(defaultValues) : emptyStorageMountFormDefaults,
         resolver: zodResolver(StorageMountFormSchema),
@@ -93,14 +104,22 @@ export function StorageMountForm({
         [methods, reset],
     );
 
-    const availableTypes = React.useMemo(() => {
-        const types: EMountType[] = [];
-        if (projectRules?.bindSettings?.enabled) types.push(EMountType.Bind);
-        if (projectRules?.volumeSettings?.enabled) types.push(EMountType.Volume);
-        if (projectRules?.clusterVolumeSettings?.enabled) types.push(EMountType.Cluster);
-        if (projectRules?.tmpfsSettings?.enabled) types.push(EMountType.Tmpfs);
-        return types.length > 0 ? types : [];
-    }, [projectRules]);
+    const typeOptions = React.useMemo<ComboboxOption<{ id: EMountType; name: string }>[]>(() => {
+        const options: ComboboxOption<{ id: EMountType; name: string }>[] = [];
+        if (storageSettings?.bindSettings?.enabled) {
+            options.push({ value: { id: EMountType.Bind, name: EMountType.Bind }, label: EMountType.Bind });
+        }
+        if (storageSettings?.volumeSettings?.enabled) {
+            options.push({ value: { id: EMountType.Volume, name: EMountType.Volume }, label: EMountType.Volume });
+        }
+        if (storageSettings?.clusterVolumeSettings?.enabled) {
+            options.push({ value: { id: EMountType.Cluster, name: EMountType.Cluster }, label: EMountType.Cluster });
+        }
+        if (storageSettings?.tmpfsSettings?.enabled) {
+            options.push({ value: { id: EMountType.Tmpfs, name: EMountType.Tmpfs }, label: EMountType.Tmpfs });
+        }
+        return options;
+    }, [storageSettings]);
 
     function onValid(data: StorageMountFormOutput) {
         onSubmit(data);
@@ -120,64 +139,54 @@ export function StorageMountForm({
                 }}
             >
                 <FieldGroup className="gap-6">
-                    <Field>
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Type"
-                                    isRequired
-                                />
-                            }
-                            titleWidth={180}
-                        >
-                            <Select
-                                {...typeField}
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Type"
+                                isRequired
+                            />
+                        }
+                        titleWidth={180}
+                    >
+                        <Field>
+                            <Combobox
+                                options={typeOptions}
                                 value={typeField.value}
-                                onValueChange={typeField.onChange}
-                            >
-                                <SelectTrigger className="w-[220px]">
-                                    <SelectValue placeholder="Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableTypes.map(type => (
-                                        <SelectItem
-                                            key={type}
-                                            value={type}
-                                        >
-                                            {type}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </InfoBlock>
-                        <FieldError errors={[errors.type]} />
-                    </Field>
+                                onChange={value => {
+                                    typeField.onChange(value ?? undefined);
+                                }}
+                                placeholder="Type"
+                                searchable={false}
+                                closeOnSelect
+                                emptyText="No storage types available"
+                                className="w-[220px]"
+                                valueKey="id"
+                                aria-invalid={Boolean(errors.type)}
+                                loading={isFetchingStorageSettings}
+                                onRefresh={() => void refetchStorageSettings()}
+                                isRefreshing={isRefetchingStorageSettings}
+                            />
+                            <FieldError errors={[errors.type]} />
+                            <div className="text-xs">
+                                <p>
+                                    <Link
+                                        to={ROUTE.projects.single.configuration.general.$route(projectId)}
+                                        className="text-blue-500"
+                                    >
+                                        Configure storage settings in the project
+                                    </Link>
+                                </p>
+                            </div>
+                        </Field>
+                    </InfoBlock>
 
-                    {storageType === EMountType.Bind && (
-                        <BindFields
-                            projectRules={projectRules}
-                            projectKey={projectKey}
-                            appLocalKey={appLocalKey}
-                        />
-                    )}
+                    {storageType === EMountType.Bind && <BindFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Volume && (
-                        <VolumeFields
-                            projectRules={projectRules}
-                            projectKey={projectKey}
-                            appLocalKey={appLocalKey}
-                        />
-                    )}
+                    {storageType === EMountType.Volume && <VolumeFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Cluster && (
-                        <ClusterFields
-                            projectRules={projectRules}
-                            projectKey={projectKey}
-                            appLocalKey={appLocalKey}
-                        />
-                    )}
+                    {storageType === EMountType.Cluster && <ClusterFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Tmpfs && <TmpfsFields projectRules={projectRules} />}
+                    {storageType === EMountType.Tmpfs && <TmpfsFields storageSettings={storageSettings} />}
 
                     {storageType !== EMountType.Tmpfs && (
                         <Field>

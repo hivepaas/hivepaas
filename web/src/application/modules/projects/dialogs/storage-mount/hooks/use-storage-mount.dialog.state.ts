@@ -1,17 +1,13 @@
 import { create } from "zustand";
-import type { AppStorageMount, ProjectStorageSettings } from "~/projects/domain";
+import type { AppStorageMount } from "~/projects/domain";
 
 import type { StorageMountDialogOptions, StorageMountDialogState } from "../types";
 
 type State = StorageMountDialogState & StorageMountDialogOptions;
 
 interface Actions {
-    open: (projectRules?: ProjectStorageSettings, options?: StorageMountDialogOptions) => void;
-    openEdit: (
-        mount: AppStorageMount & { _id: string },
-        projectRules?: ProjectStorageSettings,
-        options?: StorageMountDialogOptions,
-    ) => void;
+    open: (options?: StorageMountDialogOptions) => void;
+    openEdit: (mount: AppStorageMount & { _id: string }, options?: StorageMountDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -24,12 +20,11 @@ export const useStorageMountDialogState = create<State & Actions>()(set => ({
 
     props: {},
 
-    open: (projectRules, options = {}) => {
+    open: (options = {}) => {
         const { projectKey, appLocalKey, props = {} } = options;
         set({
             state: {
                 mode: "open",
-                projectRules,
                 projectKey,
                 appLocalKey,
             },
@@ -37,13 +32,12 @@ export const useStorageMountDialogState = create<State & Actions>()(set => ({
         });
     },
 
-    openEdit: (mount, projectRules, options = {}) => {
+    openEdit: (mount, options = {}) => {
         const { projectKey, appLocalKey, props = {} } = options;
         set({
             state: {
                 mode: "edit",
                 mount,
-                projectRules,
                 projectKey,
                 appLocalKey,
             },

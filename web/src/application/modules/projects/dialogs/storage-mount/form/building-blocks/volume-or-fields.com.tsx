@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 import { Checkbox, Input } from "@components/ui";
@@ -6,17 +6,17 @@ import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { dashedBorderBox } from "@lib/styles";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-docker-volumes";
-import type { ProjectStorageSettings } from "~/projects/domain";
+import type { SettingStorageSettings } from "~/settings/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
-import { computeRequiredSubpath } from "../../utils/required-subpath.util";
 
 interface VolumeFieldsProps {
-    projectRules?: ProjectStorageSettings;
+    storageSettings?: SettingStorageSettings;
     projectKey?: string;
     appLocalKey?: string;
 }
@@ -28,16 +28,10 @@ type MountSubpathPath = `${MountOptionsPath}.subpath`;
 type MountNoCopyPath = `${MountOptionsPath}.noCopy`;
 type MountSubpathRequiredPath = `${MountOptionsPath}.subpathRequired`;
 
-function VolumeOrClusterMountFields({
-    projectRules,
-    projectKey,
-    appLocalKey,
-    variant,
-}: VolumeFieldsProps & { variant: MountVariant }) {
-    const { control, setValue } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
+function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: MountVariant }) {
+    const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
     const { id: projectId } = useParams<{ id: string }>();
     const optionsPath: MountOptionsPath = variant === "cluster" ? "clusterOptions" : "volumeOptions";
-    const rulesSettings = variant === "cluster" ? projectRules?.clusterVolumeSettings : projectRules?.volumeSettings;
     const volumeLabel = variant === "cluster" ? "Cluster Volume" : "Volume";
 
     const volumePath: MountVolumePath = `${optionsPath}.volume`;
@@ -51,6 +45,7 @@ function VolumeOrClusterMountFields({
     } = useController({ name: volumePath, control });
     const { field: subpathField } = useController({ name: subpathPath, control });
     const { field: noCopyField } = useController({ name: noCopyPath, control });
+    const { field: subpathRequiredField } = useController({ name: subpathRequiredPath, control });
 
     const { data: volumesData, isLoading: isLoadingVolumes } = ProjectDockerVolumesQueries.useList(
         {
@@ -64,40 +59,20 @@ function VolumeOrClusterMountFields({
 
     const volumes = volumesData?.data ?? [];
 
-    const requiredPrefix = useMemo(
-        () =>
-            computeRequiredSubpath(
-                {
-                    enabled: rulesSettings?.enabled,
-                    baseSubpath: rulesSettings?.baseSubpath,
-                    appsMustUseSubPaths: rulesSettings?.appsMustUseSubPaths,
-                },
-                projectKey,
-                appLocalKey,
-            ),
-        [rulesSettings, projectKey, appLocalKey],
-    );
-
     const subpathValue = useWatch({ control, name: subpathPath }) ?? "";
-    useEffect(() => {
-        setValue(subpathRequiredPath, requiredPrefix, { shouldDirty: false, shouldValidate: false });
-        if (requiredPrefix && !subpathValue) {
-            setValue(subpathPath, requiredPrefix, { shouldDirty: false, shouldValidate: false });
-        }
-    }, [requiredPrefix, setValue, subpathRequiredPath, subpathPath, subpathValue]);
 
     return (
         <>
-            <Field>
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label={volumeLabel}
-                            isRequired
-                        />
-                    }
-                    titleWidth={180}
-                >
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label={volumeLabel}
+                        isRequired
+                    />
+                }
+                titleWidth={180}
+            >
+                <Field>
                     <Select
                         {...volumeField}
                         value={volumeField.value}
@@ -123,16 +98,28 @@ function VolumeOrClusterMountFields({
                     </Select>
 
                     <FieldError errors={[volumeError]} />
-                </InfoBlock>
-            </Field>
 
-            {requiredPrefix !== "" && (
+                    <div className="text-xs">
+                        <p>
+                            Need to add new volume?{" "}
+                            <Link
+                                to={ROUTE.projects.single.configuration.general.$route(projectId ?? "")}
+                                className="text-blue-500"
+                            >
+                                Click here
+                            </Link>
+                        </p>
+                    </div>
+                </Field>
+            </InfoBlock>
+
+            {subpathRequiredField.value && (
                 <Field>
                     <InfoBlock
                         title={<LabelWithInfo label="Required Subpath Prefix" />}
                         titleWidth={180}
                     >
-                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
+                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{subpathRequiredField.value}</div>
                     </InfoBlock>
                 </Field>
             )}
@@ -146,7 +133,7 @@ function VolumeOrClusterMountFields({
                         {...subpathField}
                         id="subpath"
                         value={subpathValue}
-                        placeholder={requiredPrefix}
+                        placeholder={subpathRequiredField.value}
                     />
                 </InfoBlock>
             </Field>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@components/ui";
@@ -6,22 +6,21 @@ import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { dashedBorderBox } from "@lib/styles";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import type { ProjectStorageSettings } from "~/projects/domain";
 import { EMountPropagation } from "~/projects/module-shared/enums";
+import type { SettingStorageSettings } from "~/settings/domain";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
-import { computeRequiredSubpath } from "../../utils/required-subpath.util";
 
 interface BindFieldsProps {
-    projectRules?: ProjectStorageSettings;
+    storageSettings?: SettingStorageSettings;
     projectKey?: string;
     appLocalKey?: string;
 }
 
-export function BindFields({ projectRules, projectKey, appLocalKey }: BindFieldsProps) {
-    const { control, setValue } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
+export function BindFields({ storageSettings }: BindFieldsProps) {
+    const { control } = useFormContext<StorageMountFormInput, unknown, StorageMountFormOutput>();
 
     const {
         field: baseDirField,
@@ -29,32 +28,11 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
     } = useController({ name: "bindOptions.baseDir", control });
     const { field: subpathField } = useController({ name: "bindOptions.subpath", control });
     const { field: propagationField } = useController({ name: "bindOptions.propagation", control });
+    const { field: subpathRequiredField } = useController({ name: "bindOptions.subpathRequired", control });
 
-    const baseDirs = projectRules?.bindSettings?.baseDirs ?? [];
-
-    const requiredPrefix = useMemo(
-        () =>
-            computeRequiredSubpath(
-                {
-                    enabled: projectRules?.bindSettings?.enabled,
-                    baseSubpath: projectRules?.bindSettings?.baseSubpath,
-                    appsMustUseSubPaths: projectRules?.bindSettings?.appsMustUseSubPaths,
-                },
-                projectKey,
-                appLocalKey,
-            ),
-        [projectRules?.bindSettings, projectKey, appLocalKey],
-    );
+    const baseDirs = storageSettings?.bindSettings?.baseDirs ?? [];
 
     const subpathValue = useWatch({ control, name: "bindOptions.subpath" }) ?? "";
-
-    useEffect(() => {
-        setValue("bindOptions.subpathRequired", requiredPrefix, { shouldDirty: false, shouldValidate: false });
-        if (requiredPrefix && !subpathValue) {
-            // Auto-fill prefix once as initial value, then let user edit freely.
-            setValue("bindOptions.subpath", requiredPrefix, { shouldDirty: false, shouldValidate: false });
-        }
-    }, [requiredPrefix, setValue, subpathValue]);
 
     return (
         <>
@@ -80,13 +58,13 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
                 </InfoBlock>
             </Field>
 
-            {requiredPrefix !== "" && (
+            {subpathRequiredField.value && (
                 <Field>
                     <InfoBlock
                         title={<LabelWithInfo label="Required Subpath Prefix" />}
                         titleWidth={180}
                     >
-                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{requiredPrefix}</div>
+                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{subpathRequiredField.value}</div>
                     </InfoBlock>
                 </Field>
             )}
@@ -100,7 +78,7 @@ export function BindFields({ projectRules, projectKey, appLocalKey }: BindFields
                         {...subpathField}
                         id="subpath"
                         value={subpathValue}
-                        placeholder={requiredPrefix}
+                        placeholder={subpathRequiredField.value}
                     />
                 </InfoBlock>
             </Field>

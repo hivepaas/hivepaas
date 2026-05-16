@@ -24,7 +24,7 @@ type Props = {
 export function FieldListLayout({ inputRow, onAdd, addDisabled, items, className, inputsClassName }: Props) {
     return (
         <div className={cn("flex flex-col gap-3", className)}>
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-2 items-center">
                 {inputsClassName ? <div className={inputsClassName}>{inputRow}</div> : inputRow}
                 <Button
                     type="button"
@@ -39,7 +39,7 @@ export function FieldListLayout({ inputRow, onAdd, addDisabled, items, className
                 {items.map(item => (
                     <div
                         key={item.id}
-                        className="flex items-center gap-3 py-2"
+                        className="flex items-center gap-2 py-2"
                     >
                         {item.content}
                         <div className="w-[76px]">

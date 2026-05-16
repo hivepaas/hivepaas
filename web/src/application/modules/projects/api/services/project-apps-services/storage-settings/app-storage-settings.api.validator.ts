@@ -2,6 +2,8 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EMountConsistency, EMountPropagation, EMountType } from "~/projects/module-shared/enums";
 
+import { StorageSettingsEntitySchema } from "@application/modules/settings/module-shared/schemas";
+
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { type AppStorageSettings_FindOne_Res } from "./app-storage-settings.api.contracts";
@@ -65,6 +67,7 @@ const MountSchema = z.object({
 
 const AppStorageSettingsSchema = z.object({
     mounts: z.array(MountSchema).nullish(),
+    settings: StorageSettingsEntitySchema,
     updateVer: z.number(),
 });
 
@@ -89,6 +92,7 @@ export class AppStorageSettingsApiValidator {
                         tmpfsOptions: item.tmpfsOptions,
                         clusterOptions: item.clusterOptions,
                     })) ?? [],
+                settings: data.settings,
                 updateVer: data.updateVer,
             },
             meta,

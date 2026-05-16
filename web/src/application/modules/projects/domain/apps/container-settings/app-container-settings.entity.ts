@@ -10,7 +10,8 @@ export type AppContainerSettings = ContainerSpec & {
 };
 
 export type ContainerSpec = {
-    labels: Record<string, string>;
+    serviceLabels: Record<string, string>;
+    containerLabels: Record<string, string>;
     image: string;
     command: string;
     workingDir: string;

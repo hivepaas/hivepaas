@@ -1,5 +1,5 @@
 import { type AppContainerSettings } from "~/projects/domain";
-import { EAppArmorMode, ERestartPolicyCondition, ESeccompMode } from "~/projects/module-shared/enums";
+import { EAppArmorMode, EHealthcheckMode, ERestartPolicyCondition, ESeccompMode } from "~/projects/module-shared/enums";
 
 import { type AppConfigContainerSettingsFormSchemaInput } from "../schemas";
 
@@ -23,7 +23,18 @@ export function mapAppContainerSettingsToFormInput(
             stopSignal: data.stopSignal,
             stopGracePeriod: data.stopGracePeriod ?? "",
         },
-        labels: Object.entries(data.labels).map(([key, value]) => ({ key, value })),
+        serviceLabels: Object.entries(data.serviceLabels).map(([key, value]) => ({ key, value })),
+        containerLabels: Object.entries(data.containerLabels).map(([key, value]) => ({ key, value })),
+        healthcheck: {
+            enabled: data.healthcheck?.enabled ?? false,
+            mode: data.healthcheck?.mode ?? EHealthcheckMode.Inherit,
+            command: data.healthcheck?.command ?? "",
+            interval: data.healthcheck?.interval ?? "",
+            timeout: data.healthcheck?.timeout ?? "",
+            startPeriod: data.healthcheck?.startPeriod ?? "",
+            startInterval: data.healthcheck?.startInterval ?? "",
+            retries: data.healthcheck?.retries,
+        },
         restartPolicy: {
             condition: data.restartPolicy?.condition ?? ERestartPolicyCondition.None,
             delay: data.restartPolicy?.delay ?? "",

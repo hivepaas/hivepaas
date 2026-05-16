@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EAppArmorMode, ERestartPolicyCondition, ESeccompMode } from "~/projects/module-shared/enums";
+import { EAppArmorMode, EHealthcheckMode, ERestartPolicyCondition, ESeccompMode } from "~/projects/module-shared/enums";
 
 /** Key/value rows before mapping to API `Record<string, string>` */
 export const ContainerSettingsFormLabelRowSchema = z.object({
@@ -31,6 +31,18 @@ export const ContainerSettingsFormRestartPolicySchema = z.object({
     maxAttempts: z.string(),
 });
 
+/** Aligned with `Healthcheck`; duration fields stay as strings for text inputs. */
+export const ContainerSettingsFormHealthcheckSchema = z.object({
+    enabled: z.boolean(),
+    mode: z.nativeEnum(EHealthcheckMode),
+    command: z.string(),
+    interval: z.string(),
+    timeout: z.string(),
+    startPeriod: z.string(),
+    startInterval: z.string(),
+    retries: z.number().optional(),
+});
+
 /** Aligned with `Privileges` plus form-only `selinuxEnabled` (maps to `seLinuxContext.disable`). */
 export const ContainerSettingsFormPrivilegesSchema = z.object({
     noNewPrivileges: z.boolean(),
@@ -46,13 +58,16 @@ export const ContainerSettingsFormPrivilegesSchema = z.object({
 
 export const AppConfigContainerSettingsFormSchema = z.object({
     general: ContainerSettingsFormGeneralSchema,
-    labels: z.array(ContainerSettingsFormLabelRowSchema),
+    serviceLabels: z.array(ContainerSettingsFormLabelRowSchema),
+    containerLabels: z.array(ContainerSettingsFormLabelRowSchema),
+    healthcheck: ContainerSettingsFormHealthcheckSchema,
     restartPolicy: ContainerSettingsFormRestartPolicySchema,
     privileges: ContainerSettingsFormPrivilegesSchema,
 });
 
 export type ContainerSettingsFormLabelRow = z.infer<typeof ContainerSettingsFormLabelRowSchema>;
 export type ContainerSettingsFormGeneral = z.infer<typeof ContainerSettingsFormGeneralSchema>;
+export type ContainerSettingsFormHealthcheck = z.infer<typeof ContainerSettingsFormHealthcheckSchema>;
 export type ContainerSettingsFormRestartPolicy = z.infer<typeof ContainerSettingsFormRestartPolicySchema>;
 export type ContainerSettingsFormPrivileges = z.infer<typeof ContainerSettingsFormPrivilegesSchema>;
 
@@ -73,7 +88,18 @@ export const emptyAppConfigContainerSettingsFormDefaults: AppConfigContainerSett
         stopSignal: "",
         stopGracePeriod: "",
     },
-    labels: [],
+    serviceLabels: [],
+    containerLabels: [],
+    healthcheck: {
+        enabled: false,
+        mode: EHealthcheckMode.Inherit,
+        command: "",
+        interval: "",
+        timeout: "",
+        startPeriod: "",
+        startInterval: "",
+        retries: undefined,
+    },
     restartPolicy: {
         condition: ERestartPolicyCondition.None,
         delay: "",

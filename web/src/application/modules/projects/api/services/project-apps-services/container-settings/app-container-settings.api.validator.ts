@@ -52,7 +52,8 @@ const HealthcheckSchema = z.object({
 });
 
 const ContainerSpecSchema = z.object({
-    labels: z.record(z.string(), z.string()).nullish(),
+    serviceLabels: z.record(z.string(), z.string()).nullish(),
+    containerLabels: z.record(z.string(), z.string()).nullish(),
     image: z.string(),
     command: z.string(),
     workingDir: z.string(),
@@ -91,7 +92,8 @@ export class AppContainerSettingsApiValidator {
         return {
             data: {
                 ...data.data,
-                labels: data.data.labels ?? {},
+                serviceLabels: data.data.serviceLabels ?? {},
+                containerLabels: data.data.containerLabels ?? {},
                 groups: data.data.groups ?? [],
             },
             meta: data.meta,

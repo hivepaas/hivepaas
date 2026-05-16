@@ -153,7 +153,7 @@ export function View({ userId }: Props) {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                                 <User className="size-4 text-blue-500" />
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 items-center">
                                     <span>Position:</span>
                                     <span className="text-black">{user.position || "Unknown position"}</span>
                                 </div>
@@ -161,7 +161,7 @@ export function View({ userId }: Props) {
                             <span>•</span>
                             <div className="flex gap-1.5 items-center">
                                 <BadgeCheck className="size-4 text-blue-500" />
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 items-center">
                                     <span>Role:</span>
                                     <UserRoleBadge role={user.role} />
                                 </div>

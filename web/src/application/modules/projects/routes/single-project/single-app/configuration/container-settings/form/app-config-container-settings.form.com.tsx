@@ -6,7 +6,13 @@ import { type AppContainerSettings } from "~/projects/domain";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { GeneralFields, LabelsFields, RestartPolicyFields, SecurityFields } from "../building-blocks";
+import {
+    GeneralFields,
+    HealthcheckFields,
+    LabelsFields,
+    RestartPolicyFields,
+    SecurityFields,
+} from "../building-blocks";
 import {
     AppConfigContainerSettingsFormSchema,
     type AppConfigContainerSettingsFormSchemaInput,
@@ -71,6 +77,7 @@ export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, c
                     <LabelsFields />
                     <RestartPolicyFields />
                     <SecurityFields />
+                    <HealthcheckFields />
                     {children}
                 </form>
             </FormProvider>

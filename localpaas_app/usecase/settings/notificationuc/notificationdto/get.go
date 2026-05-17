@@ -34,6 +34,7 @@ type NotificationResp struct {
 }
 
 type NotificationViaEmailResp struct {
+	Enabled          bool                      `json:"enabled"`
 	Sender           *settings.BaseSettingResp `json:"sender"`
 	ToProjectMembers bool                      `json:"toProjectMembers"`
 	ToProjectOwners  bool                      `json:"toProjectOwners"`
@@ -42,10 +43,12 @@ type NotificationViaEmailResp struct {
 }
 
 type NotificationViaSlackResp struct {
+	Enabled bool                      `json:"enabled"`
 	Webhook *settings.BaseSettingResp `json:"webhook"`
 }
 
 type NotificationViaDiscordResp struct {
+	Enabled bool                      `json:"enabled"`
 	Webhook *settings.BaseSettingResp `json:"webhook"`
 }
 

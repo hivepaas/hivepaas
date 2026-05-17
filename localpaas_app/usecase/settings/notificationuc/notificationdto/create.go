@@ -34,6 +34,7 @@ func (req *NotificationBaseReq) ToEntity() *entity.Notification {
 }
 
 type NotificationViaEmailReq struct {
+	Enabled          bool                `json:"enabled"`
 	Sender           basedto.ObjectIDReq `json:"sender"`
 	ToProjectMembers bool                `json:"toProjectMembers"`
 	ToProjectOwners  bool                `json:"toProjectOwners"`
@@ -46,6 +47,7 @@ func (req *NotificationViaEmailReq) ToEntity() *entity.NotificationViaEmail {
 		return nil
 	}
 	return &entity.NotificationViaEmail{
+		Enabled:          req.Enabled,
 		Sender:           entity.ObjectID{ID: req.Sender.ID},
 		ToProjectMembers: req.ToProjectMembers,
 		ToProjectOwners:  req.ToProjectOwners,
@@ -55,6 +57,7 @@ func (req *NotificationViaEmailReq) ToEntity() *entity.NotificationViaEmail {
 }
 
 type NotificationViaSlackReq struct {
+	Enabled bool                `json:"enabled"`
 	Webhook basedto.ObjectIDReq `json:"webhook"`
 }
 
@@ -63,11 +66,13 @@ func (req *NotificationViaSlackReq) ToEntity() *entity.NotificationViaSlack {
 		return nil
 	}
 	return &entity.NotificationViaSlack{
+		Enabled: req.Enabled,
 		Webhook: entity.ObjectID{ID: req.Webhook.ID},
 	}
 }
 
 type NotificationViaDiscordReq struct {
+	Enabled bool                `json:"enabled"`
 	Webhook basedto.ObjectIDReq `json:"webhook"`
 }
 
@@ -76,6 +81,7 @@ func (req *NotificationViaDiscordReq) ToEntity() *entity.NotificationViaDiscord 
 		return nil
 	}
 	return &entity.NotificationViaDiscord{
+		Enabled: req.Enabled,
 		Webhook: entity.ObjectID{ID: req.Webhook.ID},
 	}
 }

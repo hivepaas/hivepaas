@@ -72,7 +72,7 @@ func (s *service) notifyForTaskResultViaEmail(
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
 	notification := data.Notification
-	if notification == nil || notification.ViaEmail == nil {
+	if notification == nil || notification.ViaEmail == nil || !notification.ViaEmail.Enabled {
 		return nil
 	}
 
@@ -133,7 +133,7 @@ func (s *service) notifyForTaskResultViaSlack(
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
 	notification := data.Notification
-	if notification == nil || notification.ViaSlack == nil {
+	if notification == nil || notification.ViaSlack == nil || !notification.ViaSlack.Enabled {
 		return nil
 	}
 
@@ -171,7 +171,7 @@ func (s *service) notifyForTaskResultViaDiscord(
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
 	notification := data.Notification
-	if notification == nil || notification.ViaDiscord == nil {
+	if notification == nil || notification.ViaDiscord == nil || !notification.ViaDiscord.Enabled {
 		return nil
 	}
 

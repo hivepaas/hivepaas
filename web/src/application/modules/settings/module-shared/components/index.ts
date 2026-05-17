@@ -4,3 +4,7 @@ export * from "./setting-status-badge";
 export * from "./ssl-cert-table";
 export * from "./im-platform-table";
 export * from "./email-account-table";
+export * from "./ssh-key-table";
+export * from "./access-token-table";
+export * from "./cloud-storage-table";
+export * from "./oauth-table";

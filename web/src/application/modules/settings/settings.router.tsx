@@ -71,5 +71,25 @@ export const settingsRouter: RouteObject = {
 
             return SettingsImPlatformsRoute;
         }),
+        createSettingsRoute(ROUTE.settings.sshKeys.$pattern, "SSH Keys", async () => {
+            const { SettingsSSHKeysRoute } = await getLazyComponents();
+
+            return SettingsSSHKeysRoute;
+        }),
+        createSettingsRoute(ROUTE.settings.accessTokens.$pattern, "Access Tokens", async () => {
+            const { SettingsAccessTokensRoute } = await getLazyComponents();
+
+            return SettingsAccessTokensRoute;
+        }),
+        createSettingsRoute(ROUTE.settings.cloudStorages.$pattern, "Cloud Storages", async () => {
+            const { SettingsCloudStoragesRoute } = await getLazyComponents();
+
+            return SettingsCloudStoragesRoute;
+        }),
+        createSettingsRoute(ROUTE.settings.oauth.$pattern, "OAuth", async () => {
+            const { SettingsOAuthRoute } = await getLazyComponents();
+
+            return SettingsOAuthRoute;
+        }),
     ],
 } as const;

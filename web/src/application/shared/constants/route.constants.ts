@@ -114,6 +114,26 @@ export const ROUTE = {
             $pattern: "settings/im-platforms",
             $route: "/settings/im-platforms/",
         },
+
+        sshKeys: {
+            $pattern: "settings/ssh-keys",
+            $route: "/settings/ssh-keys/",
+        },
+
+        accessTokens: {
+            $pattern: "settings/access-tokens",
+            $route: "/settings/access-tokens/",
+        },
+
+        cloudStorages: {
+            $pattern: "settings/cloud-storages",
+            $route: "/settings/cloud-storages/",
+        },
+
+        oauth: {
+            $pattern: "settings/oauth",
+            $route: "/settings/oauth/",
+        },
     },
 
     /**
@@ -260,6 +280,21 @@ export const ROUTE = {
                 imPlatforms: {
                     $pattern: "projects/:id/configuration/im-platforms",
                     $route: (id: string) => `/projects/${id}/configuration/im-platforms/`,
+                },
+
+                sshKeys: {
+                    $pattern: "projects/:id/configuration/ssh-keys",
+                    $route: (id: string) => `/projects/${id}/configuration/ssh-keys/`,
+                },
+
+                accessTokens: {
+                    $pattern: "projects/:id/configuration/access-tokens",
+                    $route: (id: string) => `/projects/${id}/configuration/access-tokens/`,
+                },
+
+                cloudStorages: {
+                    $pattern: "projects/:id/configuration/cloud-storages",
+                    $route: (id: string) => `/projects/${id}/configuration/cloud-storages/`,
                 },
             },
         },

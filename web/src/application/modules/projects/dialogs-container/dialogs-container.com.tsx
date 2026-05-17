@@ -21,25 +21,37 @@ import {
 } from "~/projects/dialogs/quick-install-ssl-cert";
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
+    CreateOrEditAccessTokenDialog,
     CreateOrEditBasicAuthDialog,
+    CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
     CreateOrEditImPlatformDialog,
     CreateOrEditRegistryAuthDialog,
+    CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
+    UpdateAccessTokenStatusDialog,
     UpdateBasicAuthStatusDialog,
+    UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
     UpdateImPlatformStatusDialog,
     UpdateRegistryAuthStatusDialog,
+    UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
+    useCreateOrEditAccessTokenDialogState,
     useCreateOrEditBasicAuthDialogState,
+    useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
     useCreateOrEditImPlatformDialogState,
     useCreateOrEditRegistryAuthDialogState,
+    useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
+    useUpdateAccessTokenStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
+    useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
     useUpdateImPlatformStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
+    useUpdateSSHKeyStatusDialogState,
     useUpdateSslCertStatusDialogState,
 } from "~/settings/dialogs";
 
@@ -62,6 +74,12 @@ function View() {
     const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
     const createOrEditEmailAccountDialog = useCreateOrEditEmailAccountDialogState();
     const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
+    const createOrEditSSHKeyDialog = useCreateOrEditSSHKeyDialogState();
+    const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
+    const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
+    const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
+    const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
+    const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -81,6 +99,12 @@ function View() {
         updateImPlatformStatusDialog.destroy();
         createOrEditEmailAccountDialog.destroy();
         updateEmailAccountStatusDialog.destroy();
+        createOrEditSSHKeyDialog.destroy();
+        updateSSHKeyStatusDialog.destroy();
+        createOrEditAccessTokenDialog.destroy();
+        updateAccessTokenStatusDialog.destroy();
+        createOrEditCloudStorageDialog.destroy();
+        updateCloudStorageStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -102,6 +126,12 @@ function View() {
             <UpdateImPlatformStatusDialog />
             <CreateOrEditEmailAccountDialog />
             <UpdateEmailAccountStatusDialog />
+            <CreateOrEditSSHKeyDialog />
+            <UpdateSSHKeyStatusDialog />
+            <CreateOrEditAccessTokenDialog />
+            <UpdateAccessTokenStatusDialog />
+            <CreateOrEditCloudStorageDialog />
+            <UpdateCloudStorageStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

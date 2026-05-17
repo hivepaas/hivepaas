@@ -6,3 +6,7 @@ export * from "./email.entity.schema";
 export * from "./domain-settings.entity.schema";
 export * from "./storage-settings.entity.schema";
 export * from "./basic-auth.entity.schema";
+export * from "./ssh-key.entity.schema";
+export * from "./access-token.entity.schema";
+export * from "./cloud-storage.entity.schema";
+export * from "./oauth.entity.schema";

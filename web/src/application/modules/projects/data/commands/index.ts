@@ -8,3 +8,6 @@ export * from "./project-email";
 export * from "./project-ssl-cert";
 export * from "./project-secrets";
 export * from "./projects";
+export * from "./project-ssh-key";
+export * from "./project-access-token";
+export * from "./project-cloud-storage";

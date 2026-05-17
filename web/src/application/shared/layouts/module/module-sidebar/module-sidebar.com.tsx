@@ -80,6 +80,26 @@ const navMain: SidebarItem[] = [
                 route: ROUTE.settings.imPlatforms.$route,
                 pattern: ROUTE.settings.imPlatforms.$pattern,
             },
+            {
+                title: "SSH Keys",
+                route: ROUTE.settings.sshKeys.$route,
+                pattern: ROUTE.settings.sshKeys.$pattern,
+            },
+            {
+                title: "Access Tokens",
+                route: ROUTE.settings.accessTokens.$route,
+                pattern: ROUTE.settings.accessTokens.$pattern,
+            },
+            {
+                title: "Cloud Storages",
+                route: ROUTE.settings.cloudStorages.$route,
+                pattern: ROUTE.settings.cloudStorages.$pattern,
+            },
+            {
+                title: "OAuth",
+                route: ROUTE.settings.oauth.$route,
+                pattern: ROUTE.settings.oauth.$pattern,
+            },
         ],
     },
 ];

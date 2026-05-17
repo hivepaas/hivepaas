@@ -11,12 +11,16 @@ import {
     AppSecretsApiValidator,
     AppServiceSettingsApi,
     AppServiceSettingsApiValidator,
+    ProjectAccessTokenApi,
+    ProjectAccessTokenApiValidator,
     ProjectAppEnvVarsApi,
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
     ProjectBasicAuthApi,
     ProjectBasicAuthApiValidator,
+    ProjectCloudStorageApi,
+    ProjectCloudStorageApiValidator,
     ProjectDockerVolumesApi,
     ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
@@ -35,6 +39,8 @@ import {
     ProjectNotificationApiValidator,
     ProjectRegistryAuthApi,
     ProjectRegistryAuthApiValidator,
+    ProjectSSHKeyApi,
+    ProjectSSHKeyApiValidator,
     ProjectSecretsApi,
     ProjectSecretsApiValidator,
     ProjectSslCertApi,
@@ -92,6 +98,9 @@ function createApi() {
     const projectImServiceApiValidator = new ProjectImServiceApiValidator();
     const projectEmailApiValidator = new ProjectEmailApiValidator();
     const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
+    const projectSSHKeyApiValidator = new ProjectSSHKeyApiValidator();
+    const projectAccessTokenApiValidator = new ProjectAccessTokenApiValidator();
+    const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
 
     return {
         projects: {
@@ -167,6 +176,15 @@ function createApi() {
             },
             storageSettings: {
                 $: new ProjectStorageSettingsApi(projectStorageSettingsApiValidator),
+            },
+            sshKey: {
+                $: new ProjectSSHKeyApi(projectSSHKeyApiValidator),
+            },
+            accessToken: {
+                $: new ProjectAccessTokenApi(projectAccessTokenApiValidator),
+            },
+            cloudStorage: {
+                $: new ProjectCloudStorageApi(projectCloudStorageApiValidator),
             },
         },
     };

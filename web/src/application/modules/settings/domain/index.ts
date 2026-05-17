@@ -8,3 +8,7 @@ export * from "./email.entity";
 export * from "./domain-settings.entity";
 export * from "./storage-settings.entity";
 export * from "./basic-auth.entity";
+export * from "./ssh-key.entity";
+export * from "./access-token.entity";
+export * from "./cloud-storage.entity";
+export * from "./oauth.entity";

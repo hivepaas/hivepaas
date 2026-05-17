@@ -1,0 +1,144 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
+
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Button, Checkbox, Field, FieldError, FieldGroup, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+
+import {
+    type UpdateOAuthStatusFormInput,
+    type UpdateOAuthStatusFormOutput,
+    UpdateOAuthStatusFormSchema,
+} from "../schemas";
+
+const statusMap = {
+    [ESettingStatus.Active]: "Active",
+    [ESettingStatus.Disabled]: "Disabled",
+} as const;
+
+export function UpdateOAuthStatusForm({ isPending, onSubmit, initialValues, onHasChanges }: Props) {
+    const {
+        handleSubmit,
+        control,
+        formState: { errors },
+    } = useForm<UpdateOAuthStatusFormInput, unknown, UpdateOAuthStatusFormOutput>({
+        defaultValues: {
+            status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+            expireAt: initialValues?.expireAt ?? undefined,
+            default: initialValues?.default ?? false,
+        },
+        resolver: zodResolver(UpdateOAuthStatusFormSchema),
+        mode: "onSubmit",
+    });
+
+    const { isDirty } = useFormState({ control });
+
+    useUpdateEffect(() => {
+        onHasChanges?.(isDirty);
+    }, [isDirty]);
+
+    const { field: status } = useController({ name: "status", control });
+    const {
+        field: expireAt,
+        fieldState: { invalid: isExpireAtInvalid },
+    } = useController({ name: "expireAt", control });
+    const { field: defaultField } = useController({ name: "default", control });
+
+    function onValid(values: UpdateOAuthStatusFormOutput) {
+        onSubmit(values);
+    }
+
+    function onInvalid(_errors: FieldErrors<UpdateOAuthStatusFormOutput>) {
+        console.error(_errors);
+    }
+
+    return (
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+        >
+            <FieldGroup>
+                <Field>
+                    <InfoBlock
+                        title="Status"
+                        titleWidth={160}
+                    >
+                        <Tabs
+                            value={status.value}
+                            onValueChange={value => {
+                                status.onChange(value as ESettingStatus);
+                            }}
+                        >
+                            <TabsList>
+                                {Object.entries(statusMap).map(([value, label]) => (
+                                    <TabsTrigger
+                                        key={value}
+                                        value={value}
+                                    >
+                                        {label}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                    </InfoBlock>
+                </Field>
+
+                <Field>
+                    <InfoBlock
+                        title="Access expiration"
+                        titleWidth={160}
+                    >
+                        <DateTimePicker
+                            value={expireAt.value ?? undefined}
+                            onChange={date => {
+                                expireAt.onChange(date ?? null);
+                            }}
+                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                            granularity="second"
+                            showClearButton
+                            aria-invalid={isExpireAtInvalid}
+                        />
+                        <FieldError errors={[errors.expireAt]} />
+                    </InfoBlock>
+                </Field>
+
+                <Field>
+                    <InfoBlock
+                        title={<LabelWithInfo label="Default" />}
+                        titleWidth={160}
+                    >
+                        <Checkbox
+                            checked={defaultField.value}
+                            onCheckedChange={checked => {
+                                defaultField.onChange(Boolean(checked));
+                            }}
+                        />
+                    </InfoBlock>
+                </Field>
+
+                <Field>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </Field>
+            </FieldGroup>
+        </form>
+    );
+}
+
+interface Props {
+    isPending: boolean;
+    onSubmit: (values: UpdateOAuthStatusFormOutput) => void;
+    initialValues?: Partial<UpdateOAuthStatusFormInput>;
+    onHasChanges?: (dirty: boolean) => void;
+}

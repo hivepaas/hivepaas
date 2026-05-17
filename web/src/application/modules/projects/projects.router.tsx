@@ -144,6 +144,36 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.projects.single.configuration.sshKeys.$pattern,
+                    lazy: async () => {
+                        const { ProjectSSHKeysRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectSSHKeysRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.accessTokens.$pattern,
+                    lazy: async () => {
+                        const { ProjectAccessTokensRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectAccessTokensRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.cloudStorages.$pattern,
+                    lazy: async () => {
+                        const { ProjectCloudStoragesRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectCloudStoragesRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.apps.$pattern,
                     lazy: async () => {
                         const { ProjectAppsRoute } = await getLazyComponents();

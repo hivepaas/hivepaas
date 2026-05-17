@@ -6,3 +6,6 @@ export * from "./registry-auth";
 export * from "./ssl-certificates";
 export * from "./email-accounts";
 export * from "./im-platforms";
+export * from "./ssh-keys";
+export * from "./access-tokens";
+export * from "./cloud-storages";

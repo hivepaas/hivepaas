@@ -12,9 +12,11 @@ import {
     type Notifications_FindManyPaginated_Res,
     type Notifications_FindOneById_Res,
     type Notifications_UpdateOne_Res,
+    type Notifications_UpdateStatus_Res,
 } from "./notifications.api.contracts";
 
 const NotificationViaEmailSchema = z.object({
+    enabled: z.boolean(),
     sender: SettingsBaseEntitySchema.optional(),
     toProjectMembers: z.boolean(),
     toProjectOwners: z.boolean(),
@@ -26,19 +28,22 @@ const NotificationViaEmailSchema = z.object({
 });
 
 const NotificationViaSlackSchema = z.object({
+    enabled: z.boolean(),
     webhook: SettingsBaseEntitySchema.optional(),
 });
 
 const NotificationViaDiscordSchema = z.object({
+    enabled: z.boolean(),
     webhook: SettingsBaseEntitySchema.optional(),
 });
 
-const NotificationEntitySchema = SettingsBaseEntitySchema.extend({
+const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.literal(ESettingType.Notification),
     viaEmail: NotificationViaEmailSchema.optional(),
     viaSlack: NotificationViaSlackSchema.optional(),
     viaDiscord: NotificationViaDiscordSchema.optional(),
     minSendInterval: z.string(),
+    inherited: z.boolean().optional(),
 });
 
 /**
@@ -60,14 +65,23 @@ const FindOneByIdSchema = z.object({
  * Create one notification API response schema
  */
 const CreateOneSchema = z.object({
-    data: NotificationEntitySchema,
+    data: z.object({
+        id: z.string(),
+    }),
 });
 
 /**
  * Update one notification API response schema
  */
 const UpdateOneSchema = z.object({
-    data: NotificationEntitySchema,
+    type: z.literal("success"),
+});
+
+/**
+ * Update notification status API response schema
+ */
+const UpdateStatusSchema = z.object({
+    type: z.literal("success"),
 });
 
 /**
@@ -125,13 +139,31 @@ export class NotificationsApiValidator {
      * Validate and transform update one notification API response
      */
     updateOne = (response: AxiosResponse): Notifications_UpdateOne_Res => {
-        const { data } = parseApiResponse({
+        const { type } = parseApiResponse({
             response,
             schema: UpdateOneSchema,
         });
 
         return {
-            data,
+            data: {
+                type,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform update notification status API response
+     */
+    updateStatus = (response: AxiosResponse): Notifications_UpdateStatus_Res => {
+        const { type } = parseApiResponse({
+            response,
+            schema: UpdateStatusSchema,
+        });
+
+        return {
+            data: {
+                type,
+            },
         };
     };
 

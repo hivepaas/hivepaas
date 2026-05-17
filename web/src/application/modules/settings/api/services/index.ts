@@ -7,3 +7,7 @@ export * from "./registry-auth-services";
 export * from "./ssl-cert-services";
 export * from "./im-service-services";
 export * from "./email-services";
+export * from "./ssh-key-services";
+export * from "./access-token-services";
+export * from "./cloud-storage-services";
+export * from "./oauth-services";

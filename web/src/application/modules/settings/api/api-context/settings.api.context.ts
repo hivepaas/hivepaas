@@ -1,8 +1,12 @@
 import { createContext } from "react";
 
 import {
+    AccessTokenApi,
+    AccessTokenApiValidator,
     BasicAuthApi,
     BasicAuthApiValidator,
+    CloudStorageApi,
+    CloudStorageApiValidator,
     DomainSettingsApi,
     DomainSettingsApiValidator,
     EmailApi,
@@ -13,8 +17,12 @@ import {
     ImServiceApiValidator,
     NotificationsApi,
     NotificationsApiValidator,
+    OAuthApi,
+    OAuthApiValidator,
     RegistryAuthApi,
     RegistryAuthApiValidator,
+    SSHKeyApi,
+    SSHKeyApiValidator,
     SslCertApi,
     SslCertApiValidator,
     StorageSettingsApi,
@@ -34,6 +42,10 @@ function createApi() {
     const sslCertValidator = new SslCertApiValidator();
     const imServiceValidator = new ImServiceApiValidator();
     const emailValidator = new EmailApiValidator();
+    const sshKeyValidator = new SSHKeyApiValidator();
+    const accessTokenValidator = new AccessTokenApiValidator();
+    const cloudStorageValidator = new CloudStorageApiValidator();
+    const oauthValidator = new OAuthApiValidator();
 
     return {
         settings: {
@@ -46,6 +58,10 @@ function createApi() {
             sslCert: new SslCertApi(sslCertValidator),
             imService: new ImServiceApi(imServiceValidator),
             email: new EmailApi(emailValidator),
+            sshKey: new SSHKeyApi(sshKeyValidator),
+            accessToken: new AccessTokenApi(accessTokenValidator),
+            cloudStorage: new CloudStorageApi(cloudStorageValidator),
+            oauth: new OAuthApi(oauthValidator),
         },
     };
 }

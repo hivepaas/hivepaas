@@ -50,6 +50,22 @@ function View({ projectId, children }: Props) {
             label: "IM Platforms",
             route: ROUTE.projects.single.configuration.imPlatforms.$route(projectId),
         },
+        {
+            label: "SSH Keys",
+            route: ROUTE.projects.single.configuration.sshKeys.$route(projectId),
+        },
+        {
+            label: "Access Tokens",
+            route: ROUTE.projects.single.configuration.accessTokens.$route(projectId),
+        },
+        {
+            label: "Cloud Storages",
+            route: ROUTE.projects.single.configuration.cloudStorages.$route(projectId),
+        },
+        {
+            label: "Notification Targets",
+            route: ROUTE.projects.single.configuration.notificationTargets.$route(projectId),
+        },
     ];
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;

@@ -8,6 +8,7 @@ export const ESettingType = {
     Secret: "secret",
     AWS: "aws",
     AWSS3: "aws-s3",
+    CloudStorage: "cloud-storage",
     OAuth: "oauth",
     SSHKey: "ssh-key",
     APIKey: "api-key",

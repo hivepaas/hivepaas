@@ -4,9 +4,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import {
-    type NotificationsApiValidator,
-} from "./notifications.api.validator";
-import {
     type Notifications_CreateOne_Req,
     type Notifications_CreateOne_Res,
     type Notifications_DeleteOne_Req,
@@ -17,7 +14,10 @@ import {
     type Notifications_FindOneById_Res,
     type Notifications_UpdateOne_Req,
     type Notifications_UpdateOne_Res,
+    type Notifications_UpdateStatus_Req,
+    type Notifications_UpdateStatus_Res,
 } from "./notifications.api.contracts";
+import { type NotificationsApiValidator } from "./notifications.api.validator";
 
 export class NotificationsApi extends BaseApi {
     public constructor(private readonly validator: NotificationsApiValidator) {
@@ -109,6 +109,28 @@ export class NotificationsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update notification status
+     */
+    async updateStatus(
+        request: Notifications_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Notifications_UpdateStatus_Res, Error>> {
+        const { id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/settings/notifications/${id}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

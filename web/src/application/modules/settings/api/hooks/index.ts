@@ -7,3 +7,7 @@ export * from "./use-registry-auth.api";
 export * from "./use-ssl-cert.api";
 export * from "./use-im-service.api";
 export * from "./use-email.api";
+export * from "./use-ssh-key.api";
+export * from "./use-access-token.api";
+export * from "./use-cloud-storage.api";
+export * from "./use-oauth.api";

@@ -7,6 +7,8 @@ import {
     type Notifications_DeleteOne_Res,
     type Notifications_UpdateOne_Req,
     type Notifications_UpdateOne_Res,
+    type Notifications_UpdateStatus_Req,
+    type Notifications_UpdateStatus_Res,
 } from "~/settings/api/services/notifications-services";
 import { QK } from "~/settings/data/constants";
 
@@ -26,6 +28,9 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["settings.notifications.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.notifications.find-one-by-id"]],
             });
 
             if (onSuccess) {
@@ -52,6 +57,32 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["settings.notifications.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+type UpdateStatusReq = Notifications_UpdateStatus_Req["data"];
+type UpdateStatusRes = Notifications_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
+
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
+    const { mutations } = useNotificationsApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateStatus,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.notifications.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.notifications.find-one-by-id"]],
             });
 
             if (onSuccess) {
@@ -91,5 +122,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const NotificationCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
+    useUpdateStatus,
     useDeleteOne,
 });

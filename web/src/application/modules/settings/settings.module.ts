@@ -6,7 +6,12 @@ export {
     SettingsEmailAccountsRoute,
     SettingsImPlatformsRoute,
     SettingsRegistryAuthRoute,
+    SettingsSSHKeysRoute,
     SettingsSslCertificatesRoute,
+    SettingsAccessTokensRoute,
+    SettingsCloudStoragesRoute,
+    SettingsOAuthRoute,
+    SettingsNotificationTargetsRoute,
 } from "./routes";
 
 /**

@@ -74,6 +74,12 @@ export const QK = {
      */
     "projects.registry-auth.$.find-many-paginated": "projects.registry-auth.$.find-many-paginated",
     "projects.registry-auth.$.find-one-by-id": "projects.registry-auth.$.find-one-by-id",
+    "projects.ssh-key.$.find-many-paginated": "projects.ssh-key.$.find-many-paginated",
+    "projects.ssh-key.$.find-one-by-id": "projects.ssh-key.$.find-one-by-id",
+    "projects.access-token.$.find-many-paginated": "projects.access-token.$.find-many-paginated",
+    "projects.access-token.$.find-one-by-id": "projects.access-token.$.find-one-by-id",
+    "projects.cloud-storage.$.find-many-paginated": "projects.cloud-storage.$.find-many-paginated",
+    "projects.cloud-storage.$.find-one-by-id": "projects.cloud-storage.$.find-one-by-id",
     /*
      * Project IM service
      */

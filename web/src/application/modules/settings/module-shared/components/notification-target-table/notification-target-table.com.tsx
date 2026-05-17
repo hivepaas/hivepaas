@@ -1,0 +1,87 @@
+import { useMemo } from "react";
+
+import { Plus } from "lucide-react";
+import { ProjectNotificationQueries } from "~/projects/data/queries";
+import { NotificationQueries } from "~/settings/data/queries";
+import { useCreateOrEditNotificationTargetDialog } from "~/settings/dialogs/create-or-edit-notification-target";
+
+import { TableActions } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { useTableState } from "@application/shared/hooks/table";
+
+import { Button, DataTable } from "@/components/ui";
+
+import { NotificationTargetTableDefs } from "./notification-target-table.defs";
+import type { NotificationTargetTableScope } from "./notification-target-table.types";
+
+function NotificationTargetTableView({ scope }: Props) {
+    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
+    const createOrEditDialog = useCreateOrEditNotificationTargetDialog();
+
+    const settingsQuery = NotificationQueries.useFindManyPaginated(
+        { pagination, sorting, search },
+        { enabled: scope.type === "settings" },
+    );
+
+    const projectQuery = ProjectNotificationQueries.useFindManyPaginated(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            pagination,
+            sorting,
+            search,
+        },
+        { enabled: scope.type === "project" },
+    );
+
+    const query = scope.type === "project" ? projectQuery : settingsQuery;
+    const { data: { data: notificationTargets, meta } = DEFAULT_PAGINATED_DATA, isFetching } = query;
+    const columns = useMemo(() => NotificationTargetTableDefs.columns(scope), [scope]);
+
+    return (
+        <div className="flex flex-col gap-4">
+            <TableActions
+                search={{ value: search, onChange: setSearch }}
+                renderActions={
+                    <Button
+                        onClick={() => {
+                            createOrEditDialog.actions.open(scope);
+                        }}
+                    >
+                        <Plus className="size-4" />
+                        New Notification Target
+                    </Button>
+                }
+            />
+            <DataTable
+                columns={columns}
+                data={notificationTargets}
+                pageSize={pagination.size}
+                manualPagination
+                totalCount={meta.page.total}
+                manualSorting
+                enableSorting
+                enablePagination
+                isLoading={isFetching}
+                onPaginationChange={setPagination}
+                onSortingChange={setSorting}
+                showPageSizeSelector={false}
+            />
+        </div>
+    );
+}
+
+interface Props {
+    scope: NotificationTargetTableScope;
+}
+
+export function SettingsNotificationTargetTable() {
+    return <NotificationTargetTableView scope={{ type: "settings" }} />;
+}
+
+export function ProjectNotificationTargetTable({ projectId }: ProjectProps) {
+    return <NotificationTargetTableView scope={{ type: "project", projectId }} />;
+}
+
+interface ProjectProps {
+    projectId: string;
+}

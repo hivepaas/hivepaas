@@ -108,8 +108,7 @@ export class NotificationsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateOne),
-                map(res => Ok(res)),
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );
@@ -130,8 +129,7 @@ export class NotificationsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateStatus),
-                map(res => Ok(res)),
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );
@@ -145,8 +143,7 @@ export class NotificationsApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.delete(`/settings/notifications/${id}`)).pipe(
-                map(this.validator.deleteOne),
-                map(res => Ok(res)),
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

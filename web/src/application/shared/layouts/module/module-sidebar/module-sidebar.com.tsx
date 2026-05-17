@@ -100,6 +100,11 @@ const navMain: SidebarItem[] = [
                 route: ROUTE.settings.oauth.$route,
                 pattern: ROUTE.settings.oauth.$pattern,
             },
+            {
+                title: "Notification Targets",
+                route: ROUTE.settings.notificationTargets.$route,
+                pattern: ROUTE.settings.notificationTargets.$pattern,
+            },
         ],
     },
 ];

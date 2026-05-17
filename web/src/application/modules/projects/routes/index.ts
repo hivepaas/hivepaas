@@ -9,6 +9,7 @@ export {
     ProjectSSHKeysRoute,
     ProjectAccessTokensRoute,
     ProjectCloudStoragesRoute,
+    ProjectNotificationTargetsRoute,
     ProjectSecretsRoute,
     ProjectRegistryAuthRoute,
     ProjectSslCertificatesRoute,

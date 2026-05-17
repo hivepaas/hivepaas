@@ -16,3 +16,5 @@ export * from "./create-or-edit-cloud-storage";
 export * from "./update-cloud-storage-status";
 export * from "./create-or-edit-oauth";
 export * from "./update-oauth-status";
+export * from "./create-or-edit-notification-target";
+export * from "./update-notification-target-status";

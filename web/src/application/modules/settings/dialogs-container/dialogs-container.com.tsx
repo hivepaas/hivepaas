@@ -7,6 +7,7 @@ import {
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
     CreateOrEditImPlatformDialog,
+    CreateOrEditNotificationTargetDialog,
     CreateOrEditOAuthDialog,
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSSHKeyDialog,
@@ -16,6 +17,7 @@ import {
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
     UpdateImPlatformStatusDialog,
+    UpdateNotificationTargetStatusDialog,
     UpdateOAuthStatusDialog,
     UpdateRegistryAuthStatusDialog,
     UpdateSSHKeyStatusDialog,
@@ -25,6 +27,7 @@ import {
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
     useCreateOrEditImPlatformDialogState,
+    useCreateOrEditNotificationTargetDialogState,
     useCreateOrEditOAuthDialogState,
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSSHKeyDialogState,
@@ -34,6 +37,7 @@ import {
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
     useUpdateImPlatformStatusDialogState,
+    useUpdateNotificationTargetStatusDialogState,
     useUpdateOAuthStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
     useUpdateSSHKeyStatusDialogState,
@@ -60,6 +64,8 @@ function View() {
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const createOrEditOAuthDialog = useCreateOrEditOAuthDialogState();
     const updateOAuthStatusDialog = useUpdateOAuthStatusDialogState();
+    const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
+    const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
 
     useUpdateEffect(() => {
         createOrEditBasicAuthDialog.destroy();
@@ -80,6 +86,8 @@ function View() {
         updateCloudStorageStatusDialog.destroy();
         createOrEditOAuthDialog.destroy();
         updateOAuthStatusDialog.destroy();
+        createOrEditNotificationTargetDialog.destroy();
+        updateNotificationTargetStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -102,6 +110,8 @@ function View() {
             <UpdateCloudStorageStatusDialog />
             <CreateOrEditOAuthDialog />
             <UpdateOAuthStatusDialog />
+            <CreateOrEditNotificationTargetDialog />
+            <UpdateNotificationTargetStatusDialog />
         </>
     );
 }

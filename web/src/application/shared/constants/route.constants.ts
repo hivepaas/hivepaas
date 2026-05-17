@@ -134,6 +134,11 @@ export const ROUTE = {
             $pattern: "settings/oauth",
             $route: "/settings/oauth/",
         },
+
+        notificationTargets: {
+            $pattern: "settings/notification-targets",
+            $route: "/settings/notification-targets/",
+        },
     },
 
     /**
@@ -295,6 +300,11 @@ export const ROUTE = {
                 cloudStorages: {
                     $pattern: "projects/:id/configuration/cloud-storages",
                     $route: (id: string) => `/projects/${id}/configuration/cloud-storages/`,
+                },
+
+                notificationTargets: {
+                    $pattern: "projects/:id/configuration/notification-targets",
+                    $route: (id: string) => `/projects/${id}/configuration/notification-targets/`,
                 },
             },
         },

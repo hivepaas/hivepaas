@@ -91,5 +91,10 @@ export const settingsRouter: RouteObject = {
 
             return SettingsOAuthRoute;
         }),
+        createSettingsRoute(ROUTE.settings.notificationTargets.$pattern, "Notification Targets", async () => {
+            const { SettingsNotificationTargetsRoute } = await getLazyComponents();
+
+            return SettingsNotificationTargetsRoute;
+        }),
     ],
 } as const;

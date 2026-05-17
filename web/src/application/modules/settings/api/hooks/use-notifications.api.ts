@@ -8,6 +8,7 @@ import {
     type Notifications_FindManyPaginated_Req,
     type Notifications_FindOneById_Req,
     type Notifications_UpdateOne_Req,
+    type Notifications_UpdateStatus_Req,
 } from "~/settings/api/services/notifications-services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -105,6 +106,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update notification",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update notification status
+                 */
+                updateStatus: async (data: Notifications_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.notifications.updateStatus({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update notification status",
                                 error,
                             });
 

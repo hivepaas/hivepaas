@@ -62,6 +62,10 @@ function View({ projectId, children }: Props) {
             label: "Cloud Storages",
             route: ROUTE.projects.single.configuration.cloudStorages.$route(projectId),
         },
+        {
+            label: "Notification Targets",
+            route: ROUTE.projects.single.configuration.notificationTargets.$route(projectId),
+        },
     ];
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;

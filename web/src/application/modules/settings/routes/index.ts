@@ -7,3 +7,4 @@ export * from "./ssh-keys";
 export * from "./access-tokens";
 export * from "./cloud-storages";
 export * from "./oauth";
+export * from "./notification-targets";

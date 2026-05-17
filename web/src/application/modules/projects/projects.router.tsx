@@ -174,6 +174,16 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.projects.single.configuration.notificationTargets.$pattern,
+                    lazy: async () => {
+                        const { ProjectNotificationTargetsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectNotificationTargetsRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.apps.$pattern,
                     lazy: async () => {
                         const { ProjectAppsRoute } = await getLazyComponents();

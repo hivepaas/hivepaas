@@ -7,4 +7,5 @@ export * from "./email-account-table";
 export * from "./ssh-key-table";
 export * from "./access-token-table";
 export * from "./cloud-storage-table";
+export * from "./notification-target-table";
 export * from "./oauth-table";

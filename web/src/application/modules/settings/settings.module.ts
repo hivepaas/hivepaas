@@ -11,6 +11,7 @@ export {
     SettingsAccessTokensRoute,
     SettingsCloudStoragesRoute,
     SettingsOAuthRoute,
+    SettingsNotificationTargetsRoute,
 } from "./routes";
 
 /**

@@ -26,6 +26,7 @@ import {
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
     CreateOrEditImPlatformDialog,
+    CreateOrEditNotificationTargetDialog,
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
@@ -34,6 +35,7 @@ import {
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
     UpdateImPlatformStatusDialog,
+    UpdateNotificationTargetStatusDialog,
     UpdateRegistryAuthStatusDialog,
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
@@ -42,6 +44,7 @@ import {
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
     useCreateOrEditImPlatformDialogState,
+    useCreateOrEditNotificationTargetDialogState,
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
@@ -50,6 +53,7 @@ import {
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
     useUpdateImPlatformStatusDialogState,
+    useUpdateNotificationTargetStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
     useUpdateSSHKeyStatusDialogState,
     useUpdateSslCertStatusDialogState,
@@ -80,6 +84,8 @@ function View() {
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
     const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
+    const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
+    const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -105,6 +111,8 @@ function View() {
         updateAccessTokenStatusDialog.destroy();
         createOrEditCloudStorageDialog.destroy();
         updateCloudStorageStatusDialog.destroy();
+        createOrEditNotificationTargetDialog.destroy();
+        updateNotificationTargetStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -132,6 +140,8 @@ function View() {
             <UpdateAccessTokenStatusDialog />
             <CreateOrEditCloudStorageDialog />
             <UpdateCloudStorageStatusDialog />
+            <CreateOrEditNotificationTargetDialog />
+            <UpdateNotificationTargetStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

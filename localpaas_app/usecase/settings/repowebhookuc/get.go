@@ -20,8 +20,12 @@ func (uc *UC) GetRepoWebhook(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsRepoWebhook().MustDecrypt()
-	respData, err := repowebhookdto.TransformRepoWebhook(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsRepoWebhook().MustDecrypt()
+	}
+
+	respData, err := repowebhookdto.TransformRepoWebhook(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -20,8 +20,12 @@ func (uc *UC) GetEmail(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsEmail().MustDecrypt()
-	respData, err := emaildto.TransformEmail(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsEmail().MustDecrypt()
+	}
+
+	respData, err := emaildto.TransformEmail(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

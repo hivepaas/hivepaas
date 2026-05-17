@@ -20,8 +20,12 @@ func (uc *UC) GetCloudStorage(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsCloudStorage().MustDecrypt()
-	respData, err := cloudstoragedto.TransformCloudStorage(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsCloudStorage().MustDecrypt()
+	}
+
+	respData, err := cloudstoragedto.TransformCloudStorage(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

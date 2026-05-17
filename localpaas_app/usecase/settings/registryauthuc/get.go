@@ -20,8 +20,12 @@ func (uc *UC) GetRegistryAuth(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsRegistryAuth().MustDecrypt()
-	respData, err := registryauthdto.TransformRegistryAuth(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsRegistryAuth().MustDecrypt()
+	}
+
+	respData, err := registryauthdto.TransformRegistryAuth(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

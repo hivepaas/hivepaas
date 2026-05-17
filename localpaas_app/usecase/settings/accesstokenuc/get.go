@@ -20,8 +20,12 @@ func (uc *UC) GetAccessToken(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsAccessToken().MustDecrypt()
-	respData, err := accesstokendto.TransformAccessToken(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsAccessToken().MustDecrypt()
+	}
+
+	respData, err := accesstokendto.TransformAccessToken(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

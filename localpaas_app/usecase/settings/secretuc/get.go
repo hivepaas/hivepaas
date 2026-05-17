@@ -20,6 +20,8 @@ func (uc *UC) GetSecret(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// NOTE: we never return decrypted data to users
+
 	resp.Data.MustAsSecret()
 	respData, err := secretdto.TransformSecret(resp.Data, resp.RefObjects)
 	if err != nil {

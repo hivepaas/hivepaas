@@ -20,8 +20,12 @@ func (uc *UC) GetSSLCert(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsSSLCert().MustDecrypt()
-	respData, err := sslcertdto.TransformSSLCert(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsSSLCert().MustDecrypt()
+	}
+
+	respData, err := sslcertdto.TransformSSLCert(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

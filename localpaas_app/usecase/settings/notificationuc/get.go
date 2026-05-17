@@ -20,8 +20,12 @@ func (uc *UC) GetNotification(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsNotification().MustDecrypt()
-	respData, err := notificationdto.TransformNotification(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsNotification().MustDecrypt()
+	}
+
+	respData, err := notificationdto.TransformNotification(setting, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

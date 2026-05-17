@@ -21,12 +21,16 @@ func (uc *UC) GetGithubApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsGithubApp().MustDecrypt()
+	setting := resp.Data
+	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
+		setting.MustAsGithubApp().MustDecrypt()
+	}
+
 	input := &githubappdto.GithubAppTransformInput{
 		RefObjects:      resp.RefObjects,
 		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
 	}
-	respData, err := githubappdto.TransformGithubApp(resp.Data, input)
+	respData, err := githubappdto.TransformGithubApp(setting, input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

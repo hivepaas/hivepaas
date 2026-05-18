@@ -25,6 +25,7 @@ export const ESettingType = {
     Notification: "notification",
     SystemCleanup: "system-cleanup",
     SystemBackup: "system-backup",
+    File: "file",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",
     DomainSettings: "domain-settings",

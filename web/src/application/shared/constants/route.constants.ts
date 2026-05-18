@@ -142,6 +142,48 @@ export const ROUTE = {
     },
 
     /**
+     * System Settings
+     */
+    systemSettings: {
+        $pattern: "system-settings",
+
+        dataBackup: {
+            $pattern: "system-settings/data-backup",
+            $route: "/system-settings/data-backup/configuration/",
+
+            configuration: {
+                $pattern: "system-settings/data-backup/configuration",
+                $route: "/system-settings/data-backup/configuration/",
+            },
+
+            backupFiles: {
+                $pattern: "system-settings/data-backup/backup-files",
+                $route: "/system-settings/data-backup/backup-files/",
+            },
+
+            actions: {
+                $pattern: "system-settings/data-backup/actions",
+                $route: "/system-settings/data-backup/actions/",
+            },
+        },
+
+        dataCleanup: {
+            $pattern: "system-settings/data-cleanup",
+            $route: "/system-settings/data-cleanup/configuration/",
+
+            configuration: {
+                $pattern: "system-settings/data-cleanup/configuration",
+                $route: "/system-settings/data-cleanup/configuration/",
+            },
+
+            actions: {
+                $pattern: "system-settings/data-cleanup/actions",
+                $route: "/system-settings/data-cleanup/actions/",
+            },
+        },
+    },
+
+    /**
      * Projects
      */
     projects: {

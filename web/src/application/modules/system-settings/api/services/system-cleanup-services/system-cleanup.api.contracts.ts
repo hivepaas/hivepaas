@@ -47,3 +47,6 @@ export type SystemCleanup_UpdateOne_Req = ApiRequestBase<{
     payload: SystemCleanup_UpdateOne_Payload;
 }>;
 export type SystemCleanup_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type SystemCleanup_Execute_Req = ApiRequestBase<Record<string, never>>;
+export type SystemCleanup_Execute_Res = ApiResponseBase<{ type: "success" }>;

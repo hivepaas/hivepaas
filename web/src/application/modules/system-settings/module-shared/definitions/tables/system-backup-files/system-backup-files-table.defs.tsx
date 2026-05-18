@@ -6,8 +6,8 @@ import type { SystemBackupFile } from "~/system-settings/domain";
 
 import { Button } from "@/components/ui";
 
-import { BackupFileMenuCell } from "../building-blocks";
-import { formatBackupFileSize, getBackupFileStorageLabel } from "../utils";
+import { BackupFileMenuCell } from "./building-blocks";
+import { formatBackupFileSize, getBackupFileStorageLabel } from "./utils";
 
 function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<SystemBackupFile>[] {
     return [
@@ -26,7 +26,7 @@ function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<Syst
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-link hover:opacity-50"
                         onClick={() => {
                             onView(original);
                         }}

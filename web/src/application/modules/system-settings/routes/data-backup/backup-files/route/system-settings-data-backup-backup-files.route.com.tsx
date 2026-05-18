@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { SystemBackupFileQueries } from "~/system-settings/data";
 import type { SystemBackupFile } from "~/system-settings/domain";
+import { SystemBackupFilesTableDefs } from "~/system-settings/module-shared";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -10,7 +11,6 @@ import { useTableState } from "@application/shared/hooks/table";
 import { DataTable } from "@/components/ui";
 
 import { BackupFileInfoDialog } from "../building-blocks";
-import { SystemBackupFilesTableDefs } from "../definitions";
 
 export function SystemSettingsDataBackupBackupFilesRoute() {
     const [selectedFileID, setSelectedFileID] = useState<string>();

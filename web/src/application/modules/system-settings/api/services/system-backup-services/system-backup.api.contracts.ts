@@ -44,3 +44,6 @@ export type SystemBackup_UpdateOne_Req = ApiRequestBase<{
     payload: SystemBackup_UpdateOne_Payload;
 }>;
 export type SystemBackup_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type SystemBackup_Execute_Req = ApiRequestBase<Record<string, never>>;
+export type SystemBackup_Execute_Res = ApiResponseBase<{ type: "success" }>;

@@ -4,6 +4,8 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    SystemCleanup_Execute_Req,
+    SystemCleanup_Execute_Res,
     SystemCleanup_FindOne_Req,
     SystemCleanup_FindOne_Res,
     SystemCleanup_UpdateOne_Req,
@@ -39,6 +41,18 @@ export class SystemCleanupApi extends BaseApi {
             from(this.client.v1.put("/system/settings/cleanup", payload, { signal })).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async execute(
+        _request: SystemCleanup_Execute_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SystemCleanup_Execute_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.post("/system/settings/cleanup/exec", {}, { signal })).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

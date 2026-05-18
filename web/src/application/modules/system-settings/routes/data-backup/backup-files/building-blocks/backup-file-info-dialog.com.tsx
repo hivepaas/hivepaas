@@ -1,13 +1,15 @@
 import { format } from "date-fns";
 import { SystemBackupFileQueries } from "~/system-settings/data";
 import type { SystemBackupFile } from "~/system-settings/domain";
+import {
+    formatBackupFileSize,
+    getBackupFileStorageLabel,
+} from "~/system-settings/module-shared/definitions/tables/system-backup-files";
 import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-import { formatBackupFileSize, getBackupFileStorageLabel } from "../utils";
 
 function InfoRow({ label, value }: InfoRowProps) {
     return (

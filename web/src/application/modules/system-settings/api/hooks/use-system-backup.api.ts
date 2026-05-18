@@ -2,7 +2,11 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
-import type { SystemBackup_FindOne_Req, SystemBackup_UpdateOne_Req } from "~/system-settings/api/services";
+import type {
+    SystemBackup_Execute_Req,
+    SystemBackup_FindOne_Req,
+    SystemBackup_UpdateOne_Req,
+} from "~/system-settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
@@ -37,6 +41,17 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to update system backup settings", error });
+                            throw error;
+                        },
+                    });
+                },
+                execute: async (data: SystemBackup_Execute_Req["data"]) => {
+                    const result = await api.systemSettings.backup.execute({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to execute system backup", error });
                             throw error;
                         },
                     });

@@ -383,7 +383,7 @@ function NotificationFields() {
                             onSearch={setFailureSearch}
                             placeholder="None"
                             emptyText="No notifications available"
-                            className="max-w-[400px]"
+                            className="max-w-[460px]"
                             valueKey="id"
                             searchable
                             closeOnSelect

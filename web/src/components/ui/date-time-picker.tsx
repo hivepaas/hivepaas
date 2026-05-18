@@ -668,6 +668,7 @@ type DateTimePickerProps = {
      **/
     "granularity"?: Granularity;
     "className"?: string;
+    "containerClassName"?: string;
     /**
      * Show the default month and time when popup the calendar. Default is the current Date().
      **/
@@ -728,6 +729,7 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
             granularity = "second",
             placeholder = "Pick a date",
             className,
+            containerClassName,
             "aria-invalid": ariaInvalid,
             showClearButton = false,
             fromDate,
@@ -834,7 +836,7 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         }
 
         return (
-            <div className="relative w-full">
+            <div className={cn("relative w-full", containerClassName)}>
                 <Popover>
                     <PopoverTrigger
                         asChild

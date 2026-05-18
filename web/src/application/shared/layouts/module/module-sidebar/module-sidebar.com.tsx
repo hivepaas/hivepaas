@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Container, LayoutGrid, type LucideIcon, PawPrint, Settings, Users } from "lucide-react";
+import { Container, LayoutGrid, type LucideIcon, PawPrint, Settings, Settings2, Users } from "lucide-react";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -104,6 +104,24 @@ const navMain: SidebarItem[] = [
                 title: "Notification Targets",
                 route: ROUTE.settings.notificationTargets.$route,
                 pattern: ROUTE.settings.notificationTargets.$pattern,
+            },
+        ],
+    },
+    {
+        title: "System Settings",
+        route: "#",
+        pattern: ROUTE.systemSettings.$pattern,
+        icon: Settings2,
+        items: [
+            {
+                title: "Data Backup",
+                route: ROUTE.systemSettings.dataBackup.configuration.$route,
+                pattern: ROUTE.systemSettings.dataBackup.$pattern,
+            },
+            {
+                title: "Data Cleanup",
+                route: ROUTE.systemSettings.dataCleanup.configuration.$route,
+                pattern: ROUTE.systemSettings.dataCleanup.$pattern,
             },
         ],
     },

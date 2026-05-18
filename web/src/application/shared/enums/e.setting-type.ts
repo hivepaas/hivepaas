@@ -23,6 +23,8 @@ export const ESettingType = {
     Email: "email",
     RepoWebhook: "repo-webhook",
     Notification: "notification",
+    SystemCleanup: "system-cleanup",
+    SystemBackup: "system-backup",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",
     DomainSettings: "domain-settings",

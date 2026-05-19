@@ -8,6 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
 )
 
 const (
@@ -68,7 +69,13 @@ type DeploymentRepoSourceReq struct {
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
 	if req != nil {
-		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
+		if req.RepoRef != "" {
+			setting.RepoRef = req.RepoRef
+			if setting.RepoType == base.RepoTypeGit {
+				setting.RepoRef = string(githelper.NormalizeRepoRef(setting.RepoRef))
+			}
+		}
+
 		setting.DockerfilePath = gofn.Coalesce(req.DockerfilePath, setting.DockerfilePath)
 		if len(req.ImageTags) > 0 {
 			setting.ImageTags = req.ImageTags

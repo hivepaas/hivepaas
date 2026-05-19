@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
 )
 
-func (uc *UC) processGitlabWebhook(
+func (uc *UC) parseGitlabWebhook(
 	req *webhookdto.HandleRepoWebhookReq,
 	data *repoEventData,
 ) error {

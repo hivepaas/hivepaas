@@ -1,12 +1,14 @@
 package appsettingsdto
 
 import (
+	"github.com/gitsight/go-vcsurl"
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
 )
 
 const (
@@ -35,10 +37,14 @@ type DeploymentSettingsReq struct {
 	UpdateVer int `json:"updateVer"`
 }
 
-func (req *DeploymentSettingsReq) ToEntity() *entity.AppDeploymentSettings {
+func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, error) {
+	repoSourceEntity, err := req.RepoSource.ToEntity()
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 	return &entity.AppDeploymentSettings{
 		ImageSource:  req.ImageSource.ToEntity(),
-		RepoSource:   req.RepoSource.ToEntity(),
+		RepoSource:   repoSourceEntity,
 		ActiveMethod: req.ActiveMethod,
 
 		Command:               req.Command,
@@ -47,7 +53,7 @@ func (req *DeploymentSettingsReq) ToEntity() *entity.AppDeploymentSettings {
 		PostDeploymentCommand: req.PostDeploymentCommand,
 
 		Notification: req.Notification.ToEntity(),
-	}
+	}, nil
 }
 
 type DeploymentImageSourceReq struct {
@@ -91,13 +97,24 @@ type DeploymentRepoSourceReq struct {
 	PushToRegistry basedto.ObjectIDReq `json:"pushToRegistry"`
 }
 
-func (req *DeploymentRepoSourceReq) ToEntity() *entity.DeploymentRepoSource {
+func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, error) {
 	if req == nil {
-		return nil
+		return nil, nil
 	}
+	// Normalize repo ref (currently supports git type only)
+	if req.RepoType == base.RepoTypeGit {
+		req.RepoRef = string(githelper.NormalizeRepoRef(req.RepoRef))
+	}
+	parsedRepoURL, err := vcsurl.Parse(req.RepoURL)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	repoID := parsedRepoURL.ID
+
 	return &entity.DeploymentRepoSource{
 		BuildTool: req.BuildTool,
 		RepoType:  req.RepoType,
+		RepoID:    repoID,
 		RepoURL:   req.RepoURL,
 		RepoRef:   req.RepoRef,
 		Credentials: entity.RepoCredentials{
@@ -107,7 +124,7 @@ func (req *DeploymentRepoSourceReq) ToEntity() *entity.DeploymentRepoSource {
 		ImageName:      req.ImageName,
 		ImageTags:      req.ImageTags,
 		PushToRegistry: entity.ObjectID{ID: req.PushToRegistry.ID},
-	}
+	}, nil
 }
 
 func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator) {

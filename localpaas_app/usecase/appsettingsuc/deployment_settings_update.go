@@ -12,7 +12,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
@@ -90,7 +89,10 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	newDeploymentSettings := req.ToEntity()
+	newDeploymentSettings, err := req.ToEntity()
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 	data.NewDeploymentSettings = newDeploymentSettings
 
 	// Make sure all reference settings used in this settings exist actively
@@ -100,20 +102,14 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 
-	repoSource := newDeploymentSettings.RepoSource
-	if repoSource != nil {
-		// Normalize repo type (currently supports git type only)
-		if repoSource.RepoType == base.RepoTypeGit {
-			repoSource.RepoRef = string(githelper.NormalizeRepoRef(repoSource.RepoRef))
-		}
-
+	if newDeploymentSettings.RepoSource != nil {
 		// When the cluster has multiple nodes, the result image must be pushed to a registry
 		// that can be accessed by all the nodes in the cluster.
 		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		if isMultiNode && repoSource.PushToRegistry.ID == "" {
+		if isMultiNode && newDeploymentSettings.RepoSource.PushToRegistry.ID == "" {
 			return apperrors.Wrap(apperrors.ErrMultiNodeClusterRequireRegistryForImages)
 		}
 	}

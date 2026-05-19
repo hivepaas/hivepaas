@@ -31,5 +31,8 @@ CREATE INDEX idx_settings_updated_at ON settings(updated_at);
 CREATE INDEX idx_settings_expire_at ON settings(expire_at);
 CREATE INDEX idx_settings_deleted_at ON settings(deleted_at);
 
+-- Indexes on JSON data field
+CREATE INDEX idx_settings_app_deployment_1 ON settings((data->'repoSource'->>'repoId')) WHERE type = 'app-deployment';
+
 -- +migrate Down
 DROP TABLE IF EXISTS settings;

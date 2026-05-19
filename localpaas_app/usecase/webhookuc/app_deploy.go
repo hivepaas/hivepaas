@@ -102,8 +102,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	// Validate active deployment method
 	req.ActiveMethod = gofn.Coalesce(req.ActiveMethod, currSetting.ActiveMethod)
 	if req.ActiveMethod == "" {
-		return apperrors.New(apperrors.ErrActionFailed).
-			WithExtraDetail("Deployment method is missing.")
+		return apperrors.NewMissing("Deployment method")
 	}
 
 	// Normalize repo ref

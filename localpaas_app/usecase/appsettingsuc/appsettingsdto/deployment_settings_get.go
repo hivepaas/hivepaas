@@ -57,6 +57,7 @@ type DeploymentImageSourceResp struct {
 type DeploymentRepoSourceResp struct {
 	BuildTool      base.BuildTool            `json:"buildTool"`
 	RepoType       base.RepoType             `json:"repoType"`
+	RepoID         string                    `json:"repoId"`
 	RepoURL        string                    `json:"repoURL"`
 	RepoRef        string                    `json:"repoRef"` // can be branch name, tag...
 	Credentials    *settings.BaseSettingResp `json:"credentials"`

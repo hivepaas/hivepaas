@@ -2,6 +2,7 @@ package webhookuc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gitsight/go-vcsurl"
@@ -80,32 +81,36 @@ func (uc *UC) processRepoWebhook(
 	eventData := &repoEventData{}
 	switch data.RepoWebhook.Kind {
 	case base.WebhookKindGithub:
-		err = uc.processGithubWebhook(req, eventData)
+		err = uc.parseGithubWebhook(req, eventData)
 	case base.WebhookKindGitlab:
-		err = uc.processGitlabWebhook(req, eventData)
+		err = uc.parseGitlabWebhook(req, eventData)
 	case base.WebhookKindGitea:
-		err = uc.processGiteaWebhook(req, eventData)
+		err = uc.parseGiteaWebhook(req, eventData)
 	case base.WebhookKindBitbucket:
-		err = uc.processBitbucketWebhook(req, eventData)
+		err = uc.parseBitbucketWebhook(req, eventData)
 	case base.WebhookKindGogs:
-		err = uc.processGogsWebhook(req, eventData)
+		err = uc.parseGogsWebhook(req, eventData)
 	case base.WebhookKindAzureDevOps:
-		err = uc.processAzureDevOpsWebhook(req, eventData)
+		err = uc.parseAzureDevOpsWebhook(req, eventData)
 	default:
-		return apperrors.New(apperrors.ErrUnsupported).
-			WithMsgLog("webhook kind '%s' not supported", data.RepoWebhook.Kind)
+		return apperrors.NewUnsupported(fmt.Sprintf("Webhook kind '%v'", data.RepoWebhook.Kind))
 	}
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	if eventData.Push != nil {
-		apps, err := uc.findAppsToRedeployByPushEvent(ctx, db, eventData.Push)
+		eventData.Push.parsedURL, err = vcsurl.Parse(eventData.Push.RepoURL)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		for _, app := range apps {
-			err = uc.createAppDeploymentByPushEvent(app, eventData.Push, persistingData)
+
+		settings, err := uc.findAppDeploymentSettingsByPushEvent(ctx, db, eventData.Push)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		for _, setting := range settings {
+			err = uc.createAppDeploymentByPushEvent(setting, eventData.Push, persistingData)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -143,42 +148,49 @@ func (uc *UC) loadWebhookSettings(
 	return nil
 }
 
-func (uc *UC) findAppsToRedeployByPushEvent(
+func (uc *UC) findAppDeploymentSettingsByPushEvent(
 	ctx context.Context,
 	db database.IDB,
 	pushEvent *repoPushEventData,
-) ([]*entity.App, error) {
-	apps, _, err := uc.appRepo.List(ctx, db, "", nil,
-		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
-		bunex.SelectJoin("JOIN projects ON projects.id = app.project_id"),
-		bunex.SelectWhere("projects.status = ?", base.ProjectStatusActive),
-		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
-			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+) ([]*entity.Setting, error) {
+	settings, _, err := uc.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhere("setting.data->>'activeMethod' = ?", base.DeploymentMethodRepo),
+		bunex.SelectWhere("setting.data->>'repoRef' = ?", pushEvent.RepoRef),
+		bunex.SelectWhere("setting.data->>'repoId' = ?", pushEvent.parsedURL.ID),
+
+		bunex.SelectRelation("BelongToApp",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("BelongToApp.Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	if len(apps) == 0 {
+	if len(settings) == 0 {
 		return nil, nil
 	}
 
-	pushEvent.parsedURL, err = vcsurl.Parse(pushEvent.RepoURL)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	appsToRedeploy := make([]*entity.App, 0, len(apps))
-	for _, app := range apps {
-		matching, err := uc.shouldRedeployAppByPushEvent(ctx, db, app, pushEvent)
-		if err == nil && matching {
-			appsToRedeploy = append(appsToRedeploy, app)
+	validSettings := make([]*entity.Setting, 0, len(settings))
+	for _, setting := range settings {
+		app := setting.BelongToApp
+		if app == nil || app.Status != base.AppStatusActive ||
+			app.Project == nil || app.Project.Status != base.ProjectStatusActive {
+			continue
+		}
+		shouldRedeploy, err := uc.shouldRedeployAppByPushEvent(ctx, db, app, pushEvent)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		if shouldRedeploy {
+			validSettings = append(validSettings, setting)
 		}
 	}
 
-	return appsToRedeploy, nil
+	return validSettings, nil
 }
 
 func (uc *UC) shouldRedeployAppByPushEvent(
@@ -187,39 +199,6 @@ func (uc *UC) shouldRedeployAppByPushEvent(
 	app *entity.App,
 	pushEvent *repoPushEventData,
 ) (bool, error) {
-	if len(app.Settings) == 0 {
-		return false, nil
-	}
-	deploymentSettings, err := app.Settings[0].AsAppDeploymentSettings()
-	if err != nil {
-		return false, apperrors.Wrap(err)
-	}
-
-	shouldRedeploy := false
-	for {
-		repoSource := deploymentSettings.RepoSource
-		if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || repoSource == nil {
-			break
-		}
-		if pushEvent.RepoRef != repoSource.RepoRef {
-			break
-		}
-		if pushEvent.RepoURL == repoSource.RepoURL {
-			shouldRedeploy = true
-			break
-		}
-		parsedURL, err := vcsurl.Parse(repoSource.RepoURL)
-		if err != nil {
-			return false, apperrors.Wrap(err)
-		}
-		shouldRedeploy = parsedURL.ID == pushEvent.parsedURL.ID
-		break //nolint:staticcheck
-	}
-
-	if !shouldRedeploy {
-		return false, nil
-	}
-
 	// Make sure there is no duplicated deployment having the same `change id`
 	if pushEvent.ChangeID == "" {
 		return true, nil
@@ -238,15 +217,16 @@ func (uc *UC) shouldRedeployAppByPushEvent(
 }
 
 func (uc *UC) createAppDeploymentByPushEvent(
-	app *entity.App,
+	setting *entity.Setting, // deployment setting
 	pushEvent *repoPushEventData,
 	persistingData *appservice.PersistingAppData,
 ) error {
-	deploymentSettings, err := app.Settings[0].AsAppDeploymentSettings()
+	deploymentSettings, err := setting.AsAppDeploymentSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
+	app := setting.BelongToApp
 	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
 	if err != nil {
 		return apperrors.Wrap(err)

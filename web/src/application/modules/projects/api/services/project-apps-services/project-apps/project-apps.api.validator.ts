@@ -31,6 +31,10 @@ const ProjectAppSchema = z.object({
             completedTasks: z.number(),
         })
         .nullable(),
+    accessLinks: z
+        .array(z.string())
+        .nullish()
+        .transform(val => val ?? []),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
 });

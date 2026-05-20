@@ -3,10 +3,12 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    AppConfigFiles_BuildDownloadUrl_Req,
     AppConfigFiles_CreateOne_Req,
     AppConfigFiles_DeleteOne_Req,
     AppConfigFiles_FindManyPaginated_Req,
     AppConfigFiles_FindOneById_Req,
+    AppConfigFiles_GetDownloadToken_Req,
     AppConfigFiles_UpdateOne_Req,
 } from "~/projects/api/services";
 
@@ -55,6 +57,36 @@ function createHook() {
                             throw error;
                         },
                     });
+                },
+                /**
+                 * Get app config file download token
+                 */
+                getDownloadToken: async (data: AppConfigFiles_GetDownloadToken_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.configFiles.$.getDownloadToken(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api],
+        );
+
+        const helpers = useMemo(
+            () => ({
+                /**
+                 * Build app config file download URL
+                 */
+                buildDownloadUrl: (data: AppConfigFiles_BuildDownloadUrl_Req) => {
+                    return api.projects.apps.configFiles.$.buildDownloadUrl(data);
                 },
             }),
             [api],
@@ -128,6 +160,7 @@ function createHook() {
 
         return {
             queries,
+            helpers,
             mutations,
         };
     };

@@ -2,6 +2,7 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     AppConfigFilesApiValidator,
+    AppConfigFiles_BuildDownloadUrl_Req,
     AppConfigFiles_CreateOne_Req,
     AppConfigFiles_CreateOne_Res,
     AppConfigFiles_DeleteOne_Req,
@@ -10,9 +11,13 @@ import type {
     AppConfigFiles_FindManyPaginated_Res,
     AppConfigFiles_FindOneById_Req,
     AppConfigFiles_FindOneById_Res,
+    AppConfigFiles_GetDownloadToken_Req,
+    AppConfigFiles_GetDownloadToken_Res,
     AppConfigFiles_UpdateOne_Req,
     AppConfigFiles_UpdateOne_Res,
 } from "~/projects/api/services/project-apps-services";
+
+import { EnvConfig } from "@config";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
@@ -68,6 +73,45 @@ export class AppConfigFilesApi extends BaseApi {
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );
+    }
+
+    /**
+     * Get app config file download token
+     */
+    async getDownloadToken(
+        request: AppConfigFiles_GetDownloadToken_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppConfigFiles_GetDownloadToken_Res, Error>> {
+        const { projectID, appID, configFileID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/apps/${appID}/config-files/${configFileID}/download-token`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getDownloadToken),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Build app config file download URL
+     */
+    buildDownloadUrl(request: AppConfigFiles_BuildDownloadUrl_Req): string {
+        const { projectID, appID, configFileID, token, viewInline } = request;
+        const baseUrl = EnvConfig.API_URL.endsWith("/") ? EnvConfig.API_URL : `${EnvConfig.API_URL}/`;
+        const url = new URL(
+            `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/config-files/${encodeURIComponent(configFileID)}/download`,
+            baseUrl,
+        );
+
+        url.searchParams.set("token", token);
+        url.searchParams.set("viewInline", String(viewInline));
+
+        return url.toString();
     }
 
     /**

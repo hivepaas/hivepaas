@@ -51,10 +51,10 @@ function View({ onAddMount, onEditMount, onDeleteMount }: StorageTableProps) {
                 </div>
                 <Button
                     type="button"
-                    variant="outline"
+                    color="primary"
                     onClick={onAddMount}
                 >
-                    <Plus className="size-4 mr-2" />
+                    <Plus className="size-4" />
                     New Storage
                 </Button>
             </div>

@@ -9,6 +9,7 @@ import { ROUTE } from "@application/shared/constants";
 
 import { SingleAppBreadcrumbs } from "../buidling-blocks";
 
+import { AppAccessLinksDropdown } from "./building-blocks";
 import { SingleAppHeaderSkeleton } from "./single-app-header.skeleton.com";
 
 function View({ projectId, appId }: Props) {
@@ -73,7 +74,10 @@ function View({ projectId, appId }: Props) {
 
             <div className="border-b border-border" />
 
-            <TabNavigation links={links} />
+            <div className="flex gap-2">
+                <TabNavigation links={links} />
+                <AppAccessLinksDropdown accessLinks={appData.accessLinks} />
+            </div>
         </div>
     );
 }

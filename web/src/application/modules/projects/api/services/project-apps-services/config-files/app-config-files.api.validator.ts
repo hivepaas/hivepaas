@@ -4,6 +4,7 @@ import type {
     AppConfigFiles_CreateOne_Res,
     AppConfigFiles_FindManyPaginated_Res,
     AppConfigFiles_FindOneById_Res,
+    AppConfigFiles_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
@@ -68,6 +69,16 @@ const FindOneByIdSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+/**
+ * Get app config file download token API response schema
+ */
+const GetDownloadTokenSchema = z.object({
+    data: z.object({
+        token: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppConfigFilesApiValidator {
     /**
      * Validate and transform find many app config files paginated API response
@@ -107,5 +118,15 @@ export class AppConfigFilesApiValidator {
             data,
             meta,
         };
+    };
+
+    /**
+     * Validate and transform get app config file download token API response
+     */
+    getDownloadToken = (response: AxiosResponse): AppConfigFiles_GetDownloadToken_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetDownloadTokenSchema,
+        });
     };
 }

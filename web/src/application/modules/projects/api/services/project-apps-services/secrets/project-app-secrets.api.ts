@@ -2,6 +2,7 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     AppSecretsApiValidator,
+    AppSecrets_BuildDownloadUrl_Req,
     AppSecrets_CreateOne_Req,
     AppSecrets_CreateOne_Res,
     AppSecrets_DeleteOne_Req,
@@ -10,10 +11,14 @@ import type {
     AppSecrets_FindManyPaginated_Res,
     AppSecrets_FindOneById_Req,
     AppSecrets_FindOneById_Res,
+    AppSecrets_GetDownloadToken_Req,
+    AppSecrets_GetDownloadToken_Res,
     AppSecrets_UpdateOne_Req,
     AppSecrets_UpdateOne_Res,
 } from "~/projects/api/services/project-apps-services";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
+
+import { EnvConfig } from "@config";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
@@ -69,6 +74,45 @@ export class AppSecretsApi extends BaseApi {
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );
+    }
+
+    /**
+     * Get app secret download token
+     */
+    async getDownloadToken(
+        request: AppSecrets_GetDownloadToken_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppSecrets_GetDownloadToken_Res, Error>> {
+        const { projectID, appID, secretID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/apps/${appID}/secrets/${secretID}/download-token`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getDownloadToken),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Build app secret download URL
+     */
+    buildDownloadUrl(request: AppSecrets_BuildDownloadUrl_Req): string {
+        const { projectID, appID, secretID, token, viewInline } = request;
+        const baseUrl = EnvConfig.API_URL.endsWith("/") ? EnvConfig.API_URL : `${EnvConfig.API_URL}/`;
+        const url = new URL(
+            `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/secrets/${encodeURIComponent(secretID)}/download`,
+            baseUrl,
+        );
+
+        url.searchParams.set("token", token);
+        url.searchParams.set("viewInline", String(viewInline));
+
+        return url.toString();
     }
 
     /**

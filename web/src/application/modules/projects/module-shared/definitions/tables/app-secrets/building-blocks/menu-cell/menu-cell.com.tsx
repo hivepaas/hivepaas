@@ -2,8 +2,9 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, Trash2Icon } from "lucide-react";
+import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { useProjectAppSecretsApi } from "~/projects/api/hooks/project-apps";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
 import type { AppSecret } from "~/projects/domain";
 
@@ -11,6 +12,8 @@ import { PopConfirm } from "@application/shared/components";
 
 function View({ projectId, appId, secret }: Props) {
     const [open, setOpen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const { queries, helpers } = useProjectAppSecretsApi();
 
     const { mutate: deleteOne, isPending: isDeleting } = ProjectAppSecretsCommands.useDeleteOne({
         onSuccess: () => {
@@ -18,6 +21,31 @@ function View({ projectId, appId, secret }: Props) {
             setOpen(false);
         },
     });
+
+    async function handleDownload() {
+        try {
+            setIsDownloading(true);
+            const { data } = await queries.getDownloadToken({
+                projectID: projectId,
+                appID: appId,
+                secretID: secret.id,
+            });
+            const downloadUrl = helpers.buildDownloadUrl({
+                projectID: projectId,
+                appID: appId,
+                secretID: secret.id,
+                token: data.token,
+                viewInline: true,
+            });
+
+            window.open(downloadUrl, "_blank", "noopener,noreferrer");
+            setOpen(false);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to download secret file");
+        } finally {
+            setIsDownloading(false);
+        }
+    }
 
     return (
         <DropdownMenu
@@ -39,6 +67,17 @@ function View({ projectId, appId, secret }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <Button
+                        className="justify-start py-1.5"
+                        variant="ghost"
+                        disabled={isDownloading}
+                        onClick={() => {
+                            void handleDownload();
+                        }}
+                    >
+                        <DownloadIcon className="mr-2 size-4" />
+                        Download File
+                    </Button>
                     <PopConfirm
                         title="Delete Item"
                         variant="destructive"

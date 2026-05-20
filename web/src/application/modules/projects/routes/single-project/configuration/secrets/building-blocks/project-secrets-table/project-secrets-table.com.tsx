@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+
 import { Plus } from "lucide-react";
 import { ProjectSecretsQueries } from "~/projects/data/queries";
 import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret";
@@ -18,13 +19,14 @@ export function ProjectSecretsTable({ projectId }: Props) {
         },
     });
 
-    const { data: { data: secrets } = DEFAULT_PAGINATED_DATA, isFetching } =
-        ProjectSecretsQueries.useFindManyPaginated({
+    const { data: { data: secrets } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectSecretsQueries.useFindManyPaginated(
+        {
             projectID: projectId,
             pagination,
             sorting,
             search,
-        });
+        },
+    );
 
     const columns = useMemo(() => ProjectSecretsTableDefs.columns(projectId), [projectId]);
 
@@ -37,6 +39,8 @@ export function ProjectSecretsTable({ projectId }: Props) {
                         onClick={() => {
                             actions.open(projectId);
                         }}
+                        type="button"
+                        color="primary"
                     >
                         <Plus /> New Secret
                     </Button>

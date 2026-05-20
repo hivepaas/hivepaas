@@ -47,7 +47,7 @@ export function AppConfigFilesRoute() {
                             configFileDialogActions.open(projectId, appId);
                         }}
                     >
-                        <Plus className="mr-2 h-4 w-4" /> New Config File
+                        <Plus className="size-4" /> New Config File
                     </Button>
                 }
             />

@@ -28,6 +28,30 @@ export type AppConfigFiles_FindOneById_Req = ApiRequestBase<{
 export type AppConfigFiles_FindOneById_Res = ApiResponseBase<AppConfigFile>;
 
 /**
+ * Get app config file download token
+ */
+export type AppConfigFiles_GetDownloadToken_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    configFileID: string;
+}>;
+
+export type AppConfigFiles_GetDownloadToken_Res = ApiResponseBase<{
+    token: string;
+}>;
+
+/**
+ * Build app config file download URL
+ */
+export type AppConfigFiles_BuildDownloadUrl_Req = {
+    projectID: string;
+    appID: string;
+    configFileID: string;
+    token: string;
+    viewInline: true;
+};
+
+/**
  * Create app config file
  */
 export type AppConfigFiles_CreateOne_Req = ApiRequestBase<{

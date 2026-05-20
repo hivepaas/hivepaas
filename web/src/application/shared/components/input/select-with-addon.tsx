@@ -16,31 +16,29 @@ function View({
 }: SelectWithAddonProps) {
     return (
         <div className={cn("w-full space-y-2", classNameContainer)}>
-            <div className="flex min-w-0 rounded-md shadow-xs">
+            <div className="flex min-w-0 items-stretch rounded-md shadow-xs">
                 {addonLeft && (
-                    <span className="border-input bg-background inline-flex items-center rounded-l-md border px-3 text-sm">
+                    <span className="border-input bg-background inline-flex shrink-0 items-center rounded-l-md border px-3 text-sm">
                         {addonLeft}
                     </span>
                 )}
 
-                <div className="min-w-0 flex-1">
-                    <Select {...selectProps}>
-                        <SelectTrigger
-                            className={cn(
-                                "-mx-px w-full rounded-none shadow-none",
-                                addonLeft ? "rounded-l-none rounded-r-md" : "",
-                                addonRight ? "rounded-r-none rounded-l-md" : "",
-                                triggerClassName,
-                            )}
-                        >
-                            <SelectValue placeholder={placeholder} />
-                        </SelectTrigger>
-                        <SelectContent className={contentClassName}>{children}</SelectContent>
-                    </Select>
-                </div>
+                <Select {...selectProps}>
+                    <SelectTrigger
+                        className={cn(
+                            "-mx-px h-9 min-w-0 flex-1 py-1 w-full rounded-none shadow-none",
+                            addonLeft ? "rounded-l-none rounded-r-md" : "",
+                            addonRight ? "rounded-r-none rounded-l-md" : "",
+                            triggerClassName,
+                        )}
+                    >
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                    <SelectContent className={contentClassName}>{children}</SelectContent>
+                </Select>
 
                 {addonRight && (
-                    <span className="border-input bg-background inline-flex items-center rounded-r-md border px-3 text-sm">
+                    <span className="border-input bg-background inline-flex shrink-0 items-center rounded-r-md border px-3 text-sm">
                         {addonRight}
                     </span>
                 )}

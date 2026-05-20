@@ -28,6 +28,30 @@ export type AppSecrets_FindOneById_Req = ApiRequestBase<{
 export type AppSecrets_FindOneById_Res = ApiResponseBase<AppSecret>;
 
 /**
+ * Get app secret download token
+ */
+export type AppSecrets_GetDownloadToken_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    secretID: string;
+}>;
+
+export type AppSecrets_GetDownloadToken_Res = ApiResponseBase<{
+    token: string;
+}>;
+
+/**
+ * Build app secret download URL
+ */
+export type AppSecrets_BuildDownloadUrl_Req = {
+    projectID: string;
+    appID: string;
+    secretID: string;
+    token: string;
+    viewInline: true;
+};
+
+/**
  * Create app secret
  */
 export type AppSecrets_CreateOne_Req = ApiRequestBase<{

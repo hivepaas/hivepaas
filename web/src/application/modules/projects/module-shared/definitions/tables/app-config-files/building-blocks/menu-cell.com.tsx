@@ -10,34 +10,10 @@ import type { AppConfigFile } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
 
-function base64ToArrayBuffer(value: string): ArrayBuffer {
-    const binary = window.atob(value);
-    const buffer = new ArrayBuffer(binary.length);
-    const bytes = new Uint8Array(buffer);
-
-    for (let index = 0; index < binary.length; index++) {
-        bytes[index] = binary.charCodeAt(index);
-    }
-
-    return buffer;
-}
-
-function saveFile(configFile: AppConfigFile) {
-    const content = configFile.base64 ? base64ToArrayBuffer(configFile.content) : configFile.content;
-    const blob = new Blob([content]);
-    const url = window.URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download = configFile.name;
-    anchor.click();
-    window.URL.revokeObjectURL(url);
-}
-
 function View({ projectId, appId, configFile }: Props) {
     const [open, setOpen] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const { queries } = useAppConfigFilesApi();
+    const { queries, helpers } = useAppConfigFilesApi();
 
     const { mutate: deleteOne, isPending: isDeleting } = AppConfigFilesCommands.useDeleteOne({
         onSuccess: () => {
@@ -49,12 +25,20 @@ function View({ projectId, appId, configFile }: Props) {
     async function handleDownload() {
         try {
             setIsDownloading(true);
-            const { data } = await queries.findOneById({
+            const { data } = await queries.getDownloadToken({
                 projectID: projectId,
                 appID: appId,
                 configFileID: configFile.id,
             });
-            saveFile(data);
+            const downloadUrl = helpers.buildDownloadUrl({
+                projectID: projectId,
+                appID: appId,
+                configFileID: configFile.id,
+                token: data.token,
+                viewInline: true,
+            });
+
+            window.open(downloadUrl, "_blank", "noopener,noreferrer");
             setOpen(false);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to download config file");

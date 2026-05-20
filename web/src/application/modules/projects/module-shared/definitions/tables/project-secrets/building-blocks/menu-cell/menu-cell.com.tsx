@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 
+import { Button } from "@components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { ProjectSecretsCommands } from "~/projects/data/commands";
 import type { ProjectSecret } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
-import { ProjectSecretsCommands } from "~/projects/data/commands";
-
-import { Button } from "@components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 
 function View({ projectId, secret }: Props) {
     const [open, setOpen] = useState(false);

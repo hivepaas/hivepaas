@@ -379,7 +379,7 @@ export function CreateOrEditEmailAccountForm({
                                 title={<LabelWithInfo label="Field Mappings" />}
                             >
                                 <FieldListLayout
-                                    inputsClassName="grid grid-cols-2 flex-1 gap-2"
+                                    inputsClassName="grid flex-1 grid-cols-2 gap-2"
                                     inputRow={
                                         <>
                                             <SelectWithAddon

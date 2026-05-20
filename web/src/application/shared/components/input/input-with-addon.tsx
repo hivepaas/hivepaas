@@ -9,9 +9,9 @@ function View({ addonLeft, addonRight, classNameContainer, ...inputProps }: Inpu
 
     return (
         <div className={cn("w-full space-y-2", classNameContainer)}>
-            <div className="flex rounded-md shadow-xs">
+            <div className="flex min-w-0 items-stretch rounded-md shadow-xs">
                 {addonLeft && (
-                    <span className="border-input bg-background inline-flex items-center rounded-l-md border px-3 text-sm">
+                    <span className="border-input bg-background inline-flex shrink-0 items-center rounded-l-md border px-3 text-sm">
                         {addonLeft}
                     </span>
                 )}
@@ -20,7 +20,7 @@ function View({ addonLeft, addonRight, classNameContainer, ...inputProps }: Inpu
                     type="text"
                     {...inputProps}
                     className={cn(
-                        "-mx-px rounded-none shadow-none",
+                        "-mx-px min-w-0 flex-1 rounded-none shadow-none",
                         addonLeft ? "rounded-l-none rounded-r-md" : "",
                         addonRight ? "rounded-r-none rounded-l-md" : "",
                         inputProps.className,

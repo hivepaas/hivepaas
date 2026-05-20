@@ -3,10 +3,12 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    AppSecrets_BuildDownloadUrl_Req,
     AppSecrets_CreateOne_Req,
     AppSecrets_DeleteOne_Req,
     AppSecrets_FindManyPaginated_Req,
     AppSecrets_FindOneById_Req,
+    AppSecrets_GetDownloadToken_Req,
     AppSecrets_UpdateOne_Req,
 } from "~/projects/api/services";
 
@@ -55,6 +57,36 @@ function createHook() {
                             throw error;
                         },
                     });
+                },
+                /**
+                 * Get app secret download token
+                 */
+                getDownloadToken: async (data: AppSecrets_GetDownloadToken_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.secrets.$.getDownloadToken(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api],
+        );
+
+        const helpers = useMemo(
+            () => ({
+                /**
+                 * Build app secret download URL
+                 */
+                buildDownloadUrl: (data: AppSecrets_BuildDownloadUrl_Req) => {
+                    return api.projects.apps.secrets.$.buildDownloadUrl(data);
                 },
             }),
             [api],
@@ -128,6 +160,7 @@ function createHook() {
 
         return {
             queries,
+            helpers,
             mutations,
         };
     };

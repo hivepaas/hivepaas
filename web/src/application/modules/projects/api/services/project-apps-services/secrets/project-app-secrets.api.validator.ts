@@ -4,6 +4,7 @@ import type {
     AppSecrets_CreateOne_Res,
     AppSecrets_FindManyPaginated_Res,
     AppSecrets_FindOneById_Res,
+    AppSecrets_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
@@ -68,6 +69,16 @@ const FindOneByIdSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+/**
+ * Get app secret download token API response schema
+ */
+const GetDownloadTokenSchema = z.object({
+    data: z.object({
+        token: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppSecretsApiValidator {
     /**
      * Validate and transform find many app secrets paginated API response
@@ -107,5 +118,15 @@ export class AppSecretsApiValidator {
             data,
             meta,
         };
+    };
+
+    /**
+     * Validate and transform get app secret download token API response
+     */
+    getDownloadToken = (response: AxiosResponse): AppSecrets_GetDownloadToken_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetDownloadTokenSchema,
+        });
     };
 }

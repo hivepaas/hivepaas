@@ -1,5 +1,5 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
-import { type ProjectDetailsEntity, type ProjectBaseEntity } from "~/projects/domain";
+import { type ProjectBaseEntity, type ProjectDetailsEntity } from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -17,7 +17,7 @@ export type Projects_FindManyPaginated_Res = ApiResponsePaginated<ProjectBaseEnt
 /**
  * Create project
  */
-export type Projects_CreateOne_Req = ApiRequestBase<Pick<ProjectBaseEntity, "name" | "note" | "tags">>;
+export type Projects_CreateOne_Req = ApiRequestBase<Pick<ProjectBaseEntity, "name" | "note" | "envs" | "tags">>;
 
 export type Projects_CreateOne_Res = ApiResponseBase<{
     id: string;
@@ -46,10 +46,12 @@ export type Projects_DeleteOne_Res = ApiResponseBase<{
 /**
  * Update project
  */
-export type Projects_UpdateOne_Req = ApiRequestBase<{
-    projectID: string;
-    updateVer: number;
-} & Partial<Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "userAccesses">>>;
+export type Projects_UpdateOne_Req = ApiRequestBase<
+    {
+        projectID: string;
+        updateVer: number;
+    } & Partial<Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "userAccesses">>
+>;
 
 export type Projects_UpdateOne_Res = ApiResponseBase<{
     type: "success";

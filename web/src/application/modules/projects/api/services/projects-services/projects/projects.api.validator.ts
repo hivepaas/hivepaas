@@ -12,6 +12,11 @@ import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infra
 /**
  * Project schema
  */
+const ProjectEnvSchema = z.object({
+    name: z.string(),
+    color: z.string(),
+});
+
 const ProjectSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -19,6 +24,7 @@ const ProjectSchema = z.object({
     status: z.nativeEnum(EProjectStatus),
     photo: z.string(),
     note: z.string(),
+    envs: z.array(ProjectEnvSchema).nullish(),
     tags: z.array(z.string()),
     updateVer: z.number(),
     createdAt: z.coerce.date(),
@@ -82,7 +88,10 @@ export class ProjectsApiValidator {
         });
 
         return {
-            data,
+            data: data.map(project => ({
+                ...project,
+                envs: project.envs ?? [],
+            })),
             meta,
         };
     };
@@ -107,7 +116,10 @@ export class ProjectsApiValidator {
         });
 
         return {
-            data,
+            data: {
+                ...data,
+                envs: data.envs ?? [],
+            },
             meta,
         };
     };

@@ -74,8 +74,11 @@ export class ProjectsApi extends BaseApi {
     /**
      * Create a project
      */
-    async createOne(request: Projects_CreateOne_Req, signal?: AbortSignal): Promise<Result<Projects_CreateOne_Res, Error>> {
-        const { name, note, tags } = request.data;
+    async createOne(
+        request: Projects_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Projects_CreateOne_Res, Error>> {
+        const { name, note, envs, tags } = request.data;
 
         const json = {
             name: JsonTransformer.string({
@@ -83,6 +86,9 @@ export class ProjectsApi extends BaseApi {
             }),
             note: JsonTransformer.string({
                 data: note,
+            }),
+            envs: JsonTransformer.array({
+                data: envs,
             }),
             tags: JsonTransformer.array({
                 data: tags,
@@ -103,9 +109,7 @@ export class ProjectsApi extends BaseApi {
      */
     async deleteOne(request: Projects_DeleteOne_Req): Promise<Result<Projects_DeleteOne_Res, Error>> {
         return lastValueFrom(
-            from(
-                this.client.v1.delete(`/projects/${request.data.projectID}`),
-            ).pipe(
+            from(this.client.v1.delete(`/projects/${request.data.projectID}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -115,8 +119,11 @@ export class ProjectsApi extends BaseApi {
     /**
      * Update a project
      */
-    async updateOne(request: Projects_UpdateOne_Req, signal?: AbortSignal): Promise<Result<Projects_UpdateOne_Res, Error>> {
-        const { projectID, updateVer, name, note, tags, status } = request.data;
+    async updateOne(
+        request: Projects_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Projects_UpdateOne_Res, Error>> {
+        const { projectID, updateVer, name, note, envs, tags, status } = request.data;
 
         const json: Record<string, unknown> = {
             updateVer,
@@ -125,6 +132,9 @@ export class ProjectsApi extends BaseApi {
             }),
             note: JsonTransformer.string({
                 data: note,
+            }),
+            envs: JsonTransformer.array({
+                data: envs,
             }),
             tags: JsonTransformer.array({
                 data: tags,

@@ -5,11 +5,11 @@ import { FieldError, Input, TagInput } from "@components/ui";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
-import { type ProjectDetailsEntity } from "~/projects/domain";
+import { type ProjectDetailsEntity, type ProjectEnvEntity } from "~/projects/domain";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
+import { ProjectEnvInput, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
 import {
     ProjectGeneralFormSchema,
@@ -22,6 +22,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     const methods = useForm<ProjectGeneralFormSchemaInput, unknown, ProjectGeneralFormSchemaOutput>({
         defaultValues: {
             name: defaultValues.name,
+            envs: defaultValues.envs,
             tags: defaultValues.tags,
             note: defaultValues.note,
         },
@@ -37,6 +38,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     } = methods;
 
     const tags = watch("tags");
+    const envs = watch("envs");
 
     useImperativeHandle(
         ref,
@@ -83,6 +85,28 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
         );
     }
 
+    function handleCreateEnv(env: ProjectEnvEntity) {
+        if (!envs.some(item => item.name === env.name)) {
+            setValue("envs", [...envs, env], { shouldDirty: true });
+        }
+    }
+
+    function handleDeleteEnv(envName: string) {
+        setValue(
+            "envs",
+            envs.filter(env => env.name !== envName),
+            { shouldDirty: true },
+        );
+    }
+
+    function handleUpdateEnvColor(envName: string, color: string) {
+        setValue(
+            "envs",
+            envs.map(env => (env.name === envName ? { ...env, color } : env)),
+            { shouldDirty: true },
+        );
+    }
+
     return (
         <div className="pt-2">
             <FormProvider {...methods}>
@@ -122,6 +146,20 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                     {/* Status - Show Label */}
                     <InfoBlock title="Status">
                         <ProjectStatusBadge status={defaultValues.status} />
+                    </InfoBlock>
+
+                    {/* Environments */}
+                    <InfoBlock title="Environments">
+                        <div className="max-w-[520px]">
+                            <ProjectEnvInput
+                                envs={envs}
+                                onCreate={handleCreateEnv}
+                                onDelete={handleDeleteEnv}
+                                onUpdateColor={handleUpdateEnvColor}
+                                placeholder="Enter env"
+                            />
+                            <FieldError errors={[errors.envs]} />
+                        </div>
                     </InfoBlock>
 
                     {/* Tags */}

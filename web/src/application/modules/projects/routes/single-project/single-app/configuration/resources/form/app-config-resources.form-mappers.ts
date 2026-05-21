@@ -6,7 +6,7 @@ export function mapAppResourceSettingsToFormInput(data: AppResourceSettings): Ap
     return {
         reservations: {
             cpus: data.reservations?.cpus,
-            memoryMB: data.reservations?.memoryMB,
+            memory: data.reservations?.memory,
             genericResources: (data.reservations?.genericResources ?? []).map(item => ({
                 kind: item.kind,
                 value: item.value,
@@ -14,8 +14,12 @@ export function mapAppResourceSettingsToFormInput(data: AppResourceSettings): Ap
         },
         limits: {
             cpus: data.limits?.cpus,
-            memoryMB: data.limits?.memoryMB,
+            memory: data.limits?.memory,
             pids: data.limits?.pids,
+        },
+        memory: {
+            swap: data.memory?.swap,
+            swappiness: data.memory?.swappiness,
         },
         ulimits: data.ulimits.map(item => ({
             name: item.name,

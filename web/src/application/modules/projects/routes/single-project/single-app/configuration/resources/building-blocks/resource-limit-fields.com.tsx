@@ -1,3 +1,4 @@
+import { Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { useController, useFormContext } from "react-hook-form";
 
@@ -13,7 +14,7 @@ export function ResourceLimitFields() {
     >();
 
     const { field: cpusField } = useController({ control, name: "limits.cpus" });
-    const { field: memoryField } = useController({ control, name: "limits.memoryMB" });
+    const { field: memoryField } = useController({ control, name: "limits.memory" });
     const { field: pidsField } = useController({ control, name: "limits.pids" });
 
     return (
@@ -42,19 +43,16 @@ export function ResourceLimitFields() {
             <InfoBlock
                 title={
                     <LabelWithInfo
-                        label="Memory MB"
-                        content="Maximum memory (in MB) the service can use."
+                        label="Memory"
+                        content="Maximum memory the service can use. Use DataSize values like 512mb or 1gb."
                     />
                 }
             >
-                <InputNumber
-                    value={memoryField.value}
-                    onValueChange={val => {
-                        memoryField.onChange(val);
-                    }}
-                    stepper={128}
-                    min={0}
+                <Input
+                    value={memoryField.value ?? ""}
+                    onChange={memoryField.onChange}
                     className="max-w-[100px]"
+                    placeholder="1gb"
                 />
             </InfoBlock>
 

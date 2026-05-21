@@ -7,7 +7,13 @@ import { type AppResourceSettings } from "~/projects/domain";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { CapabilitiesFields, ResourceLimitFields, ResourceReservationFields, UlimitsFields } from "../building-blocks";
+import {
+    CapabilitiesFields,
+    MemoryFields,
+    ResourceLimitFields,
+    ResourceReservationFields,
+    UlimitsFields,
+} from "../building-blocks";
 import {
     AppConfigResourcesFormSchema,
     type AppConfigResourcesFormSchemaInput,
@@ -79,6 +85,9 @@ export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, children 
 
                     <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Resource Limit</h3>
                     <ResourceLimitFields />
+
+                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Memory</h3>
+                    <MemoryFields />
 
                     <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Ulimits</h3>
                     <UlimitsFields />

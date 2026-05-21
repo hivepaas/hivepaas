@@ -32,6 +32,7 @@ export function CreateProjectDialog() {
         createProject({
             name: values.name,
             note: values.note,
+            envs: values.envs,
             tags: values.tags,
         });
     }

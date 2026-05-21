@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { type ProjectEnvEntity } from "~/projects/domain";
+import { ProjectEnvInput } from "~/projects/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -11,7 +13,12 @@ import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
-import { type CreateProjectFormInput, type CreateProjectFormOutput, CreateProjectFormSchema } from "../schemas";
+import {
+    type CreateProjectFormInput,
+    type CreateProjectFormOutput,
+    CreateProjectFormSchema,
+    DEFAULT_PROJECT_ENVS,
+} from "../schemas";
 
 export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) {
     const {
@@ -24,6 +31,7 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
         defaultValues: {
             name: "",
             note: "",
+            envs: DEFAULT_PROJECT_ENVS.map(env => ({ ...env })),
             tags: [],
         },
         resolver: zodResolver(CreateProjectFormSchema),
@@ -35,6 +43,7 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
     }, [isDirty, onHasChanges]);
 
     const tags = watch("tags");
+    const envs = watch("envs");
 
     const {
         field: name,
@@ -62,6 +71,28 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
         setValue(
             "tags",
             tags.filter(tag => tag !== tagToRemove),
+        );
+    }
+
+    function handleCreateEnv(env: ProjectEnvEntity) {
+        if (!envs.some(item => item.name === env.name)) {
+            setValue("envs", [...envs, env], { shouldDirty: true });
+        }
+    }
+
+    function handleDeleteEnv(envName: string) {
+        setValue(
+            "envs",
+            envs.filter(env => env.name !== envName),
+            { shouldDirty: true },
+        );
+    }
+
+    function handleUpdateEnvColor(envName: string, color: string) {
+        setValue(
+            "envs",
+            envs.map(env => (env.name === envName ? { ...env, color } : env)),
+            { shouldDirty: true },
         );
     }
 
@@ -100,6 +131,24 @@ export function CreateProjectForm({ isPending, onSubmit, onHasChanges }: Props) 
                                 aria-invalid={isNameInvalid}
                             />
                             <FieldError errors={[errors.name]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={150}
+                    title={<LabelWithInfo label="Environments" />}
+                >
+                    <FieldGroup>
+                        <Field>
+                            <ProjectEnvInput
+                                envs={envs}
+                                onCreate={handleCreateEnv}
+                                onDelete={handleDeleteEnv}
+                                onUpdateColor={handleUpdateEnvColor}
+                                placeholder="Enter env"
+                            />
+                            <FieldError errors={[errors.envs]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>

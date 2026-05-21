@@ -19,14 +19,19 @@ export const SysctlFormSchema = z.object({
 export const AppConfigResourcesFormSchema = z.object({
     reservations: z.object({
         cpus: z.number().optional(),
-        memoryMB: z.number().optional(),
+        memory: z.string().optional(),
         genericResources: z.array(GenericResourceFormSchema),
     }),
 
     limits: z.object({
         cpus: z.number().optional(),
-        memoryMB: z.number().optional(),
+        memory: z.string().optional(),
         pids: z.number().optional(),
+    }),
+
+    memory: z.object({
+        swap: z.string().optional(),
+        swappiness: z.number().optional(),
     }),
 
     ulimits: z.array(UlimitFormSchema),
@@ -46,14 +51,19 @@ export type AppConfigResourcesFormSchemaOutput = z.output<typeof AppConfigResour
 export const emptyAppConfigResourcesFormDefaults: AppConfigResourcesFormSchemaInput = {
     reservations: {
         cpus: undefined,
-        memoryMB: undefined,
+        memory: undefined,
         genericResources: [],
     },
 
     limits: {
         cpus: undefined,
-        memoryMB: undefined,
+        memory: undefined,
         pids: undefined,
+    },
+
+    memory: {
+        swap: undefined,
+        swappiness: undefined,
     },
 
     ulimits: [],

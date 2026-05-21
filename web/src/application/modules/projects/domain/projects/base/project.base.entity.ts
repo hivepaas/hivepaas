@@ -7,9 +7,15 @@ export interface ProjectBaseEntity {
     status: EProjectStatus;
     photo: string;
     note: string;
+    envs: ProjectEnvEntity[];
     tags: string[];
     updateVer: number;
 
     createdAt: Date;
     updatedAt: Date | null;
+}
+
+export interface ProjectEnvEntity {
+    name: string;
+    color: string;
 }

@@ -124,13 +124,11 @@ function AppConfigStorageContent() {
                 </a>
             </div>
 
-            <div className="rounded-lg border p-4">
-                <StorageTable
-                    onAddMount={handleAddMount}
-                    onEditMount={handleEditMount}
-                    onDeleteMount={handleDeleteMount}
-                />
-            </div>
+            <StorageTable
+                onAddMount={handleAddMount}
+                onEditMount={handleEditMount}
+                onDeleteMount={handleDeleteMount}
+            />
         </div>
     );
 }

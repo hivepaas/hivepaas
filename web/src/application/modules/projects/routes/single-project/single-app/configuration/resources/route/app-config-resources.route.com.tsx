@@ -17,10 +17,21 @@ import { AppConfigResourcesForm } from "../form";
 import { type AppConfigResourcesFormSchemaOutput } from "../schemas";
 import { type AppConfigResourcesFormRef } from "../types";
 
+function normalizeMemoryValue(value: string | undefined): string | undefined {
+    const trimmedValue = value?.trim();
+    if (!trimmedValue) {
+        return undefined;
+    }
+    return trimmedValue;
+}
+
 function mapFormValuesToPayload(
     values: AppConfigResourcesFormSchemaOutput,
     server: AppResourceSettings | undefined,
 ): AppResourceSettings {
+    const reservationMemory = normalizeMemoryValue(values.reservations.memory);
+    const limitMemory = normalizeMemoryValue(values.limits.memory);
+    const swapMemory = normalizeMemoryValue(values.memory.swap);
     const sysctls: Record<string, string> = {};
     for (const row of values.capabilities.sysctls) {
         sysctls[row.name] = row.value;
@@ -28,12 +39,10 @@ function mapFormValuesToPayload(
 
     return {
         reservations:
-            values.reservations.cpus != null ||
-            values.reservations.memoryMB != null ||
-            values.reservations.genericResources.length > 0
+            values.reservations.cpus != null || reservationMemory || values.reservations.genericResources.length > 0
                 ? {
                       cpus: values.reservations.cpus,
-                      memoryMB: values.reservations.memoryMB,
+                      memory: reservationMemory,
                       genericResources: values.reservations.genericResources.map(item => ({
                           kind: item.kind,
                           value: item.value,
@@ -41,11 +50,18 @@ function mapFormValuesToPayload(
                   }
                 : null,
         limits:
-            values.limits.cpus != null || values.limits.memoryMB != null || values.limits.pids != null
+            values.limits.cpus != null || limitMemory || values.limits.pids != null
                 ? {
                       cpus: values.limits.cpus,
-                      memoryMB: values.limits.memoryMB,
+                      memory: limitMemory,
                       pids: values.limits.pids,
+                  }
+                : null,
+        memory:
+            swapMemory || values.memory.swappiness != null
+                ? {
+                      swap: swapMemory,
+                      swappiness: values.memory.swappiness,
                   }
                 : null,
         ulimits: values.ulimits.map(item => ({

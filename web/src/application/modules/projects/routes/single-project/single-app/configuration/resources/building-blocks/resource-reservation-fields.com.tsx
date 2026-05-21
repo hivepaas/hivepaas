@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
@@ -16,7 +17,7 @@ export function ResourceReservationFields() {
     >();
 
     const { field: cpusField } = useController({ control, name: "reservations.cpus" });
-    const { field: memoryField } = useController({ control, name: "reservations.memoryMB" });
+    const { field: memoryField } = useController({ control, name: "reservations.memory" });
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -52,21 +53,16 @@ export function ResourceReservationFields() {
             <InfoBlock
                 title={
                     <LabelWithInfo
-                        label="Memory MB"
-                        content="Amount of memory (in MB) reserved for the service."
+                        label="Memory"
+                        content="Amount of memory reserved for the service. Use DataSize values like 512mb or 1gb."
                     />
                 }
             >
-                <InputNumber
-                    value={memoryField.value}
-                    onValueChange={val => {
-                        memoryField.onChange(val);
-                    }}
+                <Input
+                    value={memoryField.value ?? ""}
+                    onChange={memoryField.onChange}
                     className="max-w-[100px]"
-                    stepper={128}
-                    min={0}
-                    decimalScale={0}
-                    fixedDecimalScale={false}
+                    placeholder="512mb"
                 />
             </InfoBlock>
 

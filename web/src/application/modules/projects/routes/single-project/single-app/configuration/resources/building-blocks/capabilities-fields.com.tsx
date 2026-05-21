@@ -93,7 +93,7 @@ export function CapabilitiesFields() {
             <InfoBlock
                 title={
                     <LabelWithInfo
-                        label="OomScoreAdj"
+                        label="Out-of-Mem Score Adjustment"
                         content="Adjusts the OOM killer score for the container process."
                     />
                 }

@@ -12,14 +12,19 @@ const GenericResourceSchema = z.object({
 
 const ResourceReservationsSchema = z.object({
     cpus: z.number().optional(),
-    memoryMB: z.number().optional(),
+    memory: z.string().optional(),
     genericResources: z.array(GenericResourceSchema).nullish(),
 });
 
 const ResourceLimitsSchema = z.object({
     cpus: z.number().optional(),
-    memoryMB: z.number().optional(),
+    memory: z.string().optional(),
     pids: z.number().optional(),
+});
+
+const ResourceMemorySchema = z.object({
+    swap: z.string().optional(),
+    swappiness: z.number().nullish(),
 });
 
 // BE Ulimit struct has no json tags, so fields are PascalCase
@@ -40,6 +45,7 @@ const CapabilitiesSchema = z.object({
 const AppResourceSettingsSchema = z.object({
     reservations: ResourceReservationsSchema.nullish(),
     limits: ResourceLimitsSchema.nullish(),
+    memory: ResourceMemorySchema.nullish(),
     ulimits: z.array(UlimitSchema).nullish(),
     capabilities: CapabilitiesSchema.nullish(),
     updateVer: z.number(),
@@ -58,7 +64,7 @@ export class AppResourceSettingsApiValidator {
                 reservations: data.reservations
                     ? {
                           cpus: data.reservations.cpus,
-                          memoryMB: data.reservations.memoryMB,
+                          memory: data.reservations.memory,
                           genericResources:
                               data.reservations.genericResources?.map(item => ({
                                   kind: item.kind,
@@ -69,8 +75,14 @@ export class AppResourceSettingsApiValidator {
                 limits: data.limits
                     ? {
                           cpus: data.limits.cpus,
-                          memoryMB: data.limits.memoryMB,
+                          memory: data.limits.memory,
                           pids: data.limits.pids,
+                      }
+                    : null,
+                memory: data.memory
+                    ? {
+                          swap: data.memory.swap,
+                          swappiness: data.memory.swappiness ?? undefined,
                       }
                     : null,
                 ulimits:

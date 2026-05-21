@@ -1,6 +1,7 @@
 export type AppResourceSettings = {
     reservations: ResourceReservations | null;
     limits: ResourceLimits | null;
+    memory: ResourceMemory | null;
     ulimits: Ulimit[];
     capabilities: Capabilities | null;
     updateVer: number;
@@ -8,7 +9,7 @@ export type AppResourceSettings = {
 
 export type ResourceReservations = {
     cpus?: number;
-    memoryMB?: number;
+    memory?: string;
     genericResources?: GenericResource[];
 };
 
@@ -19,8 +20,13 @@ export type GenericResource = {
 
 export type ResourceLimits = {
     cpus?: number;
-    memoryMB?: number;
+    memory?: string;
     pids?: number;
+};
+
+export type ResourceMemory = {
+    swap?: string;
+    swappiness?: number;
 };
 
 export type Ulimit = {

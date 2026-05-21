@@ -1,11 +1,14 @@
 package settinghandler
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	_ "github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 )
 
 // ListSSHKey Lists ssh-key settings
@@ -101,4 +104,37 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // @Router  /settings/ssh-keys/{itemID} [delete]
 func (h *Handler) DeleteSSHKey(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+}
+
+// GenerateSSHKey Generates an SSH key
+// @Summary Generates an SSH key
+// @Description Generates an SSH key
+// @Tags    settings
+// @Produce json
+// @Id      generateSSHKey
+// @Param   body body sshkeydto.GenerateSSHKeyReq true "request data"
+// @Success 200 {object} sshkeydto.GenerateSSHKeyResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /settings/ssh-keys/generate [post]
+func (h *Handler) GenerateSSHKey(ctx *gin.Context) {
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := sshkeydto.NewGenerateSSHKeyReq()
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.SSHKeyUC.GenerateSSHKey(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
 }

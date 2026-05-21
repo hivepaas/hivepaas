@@ -21,17 +21,19 @@ type CreateSSHKeyReq struct {
 }
 
 type SSHKeyBaseReq struct {
-	Name       string   `json:"name"`
-	PrivateKey string   `json:"privateKey"`
-	Passphrase string   `json:"passphrase"`
-	Targets    []string `json:"targets"`
+	Name       string              `json:"name"`
+	KeyType    base.PrivateKeyType `json:"keyType"`
+	PublicKey  string              `json:"publicKey"`
+	PrivateKey string              `json:"privateKey"`
+	Passphrase string              `json:"passphrase"`
 }
 
 func (req *SSHKeyBaseReq) ToEntity() *entity.SSHKey {
 	return &entity.SSHKey{
+		KeyType:    req.KeyType,
+		PublicKey:  req.PublicKey,
 		PrivateKey: entity.NewEncryptedField(req.PrivateKey),
 		Passphrase: entity.NewEncryptedField(req.Passphrase),
-		Targets:    req.Targets,
 	}
 }
 

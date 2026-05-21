@@ -67,7 +67,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		cloudStorageGroup.POST("/test-conn", settingHandler.TestCloudStorageConn)
 	}
 
-	{ // ssh key group
+	{ // SSH key group
 		sshKeyGroup := settingGroup.Group("/ssh-keys")
 		sshKeyGroup.GET("/:itemID", settingHandler.GetSSHKey)
 		sshKeyGroup.GET("", settingHandler.ListSSHKey)
@@ -75,6 +75,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		sshKeyGroup.PUT("/:itemID", settingHandler.UpdateSSHKey)
 		sshKeyGroup.PUT("/:itemID/status", settingHandler.UpdateSSHKeyStatus)
 		sshKeyGroup.DELETE("/:itemID", settingHandler.DeleteSSHKey)
+		sshKeyGroup.POST("/generate", settingHandler.GenerateSSHKey)
 	}
 
 	{ // IM service group

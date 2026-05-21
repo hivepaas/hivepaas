@@ -18699,6 +18699,58 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/settings/ssh-keys/generate" : {
+      "post" : {
+        "description" : "Generates an SSH key",
+        "operationId" : "generateSSHKey",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Generates an SSH key",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/settings/ssh-keys/{itemID}" : {
       "delete" : {
         "description" : "Deletes sshkey setting",
@@ -22395,6 +22447,11 @@
         "type" : "string",
         "x-enum-varnames" : [ "OAuthKindGithub", "OAuthKindGithubApp", "OAuthKindGitlab", "OAuthKindGitea", "OAuthKindGoogle", "OAuthKindMicrosoftOnline", "OAuthKindOpenIDConnect" ]
       },
+      "github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType" : {
+        "enum" : [ "ed25519", "ec-p256", "ec-p384", "ec-p521", "rsa-2048", "rsa-3072", "rsa-4096", "rsa-8192" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "PrivateKeyTypeEd25519", "PrivateKeyTypeECP256", "PrivateKeyTypeECP384", "PrivateKeyTypeECP521", "PrivateKeyTypeRSA2048", "PrivateKeyTypeRSA3072", "PrivateKeyTypeRSA4096", "PrivateKeyTypeRSA8192" ]
+      },
       "github_com_localpaas_localpaas_localpaas_app_base.ProjectStatus" : {
         "enum" : [ "active", "disabled", "deleting" ],
         "type" : "string",
@@ -22867,7 +22924,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -22886,8 +22943,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
         "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
@@ -31379,6 +31436,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType"
+          },
           "name" : {
             "type" : "string"
           },
@@ -31388,14 +31448,11 @@
           "privateKey" : {
             "type" : "string"
           },
-          "targets" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
+          "publicKey" : {
+            "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "passphrase", "privateKey", "targets" ],
+        "required" : [ "availableInProjects", "default", "keyType", "name", "passphrase", "privateKey", "publicKey" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.CreateSSHKeyResp" : {
@@ -31417,6 +31474,45 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyDataResp" : {
+        "properties" : {
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType"
+          },
+          "privateKey" : {
+            "type" : "string"
+          },
+          "publicKey" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "keyType", "privateKey", "publicKey" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyReq" : {
+        "properties" : {
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType"
+          },
+          "passphrase" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "keyType", "passphrase" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GenerateSSHKeyDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.GetSSHKeyResp" : {
@@ -31466,6 +31562,9 @@
           "inherited" : {
             "type" : "boolean"
           },
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType"
+          },
           "kind" : {
             "type" : "string"
           },
@@ -31478,17 +31577,14 @@
           "privateKey" : {
             "type" : "string"
           },
+          "publicKey" : {
+            "type" : "string"
+          },
           "secretMasked" : {
             "type" : "boolean"
           },
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "targets" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
           },
           "type" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
@@ -31500,7 +31596,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "id", "name", "privateKey", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "id", "keyType", "name", "privateKey", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyReq" : {
@@ -31511,6 +31607,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "keyType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.PrivateKeyType"
+          },
           "name" : {
             "type" : "string"
           },
@@ -31520,17 +31619,14 @@
           "privateKey" : {
             "type" : "string"
           },
-          "targets" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
+          "publicKey" : {
+            "type" : "string"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "passphrase", "privateKey", "targets", "updateVer" ],
+        "required" : [ "availableInProjects", "default", "keyType", "name", "passphrase", "privateKey", "publicKey", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyResp" : {

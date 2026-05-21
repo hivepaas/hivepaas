@@ -21,9 +21,10 @@ func (s *sshKeyParser) New() SettingData {
 }
 
 type SSHKey struct {
-	PrivateKey EncryptedField `json:"privateKey"`
-	Passphrase EncryptedField `json:"passphrase,omitzero"`
-	Targets    []string       `json:"targets,omitempty"`
+	KeyType    base.PrivateKeyType `json:"keyType"`
+	PublicKey  string              `json:"publicKey,omitempty"`
+	PrivateKey EncryptedField      `json:"privateKey"`
+	Passphrase EncryptedField      `json:"passphrase,omitzero"`
 }
 
 func (s *SSHKey) GetType() base.SettingType {

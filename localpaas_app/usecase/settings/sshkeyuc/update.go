@@ -24,8 +24,11 @@ func (uc *UC) UpdateSSHKey(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			err := pData.Setting.SetData(req.ToEntity())
-			if err != nil {
+			sshKey := req.ToEntity()
+			if err := generateKey(sshKey); err != nil {
+				return apperrors.Wrap(err)
+			}
+			if err := pData.Setting.SetData(sshKey); err != nil {
 				return apperrors.Wrap(err)
 			}
 			return nil

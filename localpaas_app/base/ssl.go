@@ -17,12 +17,12 @@ var (
 type SSLKeyType string
 
 const (
-	SSLKeyTypeECP256  SSLKeyType = "ec-p256"
-	SSLKeyTypeECP384  SSLKeyType = "ec-p384"
-	SSLKeyTypeECP521  SSLKeyType = "ec-p521"
-	SSLKeyTypeRSA2048 SSLKeyType = "rsa-2048"
-	SSLKeyTypeRSA3072 SSLKeyType = "rsa-3072"
-	SSLKeyTypeRSA4096 SSLKeyType = "rsa-4096"
+	SSLKeyTypeECP256  = SSLKeyType(PrivateKeyTypeECP256)
+	SSLKeyTypeECP384  = SSLKeyType(PrivateKeyTypeECP384)
+	SSLKeyTypeECP521  = SSLKeyType(PrivateKeyTypeECP521)
+	SSLKeyTypeRSA2048 = SSLKeyType(PrivateKeyTypeRSA2048)
+	SSLKeyTypeRSA3072 = SSLKeyType(PrivateKeyTypeRSA3072)
+	SSLKeyTypeRSA4096 = SSLKeyType(PrivateKeyTypeRSA4096)
 )
 
 var (

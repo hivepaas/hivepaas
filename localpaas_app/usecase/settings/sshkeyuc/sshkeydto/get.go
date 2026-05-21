@@ -4,6 +4,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
@@ -35,10 +36,11 @@ type GetSSHKeyResp struct {
 
 type SSHKeyResp struct {
 	*settings.BaseSettingResp
-	PrivateKey   string   `json:"privateKey"`
-	Passphrase   string   `json:"passphrase,omitempty"`
-	Targets      []string `json:"targets,omitempty"`
-	SecretMasked bool     `json:"secretMasked,omitempty"`
+	KeyType      base.PrivateKeyType `json:"keyType"`
+	PublicKey    string              `json:"publicKey,omitempty"`
+	PrivateKey   string              `json:"privateKey"`
+	Passphrase   string              `json:"passphrase,omitempty"`
+	SecretMasked bool                `json:"secretMasked,omitempty"`
 }
 
 func (resp *SSHKeyResp) CopyPrivateKey(field entity.EncryptedField) error {

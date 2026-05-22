@@ -3,6 +3,7 @@ package appdeploymentserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,8 +40,8 @@ type repoDeploymentData struct {
 	RegAuthHeader      string
 	ImageBuildSettings *entity.ImageBuildSettings
 
-	TempDir      string
-	CheckoutPath string
+	TempDir     string
+	CheckoutDir string
 }
 
 func (s *service) deployFromRepo(
@@ -138,10 +139,9 @@ func (s *service) repoDeployStepSourceCheckout(
 
 	// NOTE: currently supports repo of git type only
 	if repoSource.RepoType != base.RepoTypeGit {
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to checkout source: "+
+		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout source: "+
 			"unsupported repository type: "+string(repoSource.RepoType), tasklog.TsNow))
-		return apperrors.New(apperrors.ErrUnsupported).
-			WithExtraDetail("Repository type %v is unsupported", repoSource.RepoType)
+		return apperrors.NewUnsupported(fmt.Sprintf("Repository type '%v'", repoSource.RepoType))
 	}
 
 	s.addStepStartLog(ctx, data.appDeploymentData, "Start cloning Git repository...")
@@ -168,14 +168,11 @@ func (s *service) repoDeployStepSourceCheckout(
 		CommitHash:        repoSource.CommitHash,
 		MaxDepth:          checkoutMaxDepth,
 		TempDir:           data.TempDir,
-		CheckoutPath:      data.CheckoutPath,
+		CheckoutDir:       data.CheckoutDir,
+		LogStore:          data.LogStore,
 	})
 	if err != nil {
-		if repoSource.CommitHash != "" && githelper.IsErrObjectNotFound(err) {
-			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to checkout commit: "+
-				repoSource.CommitHash+", commit is too deep or doesn't exist.", tasklog.TsNow))
-		}
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to checkout repository with error: "+
+		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout repository with error: "+
 			err.Error(), tasklog.TsNow))
 		return apperrors.Wrap(err)
 	}
@@ -184,9 +181,9 @@ func (s *service) repoDeployStepSourceCheckout(
 	data.DeploymentOutput.CommitMessage = commit.Message
 
 	// Remove .git dir within the source dir
-	ee := os.RemoveAll(filepath.Join(data.CheckoutPath, ".git"))
+	ee := os.RemoveAll(filepath.Join(data.CheckoutDir, ".git"))
 	if ee != nil { // Just log
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to remove .git folder",
+		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to remove .git folder",
 			tasklog.TsNow))
 	}
 
@@ -226,7 +223,7 @@ func (s *service) repoDeployStepImageBuild(
 	}
 
 	// Create tar archive for the source code
-	tar, err := archive.TarWithOptions(data.CheckoutPath, &archive.TarOptions{})
+	tar, err := archive.TarWithOptions(data.CheckoutDir, &archive.TarOptions{})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -386,7 +383,7 @@ func (s *service) repoDeployStepPrepare(
 		return apperrors.Wrap(err)
 	}
 	data.TempDir, _ = filepath.Abs(data.TempDir)
-	data.CheckoutPath = filepath.Join(data.TempDir, "checkout")
+	data.CheckoutDir = filepath.Join(data.TempDir, "checkout")
 
 	// Load build settings
 	err = s.loadImageBuildSettings(ctx, db, data)

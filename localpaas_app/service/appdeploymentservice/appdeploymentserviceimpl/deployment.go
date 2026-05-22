@@ -78,6 +78,9 @@ func (s *service) Deploy(
 	default:
 		data.Deployment.Status = gofn.If(depErr != nil, base.DeploymentStatusFailed, base.DeploymentStatusDone)
 		data.Deployment.Output = data.DeploymentOutput
+		if depErr != nil {
+			data.Deployment.Output.Error = depErr.Error()
+		}
 	}
 
 	err = s.deploymentRepo.Update(ctx, db, data.Deployment)

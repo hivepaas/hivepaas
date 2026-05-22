@@ -22,7 +22,7 @@ func CheckoutWithGoGit(
 	checkoutOpts *CheckoutOptions,
 ) (repo *git.Repository, commit *object.Commit, err error) {
 	// 1. Prepare args
-	err = goGitProcessCheckoutOpts(checkoutOpts)
+	err = goGitProcessCheckoutOpts(ctx, checkoutOpts)
 	if err != nil {
 		return nil, nil, apperrors.New(err)
 	}
@@ -43,6 +43,7 @@ func CheckoutWithGoGit(
 }
 
 func goGitProcessCheckoutOpts(
+	ctx context.Context,
 	checkoutOpts *CheckoutOptions,
 ) (err error) {
 	if checkoutOpts.Auth != nil {
@@ -65,6 +66,8 @@ func goGitProcessCheckoutOpts(
 			}
 
 		default:
+			addLog(ctx, fmt.Sprintf("Git auth method '%v' is unsupported", auth.Name()),
+				true, checkoutOpts)
 			return apperrors.NewUnsupported(fmt.Sprintf("Git auth method '%v'", auth.Name()))
 		}
 	}
@@ -81,12 +84,12 @@ func goGitClone(
 	ctx context.Context,
 	checkoutOpts *CheckoutOptions,
 ) (repo *git.Repository, err error) {
-	err = os.MkdirAll(checkoutOpts.CheckoutPath, checkoutPathFileMode)
+	err = os.MkdirAll(checkoutOpts.CheckoutDir, checkoutPathFileMode)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	repo, err = git.PlainCloneContext(ctx, checkoutOpts.CheckoutPath, false, &git.CloneOptions{
+	repo, err = git.PlainCloneContext(ctx, checkoutOpts.CheckoutDir, false, &git.CloneOptions{
 		URL:               checkoutOpts.URL,
 		Auth:              checkoutOpts.Auth,
 		RemoteName:        checkoutOpts.RemoteName,
@@ -144,8 +147,11 @@ func goGitCheckoutTargetCommit(
 			return nil, apperrors.Wrap(err)
 		}
 	}
+
 	if commit == nil {
-		return nil, apperrors.Wrap(plumbing.ErrObjectNotFound)
+		addLog(ctx, fmt.Sprintf("Failed to checkout commit: %v, commit is too deep or doesn't exist.",
+			checkoutOpts.CommitHash), err != nil, checkoutOpts)
+		return nil, apperrors.NewNotFound(fmt.Sprintf("Commit '%v'", checkoutOpts.CommitHash))
 	}
 
 	worktree, err := repo.Worktree()

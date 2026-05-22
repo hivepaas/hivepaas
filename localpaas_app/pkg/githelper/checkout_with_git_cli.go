@@ -20,6 +20,8 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 )
 
 const (
@@ -45,8 +47,9 @@ type CheckoutOptions struct {
 	ShallowSubmodules bool
 	CommitHash        string
 
-	TempDir      string
-	CheckoutPath string
+	TempDir     string
+	CheckoutDir string
+	LogStore    *tasklog.Store
 
 	branch string
 	sshCmd string
@@ -57,7 +60,7 @@ func CheckoutWithGitCli(
 	checkoutOpts *CheckoutOptions,
 ) (repo *git.Repository, commit *object.Commit, err error) {
 	// 1. Prepare args
-	err = gitCliProcessCheckoutOpts(checkoutOpts)
+	err = gitCliProcessCheckoutOpts(ctx, checkoutOpts)
 	if err != nil {
 		return nil, nil, apperrors.New(err)
 	}
@@ -84,6 +87,7 @@ func CheckoutWithGitCli(
 }
 
 func gitCliProcessCheckoutOpts(
+	ctx context.Context,
 	checkoutOpts *CheckoutOptions,
 ) (err error) {
 	if checkoutOpts.Auth != nil { //nolint:nestif
@@ -114,11 +118,15 @@ func gitCliProcessCheckoutOpts(
 
 			sshKeyFile, err := writeSshKeyFile(checkoutOpts.TempDir, auth.PEMBytes)
 			if err != nil {
+				addLog(ctx, fmt.Sprintf("Failed to write SSH key file: %v error: %v",
+					sshKeyFile, err.Error()), true, checkoutOpts)
 				return apperrors.Wrap(err)
 			}
 			checkoutOpts.sshCmd = "ssh -o StrictHostKeyChecking=no -i " + sshKeyFile
 
 		default:
+			addLog(ctx, fmt.Sprintf("Git auth method '%v' is unsupported", auth.Name()),
+				true, checkoutOpts)
 			return apperrors.NewUnsupported(fmt.Sprintf("Git auth method '%v'", auth.Name()))
 		}
 	}
@@ -162,7 +170,7 @@ func gitCliClone(
 	ctx context.Context,
 	checkoutOpts *CheckoutOptions,
 ) (repo *git.Repository, err error) {
-	err = os.MkdirAll(checkoutOpts.CheckoutPath, checkoutPathFileMode)
+	err = os.MkdirAll(checkoutOpts.CheckoutDir, checkoutPathFileMode)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -177,7 +185,7 @@ func gitCliClone(
 	if checkoutOpts.branch != "" {
 		args = append(args, "--branch", checkoutOpts.branch)
 	}
-	args = append(args, "--", checkoutOpts.URL, checkoutOpts.CheckoutPath)
+	args = append(args, "--", checkoutOpts.URL, checkoutOpts.CheckoutDir)
 
 	env := []string{} // No use current process's env
 	if checkoutOpts.sshCmd != "" {
@@ -186,12 +194,14 @@ func gitCliClone(
 
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Env = env
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return nil, apperrors.New(err).WithExtraDetail("%s", string(out))
+	out, err := cmd.CombinedOutput()
+	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, checkoutOpts)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Open repo with go-git
-	repo, err = git.PlainOpen(checkoutOpts.CheckoutPath)
+	repo, err = git.PlainOpen(checkoutOpts.CheckoutDir)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -233,16 +243,19 @@ func gitCliCheckoutTargetCommit(
 
 		for depth <= maxDepth {
 			depth += depthIncrement
-			fetchArgs := []string{"fetch", "origin", "--depth", strconv.FormatUint(uint64(checkoutOpts.Depth), 10)}
+			fetchArgs := []string{"fetch", "origin", "--depth", strconv.FormatUint(uint64(depth), 10)}
 			if checkoutOpts.branch != "" {
 				fetchArgs = append(fetchArgs, checkoutOpts.branch)
 			}
 
 			fetchCmd := exec.CommandContext(ctx, "git", fetchArgs...)
-			fetchCmd.Dir = checkoutOpts.CheckoutPath
+			fetchCmd.Dir = checkoutOpts.CheckoutDir
 			fetchCmd.Env = env
-			if out, fetchErr := fetchCmd.CombinedOutput(); fetchErr != nil {
-				return nil, apperrors.New(fetchErr).WithExtraDetail("%s", string(out))
+
+			out, err := fetchCmd.CombinedOutput()
+			addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, checkoutOpts)
+			if err != nil {
+				return nil, apperrors.Wrap(err)
 			}
 
 			commit, err = repo.CommitObject(targetHash)
@@ -253,15 +266,20 @@ func gitCliCheckoutTargetCommit(
 	}
 
 	if commit == nil {
-		return nil, apperrors.Wrap(plumbing.ErrObjectNotFound)
+		addLog(ctx, fmt.Sprintf("Failed to checkout commit: %v, commit is too deep or doesn't exist.",
+			checkoutOpts.CommitHash), err != nil, checkoutOpts)
+		return nil, apperrors.NewNotFound(fmt.Sprintf("Commit '%v'", checkoutOpts.CommitHash))
 	}
 
 	// Checkout target commit
 	checkoutCmd := exec.CommandContext(ctx, "git", "checkout", checkoutOpts.CommitHash) //nolint:gosec
-	checkoutCmd.Dir = checkoutOpts.CheckoutPath
+	checkoutCmd.Dir = checkoutOpts.CheckoutDir
 	checkoutCmd.Env = []string{} // No use current process's env
-	if out, checkoutErr := checkoutCmd.CombinedOutput(); checkoutErr != nil {
-		return nil, apperrors.New(checkoutErr).WithExtraDetail("%s", string(out))
+
+	out, err := checkoutCmd.CombinedOutput()
+	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, checkoutOpts)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	return commit, nil
@@ -285,10 +303,27 @@ func gitCliFetchSubmodules(
 	}
 
 	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = checkoutOpts.CheckoutPath
+	cmd.Dir = checkoutOpts.CheckoutDir
 	cmd.Env = env
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return apperrors.New(err).WithExtraDetail("%s", string(out))
+
+	out, err := cmd.CombinedOutput()
+	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, checkoutOpts)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
+
 	return nil
+}
+
+func addLog(
+	ctx context.Context,
+	msg string,
+	isErr bool,
+	checkoutOpts *CheckoutOptions,
+) {
+	if checkoutOpts.LogStore == nil || len(msg) == 0 {
+		return
+	}
+	fn := gofn.If(isErr, tasklog.NewErrFrame, tasklog.NewOutFrame)
+	_ = checkoutOpts.LogStore.Add(ctx, fn(msg, tasklog.TsNow))
 }

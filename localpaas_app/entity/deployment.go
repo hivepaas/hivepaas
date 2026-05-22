@@ -88,6 +88,7 @@ type AppDeploymentTrigger struct {
 }
 
 type AppDeploymentOutput struct {
+	Error         string   `json:"error,omitempty"`
 	CommitHash    string   `json:"commitHash,omitempty"`
 	CommitMessage string   `json:"commitMessage,omitempty"`
 	ImageTags     []string `json:"imageTags,omitempty"`

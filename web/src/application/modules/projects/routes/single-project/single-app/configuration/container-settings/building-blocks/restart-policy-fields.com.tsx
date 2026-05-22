@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext } from "react-hook-form";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -38,9 +38,8 @@ export function RestartPolicyFields() {
     } = useController({ control, name: "restartPolicy.maxAttempts" });
 
     return (
-        <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Restart Policy</h3>
-            <div className="flex flex-col gap-6 px-2">
+        <ContentBlock label="Restart Policy">
+            <div className="flex flex-col gap-6">
                 <InfoBlock
                     title={
                         <LabelWithInfo
@@ -118,6 +117,6 @@ export function RestartPolicyFields() {
                     <FieldError errors={[windowError]} />
                 </InfoBlock>
             </div>
-        </>
+        </ContentBlock>
     );
 }

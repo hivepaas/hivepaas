@@ -5,6 +5,8 @@ import { type FieldPath, FormProvider, useForm } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppResourceSettings } from "~/projects/domain";
 
+import { ContentBlock } from "@application/shared/components";
+
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
 import {
@@ -80,20 +82,22 @@ export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, children 
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Resource Reservation</h3>
-                    <ResourceReservationFields />
+                    <ContentBlock label="Resource Reservation">
+                        <ResourceReservationFields />
+                    </ContentBlock>
 
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Resource Limit</h3>
-                    <ResourceLimitFields />
-
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Memory</h3>
-                    <MemoryFields />
-
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Ulimits</h3>
-                    <UlimitsFields />
-
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Capabilities</h3>
-                    <CapabilitiesFields />
+                    <ContentBlock label="Resource Limit">
+                        <ResourceLimitFields />
+                    </ContentBlock>
+                    <ContentBlock label="Memory">
+                        <MemoryFields />
+                    </ContentBlock>
+                    <ContentBlock label="Ulimits">
+                        <UlimitsFields />
+                    </ContentBlock>
+                    <ContentBlock label="Capabilities">
+                        <CapabilitiesFields />
+                    </ContentBlock>
 
                     {children}
                 </form>

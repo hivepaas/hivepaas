@@ -5,6 +5,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import { type AppDeploymentSettings } from "~/projects/domain";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
+import { ContentBlock } from "@application/shared/components";
+
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
 import {
@@ -130,23 +132,26 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Deployment Configuration</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <MethodSelector />
+                    <ContentBlock label="Deployment Configuration">
+                        <div className="flex flex-col gap-6">
+                            <MethodSelector />
 
-                        {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields />}
-                        {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields />}
-                    </div>
+                            {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields />}
+                            {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields />}
+                        </div>
+                    </ContentBlock>
 
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Run Configuration</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <RunConfigurationFields />
-                    </div>
+                    <ContentBlock label="Run Configuration">
+                        <div className="flex flex-col gap-6">
+                            <RunConfigurationFields />
+                        </div>
+                    </ContentBlock>
 
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Notification Configuration</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <NotificationFields />
-                    </div>
+                    <ContentBlock label="Notification Configuration">
+                        <div className="flex flex-col gap-6">
+                            <NotificationFields />
+                        </div>
+                    </ContentBlock>
 
                     {children}
                 </form>

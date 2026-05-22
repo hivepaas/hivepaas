@@ -1,7 +1,7 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock } from "@application/shared/components";
+import { ContentBlock, InfoBlock } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -67,9 +67,8 @@ export function GeneralFields() {
     });
 
     return (
-        <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">General</h3>
-            <div className="flex flex-col gap-6 px-2">
+        <ContentBlock label="General">
+            <div className="flex flex-col gap-6">
                 <InfoBlock title="Image">
                     <Input
                         {...image}
@@ -190,6 +189,6 @@ export function GeneralFields() {
                     <FieldError errors={[stopGracePeriodError]} />
                 </InfoBlock>
             </div>
-        </>
+        </ContentBlock>
     );
 }

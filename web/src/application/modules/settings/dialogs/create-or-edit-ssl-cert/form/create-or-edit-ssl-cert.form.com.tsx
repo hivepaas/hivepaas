@@ -7,7 +7,7 @@ import { ProjectNotificationQueries } from "~/projects/data/queries";
 import { NotificationQueries } from "~/settings/data/queries";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 
-import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
@@ -434,6 +434,7 @@ export function CreateOrEditSslCertForm({
                                     {...certificate}
                                     aria-invalid={isCertificateInvalid}
                                     rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.certificate]} />
                             </Field>
@@ -453,6 +454,7 @@ export function CreateOrEditSslCertForm({
                                     {...privateKey}
                                     aria-invalid={isPrivateKeyInvalid}
                                     rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.privateKey]} />
                             </Field>
@@ -530,9 +532,8 @@ export function CreateOrEditSslCertForm({
                 </InfoBlock>
             </FieldGroup>
 
-            <div className="rounded-md border">
-                <h3 className="rounded-t-md bg-accent px-3 py-2 font-medium">Notification Configuration</h3>
-                <div className="flex flex-col gap-4 p-4">
+            <ContentBlock label="Notification Configuration">
+                <div className="flex flex-col gap-6">
                     <InfoBlock
                         titleWidth={220}
                         title={
@@ -583,7 +584,7 @@ export function CreateOrEditSslCertForm({
                         title="On Failure"
                     />
                 </div>
-            </div>
+            </ContentBlock>
 
             <Field>
                 <div className="flex justify-end">

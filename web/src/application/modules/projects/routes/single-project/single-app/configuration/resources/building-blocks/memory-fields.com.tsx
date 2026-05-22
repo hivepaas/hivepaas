@@ -17,7 +17,7 @@ export function MemoryFields() {
     const { field: swappinessField } = useController({ control, name: "memory.swappiness" });
 
     return (
-        <div className="flex flex-col gap-6 px-2">
+        <div className="flex flex-col gap-6">
             <InfoBlock
                 title={
                     <LabelWithInfo

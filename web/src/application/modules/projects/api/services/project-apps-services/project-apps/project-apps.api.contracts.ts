@@ -21,7 +21,7 @@ export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppD
 export type ProjectApps_CreateOne_Req = ApiRequestBase<
     {
         projectID: string;
-    } & Pick<ProjectAppBase, "name" | "note" | "tags">
+    } & Pick<ProjectAppBase, "name" | "env" | "note" | "tags">
 >;
 
 export type ProjectApps_CreateOne_Res = ApiResponseBase<{
@@ -59,7 +59,10 @@ export type ProjectApps_UpdateOne_Req = ApiRequestBase<
         appID: string;
         updateVer: number;
     } & Partial<
-        Omit<ProjectAppDetails, "id" | "key" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "updateVer">
+        Omit<
+            ProjectAppDetails,
+            "id" | "key" | "env" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "updateVer"
+        >
     >
 >;
 

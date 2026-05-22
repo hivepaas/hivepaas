@@ -16,6 +16,10 @@ const ProjectAppSchema = z.object({
     id: z.string(),
     name: z.string(),
     status: z.nativeEnum(EProjectAppStatus),
+    env: z
+        .string()
+        .nullish()
+        .transform(val => val ?? ""),
     note: z.string(),
     tags: z.array(z.string()),
     key: z.string(),

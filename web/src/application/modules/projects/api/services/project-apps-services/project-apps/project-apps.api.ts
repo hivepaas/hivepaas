@@ -78,11 +78,14 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_CreateOne_Res, Error>> {
-        const { projectID, name, note, tags } = request.data;
+        const { projectID, name, env, note, tags } = request.data;
 
         const json = {
             name: JsonTransformer.string({
                 data: name,
+            }),
+            env: JsonTransformer.string({
+                data: env,
             }),
             note: JsonTransformer.string({
                 data: note,

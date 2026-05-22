@@ -4,3 +4,4 @@ export * from "./project-secret-status-badge";
 export * from "./project-sidebar";
 export * from "./env-vars-form-header";
 export * from "./project-env-input";
+export * from "./project-env-badge";

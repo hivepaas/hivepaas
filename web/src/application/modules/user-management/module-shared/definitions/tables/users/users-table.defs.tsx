@@ -12,8 +12,8 @@ const columns: ColumnDef<UserBase>[] = [
         header: "",
         enableResizing: false,
         enableHiding: false,
-        minSize: 80,
-        size: 80,
+        minSize: 56,
+        size: 56,
         cell: ({ row }) => <ActionsCell id={row.original.id} />,
         meta: {
             align: "center",

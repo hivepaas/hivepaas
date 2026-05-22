@@ -5,7 +5,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectAppsCommands } from "~/projects/data/commands";
-import { ProjectAppsQueries } from "~/projects/data/queries";
+import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 
 import { AppLoader } from "@application/shared/components";
 import { PageError } from "@application/shared/pages";
@@ -29,6 +29,10 @@ export function AppConfigGeneralRoute() {
         projectID: projectId,
         appID: appId,
     });
+    const { data: projectData, isLoading: isProjectLoading, error: projectError, refetch: refetchProject } =
+        ProjectsQueries.useFindOneById({
+            projectID: projectId,
+        });
 
     const { mutate: update, isPending } = ProjectAppsCommands.useUpdateOne({
         onSuccess: () => {
@@ -55,27 +59,36 @@ export function AppConfigGeneralRoute() {
         });
     }
 
-    if (isLoading) {
+    if (isLoading || isProjectLoading) {
         return <AppLoader />;
     }
 
-    if (error) {
+    if (error || projectError) {
+        const pageError = error ?? projectError;
+        invariant(pageError, "pageError must be defined");
+
         return (
             <PageError
-                error={error}
-                onRetry={refetch}
+                error={pageError}
+                onRetry={() => {
+                    void refetch();
+                    void refetchProject();
+                }}
             />
         );
     }
 
     invariant(data, "data must be defined");
+    invariant(projectData, "projectData must be defined");
 
     const { data: app } = data;
+    const { envs } = projectData.data;
 
     return (
         <AppConfigGeneralForm
             ref={formRef}
             defaultValues={app}
+            envs={envs}
             onSubmit={handleSubmit}
         >
             <div className="flex justify-end mt-4">

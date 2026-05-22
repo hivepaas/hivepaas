@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
+import { ProjectsQueries } from "~/projects/data/queries";
 
 import { CreateProjectAppForm } from "../form";
 import { useCreateProjectAppDialogState } from "../hooks";
@@ -14,6 +15,11 @@ export function CreateProjectAppDialog() {
 
     const open = state.mode !== "closed";
     const { projectId } = state;
+    const { data: projectData } = ProjectsQueries.useFindOneById(
+        { projectID: projectId ?? "" },
+        { enabled: Boolean(projectId) },
+    );
+    const envs = projectData?.data.envs ?? [];
 
     const { mutate: createProjectApp, isPending } = ProjectAppsCommands.useCreateOne({
         onSuccess: () => {
@@ -37,6 +43,7 @@ export function CreateProjectAppDialog() {
         createProjectApp({
             projectID: projectId,
             name: values.name,
+            env: values.env,
             note: values.note,
             tags: values.tags,
         });
@@ -68,6 +75,7 @@ export function CreateProjectAppDialog() {
                     <DialogTitle>Create App</DialogTitle>
                 </DialogHeader>
                 <CreateProjectAppForm
+                    envs={envs}
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

@@ -5,8 +5,8 @@ import { FieldError, Input, TagInput } from "@components/ui";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
-import { type ProjectAppDetails } from "~/projects/domain";
-import { ProjectAppStatusBadge } from "~/projects/module-shared/components";
+import { type ProjectAppDetails, type ProjectEnvEntity } from "~/projects/domain";
+import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
 import { InfoBlock } from "@application/shared/components";
 
@@ -17,7 +17,7 @@ import {
 } from "../schemas";
 import { type AppConfigGeneralFormRef } from "../types";
 
-export function AppConfigGeneralForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, children }: Props) {
     const methods = useForm<AppConfigGeneralFormSchemaInput, unknown, AppConfigGeneralFormSchemaOutput>({
         defaultValues: {
             name: defaultValues.name,
@@ -36,6 +36,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, onSubmit, children }:
     } = methods;
 
     const tags = watch("tags");
+    const selectedEnv = envs.find(env => env.name === defaultValues.env);
 
     useImperativeHandle(
         ref,
@@ -123,6 +124,14 @@ export function AppConfigGeneralForm({ ref, defaultValues, onSubmit, children }:
                         <ProjectAppStatusBadge status={defaultValues.status} />
                     </InfoBlock>
 
+                    {/* Environment - Read Only */}
+                    <InfoBlock title="Environment">
+                        <ProjectEnvBadge
+                            name={defaultValues.env}
+                            color={selectedEnv?.color}
+                        />
+                    </InfoBlock>
+
                     {/* Tags */}
                     <InfoBlock title="Tags">
                         <div className="max-w-[400px]">
@@ -160,5 +169,6 @@ export function AppConfigGeneralForm({ ref, defaultValues, onSubmit, children }:
 type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigGeneralFormRef>;
     defaultValues: ProjectAppDetails;
+    envs: ProjectEnvEntity[];
     onSubmit: (values: AppConfigGeneralFormSchemaOutput) => void;
 }>;

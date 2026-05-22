@@ -195,6 +195,25 @@ function DataTable<TData, TValue>({
         [sorting, onSortingChange],
     );
 
+    // Build a set of column IDs that had explicit `size` in the original user column defs.
+    // TanStack merges size: 150 as default into ALL columnDefs internally, so checking
+    // column.columnDef.size !== undefined is always true and does not distinguish user-set
+    // sizes from the TanStack default. We must inspect the original `columns` prop instead.
+    const columnsWithExplicitSize = React.useMemo(() => {
+        const set = new Set<string>();
+        for (const col of columns) {
+            if (!("size" in col)) continue;
+            const key =
+                "id" in col && col.id
+                    ? String(col.id)
+                    : "accessorKey" in col && col.accessorKey
+                      ? String(col.accessorKey)
+                      : null;
+            if (key) set.add(key);
+        }
+        return set;
+    }, [columns]);
+
     const table = useReactTable({
         data,
         columns,
@@ -305,6 +324,14 @@ function DataTable<TData, TValue>({
                                                 getVerticalAlignClass(verticalAlign),
                                                 getStickyClass(sticky),
                                             )}
+                                            style={
+                                                columnsWithExplicitSize.has(header.column.id)
+                                                    ? {
+                                                          width: `${header.getSize()}px`,
+                                                          minWidth: `${header.getSize()}px`,
+                                                      }
+                                                    : undefined
+                                            }
                                         >
                                             {header.isPlaceholder ? null : canSort && enableSorting ? (
                                                 <DataTableColumnHeader
@@ -354,6 +381,14 @@ function DataTable<TData, TValue>({
                                                     getVerticalAlignClass(verticalAlign),
                                                     getStickyClass(sticky),
                                                 )}
+                                                style={
+                                                    columnsWithExplicitSize.has(cell.column.id)
+                                                        ? {
+                                                              width: `${cell.column.getSize()}px`,
+                                                              minWidth: `${cell.column.getSize()}px`,
+                                                          }
+                                                        : undefined
+                                                }
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                             </TableCell>

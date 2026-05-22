@@ -4,6 +4,7 @@ export interface ProjectAppBase {
     id: string;
     name: string;
     status: EProjectAppStatus;
+    env: string;
     note: string;
     tags: string[];
 

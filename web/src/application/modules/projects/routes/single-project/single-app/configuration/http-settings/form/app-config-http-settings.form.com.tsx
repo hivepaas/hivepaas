@@ -7,6 +7,7 @@ import { type FieldPath, FormProvider, useController, useFieldArray, useForm, us
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
 
+import { ContentBlock } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
@@ -91,10 +92,11 @@ function ConditionalDomainDetailSections({
                         <DomainConfigurableSections domainIndex={activeDomainIndex} />
                     </div>
 
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Path Configuration</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <PathsSection domainIndex={activeDomainIndex} />
-                    </div>
+                    <ContentBlock label="Path Configuration">
+                        <div className="flex flex-col gap-6">
+                            <PathsSection domainIndex={activeDomainIndex} />
+                        </div>
+                    </ContentBlock>
                 </>
             )}
         </>

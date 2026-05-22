@@ -28,7 +28,7 @@ export function ResourceReservationFields() {
     const [newValue, setNewValue] = useState("");
 
     return (
-        <div className="flex flex-col gap-6 px-2">
+        <div className="flex flex-col gap-6">
             <InfoBlock
                 title={
                     <LabelWithInfo

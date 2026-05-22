@@ -1,23 +1,30 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { type ProjectEnvEntity } from "~/projects/domain";
+import { ProjectEnvBadge } from "~/projects/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
     type CreateProjectAppFormInput,
     type CreateProjectAppFormOutput,
-    CreateProjectAppFormSchema,
+    createCreateProjectAppFormSchema,
 } from "../schemas";
 
-export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Props) {
+export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }: Props) {
+    const defaultEnv = envs[0]?.name ?? "";
+    const envNames = useMemo(() => envs.map(env => env.name), [envs]);
+    const schema = useMemo(() => createCreateProjectAppFormSchema(envNames), [envNames]);
+
     const {
         handleSubmit,
         control,
@@ -27,10 +34,11 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
     } = useForm<CreateProjectAppFormInput, unknown, CreateProjectAppFormOutput>({
         defaultValues: {
             name: "",
+            env: defaultEnv,
             note: "",
             tags: [],
         },
-        resolver: zodResolver(CreateProjectAppFormSchema),
+        resolver: zodResolver(schema),
         mode: "onSubmit",
     });
 
@@ -38,13 +46,32 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
         onHasChanges?.(isDirty);
     }, [isDirty, onHasChanges]);
 
+    const selectedEnvName = watch("env");
     const tags = watch("tags");
+    const selectedEnv = envs.find(env => env.name === selectedEnvName);
+
+    useEffect(() => {
+        const nextEnv = envs[0]?.name ?? "";
+        const currentEnvExists = selectedEnvName === "" || envs.some(env => env.name === selectedEnvName);
+
+        if ((!selectedEnvName || !currentEnvExists) && selectedEnvName !== nextEnv) {
+            setValue("env", nextEnv, { shouldDirty: false });
+        }
+    }, [envs, selectedEnvName, setValue]);
 
     const {
         field: name,
         fieldState: { invalid: isNameInvalid },
     } = useController({
         name: "name",
+        control,
+    });
+
+    const {
+        field: env,
+        fieldState: { invalid: isEnvInvalid },
+    } = useController({
+        name: "env",
         control,
     });
 
@@ -110,6 +137,51 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
 
                 <InfoBlock
                     titleWidth={150}
+                    title={<LabelWithInfo label="Environment" />}
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Select
+                                value={env.value}
+                                onValueChange={env.onChange}
+                                disabled={envs.length === 0}
+                            >
+                                <SelectTrigger
+                                    aria-invalid={isEnvInvalid}
+                                    className="px-2"
+                                >
+                                    {selectedEnv ? (
+                                        <ProjectEnvBadge
+                                            name={selectedEnv.name}
+                                            color={selectedEnv.color}
+                                        />
+                                    ) : (
+                                        <span className="text-muted-foreground">
+                                            {envs.length === 0 ? "No environments" : "Select environment"}
+                                        </span>
+                                    )}
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {envs.map(projectEnv => (
+                                        <SelectItem
+                                            key={projectEnv.name}
+                                            value={projectEnv.name}
+                                        >
+                                            <ProjectEnvBadge
+                                                name={projectEnv.name}
+                                                color={projectEnv.color}
+                                            />
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.env]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={150}
                     title={<LabelWithInfo label="Note" />}
                 >
                     <FieldGroup>
@@ -160,6 +232,7 @@ export function CreateProjectAppForm({ isPending, onSubmit, onHasChanges }: Prop
 }
 
 interface Props {
+    envs: ProjectEnvEntity[];
     isPending: boolean;
     onSubmit: (values: CreateProjectAppFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;

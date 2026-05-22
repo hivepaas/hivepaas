@@ -12,3 +12,4 @@ export * from "./editable-combobox";
 export * from "./mfa-qr-code";
 export * from "./input";
 export * from "./module-title";
+export * from "./content-block";

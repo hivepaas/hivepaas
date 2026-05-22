@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { EHealthcheckMode } from "~/projects/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -48,9 +48,8 @@ export function HealthcheckFields() {
     const isEnabled = useWatch({ control, name: "healthcheck.enabled" });
 
     return (
-        <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Healthcheck</h3>
-            <div className="flex flex-col gap-6 px-2">
+        <ContentBlock label="Healthcheck">
+            <div className="flex flex-col gap-6">
                 <InfoBlock title="Enabled">
                     <Checkbox
                         checked={enabled.value}
@@ -198,6 +197,6 @@ export function HealthcheckFields() {
                     </>
                 )}
             </div>
-        </>
+        </ContentBlock>
     );
 }

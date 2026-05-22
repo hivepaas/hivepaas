@@ -5,6 +5,8 @@ import { type FieldPath, FormProvider, useForm } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppNetworkSettings } from "~/projects/domain";
 
+import { ContentBlock } from "@application/shared/components";
+
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
 import { DNSFields, EndpointPortConfigFields, HostsFileEntriesFields, NetworksFields } from "../building-blocks";
@@ -74,16 +76,18 @@ export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, children }
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Network Settings</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <NetworksFields />
-                        <HostsFileEntriesFields />
-                        <DNSFields />
-                    </div>
-                    <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Endpoint & Port Config</h3>
-                    <div className="flex flex-col gap-6 px-2">
-                        <EndpointPortConfigFields />
-                    </div>
+                    <ContentBlock label="Network Settings">
+                        <div className="flex flex-col gap-6">
+                            <NetworksFields />
+                            <HostsFileEntriesFields />
+                            <DNSFields />
+                        </div>
+                    </ContentBlock>
+                    <ContentBlock label="Endpoint & Port Config">
+                        <div className="flex flex-col gap-6">
+                            <EndpointPortConfigFields />
+                        </div>
+                    </ContentBlock>
                     {children}
                 </form>
             </FormProvider>

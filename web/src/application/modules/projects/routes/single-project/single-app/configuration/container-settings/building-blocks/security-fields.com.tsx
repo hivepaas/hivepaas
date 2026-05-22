@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext } from "react-hook-form";
 import { EAppArmorMode, ESeccompMode } from "~/projects/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -60,9 +60,8 @@ export function SecurityFields() {
     const seccompModeValue = watch("privileges.seccompMode");
 
     return (
-        <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">Security</h3>
-            <div className="flex flex-col gap-6 px-2">
+        <ContentBlock label="Security">
+            <div className="flex flex-col gap-6">
                 <InfoBlock
                     title={
                         <LabelWithInfo
@@ -213,6 +212,6 @@ export function SecurityFields() {
                     </Tabs>
                 </InfoBlock>
             </div>
-        </>
+        </ContentBlock>
     );
 }

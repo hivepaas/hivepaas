@@ -42,7 +42,7 @@ export function UlimitsFields() {
     const [hard, setHard] = useState<number>(0);
 
     return (
-        <div className="flex flex-col gap-6 px-2">
+        <div className="flex flex-col gap-6">
             <InfoBlock
                 title={
                     <LabelWithInfo

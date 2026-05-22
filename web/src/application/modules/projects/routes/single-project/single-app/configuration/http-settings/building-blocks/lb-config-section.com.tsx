@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useController, useFormContext } from "react-hook-form";
 import { ELBStrategy } from "~/projects/module-shared/enums";
 
-import { InfoBlock } from "@application/shared/components";
+import { ContentBlock, InfoBlock } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
@@ -26,19 +26,22 @@ export function LBConfigSection({ prefix }: LBConfigSectionProps) {
     } = useController({ control, name: `${prefix}.strategy` as never });
 
     return (
-        <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg">
-                Load Balancing Configuration{" "}
-                <a
-                    className="text-xs text-blue-500 hover:text-blue-600"
-                    href="https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    (docs)
-                </a>
-            </h3>
-            <div className="flex flex-col gap-6 px-2">
+        <ContentBlock
+            label={
+                <div className="flex items-center gap-2">
+                    Load Balancing Configuration{" "}
+                    <a
+                        className="text-xs text-blue-500 hover:text-blue-600"
+                        href="https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        (docs)
+                    </a>
+                </div>
+            }
+        >
+            <div className="flex flex-col gap-6">
                 <InfoBlock title="Strategy">
                     <Select
                         value={strategy.value === "" ? DEFAULT_STRATEGY_VALUE : strategy.value}
@@ -63,7 +66,6 @@ export function LBConfigSection({ prefix }: LBConfigSectionProps) {
                     <FieldError errors={[strategyError]} />
                 </InfoBlock>
             </div>
-        </>
-        // </Collapsible>
+        </ContentBlock>
     );
 }

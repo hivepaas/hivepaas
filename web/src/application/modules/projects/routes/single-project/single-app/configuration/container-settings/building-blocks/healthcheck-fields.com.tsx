@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { EHealthcheckMode } from "~/projects/module-shared/enums";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -48,155 +48,153 @@ export function HealthcheckFields() {
     const isEnabled = useWatch({ control, name: "healthcheck.enabled" });
 
     return (
-        <ContentBlock label="Healthcheck">
-            <div className="flex flex-col gap-6">
-                <InfoBlock title="Enabled">
-                    <Checkbox
-                        checked={enabled.value}
-                        onCheckedChange={v => {
-                            enabled.onChange(v === true);
-                        }}
-                    />
-                </InfoBlock>
+        <div className="flex flex-col gap-6">
+            <InfoBlock title="Enabled">
+                <Checkbox
+                    checked={enabled.value}
+                    onCheckedChange={v => {
+                        enabled.onChange(v === true);
+                    }}
+                />
+            </InfoBlock>
 
-                {isEnabled && (
-                    <>
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Mode"
-                                    content="How Docker should execute the healthcheck command."
-                                />
-                            }
-                        >
-                            <Tabs
-                                value={mode.value}
-                                onValueChange={v => {
-                                    mode.onChange(v as EHealthcheckMode);
-                                }}
-                                className="w-fit"
-                            >
-                                <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                                    <TabsTrigger value={EHealthcheckMode.Inherit}>Inherit</TabsTrigger>
-                                    <TabsTrigger value={EHealthcheckMode.Cmd}>CMD</TabsTrigger>
-                                    <TabsTrigger value={EHealthcheckMode.CmdShell}>CMD-SHELL</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </InfoBlock>
-
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Command"
-                                    content="Command used by Docker to determine if the container is healthy."
-                                />
-                            }
-                        >
-                            <Input
-                                {...command}
-                                value={command.value}
-                                onChange={command.onChange}
-                                placeholder="wget 127.0.0.1"
-                                className="max-w-[400px]"
+            {isEnabled && (
+                <>
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Mode"
+                                content="How Docker should execute the healthcheck command."
                             />
-                            <FieldError errors={[commandError]} />
-                        </InfoBlock>
-
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Interval"
-                                    content="Time between healthcheck executions. Zero or blank inherits Docker defaults."
-                                />
-                            }
+                        }
+                    >
+                        <Tabs
+                            value={mode.value}
+                            onValueChange={v => {
+                                mode.onChange(v as EHealthcheckMode);
+                            }}
+                            className="w-fit"
                         >
-                            <Input
-                                {...interval}
-                                value={interval.value}
-                                onChange={interval.onChange}
-                                placeholder="30s"
-                                className="max-w-[400px]"
-                            />
-                            <FieldError errors={[intervalError]} />
-                        </InfoBlock>
+                            <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                                <TabsTrigger value={EHealthcheckMode.Inherit}>Inherit</TabsTrigger>
+                                <TabsTrigger value={EHealthcheckMode.Cmd}>CMD</TabsTrigger>
+                                <TabsTrigger value={EHealthcheckMode.CmdShell}>CMD-SHELL</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </InfoBlock>
 
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Timeout"
-                                    content="Maximum time allowed for one healthcheck execution."
-                                />
-                            }
-                        >
-                            <Input
-                                {...timeout}
-                                value={timeout.value}
-                                onChange={timeout.onChange}
-                                placeholder="5s"
-                                className="max-w-[400px]"
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Command"
+                                content="Command used by Docker to determine if the container is healthy."
                             />
-                            <FieldError errors={[timeoutError]} />
-                        </InfoBlock>
+                        }
+                    >
+                        <Input
+                            {...command}
+                            value={command.value}
+                            onChange={command.onChange}
+                            placeholder="wget 127.0.0.1"
+                            className="max-w-[400px]"
+                        />
+                        <FieldError errors={[commandError]} />
+                    </InfoBlock>
 
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Start Period"
-                                    content="Grace period before healthcheck failures count."
-                                />
-                            }
-                        >
-                            <Input
-                                {...startPeriod}
-                                value={startPeriod.value}
-                                onChange={startPeriod.onChange}
-                                placeholder="3s"
-                                className="max-w-[400px]"
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Interval"
+                                content="Time between healthcheck executions. Zero or blank inherits Docker defaults."
                             />
-                            <FieldError errors={[startPeriodError]} />
-                        </InfoBlock>
+                        }
+                    >
+                        <Input
+                            {...interval}
+                            value={interval.value}
+                            onChange={interval.onChange}
+                            placeholder="30s"
+                            className="max-w-[400px]"
+                        />
+                        <FieldError errors={[intervalError]} />
+                    </InfoBlock>
 
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Start Interval"
-                                    content="Time between healthchecks during the start period."
-                                />
-                            }
-                        >
-                            <Input
-                                {...startInterval}
-                                value={startInterval.value}
-                                onChange={startInterval.onChange}
-                                placeholder="3s"
-                                className="max-w-[400px]"
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Timeout"
+                                content="Maximum time allowed for one healthcheck execution."
                             />
-                            <FieldError errors={[startIntervalError]} />
-                        </InfoBlock>
+                        }
+                    >
+                        <Input
+                            {...timeout}
+                            value={timeout.value}
+                            onChange={timeout.onChange}
+                            placeholder="5s"
+                            className="max-w-[400px]"
+                        />
+                        <FieldError errors={[timeoutError]} />
+                    </InfoBlock>
 
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Retries"
-                                    content="Consecutive failures needed before Docker marks the container unhealthy."
-                                />
-                            }
-                        >
-                            <InputNumber
-                                value={retries.value}
-                                onValueChange={value => {
-                                    retries.onChange(value);
-                                }}
-                                placeholder="3"
-                                className="max-w-[400px]"
-                                min={0}
-                                useGrouping={false}
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Start Period"
+                                content="Grace period before healthcheck failures count."
                             />
-                            <FieldError errors={[retriesError]} />
-                        </InfoBlock>
-                    </>
-                )}
-            </div>
-        </ContentBlock>
+                        }
+                    >
+                        <Input
+                            {...startPeriod}
+                            value={startPeriod.value}
+                            onChange={startPeriod.onChange}
+                            placeholder="3s"
+                            className="max-w-[400px]"
+                        />
+                        <FieldError errors={[startPeriodError]} />
+                    </InfoBlock>
+
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Start Interval"
+                                content="Time between healthchecks during the start period."
+                            />
+                        }
+                    >
+                        <Input
+                            {...startInterval}
+                            value={startInterval.value}
+                            onChange={startInterval.onChange}
+                            placeholder="3s"
+                            className="max-w-[400px]"
+                        />
+                        <FieldError errors={[startIntervalError]} />
+                    </InfoBlock>
+
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Retries"
+                                content="Consecutive failures needed before Docker marks the container unhealthy."
+                            />
+                        }
+                    >
+                        <InputNumber
+                            value={retries.value}
+                            onValueChange={value => {
+                                retries.onChange(value);
+                            }}
+                            placeholder="3"
+                            className="max-w-[400px]"
+                            min={0}
+                            useGrouping={false}
+                        />
+                        <FieldError errors={[retriesError]} />
+                    </InfoBlock>
+                </>
+            )}
+        </div>
     );
 }

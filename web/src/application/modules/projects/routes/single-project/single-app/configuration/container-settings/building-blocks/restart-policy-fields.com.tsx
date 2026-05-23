@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext } from "react-hook-form";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
@@ -39,88 +39,86 @@ export function RestartPolicyFields() {
     } = useController({ control, name: "restartPolicy.maxAttempts" });
 
     return (
-        <ContentBlock label="Restart Policy">
-            <div className="flex flex-col gap-6">
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="Condition"
-                            content="When Docker should restart the container if it exits."
-                        />
-                    }
-                >
-                    <Tabs
-                        value={condition.value}
-                        onValueChange={v => {
-                            condition.onChange(v as ERestartPolicyCondition);
-                        }}
-                        className="w-fit"
-                    >
-                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                            <TabsTrigger value={ERestartPolicyCondition.None}>None</TabsTrigger>
-                            <TabsTrigger value={ERestartPolicyCondition.OnFailure}>On Failure</TabsTrigger>
-                            <TabsTrigger value={ERestartPolicyCondition.Any}>Any</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </InfoBlock>
-
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="Restart Delay"
-                            content="Delay before restarting after the container exits."
-                        />
-                    }
-                >
-                    <Input
-                        {...delay}
-                        value={delay.value}
-                        onChange={delay.onChange}
-                        placeholder="5s"
-                        className="max-w-[400px]"
+        <div className="flex flex-col gap-6">
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Condition"
+                        content="When Docker should restart the container if it exits."
                     />
-                    <FieldError errors={[delayError]} />
-                </InfoBlock>
-
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="Restart Max Attempts"
-                            content="Maximum number of restart attempts."
-                        />
-                    }
+                }
+            >
+                <Tabs
+                    value={condition.value}
+                    onValueChange={v => {
+                        condition.onChange(v as ERestartPolicyCondition);
+                    }}
+                    className="w-fit"
                 >
-                    <InputNumber
-                        value={maxAttempts.value}
-                        onValueChange={value => {
-                            maxAttempts.onChange(value);
-                        }}
-                        placeholder="3"
-                        className="max-w-[400px]"
-                        min={0}
-                        useGrouping={false}
-                    />
-                    <FieldError errors={[maxAttemptsError]} />
-                </InfoBlock>
+                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                        <TabsTrigger value={ERestartPolicyCondition.None}>None</TabsTrigger>
+                        <TabsTrigger value={ERestartPolicyCondition.OnFailure}>On Failure</TabsTrigger>
+                        <TabsTrigger value={ERestartPolicyCondition.Any}>Any</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </InfoBlock>
 
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="Restart Window"
-                            content="Time window used together with max attempts."
-                        />
-                    }
-                >
-                    <Input
-                        {...window}
-                        value={window.value}
-                        onChange={window.onChange}
-                        placeholder="5s"
-                        className="max-w-[400px]"
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Restart Delay"
+                        content="Delay before restarting after the container exits."
                     />
-                    <FieldError errors={[windowError]} />
-                </InfoBlock>
-            </div>
-        </ContentBlock>
+                }
+            >
+                <Input
+                    {...delay}
+                    value={delay.value}
+                    onChange={delay.onChange}
+                    placeholder="5s"
+                    className="max-w-[400px]"
+                />
+                <FieldError errors={[delayError]} />
+            </InfoBlock>
+
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Restart Max Attempts"
+                        content="Maximum number of restart attempts."
+                    />
+                }
+            >
+                <InputNumber
+                    value={maxAttempts.value}
+                    onValueChange={value => {
+                        maxAttempts.onChange(value);
+                    }}
+                    placeholder="3"
+                    className="max-w-[400px]"
+                    min={0}
+                    useGrouping={false}
+                />
+                <FieldError errors={[maxAttemptsError]} />
+            </InfoBlock>
+
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Restart Window"
+                        content="Time window used together with max attempts."
+                    />
+                }
+            >
+                <Input
+                    {...window}
+                    value={window.value}
+                    onChange={window.onChange}
+                    placeholder="5s"
+                    className="max-w-[400px]"
+                />
+                <FieldError errors={[windowError]} />
+            </InfoBlock>
+        </div>
     );
 }

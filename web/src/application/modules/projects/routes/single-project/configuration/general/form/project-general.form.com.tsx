@@ -2,6 +2,8 @@ import * as React from "react";
 import { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { FieldError, Input, TagInput } from "@components/ui";
+import { Avatar } from "@components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
@@ -25,6 +27,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
             envs: defaultValues.envs,
             tags: defaultValues.tags,
             note: defaultValues.note,
+            ownerId: defaultValues.owner.id,
         },
         resolver: zodResolver(ProjectGeneralFormSchema),
         mode: "onSubmit",
@@ -39,6 +42,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
 
     const tags = watch("tags");
     const envs = watch("envs");
+    const ownerOptions = [
+        ...(!defaultValues.userAccesses.some(user => user.id === defaultValues.owner.id) ? [defaultValues.owner] : []),
+        ...defaultValues.userAccesses,
+    ];
 
     useImperativeHandle(
         ref,
@@ -70,6 +77,13 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     } = useController({
         control,
         name: "note",
+    });
+    const {
+        field: ownerId,
+        fieldState: { invalid: isOwnerInvalid },
+    } = useController({
+        control,
+        name: "ownerId",
     });
 
     function handleCreateTag(tag: string) {
@@ -146,6 +160,62 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                     {/* Status - Show Label */}
                     <InfoBlock title="Status">
                         <ProjectStatusBadge status={defaultValues.status} />
+                    </InfoBlock>
+
+                    {/* Project Owner */}
+                    <InfoBlock title="Project Owner">
+                        <div className="max-w-[400px]">
+                            <Select
+                                value={ownerId.value}
+                                onValueChange={ownerId.onChange}
+                                disabled={ownerOptions.length === 0}
+                            >
+                                <SelectTrigger aria-invalid={isOwnerInvalid}>
+                                    <SelectValue placeholder="Select project owner">
+                                        {ownerOptions
+                                            .filter(user => user.id === ownerId.value)
+                                            .map(user => (
+                                                <div
+                                                    key={user.id}
+                                                    className="flex min-w-0 items-center gap-2"
+                                                >
+                                                    <Avatar
+                                                        name={user.fullName}
+                                                        src={user.photo}
+                                                        className="size-6"
+                                                        borderless
+                                                    />
+                                                    <span className="truncate">{user.fullName}</span>
+                                                </div>
+                                            ))}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ownerOptions.map(user => (
+                                        <SelectItem
+                                            key={user.id}
+                                            value={user.id}
+                                        >
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <Avatar
+                                                    name={user.fullName}
+                                                    src={user.photo}
+                                                    className="size-6"
+                                                    borderless
+                                                />
+                                                <div className="flex min-w-0 flex-col">
+                                                    <span className="truncate">{user.fullName}</span>
+                                                    <span className="truncate text-xs text-muted-foreground">
+                                                        {user.email || user.username}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.ownerId]} />
+                        </div>
                     </InfoBlock>
 
                     {/* Environments */}

@@ -13,6 +13,7 @@ const ProjectEnvFormSchema = z.object({
 
 export const ProjectGeneralFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
+    ownerId: z.string().min(1, "Project owner is required"),
     envs: z
         .array(ProjectEnvFormSchema)
         .max(MAX_PROJECT_ENVS, `Maximum ${MAX_PROJECT_ENVS} environments`)

@@ -22,8 +22,7 @@ function buildRestartPolicy(values: AppConfigContainerSettingsFormSchemaOutput):
     const rp = values.restartPolicy;
     const delay = rp.delay.trim() === "" ? null : rp.delay;
     const window = rp.window.trim() === "" ? null : rp.window;
-    const maxRaw = rp.maxAttempts.trim();
-    const maxAttempts = maxRaw === "" ? null : Number.isNaN(Number(maxRaw)) ? null : Number(maxRaw);
+    const maxAttempts = rp.maxAttempts ?? null;
 
     if (rp.condition === ERestartPolicyCondition.None && delay == null && window == null && maxAttempts == null) {
         return null;

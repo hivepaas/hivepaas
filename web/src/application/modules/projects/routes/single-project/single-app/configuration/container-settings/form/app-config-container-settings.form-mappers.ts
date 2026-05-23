@@ -39,7 +39,7 @@ export function mapAppContainerSettingsToFormInput(
             condition: data.restartPolicy?.condition ?? ERestartPolicyCondition.None,
             delay: data.restartPolicy?.delay ?? "",
             window: data.restartPolicy?.window ?? "",
-            maxAttempts: data.restartPolicy?.maxAttempts != null ? String(data.restartPolicy.maxAttempts) : "",
+            maxAttempts: data.restartPolicy?.maxAttempts ?? undefined,
         },
         privileges: {
             noNewPrivileges: data.privileges?.noNewPrivileges ?? false,

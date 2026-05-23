@@ -1,4 +1,5 @@
 import { FieldError, Input } from "@components/ui";
+import { InputNumber } from "@components/ui/input-number";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext } from "react-hook-form";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
@@ -89,12 +90,15 @@ export function RestartPolicyFields() {
                         />
                     }
                 >
-                    <Input
-                        {...maxAttempts}
+                    <InputNumber
                         value={maxAttempts.value}
-                        onChange={maxAttempts.onChange}
+                        onValueChange={value => {
+                            maxAttempts.onChange(value);
+                        }}
                         placeholder="3"
                         className="max-w-[400px]"
+                        min={0}
+                        useGrouping={false}
                     />
                     <FieldError errors={[maxAttemptsError]} />
                 </InfoBlock>

@@ -31,6 +31,14 @@ const ProjectSchema = z.object({
     updatedAt: z.coerce.date().nullable(),
 });
 
+const UserBaseSchema = z.object({
+    id: z.string(),
+    username: z.string(),
+    email: z.string(),
+    fullName: z.string(),
+    photo: z.string(),
+});
+
 /**
  * Find many projects paginated API response schema
  */
@@ -53,8 +61,7 @@ const CreateOneSchema = z.object({
  * Project user access schema
  */
 const ProjectUserAccessSchema = z.object({
-    id: z.string(),
-    fullName: z.string(),
+    ...UserBaseSchema.shape,
     access: z.object({
         read: z.boolean(),
         write: z.boolean(),
@@ -66,6 +73,7 @@ const ProjectUserAccessSchema = z.object({
  * Project details schema (includes userAccesses)
  */
 const ProjectDetailsSchema = ProjectSchema.extend({
+    owner: UserBaseSchema,
     userAccesses: z.array(ProjectUserAccessSchema),
 });
 

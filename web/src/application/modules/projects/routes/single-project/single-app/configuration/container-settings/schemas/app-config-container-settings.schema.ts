@@ -23,12 +23,12 @@ export const ContainerSettingsFormGeneralSchema = z.object({
     stopGracePeriod: z.string(),
 });
 
-/** Aligned with `RestartPolicy`; `maxAttempts` as string for text inputs. */
+/** Aligned with `RestartPolicy`; duration fields stay as strings for text inputs. */
 export const ContainerSettingsFormRestartPolicySchema = z.object({
     condition: z.nativeEnum(ERestartPolicyCondition),
     delay: z.string(),
     window: z.string(),
-    maxAttempts: z.string(),
+    maxAttempts: z.number().optional(),
 });
 
 /** Aligned with `Healthcheck`; duration fields stay as strings for text inputs. */
@@ -104,7 +104,7 @@ export const emptyAppConfigContainerSettingsFormDefaults: AppConfigContainerSett
         condition: ERestartPolicyCondition.None,
         delay: "",
         window: "",
-        maxAttempts: "",
+        maxAttempts: undefined,
     },
     privileges: {
         noNewPrivileges: false,

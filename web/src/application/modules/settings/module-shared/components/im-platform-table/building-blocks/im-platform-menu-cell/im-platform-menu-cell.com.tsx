@@ -8,6 +8,7 @@ import { ProjectImServiceCommands } from "~/projects/data/commands";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { useUpdateImPlatformStatusDialog } from "~/settings/dialogs/update-im-platform-status";
 import type { SettingImService } from "~/settings/domain";
+import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
 
@@ -17,6 +18,7 @@ function View({ scope, imPlatform }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateImPlatformStatusDialog();
+    const inheritedSettingAlert = useInheritedSettingAlert();
 
     const { mutate: deleteSettingImPlatform, isPending: isDeletingSetting } = ImServiceCommands.useDeleteOne({
         onSuccess: () => {
@@ -33,8 +35,15 @@ function View({ scope, imPlatform }: Props) {
     });
 
     const isDeleting = isDeletingSetting || isDeletingProject;
+    const isInheritedProject = isInheritedProjectSetting(scope, imPlatform.inherited);
 
     function handleDelete() {
+        if (isInheritedProject) {
+            inheritedSettingAlert.open();
+            setOpen(false);
+            return;
+        }
+
         if (scope.type === "project") {
             deleteProjectImPlatform({
                 projectID: scope.projectId,
@@ -44,6 +53,17 @@ function View({ scope, imPlatform }: Props) {
         }
 
         deleteSettingImPlatform({ id: imPlatform.id });
+    }
+
+    function handleChangeStatus() {
+        if (isInheritedProject) {
+            inheritedSettingAlert.open();
+            setOpen(false);
+            return;
+        }
+
+        updateStatusDialog.actions.open(scope, imPlatform.id);
+        setOpen(false);
     }
 
     return (
@@ -66,31 +86,39 @@ function View({ scope, imPlatform }: Props) {
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, imPlatform.id);
-                            setOpen(false);
-                        }}
+                        onClick={handleChangeStatus}
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </Button>
-                    <PopConfirm
-                        title="Delete IM platform"
-                        variant="destructive"
-                        confirmText="Delete"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={handleDelete}
-                    >
+                    {isInheritedProject ? (
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"
-                            disabled={isDeleting}
+                            onClick={handleDelete}
                         >
                             <Trash2Icon className="mr-2 size-4" />
                             Remove
                         </Button>
-                    </PopConfirm>
+                    ) : (
+                        <PopConfirm
+                            title="Delete IM platform"
+                            variant="destructive"
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            description="Confirm deletion of this item?"
+                            onConfirm={handleDelete}
+                        >
+                            <Button
+                                className="justify-start py-1.5"
+                                variant="ghost"
+                                disabled={isDeleting}
+                            >
+                                <Trash2Icon className="mr-2 size-4" />
+                                Remove
+                            </Button>
+                        </PopConfirm>
+                    )}
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

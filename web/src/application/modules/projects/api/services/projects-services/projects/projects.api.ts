@@ -123,7 +123,7 @@ export class ProjectsApi extends BaseApi {
         request: Projects_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<Projects_UpdateOne_Res, Error>> {
-        const { projectID, updateVer, name, note, envs, tags, status } = request.data;
+        const { projectID, updateVer, name, note, envs, tags, status, owner } = request.data;
 
         const json: Record<string, unknown> = {
             updateVer,
@@ -141,6 +141,9 @@ export class ProjectsApi extends BaseApi {
             }),
             status: JsonTransformer.string({
                 data: status,
+            }),
+            owner: JsonTransformer.object({
+                data: owner,
             }),
         };
 

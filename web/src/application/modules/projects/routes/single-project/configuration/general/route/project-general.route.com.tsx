@@ -42,9 +42,12 @@ export function ProjectGeneralRoute() {
         invariant(projectId, "projectId must be defined");
         invariant(data, "data must be defined");
 
+        const { ownerId, ...projectValues } = values;
+
         update({
             projectID: projectId,
-            ...values,
+            ...projectValues,
+            owner: { id: ownerId },
             updateVer: data.data.updateVer,
             status: data.data.status,
         });

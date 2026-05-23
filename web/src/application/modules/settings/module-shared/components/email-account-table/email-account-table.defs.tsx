@@ -45,6 +45,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
                 <EmailAccountEditCell
                     scope={scope}
                     id={original.id}
+                    inherited={original.inherited}
                 />
             ),
             meta: {

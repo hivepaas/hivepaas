@@ -50,7 +50,10 @@ export type Projects_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
         updateVer: number;
-    } & Partial<Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "userAccesses">>
+        owner?: { id: string };
+    } & Partial<
+        Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "owner" | "userAccesses">
+    >
 >;
 
 export type Projects_UpdateOne_Res = ApiResponseBase<{

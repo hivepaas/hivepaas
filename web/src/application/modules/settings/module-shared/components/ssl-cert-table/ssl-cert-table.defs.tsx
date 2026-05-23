@@ -47,6 +47,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
                 <SslCertEditCell
                     scope={scope}
                     id={original.id}
+                    inherited={original.inherited}
                 />
             ),
             meta: {

@@ -8,6 +8,7 @@ import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
 import { useUpdateSslCertStatusDialog } from "~/settings/dialogs/update-ssl-cert-status";
 import type { SettingSslCert } from "~/settings/domain";
+import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
 
@@ -17,6 +18,7 @@ function View({ scope, sslCert }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateSslCertStatusDialog();
+    const inheritedSettingAlert = useInheritedSettingAlert();
 
     const { mutate: deleteSettingSslCert, isPending: isDeletingSetting } = SslCertCommands.useDeleteOne({
         onSuccess: () => {
@@ -33,8 +35,15 @@ function View({ scope, sslCert }: Props) {
     });
 
     const isDeleting = isDeletingSetting || isDeletingProject;
+    const isInheritedProject = isInheritedProjectSetting(scope, sslCert.inherited);
 
     function handleDelete() {
+        if (isInheritedProject) {
+            inheritedSettingAlert.open();
+            setOpen(false);
+            return;
+        }
+
         if (scope.type === "project") {
             deleteProjectSslCert({
                 projectID: scope.projectId,
@@ -44,6 +53,17 @@ function View({ scope, sslCert }: Props) {
         }
 
         deleteSettingSslCert({ id: sslCert.id });
+    }
+
+    function handleChangeStatus() {
+        if (isInheritedProject) {
+            inheritedSettingAlert.open();
+            setOpen(false);
+            return;
+        }
+
+        updateStatusDialog.actions.open(scope, sslCert.id);
+        setOpen(false);
     }
 
     return (
@@ -66,31 +86,39 @@ function View({ scope, sslCert }: Props) {
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"
-                        onClick={() => {
-                            updateStatusDialog.actions.open(scope, sslCert.id);
-                            setOpen(false);
-                        }}
+                        onClick={handleChangeStatus}
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </Button>
-                    <PopConfirm
-                        title="Delete SSL certificate"
-                        variant="destructive"
-                        confirmText="Delete"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={handleDelete}
-                    >
+                    {isInheritedProject ? (
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"
-                            disabled={isDeleting}
+                            onClick={handleDelete}
                         >
                             <Trash2Icon className="mr-2 size-4" />
                             Remove
                         </Button>
-                    </PopConfirm>
+                    ) : (
+                        <PopConfirm
+                            title="Delete SSL certificate"
+                            variant="destructive"
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            description="Confirm deletion of this item?"
+                            onConfirm={handleDelete}
+                        >
+                            <Button
+                                className="justify-start py-1.5"
+                                variant="ghost"
+                                disabled={isDeleting}
+                            >
+                                <Trash2Icon className="mr-2 size-4" />
+                                Remove
+                            </Button>
+                        </PopConfirm>
+                    )}
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -36,8 +36,8 @@ type UpdateSettingStatusData struct {
 
 	Setting *entity.Setting
 
-	DefaultMustUnique bool
-	ExtraLoadOpts     []bunex.SelectQueryOption
+	MultiDefaultAllowed bool
+	ExtraLoadOpts       []bunex.SelectQueryOption
 
 	Load             func(context.Context, database.Tx, *UpdateSettingStatusData) error
 	AfterLoading     func(context.Context, database.Tx, *UpdateSettingStatusData) error
@@ -184,7 +184,7 @@ func (uc *BaseUC) persistSettingStatusUpdate(
 		return apperrors.Wrap(err)
 	}
 
-	if data.DefaultMustUnique && !data.Setting.Default && persistingData.Setting.Default {
+	if !data.MultiDefaultAllowed && !data.Setting.Default && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
 			return apperrors.Wrap(err)

@@ -30,10 +30,10 @@ type CreateSettingResp struct {
 type CreateSettingData struct {
 	BaseSettingData
 
-	VerifyingName     string
-	VerifyingRefIDs   []string
-	DefaultMustUnique bool
-	Version           int
+	VerifyingName       string
+	VerifyingRefIDs     []string
+	MultiDefaultAllowed bool
+	Version             int
 
 	AfterLoading     func(context.Context, database.Tx, *CreateSettingData) error
 	PrepareCreation  func(context.Context, database.Tx, *CreateSettingData, *PersistingSettingCreationData) error
@@ -171,7 +171,7 @@ func (uc *BaseUC) persistSettingCreation(
 		return apperrors.Wrap(err)
 	}
 
-	if data.DefaultMustUnique && persistingData.Setting.Default {
+	if !data.MultiDefaultAllowed && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
 			return apperrors.Wrap(err)

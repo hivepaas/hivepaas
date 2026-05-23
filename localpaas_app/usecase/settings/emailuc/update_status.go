@@ -15,9 +15,7 @@ func (uc *UC) UpdateEmailStatus(
 	req *emaildto.UpdateEmailStatusReq,
 ) (*emaildto.UpdateEmailStatusResp, error) {
 	req.Type = currentSettingType
-	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
-		DefaultMustUnique: true,
-	})
+	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

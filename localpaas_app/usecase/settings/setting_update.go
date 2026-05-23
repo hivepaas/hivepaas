@@ -33,10 +33,10 @@ type UpdateSettingData struct {
 
 	Setting *entity.Setting
 
-	VerifyingName     string
-	VerifyingRefIDs   []string
-	DefaultMustUnique bool
-	ExtraLoadOpts     []bunex.SelectQueryOption
+	VerifyingName       string
+	VerifyingRefIDs     []string
+	MultiDefaultAllowed bool
+	ExtraLoadOpts       []bunex.SelectQueryOption
 
 	Load             func(context.Context, database.Tx, *UpdateSettingData) error
 	AfterLoading     func(context.Context, database.Tx, *UpdateSettingData) error
@@ -196,7 +196,7 @@ func (uc *BaseUC) persistSettingUpdate(
 		return apperrors.Wrap(err)
 	}
 
-	if data.DefaultMustUnique && !data.Setting.Default && persistingData.Setting.Default {
+	if !data.MultiDefaultAllowed && !data.Setting.Default && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
 			return apperrors.Wrap(err)

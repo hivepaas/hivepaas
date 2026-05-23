@@ -17,8 +17,7 @@ func (uc *UC) UpdateEmail(
 ) (*emaildto.UpdateEmailResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
-		VerifyingName:     req.Name,
-		DefaultMustUnique: true,
+		VerifyingName: req.Name,
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,

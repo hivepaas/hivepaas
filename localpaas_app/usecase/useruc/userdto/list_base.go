@@ -10,6 +10,7 @@ import (
 
 type ListUserBaseReq struct {
 	Status []base.UserStatus `json:"-" mapstructure:"status"`
+	Role   []base.UserRole   `json:"-" mapstructure:"role"`
 	Search string            `json:"-" mapstructure:"search"`
 
 	Paging basedto.Paging `json:"-"`
@@ -28,8 +29,10 @@ func NewListUserBaseReq() *ListUserBaseReq {
 // Validate implements interface basedto.ReqValidator
 func (req *ListUserBaseReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators,
-		basedto.ValidateSlice(req.Status, true, 0, base.AllUserStatuses, "status")...)
+	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
+		base.AllUserStatuses, "status")...)
+	validators = append(validators, basedto.ValidateSlice(req.Role, true, 0,
+		base.AllUserRoles, "role")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

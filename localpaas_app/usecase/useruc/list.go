@@ -20,7 +20,12 @@ func (uc *UC) ListUser(
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("\"user\".status IN (?)", bunex.List(req.Status)),
+			bunex.SelectWhereIn("\"user\".status IN (?)", req.Status...),
+		)
+	}
+	if len(req.Role) > 0 {
+		listOpts = append(listOpts,
+			bunex.SelectWhereIn("\"user\".role IN (?)", req.Role...),
 		)
 	}
 	// Filter by search keyword

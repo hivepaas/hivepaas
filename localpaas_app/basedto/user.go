@@ -1,13 +1,17 @@
 package basedto
 
-import "github.com/localpaas/localpaas/localpaas_app/entity"
+import (
+	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
+)
 
 type UserBaseResp struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	FullName string `json:"fullName"`
-	Photo    string `json:"photo"`
+	ID       string        `json:"id"`
+	Username string        `json:"username"`
+	Email    string        `json:"email"`
+	FullName string        `json:"fullName"`
+	Photo    string        `json:"photo"`
+	Role     base.UserRole `json:"role"`
 }
 
 func TransformUserBase(user *entity.User) *UserBaseResp {
@@ -20,6 +24,7 @@ func TransformUserBase(user *entity.User) *UserBaseResp {
 		Email:    user.Email,
 		FullName: user.FullName,
 		Photo:    user.Photo,
+		Role:     user.Role,
 	}
 }
 

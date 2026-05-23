@@ -3,11 +3,13 @@ import { memo } from "react";
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
 import { useCreateOrEditImPlatformDialog } from "~/settings/dialogs/create-or-edit-im-platform";
+import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import type { ImPlatformTableScope } from "../../im-platform-table.types";
 
-function View({ scope, id }: Props) {
+function View({ scope, id, inherited }: Props) {
     const createOrEditDialog = useCreateOrEditImPlatformDialog();
+    const inheritedSettingAlert = useInheritedSettingAlert();
 
     return (
         <Button
@@ -15,6 +17,11 @@ function View({ scope, id }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
+                if (isInheritedProjectSetting(scope, inherited)) {
+                    inheritedSettingAlert.open();
+                    return;
+                }
+
                 createOrEditDialog.actions.openEdit(scope, id);
             }}
         >
@@ -27,6 +34,7 @@ function View({ scope, id }: Props) {
 interface Props {
     scope: ImPlatformTableScope;
     id: string;
+    inherited?: boolean;
 }
 
 export const ImPlatformEditCell = memo(View);

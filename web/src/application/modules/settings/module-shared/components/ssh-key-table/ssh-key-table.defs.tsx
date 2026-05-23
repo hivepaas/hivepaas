@@ -20,6 +20,7 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
                 <SSHKeyEditCell
                     scope={scope}
                     id={original.id}
+                    inherited={original.inherited}
                 />
             ),
             meta: { align: "center", titleAlign: "center" },

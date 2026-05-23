@@ -3,10 +3,28 @@ import { format } from "date-fns";
 import type { ProjectSecret } from "~/projects/domain";
 import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
-import { MenuCell } from "./building-blocks";
+import { EditCell, MenuCell } from "./building-blocks";
 
 function createColumns(projectId: string): ColumnDef<ProjectSecret>[] {
     return [
+        {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <EditCell
+                    projectId={projectId}
+                    secret={original}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",

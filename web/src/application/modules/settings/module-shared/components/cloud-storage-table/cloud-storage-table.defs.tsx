@@ -20,6 +20,7 @@ function createColumns(scope: CloudStorageTableScope): ColumnDef<SettingCloudSto
                 <CloudStorageEditCell
                     scope={scope}
                     id={original.id}
+                    inherited={original.inherited}
                 />
             ),
             meta: { align: "center", titleAlign: "center" },

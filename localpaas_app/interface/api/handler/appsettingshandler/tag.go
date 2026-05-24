@@ -13,7 +13,7 @@ import (
 // CreateAppTag Creates a new app tag
 // @Summary Creates a new app tag
 // @Description Creates a new app tag
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      createAppTag
 // @Param   projectID path string true "project ID"
@@ -50,7 +50,7 @@ func (h *Handler) CreateAppTag(ctx *gin.Context) {
 // DeleteAppTags Deletes app tags
 // @Summary Deletes app tags
 // @Description Deletes app tags
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      deleteAppTag
 // @Param   projectID path string true "project ID"

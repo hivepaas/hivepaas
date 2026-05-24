@@ -3,8 +3,6 @@ package permissionimpl
 import (
 	"context"
 	"errors"
-	"slices"
-	"strings"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -179,14 +177,15 @@ func (p *manager) LoadObjectAccesses(
 	ctx context.Context,
 	db database.IDB,
 	check *permission.AccessCheck,
-	sort bool,
 	extraLoadOpts ...bunex.SelectQueryOption,
-) ([]*entity.ACLPermission, error) {
+) (objPerms, modPerms []*entity.ACLPermission, err error) {
 	if check.ResourceID == "" {
-		return nil, nil
+		return nil, nil, nil
 	}
 	loadOpts := []bunex.SelectQueryOption{
-		bunex.SelectRelation("SubjectUser"),
+		bunex.SelectRelation("SubjectUser",
+			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
+		),
 		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subject_id"),
 		bunex.SelectWhere("users.deleted_at IS NULL"),
 		bunex.SelectWhere("users.status = ?", base.UserStatusActive),
@@ -196,77 +195,35 @@ func (p *manager) LoadObjectAccesses(
 
 	modPerms, parentPerms, objPerms, err := p.loadPermissions(ctx, db, check, loadOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
-	permByUserID := make(map[string]*entity.ACLPermission)
-	deniedUserIDs := make([]string, 0)
+	objPermMap := make(map[string]struct{})
 	for _, perm := range objPerms {
-		permByUserID[perm.SubjectID] = perm
-		if !perm.Actions.Read && !perm.Actions.Write && !perm.Actions.Delete {
-			deniedUserIDs = append(deniedUserIDs, perm.SubjectID)
-		}
+		objPermMap[perm.SubjectID] = struct{}{}
 	}
 	for _, perm := range parentPerms {
-		if _, exists := permByUserID[perm.SubjectID]; exists {
-			continue
+		if _, exists := objPermMap[perm.SubjectID]; !exists {
+			objPerms = append(objPerms, perm)
 		}
-		permByUserID[perm.SubjectID] = perm
-		if !perm.Actions.Read && !perm.Actions.Write && !perm.Actions.Delete {
-			deniedUserIDs = append(deniedUserIDs, perm.SubjectID)
-		}
+	}
+
+	return objPerms, modPerms, nil
+}
+
+func (p *manager) MergeObjectAccessesBySubjectID(
+	objPerms, modPerms []*entity.ACLPermission,
+) []*entity.ACLPermission {
+	res := make([]*entity.ACLPermission, 0, len(objPerms)+len(modPerms))
+	objPermMap := make(map[string]struct{}, len(objPerms))
+	for _, perm := range objPerms {
+		res = append(res, perm)
+		objPermMap[perm.SubjectID] = struct{}{}
 	}
 	for _, perm := range modPerms {
-		if _, exists := permByUserID[perm.SubjectID]; exists {
-			continue
-		}
-		permByUserID[perm.SubjectID] = perm
-		if !perm.Actions.Read && !perm.Actions.Write && !perm.Actions.Delete {
-			deniedUserIDs = append(deniedUserIDs, perm.SubjectID)
+		if _, exists := objPermMap[perm.SubjectID]; !exists {
+			res = append(res, perm)
 		}
 	}
-	for _, userID := range deniedUserIDs {
-		delete(permByUserID, userID)
-	}
-
-	// Loads all admin users
-	adminUsers, _, err := p.userRepo.List(ctx, db, nil,
-		bunex.SelectWhere("deleted_at IS NULL"),
-		bunex.SelectWhere("status = ?", base.UserStatusActive),
-		bunex.SelectWhere("(access_expire_at IS NULL OR access_expire_at > NOW())"),
-		bunex.SelectWhere("role = ?", base.UserRoleAdmin),
-	)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	for _, user := range adminUsers {
-		perm, ok := permByUserID[user.ID]
-		if !ok {
-			perm = &entity.ACLPermission{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeProject,
-				ResourceID:   check.ResourceID,
-			}
-			permByUserID[user.ID] = perm
-		}
-		perm.Actions.Read = true
-		perm.Actions.Write = true
-		perm.Actions.Delete = true
-		perm.SubjectUser = user
-	}
-
-	aclPermissions := make([]*entity.ACLPermission, 0, len(permByUserID))
-	for _, perm := range permByUserID {
-		aclPermissions = append(aclPermissions, perm)
-	}
-
-	if sort {
-		slices.SortStableFunc(aclPermissions, func(a, b *entity.ACLPermission) int {
-			return strings.Compare(a.SubjectUser.FullName, b.SubjectUser.FullName)
-		})
-	}
-
-	return aclPermissions, nil
+	return res
 }

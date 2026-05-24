@@ -13,7 +13,7 @@ import (
 // GetEnvVars Gets app env vars
 // @Summary Gets app env vars
 // @Description Gets app env vars
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppEnvVars
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 // UpdateEnvVars Updates app env vars
 // @Summary Updates app env vars
 // @Description Updates app env vars
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppEnvVars
 // @Param   projectID path string true "project ID"

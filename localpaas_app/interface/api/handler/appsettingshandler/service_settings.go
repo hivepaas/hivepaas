@@ -13,7 +13,7 @@ import (
 // GetAppServiceSettings Gets app service settings
 // @Summary Gets app service settings
 // @Description Gets app service settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppServiceSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppServiceSettings(ctx *gin.Context) {
 // UpdateAppServiceSettings Updates app service settings
 // @Summary Updates app service settings
 // @Description Updates app service settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppServiceSettings
 // @Param   projectID path string true "project ID"

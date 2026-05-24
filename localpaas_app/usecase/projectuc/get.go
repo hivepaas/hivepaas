@@ -31,17 +31,19 @@ func (uc *UC) GetProject(
 	}
 
 	// Loads all accesses of the project
-	accesses, err := uc.permissionManager.LoadObjectAccesses(ctx, uc.db, &permission.AccessCheck{
-		SubjectType:    base.SubjectTypeUser,
-		ResourceModule: base.ResourceModuleProject,
-		ResourceType:   base.ResourceTypeProject,
-		ResourceID:     project.ID,
-		Action:         base.ActionTypeRead,
-	}, true)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
+	if req.GetUserAccesses {
+		objPerms, modPerms, err := uc.permissionManager.LoadObjectAccesses(ctx, uc.db, &permission.AccessCheck{
+			SubjectType:    base.SubjectTypeUser,
+			ResourceModule: base.ResourceModuleProject,
+			ResourceType:   base.ResourceTypeProject,
+			ResourceID:     project.ID,
+			Action:         base.ActionTypeRead,
+		})
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		project.Accesses = uc.permissionManager.MergeObjectAccessesBySubjectID(objPerms, modPerms)
 	}
-	project.Accesses = accesses
 
 	resp, err := projectdto.TransformProject(project)
 	if err != nil {

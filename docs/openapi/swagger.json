@@ -3095,7 +3095,7 @@
           }
         },
         "summary" : "Lists app config files",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "post" : {
         "description" : "Creates an app config file",
@@ -3161,7 +3161,7 @@
           }
         },
         "summary" : "Creates an app config file",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3227,7 +3227,7 @@
           }
         },
         "summary" : "Deletes an app config file",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "get" : {
         "description" : "Get an app config file details",
@@ -3290,7 +3290,7 @@
           }
         },
         "summary" : "Get an app config file details",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates an app config file",
@@ -3364,7 +3364,7 @@
           }
         },
         "summary" : "Updates an app config file",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3430,7 +3430,7 @@
           }
         },
         "summary" : "Download a config file",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/config-files/{itemID}/download-token" : {
@@ -3495,7 +3495,7 @@
           }
         },
         "summary" : "Gets config file download token",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/config-files/{itemID}/status" : {
@@ -3571,7 +3571,7 @@
           }
         },
         "summary" : "Updates app config file status",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3629,7 +3629,7 @@
           }
         },
         "summary" : "Gets app container settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app container settings",
@@ -3695,7 +3695,7 @@
           }
         },
         "summary" : "Updates app container settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3764,7 +3764,7 @@
           }
         },
         "summary" : "Checks a container port for availability",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3850,7 +3850,7 @@
           }
         },
         "summary" : "Lists cron-jobs",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "post" : {
         "description" : "Creates a new cron-job",
@@ -3916,7 +3916,7 @@
           }
         },
         "summary" : "Creates a new cron-job",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3982,7 +3982,7 @@
           }
         },
         "summary" : "Deletes cron-job",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "get" : {
         "description" : "Gets cron-job details",
@@ -4045,7 +4045,7 @@
           }
         },
         "summary" : "Gets cron-job details",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates a cron-job",
@@ -4119,7 +4119,7 @@
           }
         },
         "summary" : "Updates a cron-job",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4195,7 +4195,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4272,7 +4272,7 @@
           }
         },
         "summary" : "Updates cron-job status",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4366,7 +4366,7 @@
           }
         },
         "summary" : "Lists cron-job tasks",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/cron-jobs/{itemID}/tasks/{taskID}" : {
@@ -4439,7 +4439,7 @@
           }
         },
         "summary" : "Gets a cron-job task",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/cron-jobs/{itemID}/tasks/{taskID}/logs" : {
@@ -4512,7 +4512,7 @@
           }
         },
         "summary" : "Gets logs of a cron-job task",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/deployment-settings" : {
@@ -4569,7 +4569,7 @@
           }
         },
         "summary" : "Gets app deployment settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app deployment settings",
@@ -4635,7 +4635,7 @@
           }
         },
         "summary" : "Updates app deployment settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5020,7 +5020,7 @@
           }
         },
         "summary" : "Gets app env vars",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app env vars",
@@ -5086,7 +5086,7 @@
           }
         },
         "summary" : "Updates app env vars",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5172,7 +5172,7 @@
           }
         },
         "summary" : "Lists healthchecks",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "post" : {
         "description" : "Creates a new healthcheck",
@@ -5238,7 +5238,7 @@
           }
         },
         "summary" : "Creates a new healthcheck",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5304,7 +5304,7 @@
           }
         },
         "summary" : "Deletes healthcheck",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "get" : {
         "description" : "Gets healthcheck details",
@@ -5367,7 +5367,7 @@
           }
         },
         "summary" : "Gets healthcheck details",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates a healthcheck",
@@ -5441,7 +5441,7 @@
           }
         },
         "summary" : "Updates a healthcheck",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5518,7 +5518,7 @@
           }
         },
         "summary" : "Updates healthcheck status",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5612,7 +5612,7 @@
           }
         },
         "summary" : "Lists healthcheck tasks",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/http-settings" : {
@@ -5669,7 +5669,7 @@
           }
         },
         "summary" : "Gets app HTTP settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app HTTP settings",
@@ -5735,7 +5735,7 @@
           }
         },
         "summary" : "Updates app HTTP settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5793,7 +5793,7 @@
           }
         },
         "summary" : "Gets app network settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app network settings",
@@ -5859,7 +5859,7 @@
           }
         },
         "summary" : "Updates app network settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5917,7 +5917,7 @@
           }
         },
         "summary" : "Gets app resource settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app resource settings",
@@ -5983,7 +5983,7 @@
           }
         },
         "summary" : "Updates app resource settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6126,7 +6126,7 @@
           }
         },
         "summary" : "Lists app secrets",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "post" : {
         "description" : "Creates an app secret",
@@ -6192,7 +6192,7 @@
           }
         },
         "summary" : "Creates an app secret",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6258,7 +6258,7 @@
           }
         },
         "summary" : "Deletes an app secret",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "get" : {
         "description" : "Get an app secret details",
@@ -6321,7 +6321,7 @@
           }
         },
         "summary" : "Get an app secret details",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates an app secret",
@@ -6395,7 +6395,7 @@
           }
         },
         "summary" : "Updates an app secret",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6461,7 +6461,7 @@
           }
         },
         "summary" : "Download a secret as a file",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/secrets/{itemID}/download-token" : {
@@ -6526,7 +6526,7 @@
           }
         },
         "summary" : "Gets secret download token",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/secrets/{itemID}/status" : {
@@ -6602,7 +6602,7 @@
           }
         },
         "summary" : "Updates app secret status",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6660,7 +6660,7 @@
           }
         },
         "summary" : "Gets app service settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app service settings",
@@ -6726,7 +6726,7 @@
           }
         },
         "summary" : "Updates app service settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6853,7 +6853,7 @@
           }
         },
         "summary" : "Gets app storage settings",
-        "tags" : [ "apps" ]
+        "tags" : [ "app_settings" ]
       },
       "put" : {
         "description" : "Updates app storage settings",
@@ -6919,7 +6919,7 @@
           }
         },
         "summary" : "Updates app storage settings",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6988,7 +6988,7 @@
           }
         },
         "summary" : "Creates a new app tag",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7057,7 +7057,7 @@
           }
         },
         "summary" : "Deletes app tags",
-        "tags" : [ "apps" ],
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7972,7 +7972,7 @@
           }
         },
         "summary" : "Lists cron-jobs",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "post" : {
         "description" : "Creates a new cron-job",
@@ -8030,7 +8030,7 @@
           }
         },
         "summary" : "Creates a new cron-job",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8088,7 +8088,7 @@
           }
         },
         "summary" : "Deletes cron-job",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "get" : {
         "description" : "Gets cron-job details",
@@ -8143,7 +8143,7 @@
           }
         },
         "summary" : "Gets cron-job details",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "put" : {
         "description" : "Updates cron-job",
@@ -8209,7 +8209,7 @@
           }
         },
         "summary" : "Updates cron-job",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8278,7 +8278,7 @@
           }
         },
         "summary" : "Updates cron-job status",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9538,7 +9538,7 @@
           }
         },
         "summary" : "Gets project env vars",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "put" : {
         "description" : "Updates project env vars",
@@ -9596,7 +9596,7 @@
           }
         },
         "summary" : "Updates project env vars",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12244,7 +12244,7 @@
           }
         },
         "summary" : "Lists project secrets",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "post" : {
         "description" : "Creates a project secret",
@@ -12302,7 +12302,7 @@
           }
         },
         "summary" : "Creates a project secret",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12360,7 +12360,7 @@
           }
         },
         "summary" : "Deletes a project secret",
-        "tags" : [ "projects" ]
+        "tags" : [ "project_settings" ]
       },
       "get" : {
         "description" : "Gets secret details",
@@ -12481,7 +12481,7 @@
           }
         },
         "summary" : "Updates a project secret",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12550,7 +12550,7 @@
           }
         },
         "summary" : "Updates project secret status",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12611,7 +12611,7 @@
           }
         },
         "summary" : "Imports settings from global to a project",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13717,7 +13717,7 @@
           }
         },
         "summary" : "Creates a new project tag",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13778,7 +13778,115 @@
           }
         },
         "summary" : "Deletes project tags",
-        "tags" : [ "projects" ],
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/user-accesses" : {
+      "get" : {
+        "description" : "Gets user accesses on the project",
+        "operationId" : "getProjectUserAccesses",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.GetUserAccessesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets user accesses on the project",
+        "tags" : [ "project_settings" ]
+      },
+      "put" : {
+        "description" : "Updates user accesses on the project",
+        "operationId" : "updateProjectUserAccesses",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates user accesses on the project",
+        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22921,7 +23029,7 @@
           "ModeExclusive" : "l: exclusive use",
           "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
           "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits",
+          "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
           "ModeSocket" : "S: Unix domain socket",
@@ -22929,8 +23037,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -26069,6 +26177,18 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.CurrentUserActionsResp" : {
+        "properties" : {
+          "canUpdateProjectUserAccesses" : {
+            "type" : "boolean"
+          },
+          "canViewModuleUserAccesses" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "canUpdateProjectUserAccesses", "canViewModuleUserAccesses" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.DeleteProjectTagsReq" : {
         "properties" : {
           "tags" : {
@@ -26123,6 +26243,18 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.GetUserAccessesResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessesDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.ImportSettingsToProjectReq" : {
         "properties" : {
           "dataViewAllowed" : {
@@ -26145,6 +26277,60 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.ModuleUserAccessResp" : {
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.AccessActions"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.UserRole"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "email", "fullName", "id", "photo", "role", "username" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp" : {
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.AccessActions"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.UserRole"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "email", "fullName", "id", "photo", "role", "username" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateProjectEnvVarsDataResp" : {
@@ -26195,6 +26381,60 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesReq" : {
+        "properties" : {
+          "userAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "userAccesses" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessReq" : {
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.AccessActions"
+          },
+          "id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "id" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessesDataResp" : {
+        "properties" : {
+          "currentUserActions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.CurrentUserActionsResp"
+          },
+          "moduleUserAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.ModuleUserAccessResp"
+            },
+            "type" : "array"
+          },
+          "projectUserAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "currentUserActions", "moduleUserAccesses", "projectUserAccesses" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectuc_projectdto.CreateProjectReq" : {

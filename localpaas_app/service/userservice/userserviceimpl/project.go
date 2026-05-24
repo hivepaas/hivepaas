@@ -25,16 +25,16 @@ func (s *service) LoadNotificationUsers(
 	userIDs := make([]string, 0, 10) //nolint:mnd
 
 	if loadMembers && project != nil {
-		accesses, err := s.permissionManager.LoadObjectAccesses(ctx, db, &permission.AccessCheck{
+		objPerms, modPerms, err := s.permissionManager.LoadObjectAccesses(ctx, db, &permission.AccessCheck{
 			SubjectType:  base.SubjectTypeUser,
 			ResourceType: base.ResourceTypeProject,
 			ResourceID:   project.ID,
 			Action:       base.ActionTypeRead,
-		}, false)
+		})
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		for _, access := range accesses {
+		for _, access := range s.permissionManager.MergeObjectAccessesBySubjectID(objPerms, modPerms) {
 			userIDs = append(userIDs, access.SubjectID)
 		}
 	}
@@ -43,14 +43,10 @@ func (s *service) LoadNotificationUsers(
 		userIDs = append(userIDs, project.OwnerID)
 	}
 
-	opts := []bunex.SelectQueryOption{
+	userMap, err := s.LoadUsersEx(ctx, db, false,
 		bunex.SelectWhere("\"user\".id IN (?)", bunex.List(userIDs)),
-	}
-	if loadAdmins {
-		opts = append(opts, bunex.SelectWhereOr("\"user\".role = ?", base.UserRoleAdmin))
-	}
-
-	userMap, err := s.LoadUsersEx(ctx, db, false, opts...)
+		bunex.SelectWhereOrIf(loadAdmins, "\"user\".role = ?", base.UserRoleAdmin),
+	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -13,7 +13,7 @@ import (
 // GetAppNetworkSettings Gets app network settings
 // @Summary Gets app network settings
 // @Description Gets app network settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppNetworkSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppNetworkSettings(ctx *gin.Context) {
 // UpdateAppNetworkSettings Updates app network settings
 // @Summary Updates app network settings
 // @Description Updates app network settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppNetworkSettings
 // @Param   projectID path string true "project ID"

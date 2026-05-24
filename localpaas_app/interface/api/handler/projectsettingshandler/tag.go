@@ -13,7 +13,7 @@ import (
 // CreateProjectTag Creates a new project tag
 // @Summary Creates a new project tag
 // @Description Creates a new project tag
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      createProjectTag
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) CreateProjectTag(ctx *gin.Context) {
 // DeleteProjectTags Deletes project tags
 // @Summary Deletes project tags
 // @Description Deletes project tags
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      deleteProjectTag
 // @Param   projectID path string true "project ID"

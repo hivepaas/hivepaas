@@ -11,7 +11,7 @@ import (
 // ListCronJob Lists cron-jobs
 // @Summary Lists cron-jobs
 // @Description Lists cron-jobs
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      listProjectCronJob
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListCronJob(ctx *gin.Context) {
 // GetCronJob Gets cron-job details
 // @Summary Gets cron-job details
 // @Description Gets cron-job details
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      getProjectCronJob
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetCronJob(ctx *gin.Context) {
 // CreateCronJob Creates a new cron-job
 // @Summary Creates a new cron-job
 // @Description Creates a new cron-job
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      createProjectCronJob
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateCronJob(ctx *gin.Context) {
 // UpdateCronJob Updates cron-job
 // @Summary Updates cron-job
 // @Description Updates cron-job
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      updateProjectCronJob
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateCronJob(ctx *gin.Context) {
 // UpdateCronJobStatus Updates cron-job status
 // @Summary Updates cron-job status
 // @Description Updates cron-job status
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      updateProjectCronJobStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateCronJobStatus(ctx *gin.Context) {
 // DeleteCronJob Deletes cron-job
 // @Summary Deletes cron-job
 // @Description Deletes cron-job
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      deleteProjectCronJob
 // @Param   projectID path string true "project ID"

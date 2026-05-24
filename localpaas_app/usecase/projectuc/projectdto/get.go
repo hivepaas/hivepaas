@@ -1,6 +1,8 @@
 package projectdto
 
 import (
+	"slices"
+	"strings"
 	"time"
 
 	vld "github.com/tiendc/go-validator"
@@ -14,7 +16,8 @@ import (
 )
 
 type GetProjectReq struct {
-	ID string `json:"-"`
+	ID              string `json:"-"`
+	GetUserAccesses bool   `json:"-" mapstructure:"getUserAccesses"`
 }
 
 func NewGetProjectReq() *GetProjectReq {
@@ -100,14 +103,18 @@ func TransformProjectEnvs(settings []*entity.Setting) (resp []*ProjectEnvResp) {
 }
 
 func TransformUserAccesses(accesses []*entity.ACLPermission) []*ProjectUserAccessResp {
-	return gofn.MapSlice(accesses, TransformUserAccess)
-}
+	slices.SortStableFunc(accesses, func(a, b *entity.ACLPermission) int {
+		return strings.Compare(a.SubjectUser.FullName, b.SubjectUser.FullName)
+	})
 
-func TransformUserAccess(access *entity.ACLPermission) *ProjectUserAccessResp {
-	return &ProjectUserAccessResp{
-		UserBaseResp: basedto.TransformUserBase(access.SubjectUser),
-		Access:       access.Actions,
+	resp := make([]*ProjectUserAccessResp, 0, len(accesses))
+	for _, access := range accesses {
+		resp = append(resp, &ProjectUserAccessResp{
+			UserBaseResp: basedto.TransformUserBase(access.SubjectUser),
+			Access:       access.Actions,
+		})
 	}
+	return resp
 }
 
 func TransformProjectsBase(projects []*entity.Project) []*ProjectBaseResp {

@@ -14,7 +14,7 @@ import (
 // ListAppCronJobTask Lists cron-job tasks
 // @Summary Lists cron-job tasks
 // @Description Lists cron-job tasks
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      listAppCronJobTask
 // @Param   projectID path string true "project ID"
@@ -55,7 +55,7 @@ func (h *Handler) ListAppCronJobTask(ctx *gin.Context) {
 // GetAppCronJobTask Gets a cron-job task
 // @Summary Gets a cron-job task
 // @Description Gets a cron-job task
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppCronJobTask
 // @Param   projectID path string true "project ID"
@@ -100,7 +100,7 @@ func (h *Handler) GetAppCronJobTask(ctx *gin.Context) {
 // GetAppCronJobTaskLogs Gets logs of a cron-job task
 // @Summary Gets logs of a cron-job task
 // @Description Gets logs of a cron-job task
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppCronJobTaskLogs
 // @Param   projectID path string true "project ID"

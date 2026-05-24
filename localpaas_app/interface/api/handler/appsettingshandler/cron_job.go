@@ -13,7 +13,7 @@ import (
 // ListAppCronJob Lists cron-jobs
 // @Summary Lists cron-jobs
 // @Description Lists cron-jobs
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      listAppCronJob
 // @Param   projectID path string true "project ID"
@@ -33,7 +33,7 @@ func (h *Handler) ListAppCronJob(ctx *gin.Context) {
 // GetAppCronJob Gets cron-job details
 // @Summary Gets cron-job details
 // @Description Gets cron-job details
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppCronJob
 // @Param   projectID path string true "project ID"
@@ -50,7 +50,7 @@ func (h *Handler) GetAppCronJob(ctx *gin.Context) {
 // CreateAppCronJob Creates a new cron-job
 // @Summary Creates a new cron-job
 // @Description Creates a new cron-job
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      createAppCronJob
 // @Param   projectID path string true "project ID"
@@ -67,7 +67,7 @@ func (h *Handler) CreateAppCronJob(ctx *gin.Context) {
 // UpdateAppCronJob Updates a cron-job
 // @Summary Updates a cron-job
 // @Description Updates a cron-job
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppCronJob
 // @Param   projectID path string true "project ID"
@@ -85,7 +85,7 @@ func (h *Handler) UpdateAppCronJob(ctx *gin.Context) {
 // UpdateAppCronJobStatus Updates cron-job status
 // @Summary Updates cron-job status
 // @Description Updates cron-job status
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppCronJobStatus
 // @Param   projectID path string true "project ID"
@@ -103,7 +103,7 @@ func (h *Handler) UpdateAppCronJobStatus(ctx *gin.Context) {
 // DeleteAppCronJob Deletes cron-job
 // @Summary Deletes cron-job
 // @Description Deletes cron-job
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      deleteAppCronJob
 // @Param   projectID path string true "project ID"
@@ -119,7 +119,7 @@ func (h *Handler) DeleteAppCronJob(ctx *gin.Context) {
 
 // ExecuteAppCronJob Executes a cron job
 // @Description Executes a cron job
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      executeAppCronJob
 // @Param   projectID path string true "project ID"

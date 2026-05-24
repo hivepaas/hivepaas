@@ -13,7 +13,7 @@ import (
 // GetAppHttpSettings Gets app HTTP settings
 // @Summary Gets app HTTP settings
 // @Description Gets app HTTP settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppHttpSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
 // UpdateAppHttpSettings Updates app HTTP settings
 // @Summary Updates app HTTP settings
 // @Description Updates app HTTP settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppHttpSettings
 // @Param   projectID path string true "project ID"

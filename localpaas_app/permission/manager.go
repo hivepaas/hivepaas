@@ -17,6 +17,7 @@ type Manager interface {
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	RemoveACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error
 
-	LoadObjectAccesses(ctx context.Context, db database.IDB, check *AccessCheck, sort bool,
-		extraLoadOpts ...bunex.SelectQueryOption) ([]*entity.ACLPermission, error)
+	LoadObjectAccesses(ctx context.Context, db database.IDB, check *AccessCheck,
+		extraLoadOpts ...bunex.SelectQueryOption) (objPerms, modPerms []*entity.ACLPermission, err error)
+	MergeObjectAccessesBySubjectID(objPerms, modPerms []*entity.ACLPermission) []*entity.ACLPermission
 }

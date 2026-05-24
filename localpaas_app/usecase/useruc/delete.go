@@ -31,6 +31,8 @@ func (uc *UC) DeleteUser(
 		uc.prepareDeletingUser(userData, persistingData)
 
 		return uc.userService.PersistUserData(ctx, db, persistingData)
+
+		// TODO: remove all ACLs of the user
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

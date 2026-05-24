@@ -11,7 +11,7 @@ import (
 // ListSecret Lists project secrets
 // @Summary Lists project secrets
 // @Description Lists project secrets
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      listProjectSecret
 // @Param   projectID path string true "project ID"
@@ -43,7 +43,7 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // CreateSecret Creates a project secret
 // @Summary Creates a project secret
 // @Description Creates a project secret
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      createProjectSecret
 // @Param   projectID path string true "project ID"
@@ -59,7 +59,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // UpdateSecret Updates a project secret
 // @Summary Updates a project secret
 // @Description Updates a project secret
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      updateProjectSecret
 // @Param   projectID path string true "project ID"
@@ -76,7 +76,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // UpdateSecretStatus Updates project secret status
 // @Summary Updates project secret status
 // @Description Updates project secret status
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      updateProjectSecretStatus
 // @Param   projectID path string true "project ID"
@@ -93,7 +93,7 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // DeleteSecret Deletes a project secret
 // @Summary Deletes a project secret
 // @Description Deletes a project secret
-// @Tags    projects
+// @Tags    project_settings
 // @Produce json
 // @Id      deleteProjectSecret
 // @Param   projectID path string true "project ID"

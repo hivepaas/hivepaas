@@ -13,7 +13,7 @@ import (
 // GetAppStorageSettings Gets app storage settings
 // @Summary Gets app storage settings
 // @Description Gets app storage settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppStorageSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppStorageSettings(ctx *gin.Context) {
 // UpdateAppStorageSettings Updates app storage settings
 // @Summary Updates app storage settings
 // @Description Updates app storage settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppStorageSettings
 // @Param   projectID path string true "project ID"

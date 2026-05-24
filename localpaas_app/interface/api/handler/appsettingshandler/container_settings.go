@@ -13,7 +13,7 @@ import (
 // GetAppContainerSettings Gets app container settings
 // @Summary Gets app container settings
 // @Description Gets app container settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppContainerSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppContainerSettings(ctx *gin.Context) {
 // UpdateAppContainerSettings Updates app container settings
 // @Summary Updates app container settings
 // @Description Updates app container settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppContainerSettings
 // @Param   projectID path string true "project ID"

@@ -25,6 +25,12 @@ func (s *service) PersistProjectData(ctx context.Context, db database.IDB,
 		return apperrors.Wrap(err)
 	}
 
+	// ACL Permissions
+	err = s.permissionManager.UpdateACLPermissions(ctx, db, persistingData.UpsertingACLPermissions)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	// Projects
 	err = s.projectRepo.UpsertMulti(ctx, db, persistingData.UpsertingProjects,
 		entity.ProjectUpsertingConflictCols, entity.ProjectUpsertingUpdateCols)

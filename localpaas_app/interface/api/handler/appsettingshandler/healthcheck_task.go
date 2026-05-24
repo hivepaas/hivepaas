@@ -13,7 +13,7 @@ import (
 // ListAppHealthcheckTask Lists healthcheck tasks
 // @Summary Lists healthcheck tasks
 // @Description Lists healthcheck tasks
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      listAppHealthcheckTask
 // @Param   projectID path string true "project ID"

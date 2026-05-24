@@ -31,6 +31,12 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		tagGroup.POST("/delete", projectSettingsHandler.DeleteProjectTags)
 	}
 
+	{ // User accesses
+		userAccessGroup := projectGroup.Group("/:projectID/user-accesses")
+		userAccessGroup.GET("", projectSettingsHandler.GetProjectUserAccesses)
+		userAccessGroup.PUT("", projectSettingsHandler.UpdateProjectUserAccesses)
+	}
+
 	{ // Env vars
 		envVarGroup := projectGroup.Group("/:projectID/env-vars")
 		envVarGroup.GET("", projectSettingsHandler.GetEnvVars)

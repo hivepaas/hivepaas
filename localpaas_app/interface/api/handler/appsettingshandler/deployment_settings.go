@@ -13,7 +13,7 @@ import (
 // GetAppDeploymentSettings Gets app deployment settings
 // @Summary Gets app deployment settings
 // @Description Gets app deployment settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppDeploymentSettings
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetAppDeploymentSettings(ctx *gin.Context) {
 // UpdateAppDeploymentSettings Updates app deployment settings
 // @Summary Updates app deployment settings
 // @Description Updates app deployment settings
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppDeploymentSettings
 // @Param   projectID path string true "project ID"

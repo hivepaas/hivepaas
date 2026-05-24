@@ -11,7 +11,7 @@ import (
 // ListAppHealthcheck Lists healthchecks
 // @Summary Lists healthchecks
 // @Description Lists healthchecks
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      listAppHealthcheck
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListAppHealthcheck(ctx *gin.Context) {
 // GetAppHealthcheck Gets healthcheck details
 // @Summary Gets healthcheck details
 // @Description Gets healthcheck details
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      getAppHealthcheck
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetAppHealthcheck(ctx *gin.Context) {
 // CreateAppHealthcheck Creates a new healthcheck
 // @Summary Creates a new healthcheck
 // @Description Creates a new healthcheck
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      createAppHealthcheck
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateAppHealthcheck(ctx *gin.Context) {
 // UpdateAppHealthcheck Updates a healthcheck
 // @Summary Updates a healthcheck
 // @Description Updates a healthcheck
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppHealthcheck
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
 // UpdateAppHealthcheckStatus Updates healthcheck status
 // @Summary Updates healthcheck status
 // @Description Updates healthcheck status
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      updateAppHealthcheckStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
 // DeleteAppHealthcheck Deletes healthcheck
 // @Summary Deletes healthcheck
 // @Description Deletes healthcheck
-// @Tags    apps
+// @Tags    app_settings
 // @Produce json
 // @Id      deleteAppHealthcheck
 // @Param   projectID path string true "project ID"

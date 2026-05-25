@@ -69,10 +69,10 @@ export function GitRepositoryInput() {
                 placeholder={
                     hasCredential
                         ? "Search or paste repository URL"
-                        : "Paste repository URL or select a credential for suggestions"
+                        : "Paste repository URL or select git credentials for suggestions"
                 }
                 emptyText={
-                    hasCredential ? "No repositories available" : "Select a credential for repository suggestions"
+                    hasCredential ? "No repositories available" : "Select git credentials for repository suggestions"
                 }
                 className="max-w-[400px]"
                 aria-invalid={isRepoUrlInvalid}

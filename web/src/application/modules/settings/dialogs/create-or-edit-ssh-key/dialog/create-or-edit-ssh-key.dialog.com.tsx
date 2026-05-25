@@ -45,6 +45,7 @@ export function CreateOrEditSSHKeyDialog() {
             dialogOptions?.onSuccess?.();
         },
     });
+    const { mutateAsync: generateSSHKey, isPending: isGenerating } = SSHKeyCommands.useGenerate();
 
     useEffect(() => {
         if (state.mode === "closed") {
@@ -75,9 +76,10 @@ export function CreateOrEditSSHKeyDialog() {
                 state.mode !== "closed" && state.scope.type === "project" ? false : values.availableInProjects,
             default: values.default,
             name: values.name,
+            keyType: values.keyType,
+            publicKey: values.publicKey,
             privateKey: values.privateKey,
             passphrase: values.passphrase,
-            targets: values.targets.map(item => item.value),
         };
     }
 
@@ -129,9 +131,10 @@ export function CreateOrEditSSHKeyDialog() {
     const initialValues = sshKey
         ? {
               name: sshKey.name,
+              keyType: sshKey.keyType ?? "",
+              publicKey: sshKey.publicKey ?? "",
               privateKey: sshKey.privateKey,
               passphrase: sshKey.passphrase ?? "",
-              targets: (sshKey.targets ?? []).map(value => ({ value })),
               availableInProjects: sshKey.availableInProjects ?? false,
               default: sshKey.default ?? false,
           }
@@ -151,6 +154,11 @@ export function CreateOrEditSSHKeyDialog() {
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditSSHKeyForm
                         isPending={isPending}
+                        isGenerating={isGenerating}
+                        onGenerate={async payload => {
+                            const response = await generateSSHKey({ payload });
+                            return response.data;
+                        }}
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}

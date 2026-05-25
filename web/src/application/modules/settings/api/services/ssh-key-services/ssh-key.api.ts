@@ -12,6 +12,8 @@ import type {
     SSHKey_FindManyPaginated_Res,
     SSHKey_FindOneById_Req,
     SSHKey_FindOneById_Res,
+    SSHKey_Generate_Req,
+    SSHKey_Generate_Res,
     SSHKey_UpdateMeta_Req,
     SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Req,
@@ -101,6 +103,18 @@ export class SSHKeyApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/settings/ssh-keys/${id}`)).pipe(
                 map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async generate(request: SSHKey_Generate_Req, signal?: AbortSignal): Promise<Result<SSHKey_Generate_Res, Error>> {
+        const { payload } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post("/settings/ssh-keys/generate", payload, { signal })).pipe(
+                map(this.validator.generate),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -1,9 +1,12 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
+import type { ESSHKeyType } from "@application/shared/enums";
+
 export interface SettingSSHKey extends SettingsBaseEntity {
+    keyType?: ESSHKeyType | "";
+    publicKey?: string;
     privateKey: string;
     passphrase?: string;
-    targets?: string[];
     secretMasked?: boolean;
     inherited?: boolean;
 }

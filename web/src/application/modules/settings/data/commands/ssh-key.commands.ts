@@ -5,6 +5,8 @@ import type {
     SSHKey_CreateOne_Res,
     SSHKey_DeleteOne_Req,
     SSHKey_DeleteOne_Res,
+    SSHKey_Generate_Req,
+    SSHKey_Generate_Res,
     SSHKey_UpdateMeta_Req,
     SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Req,
@@ -87,9 +89,23 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
     });
 }
 
+type GenerateReq = SSHKey_Generate_Req["data"];
+type GenerateRes = SSHKey_Generate_Res;
+type GenerateOptions = Omit<UseMutationOptions<GenerateRes, Error, GenerateReq>, "mutationFn">;
+
+function useGenerate(options: GenerateOptions = {}) {
+    const { mutations } = useSSHKeyApi();
+
+    return useMutation({
+        mutationFn: mutations.generate,
+        ...options,
+    });
+}
+
 export const SSHKeyCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
     useUpdateMeta,
     useDeleteOne,
+    useGenerate,
 });

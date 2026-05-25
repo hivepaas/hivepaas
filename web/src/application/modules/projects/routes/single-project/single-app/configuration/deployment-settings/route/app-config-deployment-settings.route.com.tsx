@@ -55,6 +55,7 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
                 repoType: "git", // hardcoded for now, we'll handle this in the future
                 repoUrl: values.repoSource.repoUrl,
                 repoRef: values.repoSource.repoRef,
+                commitHash: values.repoSource.commitHash ?? "",
                 credentials: { id: values.repoSource.credentials?.id ?? "" },
                 imageName: values.repoSource.imageName ?? "",
             },

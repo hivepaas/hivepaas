@@ -9,10 +9,7 @@ import { QK } from "~/settings/data/constants";
 type FindOneReq = DomainSettings_FindOne_Req["data"];
 type FindOneRes = DomainSettings_FindOne_Res;
 
-function useFindOne(
-    request: FindOneReq = {},
-    options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {},
-) {
+function useFindOne(request: FindOneReq = {}, options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {}) {
     const { queries } = useDomainSettingsApi();
 
     return useQuery({

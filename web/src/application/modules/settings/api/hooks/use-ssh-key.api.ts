@@ -7,6 +7,7 @@ import type {
     SSHKey_DeleteOne_Req,
     SSHKey_FindManyPaginated_Req,
     SSHKey_FindOneById_Req,
+    SSHKey_Generate_Req,
     SSHKey_UpdateMeta_Req,
     SSHKey_UpdateOne_Req,
 } from "~/settings/api/services";
@@ -82,6 +83,16 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to delete SSH key", error });
+                            throw error;
+                        },
+                    });
+                },
+                generate: async (data: SSHKey_Generate_Req["data"]) => {
+                    const result = await api.settings.sshKey.generate({ data });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to generate SSH key", error });
                             throw error;
                         },
                     });

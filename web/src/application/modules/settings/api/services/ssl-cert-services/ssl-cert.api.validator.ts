@@ -1,6 +1,5 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-
 import { SslCertSettingEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";

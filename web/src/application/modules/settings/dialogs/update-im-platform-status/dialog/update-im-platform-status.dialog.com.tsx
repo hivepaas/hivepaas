@@ -101,7 +101,11 @@ export function UpdateImPlatformStatusDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -110,6 +114,11 @@ export function UpdateImPlatformStatusDialog() {
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "IM Platform"} Status`
+        : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
     const initialValues = imPlatform
@@ -129,7 +138,7 @@ export function UpdateImPlatformStatusDialog() {
         >
             <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle>Change status</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
@@ -139,6 +148,8 @@ export function UpdateImPlatformStatusDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

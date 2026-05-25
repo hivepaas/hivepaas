@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+import { ESSHKeyType } from "@application/shared/enums";
+
 export const CreateOrEditSSHKeyFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
+    keyType: z.union([z.nativeEnum(ESSHKeyType), z.literal("")]),
+    publicKey: z.string(),
     privateKey: z.string().min(1, "Private key is required"),
     passphrase: z.string(),
-    targets: z.array(z.object({ value: z.string().trim().min(1, "Target is required") })),
     availableInProjects: z.boolean(),
     default: z.boolean(),
 });

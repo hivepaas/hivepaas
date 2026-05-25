@@ -1,7 +1,7 @@
-import type { ESettingStatus } from "@application/shared/enums";
+import type { PaginationState, SortingState } from "@infrastructure/data";
 import type { SettingRegistryAuth } from "~/settings/domain";
 
-import type { PaginationState, SortingState } from "@infrastructure/data";
+import type { ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 

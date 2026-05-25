@@ -141,12 +141,22 @@ export function CreateOrEditAccessTokenDialog() {
 
     function handleClose() {
         if (isPending) return;
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        )
+            return;
         closeDialog();
         dialogOptions?.onClose?.();
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "Access Token")
+        : "Create or update an access token";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues = accessToken
@@ -170,7 +180,7 @@ export function CreateOrEditAccessTokenDialog() {
         >
             <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create or update an access token</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
@@ -183,6 +193,8 @@ export function CreateOrEditAccessTokenDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

@@ -45,6 +45,7 @@ export function CreateOrEditSSHKeyDialog() {
             dialogOptions?.onSuccess?.();
         },
     });
+    const { mutateAsync: generateSSHKey, isPending: isGenerating } = SSHKeyCommands.useGenerate();
 
     useEffect(() => {
         if (state.mode === "closed") {
@@ -75,9 +76,10 @@ export function CreateOrEditSSHKeyDialog() {
                 state.mode !== "closed" && state.scope.type === "project" ? false : values.availableInProjects,
             default: values.default,
             name: values.name,
+            keyType: values.keyType,
+            publicKey: values.publicKey,
             privateKey: values.privateKey,
             passphrase: values.passphrase,
-            targets: values.targets.map(item => item.value),
         };
     }
 
@@ -108,20 +110,31 @@ export function CreateOrEditSSHKeyDialog() {
 
     function handleClose() {
         if (isPending) return;
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        )
+            return;
         closeDialog();
         dialogOptions?.onClose?.();
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "SSH Key")
+        : "Create or update an SSH key";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues = sshKey
         ? {
               name: sshKey.name,
+              keyType: sshKey.keyType ?? "",
+              publicKey: sshKey.publicKey ?? "",
               privateKey: sshKey.privateKey,
               passphrase: sshKey.passphrase ?? "",
-              targets: (sshKey.targets ?? []).map(value => ({ value })),
               availableInProjects: sshKey.availableInProjects ?? false,
               default: sshKey.default ?? false,
           }
@@ -135,16 +148,23 @@ export function CreateOrEditSSHKeyDialog() {
         >
             <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create or update an SSH key</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditSSHKeyForm
                         isPending={isPending}
+                        isGenerating={isGenerating}
+                        onGenerate={async payload => {
+                            const response = await generateSSHKey({ payload });
+                            return response.data;
+                        }}
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

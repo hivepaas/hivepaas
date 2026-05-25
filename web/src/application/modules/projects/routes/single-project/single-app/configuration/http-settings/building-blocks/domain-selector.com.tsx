@@ -41,6 +41,8 @@ export function DomainSelector({
     const [duplicateDomainError, setDuplicateDomainError] = useState<string | null>(null);
 
     const activeDomainValue = domainValues[activeDomainIndex]?.domain ?? "";
+    const selectedDomain = activeDomainIndex >= 0 ? activeDomainValue.trim() : "";
+    const canViewSelectedDomain = selectedDomain.length > 0;
     const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
 
     useEffect(() => {
@@ -155,21 +157,21 @@ export function DomainSelector({
                                 <Plus className="size-4" /> Add
                             </Button>
                         </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            title="Quick Install"
-                            onClick={() => {
-                                const selectedDomain = draft.trim();
-                                if (!selectedDomain) return;
-                                const url = /^https?:\/\//i.test(selectedDomain)
-                                    ? selectedDomain
-                                    : `https://${selectedDomain}`;
-                                window.open(url, "_blank", "noopener,noreferrer");
-                            }}
-                        >
-                            <EyeIcon className="size-4" /> View
-                        </Button>
+                        {canViewSelectedDomain && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                title="View domain"
+                                onClick={() => {
+                                    const url = /^https?:\/\//i.test(selectedDomain)
+                                        ? selectedDomain
+                                        : `https://${selectedDomain}`;
+                                    window.open(url, "_blank", "noopener,noreferrer");
+                                }}
+                            >
+                                <EyeIcon className="size-4" /> View
+                            </Button>
+                        )}
                     </div>
                     {duplicateDomainError ? <p className="text-destructive text-sm">{duplicateDomainError}</p> : null}
                 </InfoBlock>

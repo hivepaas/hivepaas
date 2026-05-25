@@ -25,6 +25,7 @@ export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
             repoType: ERepoType;
             repoUrl: string;
             repoRef: string;
+            commitHash: string;
             credentials: {
                 id: string;
             };

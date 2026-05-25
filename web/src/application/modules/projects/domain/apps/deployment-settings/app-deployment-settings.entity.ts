@@ -4,10 +4,11 @@ import { type SettingsBaseEntity } from "~/settings/domain";
 export type RepoMethod = BaseDeploymentSettings & {
     activeMethod: typeof EAppDeploymentMethod.Repo;
     repoSource: {
-        buildTool: EBuildTool;
-        repoType: ERepoType;
+        buildTool?: EBuildTool;
+        repoType?: ERepoType;
         repoUrl: string;
         repoRef: string;
+        commitHash: string;
         credentials: SettingsBaseEntity;
         dockerfilePath: string;
         imageName: string;

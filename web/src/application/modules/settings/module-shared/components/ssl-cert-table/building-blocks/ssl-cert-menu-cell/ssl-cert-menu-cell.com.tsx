@@ -8,6 +8,7 @@ import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
 import { useUpdateSslCertStatusDialog } from "~/settings/dialogs/update-ssl-cert-status";
 import type { SettingSslCert } from "~/settings/domain";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
@@ -39,7 +40,7 @@ function View({ scope, sslCert }: Props) {
 
     function handleDelete() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.sslCert });
             setOpen(false);
             return;
         }
@@ -57,7 +58,12 @@ function View({ scope, sslCert }: Props) {
 
     function handleChangeStatus() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            updateStatusDialog.actions.open(scope, sslCert.id, {
+                props: {
+                    readOnlyInherited: true,
+                    entityTitle: SETTINGS_ENTITY_TITLES.sslCert,
+                },
+            });
             setOpen(false);
             return;
         }

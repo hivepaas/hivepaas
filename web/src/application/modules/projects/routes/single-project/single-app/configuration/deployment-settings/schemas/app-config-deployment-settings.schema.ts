@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
 const SettingsRefSchema = z.object({
     id: z.string(),
@@ -24,10 +24,11 @@ const BaseDeploymentSettingsSchema = z.object({
 const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
     activeMethod: z.literal(EAppDeploymentMethod.Repo),
     repoSource: z.object({
-        buildTool: z.nativeEnum(EBuildTool),
-        repoType: z.nativeEnum(ERepoType),
+        // buildTool: z.nativeEnum(EBuildTool),
+        // repoType: z.nativeEnum(ERepoType),
         repoUrl: z.string().min(1, "Repository URL is required"),
-        repoRef: z.string().min(1, "Branch / Commit is required"),
+        repoRef: z.string().min(1, "Branch is required"),
+        commitHash: z.string().optional(),
         credentials: SettingsRefSchema.optional(),
         dockerfilePath: z.string().optional(),
         imageName: z.string().optional(),

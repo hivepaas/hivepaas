@@ -7,6 +7,7 @@ export * from "./e.setting-type";
 export * from "./e.setting-status";
 export * from "./e.ssl-cert-type";
 export * from "./e.ssl-key-type";
+export * from "./e.ssh-key-type";
 export * from "./e.im-service-kind";
 export * from "./e.email-kind";
 export * from "./e.access-token-kind";

@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { SslCertApiValidator } from "./ssl-cert.api.validator";
 import type {
     SslCert_CreateOne_Req,
     SslCert_CreateOne_Res,
@@ -18,6 +17,7 @@ import type {
     SslCert_UpdateStatus_Req,
     SslCert_UpdateStatus_Res,
 } from "./ssl-cert.api.contracts";
+import type { SslCertApiValidator } from "./ssl-cert.api.validator";
 
 export class SslCertApi extends BaseApi {
     public constructor(private readonly validator: SslCertApiValidator) {

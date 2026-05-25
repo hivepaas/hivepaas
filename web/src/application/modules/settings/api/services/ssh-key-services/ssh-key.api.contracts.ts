@@ -1,7 +1,7 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type { SettingSSHKey } from "~/settings/domain";
 
-import type { ESettingStatus } from "@application/shared/enums";
+import type { ESSHKeyType, ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -21,9 +21,10 @@ export type SSHKey_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     name: string;
+    keyType: ESSHKeyType | "";
+    publicKey: string;
     privateKey: string;
     passphrase: string;
-    targets: string[];
 };
 
 export type SSHKey_CreateOne_Req = ApiRequestBase<{ payload: SSHKey_CreateOne_Payload }>;
@@ -59,3 +60,16 @@ export type SSHKey_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
 export type SSHKey_DeleteOne_Req = ApiRequestBase<{ id: string }>;
 
 export type SSHKey_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type SSHKey_Generate_Payload = {
+    keyType: ESSHKeyType;
+    passphrase?: string;
+};
+
+export type SSHKey_Generate_Req = ApiRequestBase<{ payload: SSHKey_Generate_Payload }>;
+
+export type SSHKey_Generate_Res = ApiResponseBase<{
+    keyType: ESSHKeyType;
+    publicKey: string;
+    privateKey: string;
+}>;

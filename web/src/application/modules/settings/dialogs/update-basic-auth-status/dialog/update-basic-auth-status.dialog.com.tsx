@@ -99,7 +99,11 @@ export function UpdateBasicAuthStatusDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -108,6 +112,11 @@ export function UpdateBasicAuthStatusDialog() {
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Basic Auth"} Status`
+        : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
     const initialValues = basicAuth
@@ -127,7 +136,7 @@ export function UpdateBasicAuthStatusDialog() {
         >
             <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle>Change status</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
@@ -137,6 +146,8 @@ export function UpdateBasicAuthStatusDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

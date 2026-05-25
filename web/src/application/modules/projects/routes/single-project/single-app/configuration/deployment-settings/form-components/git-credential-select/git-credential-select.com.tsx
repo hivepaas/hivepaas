@@ -61,7 +61,7 @@ export function GitCredentialSelect() {
                             credentialsField.onChange(option ?? null);
                         }}
                         onSearch={setSearchQuery}
-                        placeholder="Select git credential"
+                        placeholder="Select git credentials"
                         searchable
                         allowClear
                         closeOnSelect
@@ -77,7 +77,7 @@ export function GitCredentialSelect() {
                     <FieldError errors={[credentialsError]} />
                     <div className="text-xs">
                         <p>
-                            Need to add a new git credential?{" "}
+                            Need to add new git credentials?{" "}
                             <Link
                                 to="#"
                                 className="text-blue-500"

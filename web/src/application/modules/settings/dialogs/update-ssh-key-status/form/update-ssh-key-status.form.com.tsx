@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
+import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
@@ -25,6 +26,8 @@ export function UpdateSSHKeyStatusForm({
     initialValues,
     onHasChanges,
     showAvailableInProjects,
+    readOnlyInherited = false,
+    onClose,
 }: Props) {
     const {
         handleSubmit,
@@ -44,7 +47,7 @@ export function UpdateSSHKeyStatusForm({
     const { isDirty } = useFormState({ control });
 
     useUpdateEffect(() => {
-        onHasChanges?.(isDirty);
+        onHasChanges?.(readOnlyInherited ? false : isDirty);
     }, [isDirty]);
 
     const { field: status } = useController({ name: "status", control });
@@ -56,6 +59,10 @@ export function UpdateSSHKeyStatusForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: UpdateSSHKeyStatusFormOutput) {
+        if (readOnlyInherited) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -70,92 +77,112 @@ export function UpdateSSHKeyStatusForm({
                 void handleSubmit(onValid, onInvalid)(event);
             }}
         >
-            <FieldGroup>
-                <Field>
-                    <InfoBlock
-                        title="Status"
-                        titleWidth={160}
-                    >
-                        <Tabs
-                            value={status.value}
-                            onValueChange={value => {
-                                status.onChange(value as ESettingStatus);
-                            }}
-                        >
-                            <TabsList>
-                                {Object.entries(statusMap).map(([value, label]) => (
-                                    <TabsTrigger
-                                        key={value}
-                                        value={value}
-                                    >
-                                        {label}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                    </InfoBlock>
-                </Field>
-
-                <Field>
-                    <InfoBlock
-                        title="Access expiration"
-                        titleWidth={160}
-                    >
-                        <DateTimePicker
-                            value={expireAt.value ?? undefined}
-                            onChange={date => {
-                                expireAt.onChange(date ?? null);
-                            }}
-                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                            granularity="second"
-                            showClearButton
-                            aria-invalid={isExpireAtInvalid}
-                        />
-                        <FieldError errors={[errors.expireAt]} />
-                    </InfoBlock>
-                </Field>
-
-                {showAvailableInProjects && (
+            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            <fieldset
+                disabled={readOnlyInherited}
+                className="border-0 p-0 m-0 min-w-0"
+            >
+                <FieldGroup>
                     <Field>
                         <InfoBlock
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title="Status"
+                            titleWidth={160}
+                        >
+                            <Tabs
+                                value={status.value}
+                                onValueChange={value => {
+                                    status.onChange(value as ESettingStatus);
+                                }}
+                            >
+                                <TabsList>
+                                    {Object.entries(statusMap).map(([value, label]) => (
+                                        <TabsTrigger
+                                            key={value}
+                                            value={value}
+                                        >
+                                            {label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </InfoBlock>
+                    </Field>
+
+                    <Field>
+                        <InfoBlock
+                            title="Access expiration"
+                            titleWidth={160}
+                        >
+                            <DateTimePicker
+                                value={expireAt.value ?? undefined}
+                                onChange={date => {
+                                    expireAt.onChange(date ?? null);
+                                }}
+                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                granularity="second"
+                                showClearButton
+                                aria-invalid={isExpireAtInvalid}
+                            />
+                            <FieldError errors={[errors.expireAt]} />
+                        </InfoBlock>
+                    </Field>
+
+                    {showAvailableInProjects && (
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Available in Projects" />}
+                                titleWidth={160}
+                            >
+                                <Checkbox
+                                    checked={availableInProjects.value}
+                                    onCheckedChange={checked => {
+                                        availableInProjects.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    )}
+
+                    <Field>
+                        <InfoBlock
+                            title={<LabelWithInfo label="Default" />}
                             titleWidth={160}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={defaultField.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    defaultField.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>
                     </Field>
-                )}
 
-                <Field>
-                    <InfoBlock
-                        title={<LabelWithInfo label="Default" />}
-                        titleWidth={160}
-                    >
-                        <Checkbox
-                            checked={defaultField.value}
-                            onCheckedChange={checked => {
-                                defaultField.onChange(Boolean(checked));
-                            }}
-                        />
-                    </InfoBlock>
-                </Field>
-
+                    {!readOnlyInherited && (
+                        <Field>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </Field>
+                    )}
+                </FieldGroup>
+            </fieldset>
+            {readOnlyInherited && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
-                            type="submit"
-                            isLoading={isPending}
+                            type="button"
+                            onClick={onClose}
                         >
-                            Save
+                            Close
                         </Button>
                     </div>
                 </Field>
-            </FieldGroup>
+            )}
         </form>
     );
 }
@@ -166,4 +193,6 @@ interface Props {
     initialValues?: Partial<UpdateSSHKeyStatusFormInput>;
     onHasChanges?: (dirty: boolean) => void;
     showAvailableInProjects: boolean;
+    readOnlyInherited?: boolean;
+    onClose?: () => void;
 }

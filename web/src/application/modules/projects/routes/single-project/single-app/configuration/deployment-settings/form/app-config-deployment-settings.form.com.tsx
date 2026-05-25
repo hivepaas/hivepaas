@@ -1,7 +1,7 @@
 import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
+import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { type AppDeploymentSettings } from "~/projects/domain";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
@@ -49,10 +49,11 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
             ...base,
             activeMethod: EAppDeploymentMethod.Repo,
             repoSource: {
-                buildTool: data.repoSource.buildTool,
-                repoType: data.repoSource.repoType,
+                // buildTool: data.repoSource.buildTool ?? EBuildTool.Docker,
+                // repoType: data.repoSource.repoType ?? ERepoType.Git,
                 repoUrl: data.repoSource.repoUrl,
                 repoRef: data.repoSource.repoRef,
+                commitHash: data.repoSource.commitHash,
                 credentials: { id: data.repoSource.credentials.id, name: data.repoSource.credentials.name },
                 dockerfilePath: data.repoSource.dockerfilePath,
                 imageName: data.repoSource.imageName,
@@ -96,6 +97,14 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
 
     const activeMethod = methods.watch("activeMethod");
 
+    function onValid(values: SchemaOutput) {
+        onSubmit(values);
+    }
+
+    function onInvalid(errors: FieldErrors<SchemaInput>) {
+        console.error(errors);
+    }
+
     useImperativeHandle(
         ref,
         () => ({
@@ -128,7 +137,8 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                 <form
                     onSubmit={event => {
                         event.preventDefault();
-                        void methods.handleSubmit(onSubmit)(event);
+
+                        void methods.handleSubmit(onValid, onInvalid)(event);
                     }}
                     className="flex flex-col gap-6"
                 >

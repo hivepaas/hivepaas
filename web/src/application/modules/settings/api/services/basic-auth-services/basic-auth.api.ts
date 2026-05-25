@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { BasicAuthApiValidator } from "./basic-auth.api.validator";
 import type {
     BasicAuth_CreateOne_Req,
     BasicAuth_CreateOne_Res,
@@ -18,6 +17,7 @@ import type {
     BasicAuth_UpdateStatus_Req,
     BasicAuth_UpdateStatus_Res,
 } from "./basic-auth.api.contracts";
+import type { BasicAuthApiValidator } from "./basic-auth.api.validator";
 
 export class BasicAuthApi extends BaseApi {
     public constructor(private readonly validator: BasicAuthApiValidator) {

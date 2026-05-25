@@ -161,7 +161,11 @@ export function CreateOrEditRegistryAuthDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -170,6 +174,11 @@ export function CreateOrEditRegistryAuthDialog() {
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "Registry Auth")
+        : "Create or update a registry auth";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues = registryAuth
@@ -191,7 +200,7 @@ export function CreateOrEditRegistryAuthDialog() {
         >
             <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create or update a registry auth</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
@@ -204,6 +213,8 @@ export function CreateOrEditRegistryAuthDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

@@ -2,6 +2,8 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SSHKeySettingEntitySchema } from "~/settings/module-shared/schemas";
 
+import { ESSHKeyType } from "@application/shared/enums";
+
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
@@ -9,6 +11,7 @@ import type {
     SSHKey_DeleteOne_Res,
     SSHKey_FindManyPaginated_Res,
     SSHKey_FindOneById_Res,
+    SSHKey_Generate_Res,
     SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Res,
 } from "./ssh-key.api.contracts";
@@ -25,6 +28,15 @@ const FindOneByIdSchema = z.object({
 
 const CreateOneSchema = z.object({
     data: z.object({ id: z.string() }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const GenerateSchema = z.object({
+    data: z.object({
+        keyType: z.nativeEnum(ESSHKeyType),
+        publicKey: z.string(),
+        privateKey: z.string(),
+    }),
     meta: BaseMetaApiSchema.nullish(),
 });
 
@@ -61,5 +73,10 @@ export class SSHKeyApiValidator {
     deleteOne = (response: AxiosResponse): SSHKey_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
+    };
+
+    generate = (response: AxiosResponse): SSHKey_Generate_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: GenerateSchema });
+        return { data, meta };
     };
 }

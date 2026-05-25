@@ -11,8 +11,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: EmailAccountTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (
+                    scope: EmailAccountTableScope,
+                    id: string,
+                    options: UpdateEmailAccountStatusDialogOptions = {},
+                ) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

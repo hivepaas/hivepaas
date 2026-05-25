@@ -7,6 +7,14 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { SSHKeyEditCell, SSHKeyMenuCell } from "./building-blocks";
 import type { SSHKeyTableScope } from "./ssh-key-table.types";
 
+function formatKeyType(keyType?: string) {
+    if (keyType === undefined || keyType === "") {
+        return "Unspecified";
+    }
+
+    return keyType;
+}
+
 function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
     return [
         {
@@ -31,11 +39,10 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
             enableSorting: true,
         },
         {
-            accessorKey: "targets",
-            header: "Targets",
+            accessorKey: "keyType",
+            header: "Key Type",
             cell: ({ row: { original } }) => {
-                if (!original.targets?.length) return "-";
-                return original.targets.join(", ");
+                return formatKeyType(original.keyType);
             },
         },
         {

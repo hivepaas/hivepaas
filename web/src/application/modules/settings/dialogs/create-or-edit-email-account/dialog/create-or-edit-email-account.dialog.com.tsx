@@ -15,6 +15,8 @@ import { CreateOrEditEmailAccountForm } from "../form";
 import { useCreateOrEditEmailAccountDialogState } from "../hooks";
 import type { CreateOrEditEmailAccountFormOutput } from "../schemas";
 
+import { TestSendMailDialog, type TestSendMailFormOutput } from "./test-send-mail.dialog.com";
+
 const FIELD_MAPPING_NAMES = [
     "fromAddress",
     "fromName",
@@ -34,6 +36,8 @@ export function CreateOrEditEmailAccountDialog() {
     } = useCreateOrEditEmailAccountDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
+    const [testDialogOpen, setTestDialogOpen] = useState(false);
+    const [testAccountValues, setTestAccountValues] = useState<CreateOrEditEmailAccountFormOutput | null>(null);
 
     const { mutate: createSettingEmailAccount, isPending: isCreatingSetting } = EmailCommands.useCreateOne({
         onSuccess: () => {
@@ -80,6 +84,8 @@ export function CreateOrEditEmailAccountDialog() {
         if (state.mode === "closed") {
             setHasChanges(false);
             setTestStatus("idle");
+            setTestDialogOpen(false);
+            setTestAccountValues(null);
             clearDialog();
         }
     }, [clearDialog, state.mode]);
@@ -179,25 +185,44 @@ export function CreateOrEditEmailAccountDialog() {
         createSettingEmailAccount({ payload });
     }
 
-    function onTestSendMail(values: CreateOrEditEmailAccountFormOutput) {
+    function openTestSendMailDialog(values: CreateOrEditEmailAccountFormOutput) {
         setTestStatus("idle");
-        const { availableInProjects: _availableInProjects, default: _default, ...payload } = createPayload(values);
+        setTestAccountValues(values);
+        setTestDialogOpen(true);
+    }
+
+    function onTestSendMail(values: TestSendMailFormOutput) {
+        if (!testAccountValues) {
+            return;
+        }
+
+        setTestStatus("idle");
+        const {
+            availableInProjects: _availableInProjects,
+            default: _default,
+            ...payload
+        } = createPayload(testAccountValues);
+
         testSendMail({
             payload: {
                 ...payload,
-                testRecipient: "",
-                testSubject: "test subject",
-                testContent: "test content",
+                testRecipient: values.testRecipient,
+                testSubject: values.testSubject,
+                testContent: values.testContent,
             },
         });
     }
 
     function handleClose() {
-        if (isPending) {
+        if (isPending || isTesting) {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -205,36 +230,63 @@ export function CreateOrEditEmailAccountDialog() {
         dialogOptions?.onClose?.();
     }
 
+    function handleTestDialogOpenChange(nextOpen: boolean) {
+        if (isTesting) {
+            return;
+        }
+
+        setTestDialogOpen(nextOpen);
+
+        if (!nextOpen) {
+            setTestStatus("idle");
+            setTestAccountValues(null);
+        }
+    }
+
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "Email Account")
+        : "Create or update an e-mail account";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues = emailAccount ? toInitialValues(emailAccount) : undefined;
     const isDetailLoading = state.mode === "edit" && detailQuery.isFetching;
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={handleClose}
-        >
-            <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Create or update an e-mail account</DialogTitle>
-                </DialogHeader>
-                {isDetailLoading && <AppLoader />}
-                {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
-                    <CreateOrEditEmailAccountForm
-                        isPending={isPending}
-                        isTesting={isTesting}
-                        testStatus={testStatus}
-                        onSubmit={onSubmit}
-                        onTestSendMail={onTestSendMail}
-                        onHasChanges={setHasChanges}
-                        initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
-                    />
-                )}
-            </DialogContent>
-        </Dialog>
+        <>
+            <Dialog
+                open={open}
+                onOpenChange={handleClose}
+            >
+                <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{dialogTitle}</DialogTitle>
+                    </DialogHeader>
+                    {isDetailLoading && <AppLoader />}
+                    {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
+                        <CreateOrEditEmailAccountForm
+                            isPending={isPending}
+                            onSubmit={onSubmit}
+                            onOpenTestSendMail={openTestSendMailDialog}
+                            onHasChanges={setHasChanges}
+                            initialValues={initialValues}
+                            showAvailableInProjects={showAvailableInProjects}
+                            readOnlyInherited={readOnlyInherited}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+            <TestSendMailDialog
+                open={open && testDialogOpen}
+                isPending={isTesting}
+                testStatus={testStatus}
+                onOpenChange={handleTestDialogOpenChange}
+                onSubmit={onTestSendMail}
+            />
+        </>
     );
 }
 

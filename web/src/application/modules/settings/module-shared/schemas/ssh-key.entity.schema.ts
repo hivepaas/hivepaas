@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ESettingType } from "@application/shared/enums";
+import { ESSHKeyType, ESettingType } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -9,8 +9,9 @@ export const SSHKeySettingEntitySchema = SettingsBaseEntitySchema.omit({ descrip
     type: z.literal(ESettingType.SSHKey),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
+    keyType: z.union([z.nativeEnum(ESSHKeyType), z.literal("")]).optional(),
+    publicKey: z.string().optional(),
     privateKey: z.string(),
     passphrase: z.string().optional(),
-    targets: z.array(z.string()).optional(),
     secretMasked: z.boolean().optional(),
 });

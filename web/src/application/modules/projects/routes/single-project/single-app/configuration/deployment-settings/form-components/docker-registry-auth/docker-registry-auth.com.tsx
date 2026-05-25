@@ -51,7 +51,7 @@ export function DockerRegistryAuth() {
     }, [registryAuths]);
 
     return (
-        <InfoBlock title="Registry Credential">
+        <InfoBlock title="Registry Credentials">
             <FieldGroup>
                 <Field>
                     <Combobox
@@ -61,7 +61,7 @@ export function DockerRegistryAuth() {
                             registryAuth.onChange(option ?? null);
                         }}
                         onSearch={setSearchQuery}
-                        placeholder="Select registry credential"
+                        placeholder="Select registry credentials"
                         searchable
                         closeOnSelect
                         emptyText="No registry credentials available"
@@ -76,7 +76,7 @@ export function DockerRegistryAuth() {
                     <FieldError errors={[registryAuthError]} />
                     <div className="text-xs">
                         <p>
-                            Need to add a new registry credential?{" "}
+                            Need to add new registry credentials?{" "}
                             <Link
                                 to="#"
                                 className="text-blue-500"

@@ -7,7 +7,7 @@ export const CreateOrEditAccessTokenFormSchema = z.object({
     kind: z.nativeEnum(EAccessTokenKind),
     user: z.string().trim().min(1, "User is required"),
     token: z.string().min(1, "Token is required"),
-    baseURL: z.string().trim().min(1, "Base URL is required"),
+    baseURL: z.string().trim(),
     expireAt: z.date().nullable(),
     availableInProjects: z.boolean(),
     default: z.boolean(),

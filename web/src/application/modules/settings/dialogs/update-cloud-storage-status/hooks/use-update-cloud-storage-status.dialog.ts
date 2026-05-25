@@ -11,8 +11,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: CloudStorageTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (
+                    scope: CloudStorageTableScope,
+                    id: string,
+                    options: UpdateCloudStorageStatusDialogOptions = {},
+                ) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

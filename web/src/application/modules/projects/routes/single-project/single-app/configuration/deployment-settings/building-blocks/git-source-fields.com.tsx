@@ -22,6 +22,11 @@ export function GitSourceFields() {
     } = useController({ control, name: "repoSource.repoRef" });
 
     const {
+        field: commitHash,
+        fieldState: { invalid: isCommitHashInvalid, error: commitHashError },
+    } = useController({ control, name: "repoSource.commitHash" });
+
+    const {
         field: dockerfilePath,
         fieldState: { invalid: isDockerfilePathInvalid, error: dockerfilePathError },
     } = useController({ control, name: "repoSource.dockerfilePath" });
@@ -40,7 +45,7 @@ export function GitSourceFields() {
             <InfoBlock
                 title={
                     <LabelWithInfo
-                        label="Branch / Commit"
+                        label="Branch"
                         isRequired
                     />
                 }
@@ -54,6 +59,18 @@ export function GitSourceFields() {
                     className="max-w-[400px]"
                 />
                 <FieldError errors={[repoRefError]} />
+            </InfoBlock>
+
+            <InfoBlock title="Commit Hash">
+                <Input
+                    {...commitHash}
+                    value={commitHash.value ?? ""}
+                    onChange={commitHash.onChange}
+                    placeholder="commit sha"
+                    aria-invalid={isCommitHashInvalid}
+                    className="max-w-[400px]"
+                />
+                <FieldError errors={[commitHashError]} />
             </InfoBlock>
 
             <InfoBlock title="Dockerfile Path">

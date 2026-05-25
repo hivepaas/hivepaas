@@ -8,6 +8,7 @@ import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { useUpdateRegistryAuthStatusDialog } from "~/settings/dialogs/update-registry-auth-status";
 import type { SettingRegistryAuth } from "~/settings/domain";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
@@ -40,7 +41,7 @@ function View({ scope, registryAuth }: Props) {
 
     function handleDelete() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.registryAuth });
             setOpen(false);
             return;
         }
@@ -58,7 +59,12 @@ function View({ scope, registryAuth }: Props) {
 
     function handleChangeStatus() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            updateStatusDialog.actions.open(scope, registryAuth.id, {
+                props: {
+                    readOnlyInherited: true,
+                    entityTitle: SETTINGS_ENTITY_TITLES.registryAuth,
+                },
+            });
             setOpen(false);
             return;
         }

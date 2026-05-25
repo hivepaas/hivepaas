@@ -82,12 +82,22 @@ export function UpdateNotificationTargetStatusDialog() {
 
     function handleClose() {
         if (isPending) return;
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        )
+            return;
         closeDialog();
         dialogOptions?.onClose?.();
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Notification Target"} Status`
+        : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
     const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
     const initialValues = notificationTarget
@@ -110,7 +120,7 @@ export function UpdateNotificationTargetStatusDialog() {
         >
             <DialogContent className="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle>Change status</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
@@ -120,6 +130,8 @@ export function UpdateNotificationTargetStatusDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

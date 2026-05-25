@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: RegistryAuthTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: RegistryAuthTableScope, options: CreateOrEditRegistryAuthDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: RegistryAuthTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: RegistryAuthTableScope,
+                    id: string,
+                    options: CreateOrEditRegistryAuthDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

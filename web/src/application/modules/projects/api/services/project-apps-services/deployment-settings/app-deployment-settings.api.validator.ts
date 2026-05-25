@@ -41,6 +41,7 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
         repoType: z.nativeEnum(ERepoType),
         repoUrl: z.string(),
         repoRef: z.string(),
+        commitHash: z.string(),
         credentials: SettingsBaseEntitySchema,
         dockerfilePath: z.string(),
         imageName: z.string(),

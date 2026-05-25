@@ -17,5 +17,7 @@ export interface UpdateSslCertStatusDialogOptions {
         onClose?: () => void;
         onSuccess?: () => void;
         onError?: (error: Error) => void;
+        readOnlyInherited?: boolean;
+        entityTitle?: string;
     };
 }

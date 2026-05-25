@@ -162,7 +162,11 @@ export function CreateOrEditImPlatformDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -171,6 +175,11 @@ export function CreateOrEditImPlatformDialog() {
     }
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "IM Platform")
+        : "Create or update an IM platform";
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = state.mode !== "closed" && state.scope.type === "settings";
     const initialValues = imPlatform
@@ -194,7 +203,7 @@ export function CreateOrEditImPlatformDialog() {
         >
             <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create or update an IM platform</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
@@ -207,6 +216,8 @@ export function CreateOrEditImPlatformDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

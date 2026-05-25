@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: BasicAuthTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: BasicAuthTableScope, options: CreateOrEditBasicAuthDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: BasicAuthTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: BasicAuthTableScope,
+                    id: string,
+                    options: CreateOrEditBasicAuthDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

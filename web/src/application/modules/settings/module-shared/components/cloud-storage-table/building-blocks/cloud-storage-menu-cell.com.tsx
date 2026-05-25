@@ -8,6 +8,7 @@ import { ProjectCloudStorageCommands } from "~/projects/data/commands";
 import { CloudStorageCommands } from "~/settings/data/commands";
 import { useUpdateCloudStorageStatusDialog } from "~/settings/dialogs/update-cloud-storage-status";
 import type { SettingCloudStorage } from "~/settings/domain";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
@@ -39,7 +40,7 @@ function View({ scope, cloudStorage }: Props) {
 
     function handleDelete() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.cloudStorage });
             setOpen(false);
             return;
         }
@@ -54,7 +55,12 @@ function View({ scope, cloudStorage }: Props) {
 
     function handleChangeStatus() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            updateStatusDialog.actions.open(scope, cloudStorage.id, {
+                props: {
+                    readOnlyInherited: true,
+                    entityTitle: SETTINGS_ENTITY_TITLES.cloudStorage,
+                },
+            });
             setOpen(false);
             return;
         }

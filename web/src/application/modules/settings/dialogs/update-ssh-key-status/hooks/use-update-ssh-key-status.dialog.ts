@@ -11,8 +11,11 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: SSHKeyTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (scope: SSHKeyTableScope, id: string, options: UpdateSSHKeyStatusDialogOptions = {}) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

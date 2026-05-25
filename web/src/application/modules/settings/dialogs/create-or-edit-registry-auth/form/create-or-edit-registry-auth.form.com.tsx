@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -20,6 +21,8 @@ export function CreateOrEditRegistryAuthForm({
     onHasChanges,
     initialValues,
     showAvailableInProjects,
+    readOnlyInherited = false,
+    onClose,
 }: Props) {
     const {
         handleSubmit,
@@ -40,8 +43,8 @@ export function CreateOrEditRegistryAuthForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnlyInherited ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnlyInherited]);
 
     const {
         field: name,
@@ -64,6 +67,10 @@ export function CreateOrEditRegistryAuthForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditRegistryAuthFormOutput) {
+        if (readOnlyInherited) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -83,144 +90,166 @@ export function CreateOrEditRegistryAuthForm({
             }}
             className="flex flex-col gap-6"
         >
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Name" />}
+            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            <fieldset
+                disabled={readOnlyInherited}
+                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...name}
-                            aria-invalid={isNameInvalid}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Server Address"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...address}
-                            aria-invalid={isAddressInvalid}
-                        />
-                        <FieldError errors={[errors.address]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Username"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...username}
-                            aria-invalid={isUsernameInvalid}
-                        />
-                        <FieldError errors={[errors.username]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Password"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <PasswordInput
-                            value={password.value}
-                            onChange={password.onChange}
-                            aria-invalid={isPasswordInvalid}
-                        />
-                        <FieldError errors={[errors.password]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Read-only" />}
-            >
-                <Checkbox
-                    checked={readonly.value}
-                    onCheckedChange={checked => {
-                        readonly.onChange(Boolean(checked));
-                    }}
-                />
-            </InfoBlock>
-
-            {showAvailableInProjects && (
                 <InfoBlock
                     titleWidth={220}
-                    title={<LabelWithInfo label="Available in Projects" />}
+                    title={<LabelWithInfo label="Name" />}
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...name}
+                                aria-invalid={isNameInvalid}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Server Address"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...address}
+                                aria-invalid={isAddressInvalid}
+                            />
+                            <FieldError errors={[errors.address]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Username"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...username}
+                                aria-invalid={isUsernameInvalid}
+                            />
+                            <FieldError errors={[errors.username]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Password"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <PasswordInput
+                                value={password.value}
+                                onChange={password.onChange}
+                                aria-invalid={isPasswordInvalid}
+                            />
+                            <FieldError errors={[errors.password]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={<LabelWithInfo label="Read Only" />}
                 >
                     <Checkbox
-                        checked={availableInProjects.value}
+                        checked={readonly.value}
                         onCheckedChange={checked => {
-                            availableInProjects.onChange(Boolean(checked));
+                            readonly.onChange(Boolean(checked));
                         }}
                     />
                 </InfoBlock>
-            )}
 
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Default" />}
-            >
-                <Checkbox
-                    checked={defaultField.value}
-                    onCheckedChange={checked => {
-                        defaultField.onChange(Boolean(checked));
-                    }}
-                />
-            </InfoBlock>
+                {showAvailableInProjects && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Available in Projects" />}
+                    >
+                        <Checkbox
+                            checked={availableInProjects.value}
+                            onCheckedChange={checked => {
+                                availableInProjects.onChange(Boolean(checked));
+                            }}
+                        />
+                    </InfoBlock>
+                )}
 
-            <Field>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                <InfoBlock
+                    titleWidth={220}
+                    title={<LabelWithInfo label="Default" />}
+                >
+                    <Checkbox
+                        checked={defaultField.value}
+                        onCheckedChange={checked => {
+                            defaultField.onChange(Boolean(checked));
+                        }}
+                    />
+                </InfoBlock>
+
+                {!readOnlyInherited && (
+                    <Field>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    isLoading={isTesting}
+                                    onClick={() => {
+                                        void handleSubmit(onTestValid, onInvalid)();
+                                    }}
+                                >
+                                    Test Connection
+                                </Button>
+                                {testStatus === "succeeded" && (
+                                    <span className="text-sm text-green-600">Succeeded</span>
+                                )}
+                                {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
+                            </div>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </Field>
+                )}
+            </fieldset>
+            {readOnlyInherited && (
+                <Field>
+                    <div className="flex justify-end">
                         <Button
                             type="button"
-                            variant="secondary"
-                            isLoading={isTesting}
-                            onClick={() => {
-                                void handleSubmit(onTestValid, onInvalid)();
-                            }}
+                            onClick={onClose}
                         >
-                            Test Connection
+                            Close
                         </Button>
-                        {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
-                        {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
                     </div>
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                </Field>
+            )}
         </form>
     );
 }
@@ -234,4 +263,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: Partial<CreateOrEditRegistryAuthFormInput>;
     showAvailableInProjects: boolean;
+    readOnlyInherited?: boolean;
+    onClose?: () => void;
 }

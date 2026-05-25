@@ -40,6 +40,11 @@ export function CreateOrEditSslCertDialog() {
     const [hasChanges, setHasChanges] = useState(false);
 
     const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? (resolvedDialogOptions.entityTitle ?? "SSL Certificate")
+        : "Create or update an SSL certificate";
     const projectId = state.mode !== "closed" && state.scope.type === "project" ? state.scope.projectId : "";
 
     const settingsDomainSettingsQuery = DomainSettingsQueries.useFindOne(
@@ -188,7 +193,11 @@ export function CreateOrEditSslCertDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (
+            !readOnlyInherited &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
             return;
         }
 
@@ -245,7 +254,7 @@ export function CreateOrEditSslCertDialog() {
         >
             <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create or update an SSL certificate</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
                 {isDetailLoading && <AppLoader />}
                 {state.mode !== "closed" && !isDetailLoading && canRenderForm && (
@@ -256,6 +265,8 @@ export function CreateOrEditSslCertDialog() {
                         initialValues={initialValues}
                         scope={state.scope}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnlyInherited={readOnlyInherited}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

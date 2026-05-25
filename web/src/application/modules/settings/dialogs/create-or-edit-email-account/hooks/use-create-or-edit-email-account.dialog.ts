@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: EmailAccountTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: EmailAccountTableScope, options: CreateOrEditEmailAccountDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: EmailAccountTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: EmailAccountTableScope,
+                    id: string,
+                    options: CreateOrEditEmailAccountDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

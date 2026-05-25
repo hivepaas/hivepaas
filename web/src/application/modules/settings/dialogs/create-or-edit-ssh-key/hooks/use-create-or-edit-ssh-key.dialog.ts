@@ -11,11 +11,17 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: SSHKeyTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: SSHKeyTableScope, options: CreateOrEditSSHKeyDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: SSHKeyTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (scope: SSHKeyTableScope, id: string, options: CreateOrEditSSHKeyDialogOptions = {}) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

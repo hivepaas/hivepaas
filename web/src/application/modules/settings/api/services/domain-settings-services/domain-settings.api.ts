@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { DomainSettingsApiValidator } from "./domain-settings.api.validator";
 import type {
     DomainSettings_DeleteOne_Req,
     DomainSettings_DeleteOne_Res,
@@ -14,6 +13,7 @@ import type {
     DomainSettings_UpdateStatus_Req,
     DomainSettings_UpdateStatus_Res,
 } from "./domain-settings.api.contracts";
+import type { DomainSettingsApiValidator } from "./domain-settings.api.validator";
 
 export class DomainSettingsApi extends BaseApi {
     public constructor(private readonly validator: DomainSettingsApiValidator) {

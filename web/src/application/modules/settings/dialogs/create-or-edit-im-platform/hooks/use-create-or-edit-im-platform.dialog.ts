@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: ImPlatformTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: ImPlatformTableScope, options: CreateOrEditImPlatformDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: ImPlatformTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: ImPlatformTableScope,
+                    id: string,
+                    options: CreateOrEditImPlatformDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

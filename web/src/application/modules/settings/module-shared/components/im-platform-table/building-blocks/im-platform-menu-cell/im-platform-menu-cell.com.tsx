@@ -8,6 +8,7 @@ import { ProjectImServiceCommands } from "~/projects/data/commands";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { useUpdateImPlatformStatusDialog } from "~/settings/dialogs/update-im-platform-status";
 import type { SettingImService } from "~/settings/domain";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
 import { PopConfirm } from "@application/shared/components";
@@ -39,7 +40,7 @@ function View({ scope, imPlatform }: Props) {
 
     function handleDelete() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.imPlatform });
             setOpen(false);
             return;
         }
@@ -57,7 +58,12 @@ function View({ scope, imPlatform }: Props) {
 
     function handleChangeStatus() {
         if (isInheritedProject) {
-            inheritedSettingAlert.open();
+            updateStatusDialog.actions.open(scope, imPlatform.id, {
+                props: {
+                    readOnlyInherited: true,
+                    entityTitle: SETTINGS_ENTITY_TITLES.imPlatform,
+                },
+            });
             setOpen(false);
             return;
         }

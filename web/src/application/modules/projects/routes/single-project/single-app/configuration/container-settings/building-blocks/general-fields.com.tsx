@@ -155,7 +155,7 @@ export function GeneralFields() {
                 </div>
             </InfoBlock>
 
-            <InfoBlock title="Read-only root filesystem">
+            <InfoBlock title="Read Only Root Filesystem">
                 <div className="flex items-center gap-2">
                     <Checkbox
                         checked={readOnly.value}

@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: AccessTokenTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: AccessTokenTableScope, options: CreateOrEditAccessTokenDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: AccessTokenTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: AccessTokenTableScope,
+                    id: string,
+                    options: CreateOrEditAccessTokenDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

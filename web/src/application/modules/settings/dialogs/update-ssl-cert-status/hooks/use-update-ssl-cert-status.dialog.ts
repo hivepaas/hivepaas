@@ -11,8 +11,11 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: SslCertTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (scope: SslCertTableScope, id: string, options: UpdateSslCertStatusDialogOptions = {}) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

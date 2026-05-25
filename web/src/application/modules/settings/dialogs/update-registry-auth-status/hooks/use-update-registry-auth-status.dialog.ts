@@ -11,8 +11,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: RegistryAuthTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (
+                    scope: RegistryAuthTableScope,
+                    id: string,
+                    options: UpdateRegistryAuthStatusDialogOptions = {},
+                ) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

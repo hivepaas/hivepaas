@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
+import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EImServiceKind } from "@application/shared/enums";
@@ -32,6 +33,8 @@ export function CreateOrEditImPlatformForm({
     onHasChanges,
     initialValues,
     showAvailableInProjects,
+    readOnlyInherited = false,
+    onClose,
 }: Props) {
     const {
         handleSubmit,
@@ -50,8 +53,8 @@ export function CreateOrEditImPlatformForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnlyInherited ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnlyInherited]);
 
     const kindValue = useWatch({ control, name: "kind" });
 
@@ -71,6 +74,10 @@ export function CreateOrEditImPlatformForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditImPlatformFormOutput) {
+        if (readOnlyInherited) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -90,115 +97,137 @@ export function CreateOrEditImPlatformForm({
             }}
             className="flex flex-col gap-6"
         >
-            <FieldGroup>
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Name" />}
-                >
-                    <Field>
-                        <Input
-                            {...name}
-                            aria-invalid={isNameInvalid}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Type" />}
-                >
-                    <Field>
-                        <Select
-                            value={kind.value}
-                            onValueChange={value => {
-                                kind.onChange(value);
-                            }}
-                        >
-                            <SelectTrigger aria-invalid={isKindInvalid}>
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={EImServiceKind.Slack}>Slack Webhook</SelectItem>
-                                <SelectItem value={EImServiceKind.Discord}>Discord Webhook</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FieldError errors={[errors.kind]} />
-                    </Field>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Webhook URL"
-                            isRequired
-                        />
-                    }
-                >
-                    <Field>
-                        <Input
-                            {...webhook}
-                            aria-invalid={isWebhookInvalid}
-                            placeholder={
-                                kindValue === EImServiceKind.Slack ? "Slack webhook URL" : "Discord webhook URL"
-                            }
-                        />
-                        <FieldError errors={[errors.webhook]} />
-                    </Field>
-                </InfoBlock>
-
-                {showAvailableInProjects && (
+            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            <fieldset
+                disabled={readOnlyInherited}
+                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+            >
+                <FieldGroup>
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Available in Projects" />}
+                        title={<LabelWithInfo label="Name" />}
+                    >
+                        <Field>
+                            <Input
+                                {...name}
+                                aria-invalid={isNameInvalid}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </Field>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Type" />}
+                    >
+                        <Field>
+                            <Select
+                                value={kind.value}
+                                onValueChange={value => {
+                                    kind.onChange(value);
+                                }}
+                            >
+                                <SelectTrigger aria-invalid={isKindInvalid}>
+                                    <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={EImServiceKind.Slack}>Slack Webhook</SelectItem>
+                                    <SelectItem value={EImServiceKind.Discord}>Discord Webhook</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.kind]} />
+                        </Field>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Webhook URL"
+                                isRequired
+                            />
+                        }
+                    >
+                        <Field>
+                            <Input
+                                {...webhook}
+                                aria-invalid={isWebhookInvalid}
+                                placeholder={
+                                    kindValue === EImServiceKind.Slack ? "Slack webhook URL" : "Discord webhook URL"
+                                }
+                            />
+                            <FieldError errors={[errors.webhook]} />
+                        </Field>
+                    </InfoBlock>
+
+                    {showAvailableInProjects && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Available in Projects" />}
+                        >
+                            <Checkbox
+                                checked={availableInProjects.value}
+                                onCheckedChange={checked => {
+                                    availableInProjects.onChange(Boolean(checked));
+                                }}
+                            />
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
                     >
                         <Checkbox
-                            checked={availableInProjects.value}
+                            checked={defaultField.value}
                             onCheckedChange={checked => {
-                                availableInProjects.onChange(Boolean(checked));
+                                defaultField.onChange(Boolean(checked));
                             }}
                         />
                     </InfoBlock>
+                </FieldGroup>
+
+                {!readOnlyInherited && (
+                    <Field>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    isLoading={isTesting}
+                                    onClick={() => {
+                                        void handleSubmit(onTestValid, onInvalid)();
+                                    }}
+                                >
+                                    Test Send Msg
+                                </Button>
+                                {testStatus === "succeeded" && (
+                                    <span className="text-sm text-green-600">Succeeded</span>
+                                )}
+                                {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
+                            </div>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </Field>
                 )}
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Default" />}
-                >
-                    <Checkbox
-                        checked={defaultField.value}
-                        onCheckedChange={checked => {
-                            defaultField.onChange(Boolean(checked));
-                        }}
-                    />
-                </InfoBlock>
-            </FieldGroup>
-
-            <Field>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+            </fieldset>
+            {readOnlyInherited && (
+                <Field>
+                    <div className="flex justify-end">
                         <Button
                             type="button"
-                            variant="secondary"
-                            isLoading={isTesting}
-                            onClick={() => {
-                                void handleSubmit(onTestValid, onInvalid)();
-                            }}
+                            onClick={onClose}
                         >
-                            Test Send Msg
+                            Close
                         </Button>
-                        {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
-                        {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
                     </div>
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                </Field>
+            )}
         </form>
     );
 }
@@ -212,4 +241,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: Partial<CreateOrEditImPlatformFormInput>;
     showAvailableInProjects: boolean;
+    readOnlyInherited?: boolean;
+    onClose?: () => void;
 }

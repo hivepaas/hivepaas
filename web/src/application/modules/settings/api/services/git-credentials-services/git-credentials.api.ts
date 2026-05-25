@@ -3,11 +3,11 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { GitCredentialsApiValidator } from "./git-credentials.api.validator";
 import type {
     GitCredentials_FindManyPaginated_Req,
     GitCredentials_FindManyPaginated_Res,
 } from "./git-credentials.api.contracts";
+import type { GitCredentialsApiValidator } from "./git-credentials.api.validator";
 
 export class GitCredentialsApi extends BaseApi {
     public constructor(private readonly validator: GitCredentialsApiValidator) {

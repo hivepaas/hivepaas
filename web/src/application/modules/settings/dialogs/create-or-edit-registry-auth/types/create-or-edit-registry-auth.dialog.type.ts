@@ -21,5 +21,7 @@ export interface CreateOrEditRegistryAuthDialogOptions {
         onClose?: () => void;
         onSuccess?: () => void;
         onError?: (error: Error) => void;
+        readOnlyInherited?: boolean;
+        entityTitle?: string;
     };
 }

@@ -13,8 +13,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: NotificationTargetTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (
+                    scope: NotificationTargetTableScope,
+                    id: string,
+                    options: UpdateNotificationTargetStatusDialogOptions = {},
+                ) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

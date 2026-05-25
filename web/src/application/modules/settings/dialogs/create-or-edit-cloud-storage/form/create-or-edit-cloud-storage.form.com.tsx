@@ -4,6 +4,7 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ECloudStorageKind } from "@application/shared/enums";
@@ -24,6 +25,8 @@ export function CreateOrEditCloudStorageForm({
     onHasChanges,
     initialValues,
     showAvailableInProjects,
+    readOnlyInherited = false,
+    onClose,
 }: Props) {
     const {
         handleSubmit,
@@ -46,8 +49,8 @@ export function CreateOrEditCloudStorageForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnlyInherited ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnlyInherited]);
 
     const {
         field: name,
@@ -81,6 +84,10 @@ export function CreateOrEditCloudStorageForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditCloudStorageFormOutput) {
+        if (readOnlyInherited) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -100,201 +107,223 @@ export function CreateOrEditCloudStorageForm({
             }}
             className="flex flex-col gap-6"
         >
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Name" />}
+            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            <fieldset
+                disabled={readOnlyInherited}
+                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...name}
-                            aria-invalid={isNameInvalid}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Provider"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Select
-                            value={kind.value}
-                            onValueChange={kind.onChange}
-                        >
-                            <SelectTrigger aria-invalid={isKindInvalid}>
-                                <SelectValue placeholder="Select provider" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {providerOptions.map(option => (
-                                    <SelectItem
-                                        key={option}
-                                        value={option}
-                                    >
-                                        {option}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FieldError errors={[errors.kind]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Access Key ID"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...accessKeyId}
-                            aria-invalid={isAccessKeyIdInvalid}
-                        />
-                        <FieldError errors={[errors.accessKeyId]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Secret Key"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <PasswordInput
-                            value={secretKey.value}
-                            onChange={secretKey.onChange}
-                            aria-invalid={isSecretKeyInvalid}
-                        />
-                        <FieldError errors={[errors.secretKey]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Region"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...region}
-                            aria-invalid={isRegionInvalid}
-                        />
-                        <FieldError errors={[errors.region]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Bucket"
-                        isRequired
-                    />
-                }
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...bucket}
-                            aria-invalid={isBucketInvalid}
-                        />
-                        <FieldError errors={[errors.bucket]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Endpoint" />}
-            >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            {...endpoint}
-                            aria-invalid={isEndpointInvalid}
-                        />
-                        <FieldError errors={[errors.endpoint]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            {showAvailableInProjects && (
                 <InfoBlock
                     titleWidth={220}
-                    title={<LabelWithInfo label="Available in Projects" />}
+                    title={<LabelWithInfo label="Name" />}
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...name}
+                                aria-invalid={isNameInvalid}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Provider"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Select
+                                value={kind.value}
+                                onValueChange={kind.onChange}
+                            >
+                                <SelectTrigger aria-invalid={isKindInvalid}>
+                                    <SelectValue placeholder="Select provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {providerOptions.map(option => (
+                                        <SelectItem
+                                            key={option}
+                                            value={option}
+                                        >
+                                            {option}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.kind]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Access Key ID"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...accessKeyId}
+                                aria-invalid={isAccessKeyIdInvalid}
+                            />
+                            <FieldError errors={[errors.accessKeyId]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Secret Key"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <PasswordInput
+                                value={secretKey.value}
+                                onChange={secretKey.onChange}
+                                aria-invalid={isSecretKeyInvalid}
+                            />
+                            <FieldError errors={[errors.secretKey]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Region"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...region}
+                                aria-invalid={isRegionInvalid}
+                            />
+                            <FieldError errors={[errors.region]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Bucket"
+                            isRequired
+                        />
+                    }
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...bucket}
+                                aria-invalid={isBucketInvalid}
+                            />
+                            <FieldError errors={[errors.bucket]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={<LabelWithInfo label="Endpoint" />}
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Input
+                                {...endpoint}
+                                aria-invalid={isEndpointInvalid}
+                            />
+                            <FieldError errors={[errors.endpoint]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                {showAvailableInProjects && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Available in Projects" />}
+                    >
+                        <Checkbox
+                            checked={availableInProjects.value}
+                            onCheckedChange={checked => {
+                                availableInProjects.onChange(Boolean(checked));
+                            }}
+                        />
+                    </InfoBlock>
+                )}
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={<LabelWithInfo label="Default" />}
                 >
                     <Checkbox
-                        checked={availableInProjects.value}
+                        checked={defaultField.value}
                         onCheckedChange={checked => {
-                            availableInProjects.onChange(Boolean(checked));
+                            defaultField.onChange(Boolean(checked));
                         }}
                     />
                 </InfoBlock>
-            )}
 
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Default" />}
-            >
-                <Checkbox
-                    checked={defaultField.value}
-                    onCheckedChange={checked => {
-                        defaultField.onChange(Boolean(checked));
-                    }}
-                />
-            </InfoBlock>
-
-            <Field>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                {!readOnlyInherited && (
+                    <Field>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    isLoading={isTesting}
+                                    onClick={() => {
+                                        void handleSubmit(onTestValid, onInvalid)();
+                                    }}
+                                >
+                                    Test Access
+                                </Button>
+                                {testStatus === "succeeded" && (
+                                    <span className="text-sm text-green-600">Succeeded</span>
+                                )}
+                                {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
+                            </div>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </Field>
+                )}
+            </fieldset>
+            {readOnlyInherited && (
+                <Field>
+                    <div className="flex justify-end">
                         <Button
                             type="button"
-                            variant="secondary"
-                            isLoading={isTesting}
-                            onClick={() => {
-                                void handleSubmit(onTestValid, onInvalid)();
-                            }}
+                            onClick={onClose}
                         >
-                            Test Access
+                            Close
                         </Button>
-                        {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
-                        {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
                     </div>
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                </Field>
+            )}
         </form>
     );
 }
@@ -308,4 +337,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: Partial<CreateOrEditCloudStorageFormInput>;
     showAvailableInProjects: boolean;
+    readOnlyInherited?: boolean;
+    onClose?: () => void;
 }

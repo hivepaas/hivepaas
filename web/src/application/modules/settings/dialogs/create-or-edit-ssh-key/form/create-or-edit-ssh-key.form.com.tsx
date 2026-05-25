@@ -4,6 +4,7 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
+import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { SingleValueList } from "@application/shared/form";
@@ -19,6 +20,8 @@ export function CreateOrEditSSHKeyForm({
     onHasChanges,
     initialValues,
     showAvailableInProjects,
+    readOnlyInherited = false,
+    onClose,
 }: Props) {
     const form = useForm<CreateOrEditSSHKeyFormInput, unknown, CreateOrEditSSHKeyFormOutput>({
         defaultValues: {
@@ -40,8 +43,8 @@ export function CreateOrEditSSHKeyForm({
     } = form;
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnlyInherited ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnlyInherited]);
 
     const {
         field: name,
@@ -59,6 +62,10 @@ export function CreateOrEditSSHKeyForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditSSHKeyFormOutput) {
+        if (readOnlyInherited) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -75,106 +82,126 @@ export function CreateOrEditSSHKeyForm({
                 }}
                 className="flex flex-col gap-6"
             >
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Name" />}
+                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                <fieldset
+                    disabled={readOnlyInherited}
+                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...name}
-                                aria-invalid={isNameInvalid}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Private Key"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Textarea
-                                {...privateKey}
-                                className="min-h-24"
-                                aria-invalid={isPrivateKeyInvalid}
-                            />
-                            <FieldError errors={[errors.privateKey]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Passphrase" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <PasswordInput
-                                value={passphrase.value}
-                                onChange={passphrase.onChange}
-                                aria-invalid={isPassphraseInvalid}
-                            />
-                            <FieldError errors={[errors.passphrase]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Targets" />}
-                >
-                    <SingleValueList<CreateOrEditSSHKeyFormInput>
-                        name="targets"
-                        label="Name"
-                        placeholder="name"
-                    />
-                    <FieldError errors={[errors.targets]} />
-                </InfoBlock>
-
-                {showAvailableInProjects && (
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Available in Projects" />}
+                        title={<LabelWithInfo label="Name" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...name}
+                                    aria-invalid={isNameInvalid}
+                                />
+                                <FieldError errors={[errors.name]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Private Key"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Textarea
+                                    {...privateKey}
+                                    className="min-h-24"
+                                    aria-invalid={isPrivateKeyInvalid}
+                                />
+                                <FieldError errors={[errors.privateKey]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Passphrase" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <PasswordInput
+                                    value={passphrase.value}
+                                    onChange={passphrase.onChange}
+                                    aria-invalid={isPassphraseInvalid}
+                                />
+                                <FieldError errors={[errors.passphrase]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Targets" />}
+                    >
+                        <SingleValueList<CreateOrEditSSHKeyFormInput>
+                            name="targets"
+                            label="Name"
+                            placeholder="name"
+                        />
+                        <FieldError errors={[errors.targets]} />
+                    </InfoBlock>
+
+                    {showAvailableInProjects && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Available in Projects" />}
+                        >
+                            <Checkbox
+                                checked={availableInProjects.value}
+                                onCheckedChange={checked => {
+                                    availableInProjects.onChange(Boolean(checked));
+                                }}
+                            />
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
                     >
                         <Checkbox
-                            checked={availableInProjects.value}
+                            checked={defaultField.value}
                             onCheckedChange={checked => {
-                                availableInProjects.onChange(Boolean(checked));
+                                defaultField.onChange(Boolean(checked));
                             }}
                         />
                     </InfoBlock>
+
+                    {!readOnlyInherited && (
+                        <Field>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </Field>
+                    )}
+                </fieldset>
+                {readOnlyInherited && (
+                    <Field>
+                        <div className="flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={onClose}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </Field>
                 )}
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Default" />}
-                >
-                    <Checkbox
-                        checked={defaultField.value}
-                        onCheckedChange={checked => {
-                            defaultField.onChange(Boolean(checked));
-                        }}
-                    />
-                </InfoBlock>
-
-                <Field>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Save
-                        </Button>
-                    </div>
-                </Field>
             </form>
         </FormProvider>
     );
@@ -186,4 +213,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: Partial<CreateOrEditSSHKeyFormInput>;
     showAvailableInProjects: boolean;
+    readOnlyInherited?: boolean;
+    onClose?: () => void;
 }

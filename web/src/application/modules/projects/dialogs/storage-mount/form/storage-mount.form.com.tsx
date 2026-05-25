@@ -191,7 +191,7 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Pr
                     {storageType !== EMountType.Tmpfs && (
                         <Field>
                             <InfoBlock
-                                title={<LabelWithInfo label="Read-only" />}
+                                title={<LabelWithInfo label="Read Only" />}
                                 titleWidth={180}
                             >
                                 <Checkbox

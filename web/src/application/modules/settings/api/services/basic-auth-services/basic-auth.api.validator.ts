@@ -1,6 +1,5 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-
 import { BasicAuthSettingEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";

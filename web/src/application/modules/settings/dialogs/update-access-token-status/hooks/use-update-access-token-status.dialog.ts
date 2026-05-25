@@ -11,8 +11,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: AccessTokenTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (
+                    scope: AccessTokenTableScope,
+                    id: string,
+                    options: UpdateAccessTokenStatusDialogOptions = {},
+                ) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

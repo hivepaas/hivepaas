@@ -11,8 +11,11 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: BasicAuthTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (scope: BasicAuthTableScope, id: string, options: UpdateBasicAuthStatusDialogOptions = {}) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

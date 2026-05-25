@@ -11,8 +11,11 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: ImPlatformTableScope, id: string) => {
-                    actions.open(scope, id, { props });
+                open: (scope: ImPlatformTableScope, id: string, options: UpdateImPlatformStatusDialogOptions = {}) => {
+                    actions.open(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

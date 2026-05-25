@@ -11,11 +11,21 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (scope: CloudStorageTableScope) => {
-                    actions.open(scope, { props });
+                open: (scope: CloudStorageTableScope, options: CreateOrEditCloudStorageDialogOptions = {}) => {
+                    actions.open(scope, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
-                openEdit: (scope: CloudStorageTableScope, id: string) => {
-                    actions.openEdit(scope, id, { props });
+                openEdit: (
+                    scope: CloudStorageTableScope,
+                    id: string,
+                    options: CreateOrEditCloudStorageDialogOptions = {},
+                ) => {
+                    actions.openEdit(scope, id, {
+                        ...options,
+                        props: { ...props, ...options.props },
+                    });
                 },
                 close: () => {
                     actions.close();

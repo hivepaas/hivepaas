@@ -2,7 +2,6 @@ package userdto
 
 import (
 	"encoding/base64"
-	"path/filepath"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	maxInviteTokenLen = 10000
+	inviteTokenMaxLen = 10000
 )
 
 type CompleteUserSignupReq struct {
@@ -37,14 +36,13 @@ type UserPhotoReq struct {
 
 	// NOTE: Use locally only
 	DataBytes []byte `json:"-"`
-	FileExt   string `json:"-"`
 }
 
 func (req *UserPhotoReq) IsChanged() bool {
 	if req == nil {
 		return false
 	}
-	return req.Delete || (req.FileExt != "" && len(req.FileName) > 0)
+	return req.Delete || req.FileName != ""
 }
 
 func NewCompleteUserSignupReq() *CompleteUserSignupReq {
@@ -55,9 +53,8 @@ func (req *CompleteUserSignupReq) ModifyRequest() error {
 	req.Username = strings.TrimSpace(req.Username)
 	req.FullName = strings.TrimSpace(req.FullName)
 	// Parse photo
-	if req.Photo != nil && req.Photo.FileName != "" && req.Photo.DataBase64 != "" {
+	if req.Photo != nil && req.Photo.DataBase64 != "" {
 		req.Photo.DataBytes, _ = base64.StdEncoding.DecodeString(req.Photo.DataBase64)
-		req.Photo.FileExt = strings.ToLower(filepath.Ext(req.Photo.FileName))
 	}
 	return nil
 }
@@ -65,10 +62,10 @@ func (req *CompleteUserSignupReq) ModifyRequest() error {
 func (req *CompleteUserSignupReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStr(&req.InviteToken, true,
-		1, maxInviteTokenLen, "inviteToken")...)
+		1, inviteTokenMaxLen, "inviteToken")...)
 	validators = append(validators, validateUsername(&req.Username, true, "username")...)
 	validators = append(validators, basedto.ValidateStr(&req.FullName, true,
-		minNameLen, maxNameLen, "fullName")...)
+		nameMinLen, nameMaxLen, "fullName")...)
 	validators = append(validators, validateUserPhoto(req.Photo, "photo")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

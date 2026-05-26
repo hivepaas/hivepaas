@@ -21,7 +21,7 @@ func NewBeginUserSignupReq() *BeginUserSignupReq {
 func (req *BeginUserSignupReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStr(&req.InviteToken, true,
-		1, maxInviteTokenLen, "inviteToken")...)
+		1, inviteTokenMaxLen, "inviteToken")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

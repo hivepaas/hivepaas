@@ -20,7 +20,7 @@ func NewResetPasswordReq() *ResetPasswordReq {
 func (req *ResetPasswordReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
-	validators = append(validators, basedto.ValidateStr(&req.Password, true, minNameLen, maxNameLen, "password")...)
+	validators = append(validators, basedto.ValidateStr(&req.Password, true, nameMinLen, nameMaxLen, "password")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

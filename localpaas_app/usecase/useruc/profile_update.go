@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -158,6 +160,7 @@ func (uc *UC) preparePersistingUserPhoto(
 			persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
 		}
 		user.Photo = ""
+		user.PhotoID = ""
 		return
 	}
 
@@ -167,11 +170,12 @@ func (uc *UC) preparePersistingUserPhoto(
 			CreatedAt: timeNow,
 		}
 	}
+	fileExt := strings.ToLower(filepath.Ext(req.FileName))
 	photoData.UpdatedAt = timeNow
 	photoData.Type = base.BinObjectTypeUserPhoto
 	photoData.Status = base.BinObjectStatusActive
 	photoData.Name = req.FileName
-	photoData.ContentType = fileutil.TypeByExtension(req.FileExt)
+	photoData.ContentType = fileutil.TypeByExtension(fileExt)
 	photoData.Data = req.DataBytes
 	persistingData.UpsertingBinObjects = append(persistingData.UpsertingBinObjects, photoData)
 

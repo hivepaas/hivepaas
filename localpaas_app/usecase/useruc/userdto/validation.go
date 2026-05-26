@@ -1,6 +1,9 @@
 package userdto
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/asaskevich/govalidator"
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
@@ -10,18 +13,18 @@ import (
 )
 
 const (
-	minNameLen = 1
-	maxNameLen = 100
+	nameMinLen = 1
+	nameMaxLen = 100
 
-	maxUserPhotoSize = 300 * 1024 // 300KB
+	photoMaxSize = 300 * 1024 // 300KB
 
-	minNotesLen = 1
-	maxNotesLen = 10000
+	notesMinLen = 1
+	notesMaxLen = 10000
 )
 
 func validateUsername(username *string, required bool, field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(username, required,
-		minNameLen, maxNameLen, "username")...)
+		nameMinLen, nameMaxLen, "username")...)
 
 	// NOTE: username must not be a valid email address as it takes the address
 	if username != nil {
@@ -33,12 +36,13 @@ func validateUsername(username *string, required bool, field string) (res []vld.
 	return res
 }
 
-func validateUserPhoto(photo *UserPhotoReq, field string) []vld.Validator {
-	if photo == nil || photo.FileName == "" || photo.DataBase64 == "" {
+func validateUserPhoto(photo *UserPhotoReq, field string) (res []vld.Validator) {
+	if photo == nil || photo.FileName == "" {
 		return nil
 	}
+	fileExt := strings.ToLower(filepath.Ext(photo.FileName))
 	return []vld.Validator{
-		vld.Must(gofn.Contain(base.AllPhotoFileExts, photo.FileExt)).OnError(
+		vld.Must(gofn.Contain(base.AllPhotoFileExts, fileExt)).OnError(
 			vld.SetField(field+".fileName", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_EXT_UNSUPPORTED"),
 		),
@@ -47,7 +51,7 @@ func validateUserPhoto(photo *UserPhotoReq, field string) []vld.Validator {
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_INVALID"),
 		),
 		vld.When(len(photo.DataBytes) > 0).Then(
-			vld.Must(len(photo.DataBytes) <= maxUserPhotoSize).OnError(
+			vld.Must(len(photo.DataBytes) <= photoMaxSize).OnError(
 				vld.SetField(field+".dataBase64", nil),
 				vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_TOO_BIG"),
 			),

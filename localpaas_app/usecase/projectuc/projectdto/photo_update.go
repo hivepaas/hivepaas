@@ -25,7 +25,6 @@ type UpdateProjectPhotoReq struct {
 
 	// NOTE: Use locally only
 	DataBytes []byte `json:"-"`
-	FileExt   string `json:"-"`
 }
 
 func NewUpdateProjectPhotoReq() *UpdateProjectPhotoReq {
@@ -35,17 +34,17 @@ func NewUpdateProjectPhotoReq() *UpdateProjectPhotoReq {
 func (req *UpdateProjectPhotoReq) ModifyRequest() error {
 	if req.FileName != "" && req.DataBase64 != "" {
 		req.DataBytes, _ = base64.StdEncoding.DecodeString(req.DataBase64)
-		req.FileExt = strings.ToLower(filepath.Ext(req.FileName))
 	}
 	return nil
 }
 
 func validateProjectPhoto(photo *UpdateProjectPhotoReq) []vld.Validator {
-	if photo == nil || photo.FileName == "" || photo.DataBase64 == "" {
+	if photo == nil || photo.FileName == "" {
 		return nil
 	}
+	fileExt := strings.ToLower(filepath.Ext(photo.FileName))
 	return []vld.Validator{
-		vld.Must(gofn.Contain(base.AllPhotoFileExts, photo.FileExt)).OnError(
+		vld.Must(gofn.Contain(base.AllPhotoFileExts, fileExt)).OnError(
 			vld.SetField("fileName", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_EXT_UNSUPPORTED"),
 		),

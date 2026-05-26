@@ -43,16 +43,16 @@ func (req *UpdateUserReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, validateUsername(&req.Username, false, "username")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)
-	validators = append(validators, basedto.ValidateStr(&req.FullName, false, minNameLen, maxNameLen,
+	validators = append(validators, basedto.ValidateStr(&req.FullName, false, nameMinLen, nameMaxLen,
 		"fullName")...)
 	validators = append(validators, basedto.ValidateStr(req.Position, false,
-		minNameLen, maxNameLen, "position")...)
+		nameMinLen, nameMaxLen, "position")...)
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false, base.AllUserStatuses,
 		"status")...)
 	validators = append(validators, basedto.ValidateStrIn(req.Role, false, base.AllUserRoles,
 		"role")...)
 	validators = append(validators, basedto.ValidateStr(req.Notes, false,
-		minNotesLen, maxNotesLen, "notes")...)
+		notesMinLen, notesMaxLen, "notes")...)
 	validators = append(validators, basedto.ValidateStrIn(req.SecurityOption, false,
 		base.AllUserSecurityOptions, "securityOption")...)
 	validators = append(validators, basedto.ValidateModuleAccessSliceReq(req.ModuleAccesses, true,

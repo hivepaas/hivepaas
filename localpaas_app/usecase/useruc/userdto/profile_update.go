@@ -2,7 +2,6 @@ package userdto
 
 import (
 	"encoding/base64"
-	"path/filepath"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -30,14 +29,13 @@ func (req *UpdateProfileReq) ModifyRequest() error {
 	req.Email = strutil.NormalizeEmail(req.Email)
 	req.FullName = strings.TrimSpace(req.FullName)
 	// Parse photo
-	if req.Photo != nil && req.Photo.FileName != "" && req.Photo.DataBase64 != "" {
+	if req.Photo != nil && req.Photo.DataBase64 != "" {
 		dataBase64 := req.Photo.DataBase64
 		// Image base64 from FE can be in form: `data:image/png;base64,<data-in-base64>`
 		if strings.HasPrefix(dataBase64, "data:") {
 			dataBase64 = dataBase64[strings.Index(dataBase64, ",")+1:]
 		}
 		req.Photo.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
-		req.Photo.FileExt = strings.ToLower(filepath.Ext(req.Photo.FileName))
 	}
 	return nil
 }
@@ -47,12 +45,12 @@ func (req *UpdateProfileReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, validateUsername(&req.Username, false, "username")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)
 	validators = append(validators, basedto.ValidateStr(&req.FullName, false,
-		minNameLen, maxNameLen, "fullName")...)
+		nameMinLen, nameMaxLen, "fullName")...)
 	validators = append(validators, basedto.ValidateStr(req.Position, false,
-		minNameLen, maxNameLen, "position")...)
+		nameMinLen, nameMaxLen, "position")...)
 	validators = append(validators, validateUserPhoto(req.Photo, "photo")...)
 	validators = append(validators, basedto.ValidateStr(req.Notes, false,
-		minNotesLen, maxNotesLen, "notes")...)
+		notesMinLen, notesMaxLen, "notes")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

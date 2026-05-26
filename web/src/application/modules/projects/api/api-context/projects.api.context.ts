@@ -45,6 +45,8 @@ import {
     ProjectSecretsApiValidator,
     ProjectSslCertApi,
     ProjectSslCertApiValidator,
+    ProjectUserAccessesApi,
+    ProjectUserAccessesApiValidator,
     ProjectsApi,
     ProjectsApiValidator,
 } from "~/projects/api/services";
@@ -101,10 +103,14 @@ function createApi() {
     const projectSSHKeyApiValidator = new ProjectSSHKeyApiValidator();
     const projectAccessTokenApiValidator = new ProjectAccessTokenApiValidator();
     const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
+    const projectUserAccessesApiValidator = new ProjectUserAccessesApiValidator();
 
     return {
         projects: {
             $: new ProjectsApi(projectsApiValidator),
+            userAccesses: {
+                $: new ProjectUserAccessesApi(projectUserAccessesApiValidator),
+            },
             apps: {
                 $: new ProjectAppsApi(projectAppsApiValidator),
                 envVars: {

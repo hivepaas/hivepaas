@@ -1,11 +1,12 @@
 import { memo } from "react";
 
-import { Button } from "@components/ui";
-import { Trash2 } from "lucide-react";
+import { Avatar, Button } from "@components/ui";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
 import { ProjectsCommands } from "~/projects/data/commands";
+import { useProjectUserAccessesDialog } from "~/projects/dialogs/project-user-accesses";
 
 import { BackButton, TabNavigation } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
@@ -22,6 +23,7 @@ function View({ projectId }: Props) {
     const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
     const { navigate } = useAppNavigate();
+    const projectUserAccessesDialog = useProjectUserAccessesDialog();
 
     const { mutate: deleteOne, isPending: isDeleting } = ProjectsCommands.useDeleteOne({});
 
@@ -35,6 +37,24 @@ function View({ projectId }: Props) {
 
     invariant(data, "data must be defined");
     const { data: project } = data;
+    const accessUsers = [project.owner, ...project.userAccesses].reduce<ProjectAccessUser[]>((users, user) => {
+        if (users.some(item => item.id === user.id)) {
+            return users;
+        }
+
+        return [
+            ...users,
+            {
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                username: user.username,
+                photo: user.photo,
+            },
+        ];
+    }, []);
+    const visibleAccessUsers = accessUsers.slice(0, 3);
+    const extraAccessUsers = Math.max(accessUsers.length - visibleAccessUsers.length, 0);
 
     const handleRemove = () => {
         deleteOne(
@@ -82,15 +102,56 @@ function View({ projectId }: Props) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 mt-4 pb-4">
+            <div className="flex flex-wrap items-center gap-4 mt-4 pb-4">
                 <BackButton />
-                <div className="flex items-center gap-4">
-                    <div className="flex flex-col gap-3">
+                <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex min-w-0 flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>
                             <ProjectStatusBadge status={project.status} />
                         </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground">Project Owner</span>
+                            <Avatar
+                                name={project.owner.fullName}
+                                src={project.owner.photo}
+                                className="size-8"
+                                borderless
+                            />
+                            <span className="truncate text-sm font-medium">{project.owner.fullName}</span>
+                        </div>
                     </div>
+                </div>
+
+                <div className="ml-auto flex flex-wrap items-center justify-end gap-4">
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground">Access</span>
+                        <div className="flex -space-x-2">
+                            {visibleAccessUsers.map(user => (
+                                <Avatar
+                                    key={user.id}
+                                    name={user.fullName || user.email || user.username}
+                                    src={user.photo}
+                                    className="size-8 border-2 border-background"
+                                />
+                            ))}
+                            {extraAccessUsers > 0 && (
+                                <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary/10 text-xs font-semibold text-primary">
+                                    +{extraAccessUsers}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            projectUserAccessesDialog.actions.open(project.id, project.name);
+                        }}
+                    >
+                        <PlusCircle className="size-4" />
+                        Add User
+                    </Button>
                 </div>
             </div>
 
@@ -103,6 +164,14 @@ function View({ projectId }: Props) {
 
 interface Props {
     projectId: string;
+}
+
+interface ProjectAccessUser {
+    id: string;
+    fullName: string;
+    email: string;
+    username: string;
+    photo: string | null;
 }
 
 export const SingleProjectHeader = memo(View);

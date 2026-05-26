@@ -15,6 +15,7 @@ import {
 } from "~/projects/dialogs/create-or-edit-project-secret";
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
+import { ProjectUserAccessesDialog, useProjectUserAccessesDialogState } from "~/projects/dialogs/project-user-accesses";
 import {
     QuickInstallSslCertDialog,
     useQuickInstallSslCertDialogState,
@@ -86,6 +87,7 @@ function View() {
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
+    const projectUserAccessesDialog = useProjectUserAccessesDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -113,6 +115,7 @@ function View() {
         updateCloudStorageStatusDialog.destroy();
         createOrEditNotificationTargetDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
+        projectUserAccessesDialog.destroy();
     }, [location]);
 
     return (
@@ -142,6 +145,7 @@ function View() {
             <UpdateCloudStorageStatusDialog />
             <CreateOrEditNotificationTargetDialog />
             <UpdateNotificationTargetStatusDialog />
+            <ProjectUserAccessesDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

@@ -10,6 +10,7 @@ export * from "./project-notification";
 export * from "./project-ssl-cert";
 export * from "./project-secrets";
 export * from "./projects";
+export * from "./project-user-accesses";
 export * from "./project-docker-volumes";
 export * from "./project-ssh-key";
 export * from "./project-access-token";

@@ -1,10 +1,16 @@
 import { createContext } from "react";
 
-import { ProjectsPublicApi, ProjectsPublicApiValidator } from "@application/shared/api-public/services";
+import {
+    ProjectsPublicApi,
+    ProjectsPublicApiValidator,
+    UsersPublicApi,
+    UsersPublicApiValidator,
+} from "@application/shared/api-public/services";
 
 function createApplicationPublicApi() {
     return {
         projects: new ProjectsPublicApi(new ProjectsPublicApiValidator()),
+        users: new UsersPublicApi(new UsersPublicApiValidator()),
     };
 }
 

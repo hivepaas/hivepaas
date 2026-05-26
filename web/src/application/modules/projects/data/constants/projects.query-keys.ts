@@ -4,6 +4,7 @@ export const QK = {
      */
     "projects.$.find-many-paginated": "projects.$.find-many-paginated",
     "projects.$.find-one-by-id": "projects.$.find-one-by-id",
+    "projects.user-accesses.$.find-one": "projects.user-accesses.$.find-one",
     /*
      * Project Apps
      */

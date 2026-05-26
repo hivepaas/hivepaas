@@ -60,7 +60,7 @@ export class ProjectsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}`, {
+                this.client.v1.get(`/projects/${projectID}?getUserAccesses=true`, {
                     signal,
                 }),
             ).pipe(

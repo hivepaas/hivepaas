@@ -11,18 +11,33 @@ services:
         published: 8000 # Host port
         protocol: tcp
         mode: host
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   backend:
     image: crccheck/hello-world:latest
     networks:
       - localpaas_net
       - local_net
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   db:
     image: crccheck/hello-world:latest
     networks:
       - localpaas_net
       - local_net
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
 networks:
   localpaas_net:

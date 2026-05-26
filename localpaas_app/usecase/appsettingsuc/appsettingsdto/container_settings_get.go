@@ -58,6 +58,7 @@ type BaseContainerSettings struct {
 	Privileges      *Privileges        `json:"privileges"`
 	Healthcheck     *Healthcheck       `json:"healthcheck"`
 	RestartPolicy   *RestartPolicy     `json:"restartPolicy"`
+	LogDriver       *LogDriver         `json:"logDriver"`
 }
 
 type RestartPolicy struct {
@@ -65,6 +66,11 @@ type RestartPolicy struct {
 	Delay       *timeutil.Duration           `json:"delay,omitempty"`
 	MaxAttempts *uint64                      `json:"maxAttempts,omitempty"`
 	Window      *timeutil.Duration           `json:"window,omitempty"`
+}
+
+type LogDriver struct {
+	Name    string            `json:"name"`
+	Options map[string]string `json:"options"`
 }
 
 type Healthcheck struct {
@@ -149,6 +155,7 @@ func TransformContainerSettingsBase(spec *swarm.ServiceSpec) *BaseContainerSetti
 		Privileges:      TransformContainerPrivileges(containerSpec.Privileges),
 		Healthcheck:     TransformContainerHealthcheck(containerSpec.Healthcheck),
 		RestartPolicy:   TransformContainerRestartPolicy(spec.TaskTemplate.RestartPolicy),
+		LogDriver:       TransformContainerLogDriver(spec.TaskTemplate.LogDriver),
 	}
 	if containerSpec.StopGracePeriod != nil {
 		res.StopGracePeriod = new(timeutil.Duration(*containerSpec.StopGracePeriod))
@@ -224,4 +231,14 @@ func TransformContainerRestartPolicy(policy *swarm.RestartPolicy) *RestartPolicy
 		res.Window = new(timeutil.Duration(*policy.Window))
 	}
 	return res
+}
+
+func TransformContainerLogDriver(logDriver *swarm.Driver) *LogDriver {
+	if logDriver == nil {
+		return nil
+	}
+	return &LogDriver{
+		Name:    logDriver.Name,
+		Options: logDriver.Options,
+	}
 }

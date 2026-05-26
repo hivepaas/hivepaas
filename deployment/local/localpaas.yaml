@@ -50,6 +50,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   db:
     image: postgres:18-alpine
@@ -72,6 +77,11 @@ services:
         mode: host
     volumes:
       - db:/var/lib/postgresql
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   redis:
     image: redis:8-alpine
@@ -83,6 +93,11 @@ services:
         published: 36379 # Host port exposed on the nodes
         protocol: tcp
         mode: host
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   adminer:
     image: adminer:latest
@@ -104,6 +119,11 @@ services:
         - "traefik.http.routers.adminer-http.entrypoints=web"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
         - "traefik.swarm.network=localpaas_net"
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   redis_ui:
     image: redislabs/redisinsight:latest
@@ -114,6 +134,11 @@ services:
         published: 35540 # Host port exposed on the nodes
         protocol: tcp
         mode: host
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   app:
     image: localpaas/localpaas-dev:latest
@@ -153,6 +178,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   worker:
     image: localpaas/localpaas-dev:latest
@@ -172,6 +202,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
   updater:
     image: localpaas/localpaas-dev:latest
@@ -191,6 +226,11 @@ services:
       placement:
         constraints:
           - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
 
 # Define the overlay network for Swarm
 networks:

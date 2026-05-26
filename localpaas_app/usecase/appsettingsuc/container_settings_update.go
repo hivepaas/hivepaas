@@ -115,6 +115,7 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 	uc.prepareUpdatingAppContainerHealthcheck(req, data)
 	uc.prepareUpdatingAppContainerPrivileges(req, data)
 	uc.prepareUpdatingAppContainerRestartPolicy(req, data)
+	uc.prepareUpdatingAppContainerLogDriver(req, data)
 }
 
 func (uc *UC) prepareUpdatingAppContainerHealthcheck(
@@ -214,6 +215,24 @@ func (uc *UC) prepareUpdatingAppContainerRestartPolicy(
 	if req.RestartPolicy.Window != nil {
 		taskSpec.RestartPolicy.Window = new(time.Duration(*req.RestartPolicy.Window))
 	}
+}
+
+func (uc *UC) prepareUpdatingAppContainerLogDriver(
+	req *appsettingsdto.UpdateAppContainerSettingsReq,
+	data *updateAppContainerSettingsData,
+) {
+	service := data.Service
+	taskSpec := &service.Spec.TaskTemplate
+
+	if req.LogDriver == nil {
+		taskSpec.LogDriver = nil
+		return
+	}
+	if taskSpec.LogDriver == nil {
+		taskSpec.LogDriver = &swarm.Driver{}
+	}
+	taskSpec.LogDriver.Name = req.LogDriver.Name
+	taskSpec.LogDriver.Options = req.LogDriver.Options
 }
 
 func (uc *UC) applyAppContainerSettings(

@@ -214,6 +214,16 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 					Aliases: data.LocalNetAliases,
 				},
 			},
+			LogDriver: &swarm.Driver{
+				// Default driver is `json-file`, but Docker recommends `local`
+				// See: https://docs.docker.com/engine/logging/configure/
+				Name: "local",
+				Options: map[string]string{
+					"max-size": "50m",
+					"max-file": "20",
+					"compress": "true",
+				},
+			},
 		},
 	}
 	data.ServiceSpec = serviceSpec

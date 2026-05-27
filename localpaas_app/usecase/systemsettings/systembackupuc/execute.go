@@ -25,7 +25,7 @@ func (uc *UC) ExecuteSystemBackup(
 		return nil, apperrors.Wrap(err)
 	}
 
-	task, err := uc.cronJobService.CreateCronJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
+	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -59,8 +59,8 @@ func (uc *UC) getBackupSettingAndJob(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	// Load cron job of the backup
-	job, err = uc.SettingRepo.GetSingle(ctx, db, scope, base.SettingTypeCronJob, requireJobActive,
+	// Load sched job of the backup
+	job, err = uc.SettingRepo.GetSingle(ctx, db, scope, base.SettingTypeSchedJob, requireJobActive,
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", backup.ID),
 	)
 	if err != nil {

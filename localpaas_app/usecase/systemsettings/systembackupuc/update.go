@@ -106,8 +106,8 @@ func (uc *UC) loadSettingData(
 	data.JobScheduleChanges = backup.ScheduleInterval != data.NewBackup.ScheduleInterval ||
 		backup.ScheduleFrom != data.NewBackup.ScheduleFrom
 
-	// Load cron job of the backup
-	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeCronJob, false,
+	// Load sched job of the backup
+	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", backupSetting.ID),
 		bunex.SelectFor("UPDATE OF setting"),
 	)
@@ -119,21 +119,21 @@ func (uc *UC) loadSettingData(
 		jobSetting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
 			Scope:     req.Scope.ScopeType(),
-			Type:      base.SettingTypeCronJob,
+			Type:      base.SettingTypeSchedJob,
 			Status:    base.SettingStatusActive,
 			Name:      backupJobName,
-			Version:   entity.CurrentCronJobVersion,
+			Version:   entity.CurrentSchedJobVersion,
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		cronJob := &entity.CronJob{
-			CronType:      base.CronJobTypeSystemBackup,
-			Schedule:      &entity.CronJobSchedule{},
+		schedJob := &entity.SchedJob{
+			JobType:       base.SchedJobTypeSystemBackup,
+			Schedule:      &entity.SchedJobSchedule{},
 			TargetSetting: entity.ObjectID{ID: backupSetting.ID},
 			MaxRetry:      backupJobMaxRetry,
 			RetryDelay:    backupJobRetryDelay,
 		}
-		jobSetting.MustSetData(cronJob)
+		jobSetting.MustSetData(schedJob)
 	}
 	data.JobSetting = jobSetting
 
@@ -156,10 +156,10 @@ func (uc *UC) preparePersistingData(
 	jobSetting := updateData.JobSetting
 	jobSetting.Status = gofn.If(persistingData.Setting.Status == base.SettingStatusActive,
 		base.SettingStatusActive, base.SettingStatusDisabled)
-	jobSetting.Kind = string(base.CronJobTypeSystemBackup)
+	jobSetting.Kind = string(base.SchedJobTypeSystemBackup)
 	persistingData.JobSetting = jobSetting
 
-	backupJob := jobSetting.MustAsCronJob()
+	backupJob := jobSetting.MustAsSchedJob()
 	backupJob.Schedule.Interval = updateData.NewBackup.ScheduleInterval
 	backupJob.Schedule.CronExpr = updateData.NewBackup.ScheduleCronExpr
 	backupJob.Schedule.InitialTime = updateData.NewBackup.ScheduleFrom
@@ -180,13 +180,13 @@ func (uc *UC) postPersisting(
 	updateData *updateSettingData,
 	persistingData *persistingSettingData,
 ) error {
-	// Persist the cron job updates
+	// Persist the sched job updates
 	err := uc.SettingRepo.Update(ctx, db, persistingData.JobSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	err = uc.taskQueue.ScheduleTasksForCronJob(ctx, db, updateData.JobSetting, updateData.JobScheduleChanges)
+	err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, updateData.JobSetting, updateData.JobScheduleChanges)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

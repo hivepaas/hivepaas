@@ -1,15 +1,15 @@
 package base
 
-type CronJobType string
+type SchedJobType string
 
 const (
-	CronJobTypeContainerCommand CronJobType = "container-command"
-	CronJobTypeSystemCleanup    CronJobType = "system-cleanup"
-	CronJobTypeSystemBackup     CronJobType = "system-backup"
-	CronJobTypeSSLRenewal       CronJobType = "ssl-renewal"
+	SchedJobTypeContainerCommand SchedJobType = "container-command"
+	SchedJobTypeSystemCleanup    SchedJobType = "system-cleanup"
+	SchedJobTypeSystemBackup     SchedJobType = "system-backup"
+	SchedJobTypeSSLRenewal       SchedJobType = "ssl-renewal"
 )
 
 var (
-	AllCronJobTypes = []CronJobType{CronJobTypeContainerCommand, CronJobTypeSystemCleanup,
-		CronJobTypeSystemBackup, CronJobTypeSSLRenewal}
+	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
+		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal}
 )

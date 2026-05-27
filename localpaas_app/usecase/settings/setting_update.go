@@ -34,7 +34,7 @@ type UpdateSettingData struct {
 	Setting *entity.Setting
 
 	VerifyingName       string
-	VerifyingRefIDs     []string
+	VerifyingRefIDs     *entity.RefObjectIDs
 	MultiDefaultAllowed bool
 	ExtraLoadOpts       []bunex.SelectQueryOption
 
@@ -157,11 +157,9 @@ func (uc *BaseUC) loadSettingForUpdate(
 	}
 
 	// Verify that the referenced settings exist
-	if len(data.VerifyingRefIDs) > 0 {
-		err := uc.checkRefSettingsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+	err = uc.checkRefObjectsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
 	return nil

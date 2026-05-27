@@ -12,7 +12,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc/configfiledto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
@@ -22,6 +21,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc/oauthdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/registryauthuc/registryauthdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc/repowebhookdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/schedjobuc/schedjobdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
@@ -107,10 +107,10 @@ func (h *Handler) UpdateSettingStatus(
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.SSLCertUC.UpdateSSLCertStatus(reqCtx, auth, r) }
 
-	case base.ResourceTypeCronJob:
-		r := cronjobdto.NewUpdateCronJobStatusReq()
+	case base.ResourceTypeSchedJob:
+		r := schedjobdto.NewUpdateSchedJobStatusReq()
 		r.Scope, r.ID = scope, itemID
-		req, ucFunc = r, func() (any, error) { return h.CronJobUC.UpdateCronJobStatus(reqCtx, auth, r) }
+		req, ucFunc = r, func() (any, error) { return h.SchedJobUC.UpdateSchedJobStatus(reqCtx, auth, r) }
 
 	case base.ResourceTypeHealthcheck:
 		r := healthcheckdto.NewUpdateHealthcheckStatusReq()

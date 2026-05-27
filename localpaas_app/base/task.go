@@ -5,13 +5,13 @@ type TaskType string
 const (
 	TaskTypeDummy        TaskType = "task:dummy"
 	TaskTypeAppDeploy    TaskType = "task:app-deploy"
-	TaskTypeCronJobExec  TaskType = "task:cron-job-exec"
+	TaskTypeSchedJobExec TaskType = "task:sched-job-exec"
 	TaskTypeHealthcheck  TaskType = "task:healthcheck"
 	TaskTypeSystemUpdate TaskType = "task:system-update"
 )
 
 var (
-	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeCronJobExec, TaskTypeHealthcheck,
+	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeSchedJobExec, TaskTypeHealthcheck,
 		TaskTypeSystemUpdate}
 )
 

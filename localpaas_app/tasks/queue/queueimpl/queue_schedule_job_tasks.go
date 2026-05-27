@@ -40,7 +40,7 @@ func (q *taskQueue) createTasksForJobs(
 	withinDuration time.Duration,
 ) ([]*entity.Task, error) {
 	opts := []bunex.SelectQueryOption{
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeCronJob),
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeSchedJob),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		bunex.SelectFor("UPDATE OF setting"),
 	}
@@ -61,11 +61,11 @@ func (q *taskQueue) createTasksForJobs(
 	updatingJobSettings := make([]*entity.Setting, 0, len(jobSettings))
 
 	for _, jobSetting := range jobSettings {
-		cronJob, err := jobSetting.AsCronJob()
+		schedJob, err := jobSetting.AsSchedJob()
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		nextRuns, err := cronJob.Schedule.CalcNextRunsInRange(timeNow, timeNow.Add(withinDuration))
+		nextRuns, err := schedJob.Schedule.CalcNextRunsInRange(timeNow, timeNow.Add(withinDuration))
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -73,16 +73,16 @@ func (q *taskQueue) createTasksForJobs(
 		var lastSchedTime time.Time
 		for _, nextRunAt := range nextRuns {
 			lastSchedTime = nextRunAt
-			task, err := q.cronJobService.CreateCronJobTask(jobSetting, nextRunAt, timeNow)
+			task, err := q.schedJobService.CreateSchedJobTask(jobSetting, nextRunAt, timeNow)
 			if err != nil {
 				return nil, apperrors.Wrap(err)
 			}
 			allNewTasks = append(allNewTasks, task)
 		}
 
-		if !lastSchedTime.Equal(cronJob.Schedule.LastSchedTime) {
-			cronJob.Schedule.LastSchedTime = lastSchedTime
-			jobSetting.MustSetData(cronJob)
+		if !lastSchedTime.Equal(schedJob.Schedule.LastSchedTime) {
+			schedJob.Schedule.LastSchedTime = lastSchedTime
+			jobSetting.MustSetData(schedJob)
 			updatingJobSettings = append(updatingJobSettings, jobSetting)
 		}
 	}

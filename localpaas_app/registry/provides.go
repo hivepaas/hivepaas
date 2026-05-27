@@ -36,7 +36,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice/appserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice/clusterserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice/containerexecserviceimpl"
-	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice/cronjobserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/dbservice/dbserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/emailservice/emailserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice/envvarserviceimpl"
@@ -46,6 +45,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice/networkserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice/notificationserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice/projectserviceimpl"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobservice/schedjobserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice/settingserviceimpl"
 	sslrenewalserviceimpl "github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice/sslrenewalservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice/sslserviceimpl"
@@ -59,9 +59,9 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/tasks/initializer"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue/queueimpl"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskappdeploy"
-	"github.com/localpaas/localpaas/localpaas_app/tasks/taskcronjobexec"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskdummy"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskhealthcheck"
+	"github.com/localpaas/localpaas/localpaas_app/tasks/taskschedjobexec"
 	"github.com/localpaas/localpaas/localpaas_app/updater/tasksystemupdate"
 	"github.com/localpaas/localpaas/localpaas_app/updater/updaterimpl"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
@@ -82,7 +82,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
@@ -95,6 +94,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/registryauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/schedjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
@@ -142,7 +142,7 @@ var Provides = []any{
 	initializer.NewWorkerInitializer,
 	taskdummy.NewExecutor,
 	taskappdeploy.NewExecutor,
-	taskcronjobexec.NewExecutor,
+	taskschedjobexec.NewExecutor,
 	taskhealthcheck.NewExecutor,
 
 	// Updater
@@ -204,7 +204,7 @@ var Provides = []any{
 	accesstokenuc.New,
 	traefikuc.New,
 	lpappuc.New,
-	cronjobuc.New,
+	schedjobuc.New,
 	healthcheckuc.New,
 	taskuc.New,
 	emailuc.New,
@@ -235,7 +235,7 @@ var Provides = []any{
 	lpappserviceimpl.New,
 	emailserviceimpl.New,
 	notificationserviceimpl.New,
-	cronjobserviceimpl.New,
+	schedjobserviceimpl.New,
 	taskserviceimpl.New,
 	dbserviceimpl.New,
 	fileserviceimpl.New,

@@ -64,7 +64,7 @@ func (q *taskQueue) UnscheduleTask(
 	return nil
 }
 
-func (q *taskQueue) ScheduleTasksForCronJob(
+func (q *taskQueue) ScheduleTasksForSchedJob(
 	ctx context.Context,
 	db database.Tx,
 	jobSetting *entity.Setting,

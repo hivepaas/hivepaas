@@ -41,20 +41,20 @@ func (cfg *Config) DashboardDeploymentDetailsURL(deploymentID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "deployments", deploymentID)) // TODO: update this
 }
 
-// Cron jobs
+// Scheduled jobs
 
-func (cfg *Config) DashboardGlobalCronTaskDetailsURL(cronJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "settings", "cron-jobs", cronJobID,
+func (cfg *Config) DashboardGlobalSchedTaskDetailsURL(schedJobID, taskID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "settings", "sched-jobs", schedJobID,
 		"tasks", taskID)) // TODO: update this
 }
 
-func (cfg *Config) DashboardAppCronTaskDetailsURL(appID, projectID, cronJobID, taskID string) string {
+func (cfg *Config) DashboardAppSchedTaskDetailsURL(appID, projectID, schedJobID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "apps", appID,
-		"cron-jobs", cronJobID, "tasks", taskID)) // TODO: update this
+		"sched-jobs", schedJobID, "tasks", taskID)) // TODO: update this
 }
 
-func (cfg *Config) DashboardProjectCronTaskDetailsURL(projectID, cronJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "cron-jobs", cronJobID,
+func (cfg *Config) DashboardProjectSchedTaskDetailsURL(projectID, schedJobID, taskID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "sched-jobs", schedJobID,
 		"tasks", taskID)) // TODO: update this
 }
 

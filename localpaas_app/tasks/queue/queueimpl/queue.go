@@ -12,7 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
-	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/startupservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
@@ -31,7 +31,7 @@ type taskQueue struct {
 	taskInfoRepo              cacherepository.TaskInfoRepo
 	healthcheckSettingsRepo   cacherepository.HealthcheckSettingsRepo
 	healthcheckNotifEventRepo cacherepository.HealthcheckNotifEventRepo
-	cronJobService            cronjobservice.Service
+	schedJobService           schedjobservice.Service
 	taskService               taskservice.Service
 	settingService            settingservice.Service
 	startupService            startupservice.Service
@@ -50,7 +50,7 @@ func New(
 	cacheTaskInfoRepo cacherepository.TaskInfoRepo,
 	healthcheckSettingsRepo cacherepository.HealthcheckSettingsRepo,
 	healthcheckNotifEventRepo cacherepository.HealthcheckNotifEventRepo,
-	cronJobService cronjobservice.Service,
+	schedJobService schedjobservice.Service,
 	taskService taskservice.Service,
 	settingService settingservice.Service,
 	startupService startupservice.Service,
@@ -65,7 +65,7 @@ func New(
 		taskInfoRepo:              cacheTaskInfoRepo,
 		healthcheckSettingsRepo:   healthcheckSettingsRepo,
 		healthcheckNotifEventRepo: healthcheckNotifEventRepo,
-		cronJobService:            cronJobService,
+		schedJobService:           schedJobService,
 		taskService:               taskService,
 		settingService:            settingService,
 		startupService:            startupService,

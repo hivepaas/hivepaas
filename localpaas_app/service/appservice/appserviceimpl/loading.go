@@ -2,13 +2,52 @@ package appserviceimpl
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/entityutil"
 )
+
+func (s *service) LoadApps(
+	ctx context.Context,
+	db database.IDB,
+	projectID string,
+	appIDs []string,
+	requireProjectActive, requireAppsActive bool,
+	extraOpts ...bunex.SelectQueryOption,
+) ([]*entity.App, error) {
+	// NOTE: make sure to add SelectRelation("Project") into extraOpts
+	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	appMap := entityutil.SliceToIDMap(apps)
+	for _, appID := range appIDs {
+		if _, exists := appMap[appID]; !exists {
+			return nil, apperrors.NewNotFound(fmt.Sprintf("App '%v'", appID))
+		}
+	}
+
+	for _, app := range apps {
+		if requireProjectActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
+			projectName := app.ProjectID
+			if app.Project != nil {
+				projectName = app.Project.Name
+			}
+			return nil, apperrors.New(apperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+		}
+		if requireAppsActive && app.Status != base.AppStatusActive {
+			return nil, apperrors.New(apperrors.ErrAppInactive).WithNTParam("Name", app.Name)
+		}
+	}
+
+	return apps, nil
+}
 
 func (s *service) LoadApp(
 	ctx context.Context,

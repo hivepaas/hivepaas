@@ -49,17 +49,17 @@ func (s *service) initDefaultSSLRenewal(
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.SettingScopeGlobal,
-		Type:      base.SettingTypeCronJob,
-		Kind:      string(base.CronJobTypeSSLRenewal),
+		Type:      base.SettingTypeSchedJob,
+		Kind:      string(base.SchedJobTypeSSLRenewal),
 		Status:    sslRenewalDefaultStatus,
 		Name:      sslRenewalJobName,
-		Version:   entity.CurrentCronJobVersion,
+		Version:   entity.CurrentSchedJobVersion,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	cronJob := &entity.CronJob{
-		CronType: base.CronJobTypeSSLRenewal,
-		Schedule: &entity.CronJobSchedule{
+	schedJob := &entity.SchedJob{
+		JobType: base.SchedJobTypeSSLRenewal,
+		Schedule: &entity.SchedJobSchedule{
 			Interval:    renewal.ScheduleInterval,
 			InitialTime: renewal.ScheduleFrom,
 		},
@@ -67,7 +67,7 @@ func (s *service) initDefaultSSLRenewal(
 		MaxRetry:      sslRenewalMaxRetry,
 		RetryDelay:    sslRenewalRetryDelay,
 	}
-	jobSetting.MustSetData(cronJob)
+	jobSetting.MustSetData(schedJob)
 
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{renewalSetting, jobSetting})

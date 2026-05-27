@@ -20,7 +20,7 @@ type TemplateName string
 
 const (
 	TemplateAppDeploymentNotification TemplateName = "app-deployment-notification"
-	TemplateCronTaskNotification      TemplateName = "cron-job-notification"
+	TemplateSchedTaskNotification     TemplateName = "sched-job-notification"
 	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
 	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
 	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
@@ -88,12 +88,12 @@ type TemplateDataAppDeployment struct {
 // CRON TASK
 //
 
-type TemplateDataCronTask struct {
+type TemplateDataSchedTask struct {
 	BaseTemplateData
 	ProjectName   string
 	AppName       string
 	Succeeded     bool
-	CronJobName   string
+	SchedJobName  string
 	Schedule      string
 	CreatedAt     time.Time
 	StartedAt     time.Time

@@ -64,17 +64,17 @@ func (s *service) initDefaultSystemBackup(
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.SettingScopeGlobal,
-		Type:      base.SettingTypeCronJob,
-		Kind:      string(base.CronJobTypeSystemBackup),
+		Type:      base.SettingTypeSchedJob,
+		Kind:      string(base.SchedJobTypeSystemBackup),
 		Status:    sysBackupDefaultStatus,
 		Name:      sysBackupJobName,
-		Version:   entity.CurrentCronJobVersion,
+		Version:   entity.CurrentSchedJobVersion,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	cronJob := &entity.CronJob{
-		CronType: base.CronJobTypeSystemBackup,
-		Schedule: &entity.CronJobSchedule{
+	schedJob := &entity.SchedJob{
+		JobType: base.SchedJobTypeSystemBackup,
+		Schedule: &entity.SchedJobSchedule{
 			Interval:    backup.ScheduleInterval,
 			InitialTime: backup.ScheduleFrom,
 		},
@@ -83,7 +83,7 @@ func (s *service) initDefaultSystemBackup(
 		RetryDelay:    sysBackupRetryDelay,
 		Notification:  backup.Notification,
 	}
-	jobSetting.MustSetData(cronJob)
+	jobSetting.MustSetData(schedJob)
 
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{backupSetting, jobSetting})

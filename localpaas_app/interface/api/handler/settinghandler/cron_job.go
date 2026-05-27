@@ -8,129 +8,129 @@ import (
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc/cronjobdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
-// ListCronJob Lists cron-jobs
-// @Summary Lists cron-jobs
-// @Description Lists cron-jobs
+// ListSchedJob Lists sched-jobs
+// @Summary Lists sched-jobs
+// @Description Lists sched-jobs
 // @Tags    settings
 // @Produce json
-// @Id      listSettingCronJob
+// @Id      listSettingSchedJob
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} cronjobdto.ListCronJobResp
+// @Success 200 {object} schedjobdto.ListSchedJobResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs [get]
-func (h *Handler) ListCronJob(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs [get]
+func (h *Handler) ListSchedJob(ctx *gin.Context) {
+	h.ListSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// GetCronJob Gets cron-job details
-// @Summary Gets cron-job details
-// @Description Gets cron-job details
+// GetSchedJob Gets sched-job details
+// @Summary Gets sched-job details
+// @Description Gets sched-job details
 // @Tags    settings
 // @Produce json
-// @Id      getSettingCronJob
+// @Id      getSettingSchedJob
 // @Param   itemID path string true "setting ID"
-// @Success 200 {object} cronjobdto.GetCronJobResp
+// @Success 200 {object} schedjobdto.GetSchedJobResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/{itemID} [get]
-func (h *Handler) GetCronJob(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs/{itemID} [get]
+func (h *Handler) GetSchedJob(ctx *gin.Context) {
+	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// CreateCronJob Creates a new cron-job
-// @Summary Creates a new cron-job
-// @Description Creates a new cron-job
+// CreateSchedJob Creates a new sched-job
+// @Summary Creates a new sched-job
+// @Description Creates a new sched-job
 // @Tags    settings
 // @Produce json
-// @Id      createSettingCronJob
-// @Param   body body cronjobdto.CreateCronJobReq true "request data"
-// @Success 201 {object} cronjobdto.CreateCronJobResp
+// @Id      createSettingSchedJob
+// @Param   body body schedjobdto.CreateSchedJobReq true "request data"
+// @Success 201 {object} schedjobdto.CreateSchedJobResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs [post]
-func (h *Handler) CreateCronJob(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs [post]
+func (h *Handler) CreateSchedJob(ctx *gin.Context) {
+	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// UpdateCronJob Updates cron-job
-// @Summary Updates cron-job
-// @Description Updates cron-job
+// UpdateSchedJob Updates sched-job
+// @Summary Updates sched-job
+// @Description Updates sched-job
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingCronJob
+// @Id      updateSettingSchedJob
 // @Param   itemID path string true "setting ID"
-// @Param   body body cronjobdto.UpdateCronJobReq true "request data"
-// @Success 200 {object} cronjobdto.UpdateCronJobResp
+// @Param   body body schedjobdto.UpdateSchedJobReq true "request data"
+// @Success 200 {object} schedjobdto.UpdateSchedJobResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/{itemID} [put]
-func (h *Handler) UpdateCronJob(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs/{itemID} [put]
+func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
+	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// UpdateCronJobStatus Updates cron-job status
-// @Summary Updates cron-job status
-// @Description Updates cron-job status
+// UpdateSchedJobStatus Updates sched-job status
+// @Summary Updates sched-job status
+// @Description Updates sched-job status
 // @Tags    settings
 // @Produce json
-// @Id      updateSettingCronJobStatus
+// @Id      updateSettingSchedJobStatus
 // @Param   itemID path string true "setting ID"
-// @Param   body body cronjobdto.UpdateCronJobStatusReq true "request data"
-// @Success 200 {object} cronjobdto.UpdateCronJobStatusResp
+// @Param   body body schedjobdto.UpdateSchedJobStatusReq true "request data"
+// @Success 200 {object} schedjobdto.UpdateSchedJobStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/{itemID}/status [put]
-func (h *Handler) UpdateCronJobStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs/{itemID}/status [put]
+func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// DeleteCronJob Deletes cron-job
-// @Summary Deletes cron-job
-// @Description Deletes cron-job
+// DeleteSchedJob Deletes sched-job
+// @Summary Deletes sched-job
+// @Description Deletes sched-job
 // @Tags    settings
 // @Produce json
-// @Id      deleteSettingCronJob
+// @Id      deleteSettingSchedJob
 // @Param   itemID path string true "setting ID"
-// @Success 200 {object} cronjobdto.DeleteCronJobResp
+// @Success 200 {object} schedjobdto.DeleteSchedJobResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/{itemID} [delete]
-func (h *Handler) DeleteCronJob(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeCronJob, base.SettingScopeGlobal)
+// @Router  /settings/sched-jobs/{itemID} [delete]
+func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
+	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeGlobal)
 }
 
-// CronJobCalcNextRuns Calculates next runs of the job
+// SchedJobCalcNextRuns Calculates next runs of the job
 // @Summary Calculates next runs of the job
 // @Description Calculates next runs of the job
 // @Tags    settings
 // @Produce json
-// @Id      cronJobCalcNextRuns
-// @Param   body body cronjobdto.CalcNextRunsReq true "request data"
-// @Success 200 {object} cronjobdto.CalcNextRunsResp
+// @Id      schedJobCalcNextRuns
+// @Param   body body schedjobdto.CalcNextRunsReq true "request data"
+// @Success 200 {object} schedjobdto.CalcNextRunsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /settings/cron-jobs/calc-next-runs [post]
-func (h *Handler) CronJobCalcNextRuns(ctx *gin.Context) {
+// @Router  /settings/sched-jobs/calc-next-runs [post]
+func (h *Handler) SchedJobCalcNextRuns(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := cronjobdto.NewCalcNextRunsReq()
+	req := schedjobdto.NewCalcNextRunsReq()
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.CronJobUC.CalcNextRuns(h.RequestCtx(ctx), auth, req)
+	resp, err := h.SchedJobUC.CalcNextRuns(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

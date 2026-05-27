@@ -30,13 +30,13 @@ func (s *service) ContainerExec(
 
 	resp = &containerexecservice.ContainerExecResp{}
 
-	cronJob := data.CronJob.MustAsCronJob()
-	command := cronJob.Command
+	schedJob := data.SchedJob.MustAsSchedJob()
+	command := schedJob.Command
 	if command == nil || command.Command == "" { // can't continue if this happens
 		data.TaskNonRetryable = true
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command is empty, aborted", tasklog.TsNow))
-		return nil, apperrors.New(apperrors.ErrInternalServer).WithMsgLog("cron job command is empty")
+		return nil, apperrors.New(apperrors.ErrInternalServer).WithMsgLog("schedule job command is empty")
 	}
 
 	contSum, _, err := s.dockerManager.ServiceContainerGetActive(ctx, data.App.ServiceID,
@@ -50,7 +50,7 @@ func (s *service) ContainerExec(
 		return resp, nil
 	}
 
-	envVars, err := s.cronJobService.BuildCommandEnv(ctx, db, data.App, cronJob)
+	envVars, err := s.schedJobService.BuildCommandEnv(ctx, db, data.App, schedJob)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

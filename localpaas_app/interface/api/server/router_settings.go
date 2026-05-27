@@ -164,15 +164,15 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		secretGroup.DELETE("/:itemID", settingHandler.DeleteSecret)
 	}
 
-	{ // cron-job group
-		cronJobGroup := settingGroup.Group("/cron-jobs")
-		cronJobGroup.GET("/:itemID", settingHandler.GetCronJob)
-		cronJobGroup.GET("", settingHandler.ListCronJob)
-		cronJobGroup.POST("", settingHandler.CreateCronJob)
-		cronJobGroup.PUT("/:itemID", settingHandler.UpdateCronJob)
-		cronJobGroup.PUT("/:itemID/status", settingHandler.UpdateCronJobStatus)
-		cronJobGroup.DELETE("/:itemID", settingHandler.DeleteCronJob)
-		cronJobGroup.POST("calc-next-runs", settingHandler.CronJobCalcNextRuns)
+	{ // sched-job group
+		schedJobGroup := settingGroup.Group("/sched-jobs")
+		schedJobGroup.GET("/:itemID", settingHandler.GetSchedJob)
+		schedJobGroup.GET("", settingHandler.ListSchedJob)
+		schedJobGroup.POST("", settingHandler.CreateSchedJob)
+		schedJobGroup.PUT("/:itemID", settingHandler.UpdateSchedJob)
+		schedJobGroup.PUT("/:itemID/status", settingHandler.UpdateSchedJobStatus)
+		schedJobGroup.DELETE("/:itemID", settingHandler.DeleteSchedJob)
+		schedJobGroup.POST("calc-next-runs", settingHandler.SchedJobCalcNextRuns)
 	}
 
 	{ // notification group

@@ -158,6 +158,9 @@ func (s *service) LoadReferenceApps(
 			return nil, apperrors.NewNotFound("App").
 				WithMsgLog("app %s not found or inactive", id)
 		}
+		if app == nil {
+			continue
+		}
 		if requireActive && app.Project != nil && app.Project.Status != base.ProjectStatusActive {
 			app.Project = nil
 		}

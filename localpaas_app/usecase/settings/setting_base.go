@@ -126,6 +126,31 @@ func (uc *BaseUC) checkNameConflict(
 	return nil
 }
 
+func (uc *BaseUC) checkRefObjectsExistence(
+	ctx context.Context,
+	db database.IDB,
+	req *BaseSettingReq,
+	refIDs *entity.RefObjectIDs,
+	requireActive bool,
+) (err error) {
+	if refIDs == nil {
+		return nil
+	}
+	err = uc.checkRefSettingsExistence(ctx, db, req, refIDs.RefSettingIDs, requireActive)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	err = uc.checkRefAppsExistence(ctx, db, refIDs.RefAppIDs, requireActive)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	err = uc.checkRefUsersExistence(ctx, db, refIDs.RefUserIDs, requireActive)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (uc *BaseUC) checkRefSettingsExistence(
 	ctx context.Context,
 	db database.IDB,
@@ -148,6 +173,42 @@ func (uc *BaseUC) checkRefSettingsExistence(
 		if found == nil {
 			return apperrors.NewNotFound("Setting").WithMsgLog("setting %s not found", refSettingID)
 		}
+	}
+	return nil
+}
+
+func (uc *BaseUC) checkRefAppsExistence(
+	ctx context.Context,
+	db database.IDB,
+	refAppIDs []string,
+	requireActive bool,
+) (err error) {
+	if len(refAppIDs) == 0 {
+		return nil
+	}
+	_, err = uc.AppService.LoadApps(ctx, db, "", refAppIDs, requireActive, requireActive,
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (uc *BaseUC) checkRefUsersExistence(
+	ctx context.Context,
+	db database.IDB,
+	refUserIDs []string,
+	requireActive bool,
+) (err error) {
+	if len(refUserIDs) == 0 {
+		return nil
+	}
+	_, err = uc.UserService.LoadUsers(ctx, db, refUserIDs, requireActive)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

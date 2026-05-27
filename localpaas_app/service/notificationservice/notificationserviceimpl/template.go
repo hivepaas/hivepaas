@@ -71,8 +71,8 @@ func (s *service) loadEmailTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "app_deployment_notification.html")
-	case notificationservice.TemplateCronTaskNotification:
-		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "cron_task_notification.html")
+	case notificationservice.TemplateSchedTaskNotification:
+		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "sched_task_notification.html")
 	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "healthcheck_notification.html")
 	case notificationservice.TemplateSSLExpiringNotification:
@@ -97,8 +97,8 @@ func (s *service) loadSlackTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "app_deployment_notification.tpl")
-	case notificationservice.TemplateCronTaskNotification:
-		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "cron_task_notification.tpl")
+	case notificationservice.TemplateSchedTaskNotification:
+		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "healthcheck_notification.tpl")
 	case notificationservice.TemplateSSLExpiringNotification:
@@ -123,8 +123,8 @@ func (s *service) loadDiscordTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "app_deployment_notification.tpl")
-	case notificationservice.TemplateCronTaskNotification:
-		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "cron_task_notification.tpl")
+	case notificationservice.TemplateSchedTaskNotification:
+		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "healthcheck_notification.tpl")
 	case notificationservice.TemplateSSLExpiringNotification:

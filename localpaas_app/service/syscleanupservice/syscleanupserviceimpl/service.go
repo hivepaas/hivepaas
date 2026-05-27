@@ -6,8 +6,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/cronjobservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
@@ -36,7 +36,7 @@ type service struct {
 	lockRepo                 repository.LockRepo
 	loginTrustedDeviceRepo   repository.LoginTrustedDeviceRepo
 
-	cronJobService      cronjobservice.Service
+	schedJobService     schedjobservice.Service
 	appService          appservice.Service
 	settingService      settingservice.Service
 	sslService          sslservice.Service
@@ -64,7 +64,7 @@ func New(
 	sysErrorRepo repository.SysErrorRepo,
 	lockRepo repository.LockRepo,
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
-	cronJobService cronjobservice.Service,
+	schedJobService schedjobservice.Service,
 	appService appservice.Service,
 	settingService settingservice.Service,
 	sslService sslservice.Service,
@@ -91,7 +91,7 @@ func New(
 		sysErrorRepo:             sysErrorRepo,
 		lockRepo:                 lockRepo,
 		loginTrustedDeviceRepo:   loginTrustedDeviceRepo,
-		cronJobService:           cronJobService,
+		schedJobService:          schedJobService,
 		appService:               appService,
 		settingService:           settingService,
 		sslService:               sslService,

@@ -31,7 +31,7 @@ type CreateSettingData struct {
 	BaseSettingData
 
 	VerifyingName       string
-	VerifyingRefIDs     []string
+	VerifyingRefIDs     *entity.RefObjectIDs
 	MultiDefaultAllowed bool
 	Version             int
 
@@ -125,12 +125,10 @@ func (uc *BaseUC) loadSettingForCreation(
 		}
 	}
 
-	// Verify that the referenced settings exist
-	if len(data.VerifyingRefIDs) > 0 {
-		err := uc.checkRefSettingsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+	// Verify that the referenced objects exist
+	err = uc.checkRefObjectsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
 	return nil

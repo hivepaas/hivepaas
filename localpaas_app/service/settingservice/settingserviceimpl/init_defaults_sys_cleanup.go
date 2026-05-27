@@ -79,17 +79,17 @@ func (s *service) initDefaultSystemCleanup(
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.SettingScopeGlobal,
-		Type:      base.SettingTypeCronJob,
-		Kind:      string(base.CronJobTypeSystemCleanup),
+		Type:      base.SettingTypeSchedJob,
+		Kind:      string(base.SchedJobTypeSystemCleanup),
 		Status:    sysCleanupDefaultStatus,
 		Name:      sysCleanupJobName,
-		Version:   entity.CurrentCronJobVersion,
+		Version:   entity.CurrentSchedJobVersion,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	cronJob := &entity.CronJob{
-		CronType: base.CronJobTypeSystemCleanup,
-		Schedule: &entity.CronJobSchedule{
+	schedJob := &entity.SchedJob{
+		JobType: base.SchedJobTypeSystemCleanup,
+		Schedule: &entity.SchedJobSchedule{
 			Interval:    cleanup.ScheduleInterval,
 			InitialTime: cleanup.ScheduleFrom,
 		},
@@ -98,7 +98,7 @@ func (s *service) initDefaultSystemCleanup(
 		RetryDelay:    sysCleanupRetryDelay,
 		Notification:  cleanup.Notification,
 	}
-	jobSetting.MustSetData(cronJob)
+	jobSetting.MustSetData(schedJob)
 
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{cleanupSetting, jobSetting})

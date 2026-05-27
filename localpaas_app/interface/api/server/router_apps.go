@@ -83,22 +83,22 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		configFileGroup.GET("/:itemID/download", appSettingsHandler.DownloadConfigFile)
 	}
 
-	{ // Cron jobs
-		cronJobGroup := appGroup.Group("/:appID/cron-jobs")
-		cronJobGroup.GET("", appSettingsHandler.ListAppCronJob)
-		cronJobGroup.GET("/:itemID", appSettingsHandler.GetAppCronJob)
-		cronJobGroup.POST("", appSettingsHandler.CreateAppCronJob)
-		cronJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppCronJob)
-		cronJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppCronJobStatus)
-		cronJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppCronJob)
+	{ // Scheduled jobs
+		schedJobGroup := appGroup.Group("/:appID/sched-jobs")
+		schedJobGroup.GET("", appSettingsHandler.ListAppSchedJob)
+		schedJobGroup.GET("/:itemID", appSettingsHandler.GetAppSchedJob)
+		schedJobGroup.POST("", appSettingsHandler.CreateAppSchedJob)
+		schedJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppSchedJob)
+		schedJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppSchedJobStatus)
+		schedJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppSchedJob)
 		// Execute
-		cronJobGroup.POST("/:itemID/exec", appSettingsHandler.ExecuteAppCronJob)
+		schedJobGroup.POST("/:itemID/exec", appSettingsHandler.ExecuteAppSchedJob)
 
-		// Cron job task group
-		cronJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppCronJobTask)
-		cronJobGroup.GET("/:itemID/tasks/:taskID", appSettingsHandler.GetAppCronJobTask)
-		cronJobGroup.GET("/:itemID/tasks/:taskID/logs", func(ctx *gin.Context) {
-			appSettingsHandler.GetAppCronJobTaskLogs(ctx, s.websocket)
+		// Sched job task group
+		schedJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppSchedJobTask)
+		schedJobGroup.GET("/:itemID/tasks/:taskID", appSettingsHandler.GetAppSchedJobTask)
+		schedJobGroup.GET("/:itemID/tasks/:taskID/logs", func(ctx *gin.Context) {
+			appSettingsHandler.GetAppSchedJobTaskLogs(ctx, s.websocket)
 		})
 	}
 

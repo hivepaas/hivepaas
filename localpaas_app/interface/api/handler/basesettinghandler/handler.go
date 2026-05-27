@@ -8,7 +8,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cronjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
@@ -21,6 +20,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/oauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/registryauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/repowebhookuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/schedjobuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
@@ -45,7 +45,7 @@ type Handler struct {
 	DomainSettingsUC       *domainsettingsuc.UC
 	GithubAppUC            *githubappuc.UC
 	AccessTokenUC          *accesstokenuc.UC
-	CronJobUC              *cronjobuc.UC
+	SchedJobUC             *schedjobuc.UC
 	HealthcheckUC          *healthcheckuc.UC
 	SecretUC               *secretuc.UC
 	ConfigFileUC           *configfileuc.UC
@@ -76,7 +76,7 @@ func New(
 	domainSettingsUC *domainsettingsuc.UC,
 	githubAppUC *githubappuc.UC,
 	accessTokenUC *accesstokenuc.UC,
-	cronJobUC *cronjobuc.UC,
+	schedJobUC *schedjobuc.UC,
 	healthcheckUC *healthcheckuc.UC,
 	secretUC *secretuc.UC,
 	configFileUC *configfileuc.UC,
@@ -106,7 +106,7 @@ func New(
 		DomainSettingsUC:       domainSettingsUC,
 		GithubAppUC:            githubAppUC,
 		AccessTokenUC:          accessTokenUC,
-		CronJobUC:              cronJobUC,
+		SchedJobUC:             schedJobUC,
 		HealthcheckUC:          healthcheckUC,
 		SecretUC:               secretUC,
 		ConfigFileUC:           configFileUC,

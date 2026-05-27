@@ -22,6 +22,6 @@ type TaskQueue interface {
 
 	ScheduleTask(ctx context.Context, tasks ...*entity.Task) error
 	UnscheduleTask(ctx context.Context, tasks ...*entity.Task) error
-	ScheduleTasksForCronJob(ctx context.Context, db database.Tx, cronJob *entity.Setting,
+	ScheduleTasksForSchedJob(ctx context.Context, db database.Tx, schedJob *entity.Setting,
 		unscheduleCurrentTasks bool) error
 }

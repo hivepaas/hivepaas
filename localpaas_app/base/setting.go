@@ -27,7 +27,7 @@ const (
 	SettingTypeSSLCert            SettingType = "ssl-cert"
 	SettingTypeGithubApp          SettingType = "github-app"
 	SettingTypeAccessToken        SettingType = "access-token"
-	SettingTypeCronJob            SettingType = "cron-job"
+	SettingTypeSchedJob           SettingType = "sched-job"
 	SettingTypeHealthcheck        SettingType = "healthcheck"
 	SettingTypeEmail              SettingType = "email"
 	SettingTypeRepoWebhook        SettingType = "repo-webhook"
@@ -45,7 +45,7 @@ const (
 
 var (
 	AllAppSettingTypes = []SettingType{SettingTypeApp, SettingTypeAppDeployment,
-		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeCronJob, SettingTypeHealthcheck}
+		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeSchedJob, SettingTypeHealthcheck}
 
 	AllProjectSettingTypes = []SettingType{SettingTypeProject, SettingTypeEnvVar, SettingTypeSecret}
 )

@@ -7,9 +7,9 @@ import (
 
 type ContainerExecReq struct {
 	*queue.TaskExecData
-	CronJob *entity.Setting
-	Project *entity.Project
-	App     *entity.App
+	SchedJob *entity.Setting
+	Project  *entity.Project
+	App      *entity.App
 }
 
 type ContainerExecResp struct {

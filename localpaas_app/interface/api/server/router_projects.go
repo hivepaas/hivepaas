@@ -53,14 +53,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		secretGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSecret)
 	}
 
-	{ // Cron jobs
-		cronJobGroup := projectGroup.Group("/:projectID/cron-jobs")
-		cronJobGroup.GET("", projectSettingsHandler.ListCronJob)
-		cronJobGroup.GET("/:itemID", projectSettingsHandler.GetCronJob)
-		cronJobGroup.POST("", projectSettingsHandler.CreateCronJob)
-		cronJobGroup.PUT("/:itemID", projectSettingsHandler.UpdateCronJob)
-		cronJobGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCronJobStatus)
-		cronJobGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCronJob)
+	{ // Scheduled jobs
+		schedJobGroup := projectGroup.Group("/:projectID/sched-jobs")
+		schedJobGroup.GET("", projectSettingsHandler.ListSchedJob)
+		schedJobGroup.GET("/:itemID", projectSettingsHandler.GetSchedJob)
+		schedJobGroup.POST("", projectSettingsHandler.CreateSchedJob)
+		schedJobGroup.PUT("/:itemID", projectSettingsHandler.UpdateSchedJob)
+		schedJobGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSchedJobStatus)
+		schedJobGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSchedJob)
 	}
 
 	{ // Github-app group

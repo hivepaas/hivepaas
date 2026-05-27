@@ -12,7 +12,7 @@ func ValidateNumber[T vldbase.Number](v *T, required bool, min, max T, field str
 			vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
 		))
 	}
-	if v != nil {
+	if v != nil && (required || *v != 0) {
 		result = append(result, vld.NumRange(v, min, max).OnError(
 			vld.SetField(field, nil),
 			vld.SetCustomKey("ERR_VLD_VALUE_NOT_IN_RANGE"),
@@ -28,7 +28,7 @@ func ValidateNumberIn[T vldbase.Number](v *T, required bool, allowedValues []T, 
 			vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
 		))
 	}
-	if v != nil && len(allowedValues) > 0 {
+	if v != nil && (required || *v != 0) && len(allowedValues) > 0 {
 		result = append(result,
 			vld.NumIn(v, allowedValues...).OnError(
 				vld.SetField(field, nil),

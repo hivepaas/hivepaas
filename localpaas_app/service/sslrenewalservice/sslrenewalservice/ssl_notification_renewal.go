@@ -79,14 +79,14 @@ func (s *service) sslBuildRenewalNotificationMsgData(
 
 	switch {
 	case app != nil:
-		msgData.DashboardLink = config.Current.DashboardAppCronTaskDetailsURL(app.ID, app.ProjectID,
-			data.CronJob.ID, data.Task.ID)
+		msgData.DashboardLink = config.Current.DashboardAppSchedTaskDetailsURL(app.ID, app.ProjectID,
+			data.SchedJob.ID, data.Task.ID)
 	case project != nil:
-		msgData.DashboardLink = config.Current.DashboardProjectCronTaskDetailsURL(project.ID,
-			data.CronJob.ID, data.Task.ID)
+		msgData.DashboardLink = config.Current.DashboardProjectSchedTaskDetailsURL(project.ID,
+			data.SchedJob.ID, data.Task.ID)
 	default:
-		msgData.DashboardLink = config.Current.DashboardGlobalCronTaskDetailsURL(
-			data.CronJob.ID, data.Task.ID)
+		msgData.DashboardLink = config.Current.DashboardGlobalSchedTaskDetailsURL(
+			data.SchedJob.ID, data.Task.ID)
 	}
 	item.RenewalNotifMsgData = msgData
 }

@@ -36,7 +36,7 @@ const (
 	ResourceTypeSSLCert            ResourceType = "ssl-cert"
 	ResourceTypeGithubApp          ResourceType = "github-app"
 	ResourceTypeAccessToken        ResourceType = "access-token"
-	ResourceTypeCronJob            ResourceType = "cron-job"
+	ResourceTypeSchedJob           ResourceType = "sched-job"
 	ResourceTypeHealthcheck        ResourceType = "healthcheck"
 	ResourceTypeEmail              ResourceType = "email"
 	ResourceTypeRepoWebhook        ResourceType = "repo-webhook"

@@ -1,17 +1,13 @@
 import { memo } from "react";
 
 import { Avatar, Button } from "@components/ui";
-import { PlusCircle, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { PlusCircle } from "lucide-react";
 import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
-import { ProjectsCommands } from "~/projects/data/commands";
 import { useProjectUserAccessesDialog } from "~/projects/dialogs/project-user-accesses";
 
 import { BackButton, TabNavigation } from "@application/shared/components";
-import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { ROUTE } from "@application/shared/constants";
-import { useAppNavigate } from "@application/shared/hooks/router";
 
 import { ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
@@ -22,10 +18,7 @@ import { SingleProjectHeaderSkeleton } from "./single-project-header.skeleton.co
 function View({ projectId }: Props) {
     const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
-    const { navigate } = useAppNavigate();
     const projectUserAccessesDialog = useProjectUserAccessesDialog();
-
-    const { mutate: deleteOne, isPending: isDeleting } = ProjectsCommands.useDeleteOne({});
 
     if (isLoading) {
         return <SingleProjectHeaderSkeleton />;
@@ -56,18 +49,6 @@ function View({ projectId }: Props) {
     const visibleAccessUsers = accessUsers.slice(0, 3);
     const extraAccessUsers = Math.max(accessUsers.length - visibleAccessUsers.length, 0);
 
-    const handleRemove = () => {
-        deleteOne(
-            { projectID: projectId },
-            {
-                onSuccess: () => {
-                    toast.success("Project removed successfully");
-                    navigate.modules(ROUTE.projects.list.$route);
-                },
-            },
-        );
-    };
-
     const links = [
         {
             route: ROUTE.projects.single.apps.$route(projectId),
@@ -82,7 +63,7 @@ function View({ projectId }: Props) {
         <div className="bg-background pt-4 px-5 rounded-lg">
             <div className="flex items-center justify-between">
                 <SingleProjectBreadcrumbs project={project} />
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                     <PopConfirm
                         title="Remove project"
                         variant="destructive"
@@ -99,12 +80,17 @@ function View({ projectId }: Props) {
                             Remove
                         </Button>
                     </PopConfirm>
-                </div>
+                </div> */}
             </div>
 
             <div className="flex flex-wrap items-center gap-4 mt-4 pb-4">
                 <BackButton />
                 <div className="flex min-w-0 items-center gap-4">
+                    <Avatar
+                        name={project.name}
+                        src={project.photo}
+                        className="size-20 text-2xl"
+                    />
                     <div className="flex min-w-0 flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>

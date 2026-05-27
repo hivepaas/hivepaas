@@ -20,7 +20,14 @@ import styles from "./upload-photo.form.module.scss";
 
 const cx = classnames.bind(styles);
 
-export function UploadPhotoForm({ photo, onSubmit, onEditingStart, onEditingEnd, children }: Props) {
+export function UploadPhotoForm({
+    photo,
+    onSubmit,
+    onEditingStart,
+    onEditingEnd,
+    filename = "profile-photo",
+    children,
+}: Props) {
     const { handleSubmit: originalHandleSubmit, setValue } = useForm<
         UploadPhotoFormInput,
         unknown,
@@ -50,7 +57,7 @@ export function UploadPhotoForm({ photo, onSubmit, onEditingStart, onEditingEnd,
         const bitmap = await createImageBitmap(canvas);
 
         return ImageService.convert(bitmap, {
-            filename: "profile-photo",
+            filename,
             type: "image/webp",
             quality: 0.9,
         });
@@ -105,4 +112,5 @@ type Props = PropsWithChildren<{
     onSubmit: (values: UploadPhotoFormOutput) => void;
     onEditingStart?: () => void;
     onEditingEnd?: () => void;
+    filename?: string;
 }>;

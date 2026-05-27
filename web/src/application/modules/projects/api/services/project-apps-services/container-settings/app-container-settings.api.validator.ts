@@ -51,6 +51,11 @@ const HealthcheckSchema = z.object({
     retries: z.number().optional(),
 });
 
+const LogDriverSchema = z.object({
+    name: z.string(),
+    options: z.record(z.string(), z.string()).nullish(),
+});
+
 const ContainerSpecSchema = z.object({
     serviceLabels: z.record(z.string(), z.string()).nullish(),
     containerLabels: z.record(z.string(), z.string()).nullish(),
@@ -68,6 +73,7 @@ const ContainerSpecSchema = z.object({
     privileges: PrivilegesSchema.nullable(),
     healthcheck: HealthcheckSchema.nullable(),
     restartPolicy: RestartPolicySchema.nullable(),
+    logDriver: LogDriverSchema.nullish(),
 });
 
 const AppContainerSettingsSchema = ContainerSpecSchema.extend({
@@ -95,6 +101,9 @@ export class AppContainerSettingsApiValidator {
                 serviceLabels: data.data.serviceLabels ?? {},
                 containerLabels: data.data.containerLabels ?? {},
                 groups: data.data.groups ?? [],
+                logDriver: data.data.logDriver
+                    ? { ...data.data.logDriver, options: data.data.logDriver.options ?? {} }
+                    : null,
             },
             meta: data.meta,
         };

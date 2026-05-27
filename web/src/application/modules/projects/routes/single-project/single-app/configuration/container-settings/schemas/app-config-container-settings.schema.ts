@@ -43,6 +43,12 @@ export const ContainerSettingsFormHealthcheckSchema = z.object({
     retries: z.number().optional(),
 });
 
+/** Aligned with Docker swarm log driver config. */
+export const ContainerSettingsFormLogDriverSchema = z.object({
+    driver: z.string().trim(),
+    options: z.array(ContainerSettingsFormLabelRowSchema),
+});
+
 /** Aligned with `Privileges` plus form-only `selinuxEnabled` (maps to `seLinuxContext.disable`). */
 export const ContainerSettingsFormPrivilegesSchema = z.object({
     noNewPrivileges: z.boolean(),
@@ -56,18 +62,31 @@ export const ContainerSettingsFormPrivilegesSchema = z.object({
     appArmorMode: z.nativeEnum(EAppArmorMode),
 });
 
-export const AppConfigContainerSettingsFormSchema = z.object({
-    general: ContainerSettingsFormGeneralSchema,
-    serviceLabels: z.array(ContainerSettingsFormLabelRowSchema),
-    containerLabels: z.array(ContainerSettingsFormLabelRowSchema),
-    healthcheck: ContainerSettingsFormHealthcheckSchema,
-    restartPolicy: ContainerSettingsFormRestartPolicySchema,
-    privileges: ContainerSettingsFormPrivilegesSchema,
-});
+export const AppConfigContainerSettingsFormSchema = z
+    .object({
+        general: ContainerSettingsFormGeneralSchema,
+        serviceLabels: z.array(ContainerSettingsFormLabelRowSchema),
+        containerLabels: z.array(ContainerSettingsFormLabelRowSchema),
+        healthcheck: ContainerSettingsFormHealthcheckSchema,
+        restartPolicy: ContainerSettingsFormRestartPolicySchema,
+        logDriver: ContainerSettingsFormLogDriverSchema,
+        privileges: ContainerSettingsFormPrivilegesSchema,
+    })
+    .superRefine((values, ctx) => {
+        const hasOptions = values.logDriver.options.some(row => row.key.trim() !== "");
+        if (hasOptions && !values.logDriver.driver) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["logDriver", "driver"],
+                message: "Driver is required when options are configured",
+            });
+        }
+    });
 
 export type ContainerSettingsFormLabelRow = z.infer<typeof ContainerSettingsFormLabelRowSchema>;
 export type ContainerSettingsFormGeneral = z.infer<typeof ContainerSettingsFormGeneralSchema>;
 export type ContainerSettingsFormHealthcheck = z.infer<typeof ContainerSettingsFormHealthcheckSchema>;
+export type ContainerSettingsFormLogDriver = z.infer<typeof ContainerSettingsFormLogDriverSchema>;
 export type ContainerSettingsFormRestartPolicy = z.infer<typeof ContainerSettingsFormRestartPolicySchema>;
 export type ContainerSettingsFormPrivileges = z.infer<typeof ContainerSettingsFormPrivilegesSchema>;
 
@@ -105,6 +124,10 @@ export const emptyAppConfigContainerSettingsFormDefaults: AppConfigContainerSett
         delay: "",
         window: "",
         maxAttempts: undefined,
+    },
+    logDriver: {
+        driver: "",
+        options: [],
     },
     privileges: {
         noNewPrivileges: false,

@@ -8,6 +8,7 @@ import type {
     Projects_FindManyPaginated_Req,
     Projects_FindOneById_Req,
     Projects_UpdateOne_Req,
+    Projects_UpdatePhoto_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -131,6 +132,28 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update project",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update a project photo
+                 */
+                updatePhoto: async (data: Projects_UpdatePhoto_Req["data"]) => {
+                    const result = await api.projects.$.updatePhoto(
+                        {
+                            data,
+                        },
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project photo",
                                 error,
                             });
 

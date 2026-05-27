@@ -15,9 +15,20 @@ interface PhotoUploadDialogProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (result: File | null) => void;
     initialImage?: string | null;
+    title?: string;
+    description?: string;
+    filename?: string;
 }
 
-export function PhotoUploadDialog({ open, onOpenChange, onSubmit, initialImage = null }: PhotoUploadDialogProps) {
+export function PhotoUploadDialog({
+    open,
+    onOpenChange,
+    onSubmit,
+    initialImage = null,
+    title = "Profile Photo",
+    description = "Adjust the crop area. Use tools to rotate/zoom.",
+    filename,
+}: PhotoUploadDialogProps) {
     return (
         <Dialog
             open={open}
@@ -26,12 +37,13 @@ export function PhotoUploadDialog({ open, onOpenChange, onSubmit, initialImage =
         >
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Profile Photo</DialogTitle>
-                    <DialogDescription>Adjust the crop area. Use tools to rotate/zoom.</DialogDescription>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
 
                 <UploadPhotoForm
                     photo={initialImage}
+                    filename={filename}
                     onSubmit={result => {
                         onSubmit(result.photo);
                         onOpenChange(false);

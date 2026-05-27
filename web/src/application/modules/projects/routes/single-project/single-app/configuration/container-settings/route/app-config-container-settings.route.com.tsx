@@ -5,7 +5,13 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppContainerSettingsCommands, AppContainerSettingsQueries } from "~/projects/data";
-import { type AppContainerSettings, type Healthcheck, type Privileges, type RestartPolicy } from "~/projects/domain";
+import {
+    type AppContainerSettings,
+    type Healthcheck,
+    type LogDriver,
+    type Privileges,
+    type RestartPolicy,
+} from "~/projects/domain";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
@@ -86,6 +92,18 @@ function buildHealthcheck(values: AppConfigContainerSettingsFormSchemaOutput): H
     };
 }
 
+function buildLogDriver(values: AppConfigContainerSettingsFormSchemaOutput): LogDriver | null {
+    const driver = values.logDriver.driver.trim();
+    if (!driver) {
+        return null;
+    }
+
+    return {
+        name: driver,
+        options: buildLabels(values.logDriver.options),
+    };
+}
+
 function mapFormValuesToPayload(
     values: AppConfigContainerSettingsFormSchemaOutput,
     server: AppContainerSettings | undefined,
@@ -110,6 +128,7 @@ function mapFormValuesToPayload(
         privileges: buildPrivileges(values),
         healthcheck: buildHealthcheck(values),
         restartPolicy: buildRestartPolicy(values),
+        logDriver: buildLogDriver(values),
         updateVer: server?.updateVer ?? 0,
     };
 }

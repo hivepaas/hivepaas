@@ -11,7 +11,21 @@ const ProjectEnvFormSchema = z.object({
     color: z.string(),
 });
 
+const ProjectPhotoUploadSchema = z
+    .union([
+        z.object({
+            fileName: z.string(),
+            dataBase64: z.string(),
+        }),
+        z.object({
+            delete: z.literal(true),
+        }),
+    ])
+    .nullable();
+
 export const ProjectGeneralFormSchema = z.object({
+    photo: z.string().nullable(),
+    photoUpload: ProjectPhotoUploadSchema,
     name: z.string().min(1, "Name is required"),
     ownerId: z.string().min(1, "Project owner is required"),
     envs: z

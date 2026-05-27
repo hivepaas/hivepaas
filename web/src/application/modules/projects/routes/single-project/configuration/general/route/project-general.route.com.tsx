@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { Button } from "@components/ui";
 import { useParams } from "react-router";
@@ -27,31 +27,72 @@ export function ProjectGeneralRoute() {
 
     const { data, isLoading, error, refetch } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
-    const { mutate: update, isPending } = ProjectsCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("Project information updated");
-        },
+    const { mutate: update, isPending: isUpdating } = ProjectsCommands.useUpdateOne({
         onError: err => {
             if (isValidationException(err)) {
                 formRef.current?.onError(ValidationException.fromHttp(err));
             }
         },
     });
+    const { mutate: updatePhoto, isPending: isUpdatingPhoto } = ProjectsCommands.useUpdatePhoto({});
 
     function handleSubmit(values: ProjectGeneralFormSchemaOutput) {
         invariant(projectId, "projectId must be defined");
         invariant(data, "data must be defined");
 
-        const { ownerId, ...projectValues } = values;
+        const { photoUpload } = values;
 
-        update({
-            projectID: projectId,
-            ...projectValues,
-            owner: { id: ownerId },
-            updateVer: data.data.updateVer,
-            status: data.data.status,
-        });
+        update(
+            {
+                projectID: projectId,
+                name: values.name,
+                envs: values.envs,
+                tags: values.tags,
+                note: values.note,
+                owner: { id: values.ownerId },
+                updateVer: data.data.updateVer,
+                status: data.data.status,
+            },
+            {
+                onSuccess: () => {
+                    if (!photoUpload) {
+                        toast.success("Project information updated");
+                        return;
+                    }
+
+                    updatePhoto(
+                        {
+                            projectID: projectId,
+                            photo: photoUpload,
+                        },
+                        {
+                            onSuccess: () => {
+                                toast.success("Project information updated");
+                            },
+                        },
+                    );
+                },
+            },
+        );
     }
+
+    useEffect(() => {
+        const project = data?.data;
+
+        if (!project) {
+            return;
+        }
+
+        formRef.current?.setValues({
+            photo: project.photo === "" ? null : project.photo,
+            photoUpload: null,
+            name: project.name,
+            envs: project.envs,
+            tags: project.tags,
+            note: project.note,
+            ownerId: project.owner.id,
+        });
+    }, [data?.data]);
 
     if (isLoading) {
         return <AppLoader />;
@@ -81,8 +122,8 @@ export function ProjectGeneralRoute() {
                     <Button
                         type="submit"
                         className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
+                        disabled={isUpdating || isUpdatingPhoto}
+                        isLoading={isUpdating || isUpdatingPhoto}
                     >
                         Save
                     </Button>

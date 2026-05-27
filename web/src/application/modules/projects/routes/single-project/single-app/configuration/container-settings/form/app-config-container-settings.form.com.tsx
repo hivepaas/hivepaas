@@ -12,6 +12,7 @@ import {
     GeneralFields,
     HealthcheckFields,
     LabelsFields,
+    LogDriverFields,
     RestartPolicyFields,
     SecurityFields,
 } from "../building-blocks";
@@ -27,7 +28,7 @@ import { mapAppContainerSettingsToFormInput } from "./app-config-container-setti
 
 type SchemaInput = AppConfigContainerSettingsFormSchemaInput;
 type SchemaOutput = AppConfigContainerSettingsFormSchemaOutput;
-type SectionValue = "general" | "labels" | "restart-policy" | "security" | "healthcheck";
+type SectionValue = "general" | "labels" | "restart-policy" | "security" | "log-driver" | "healthcheck";
 
 const SECTION_BY_FIELD: Record<keyof SchemaInput, SectionValue> = {
     general: "general",
@@ -35,18 +36,39 @@ const SECTION_BY_FIELD: Record<keyof SchemaInput, SectionValue> = {
     containerLabels: "labels",
     restartPolicy: "restart-policy",
     privileges: "security",
+    logDriver: "log-driver",
     healthcheck: "healthcheck",
 };
 
+function LogDriverSectionTitle() {
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            <span>Log Driver</span>
+            <a
+                className="text-xs text-blue-500 hover:text-blue-600"
+                href="https://docs.docker.com/engine/logging/configure/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={event => {
+                    event.stopPropagation();
+                }}
+            >
+                (docs)
+            </a>
+        </span>
+    );
+}
+
 const CONTAINER_SETTINGS_SECTIONS: {
     value: SectionValue;
-    title: string;
+    title: React.ReactNode;
     content: React.ReactNode;
 }[] = [
     { value: "general", title: "General", content: <GeneralFields /> },
     { value: "labels", title: "Labels", content: <LabelsFields /> },
     { value: "restart-policy", title: "Restart Policy", content: <RestartPolicyFields /> },
     { value: "security", title: "Security", content: <SecurityFields /> },
+    { value: "log-driver", title: <LogDriverSectionTitle />, content: <LogDriverFields /> },
     { value: "healthcheck", title: "Healthcheck", content: <HealthcheckFields /> },
 ];
 

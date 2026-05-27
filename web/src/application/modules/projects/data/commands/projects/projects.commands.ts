@@ -7,6 +7,8 @@ import type {
     Projects_DeleteOne_Res,
     Projects_UpdateOne_Req,
     Projects_UpdateOne_Res,
+    Projects_UpdatePhoto_Req,
+    Projects_UpdatePhoto_Res,
 } from "~/projects/api/services";
 
 import { QK } from "~/projects/data/constants";
@@ -96,9 +98,40 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
+/**
+ * Update a project photo command
+ */
+type UpdatePhotoReq = Projects_UpdatePhoto_Req["data"];
+type UpdatePhotoRes = Projects_UpdatePhoto_Res;
+type UpdatePhotoOptions = Omit<UseMutationOptions<UpdatePhotoRes, Error, UpdatePhotoReq>, "mutationFn">;
+
+function useUpdatePhoto({ onSuccess, ...options }: UpdatePhotoOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updatePhoto,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectsCommands = Object.freeze({
     useCreateOne,
     useDeleteOne,
     useUpdateOne,
+    useUpdatePhoto,
 });
-

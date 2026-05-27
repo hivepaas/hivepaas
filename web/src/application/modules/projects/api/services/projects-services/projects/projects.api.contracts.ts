@@ -59,3 +59,17 @@ export type Projects_UpdateOne_Req = ApiRequestBase<
 export type Projects_UpdateOne_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Update project photo
+ */
+export type ProjectPhotoPayload = { fileName: string; dataBase64: string } | { delete: true };
+
+export type Projects_UpdatePhoto_Req = ApiRequestBase<{
+    projectID: string;
+    photo: ProjectPhotoPayload;
+}>;
+
+export type Projects_UpdatePhoto_Res = ApiResponseBase<{
+    type: "success";
+}>;

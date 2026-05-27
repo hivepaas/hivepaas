@@ -35,6 +35,7 @@ type GetSystemCleanupResp struct {
 type SystemCleanupResp struct {
 	*settings.BaseSettingResp
 	ScheduleInterval  timeutil.Duration                  `json:"scheduleInterval"`
+	ScheduleCronExpr  string                             `json:"scheduleCronExpr"`
 	ScheduleFrom      time.Time                          `json:"scheduleFrom"`
 	DBObjectRetention *DBObjectRetentionResp             `json:"dbObjectRetention"`
 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`

@@ -161,7 +161,12 @@ func (uc *UC) preparePersistingData(
 
 	backupJob := jobSetting.MustAsCronJob()
 	backupJob.Schedule.Interval = updateData.NewBackup.ScheduleInterval
+	backupJob.Schedule.CronExpr = updateData.NewBackup.ScheduleCronExpr
 	backupJob.Schedule.InitialTime = updateData.NewBackup.ScheduleFrom
+	if err = backupJob.Schedule.IsValid(); err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	backupJob.Schedule.OnChange(updateData.JobScheduleChanges) // call this to handle if the schedule changes
 	backupJob.Notification = updateData.NewBackup.Notification
 	jobSetting.MustSetData(backupJob)

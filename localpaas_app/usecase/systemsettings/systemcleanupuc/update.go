@@ -161,7 +161,12 @@ func (uc *UC) preparePersistingData(
 
 	cleanupJob := jobSetting.MustAsCronJob()
 	cleanupJob.Schedule.Interval = updateData.NewCleanup.ScheduleInterval
+	cleanupJob.Schedule.CronExpr = updateData.NewCleanup.ScheduleCronExpr
 	cleanupJob.Schedule.InitialTime = updateData.NewCleanup.ScheduleFrom
+	if err = cleanupJob.Schedule.IsValid(); err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	cleanupJob.Schedule.OnChange(updateData.JobScheduleChanges) // call this to handle if the schedule changes
 	cleanupJob.Notification = updateData.NewCleanup.Notification
 	jobSetting.MustSetData(cleanupJob)

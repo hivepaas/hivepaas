@@ -21,6 +21,7 @@ type UpdateSystemBackupReq struct {
 type SystemBackupBaseReq struct {
 	Status           base.SettingStatus                `json:"status"`
 	ScheduleInterval timeutil.Duration                 `json:"scheduleInterval"`
+	ScheduleCronExpr string                            `json:"scheduleCronExpr"`
 	ScheduleFrom     time.Time                         `json:"scheduleFrom"`
 	Compression      SystemBackupCompressionReq        `json:"compression"`
 	Encryption       SystemBackupEncryptionReq         `json:"encryption"`
@@ -32,6 +33,7 @@ type SystemBackupBaseReq struct {
 func (req *SystemBackupBaseReq) ToEntity() *entity.SystemBackup {
 	return &entity.SystemBackup{
 		ScheduleInterval: req.ScheduleInterval,
+		ScheduleCronExpr: req.ScheduleCronExpr,
 		ScheduleFrom:     req.ScheduleFrom,
 		Compression:      req.Compression.ToEntity(),
 		Encryption:       req.Encryption.ToEntity(),
@@ -51,6 +53,15 @@ func (req *SystemBackupCompressionReq) ToEntity() entity.SystemBackupCompression
 	}
 }
 
+func (req *SystemBackupCompressionReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStrIn(&req.Format, false,
+		base.AllFileCompressionFormats, field+"format")...)
+	return res
+}
+
 type SystemBackupEncryptionReq struct {
 	Format base.FileEncryptionFormat `json:"format,omitempty"`
 	Secret string                    `json:"secret,omitzero"`
@@ -61,6 +72,15 @@ func (req *SystemBackupEncryptionReq) ToEntity() entity.SystemBackupEncryption {
 		Format: req.Format,
 		Secret: entity.NewEncryptedField(req.Secret),
 	}
+}
+
+func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStrIn(&req.Format, false,
+		base.AllFileEncryptionFormats, field+"format")...)
+	return res
 }
 
 type SystemBackupCloudStorageReq struct {
@@ -75,6 +95,15 @@ func (req *SystemBackupCloudStorageReq) ToEntity() entity.SystemBackupCloudStora
 	}
 }
 
+func (req *SystemBackupCloudStorageReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateID(&req.ID, false, field+"id")...)
+	// TODO: validate `destinationDir`
+	return res
+}
+
 type SystemBackupDBConfigReq struct {
 	BackupDeletedObjects bool `json:"backupDeletedObjects"`
 }
@@ -85,9 +114,21 @@ func (req *SystemBackupDBConfigReq) ToEntity() entity.SystemBackupDBConfig {
 	}
 }
 
-func (req *SystemBackupBaseReq) validate(_ string) []vld.Validator {
-	// TODO: add validation
-	return nil
+func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	schedValid := (req.ScheduleInterval > 0 && req.ScheduleCronExpr == "") ||
+		(req.ScheduleInterval == 0 && req.ScheduleCronExpr != "")
+	res = append(res, vld.Must(schedValid).OnError(
+		vld.SetField(field+"scheduleInterval|scheduleCronExpr", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
+	))
+	res = append(res, req.Compression.validate(field+"compression")...)
+	res = append(res, req.Encryption.validate(field+"encryption")...)
+	res = append(res, req.CloudStorage.validate(field+"cloudStorage")...)
+	res = append(res, req.Notification.Validate(field+"notification")...)
+	return res
 }
 
 func NewUpdateSystemBackupReq() *UpdateSystemBackupReq {

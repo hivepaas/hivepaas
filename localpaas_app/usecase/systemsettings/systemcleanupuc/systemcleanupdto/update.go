@@ -21,6 +21,7 @@ type UpdateSystemCleanupReq struct {
 type SystemCleanupBaseReq struct {
 	Status            base.SettingStatus                `json:"status"`
 	ScheduleInterval  timeutil.Duration                 `json:"scheduleInterval"`
+	ScheduleCronExpr  string                            `json:"scheduleCronExpr"`
 	ScheduleFrom      time.Time                         `json:"scheduleFrom"`
 	DBObjectRetention DBObjectRetentionReq              `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanupReq           `json:"clusterCleanup"`
@@ -31,12 +32,30 @@ type SystemCleanupBaseReq struct {
 func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
 	return &entity.SystemCleanup{
 		ScheduleInterval:  req.ScheduleInterval,
+		ScheduleCronExpr:  req.ScheduleCronExpr,
 		ScheduleFrom:      req.ScheduleFrom,
 		DBObjectRetention: req.DBObjectRetention.ToEntity(),
 		ClusterCleanup:    req.ClusterCleanup.ToEntity(),
 		BackupCleanup:     req.BackupCleanup.ToEntity(),
 		Notification:      req.Notification.ToEntity(),
 	}
+}
+
+func (req *SystemCleanupBaseReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	schedValid := (req.ScheduleInterval > 0 && req.ScheduleCronExpr == "") ||
+		(req.ScheduleInterval == 0 && req.ScheduleCronExpr != "")
+	res = append(res, vld.Must(schedValid).OnError(
+		vld.SetField(field+"scheduleInterval|scheduleCronExpr", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
+	))
+	res = append(res, req.DBObjectRetention.validate(field+"dbObjectRetention")...)
+	res = append(res, req.ClusterCleanup.validate(field+"clusterCleanup")...)
+	res = append(res, req.BackupCleanup.validate(field+"backupCleanup")...)
+	res = append(res, req.Notification.Validate(field+"notification")...)
+	return res
 }
 
 type DBObjectRetentionReq struct {
@@ -57,6 +76,21 @@ func (req *DBObjectRetentionReq) ToEntity() entity.DBObjectRetention {
 	}
 }
 
+func (req *DBObjectRetentionReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	oneDay := timeutil.Duration(time.Hour * 24) //nolint:mnd
+	durValid := req.Tasks >= oneDay && req.SysErrors >= oneDay &&
+		req.Deployments >= oneDay && req.DeletedObjects >= oneDay
+	res = append(res, vld.Must(durValid).OnError(
+		vld.SetField(field+"duration values", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_MUST_GREATER_THAN"),
+		vld.SetParam("Min", oneDay.String()),
+	))
+	return res
+}
+
 type SystemClusterCleanupReq struct {
 	Enabled         bool `json:"enabled"`
 	PruneImages     bool `json:"pruneImages"`
@@ -75,6 +109,10 @@ func (req *SystemClusterCleanupReq) ToEntity() entity.SystemClusterCleanup {
 	}
 }
 
+func (req *SystemClusterCleanupReq) validate(_ string) []vld.Validator {
+	return nil
+}
+
 type SystemBackupCleanupReq struct {
 	Enabled              bool              `json:"enabled"`
 	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
@@ -89,9 +127,17 @@ func (req *SystemBackupCleanupReq) ToEntity() entity.SystemBackupCleanup {
 	}
 }
 
-func (req *SystemCleanupBaseReq) validate(_ string) []vld.Validator {
-	// TODO: add validation
-	return nil
+func (req *SystemBackupCleanupReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	durValid := req.CloudBackupRetention >= 0 && req.LocalBackupRetention >= 0
+	res = append(res, vld.Must(durValid).OnError(
+		vld.SetField(field+"duration values", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_MUST_GREATER_THAN"),
+		vld.SetParam("Min", 0),
+	))
+	return res
 }
 
 func NewUpdateSystemCleanupReq() *UpdateSystemCleanupReq {

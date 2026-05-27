@@ -24,7 +24,8 @@ func (s *systemCleanupParser) New() SettingData {
 }
 
 type SystemCleanup struct {
-	ScheduleInterval  timeutil.Duration      `json:"scheduleInterval"`
+	ScheduleInterval  timeutil.Duration      `json:"scheduleInterval,omitempty"`
+	ScheduleCronExpr  string                 `json:"scheduleCronExpr,omitempty"`
 	ScheduleFrom      time.Time              `json:"scheduleFrom"`
 	DBObjectRetention DBObjectRetention      `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanup   `json:"clusterCleanup"`

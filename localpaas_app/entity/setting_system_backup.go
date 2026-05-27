@@ -24,7 +24,8 @@ func (s *systemBackupParser) New() SettingData {
 }
 
 type SystemBackup struct {
-	ScheduleInterval timeutil.Duration        `json:"scheduleInterval"`
+	ScheduleInterval timeutil.Duration        `json:"scheduleInterval,omitempty"`
+	ScheduleCronExpr string                   `json:"scheduleCronExpr,omitempty"`
 	ScheduleFrom     time.Time                `json:"scheduleFrom"`
 	Compression      SystemBackupCompression  `json:"compression,omitempty"`
 	Encryption       SystemBackupEncryption   `json:"encryption,omitempty"`

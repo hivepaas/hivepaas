@@ -36,6 +36,7 @@ type GetSystemBackupResp struct {
 type SystemBackupResp struct {
 	*settings.BaseSettingResp
 	ScheduleInterval timeutil.Duration                  `json:"scheduleInterval"`
+	ScheduleCronExpr string                             `json:"scheduleCronExpr"`
 	ScheduleFrom     time.Time                          `json:"scheduleFrom"`
 	Compression      *SystemBackupCompressionResp       `json:"compression"`
 	Encryption       *SystemBackupEncryptionResp        `json:"encryption"`

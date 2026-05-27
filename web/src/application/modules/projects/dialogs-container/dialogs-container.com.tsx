@@ -15,6 +15,10 @@ import {
 } from "~/projects/dialogs/create-or-edit-project-secret";
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
+import {
+    ImportProjectSettingsDialog,
+    useImportProjectSettingsDialogState,
+} from "~/projects/dialogs/import-project-settings";
 import { ProjectUserAccessesDialog, useProjectUserAccessesDialogState } from "~/projects/dialogs/project-user-accesses";
 import {
     QuickInstallSslCertDialog,
@@ -97,6 +101,7 @@ function View() {
     const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
+    const importProjectSettingsDialog = useImportProjectSettingsDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -128,6 +133,7 @@ function View() {
         createOrEditGithubAppDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
+        importProjectSettingsDialog.destroy();
     }, [location]);
 
     return (
@@ -161,6 +167,7 @@ function View() {
             <CreateOrEditGithubAppDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
+            <ImportProjectSettingsDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

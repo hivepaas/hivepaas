@@ -220,7 +220,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
 
                     {/* Environments */}
                     <InfoBlock title="Environments">
-                        <div className="max-w-[520px]">
+                        <div>
                             <ProjectEnvInput
                                 envs={envs}
                                 onCreate={handleCreateEnv}
@@ -234,7 +234,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
 
                     {/* Tags */}
                     <InfoBlock title="Tags">
-                        <div className="max-w-[400px]">
+                        <div>
                             <TagInput
                                 tags={tags}
                                 onCreate={handleCreateTag}

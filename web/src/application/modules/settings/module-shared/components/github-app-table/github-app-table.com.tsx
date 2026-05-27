@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { Plus } from "lucide-react";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppQueries } from "~/settings/data/queries";
 import { useCreateOrEditGithubAppDialog } from "~/settings/dialogs/create-or-edit-github-app";
@@ -13,6 +14,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
+
+import { ProjectSettingsImportButton } from "../project-settings-import-button";
 
 import { GithubAppTableDefs } from "./github-app-table.defs";
 import type { GithubAppTableScope } from "./github-app-table.types";
@@ -60,6 +63,12 @@ function GithubAppTableView({ scope }: Props) {
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
                     <div className="flex flex-wrap gap-3">
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.GithubApp}
+                            />
+                        )}
                         <Button
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);

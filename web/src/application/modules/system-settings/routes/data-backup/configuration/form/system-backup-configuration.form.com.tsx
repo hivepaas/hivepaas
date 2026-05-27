@@ -420,6 +420,8 @@ function useSystemBackupFormMethods(defaultValues?: SystemBackupSettings) {
 export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, children }: Props) {
     const methods = useSystemBackupFormMethods(defaultValues);
 
+    console.log(defaultValues);
+
     useImperativeHandle(
         ref,
         () => ({

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectCloudStorageQueries } from "~/projects/data/queries";
 import { CloudStorageQueries } from "~/settings/data/queries";
 import { useCreateOrEditCloudStorageDialog } from "~/settings/dialogs/create-or-edit-cloud-storage";
@@ -10,6 +11,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
+
+import { ProjectSettingsImportButton } from "../project-settings-import-button";
 
 import { CloudStorageTableDefs } from "./cloud-storage-table.defs";
 import type { CloudStorageTableScope } from "./cloud-storage-table.types";
@@ -42,14 +45,22 @@ function CloudStorageTableView({ scope }: Props) {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            createOrEditDialog.actions.open(scope);
-                        }}
-                    >
-                        <Plus className="size-4" />
-                        New Cloud Storage
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.CloudStorage}
+                            />
+                        )}
+                        <Button
+                            onClick={() => {
+                                createOrEditDialog.actions.open(scope);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            New Cloud Storage
+                        </Button>
+                    </div>
                 }
             />
             <DataTable

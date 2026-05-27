@@ -1,6 +1,7 @@
 export * from "./project-env-vars";
 export * from "./project-domain-settings";
 export * from "./project-basic-auth";
+export * from "./project-settings-import";
 export * from "./project-github-app";
 export * from "./project-git-credentials";
 export * from "./project-networks";

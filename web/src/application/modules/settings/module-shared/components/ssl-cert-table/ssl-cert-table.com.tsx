@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectSslCertQueries } from "~/projects/data/queries";
 import { SslCertQueries } from "~/settings/data/queries";
 import { useCreateOrEditSslCertDialog } from "~/settings/dialogs/create-or-edit-ssl-cert";
@@ -10,6 +11,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
+
+import { ProjectSettingsImportButton } from "../project-settings-import-button";
 
 import { SslCertTableDefs } from "./ssl-cert-table.defs";
 import type { SslCertTableScope } from "./ssl-cert-table.types";
@@ -50,14 +53,22 @@ function SslCertTableView({ scope }: Props) {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            createOrEditDialog.actions.open(scope);
-                        }}
-                    >
-                        <Plus className="size-4" />
-                        New SSL Certificate
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.SslCert}
+                            />
+                        )}
+                        <Button
+                            onClick={() => {
+                                createOrEditDialog.actions.open(scope);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            New SSL Certificate
+                        </Button>
+                    </div>
                 }
             />
             <DataTable

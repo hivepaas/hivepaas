@@ -18,3 +18,6 @@ export * from "./create-or-edit-oauth";
 export * from "./update-oauth-status";
 export * from "./create-or-edit-notification-target";
 export * from "./update-notification-target-status";
+export * from "./create-or-edit-github-app";
+export * from "./provision-github-app";
+export * from "./update-github-app-status";

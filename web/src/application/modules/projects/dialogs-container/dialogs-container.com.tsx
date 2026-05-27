@@ -26,15 +26,18 @@ import {
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
+    CreateOrEditGithubAppDialog,
     CreateOrEditImPlatformDialog,
     CreateOrEditNotificationTargetDialog,
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
+    ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
+    UpdateGithubAppStatusDialog,
     UpdateImPlatformStatusDialog,
     UpdateNotificationTargetStatusDialog,
     UpdateRegistryAuthStatusDialog,
@@ -44,15 +47,18 @@ import {
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
+    useCreateOrEditGithubAppDialogState,
     useCreateOrEditImPlatformDialogState,
     useCreateOrEditNotificationTargetDialogState,
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
+    useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
+    useUpdateGithubAppStatusDialogState,
     useUpdateImPlatformStatusDialogState,
     useUpdateNotificationTargetStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
@@ -88,6 +94,9 @@ function View() {
     const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const projectUserAccessesDialog = useProjectUserAccessesDialogState();
+    const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
+    const provisionGithubAppDialog = useProvisionGithubAppDialogState();
+    const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -116,6 +125,9 @@ function View() {
         createOrEditNotificationTargetDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
         projectUserAccessesDialog.destroy();
+        createOrEditGithubAppDialog.destroy();
+        provisionGithubAppDialog.destroy();
+        updateGithubAppStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -146,6 +158,9 @@ function View() {
             <CreateOrEditNotificationTargetDialog />
             <UpdateNotificationTargetStatusDialog />
             <ProjectUserAccessesDialog />
+            <CreateOrEditGithubAppDialog />
+            <ProvisionGithubAppDialog />
+            <UpdateGithubAppStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

@@ -1,6 +1,6 @@
 ## API Service Guidelines
 
-This guideline documents the standard process to build a complete API surface for any entity in COMPASS-V2. It covers service and validator implementation, wiring into the API context, React hooks, data queries, and commands. Follow alongside `docs/DEVELOPMENT_GUIDELINES.md` for cross-cutting rules (imports, Zod, Result pattern, query keys, etc.).
+This guideline documents the standard process to build a complete API surface for any entity in LocalPaaS Dashboard. It covers service and validator implementation, wiring into the API context, React hooks, data queries, and commands. Follow alongside `docs/DEVELOPMENT_GUIDELINES.md` for cross-cutting rules (imports, Zod, Result pattern, query keys, etc.).
 
 ### Scope and Outcomes
 
@@ -22,29 +22,28 @@ This guideline documents the standard process to build a complete API surface fo
 - Create a contracts file under the module service folder. Include:
     - Entity shape (domain-aligned fields)
     - Request/response types based on `ApiRequestBase`/`ApiResponseBase`/`ApiResponsePaginated`
-    - Include `WorkspaceMeta` in requests (via `ApiRequestBase<..., WorkspaceMeta>`) and support `pagination`/`sorting`/`search` as needed
+    - Support `pagination`/`sorting`/`search` in the request `data` shape when the endpoint needs them
 
 Example (concise):
 
 ```ts
-import type { WorkspaceMeta } from "@application/shared/api/types";
+import type { PaginationState, SortingState } from "@infrastructure/data";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
-
-import type { PaginationState, SortingState } from "@infrastructure/data";
 
 export interface MyEntity {
     id: string;
     name: string;
 }
 
-export type MyEntities_FindMany_Req = ApiRequestBase<
-    { pagination?: PaginationState; sorting?: SortingState; search?: string },
-    WorkspaceMeta
->;
+export type MyEntities_FindMany_Req = ApiRequestBase<{
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
 export type MyEntities_FindMany_Res = ApiResponsePaginated<MyEntity>;
 
-export type MyEntities_CreateOne_Req = ApiRequestBase<{ payload: { name: string } }, WorkspaceMeta>;
+export type MyEntities_CreateOne_Req = ApiRequestBase<{ payload: { name: string } }>;
 export type MyEntities_CreateOne_Res = ApiResponseBase<{ type: "success" }>;
 ```
 
@@ -82,7 +81,7 @@ Use when the HTTP payload or parsed response shape **differs** from your domain 
 - **Pattern**: one small class per operation with explicit methods:
     - **`toApi`**: domain → wire (request bodies, query serialization if needed).
     - **`toDomain`**: validated API output → domain (when you normalize beyond what Zod already gives you).
-- **Facade**: export a single **`MyEntityApiMapper`** with `readonly` nested mappers (e.g. `readonly updateOne = new UpdateOneMapper()`), matching the Tasks module style.
+- **Facade**: export a single **`MyEntityApiMapper`** with `readonly` nested mappers (e.g. `readonly updateOne = new UpdateOneMapper()`), matching nearby module style.
 - **Service**: inject the mapper in the service constructor (alongside the validator) and call `this.mapper.updateOne.toApi(payload)` before `put`/`post`.
 
 This keeps the **data layer** free of business shaping: queries/commands call the API hook; the **service** owns HTTP + validation + domain/wire mapping at the boundary.
@@ -144,15 +143,15 @@ export class MyEntitiesApi extends BaseApi {
 Example (excerpt):
 
 ```ts
-import { MyEntitiesApi, MyEntitiesApiMapper, MyEntitiesApiValidator } from "~/module/api/services";
+import { MyEntitiesApi, MyEntitiesApiMapper, MyEntitiesApiValidator } from "~/<module>/api/services";
 
 const myEntitiesValidator = new MyEntitiesApiValidator();
 const myEntitiesMapper = new MyEntitiesApiMapper();
 
 return {
-  module: {
-    myEntities: new MyEntitiesApi(myEntitiesValidator, myEntitiesMapper),
-  },
+    module: {
+        myEntities: new MyEntitiesApi(myEntitiesValidator, myEntitiesMapper),
+    },
 };
 ```
 
@@ -168,27 +167,18 @@ Example:
 import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
-import invariant from "tiny-invariant";
-
-import { useWorkspaceId } from "@application/shared/hooks/workspaces";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
     return function useMyEntitiesApi() {
-        const { workspaceId } = useWorkspaceId();
-        invariant(workspaceId, "workspaceId must be defined");
-
         const { api } = use(MyApiContext);
         const { notifyError } = useApiErrorNotifications();
 
         const queries = useMemo(
             () => ({
                 findMany: async (request, signal) => {
-                    const result = await api.module.myEntities.findMany(
-                        { data: request, meta: { workspaceId } },
-                        signal,
-                    );
+                    const result = await api.module.myEntities.findMany({ data: request }, signal);
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
@@ -197,13 +187,13 @@ function createHook() {
                     });
                 },
             }),
-            [api, workspaceId],
+            [api],
         );
 
         const mutations = useMemo(
             () => ({
                 createOne: async request => {
-                    const result = await api.module.myEntities.createOne({ data: request, meta: { workspaceId } });
+                    const result = await api.module.myEntities.createOne({ data: request });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
@@ -213,7 +203,7 @@ function createHook() {
                     });
                 },
             }),
-            [api, notifyError, workspaceId],
+            [api, notifyError],
         );
 
         return { queries, mutations };
@@ -246,10 +236,8 @@ Example:
 
 ```ts
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
-
-import { useMyEntitiesApi } from "~/module/api";
-
-import { QK } from "~/module/data/constants";
+import { useMyEntitiesApi } from "~/<module>/api";
+import { QK } from "~/<module>/data/constants";
 
 type FindManyReq = MyEntities_FindMany_Req["data"]; // from contracts
 type FindManyRes = MyEntities_FindMany_Res;
@@ -280,8 +268,7 @@ Example:
 
 ```ts
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { QK } from "~/module/data/constants";
+import { QK } from "~/<module>/data/constants";
 
 function useCreateOne(options: Omit<UseMutationOptions<CreateRes, Error, CreateReq>, "mutationFn"> = {}) {
     const { mutations } = useMyEntitiesApi();
@@ -313,7 +300,7 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 - **Result Pattern**: Services must return `Result` (`Ok`/`Err`); hooks unwrap with `match` and rethrow/notify.
 - **Query Keys**: Centralize keys in `data/constants`. Never hardcode literals in hooks/queries/commands.
 - **No Data Conversion in Data Layer**: Do not map/transform inside queries/commands; handle conversion in UI/forms, or in **API service mappers** (`*.api.mapper.ts`) invoked from the service. Keep TanStack layers thin.
-- **Module Isolation**: Keep module code within the module. Move shared code to `src/application/shared` or `src/ui-kit`.
+- **Module Isolation**: Keep module code within the module. Move shared code to `src/application/shared` or compose existing primitives from `src/components/ui`.
 
 ---
 
@@ -336,7 +323,7 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 ## QA Checklist
 
 - Queries resolve with correct types; validators enforce shapes.
-- Lint/typecheck pass; no direct `antd` imports (use `@ui-kit`).
+- Lint/typecheck pass; UI uses the existing local primitives and shared components.
 - Query keys added and used consistently.
 - Commands invalidate or update caches appropriately.
 - Public barrel exports are complete and organized.

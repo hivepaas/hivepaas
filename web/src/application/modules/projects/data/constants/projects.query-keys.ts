@@ -17,6 +17,8 @@ export const QK = {
     "projects.secrets.$.find-one-by-id": "projects.secrets.$.find-one-by-id",
     "projects.basic-auth.$.find-many-paginated": "projects.basic-auth.$.find-many-paginated",
     "projects.basic-auth.$.find-one-by-id": "projects.basic-auth.$.find-one-by-id",
+    "projects.github-app.$.find-many-paginated": "projects.github-app.$.find-many-paginated",
+    "projects.github-app.$.find-one-by-id": "projects.github-app.$.find-one-by-id",
     "projects.env-vars.$.find-one": "projects.env-vars.$.find-one",
     "projects.domain-settings.$.find-one": "projects.domain-settings.$.find-one",
     "projects.networks.$.find-many-paginated": "projects.networks.$.find-many-paginated",

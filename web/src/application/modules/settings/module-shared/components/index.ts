@@ -9,3 +9,5 @@ export * from "./access-token-table";
 export * from "./cloud-storage-table";
 export * from "./notification-target-table";
 export * from "./oauth-table";
+export * from "./github-app-status-badge";
+export * from "./github-app-table";

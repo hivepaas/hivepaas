@@ -31,6 +31,8 @@ import {
     ProjectEnvVarsApiValidator,
     ProjectGitCredentialsApi,
     ProjectGitCredentialsApiValidator,
+    ProjectGithubAppApi,
+    ProjectGithubAppApiValidator,
     ProjectImServiceApi,
     ProjectImServiceApiValidator,
     ProjectNetworksApi,
@@ -79,6 +81,7 @@ function createApi() {
     const projectAppsApiValidator = new ProjectAppsApiValidator();
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
+    const projectGithubAppApiValidator = new ProjectGithubAppApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
@@ -149,6 +152,9 @@ function createApi() {
             },
             basicAuth: {
                 $: new ProjectBasicAuthApi(projectBasicAuthApiValidator),
+            },
+            githubApp: {
+                $: new ProjectGithubAppApi(projectGithubAppApiValidator),
             },
             envVars: {
                 $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),

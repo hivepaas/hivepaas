@@ -35,6 +35,10 @@ function View({ projectId, children }: Props) {
             route: ROUTE.projects.single.configuration.basicAuth.$route(projectId),
         },
         {
+            label: "Github Apps",
+            route: ROUTE.projects.single.configuration.githubApps.$route(projectId),
+        },
+        {
             label: "Registry Auth",
             route: ROUTE.projects.single.configuration.registryAuth.$route(projectId),
         },

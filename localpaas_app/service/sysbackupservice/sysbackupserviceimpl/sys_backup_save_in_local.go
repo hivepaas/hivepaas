@@ -35,6 +35,8 @@ func (s *service) sysBackupSaveResultInLocal(
 	switch data.SysBackupSettings.Compression.Format {
 	case base.FileCompressionFormatGzip:
 		data.OutFileName += ".gz"
+	case base.FileCompressionFormatZstd:
+		data.OutFileName += ".zst"
 	case base.FileCompressionNone: // Do nothing
 	default:
 		return apperrors.NewUnsupported(

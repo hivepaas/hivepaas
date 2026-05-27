@@ -22491,9 +22491,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -22608,9 +22608,9 @@
         "x-enum-varnames" : [ "EmailKindSMTP", "EmailKindHTTP" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.FileCompressionFormat" : {
-        "enum" : [ "", "gzip" ],
+        "enum" : [ "", "zstd", "gzip" ],
         "type" : "string",
-        "x-enum-varnames" : [ "FileCompressionNone", "FileCompressionFormatGzip" ]
+        "x-enum-varnames" : [ "FileCompressionNone", "FileCompressionFormatZstd", "FileCompressionFormatGzip" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.FileEncryptionFormat" : {
         "enum" : [ "", "age" ],
@@ -23169,7 +23169,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "Day", "Week" ]

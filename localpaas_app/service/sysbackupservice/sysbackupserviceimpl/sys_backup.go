@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"github.com/klauspost/compress/zstd"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -128,6 +129,7 @@ func (s *service) sysBackup(
 	return nil
 }
 
+//nolint:gocognit
 func (s *service) sysBackupCreateWriter(
 	data *sysBackupData,
 ) (tmpFileName string, tarW *tar.Writer, closer func() error, err error) {
@@ -147,6 +149,7 @@ func (s *service) sysBackupCreateWriter(
 
 	var w io.Writer
 	var encW, gzW io.WriteCloser
+	var zstdW *zstd.Encoder
 	w = tmpFile
 
 	switch data.SysBackupSettings.Encryption.Format {
@@ -174,6 +177,12 @@ func (s *service) sysBackupCreateWriter(
 	case base.FileCompressionFormatGzip:
 		gzW = gzip.NewWriter(w)
 		w = gzW
+	case base.FileCompressionFormatZstd:
+		zstdW, err = zstd.NewWriter(w)
+		if err != nil {
+			return "", nil, nil, apperrors.Wrap(err)
+		}
+		w = zstdW
 	case base.FileCompressionNone: // Do nothing
 	default:
 		return "", nil, nil, apperrors.NewUnsupported(
@@ -190,6 +199,11 @@ func (s *service) sysBackupCreateWriter(
 		}
 		if gzW != nil {
 			if e := gzW.Close(); e != nil {
+				err = errors.Join(err, e)
+			}
+		}
+		if zstdW != nil {
+			if e := zstdW.Close(); e != nil {
 				err = errors.Join(err, e)
 			}
 		}

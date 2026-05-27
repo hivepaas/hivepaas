@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceQueries } from "~/settings/data/queries";
 import { useCreateOrEditImPlatformDialog } from "~/settings/dialogs/create-or-edit-im-platform";
@@ -10,6 +11,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
+
+import { ProjectSettingsImportButton } from "../project-settings-import-button";
 
 import { ImPlatformTableDefs } from "./im-platform-table.defs";
 import type { ImPlatformTableScope } from "./im-platform-table.types";
@@ -50,14 +53,22 @@ function ImPlatformTableView({ scope }: Props) {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            createOrEditDialog.actions.open(scope);
-                        }}
-                    >
-                        <Plus className="size-4" />
-                        New IM Platform
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.ImService}
+                            />
+                        )}
+                        <Button
+                            onClick={() => {
+                                createOrEditDialog.actions.open(scope);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            New IM Platform
+                        </Button>
+                    </div>
                 }
             />
             <DataTable

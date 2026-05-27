@@ -26,6 +26,7 @@ export type ContainerSpec = {
     privileges: Privileges | null;
     healthcheck: Healthcheck | null;
     restartPolicy: RestartPolicy | null;
+    logDriver: LogDriver | null;
 };
 
 export type RestartPolicy = {
@@ -44,6 +45,11 @@ export type Healthcheck = {
     startPeriod?: string;
     startInterval?: string;
     retries?: number;
+};
+
+export type LogDriver = {
+    name: string;
+    options: Record<string, string>;
 };
 
 export type SELinuxContext = {

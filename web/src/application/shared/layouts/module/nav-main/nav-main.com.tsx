@@ -59,6 +59,64 @@ interface NavigationLinkProps {
     Icon?: LucideIcon;
 }
 
+interface NavigationGroupProps {
+    item: {
+        title: string;
+        route: string;
+        pattern: string;
+        icon?: LucideIcon;
+        items: {
+            title: string;
+            route: string;
+            pattern: string;
+            icon?: LucideIcon;
+        }[];
+    };
+}
+
+function NavigationGroup({ item }: NavigationGroupProps) {
+    const { match } = useAppMatchPath();
+    const isActive = match.modules({ pattern: item.pattern }) !== null;
+
+    return (
+        <Collapsible
+            key={item.title}
+            asChild
+            defaultOpen={isActive}
+            className="group/collapsible"
+        >
+            <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                        tooltip={item.title}
+                        className="px-4"
+                    >
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <SidebarMenuSub>
+                        {item.items.map(subItem => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                                <SidebarMenuSubButton asChild>
+                                    <NavigationLink
+                                        route={subItem.route}
+                                        pattern={subItem.pattern}
+                                        label={subItem.title}
+                                        Icon={subItem.icon}
+                                    />
+                                </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                        ))}
+                    </SidebarMenuSub>
+                </CollapsibleContent>
+            </SidebarMenuItem>
+        </Collapsible>
+    );
+}
+
 export function NavMain({
     items,
 }: {
@@ -81,40 +139,10 @@ export function NavMain({
             <SidebarMenu>
                 {items.map(item =>
                     item.items && item.items.length > 0 ? (
-                        <Collapsible
+                        <NavigationGroup
                             key={item.title}
-                            asChild
-                            className="group/collapsible"
-                        >
-                            <SidebarMenuItem>
-                                <CollapsibleTrigger asChild>
-                                    <SidebarMenuButton
-                                        tooltip={item.title}
-                                        className="px-4"
-                                    >
-                                        {item.icon && <item.icon />}
-                                        <span>{item.title}</span>
-                                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                    </SidebarMenuButton>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <SidebarMenuSub>
-                                        {item.items.map(subItem => (
-                                            <SidebarMenuSubItem key={subItem.title}>
-                                                <SidebarMenuSubButton asChild>
-                                                    <NavigationLink
-                                                        route={subItem.route}
-                                                        pattern={subItem.pattern}
-                                                        label={subItem.title}
-                                                        Icon={subItem.icon}
-                                                    />
-                                                </SidebarMenuSubButton>
-                                            </SidebarMenuSubItem>
-                                        ))}
-                                    </SidebarMenuSub>
-                                </CollapsibleContent>
-                            </SidebarMenuItem>
-                        </Collapsible>
+                            item={{ ...item, items: item.items }}
+                        />
                     ) : (
                         <SidebarMenuItem key={item.title}>
                             <NavigationLink

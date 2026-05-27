@@ -1,15 +1,19 @@
 import * as React from "react";
-import { type PropsWithChildren, useImperativeHandle } from "react";
+import { type PropsWithChildren, useImperativeHandle, useMemo, useState } from "react";
 
-import { FieldError, Input, TagInput } from "@components/ui";
+import { Button, FieldError, Input, TagInput } from "@components/ui";
 import { Avatar } from "@components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageService } from "@infrastructure/services";
+import { Pencil } from "lucide-react";
 import { FormProvider, useController, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { type ProjectDetailsEntity, type ProjectEnvEntity } from "~/projects/domain";
 
-import { InfoBlock } from "@application/shared/components";
+import { Combobox, type ComboboxOption, InfoBlock } from "@application/shared/components";
+import { UsersPublicQueries } from "@application/shared/data-public/queries";
+import { PhotoUploadDialog } from "@application/shared/dialogs";
 
 import { ProjectEnvInput, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
@@ -20,9 +24,78 @@ import {
 } from "../schemas";
 import { type ProjectGeneralFormRef } from "../types";
 
+type OwnerOption = Record<string, unknown> & {
+    id: string;
+    username: string;
+    email: string;
+    fullName: string;
+    photo: string | null;
+};
+
+function getOwnerDisplayName(user: Pick<OwnerOption, "email" | "fullName" | "username">) {
+    return user.fullName || user.email || user.username;
+}
+
+function getOwnerIdentity(user: Pick<OwnerOption, "email" | "username">) {
+    return Array.from(new Set([user.username, user.email].filter(Boolean))).join(" • ");
+}
+
+function toOwnerOption(user: Pick<OwnerOption, "id" | "username" | "email" | "fullName" | "photo">): OwnerOption {
+    return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        photo: user.photo,
+    };
+}
+
+function OwnerSelectedOption({ user }: { user: OwnerOption }) {
+    return (
+        <div className="flex min-w-0 items-center gap-2">
+            <Avatar
+                name={getOwnerDisplayName(user)}
+                src={user.photo}
+                className="size-6"
+                borderless
+            />
+            <span className="truncate">{getOwnerDisplayName(user)}</span>
+        </div>
+    );
+}
+
+function OwnerOptionRow({ user }: { user: OwnerOption }) {
+    const identity = getOwnerIdentity(user);
+
+    return (
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Avatar
+                name={getOwnerDisplayName(user)}
+                src={user.photo}
+                className="size-6"
+                borderless
+            />
+            <div className="flex min-w-0 flex-col">
+                <span className="truncate">{getOwnerDisplayName(user)}</span>
+                {identity && <span className="truncate text-xs text-muted-foreground">{identity}</span>}
+            </div>
+        </div>
+    );
+}
+
 export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: Props) {
+    const [openPhotoUpload, setOpenPhotoUpload] = useState(false);
+    const [ownerSearch, setOwnerSearch] = useState("");
+    const [selectedOwner, setSelectedOwner] = useState<OwnerOption>(() => toOwnerOption(defaultValues.owner));
+
+    const { data: ownerUsersData, isFetching: isFetchingOwnerUsers } = UsersPublicQueries.useFindManyBase({
+        search: ownerSearch,
+    });
+
     const methods = useForm<ProjectGeneralFormSchemaInput, unknown, ProjectGeneralFormSchemaOutput>({
         defaultValues: {
+            photo: defaultValues.photo === "" ? null : defaultValues.photo,
+            photoUpload: null,
             name: defaultValues.name,
             envs: defaultValues.envs,
             tags: defaultValues.tags,
@@ -42,10 +115,31 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
 
     const tags = watch("tags");
     const envs = watch("envs");
-    const ownerOptions = [
-        ...(!defaultValues.userAccesses.some(user => user.id === defaultValues.owner.id) ? [defaultValues.owner] : []),
-        ...defaultValues.userAccesses,
-    ];
+    const photoUrl = watch("photo");
+    const photoPreviewUrl = photoUrl === "" ? null : photoUrl;
+    const ownerUsers = ownerUsersData?.data;
+    const ownerOptions = useMemo<OwnerOption[]>(() => {
+        const optionMap = new Map<string, OwnerOption>();
+        const currentOwner = toOwnerOption(defaultValues.owner);
+
+        optionMap.set(selectedOwner.id, selectedOwner);
+        optionMap.set(currentOwner.id, currentOwner);
+
+        (ownerUsers ?? []).forEach(user => {
+            optionMap.set(user.id, toOwnerOption(user));
+        });
+
+        return Array.from(optionMap.values());
+    }, [defaultValues.owner, ownerUsers, selectedOwner]);
+
+    const ownerComboboxOptions = useMemo<ComboboxOption<OwnerOption>[]>(
+        () =>
+            ownerOptions.map(user => ({
+                value: user,
+                label: getOwnerDisplayName(user),
+            })),
+        [ownerOptions],
+    );
 
     useImperativeHandle(
         ref,
@@ -121,6 +215,31 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
         );
     }
 
+    async function handlePhotoUpload(result: File | null) {
+        if (!result) {
+            setValue("photo", null, { shouldDirty: true });
+            setValue("photoUpload", { delete: true }, { shouldDirty: true });
+            return;
+        }
+
+        try {
+            const base64String = await ImageService.convertFileToBase64(result);
+
+            setValue("photo", base64String, { shouldDirty: true });
+            setValue(
+                "photoUpload",
+                {
+                    fileName: result.name,
+                    dataBase64: base64String,
+                },
+                { shouldDirty: true },
+            );
+        } catch (error) {
+            console.error("Error converting file to base64:", error);
+            toast.error("Failed to process image");
+        }
+    }
+
     return (
         <div className="pt-2">
             <FormProvider {...methods}>
@@ -132,6 +251,30 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                     }}
                     className="flex flex-col gap-6"
                 >
+                    {/* Photo */}
+                    <InfoBlock title="Photo">
+                        <div className="relative size-24 rounded-full border">
+                            <Avatar
+                                key={photoPreviewUrl ?? "no-photo"}
+                                name={defaultValues.name}
+                                className="size-full text-2xl"
+                                src={photoPreviewUrl}
+                            />
+                            <Button
+                                type="button"
+                                size="icon-sm"
+                                className="absolute -bottom-1 -right-1 rounded-full border"
+                                onClick={() => {
+                                    setOpenPhotoUpload(true);
+                                }}
+                                aria-label="Edit photo"
+                                title="Edit photo"
+                            >
+                                <Pencil />
+                            </Button>
+                        </div>
+                    </InfoBlock>
+
                     {/* Name */}
                     <InfoBlock title="Name">
                         <Input
@@ -165,62 +308,35 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                     {/* Project Owner */}
                     <InfoBlock title="Project Owner">
                         <div className="max-w-[400px]">
-                            <Select
+                            <Combobox
+                                options={ownerComboboxOptions}
                                 value={ownerId.value}
-                                onValueChange={ownerId.onChange}
-                                disabled={ownerOptions.length === 0}
-                            >
-                                <SelectTrigger aria-invalid={isOwnerInvalid}>
-                                    <SelectValue placeholder="Select project owner">
-                                        {ownerOptions
-                                            .filter(user => user.id === ownerId.value)
-                                            .map(user => (
-                                                <div
-                                                    key={user.id}
-                                                    className="flex min-w-0 items-center gap-2"
-                                                >
-                                                    <Avatar
-                                                        name={user.fullName}
-                                                        src={user.photo}
-                                                        className="size-6"
-                                                        borderless
-                                                    />
-                                                    <span className="truncate">{user.fullName}</span>
-                                                </div>
-                                            ))}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ownerOptions.map(user => (
-                                        <SelectItem
-                                            key={user.id}
-                                            value={user.id}
-                                        >
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                <Avatar
-                                                    name={user.fullName}
-                                                    src={user.photo}
-                                                    className="size-6"
-                                                    borderless
-                                                />
-                                                <div className="flex min-w-0 flex-col">
-                                                    <span className="truncate">{user.fullName}</span>
-                                                    <span className="truncate text-xs text-muted-foreground">
-                                                        {user.email || user.username}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                onChange={(value, option) => {
+                                    if (!value || !option) {
+                                        return;
+                                    }
+
+                                    setSelectedOwner(option);
+                                    ownerId.onChange(value);
+                                }}
+                                onSearch={setOwnerSearch}
+                                placeholder="Select project owner"
+                                searchable
+                                emptyText="No users available"
+                                valueKey="id"
+                                loading={isFetchingOwnerUsers}
+                                disabled={ownerOptions.length === 0 && !isFetchingOwnerUsers}
+                                aria-invalid={isOwnerInvalid}
+                                renderSelectedOption={option => <OwnerSelectedOption user={option.value} />}
+                                renderOption={option => <OwnerOptionRow user={option.value} />}
+                            />
                             <FieldError errors={[errors.ownerId]} />
                         </div>
                     </InfoBlock>
 
                     {/* Environments */}
                     <InfoBlock title="Environments">
-                        <div className="max-w-[520px]">
+                        <div>
                             <ProjectEnvInput
                                 envs={envs}
                                 onCreate={handleCreateEnv}
@@ -234,7 +350,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
 
                     {/* Tags */}
                     <InfoBlock title="Tags">
-                        <div className="max-w-[400px]">
+                        <div>
                             <TagInput
                                 tags={tags}
                                 onCreate={handleCreateTag}
@@ -262,6 +378,17 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                     {children}
                 </form>
             </FormProvider>
+            <PhotoUploadDialog
+                open={openPhotoUpload}
+                onOpenChange={setOpenPhotoUpload}
+                onSubmit={result => {
+                    void handlePhotoUpload(result);
+                }}
+                initialImage={photoPreviewUrl}
+                title="Project Photo"
+                description="Adjust the crop area. Use tools to rotate/zoom."
+                filename="project-photo"
+            />
         </div>
     );
 }

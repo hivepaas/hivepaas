@@ -29,7 +29,7 @@ export function CreateOrEditBasicAuthForm({
         defaultValues: {
             name: initialValues?.name ?? "",
             username: initialValues?.username ?? "",
-            password: "",
+            password: initialValues?.password ?? "",
             availableInProjects: initialValues?.availableInProjects ?? false,
             default: initialValues?.default ?? false,
         },

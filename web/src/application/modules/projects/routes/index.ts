@@ -3,6 +3,7 @@ export {
     ProjectGeneralRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,
+    ProjectGithubAppsRoute,
     ProjectEmailAccountsRoute,
     ProjectEnvVariablesRoute,
     ProjectImPlatformsRoute,

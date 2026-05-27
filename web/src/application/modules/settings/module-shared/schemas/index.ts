@@ -10,3 +10,4 @@ export * from "./ssh-key.entity.schema";
 export * from "./access-token.entity.schema";
 export * from "./cloud-storage.entity.schema";
 export * from "./oauth.entity.schema";
+export * from "./github-app.entity.schema";

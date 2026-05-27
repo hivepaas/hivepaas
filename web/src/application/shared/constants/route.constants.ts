@@ -85,6 +85,24 @@ export const ROUTE = {
     },
 
     /**
+     * Sources
+     */
+    sources: {
+        $pattern: "sources",
+        $route: "/sources/github-apps/",
+
+        githubApps: {
+            $pattern: "sources/github-apps",
+            $route: "/sources/github-apps/",
+        },
+
+        webhooks: {
+            $pattern: "sources/webhooks",
+            $route: "/sources/webhooks/",
+        },
+    },
+
+    /**
      * Settings
      */
     settings: {
@@ -307,6 +325,11 @@ export const ROUTE = {
                 basicAuth: {
                     $pattern: "projects/:id/configuration/basic-auth",
                     $route: (id: string) => `/projects/${id}/configuration/basic-auth/`,
+                },
+
+                githubApps: {
+                    $pattern: "projects/:id/configuration/github-apps",
+                    $route: (id: string) => `/projects/${id}/configuration/github-apps/`,
                 },
 
                 registryAuth: {

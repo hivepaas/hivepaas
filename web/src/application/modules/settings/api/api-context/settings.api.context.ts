@@ -13,6 +13,8 @@ import {
     EmailApiValidator,
     GitCredentialsApi,
     GitCredentialsApiValidator,
+    GithubAppApi,
+    GithubAppApiValidator,
     ImServiceApi,
     ImServiceApiValidator,
     NotificationsApi,
@@ -46,6 +48,7 @@ function createApi() {
     const accessTokenValidator = new AccessTokenApiValidator();
     const cloudStorageValidator = new CloudStorageApiValidator();
     const oauthValidator = new OAuthApiValidator();
+    const githubAppValidator = new GithubAppApiValidator();
 
     return {
         settings: {
@@ -62,6 +65,7 @@ function createApi() {
             accessToken: new AccessTokenApi(accessTokenValidator),
             cloudStorage: new CloudStorageApi(cloudStorageValidator),
             oauth: new OAuthApi(oauthValidator),
+            githubApp: new GithubAppApi(githubAppValidator),
         },
     };
 }

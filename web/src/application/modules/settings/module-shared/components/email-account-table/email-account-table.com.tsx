@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectEmailQueries } from "~/projects/data/queries";
 import { EmailQueries } from "~/settings/data/queries";
 import { useCreateOrEditEmailAccountDialog } from "~/settings/dialogs/create-or-edit-email-account";
@@ -10,6 +11,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
+
+import { ProjectSettingsImportButton } from "../project-settings-import-button";
 
 import { EmailAccountTableDefs } from "./email-account-table.defs";
 import type { EmailAccountTableScope } from "./email-account-table.types";
@@ -50,14 +53,22 @@ function EmailAccountTableView({ scope }: Props) {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            createOrEditDialog.actions.open(scope);
-                        }}
-                    >
-                        <Plus className="size-4" />
-                        New Email Account
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.Email}
+                            />
+                        )}
+                        <Button
+                            onClick={() => {
+                                createOrEditDialog.actions.open(scope);
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            New Email Account
+                        </Button>
+                    </div>
                 }
             />
             <DataTable

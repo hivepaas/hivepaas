@@ -33,7 +33,7 @@ export function CreateOrEditRegistryAuthForm({
             name: initialValues?.name ?? "",
             address: initialValues?.address ?? "",
             username: initialValues?.username ?? "",
-            password: "",
+            password: initialValues?.password ?? "",
             readonly: initialValues?.readonly ?? false,
             availableInProjects: initialValues?.availableInProjects ?? false,
             default: initialValues?.default ?? false,

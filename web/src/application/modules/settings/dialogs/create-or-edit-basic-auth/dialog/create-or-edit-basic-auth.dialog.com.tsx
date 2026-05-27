@@ -154,6 +154,7 @@ export function CreateOrEditBasicAuthDialog() {
         ? {
               name: basicAuth.name,
               username: basicAuth.username,
+              password: basicAuth.password,
               availableInProjects: basicAuth.availableInProjects ?? false,
               default: basicAuth.default ?? false,
           }

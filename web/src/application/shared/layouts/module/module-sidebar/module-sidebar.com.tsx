@@ -1,6 +1,15 @@
 import * as React from "react";
 
-import { Container, LayoutGrid, type LucideIcon, PawPrint, Settings, Settings2, Users } from "lucide-react";
+import {
+    Container,
+    LayoutGrid,
+    type LucideIcon,
+    PawPrint,
+    Settings,
+    Settings2,
+    SlidersHorizontal,
+    Users,
+} from "lucide-react";
 
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -48,6 +57,24 @@ const navMain: SidebarItem[] = [
         route: ROUTE.userManagement.users.$route,
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
+    },
+    {
+        title: "Sources",
+        route: "#",
+        pattern: ROUTE.sources.$pattern,
+        icon: SlidersHorizontal,
+        items: [
+            {
+                title: "Github Apps",
+                route: ROUTE.sources.githubApps.$route,
+                pattern: ROUTE.sources.githubApps.$pattern,
+            },
+            {
+                title: "Webhooks",
+                route: ROUTE.sources.webhooks.$route,
+                pattern: ROUTE.sources.webhooks.$pattern,
+            },
+        ],
     },
     {
         title: "Settings",

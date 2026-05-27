@@ -11,3 +11,4 @@ export * from "./ssh-key.queries";
 export * from "./access-token.queries";
 export * from "./cloud-storage.queries";
 export * from "./oauth.queries";
+export * from "./github-app.queries";

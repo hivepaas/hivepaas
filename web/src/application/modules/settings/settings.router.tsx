@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 
 import { ROUTE } from "@/application/shared/constants";
-import { Outlet, type RouteObject } from "react-router";
+import { Navigate, Outlet, type RouteObject } from "react-router";
 
 import { ModuleTitle } from "@application/shared/components/module-title";
 
@@ -46,6 +46,15 @@ export const settingsRouter: RouteObject = {
         };
     },
     children: [
+        {
+            path: "settings/github-apps",
+            element: (
+                <Navigate
+                    to={ROUTE.sources.githubApps.$route}
+                    replace
+                />
+            ),
+        },
         createSettingsRoute(ROUTE.settings.basicAuth.$pattern, "Basic Auth", async () => {
             const { SettingsBasicAuthRoute } = await getLazyComponents();
 

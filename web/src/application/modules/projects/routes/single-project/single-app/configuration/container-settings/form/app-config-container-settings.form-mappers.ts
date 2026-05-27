@@ -41,6 +41,10 @@ export function mapAppContainerSettingsToFormInput(
             window: data.restartPolicy?.window ?? "",
             maxAttempts: data.restartPolicy?.maxAttempts ?? undefined,
         },
+        logDriver: {
+            driver: data.logDriver?.name ?? "",
+            options: Object.entries(data.logDriver?.options ?? {}).map(([key, value]) => ({ key, value })),
+        },
         privileges: {
             noNewPrivileges: data.privileges?.noNewPrivileges ?? false,
             selinuxEnabled,

@@ -10,3 +10,4 @@ export * from "./ssh-key.commands";
 export * from "./access-token.commands";
 export * from "./cloud-storage.commands";
 export * from "./oauth.commands";
+export * from "./github-app.commands";

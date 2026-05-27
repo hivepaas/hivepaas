@@ -1,5 +1,6 @@
 import { ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
+import { ProjectGithubAppsLegacyRedirect } from "~/projects/routes/single-project/configuration/github-apps/route/project-github-apps-legacy-redirect.com";
 
 async function getLazyComponents() {
     return await import("./projects.module");
@@ -19,6 +20,10 @@ export const projectsRouter: RouteObject = {
         };
     },
     children: [
+        {
+            path: "projects/:id/github-apps",
+            element: <ProjectGithubAppsLegacyRedirect />,
+        },
         {
             lazy: async () => {
                 const { ProjectsLayout } = await getLazyComponents();
@@ -100,6 +105,16 @@ export const projectsRouter: RouteObject = {
 
                         return {
                             Component: ProjectBasicAuthRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.configuration.githubApps.$pattern,
+                    lazy: async () => {
+                        const { ProjectGithubAppsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectGithubAppsRoute,
                         };
                     },
                 },

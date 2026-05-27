@@ -58,6 +58,9 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
             void queryClient.invalidateQueries({
                 queryKey: [QK["settings.notifications.find-many-paginated"]],
             });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.notifications.find-one-by-id"]],
+            });
 
             if (onSuccess) {
                 onSuccess(response, ...rest);
@@ -109,6 +112,9 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["settings.notifications.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.notifications.find-one-by-id"]],
             });
 
             if (onSuccess) {

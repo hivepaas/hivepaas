@@ -7,9 +7,9 @@ import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from ".
 
 const SystemBackupCompressionSchema = z
     .object({
-        format: z.nativeEnum(ESystemBackupCompressionFormat).default(ESystemBackupCompressionFormat.Gzip),
+        format: z.nativeEnum(ESystemBackupCompressionFormat).default(ESystemBackupCompressionFormat.None),
     })
-    .default({ format: ESystemBackupCompressionFormat.Gzip });
+    .default({ format: ESystemBackupCompressionFormat.None });
 
 const SystemBackupEncryptionSchema = z
     .object({

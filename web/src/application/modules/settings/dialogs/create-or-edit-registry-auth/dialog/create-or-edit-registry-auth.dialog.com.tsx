@@ -186,6 +186,7 @@ export function CreateOrEditRegistryAuthDialog() {
               name: registryAuth.name,
               address: registryAuth.address,
               username: registryAuth.username,
+              password: registryAuth.password,
               readonly: registryAuth.readonly,
               availableInProjects: registryAuth.availableInProjects ?? false,
               default: registryAuth.default ?? false,

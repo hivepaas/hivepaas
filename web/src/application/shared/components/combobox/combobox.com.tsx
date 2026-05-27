@@ -68,6 +68,8 @@ export interface ComboboxProps<T extends Record<string, unknown> = Record<string
     "splitLabelBadge"?: boolean;
     /** Show a clear button on hover when a value is selected */
     "allowClear"?: boolean;
+    "renderSelectedOption"?: (option: ComboboxOption<T>) => React.ReactNode;
+    "renderOption"?: (option: ComboboxOption<T>) => React.ReactNode;
 }
 
 export function Combobox<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -89,6 +91,8 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     isRefreshing = false,
     splitLabelBadge = false,
     allowClear = false,
+    renderSelectedOption,
+    renderOption,
 }: ComboboxProps<T>) {
     const [open, setOpen] = React.useState(false);
     const [debouncedSearch, setSearch, searchValue] = useDebouncedSearch(debounceMs, "");
@@ -151,10 +155,14 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                         >
                             <span className="min-w-0 flex-1 overflow-hidden text-left font-normal leading-[18px]">
                                 {selectedOption ? (
-                                    <ComboboxLabelContent
-                                        label={selectedOption.label}
-                                        splitBadge={splitLabelBadge}
-                                    />
+                                    renderSelectedOption ? (
+                                        renderSelectedOption(selectedOption)
+                                    ) : (
+                                        <ComboboxLabelContent
+                                            label={selectedOption.label}
+                                            splitBadge={splitLabelBadge}
+                                        />
+                                    )
                                 ) : (
                                     <span className="text-muted-foreground">{placeholder}</span>
                                 )}
@@ -213,10 +221,14 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                                             disabled={option.disabled}
                                                             onSelect={handleSelect}
                                                         >
-                                                            <ComboboxLabelContent
-                                                                label={option.label}
-                                                                splitBadge={splitLabelBadge}
-                                                            />
+                                                            {renderOption ? (
+                                                                renderOption(option)
+                                                            ) : (
+                                                                <ComboboxLabelContent
+                                                                    label={option.label}
+                                                                    splitBadge={splitLabelBadge}
+                                                                />
+                                                            )}
                                                             <Check
                                                                 className={cn(
                                                                     "ml-auto h-4 w-4 shrink-0",

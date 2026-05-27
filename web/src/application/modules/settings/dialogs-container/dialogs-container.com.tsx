@@ -6,16 +6,19 @@ import {
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
+    CreateOrEditGithubAppDialog,
     CreateOrEditImPlatformDialog,
     CreateOrEditNotificationTargetDialog,
     CreateOrEditOAuthDialog,
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
+    ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
+    UpdateGithubAppStatusDialog,
     UpdateImPlatformStatusDialog,
     UpdateNotificationTargetStatusDialog,
     UpdateOAuthStatusDialog,
@@ -26,16 +29,19 @@ import {
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
+    useCreateOrEditGithubAppDialogState,
     useCreateOrEditImPlatformDialogState,
     useCreateOrEditNotificationTargetDialogState,
     useCreateOrEditOAuthDialogState,
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
+    useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
+    useUpdateGithubAppStatusDialogState,
     useUpdateImPlatformStatusDialogState,
     useUpdateNotificationTargetStatusDialogState,
     useUpdateOAuthStatusDialogState,
@@ -66,6 +72,9 @@ function View() {
     const updateOAuthStatusDialog = useUpdateOAuthStatusDialogState();
     const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
+    const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
+    const provisionGithubAppDialog = useProvisionGithubAppDialogState();
+    const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
 
     useUpdateEffect(() => {
         createOrEditBasicAuthDialog.destroy();
@@ -88,6 +97,9 @@ function View() {
         updateOAuthStatusDialog.destroy();
         createOrEditNotificationTargetDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
+        createOrEditGithubAppDialog.destroy();
+        provisionGithubAppDialog.destroy();
+        updateGithubAppStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -112,6 +124,9 @@ function View() {
             <UpdateOAuthStatusDialog />
             <CreateOrEditNotificationTargetDialog />
             <UpdateNotificationTargetStatusDialog />
+            <CreateOrEditGithubAppDialog />
+            <ProvisionGithubAppDialog />
+            <UpdateGithubAppStatusDialog />
         </>
     );
 }

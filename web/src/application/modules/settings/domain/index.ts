@@ -12,3 +12,4 @@ export * from "./ssh-key.entity";
 export * from "./access-token.entity";
 export * from "./cloud-storage.entity";
 export * from "./oauth.entity";
+export * from "./github-app.entity";

@@ -19,27 +19,37 @@ type UpdateSystemBackupReq struct {
 }
 
 type SystemBackupBaseReq struct {
-	Status           base.SettingStatus                `json:"status"`
-	ScheduleInterval timeutil.Duration                 `json:"scheduleInterval"`
-	ScheduleCronExpr string                            `json:"scheduleCronExpr"`
-	ScheduleFrom     time.Time                         `json:"scheduleFrom"`
-	Compression      SystemBackupCompressionReq        `json:"compression"`
-	Encryption       SystemBackupEncryptionReq         `json:"encryption"`
-	CloudStorage     SystemBackupCloudStorageReq       `json:"cloudStorage"`
-	DBBackupConfig   SystemBackupDBConfigReq           `json:"dbBackupConfig"`
-	Notification     *basedto.BaseEventNotificationReq `json:"notification"`
+	Status         base.SettingStatus                `json:"status"`
+	Schedule       ScheduleReq                       `json:"schedule"`
+	Compression    SystemBackupCompressionReq        `json:"compression"`
+	Encryption     SystemBackupEncryptionReq         `json:"encryption"`
+	CloudStorage   SystemBackupCloudStorageReq       `json:"cloudStorage"`
+	DBBackupConfig SystemBackupDBConfigReq           `json:"dbBackupConfig"`
+	Notification   *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SystemBackupBaseReq) ToEntity() *entity.SystemBackup {
 	return &entity.SystemBackup{
-		ScheduleInterval: req.ScheduleInterval,
-		ScheduleCronExpr: req.ScheduleCronExpr,
-		ScheduleFrom:     req.ScheduleFrom,
-		Compression:      req.Compression.ToEntity(),
-		Encryption:       req.Encryption.ToEntity(),
-		CloudStorage:     req.CloudStorage.ToEntity(),
-		DBBackupConfig:   req.DBBackupConfig.ToEntity(),
-		Notification:     req.Notification.ToEntity(),
+		Schedule:       req.Schedule.ToEntity(),
+		Compression:    req.Compression.ToEntity(),
+		Encryption:     req.Encryption.ToEntity(),
+		CloudStorage:   req.CloudStorage.ToEntity(),
+		DBBackupConfig: req.DBBackupConfig.ToEntity(),
+		Notification:   req.Notification.ToEntity(),
+	}
+}
+
+type ScheduleReq struct {
+	CronExpr    string            `json:"cronExpr"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval"`
+	InitialTime time.Time         `json:"initialTime"`
+}
+
+func (req *ScheduleReq) ToEntity() entity.SchedJobSchedule {
+	return entity.SchedJobSchedule{
+		CronExpr:    req.CronExpr,
+		Interval:    req.Interval,
+		InitialTime: req.InitialTime,
 	}
 }
 
@@ -118,12 +128,13 @@ func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	schedValid := (req.ScheduleInterval > 0 && req.ScheduleCronExpr == "") ||
-		(req.ScheduleInterval == 0 && req.ScheduleCronExpr != "")
-	res = append(res, vld.Must(schedValid).OnError(
-		vld.SetField(field+"scheduleInterval|scheduleCronExpr", nil),
+	sched := req.Schedule.ToEntity()
+	res = append(res, vld.Must((&sched).IsValid() == nil).OnError(
+		vld.SetField(field+"schedule.Interval|schedule.CronExpr", nil),
 		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
 	))
+	res = append(res, basedto.ValidateTime(&req.Schedule.InitialTime, true,
+		time.Now().Add(-timeutil.Duration365Days), time.Time{}, field+"schedule.initialTime")...)
 	res = append(res, req.Compression.validate(field+"compression")...)
 	res = append(res, req.Encryption.validate(field+"encryption")...)
 	res = append(res, req.CloudStorage.validate(field+"cloudStorage")...)
@@ -136,9 +147,10 @@ func NewUpdateSystemBackupReq() *UpdateSystemBackupReq {
 }
 
 func (req *UpdateSystemBackupReq) ModifyRequest() error {
-	if !req.ScheduleFrom.IsZero() {
-		req.ScheduleFrom = req.ScheduleFrom.Truncate(time.Minute)
+	if req.Schedule.InitialTime.IsZero() {
+		req.Schedule.InitialTime = timeutil.NowUTC()
 	}
+	req.Schedule.InitialTime = req.Schedule.InitialTime.Truncate(time.Minute)
 	return nil
 }
 

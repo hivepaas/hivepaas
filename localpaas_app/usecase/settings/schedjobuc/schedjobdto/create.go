@@ -81,16 +81,16 @@ func (req *ScheduleReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, basedto.ValidateValue(req.ToEntity().IsValid() == nil, field+"cronExpr|interval")...)
 	res = append(res, basedto.ValidateTime(&req.InitialTime, true,
-		timeutil.NowUTC().Add(-time.Second), time.Time{}, field+"initialTime")...)
+		timeutil.NowUTC().Add(-timeutil.Duration365Days), time.Time{}, field+"initialTime")...)
 	return res
 }
 
 type ContainerCommandReq struct {
-	RunInShell string                        `json:"runInShell"`
-	Command    string                        `json:"command"`
-	WorkingDir string                        `json:"workingDir"`
-	EnvVars    []*basedto.EnvVarReq          `json:"envVars"`
-	ArgGroups  []*SchedJobCommandArgGroupReq `json:"argGroups"`
+	RunInShell string                `json:"runInShell"`
+	Command    string                `json:"command"`
+	WorkingDir string                `json:"workingDir"`
+	EnvVars    []*basedto.EnvVarReq  `json:"envVars"`
+	ArgGroups  []*CommandArgGroupReq `json:"argGroups"`
 }
 
 func (req *ContainerCommandReq) ToEntity() *entity.SchedJobContainerCommand {
@@ -100,7 +100,7 @@ func (req *ContainerCommandReq) ToEntity() *entity.SchedJobContainerCommand {
 	return &entity.SchedJobContainerCommand{
 		Command:    req.Command,
 		WorkingDir: req.WorkingDir,
-		ArgGroups: gofn.MapSlice(req.ArgGroups, func(item *SchedJobCommandArgGroupReq) *entity.SchedJobCommandArgGroup {
+		ArgGroups: gofn.MapSlice(req.ArgGroups, func(item *CommandArgGroupReq) *entity.SchedJobCommandArgGroup {
 			return item.ToEntity()
 		}),
 	}
@@ -115,32 +115,34 @@ func (req *ContainerCommandReq) validate(_ string) (res []vld.Validator) {
 	return res
 }
 
-type SchedJobCommandArgGroupReq struct {
-	ExportEnv string                   `json:"exportEnv"`
-	Separator string                   `json:"separator"`
-	Args      []*SchedJobCommandArgReq `json:"args,omitempty"`
+type CommandArgGroupReq struct {
+	Enabled   bool             `json:"enabled"`
+	ExportEnv string           `json:"exportEnv"`
+	Separator string           `json:"separator"`
+	Args      []*CommandArgReq `json:"args,omitempty"`
 }
 
-func (req *SchedJobCommandArgGroupReq) ToEntity() *entity.SchedJobCommandArgGroup {
+func (req *CommandArgGroupReq) ToEntity() *entity.SchedJobCommandArgGroup {
 	if req == nil {
 		return nil
 	}
 	return &entity.SchedJobCommandArgGroup{
+		Enabled:   req.Enabled,
 		ExportEnv: req.ExportEnv,
 		Separator: req.Separator,
-		Args: gofn.MapSlice(req.Args, func(item *SchedJobCommandArgReq) *entity.SchedJobCommandArg {
+		Args: gofn.MapSlice(req.Args, func(item *CommandArgReq) *entity.SchedJobCommandArg {
 			return item.ToEntity()
 		}),
 	}
 }
 
-type SchedJobCommandArgReq struct {
+type CommandArgReq struct {
 	Use   bool   `json:"use"`
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-func (req *SchedJobCommandArgReq) ToEntity() *entity.SchedJobCommandArg {
+func (req *CommandArgReq) ToEntity() *entity.SchedJobCommandArg {
 	if req == nil {
 		return nil
 	}
@@ -157,8 +159,9 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 	if req.Schedule != nil {
 		req.Schedule.CronExpr = strings.TrimSpace(req.Schedule.CronExpr)
 		if req.Schedule.InitialTime.IsZero() {
-			req.Schedule.InitialTime = timeutil.NowUTC().Truncate(time.Second).Add(time.Second)
+			req.Schedule.InitialTime = timeutil.NowUTC()
 		}
+		req.Schedule.InitialTime = req.Schedule.InitialTime.Truncate(time.Second)
 	}
 	return nil
 }

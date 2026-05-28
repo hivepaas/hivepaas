@@ -35,14 +35,21 @@ type GetSystemBackupResp struct {
 
 type SystemBackupResp struct {
 	*settings.BaseSettingResp
-	ScheduleInterval timeutil.Duration                  `json:"scheduleInterval"`
-	ScheduleCronExpr string                             `json:"scheduleCronExpr"`
-	ScheduleFrom     time.Time                          `json:"scheduleFrom"`
-	Compression      *SystemBackupCompressionResp       `json:"compression"`
-	Encryption       *SystemBackupEncryptionResp        `json:"encryption"`
-	CloudStorage     *SystemBackupCloudStorageResp      `json:"cloudStorage"`
-	DBBackupConfig   *SystemBackupDBConfigResp          `json:"dbBackupConfig"`
-	Notification     *basedto.BaseEventNotificationResp `json:"notification"`
+	Schedule       *ScheduleResp                      `json:"schedule"`
+	Compression    *SystemBackupCompressionResp       `json:"compression"`
+	Encryption     *SystemBackupEncryptionResp        `json:"encryption"`
+	CloudStorage   *SystemBackupCloudStorageResp      `json:"cloudStorage"`
+	DBBackupConfig *SystemBackupDBConfigResp          `json:"dbBackupConfig"`
+	Notification   *basedto.BaseEventNotificationResp `json:"notification"`
+
+	// Calculated fields
+	NextRuns []time.Time `json:"nextRuns"`
+}
+
+type ScheduleResp struct {
+	CronExpr    string            `json:"cronExpr,omitempty"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval,omitempty"`
+	InitialTime time.Time         `json:"initialTime"`
 }
 
 type SystemBackupCompressionResp struct {
@@ -90,5 +97,9 @@ func TransformSystemBackup(
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+
+	// Add next runs
+	resp.NextRuns, _ = config.Schedule.CalcNextRuns(time.Now(), 5) //nolint
+
 	return resp, nil
 }

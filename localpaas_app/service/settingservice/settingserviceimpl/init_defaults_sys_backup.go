@@ -42,8 +42,10 @@ func (s *service) initDefaultSystemBackup(
 		UpdatedAt: timeNow,
 	}
 	backup := &entity.SystemBackup{
-		ScheduleInterval: sysBackupInterval,
-		ScheduleFrom:     timeNow.Truncate(sysBackupInterval.ToDuration()),
+		Schedule: entity.SchedJobSchedule{
+			Interval:    sysBackupInterval,
+			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 1, 0, 0, 0, time.UTC),
+		},
 		DBBackupConfig: entity.SystemBackupDBConfig{
 			BackupDeletedObjects: sysBackupDeletedObjects,
 		},
@@ -73,11 +75,8 @@ func (s *service) initDefaultSystemBackup(
 		UpdatedAt: timeNow,
 	}
 	schedJob := &entity.SchedJob{
-		JobType: base.SchedJobTypeSystemBackup,
-		Schedule: &entity.SchedJobSchedule{
-			Interval:    backup.ScheduleInterval,
-			InitialTime: backup.ScheduleFrom,
-		},
+		JobType:       base.SchedJobTypeSystemBackup,
+		Schedule:      &backup.Schedule,
 		TargetSetting: entity.ObjectID{ID: backupSetting.ID},
 		MaxRetry:      sysBackupMaxRetry,
 		RetryDelay:    sysBackupRetryDelay,

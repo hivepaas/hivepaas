@@ -164,7 +164,6 @@ func (uc *UC) preparePersistingData(
 	renewalJob := jobSetting.MustAsSchedJob()
 	renewalJob.Schedule.Interval = updateData.NewRenewal.ScheduleInterval
 	renewalJob.Schedule.InitialTime = updateData.NewRenewal.ScheduleFrom
-	renewalJob.Schedule.OnChange(updateData.JobScheduleChanges) // call this to handle if the schedule changes
 	jobSetting.MustSetData(renewalJob)
 
 	return nil

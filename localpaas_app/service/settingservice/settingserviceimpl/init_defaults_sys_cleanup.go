@@ -47,8 +47,10 @@ func (s *service) initDefaultSystemCleanup(
 		UpdatedAt: timeNow,
 	}
 	cleanup := &entity.SystemCleanup{
-		ScheduleInterval: sysCleanupInterval,
-		ScheduleFrom:     timeNow.Truncate(sysCleanupInterval.ToDuration()),
+		Schedule: entity.SchedJobSchedule{
+			Interval:    sysCleanupInterval,
+			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 0, 0, 0, time.UTC),
+		},
 		DBObjectRetention: entity.DBObjectRetention{
 			Enabled:        true,
 			Tasks:          dbObjectRetentionOfTasks,
@@ -88,11 +90,8 @@ func (s *service) initDefaultSystemCleanup(
 		UpdatedAt: timeNow,
 	}
 	schedJob := &entity.SchedJob{
-		JobType: base.SchedJobTypeSystemCleanup,
-		Schedule: &entity.SchedJobSchedule{
-			Interval:    cleanup.ScheduleInterval,
-			InitialTime: cleanup.ScheduleFrom,
-		},
+		JobType:       base.SchedJobTypeSystemCleanup,
+		Schedule:      &cleanup.Schedule,
 		TargetSetting: entity.ObjectID{ID: cleanupSetting.ID},
 		MaxRetry:      sysCleanupMaxRetry,
 		RetryDelay:    sysCleanupRetryDelay,

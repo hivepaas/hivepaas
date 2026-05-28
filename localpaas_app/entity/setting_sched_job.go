@@ -43,20 +43,18 @@ type SchedJob struct {
 }
 
 type SchedJobSchedule struct {
-	CronExpr      string            `json:"cronExpr,omitempty"` // cronExpr and interval are mutually exclusive
-	Interval      timeutil.Duration `json:"interval,omitempty"`
-	InitialTime   time.Time         `json:"initialTime"`
-	LastSchedTime time.Time         `json:"lastSchedTime"`
+	CronExpr    string            `json:"cronExpr,omitempty"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval,omitempty"`
+	InitialTime time.Time         `json:"initialTime"`
+
+	InitialTimeAdj  time.Time `json:"initialTimeAdj"`
+	LastCronExpr    string    `json:"lastCronExpr,omitempty"`
+	LastInitialTime time.Time `json:"lastInitialTime,omitzero"`
 }
 
-func (s *SchedJobSchedule) Changed(oldSched *SchedJobSchedule) bool {
-	return s.CronExpr != oldSched.CronExpr || s.Interval != oldSched.Interval || s.InitialTime != oldSched.InitialTime
-}
-
-func (s *SchedJobSchedule) OnChange(scheduleChanged bool) {
-	if scheduleChanged {
-		s.LastSchedTime = time.Time{}
-	}
+func (s *SchedJobSchedule) Equal(oldSched *SchedJobSchedule) bool {
+	return s.CronExpr == oldSched.CronExpr && s.Interval == oldSched.Interval &&
+		s.InitialTime.Equal(oldSched.InitialTime)
 }
 
 func (s *SchedJobSchedule) IsValid() error {
@@ -88,13 +86,19 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 }
 
 func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
-	nextRunAt := gofn.Coalesce(s.LastSchedTime, s.InitialTime)
 	if count == 0 {
 		return nil, apperrors.NewValueInvalid()
 	}
 
+	nextRunAt := s.InitialTime
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()
+		if interval < 0 {
+			interval = -interval
+		}
+		if diff := fromTime.Sub(nextRunAt); diff > interval {
+			nextRunAt = nextRunAt.Add((diff / interval) * interval)
+		}
 		for {
 			if nextRunAt.Before(fromTime) {
 				nextRunAt = nextRunAt.Add(interval)
@@ -110,6 +114,9 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	}
 
 	if s.CronExpr != "" {
+		if !s.InitialTimeAdj.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInitialTime.Equal(s.InitialTime) {
+			nextRunAt = s.InitialTimeAdj
+		}
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -131,13 +138,19 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 }
 
 func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
-	nextRunAt := gofn.Coalesce(s.LastSchedTime, s.InitialTime)
 	if toTime.IsZero() {
 		return nil, apperrors.NewValueInvalid()
 	}
+	nextRunAt := s.InitialTime
 
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()
+		if interval < 0 {
+			interval = -interval
+		}
+		if diff := fromTime.Sub(nextRunAt); diff > interval {
+			nextRunAt = nextRunAt.Add((diff / interval) * interval)
+		}
 		for {
 			if nextRunAt.Before(fromTime) {
 				nextRunAt = nextRunAt.Add(interval)
@@ -153,6 +166,9 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	}
 
 	if s.CronExpr != "" {
+		if !s.InitialTimeAdj.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInitialTime.Equal(s.InitialTime) {
+			nextRunAt = s.InitialTimeAdj
+		}
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -173,6 +189,19 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	return nil, apperrors.NewValueInvalid()
 }
 
+func (s *SchedJobSchedule) AdjustInitialTime(initialTimeAdj time.Time) bool {
+	if s.CronExpr == "" { // Only need to adjust initial time on `Cron` mode
+		return false
+	}
+	if !s.InitialTimeAdj.IsZero() && initialTimeAdj.Sub(s.InitialTimeAdj) < timeutil.Duration7Days {
+		return false
+	}
+	s.InitialTimeAdj = initialTimeAdj
+	s.LastInitialTime = s.InitialTime
+	s.LastCronExpr = s.CronExpr
+	return true
+}
+
 type SchedJobContainerCommand struct {
 	RunInShell string                     `json:"runInShell,omitempty"`
 	Command    string                     `json:"command"`
@@ -182,6 +211,7 @@ type SchedJobContainerCommand struct {
 }
 
 type SchedJobCommandArgGroup struct {
+	Enabled   bool                  `json:"enabled"`
 	ExportEnv string                `json:"exportEnv"`
 	Separator string                `json:"separator"`
 	Args      []*SchedJobCommandArg `json:"args,omitempty"`

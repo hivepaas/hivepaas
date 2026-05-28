@@ -1,13 +1,10 @@
 package entity
 
 import (
-	"time"
-
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
 const (
@@ -24,14 +21,12 @@ func (s *systemBackupParser) New() SettingData {
 }
 
 type SystemBackup struct {
-	ScheduleInterval timeutil.Duration        `json:"scheduleInterval,omitempty"`
-	ScheduleCronExpr string                   `json:"scheduleCronExpr,omitempty"`
-	ScheduleFrom     time.Time                `json:"scheduleFrom"`
-	Compression      SystemBackupCompression  `json:"compression,omitempty"`
-	Encryption       SystemBackupEncryption   `json:"encryption,omitempty"`
-	CloudStorage     SystemBackupCloudStorage `json:"cloudStorage,omitempty"`
-	DBBackupConfig   SystemBackupDBConfig     `json:"dbBackupConfig"`
-	Notification     *BaseEventNotification   `json:"notification,omitempty"`
+	Schedule       SchedJobSchedule         `json:"schedule"`
+	Compression    SystemBackupCompression  `json:"compression,omitempty"`
+	Encryption     SystemBackupEncryption   `json:"encryption,omitempty"`
+	CloudStorage   SystemBackupCloudStorage `json:"cloudStorage,omitempty"`
+	DBBackupConfig SystemBackupDBConfig     `json:"dbBackupConfig"`
+	Notification   *BaseEventNotification   `json:"notification,omitempty"`
 }
 
 type SystemBackupCompression struct {

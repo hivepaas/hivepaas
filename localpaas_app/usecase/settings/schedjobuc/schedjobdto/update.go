@@ -17,6 +17,10 @@ func NewUpdateSchedJobReq() *UpdateSchedJobReq {
 	return &UpdateSchedJobReq{}
 }
 
+func (req *UpdateSchedJobReq) ModifyRequest() error {
+	return req.modifyRequest()
+}
+
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateSchedJobReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	vld "github.com/tiendc/go-validator"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -46,6 +47,7 @@ type SchedJobResp struct {
 	Command         *ContainerCommandResp              `json:"command"`
 	Notification    *basedto.BaseEventNotificationResp `json:"notification"`
 
+	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`
 }
 
@@ -64,6 +66,7 @@ type ContainerCommandResp struct {
 }
 
 type CommandArgGroupResp struct {
+	Enabled   bool              `json:"enabled"`
 	ExportEnv string            `json:"exportEnv"`
 	Separator string            `json:"separator"`
 	Args      []*CommandArgResp `json:"args"`
@@ -78,9 +81,10 @@ type CommandArgResp struct {
 func TransformSchedJob(
 	setting *entity.Setting,
 	refObjects *entity.RefObjects,
+	isListAPI bool,
 ) (resp *SchedJobResp, err error) {
-	config := setting.MustAsSchedJob()
-	if err = copier.Copy(&resp, config); err != nil {
+	job := setting.MustAsSchedJob()
+	if err = copier.Copy(&resp, job); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
@@ -89,13 +93,19 @@ func TransformSchedJob(
 		return nil, apperrors.Wrap(err)
 	}
 
-	if config.App.ID != "" {
-		refApp := refObjects.RefApps[config.App.ID]
+	if job.App.ID != "" {
+		refApp := refObjects.RefApps[job.App.ID]
 		if err = copier.Copy(&resp.App, refApp); err != nil {
 			return nil, apperrors.Wrap(err)
 		}
 	}
 
-	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
+
+	if setting.IsActive() {
+		count := gofn.If(isListAPI, 1, 5) //nolint:mnd
+		resp.NextRuns, _ = job.Schedule.CalcNextRuns(timeutil.NowUTC(), count)
+	}
+
 	return resp, nil
 }

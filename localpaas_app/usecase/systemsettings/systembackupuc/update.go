@@ -103,8 +103,7 @@ func (uc *UC) loadSettingData(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.JobScheduleChanges = backup.ScheduleInterval != data.NewBackup.ScheduleInterval ||
-		backup.ScheduleFrom != data.NewBackup.ScheduleFrom
+	data.JobScheduleChanges = !backup.Schedule.Equal(&data.NewBackup.Schedule)
 
 	// Load sched job of the backup
 	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,
@@ -160,14 +159,7 @@ func (uc *UC) preparePersistingData(
 	persistingData.JobSetting = jobSetting
 
 	backupJob := jobSetting.MustAsSchedJob()
-	backupJob.Schedule.Interval = updateData.NewBackup.ScheduleInterval
-	backupJob.Schedule.CronExpr = updateData.NewBackup.ScheduleCronExpr
-	backupJob.Schedule.InitialTime = updateData.NewBackup.ScheduleFrom
-	if err = backupJob.Schedule.IsValid(); err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	backupJob.Schedule.OnChange(updateData.JobScheduleChanges) // call this to handle if the schedule changes
+	backupJob.Schedule = &updateData.NewBackup.Schedule
 	backupJob.Notification = updateData.NewBackup.Notification
 	jobSetting.MustSetData(backupJob)
 

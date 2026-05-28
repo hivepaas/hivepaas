@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"time"
-
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -24,9 +22,7 @@ func (s *systemCleanupParser) New() SettingData {
 }
 
 type SystemCleanup struct {
-	ScheduleInterval  timeutil.Duration      `json:"scheduleInterval,omitempty"`
-	ScheduleCronExpr  string                 `json:"scheduleCronExpr,omitempty"`
-	ScheduleFrom      time.Time              `json:"scheduleFrom"`
+	Schedule          SchedJobSchedule       `json:"schedule"`
 	DBObjectRetention DBObjectRetention      `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanup   `json:"clusterCleanup"`
 	BackupCleanup     SystemBackupCleanup    `json:"backupCleanup"`

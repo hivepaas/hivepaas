@@ -34,13 +34,20 @@ type GetSystemCleanupResp struct {
 
 type SystemCleanupResp struct {
 	*settings.BaseSettingResp
-	ScheduleInterval  timeutil.Duration                  `json:"scheduleInterval"`
-	ScheduleCronExpr  string                             `json:"scheduleCronExpr"`
-	ScheduleFrom      time.Time                          `json:"scheduleFrom"`
+	Schedule          *ScheduleResp                      `json:"schedule"`
 	DBObjectRetention *DBObjectRetentionResp             `json:"dbObjectRetention"`
 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`
 	BackupCleanup     *SystemBackupCleanupResp           `json:"backupCleanup"`
 	Notification      *basedto.BaseEventNotificationResp `json:"notification"`
+
+	// Calculated fields
+	NextRuns []time.Time `json:"nextRuns"`
+}
+
+type ScheduleResp struct {
+	CronExpr    string            `json:"cronExpr,omitempty"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval,omitempty"`
+	InitialTime time.Time         `json:"initialTime"`
 }
 
 type DBObjectRetentionResp struct {
@@ -80,5 +87,9 @@ func TransformSystemCleanup(
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+
+	// Add next runs
+	resp.NextRuns, _ = config.Schedule.CalcNextRuns(time.Now(), 5) //nolint
+
 	return resp, nil
 }

@@ -26,7 +26,7 @@ func (uc *UC) UpdateSchedJob(
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
-			scheduleChanges = job.Schedule.Changed(newJob.Schedule)
+			scheduleChanges = !job.Schedule.Equal(newJob.Schedule)
 			return nil
 		},
 		PrepareUpdate: func(
@@ -36,7 +36,6 @@ func (uc *UC) UpdateSchedJob(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(newJob.JobType)
-			newJob.Schedule.OnChange(scheduleChanges) // call this to handle if the schedule changes
 			err := pData.Setting.SetData(newJob)
 			if err != nil {
 				return apperrors.Wrap(err)

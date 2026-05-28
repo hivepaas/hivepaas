@@ -80,8 +80,7 @@ func (q *taskQueue) createTasksForJobs(
 			allNewTasks = append(allNewTasks, task)
 		}
 
-		if !lastSchedTime.Equal(schedJob.Schedule.LastSchedTime) {
-			schedJob.Schedule.LastSchedTime = lastSchedTime
+		if schedJob.Schedule.AdjustInitialTime(lastSchedTime) {
 			jobSetting.MustSetData(schedJob)
 			updatingJobSettings = append(updatingJobSettings, jobSetting)
 		}

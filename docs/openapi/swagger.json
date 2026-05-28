@@ -22544,9 +22544,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -23179,7 +23179,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -23198,8 +23198,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -23222,10 +23222,10 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000, 864000000000000, 1296000000000000, 2592000000000000, 5184000000000000, 7776000000000000, 31536000000000000, 604800000000000, 1209600000000000, 2419200000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "Day", "Week" ]
+        "x-enum-varnames" : [ "DurationDay", "Duration7Days", "Duration10Days", "Duration15Days", "Duration30Days", "Duration60Days", "Duration90Days", "Duration365Days", "DurationWeek", "Duration2Weeks", "Duration4Weeks" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize" : {
         "enum" : [ 1, 1024, 1048576, 1073741824, 1099511627776, 1125899906842624, 1152921504606846976 ],
@@ -31195,13 +31195,16 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupReq" : {
         "properties" : {
           "args" : {
             "items" : {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgResp"
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgReq"
             },
             "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
           },
           "exportEnv" : {
             "type" : "string"
@@ -31210,7 +31213,43 @@
             "type" : "string"
           }
         },
-        "required" : [ "args", "exportEnv", "separator" ],
+        "required" : [ "enabled", "exportEnv", "separator" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupResp" : {
+        "properties" : {
+          "args" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgResp"
+            },
+            "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "exportEnv" : {
+            "type" : "string"
+          },
+          "separator" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "args", "enabled", "exportEnv", "separator" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgReq" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "use" : {
+            "type" : "boolean"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "use", "value" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgResp" : {
@@ -31232,7 +31271,7 @@
         "properties" : {
           "argGroups" : {
             "items" : {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobCommandArgGroupReq"
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupReq"
             },
             "type" : "array"
           },
@@ -31438,39 +31477,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobCommandArgGroupReq" : {
-        "properties" : {
-          "args" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobCommandArgReq"
-            },
-            "type" : "array"
-          },
-          "exportEnv" : {
-            "type" : "string"
-          },
-          "separator" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "exportEnv", "separator" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobCommandArgReq" : {
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "use" : {
-            "type" : "boolean"
-          },
-          "value" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "name", "use", "value" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobResp" : {
         "properties" : {
           "app" : {
@@ -31513,6 +31519,7 @@
             "type" : "string"
           },
           "nextRuns" : {
+            "description" : "Calculated fields",
             "items" : {
               "type" : "string"
             },
@@ -33387,6 +33394,38 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.ScheduleReq" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.ScheduleResp" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "initialTime" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.SystemBackupCloudStorageReq" : {
         "properties" : {
           "destinationDir" : {
@@ -33540,17 +33579,18 @@
           "name" : {
             "type" : "string"
           },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "notification" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationResp"
           },
-          "scheduleCronExpr" : {
-            "type" : "string"
-          },
-          "scheduleFrom" : {
-            "type" : "string"
-          },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.ScheduleResp"
           },
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
@@ -33565,7 +33605,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "encryption", "id", "name", "notification", "scheduleCronExpr", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "encryption", "id", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.UpdateSystemBackupReq" : {
@@ -33591,14 +33631,8 @@
           "notification" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationReq"
           },
-          "scheduleCronExpr" : {
-            "type" : "string"
-          },
-          "scheduleFrom" : {
-            "type" : "string"
-          },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.ScheduleReq"
           },
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
@@ -33607,7 +33641,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "notification", "scheduleCronExpr", "scheduleFrom", "scheduleInterval", "status", "updateVer" ],
+        "required" : [ "availableInProjects", "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.UpdateSystemBackupResp" : {
@@ -33697,6 +33731,38 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ScheduleReq" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ScheduleResp" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          }
+        },
+        "required" : [ "initialTime" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.SystemBackupCleanupReq" : {
         "properties" : {
           "cloudBackupRetention" : {
@@ -33762,17 +33828,18 @@
           "name" : {
             "type" : "string"
           },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "notification" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationResp"
           },
-          "scheduleCronExpr" : {
-            "type" : "string"
-          },
-          "scheduleFrom" : {
-            "type" : "string"
-          },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ScheduleResp"
           },
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
@@ -33787,7 +33854,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "backupCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "id", "name", "notification", "scheduleCronExpr", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "backupCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "id", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.SystemClusterCleanupReq" : {
@@ -33852,14 +33919,8 @@
           "notification" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationReq"
           },
-          "scheduleCronExpr" : {
-            "type" : "string"
-          },
-          "scheduleFrom" : {
-            "type" : "string"
-          },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ScheduleReq"
           },
           "status" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
@@ -33868,7 +33929,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "backupCleanup", "clusterCleanup", "dbObjectRetention", "default", "notification", "scheduleCronExpr", "scheduleFrom", "scheduleInterval", "status", "updateVer" ],
+        "required" : [ "availableInProjects", "backupCleanup", "clusterCleanup", "dbObjectRetention", "default", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.UpdateSystemCleanupResp" : {

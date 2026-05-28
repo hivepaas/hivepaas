@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
@@ -52,11 +54,14 @@ func (s *service) BuildCommandEnv(
 func (s *service) buildEnvForArgs(
 	argGroup *entity.SchedJobCommandArgGroup,
 ) *entity.EnvVar {
-	if len(argGroup.Args) == 0 {
+	if !argGroup.Enabled || len(argGroup.Args) == 0 {
 		return nil
 	}
+
 	buf := &strings.Builder{}
 	buf.Grow(100) //nolint:mnd
+	separator := gofn.Coalesce(argGroup.Separator, " ")
+
 	for _, arg := range argGroup.Args {
 		if !arg.Use {
 			continue
@@ -67,7 +72,7 @@ func (s *service) buildEnvForArgs(
 		if arg.Value == "" {
 			buf.WriteString(arg.Name)
 		} else {
-			buf.WriteString(arg.Name + argGroup.Separator + shellutil.ArgQuote(arg.Value))
+			buf.WriteString(arg.Name + separator + shellutil.ArgQuote(arg.Value))
 		}
 	}
 	if buf.Len() == 0 {

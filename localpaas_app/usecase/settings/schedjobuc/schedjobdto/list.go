@@ -41,7 +41,7 @@ func TransformSchedJobs(
 ) ([]*SchedJobResp, error) {
 	resp := make([]*SchedJobResp, 0, len(settings))
 	for _, setting := range settings {
-		item, err := TransformSchedJob(setting, refObjects)
+		item, err := TransformSchedJob(setting, refObjects, true)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

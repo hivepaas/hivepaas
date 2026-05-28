@@ -38,7 +38,7 @@ export interface SystemBackupSettings extends SettingsBaseEntity {
     type: typeof ESettingType.SystemBackup;
     status: ESettingStatus;
     scheduleInterval: string;
-    scheduleFrom: Date;
+    scheduleFrom?: Date | null;
     compression: SystemBackupCompression;
     encryption: SystemBackupEncryption;
     cloudStorage?: SystemBackupCloudStorage | null;

@@ -1,5 +1,7 @@
-import { ROUTE } from "@/application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
+
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./user-management.module");
@@ -25,9 +27,11 @@ export const userManagementRouter: RouteObject = {
 
                 return {
                     element: (
-                        <MainLayout>
-                            <Outlet />
-                        </MainLayout>
+                        <ConditionalModule id={MODULE_IDS.User}>
+                            <MainLayout>
+                                <Outlet />
+                            </MainLayout>
+                        </ConditionalModule>
                     ),
                 };
             },
@@ -57,9 +61,11 @@ export const userManagementRouter: RouteObject = {
 
                 return {
                     element: (
-                        <SingleUserLayout>
-                            <Outlet />
-                        </SingleUserLayout>
+                        <ConditionalModule id={MODULE_IDS.User}>
+                            <SingleUserLayout>
+                                <Outlet />
+                            </SingleUserLayout>
+                        </ConditionalModule>
                     ),
                 };
             },

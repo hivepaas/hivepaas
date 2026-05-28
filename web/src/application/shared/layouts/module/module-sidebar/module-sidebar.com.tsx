@@ -11,8 +11,9 @@ import {
     Users,
 } from "lucide-react";
 
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE, type ResourceModuleId } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
+import { type ModuleId, type ModulePermission, useConditionalModuleCollections } from "@application/shared/permissions";
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 
@@ -24,11 +25,13 @@ interface SidebarItem {
     route: string;
     pattern: string;
     icon?: LucideIcon;
+    moduleId?: ResourceModuleId;
     items?: {
         title: string;
         route: string;
         pattern: string;
         icon?: LucideIcon;
+        moduleId?: ResourceModuleId;
     }[];
 }
 
@@ -38,12 +41,14 @@ const navMain: SidebarItem[] = [
         route: ROUTE.projects.list.$route,
         pattern: ROUTE.projects.list.$pattern,
         icon: LayoutGrid,
+        moduleId: MODULE_IDS.Project,
     },
     {
         title: "Cluster",
         route: "#",
         pattern: "#",
         icon: Container,
+        moduleId: MODULE_IDS.Cluster,
         items: [
             {
                 title: "Nodes",
@@ -57,12 +62,14 @@ const navMain: SidebarItem[] = [
         route: ROUTE.userManagement.users.$route,
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
+        moduleId: MODULE_IDS.User,
     },
     {
         title: "Sources",
         route: "#",
         pattern: ROUTE.sources.$pattern,
         icon: SlidersHorizontal,
+        moduleId: MODULE_IDS.Settings,
         items: [
             {
                 title: "Github Apps",
@@ -81,6 +88,7 @@ const navMain: SidebarItem[] = [
         route: "#",
         pattern: ROUTE.settings.$pattern,
         icon: Settings,
+        moduleId: MODULE_IDS.Settings,
         items: [
             {
                 title: "Basic Auth",
@@ -139,6 +147,7 @@ const navMain: SidebarItem[] = [
         route: "#",
         pattern: ROUTE.systemSettings.$pattern,
         icon: Settings2,
+        moduleId: MODULE_IDS.System,
         items: [
             {
                 title: "Data Backup",
@@ -154,8 +163,38 @@ const navMain: SidebarItem[] = [
     },
 ];
 
+function hasReadableModuleAccess(item: SidebarItem, permissions: ReadonlyMap<ModuleId, ModulePermission>) {
+    return !item.moduleId || permissions.get(item.moduleId)?.actions.read === true;
+}
+
+function filterSidebarItems(items: readonly SidebarItem[], permissions: ReadonlyMap<ModuleId, ModulePermission>) {
+    return items.flatMap(item => {
+        if (!hasReadableModuleAccess(item, permissions)) {
+            return [];
+        }
+
+        const subItems = item.items?.filter(subItem => hasReadableModuleAccess(subItem, permissions));
+
+        if (item.items && (!subItems || subItems.length === 0)) {
+            return [];
+        }
+
+        return [
+            {
+                ...item,
+                items: subItems,
+            },
+        ];
+    });
+}
+
 export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { profile } = useProfileContext();
+    const { map: modulePermissionMap } = useConditionalModuleCollections();
+    const navigationItems = React.useMemo(
+        () => filterSidebarItems(navMain, modulePermissionMap),
+        [modulePermissionMap],
+    );
 
     if (!profile) {
         return null;
@@ -169,7 +208,7 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
                 <PawPrint size={36} />
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={navMain} />
+                <NavMain items={navigationItems} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={profile} />

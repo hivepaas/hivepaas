@@ -1,8 +1,9 @@
-import { ROUTE } from "@/application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
 
 import { AppNavigate } from "@application/shared/components";
 import { ModuleTitle } from "@application/shared/components/module-title";
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./system-settings.module");
@@ -16,11 +17,13 @@ export const systemSettingsRouter: RouteObject = {
 
                 return {
                     element: (
-                        <ModuleTitle title="Data Backup">
-                            <DataBackupLayout>
-                                <Outlet />
-                            </DataBackupLayout>
-                        </ModuleTitle>
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Data Backup">
+                                <DataBackupLayout>
+                                    <Outlet />
+                                </DataBackupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
                     ),
                 };
             },
@@ -68,11 +71,13 @@ export const systemSettingsRouter: RouteObject = {
 
                 return {
                     element: (
-                        <ModuleTitle title="Data Cleanup">
-                            <DataCleanupLayout>
-                                <Outlet />
-                            </DataCleanupLayout>
-                        </ModuleTitle>
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Data Cleanup">
+                                <DataCleanupLayout>
+                                    <Outlet />
+                                </DataCleanupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
                     ),
                 };
             },

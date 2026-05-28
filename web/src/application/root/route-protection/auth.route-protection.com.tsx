@@ -4,14 +4,46 @@ import { useLocation, useMatch, useSearchParams } from "react-router";
 import { useCookie } from "react-use";
 
 import { AppNavigate } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
+import { type ModuleId, type ModulePermission, useConditionalModuleCollections } from "@application/shared/permissions";
 
 import { AuthCommands } from "@application/authentication/data/commands";
 import { SsoRoute } from "@application/authentication/routes";
 
+const DEFAULT_MODULE_ROUTES = [
+    {
+        moduleId: MODULE_IDS.User,
+        route: ROUTE.userManagement.users.$route,
+    },
+    {
+        moduleId: MODULE_IDS.Project,
+        route: ROUTE.projects.list.$route,
+    },
+    {
+        moduleId: MODULE_IDS.Cluster,
+        route: ROUTE.cluster.nodes.$route,
+    },
+    {
+        moduleId: MODULE_IDS.Settings,
+        route: ROUTE.settings.basicAuth.$route,
+    },
+    {
+        moduleId: MODULE_IDS.System,
+        route: ROUTE.systemSettings.dataBackup.configuration.$route,
+    },
+] as const;
+
+function getDefaultRoute(modulePermissions: ReadonlyMap<ModuleId, ModulePermission>) {
+    return (
+        DEFAULT_MODULE_ROUTES.find(item => modulePermissions.get(item.moduleId)?.actions.read === true)?.route ??
+        ROUTE.currentUser.profile.$route
+    );
+}
+
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
+    const { map: modulePermissionMap } = useConditionalModuleCollections();
     const [token, , deleteToken] = useCookie("access_token");
 
     const { setProfile } = useProfileContext();
@@ -67,7 +99,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
         } else {
             return (
                 <AppNavigate.Basic
-                    to={ROUTE.userManagement.users.$route}
+                    to={getDefaultRoute(modulePermissionMap)}
                     replace
                 />
             );

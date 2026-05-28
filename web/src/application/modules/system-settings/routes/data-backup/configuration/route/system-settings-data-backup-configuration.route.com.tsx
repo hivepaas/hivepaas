@@ -7,10 +7,6 @@ import { SystemBackupCommands, SystemBackupQueries } from "~/system-settings/dat
 
 import { AppLoader } from "@application/shared/components";
 
-import { isValidationException } from "@infrastructure/api";
-
-import { ValidationException } from "@infrastructure/exceptions/validation";
-
 import { SystemBackupConfigurationForm } from "../form";
 import type { SystemBackupConfigurationFormOutput } from "../schemas";
 import type { SystemBackupConfigurationFormRef } from "../types";
@@ -22,7 +18,7 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
         updateVer,
         status: values.status,
         scheduleInterval: values.scheduleInterval,
-        scheduleFrom: values.scheduleFrom,
+        scheduleFrom: values.scheduleFrom ?? null,
         compression: {
             format: values.compressionFormat,
         },
@@ -59,15 +55,15 @@ export function SystemSettingsDataBackupConfigurationRoute() {
         onSuccess: () => {
             toast.success("System backup settings updated");
         },
-        onError: err => {
-            if (isValidationException(err)) {
-                formRef.current?.onError(ValidationException.fromHttp(err));
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            } else {
-                toast.error("Failed to update system backup settings");
-            }
-        },
+        // onError: err => {
+        //     if (isValidationException(err)) {
+        //         formRef.current?.onError(ValidationException.fromHttp(err));
+        //     } else if (err instanceof Error) {
+        //         toast.error(err.message);
+        //     } else {
+        //         toast.error("Failed to update system backup settings");
+        //     }
+        // },
     });
 
     function handleSubmit(values: SystemBackupConfigurationFormOutput) {

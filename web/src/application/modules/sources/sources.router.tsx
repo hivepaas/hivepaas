@@ -3,7 +3,8 @@ import type { ComponentType } from "react";
 import { Navigate, Outlet, type RouteObject } from "react-router";
 
 import { ModuleTitle } from "@application/shared/components/module-title";
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./sources.module");
@@ -13,9 +14,11 @@ function createSourcesRoute(path: string, title: string, loadComponent: () => Pr
     return {
         path,
         element: (
-            <ModuleTitle title={title}>
-                <Outlet />
-            </ModuleTitle>
+            <ConditionalModule id={MODULE_IDS.Settings}>
+                <ModuleTitle title={title}>
+                    <Outlet />
+                </ModuleTitle>
+            </ConditionalModule>
         ),
         children: [
             {
@@ -49,10 +52,12 @@ export const sourcesRouter: RouteObject = {
         {
             path: ROUTE.sources.$pattern,
             element: (
-                <Navigate
-                    to={ROUTE.sources.githubApps.$route}
-                    replace
-                />
+                <ConditionalModule id={MODULE_IDS.Settings}>
+                    <Navigate
+                        to={ROUTE.sources.githubApps.$route}
+                        replace
+                    />
+                </ConditionalModule>
             ),
         },
         createSourcesRoute(ROUTE.sources.githubApps.$pattern, "Github Apps", async () => {

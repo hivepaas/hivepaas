@@ -13,7 +13,7 @@ export type SystemBackup_UpdateOne_Payload = {
     updateVer: number;
     status: ESettingStatus;
     scheduleInterval: string;
-    scheduleFrom: Date;
+    scheduleFrom: Date | null;
     compression: {
         format: ESystemBackupCompressionFormat;
     };

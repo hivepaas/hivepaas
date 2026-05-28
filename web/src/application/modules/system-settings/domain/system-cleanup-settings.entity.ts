@@ -41,7 +41,7 @@ export interface SystemCleanupSettings extends SettingsBaseEntity {
     type: typeof ESettingType.SystemCleanup;
     status: ESettingStatus;
     scheduleInterval: string;
-    scheduleFrom: Date;
+    scheduleFrom?: Date | null;
     dbObjectRetention: SystemCleanupDBObjectRetention;
     clusterCleanup: SystemCleanupClusterCleanup;
     backupCleanup: SystemCleanupBackupCleanup;

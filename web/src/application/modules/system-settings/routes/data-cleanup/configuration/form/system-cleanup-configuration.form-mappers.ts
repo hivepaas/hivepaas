@@ -7,7 +7,7 @@ import type { SystemCleanupConfigurationFormInput } from "../schemas";
 export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigurationFormInput = {
     status: ESettingStatus.Active,
     scheduleInterval: "24h",
-    scheduleFrom: new Date(),
+    scheduleFrom: null,
     dbObjectRetention: {
         enabled: true,
         tasks: "180d",
@@ -41,7 +41,7 @@ export function mapSystemCleanupSettingsToFormInput(
     return {
         status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
         scheduleInterval: settings.scheduleInterval,
-        scheduleFrom: settings.scheduleFrom,
+        scheduleFrom: settings.scheduleFrom ?? null,
         dbObjectRetention: {
             enabled: settings.dbObjectRetention.enabled,
             tasks: settings.dbObjectRetention.tasks,

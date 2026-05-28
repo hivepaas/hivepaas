@@ -41,8 +41,14 @@ const SystemCleanupNotificationSchema = z
 
 export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.literal(ESettingType.SystemCleanup),
-    scheduleInterval: z.string(),
-    scheduleFrom: z.coerce.date(),
+    scheduleInterval: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    scheduleFrom: z.coerce
+        .date()
+        .nullish()
+        .transform(value => value ?? undefined),
     dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
     clusterCleanup: SystemCleanupClusterCleanupSchema,
     backupCleanup: SystemCleanupBackupCleanupSchema,

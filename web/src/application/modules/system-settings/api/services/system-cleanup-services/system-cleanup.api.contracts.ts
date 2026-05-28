@@ -11,7 +11,7 @@ export type SystemCleanup_UpdateOne_Payload = {
     updateVer: number;
     status: ESettingStatus;
     scheduleInterval: string;
-    scheduleFrom: Date;
+    scheduleFrom: Date | null;
     dbObjectRetention: {
         enabled: boolean;
         tasks: string;

@@ -16,8 +16,8 @@ const NotificationSchema = z.object({
 
 export const SystemCleanupConfigurationFormSchema = z.object({
     status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
-    scheduleInterval: z.string().min(1, "Run interval is required"),
-    scheduleFrom: z.date({ required_error: "First run start time is required" }),
+    scheduleInterval: z.string(),
+    scheduleFrom: z.date().nullable(),
     dbObjectRetention: z.object({
         enabled: z.boolean(),
         tasks: z.string(),

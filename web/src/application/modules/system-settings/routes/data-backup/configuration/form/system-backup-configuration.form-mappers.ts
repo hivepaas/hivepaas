@@ -23,13 +23,11 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
     },
 };
 
-export function mapSystemBackupSettingsToFormInput(
-    settings: SystemBackupSettings,
-): SystemBackupConfigurationFormInput {
+export function mapSystemBackupSettingsToFormInput(settings: SystemBackupSettings): SystemBackupConfigurationFormInput {
     return {
         status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
         scheduleInterval: settings.scheduleInterval,
-        scheduleFrom: settings.scheduleFrom,
+        scheduleFrom: settings.scheduleFrom ?? null,
         compressionFormat: settings.compression.format,
         encryptionFormat: settings.encryption.format,
         encryptionSecret: settings.encryption.secret,

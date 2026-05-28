@@ -1,9 +1,10 @@
 import type { ComponentType } from "react";
 
-import { ROUTE } from "@/application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Navigate, Outlet, type RouteObject } from "react-router";
 
 import { ModuleTitle } from "@application/shared/components/module-title";
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./settings.module");
@@ -13,9 +14,11 @@ function createSettingsRoute(path: string, title: string, loadComponent: () => P
     return {
         path,
         element: (
-            <ModuleTitle title={title}>
-                <Outlet />
-            </ModuleTitle>
+            <ConditionalModule id={MODULE_IDS.Settings}>
+                <ModuleTitle title={title}>
+                    <Outlet />
+                </ModuleTitle>
+            </ConditionalModule>
         ),
         children: [
             {
@@ -49,10 +52,12 @@ export const settingsRouter: RouteObject = {
         {
             path: "settings/github-apps",
             element: (
-                <Navigate
-                    to={ROUTE.sources.githubApps.$route}
-                    replace
-                />
+                <ConditionalModule id={MODULE_IDS.Settings}>
+                    <Navigate
+                        to={ROUTE.sources.githubApps.$route}
+                        replace
+                    />
+                </ConditionalModule>
             ),
         },
         createSettingsRoute(ROUTE.settings.basicAuth.$pattern, "Basic Auth", async () => {

@@ -1,6 +1,8 @@
-import { ROUTE } from "@/application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
 import { ProjectGithubAppsLegacyRedirect } from "~/projects/routes/single-project/configuration/github-apps/route/project-github-apps-legacy-redirect.com";
+
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./projects.module");
@@ -22,7 +24,11 @@ export const projectsRouter: RouteObject = {
     children: [
         {
             path: "projects/:id/github-apps",
-            element: <ProjectGithubAppsLegacyRedirect />,
+            element: (
+                <ConditionalModule id={MODULE_IDS.Project}>
+                    <ProjectGithubAppsLegacyRedirect />
+                </ConditionalModule>
+            ),
         },
         {
             lazy: async () => {
@@ -30,9 +36,11 @@ export const projectsRouter: RouteObject = {
 
                 return {
                     element: (
-                        <ProjectsLayout>
-                            <Outlet />
-                        </ProjectsLayout>
+                        <ConditionalModule id={MODULE_IDS.Project}>
+                            <ProjectsLayout>
+                                <Outlet />
+                            </ProjectsLayout>
+                        </ConditionalModule>
                     ),
                 };
             },
@@ -58,9 +66,11 @@ export const projectsRouter: RouteObject = {
 
                 return {
                     element: (
-                        <SingleProjectLayout>
-                            <Outlet />
-                        </SingleProjectLayout>
+                        <ConditionalModule id={MODULE_IDS.Project}>
+                            <SingleProjectLayout>
+                                <Outlet />
+                            </SingleProjectLayout>
+                        </ConditionalModule>
                     ),
                 };
             },
@@ -216,9 +226,11 @@ export const projectsRouter: RouteObject = {
 
                 return {
                     element: (
-                        <SingleAppLayout>
-                            <Outlet />
-                        </SingleAppLayout>
+                        <ConditionalModule id={MODULE_IDS.Project}>
+                            <SingleAppLayout>
+                                <Outlet />
+                            </SingleAppLayout>
+                        </ConditionalModule>
                     ),
                 };
             },

@@ -22,7 +22,7 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
         updateVer,
         status: values.status,
         scheduleInterval: values.scheduleInterval,
-        scheduleFrom: values.scheduleFrom,
+        scheduleFrom: values.scheduleFrom ?? null,
         dbObjectRetention: {
             enabled: values.dbObjectRetention.enabled,
             tasks: values.dbObjectRetention.tasks,

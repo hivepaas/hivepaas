@@ -1,5 +1,7 @@
-import { ROUTE } from "@/application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
+
+import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./cluster.module");
@@ -25,9 +27,11 @@ export const clusterRouter: RouteObject = {
 
                 return {
                     element: (
-                        <NodesLayout>
-                            <Outlet />
-                        </NodesLayout>
+                        <ConditionalModule id={MODULE_IDS.Cluster}>
+                            <NodesLayout>
+                                <Outlet />
+                            </NodesLayout>
+                        </ConditionalModule>
                     ),
                 };
             },
@@ -53,9 +57,11 @@ export const clusterRouter: RouteObject = {
 
                 return {
                     element: (
-                        <SingleNodeLayout>
-                            <Outlet />
-                        </SingleNodeLayout>
+                        <ConditionalModule id={MODULE_IDS.Cluster}>
+                            <SingleNodeLayout>
+                                <Outlet />
+                            </SingleNodeLayout>
+                        </ConditionalModule>
                     ),
                 };
             },

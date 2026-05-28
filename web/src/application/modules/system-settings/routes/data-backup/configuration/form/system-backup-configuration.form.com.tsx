@@ -121,7 +121,7 @@ function GeneralFields() {
                         <Field>
                             <div className="flex items-center gap-4">
                                 <DateTimePicker
-                                    value={scheduleFrom.value}
+                                    value={scheduleFrom.value ?? undefined}
                                     onChange={scheduleFrom.onChange}
                                     placeholder="select date time"
                                     granularity="minute"

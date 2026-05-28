@@ -18,8 +18,8 @@ const NotificationSchema = z.object({
 
 export const SystemBackupConfigurationFormSchema = z.object({
     status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
-    scheduleInterval: z.string().min(1, "Run interval is required"),
-    scheduleFrom: z.date({ required_error: "First run start time is required" }),
+    scheduleInterval: z.string(),
+    scheduleFrom: z.date().nullable(),
     compressionFormat: z.nativeEnum(ESystemBackupCompressionFormat),
     encryptionFormat: z.nativeEnum(ESystemBackupEncryptionFormat),
     encryptionSecret: z.string(),

@@ -4,12 +4,46 @@ import { AccessSchema } from "~/user-management/module-shared/schemas";
 
 import { type Session_GetProfile_Res, type Session_Logout_Res } from "@application/shared/api/services";
 import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
+import type { ModulePermission } from "@application/shared/permissions";
 
 import { parseApiResponse } from "@infrastructure/api";
 
 /**
  * Get account API response schema
  */
+const ModuleAccessSchema = AccessSchema.extend({
+    name: z.string().optional().default(""),
+    access: z
+        .object({
+            read: z.boolean().nullable().optional(),
+            write: z.boolean().nullable().optional(),
+            delete: z.boolean().nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+}).transform(moduleAccess => ({
+    id: moduleAccess.id,
+    name: moduleAccess.name,
+    access: {
+        read: moduleAccess.access?.read === true,
+        write: moduleAccess.access?.write === true,
+        delete: moduleAccess.access?.delete === true,
+    },
+}));
+
+function mapModuleAccessesToModulePermissions(
+    moduleAccesses: readonly z.output<typeof ModuleAccessSchema>[],
+): ModulePermission[] {
+    return moduleAccesses.map(moduleAccess => ({
+        moduleId: moduleAccess.id,
+        actions: {
+            read: moduleAccess.access.read,
+            write: moduleAccess.access.write,
+            delete: moduleAccess.access.delete,
+        },
+    }));
+}
+
 const GetProfileSchema = z.object({
     data: z.object({
         nextStep: z.string().optional(),
@@ -28,8 +62,8 @@ const GetProfileSchema = z.object({
             createdAt: z.coerce.date(),
             status: z.nativeEnum(EUserStatus),
             mfaSecret: z.string().optional(),
-            projectAccesses: z.array(AccessSchema).nullable(),
-            moduleAccesses: z.array(AccessSchema).nullable(),
+            projectAccesses: z.array(AccessSchema).nullable().optional(),
+            moduleAccesses: z.array(ModuleAccessSchema).nullable().optional(),
             mfaTotpActivated: z.boolean().optional(),
         }),
     }),
@@ -46,6 +80,8 @@ export class SessionApiValidator {
             response,
             schema: GetProfileSchema,
         });
+
+        const moduleAccesses = user.moduleAccesses ?? [];
 
         return {
             data: {
@@ -65,7 +101,8 @@ export class SessionApiValidator {
                 position: user.position ?? "",
                 status: user.status,
                 projectAccesses: user.projectAccesses ?? [],
-                moduleAccesses: user.moduleAccesses ?? [],
+                moduleAccesses,
+                modulePermissions: mapModuleAccessesToModulePermissions(moduleAccesses),
                 mfaTotpActivated: user.mfaTotpActivated,
             },
         };

@@ -44,15 +44,30 @@ export function EditableCombobox({
     disabled = false,
 }: EditableComboboxProps) {
     const [open, setOpen] = React.useState(false);
+    const [search, setSearch] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);
     const text = value ?? "";
     const showRefresh = Boolean(onRefresh);
 
     const filtered = React.useMemo(() => {
-        if (disableFilter || !text) return options;
-        const lower = text.toLowerCase();
+        if (disableFilter || !search) return options;
+        const lower = search.toLowerCase();
         return options.filter(opt => opt.toLowerCase().includes(lower));
-    }, [options, text, disableFilter]);
+    }, [options, search, disableFilter]);
+
+    const updateOpen = (nextOpen: boolean) => {
+        if (disabled) {
+            setOpen(false);
+            setSearch("");
+            return;
+        }
+
+        if (nextOpen) {
+            setSearch("");
+        }
+
+        setOpen(nextOpen);
+    };
 
     const handleSelect = (selected: string) => {
         if (disabled) {
@@ -60,6 +75,7 @@ export function EditableCombobox({
         }
 
         onChange(selected);
+        setSearch("");
         setOpen(false);
         inputRef.current?.focus();
     };
@@ -71,14 +87,7 @@ export function EditableCombobox({
             <div className="group/clear min-w-0 flex-1">
                 <Popover
                     open={!disabled && open}
-                    onOpenChange={nextOpen => {
-                        if (disabled) {
-                            setOpen(false);
-                            return;
-                        }
-
-                        setOpen(nextOpen);
-                    }}
+                    onOpenChange={updateOpen}
                 >
                     <PopoverAnchor asChild>
                         <div className="relative flex w-full items-center">
@@ -89,6 +98,8 @@ export function EditableCombobox({
                                     if (disabled) {
                                         return;
                                     }
+
+                                    setSearch(e.target.value);
 
                                     if (onInputChange) {
                                         onInputChange(e.target.value);
@@ -101,7 +112,7 @@ export function EditableCombobox({
                                         return;
                                     }
 
-                                    setOpen(true);
+                                    updateOpen(true);
                                 }}
                                 placeholder={placeholder}
                                 aria-invalid={ariaInvalid}
@@ -122,6 +133,7 @@ export function EditableCombobox({
                                         e.preventDefault();
                                     }}
                                     onClick={() => {
+                                        setSearch("");
                                         if (onInputChange) {
                                             onInputChange("");
                                         } else {

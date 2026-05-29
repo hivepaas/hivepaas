@@ -9,9 +9,11 @@ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } 
 /**
  * Update profile
  */
+export type ProfilePhotoPayload = { fileName: string; dataBase64: string } | { delete: true };
+
 export type Profile_UpdateProfile_Req = ApiRequestBase<{
-    profile: Pick<Profile, "fullName" | "email" | "username" | "position" | "notes"> & {
-        photo?: { fileName: string; dataBase64: string } | { delete: true };
+    profile: Partial<Pick<Profile, "fullName" | "email" | "username" | "position" | "notes">> & {
+        photo?: ProfilePhotoPayload;
     };
 }>;
 

@@ -8,10 +8,9 @@ import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
 import { useUpdateSslCertStatusDialog } from "~/settings/dialogs/update-ssl-cert-status";
 import type { SettingSslCert } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { SslCertTableScope } from "../../ssl-cert-table.types";
 
@@ -19,8 +18,6 @@ function View({ scope, sslCert }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateSslCertStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingSslCert, isPending: isDeletingSetting } = SslCertCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("SSL certificate deleted successfully");
@@ -39,12 +36,6 @@ function View({ scope, sslCert }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, sslCert.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.sslCert });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectSslCert({
                 projectID: scope.projectId,
@@ -97,30 +88,19 @@ function View({ scope, sslCert }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete SSL certificate"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete SSL certificate"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

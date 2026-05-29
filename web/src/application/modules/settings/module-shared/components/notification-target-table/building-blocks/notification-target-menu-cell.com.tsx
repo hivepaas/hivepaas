@@ -8,18 +8,15 @@ import { ProjectNotificationCommands } from "~/projects/data/commands";
 import { NotificationCommands } from "~/settings/data/commands";
 import { useUpdateNotificationTargetStatusDialog } from "~/settings/dialogs/update-notification-target-status";
 import type { SettingNotification } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { NotificationTargetTableScope } from "../notification-target-table.types";
 
 function View({ scope, notificationTarget }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateNotificationTargetStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingNotification, isPending: isDeletingSetting } = NotificationCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Notification target deleted successfully");
@@ -39,12 +36,6 @@ function View({ scope, notificationTarget }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, notificationTarget.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.notificationTarget });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectNotification({ projectID: scope.projectId, id: notificationTarget.id });
             return;
@@ -94,30 +85,19 @@ function View({ scope, notificationTarget }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete notification target"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete notification target"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

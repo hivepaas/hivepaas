@@ -110,6 +110,11 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         return options.find(opt => String(opt.value[valueKey]) === String(value));
     }, [options, value, valueKey]);
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        setSearch("");
+        setOpen(nextOpen);
+    };
+
     const handleSelect = (currentValue: string) => {
         const option = options.find(opt => String(opt.value[valueKey]) === currentValue);
         if (!option || option.disabled) {
@@ -134,6 +139,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     const handleClear = (e: React.MouseEvent) => {
         e.stopPropagation();
         onChange?.(null, null);
+        setSearch("");
         setOpen(false);
     };
 
@@ -142,7 +148,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
             <div className="group/clear min-w-0 flex-1">
                 <Popover
                     open={open}
-                    onOpenChange={setOpen}
+                    onOpenChange={handleOpenChange}
                 >
                     <PopoverTrigger asChild>
                         <Button

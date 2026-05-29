@@ -8,10 +8,9 @@ import { ProjectBasicAuthCommands } from "~/projects/data/commands";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { useUpdateBasicAuthStatusDialog } from "~/settings/dialogs/update-basic-auth-status";
 import type { SettingBasicAuth } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { BasicAuthTableScope } from "../../basic-auth-table.types";
 
@@ -19,8 +18,6 @@ function View({ scope, basicAuth }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateBasicAuthStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingBasicAuth, isPending: isDeletingSetting } = BasicAuthCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Basic auth deleted successfully");
@@ -39,12 +36,6 @@ function View({ scope, basicAuth }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, basicAuth.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.basicAuth });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectBasicAuth({
                 projectID: scope.projectId,
@@ -97,30 +88,19 @@ function View({ scope, basicAuth }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete basic auth"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete basic auth"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

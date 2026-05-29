@@ -8,10 +8,9 @@ import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { useUpdateRegistryAuthStatusDialog } from "~/settings/dialogs/update-registry-auth-status";
 import type { SettingRegistryAuth } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { RegistryAuthTableScope } from "../../registry-auth-table.types";
 
@@ -19,8 +18,6 @@ function View({ scope, registryAuth }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateRegistryAuthStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingRegistryAuth, isPending: isDeletingSetting } = RegistryAuthCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Registry auth deleted successfully");
@@ -40,12 +37,6 @@ function View({ scope, registryAuth }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, registryAuth.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.registryAuth });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectRegistryAuth({
                 projectID: scope.projectId,
@@ -98,30 +89,19 @@ function View({ scope, registryAuth }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete registry auth"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete registry auth"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

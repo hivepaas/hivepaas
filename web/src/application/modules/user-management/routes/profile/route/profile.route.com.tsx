@@ -6,6 +6,7 @@ import { cn } from "@lib/utils";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
+import { type ProfilePhotoPayload } from "@application/shared/api/services";
 import { useProfileContext } from "@application/shared/context";
 import { ProfileCommands } from "@application/shared/data/commands";
 
@@ -19,10 +20,18 @@ export function ProfileRoute() {
     invariant(profile, "profile must be defined");
 
     const formRef = useRef<ProfileFormRef>(null);
+    const photoActionRef = useRef<"update" | "delete">("update");
 
-    const { mutate: updateProfile, isPending } = ProfileCommands.useUpdate({
+    const { mutate: updateProfile, isPending: isUpdatingProfile } = ProfileCommands.useUpdate({
         onSuccess: newProfile => {
             toast.success("Profile updated");
+            setProfile(newProfile);
+        },
+    });
+
+    const { mutate: updateProfilePhoto, isPending: isUpdatingProfilePhoto } = ProfileCommands.useUpdate({
+        onSuccess: newProfile => {
+            toast.success(photoActionRef.current === "delete" ? "Profile photo removed" : "Profile photo updated");
             setProfile(newProfile);
         },
     });
@@ -30,11 +39,21 @@ export function ProfileRoute() {
     function handleSubmit(values: ProfileFormSchemaOutput) {
         updateProfile({
             profile: {
-                ...values,
-                photo:
-                    values.photo && values.photoUpload
-                        ? { fileName: values.photoUpload.fileName, dataBase64: values.photoUpload.dataBase64 }
-                        : { delete: true },
+                fullName: values.fullName,
+                email: values.email,
+                username: values.username,
+                position: values.position,
+                notes: values.notes,
+            },
+        });
+    }
+
+    function handlePhotoSubmit(photo: ProfilePhotoPayload) {
+        photoActionRef.current = "delete" in photo ? "delete" : "update";
+
+        updateProfilePhoto({
+            profile: {
+                photo,
             },
         });
     }
@@ -44,7 +63,6 @@ export function ProfileRoute() {
             ...profile,
             fullName: profile.fullName ?? "",
             email: profile.email ?? "",
-            photoUpload: null,
         });
     }, [profile]);
 
@@ -54,13 +72,15 @@ export function ProfileRoute() {
                 ref={formRef}
                 defaultValues={profile}
                 onSubmit={handleSubmit}
+                onPhotoSubmit={handlePhotoSubmit}
+                isPhotoPending={isUpdatingProfilePhoto}
             >
                 <div className="flex justify-end">
                     <Button
                         type="submit"
                         className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
+                        disabled={isUpdatingProfile || isUpdatingProfilePhoto}
+                        isLoading={isUpdatingProfile}
                     >
                         Save
                     </Button>

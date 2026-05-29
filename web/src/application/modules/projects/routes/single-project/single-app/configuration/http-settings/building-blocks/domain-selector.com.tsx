@@ -38,22 +38,32 @@ export function DomainSelector({
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
 
     const domainValues = useWatch({ control, name: "domains", defaultValue: [] });
-    const domainNames = domainValues.map(d => d.domain).filter(Boolean);
-    const [draft, setDraft] = useState(domainSuggestion);
+    const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
+    const suggestedDomain = domainSuggestion.trim();
+    const domainNames = useMemo(() => {
+        const configuredDomains = domainValues.map(d => d.domain).filter(domain => domain.trim().length > 0);
+
+        if (
+            suggestedDomain.length === 0 ||
+            configuredDomains.some(domain => normalizeDomain(domain) === normalizeDomain(suggestedDomain))
+        ) {
+            return configuredDomains;
+        }
+
+        return [...configuredDomains, suggestedDomain];
+    }, [domainValues, normalizeDomain, suggestedDomain]);
+    const [draft, setDraft] = useState(suggestedDomain);
     const [duplicateDomainError, setDuplicateDomainError] = useState<string | null>(null);
 
-    const activeDomainValue = domainValues[activeDomainIndex]?.domain ?? "";
-    const selectedDomain = activeDomainIndex >= 0 ? activeDomainValue.trim() : "";
+    const activeDomain = activeDomainIndex >= 0 ? domainValues[activeDomainIndex] : undefined;
+    const hasActiveDomain = Boolean(activeDomain);
+    const activeDomainValue = activeDomain?.domain ?? "";
+    const selectedDomain = hasActiveDomain ? activeDomainValue.trim() : "";
     const canViewSelectedDomain = selectedDomain.length > 0;
-    const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
 
     useEffect(() => {
-        setDraft(activeDomainValue);
-    }, [activeDomainIndex, activeDomainValue]);
-
-    useEffect(() => {
-        setDraft(domainSuggestion);
-    }, [domainSuggestion]);
+        setDraft(hasActiveDomain ? activeDomainValue : suggestedDomain);
+    }, [activeDomainValue, hasActiveDomain, suggestedDomain]);
 
     function handleDomainSelect(value: string) {
         if (readOnly) {

@@ -202,6 +202,8 @@ export function CreateOrEditSSHKeyForm({
                                     {...publicKey}
                                     className="min-h-24"
                                     aria-invalid={isPublicKeyInvalid}
+                                    rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.publicKey]} />
                             </Field>
@@ -223,6 +225,8 @@ export function CreateOrEditSSHKeyForm({
                                     {...privateKey}
                                     className="min-h-24"
                                     aria-invalid={isPrivateKeyInvalid}
+                                    rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.privateKey]} />
                             </Field>

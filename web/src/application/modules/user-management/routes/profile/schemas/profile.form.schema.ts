@@ -5,12 +5,6 @@ import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
 export const ProfileFormSchema = z.object({
     photo: z.string().nullable(),
-    photoUpload: z
-        .object({
-            fileName: z.string(),
-            dataBase64: z.string(),
-        })
-        .nullable(),
     fullName: z
         .string()
         .trim()

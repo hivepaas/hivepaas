@@ -8,9 +8,8 @@ import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { useUpdateGithubAppStatusDialog } from "~/settings/dialogs/update-github-app-status";
 import type { SettingGithubApp } from "~/settings/domain";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { GithubAppTableScope } from "../../github-app-table.types";
 
@@ -18,8 +17,6 @@ function View({ scope, githubApp }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateGithubAppStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingsGithubApp, isPending: isDeletingSettings } = GithubAppCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Github app deleted successfully");
@@ -38,12 +35,6 @@ function View({ scope, githubApp }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, githubApp.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: "Github App" });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectGithubApp({
                 projectID: scope.projectId,
@@ -96,30 +87,19 @@ function View({ scope, githubApp }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete github app"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete github app"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

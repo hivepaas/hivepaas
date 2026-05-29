@@ -8,18 +8,15 @@ import { ProjectCloudStorageCommands } from "~/projects/data/commands";
 import { CloudStorageCommands } from "~/settings/data/commands";
 import { useUpdateCloudStorageStatusDialog } from "~/settings/dialogs/update-cloud-storage-status";
 import type { SettingCloudStorage } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { CloudStorageTableScope } from "../cloud-storage-table.types";
 
 function View({ scope, cloudStorage }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateCloudStorageStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingCloudStorage, isPending: isDeletingSetting } = CloudStorageCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Cloud storage deleted successfully");
@@ -39,12 +36,6 @@ function View({ scope, cloudStorage }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, cloudStorage.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.cloudStorage });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectCloudStorage({ projectID: scope.projectId, id: cloudStorage.id });
             return;
@@ -94,30 +85,19 @@ function View({ scope, cloudStorage }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete cloud storage"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete cloud storage"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

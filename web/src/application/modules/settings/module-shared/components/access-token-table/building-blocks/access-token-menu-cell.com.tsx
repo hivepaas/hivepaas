@@ -8,18 +8,15 @@ import { ProjectAccessTokenCommands } from "~/projects/data/commands";
 import { AccessTokenCommands } from "~/settings/data/commands";
 import { useUpdateAccessTokenStatusDialog } from "~/settings/dialogs/update-access-token-status";
 import type { SettingAccessToken } from "~/settings/domain";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { AccessTokenTableScope } from "../access-token-table.types";
 
 function View({ scope, accessToken }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateAccessTokenStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingAccessToken, isPending: isDeletingSetting } = AccessTokenCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Access token deleted successfully");
@@ -38,12 +35,6 @@ function View({ scope, accessToken }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, accessToken.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.accessToken });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectAccessToken({ projectID: scope.projectId, id: accessToken.id });
             return;
@@ -93,30 +84,19 @@ function View({ scope, accessToken }: Props) {
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
                     </SettingsScopeMenuButton>
-                    {isInheritedProject ? (
-                        <SettingsScopeMenuButton
-                            scope={scope}
-                            action="delete"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopeMenuButton>
-                    ) : (
-                        <SettingsScopePopConfirmButton
-                            scope={scope}
-                            action="delete"
-                            title="Delete access token"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                            isLoading={isDeleting}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </SettingsScopePopConfirmButton>
-                    )}
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete access token"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

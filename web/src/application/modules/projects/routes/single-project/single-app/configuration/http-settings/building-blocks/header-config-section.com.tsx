@@ -13,10 +13,11 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 interface HeaderConfigSectionProps {
     prefix: string;
     autoExpandToken?: number;
+    readOnly?: boolean;
     onRemove?: () => void;
 }
 
-export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: HeaderConfigSectionProps) {
+export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false, onRemove }: HeaderConfigSectionProps) {
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (autoExpandToken !== undefined) {
@@ -66,7 +67,14 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                         size="icon"
                         className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
-                        onClick={onRemove}
+                        onClick={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            onRemove();
+                        }}
+                        disabled={readOnly}
                     >
                         <X className="size-4" />
                     </Button>
@@ -77,7 +85,14 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -93,6 +108,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                                 <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toAddToRequests` as never}
                                     className="max-w-[550px]"
+                                    disabled={readOnly}
                                 />
                             </InfoBlock>
                             <InfoBlock
@@ -107,6 +123,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                                     name={`${prefix}.toRemoveFromRequests` as never}
                                     placeholder="Header name"
                                     className="max-w-[314px]"
+                                    disabled={readOnly}
                                 />
                             </InfoBlock>
                             <InfoBlock
@@ -120,6 +137,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                                 <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toAddToResponses` as never}
                                     className="max-w-[550px]"
+                                    disabled={readOnly}
                                 />
                             </InfoBlock>
                             <InfoBlock
@@ -134,6 +152,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, onRemove }: Heade
                                     name={`${prefix}.toRemoveFromResponses` as never}
                                     placeholder="Header name"
                                     className="max-w-[314px]"
+                                    disabled={readOnly}
                                 />
                             </InfoBlock>
                         </>

@@ -20,7 +20,7 @@ import {
     createCreateProjectAppFormSchema,
 } from "../schemas";
 
-export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }: Props) {
+export function CreateProjectAppForm({ envs, isPending, readOnly = false, onSubmit, onHasChanges }: Props) {
     const defaultEnv = envs[0]?.name ?? "";
     const envNames = useMemo(() => envs.map(env => env.name), [envs]);
     const schema = useMemo(() => createCreateProjectAppFormSchema(envNames), [envNames]);
@@ -43,8 +43,8 @@ export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }
     });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     const selectedEnvName = watch("env");
     const tags = watch("tags");
@@ -84,12 +84,20 @@ export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }
     });
 
     function handleCreateTag(tag: string) {
+        if (readOnly) {
+            return;
+        }
+
         if (!tags.includes(tag)) {
             setValue("tags", [...tags, tag]);
         }
     }
 
     function handleDeleteTag(tagToRemove: string) {
+        if (readOnly) {
+            return;
+        }
+
         setValue(
             "tags",
             tags.filter(tag => tag !== tagToRemove),
@@ -97,6 +105,10 @@ export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }
     }
 
     function onValid(values: CreateProjectAppFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         void onSubmit(values);
     }
 
@@ -113,114 +125,121 @@ export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }
                 }}
                 className="flex flex-col gap-6"
             >
-                <InfoBlock
-                    titleWidth={150}
-                    title={
-                        <LabelWithInfo
-                            label="Name"
-                            isRequired
-                        />
-                    }
+                <fieldset
+                    disabled={readOnly}
+                    className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
                 >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                id="name"
-                                {...name}
-                                placeholder="E.g. My App"
-                                aria-invalid={isNameInvalid}
+                    <InfoBlock
+                        titleWidth={150}
+                        title={
+                            <LabelWithInfo
+                                label="Name"
+                                isRequired
                             />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    id="name"
+                                    {...name}
+                                    placeholder="E.g. My App"
+                                    aria-invalid={isNameInvalid}
+                                />
+                                <FieldError errors={[errors.name]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                <InfoBlock
-                    titleWidth={150}
-                    title={<LabelWithInfo label="Environment" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Select
-                                value={env.value}
-                                onValueChange={env.onChange}
-                                disabled={envs.length === 0}
-                            >
-                                <SelectTrigger
-                                    aria-invalid={isEnvInvalid}
-                                    className="px-2"
+                    <InfoBlock
+                        titleWidth={150}
+                        title={<LabelWithInfo label="Environment" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Select
+                                    value={env.value}
+                                    onValueChange={env.onChange}
+                                    disabled={readOnly || envs.length === 0}
                                 >
-                                    {selectedEnv ? (
-                                        <ProjectEnvBadge
-                                            name={selectedEnv.name}
-                                            color={selectedEnv.color}
-                                        />
-                                    ) : (
-                                        <span className="text-muted-foreground">
-                                            {envs.length === 0 ? "No environments" : "Select environment"}
-                                        </span>
-                                    )}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {envs.map(projectEnv => (
-                                        <SelectItem
-                                            key={projectEnv.name}
-                                            value={projectEnv.name}
-                                        >
+                                    <SelectTrigger
+                                        aria-invalid={isEnvInvalid}
+                                        className="px-2"
+                                    >
+                                        {selectedEnv ? (
                                             <ProjectEnvBadge
-                                                name={projectEnv.name}
-                                                color={projectEnv.color}
+                                                name={selectedEnv.name}
+                                                color={selectedEnv.color}
                                             />
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError errors={[errors.env]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                                        ) : (
+                                            <span className="text-muted-foreground">
+                                                {envs.length === 0 ? "No environments" : "Select environment"}
+                                            </span>
+                                        )}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {envs.map(projectEnv => (
+                                            <SelectItem
+                                                key={projectEnv.name}
+                                                value={projectEnv.name}
+                                            >
+                                                <ProjectEnvBadge
+                                                    name={projectEnv.name}
+                                                    color={projectEnv.color}
+                                                />
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.env]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                <InfoBlock
-                    titleWidth={150}
-                    title={<LabelWithInfo label="Note" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Textarea
-                                id="note"
-                                className="min-h-[120px]"
-                                {...note}
-                                placeholder=""
-                                rows={4}
-                                aria-invalid={isNoteInvalid}
-                            />
-                            <FieldError errors={[errors.note]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                    <InfoBlock
+                        titleWidth={150}
+                        title={<LabelWithInfo label="Note" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Textarea
+                                    id="note"
+                                    className="min-h-[120px]"
+                                    {...note}
+                                    placeholder=""
+                                    rows={4}
+                                    aria-invalid={isNoteInvalid}
+                                />
+                                <FieldError errors={[errors.note]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                <InfoBlock
-                    titleWidth={150}
-                    title={<LabelWithInfo label="Tags" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <TagInput
-                                tags={tags}
-                                onCreate={handleCreateTag}
-                                onDelete={handleDeleteTag}
-                                placeholder="Enter tag"
-                            />
-                            <FieldError errors={[errors.tags]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                    <InfoBlock
+                        titleWidth={150}
+                        title={<LabelWithInfo label="Tags" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <TagInput
+                                    tags={tags}
+                                    onCreate={handleCreateTag}
+                                    onDelete={handleDeleteTag}
+                                    placeholder="Enter tag"
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.tags]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                </fieldset>
 
                 <Field>
                     <div className="flex justify-end">
                         <Button
                             type="submit"
                             isLoading={isPending}
+                            disabled={readOnly}
                         >
                             Create App
                         </Button>
@@ -234,6 +253,7 @@ export function CreateProjectAppForm({ envs, isPending, onSubmit, onHasChanges }
 interface Props {
     envs: ProjectEnvEntity[];
     isPending: boolean;
+    readOnly?: boolean;
     onSubmit: (values: CreateProjectAppFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
 }

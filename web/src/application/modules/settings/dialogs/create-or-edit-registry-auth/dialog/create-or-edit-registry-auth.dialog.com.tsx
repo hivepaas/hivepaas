@@ -8,6 +8,7 @@ import { RegistryAuthCommands } from "~/settings/data/commands";
 import { RegistryAuthQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditRegistryAuthForm } from "../form";
 import { useCreateOrEditRegistryAuthDialogState } from "../hooks";
@@ -21,6 +22,9 @@ export function CreateOrEditRegistryAuthDialog() {
         clear: clearDialog,
     } = useCreateOrEditRegistryAuthDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
 
     const { mutate: createSettingRegistryAuth, isPending: isCreatingSetting } = RegistryAuthCommands.useCreateOne({
@@ -163,6 +167,7 @@ export function CreateOrEditRegistryAuthDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -215,6 +220,7 @@ export function CreateOrEditRegistryAuthDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

@@ -16,7 +16,7 @@ type EnvVarRecord = {
     isLiteral: boolean;
 };
 
-function View<T>({ name, search = "", viewMode = "individual", isRevealed = false }: Props<T>) {
+function View<T>({ name, search = "", viewMode = "individual", isRevealed = false, readOnly = false }: Props<T>) {
     const {
         control,
         register,
@@ -69,20 +69,33 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
 
         // When switching from merge to individual
         if (previousViewModeRef.current === "merge" && viewMode === "individual") {
+            if (readOnly) {
+                previousViewModeRef.current = viewMode;
+                return;
+            }
+
             const text = mergeText ?? stringifyEnvVars(fieldValues);
             const parsedArray = parseEnvVars(text);
             replace(parsedArray);
         }
 
         previousViewModeRef.current = viewMode;
-    }, [viewMode, fieldValues, replace, mergeText]);
+    }, [viewMode, fieldValues, replace, mergeText, readOnly]);
 
     // Handle merge textarea changes
     const handleMergeTextChange = (value: string) => {
+        if (readOnly) {
+            return;
+        }
+
         setMergeText(value);
     };
 
     const syncMergeTextToFields = () => {
+        if (readOnly) {
+            return;
+        }
+
         const text = mergeText ?? "";
         const parsedArray = parseEnvVars(text);
         replace(parsedArray);
@@ -100,6 +113,10 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
     }, [viewMode, fieldValues, mergeText]);
 
     const handleAdd = () => {
+        if (readOnly) {
+            return;
+        }
+
         append({ key: "", value: "", isLiteral: false });
     };
 
@@ -126,6 +143,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                             {...register(`${name}.${index}.key`)}
                                             placeholder="Key"
                                             aria-invalid={!!get(errors, `${name}.${index}.key`)}
+                                            disabled={readOnly}
                                         />
                                         <FieldError errors={[get(errors, `${name}.${index}.key`)]} />
                                     </Field>
@@ -139,6 +157,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                             {...register(`${name}.${index}.value`)}
                                             placeholder="Value"
                                             aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                            disabled={readOnly}
                                         />
                                         <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
                                     </Field>
@@ -150,11 +169,16 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                         id={`${name}-${index}-literal`}
                                         checked={record.isLiteral}
                                         onCheckedChange={checked => {
+                                            if (readOnly) {
+                                                return;
+                                            }
+
                                             update(index, {
                                                 ...record,
                                                 isLiteral: checked === true,
                                             });
                                         }}
+                                        disabled={readOnly}
                                     />
                                     <label
                                         htmlFor={`${name}-${index}-literal`}
@@ -170,8 +194,13 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         remove(index);
                                     }}
+                                    disabled={readOnly}
                                     className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                 >
                                     <Trash2 className="size-4" />
@@ -191,6 +220,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 type="button"
                 variant="outline"
                 onClick={handleAdd}
+                disabled={readOnly}
                 className="w-fit"
             >
                 <Plus className="size-4" />
@@ -211,6 +241,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 placeholder="KEY_1=VALUE_1&#10;KEY_2=VALUE_2"
                 rows={10}
                 className="font-mono text-sm min-h-[500px]"
+                disabled={readOnly}
             />
             <p className="text-xs text-muted-foreground">
                 Enter environment variables in key=value format, one per line
@@ -224,6 +255,7 @@ type Props<T> = {
     search?: string;
     viewMode?: "merge" | "individual";
     isRevealed?: boolean;
+    readOnly?: boolean;
 };
 
 export const ConfigVariables = React.memo(View) as typeof View;

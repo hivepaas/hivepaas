@@ -13,9 +13,10 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable } from "@/components/ui";
+import { DataTable } from "@/components/ui";
 
 import { ProjectSettingsImportButton } from "../project-settings-import-button";
+import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { GithubAppTableDefs } from "./github-app-table.defs";
 import type { GithubAppTableScope } from "./github-app-table.types";
@@ -69,22 +70,24 @@ function GithubAppTableView({ scope }: Props) {
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.GithubApp}
                             />
                         )}
-                        <Button
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             Create Manually
-                        </Button>
-                        <Button
+                        </SettingsScopeCreateButton>
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 provisionDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             Provision Github App
-                        </Button>
+                        </SettingsScopeCreateButton>
                     </div>
                 }
             />

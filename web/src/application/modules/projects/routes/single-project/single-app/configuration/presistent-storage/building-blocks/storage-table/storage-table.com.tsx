@@ -5,6 +5,9 @@ import { DataTable } from "@components/ui/data-table";
 import { Plus, SearchIcon } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
 import { useStorageMounts } from "../../context";
 
 import { createStorageTableColumns } from "./storage-table.defs";
@@ -15,13 +18,17 @@ interface StorageTableProps {
     onAddMount: () => void;
     onEditMount: (mount: StorageMountWithId) => void;
     onDeleteMount: (mount: StorageMountWithId) => Promise<void> | void;
+    canWrite: boolean;
 }
 
-function View({ onAddMount, onEditMount, onDeleteMount }: StorageTableProps) {
+function View({ onAddMount, onEditMount, onDeleteMount, canWrite }: StorageTableProps) {
     const { mounts } = useStorageMounts();
     const [internalSearch, setInternalSearch] = useState("");
 
-    const columns = useMemo(() => createStorageTableColumns(onEditMount, onDeleteMount), [onDeleteMount, onEditMount]);
+    const columns = useMemo(
+        () => createStorageTableColumns(onEditMount, onDeleteMount, canWrite),
+        [canWrite, onDeleteMount, onEditMount],
+    );
 
     const filteredMounts = useMemo(() => {
         return mounts.filter(
@@ -49,14 +56,22 @@ function View({ onAddMount, onEditMount, onDeleteMount }: StorageTableProps) {
                         className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
                     />
                 </div>
-                <Button
-                    type="button"
-                    color="primary"
-                    onClick={onAddMount}
+                <PermissionTooltipAction
+                    id={MODULE_IDS.Project}
+                    action="write"
                 >
-                    <Plus className="size-4" />
-                    New Storage
-                </Button>
+                    {({ isDenied }) => (
+                        <Button
+                            type="button"
+                            color="primary"
+                            onClick={onAddMount}
+                            disabled={isDenied}
+                        >
+                            <Plus className="size-4" />
+                            New Storage
+                        </Button>
+                    )}
+                </PermissionTooltipAction>
             </div>
 
             <DataTable

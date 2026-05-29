@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
 
+import { MODULE_IDS } from "@application/shared/constants";
 import { ESslCertType } from "@application/shared/enums";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { QuickInstallSslCertForm } from "../form";
 import { useQuickInstallSslCertDialogState } from "../hooks";
@@ -21,6 +23,7 @@ export function QuickInstallSslCertDialog() {
     const { state, props: dialogProps, ...actions } = useQuickInstallSslCertDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const createdNameRef = useRef<string>("");
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const open = state.mode !== "closed";
     const projectId = state.mode === "open" ? state.projectId : null;
@@ -61,7 +64,7 @@ export function QuickInstallSslCertDialog() {
     }, [state.mode]);
 
     function onSubmit(values: QuickInstallSslCertFormOutput) {
-        if (!projectId) {
+        if (!projectId || !canWrite) {
             return;
         }
 
@@ -98,7 +101,7 @@ export function QuickInstallSslCertDialog() {
     }
 
     function handleClose() {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const confirmed = window.confirm("Are you sure you want to close without saving changes?");
             if (!confirmed) {
                 return;
@@ -127,6 +130,7 @@ export function QuickInstallSslCertDialog() {
                     domain={domain}
                     isPending={isPending}
                     prefill={prefill}
+                    readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />

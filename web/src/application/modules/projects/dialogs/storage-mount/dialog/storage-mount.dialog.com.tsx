@@ -22,7 +22,7 @@ function mountWithoutId(mount: AppStorageMount & { _id: string }): AppStorageMou
 export function StorageMountDialog() {
     const {
         state,
-        props: { onSubmit = fnPlaceholder, onClose = fnPlaceholder, onError = errorPlaceholder } = {},
+        props: { onSubmit = fnPlaceholder, onClose = fnPlaceholder, onError = errorPlaceholder, readOnly = false } = {},
         ...actions
     } = useStorageMountDialogState();
 
@@ -36,6 +36,10 @@ export function StorageMountDialog() {
     const defaultValues = state.mode === "edit" ? mountWithoutId(state.mount) : undefined;
 
     async function handleSubmit(values: StorageMountFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         try {
             setIsSubmitting(true);
             await onSubmit(formValuesToMount(values));
@@ -81,6 +85,7 @@ export function StorageMountDialog() {
                             defaultValues={defaultValues}
                             projectKey={projectKey}
                             appLocalKey={appLocalKey}
+                            readOnly={readOnly}
                         />
                     </>
                 )}

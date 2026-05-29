@@ -61,7 +61,7 @@ function addDays(date: Date, days: number): Date {
     return result;
 }
 
-export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, onHasChanges }: Props) {
+export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly = false, onSubmit, onHasChanges }: Props) {
     const defaultEmail = "";
     const defaultKeyType = ESslKeyType.ECP256;
     const defaultAutoRenew = true;
@@ -108,8 +108,8 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, 
     }, [domain, prefillAutoRenew, prefillEmail, prefillKeyType, reset]);
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     const certType = useWatch({ control, name: "certType" });
     const expireAt = useWatch({ control, name: "expireAt" });
@@ -156,128 +156,161 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, 
         fieldState: { invalid: isNotifyFromInvalid },
     } = useController({ name: "notifyFrom", control });
 
+    function onValid(values: QuickInstallSslCertFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
+        void onSubmit(values);
+    }
+
     return (
         <form
             onSubmit={event => {
                 event.preventDefault();
-                void handleSubmit(onSubmit)(event);
+                if (readOnly) {
+                    return;
+                }
+
+                void handleSubmit(onValid)(event);
             }}
             className="flex flex-col gap-6"
         >
-            <FieldGroup>
-                <Field>
-                    <FieldLabel>Domain</FieldLabel>
-                    <Input
-                        value={domain}
-                        disabled
-                    />
-                </Field>
-                <Field>
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Certificate Type"
-                                isRequired
-                            />
-                        }
-                        titleWidth={150}
-                    >
-                        <Tabs
-                            value={certType}
-                            onValueChange={value => {
-                                certTypeField.onChange(value);
-                            }}
-                        >
-                            <TabsList>
-                                <TabsTrigger
-                                    value={ESslCertType.LetsEncrypt}
-                                    className="flex-1"
-                                >
-                                    Let&apos;s Encrypt
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value={ESslCertType.Custom}
-                                    className="flex-1"
-                                >
-                                    Custom
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </InfoBlock>
-                </Field>
-
-                <Field>
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
-                                isRequired
-                            />
-                        }
-                        titleWidth={150}
-                    >
+            <fieldset
+                disabled={readOnly}
+                className="m-0 min-w-0 border-0 p-0"
+            >
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel>Domain</FieldLabel>
                         <Input
-                            {...email}
-                            type="email"
-                            aria-invalid={isEmailInvalid}
-                        />
-                        <FieldError errors={[errors.email]} />
-                    </InfoBlock>
-                </Field>
-
-                <Field>
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Key Type"
-                                isRequired
-                            />
-                        }
-                        titleWidth={150}
-                    >
-                        <Select
-                            value={keyType.value}
-                            onValueChange={value => {
-                                keyType.onChange(value);
-                            }}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select key type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {keyTypeOptions.map(option => (
-                                    <SelectItem
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FieldError errors={[errors.keyType]} />
-                    </InfoBlock>
-                </Field>
-
-                {isLetsEncrypt ? (
+                            value={domain}
+                            disabled
+                    />
+                    </Field>
                     <Field>
                         <InfoBlock
                             title={
                                 <LabelWithInfo
-                                    label="Auto-renew"
+                                    label="Certificate Type"
                                     isRequired
-                                />
-                            }
-                            titleWidth={150}
-                        >
-                            <Checkbox
-                                checked={autoRenew.value}
-                                onCheckedChange={value => {
-                                    autoRenew.onChange(value === true);
-                                }}
                             />
+                        }
+                            titleWidth={150}
+                    >
+                            <Tabs
+                                value={certType}
+                                onValueChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                certTypeField.onChange(value);
+                            }}
+                        >
+                                <TabsList>
+                                    <TabsTrigger
+                                        value={ESslCertType.LetsEncrypt}
+                                        className="flex-1"
+                                        disabled={readOnly}
+                                >
+                                        Let&apos;s Encrypt
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value={ESslCertType.Custom}
+                                        className="flex-1"
+                                        disabled={readOnly}
+                                >
+                                        Custom
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
                         </InfoBlock>
                     </Field>
+
+                    <Field>
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
+                                    isRequired
+                            />
+                        }
+                            titleWidth={150}
+                    >
+                            <Input
+                                {...email}
+                                type="email"
+                                aria-invalid={isEmailInvalid}
+                                disabled={readOnly}
+                        />
+                            <FieldError errors={[errors.email]} />
+                        </InfoBlock>
+                    </Field>
+
+                    <Field>
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Key Type"
+                                    isRequired
+                            />
+                        }
+                            titleWidth={150}
+                    >
+                            <Select
+                                value={keyType.value}
+                                onValueChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                keyType.onChange(value);
+                            }}
+                                disabled={readOnly}
+                        >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select key type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {keyTypeOptions.map(option => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                    >
+                                            {option.label}
+                                        </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.keyType]} />
+                        </InfoBlock>
+                    </Field>
+
+                    {isLetsEncrypt ? (
+                        <Field>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Auto-renew"
+                                        isRequired
+                                />
+                            }
+                                titleWidth={150}
+                        >
+                                <Checkbox
+                                    checked={autoRenew.value}
+                                    onCheckedChange={value => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
+                                    autoRenew.onChange(value === true);
+                                }}
+                                    disabled={readOnly}
+                            />
+                            </InfoBlock>
+                        </Field>
                 ) : (
                     <>
                         <Field>
@@ -294,6 +327,7 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, 
                                     {...certificate}
                                     aria-invalid={isCertificateInvalid}
                                     rows={4}
+                                    disabled={readOnly}
                                 />
                             </InfoBlock>
                         </Field>
@@ -310,11 +344,16 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, 
                                 <DatePicker
                                     value={expireAtField.value ?? undefined}
                                     onChange={date => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         expireAtField.onChange(date ?? null);
                                     }}
                                     aria-invalid={isExpireAtInvalid}
                                     placeholder="Select date"
                                     allowClear
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[errors.expireAt]} />
                             </InfoBlock>
@@ -328,23 +367,30 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, onSubmit, 
                                 <DatePicker
                                     value={notifyFromField.value ?? undefined}
                                     onChange={date => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         notifyFromField.onChange(date ?? null);
                                     }}
                                     aria-invalid={isNotifyFromInvalid}
                                     placeholder="Select date"
                                     allowClear
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[errors.notifyFrom]} />
                             </InfoBlock>
                         </Field>
                     </>
                 )}
-            </FieldGroup>
+                </FieldGroup>
+            </fieldset>
 
             <div className="flex justify-end">
                 <Button
                     type="submit"
                     isLoading={isPending}
+                    disabled={readOnly}
                 >
                     Save
                 </Button>
@@ -363,6 +409,7 @@ interface Props {
     domain: string;
     isPending: boolean;
     prefill?: PrefillValues;
+    readOnly?: boolean;
     onSubmit: (values: QuickInstallSslCertFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
 }

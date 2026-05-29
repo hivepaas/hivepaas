@@ -9,6 +9,8 @@ import invariant from "tiny-invariant";
 import { NodesCommands, NodesQueries } from "~/cluster/data";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -21,6 +23,7 @@ import { type SingleNodeFormRef } from "../types";
 export function SingleNodeRoute() {
     const { id: nodeId } = useParams<{ id: string }>();
     const formRef = useRef<SingleNodeFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Cluster });
 
     invariant(nodeId, "nodeId must be defined");
 
@@ -38,6 +41,10 @@ export function SingleNodeRoute() {
     });
 
     function handleSubmit(values: SingleNodeFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(nodeId, "nodeId must be defined");
         invariant(data, "data must be defined");
 
@@ -66,16 +73,24 @@ export function SingleNodeRoute() {
                 ref={formRef}
                 defaultValues={node}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.Cluster}
+                        action="write"
                     >
-                        Save
-                    </Button>
+                        {({ isDenied }) => (
+                            <Button
+                                type="submit"
+                                className="min-w-[100px]"
+                                disabled={isPending || isDenied}
+                                isLoading={isPending}
+                            >
+                                Save
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 </div>
             </SingleNodeForm>
         </div>

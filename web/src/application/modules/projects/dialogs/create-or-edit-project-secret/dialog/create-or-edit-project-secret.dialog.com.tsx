@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui
 import { toast } from "sonner";
 import { ProjectSecretsCommands } from "~/projects/data/commands";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
 import { CreateOrEditProjectSecretForm } from "../form";
 import { useCreateOrEditProjectSecretDialogState } from "../hooks";
 import type { CreateOrEditProjectSecretFormOutput } from "../schemas";
@@ -36,6 +39,7 @@ async function getSecretValue(values: CreateOrEditProjectSecretFormOutput): Prom
 export function CreateOrEditProjectSecretDialog() {
     const { state, props: dialogOptions, ...actions } = useCreateOrEditProjectSecretDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { mode } = state;
     const open = mode !== "closed";
@@ -66,7 +70,7 @@ export function CreateOrEditProjectSecretDialog() {
     }, [mode]);
 
     async function onSubmit(values: CreateOrEditProjectSecretFormOutput) {
-        if (!projectId || scope !== "project") {
+        if (!canWrite || !projectId || scope !== "project") {
             return;
         }
 
@@ -93,7 +97,7 @@ export function CreateOrEditProjectSecretDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -133,6 +137,7 @@ export function CreateOrEditProjectSecretDialog() {
                     onHasChanges={setHasChanges}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
+                    readOnly={!canWrite}
                 />
             </DialogContent>
         </Dialog>

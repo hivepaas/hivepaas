@@ -8,6 +8,7 @@ import { NotificationCommands } from "~/settings/data/commands";
 import { NotificationQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateNotificationTargetStatusForm } from "../form";
@@ -22,6 +23,9 @@ export function UpdateNotificationTargetStatusDialog() {
         clear: clearDialog,
     } = useUpdateNotificationTargetStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = NotificationCommands.useUpdateStatus({
         onSuccess: () => {
@@ -84,6 +88,7 @@ export function UpdateNotificationTargetStatusDialog() {
         if (isPending) return;
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         )
@@ -131,6 +136,7 @@ export function UpdateNotificationTargetStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

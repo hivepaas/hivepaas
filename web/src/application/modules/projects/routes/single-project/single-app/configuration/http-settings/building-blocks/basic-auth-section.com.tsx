@@ -16,10 +16,11 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 interface BasicAuthSectionProps {
     prefix: string;
+    readOnly?: boolean;
     onRemove: () => void;
 }
 
-export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
+export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAuthSectionProps) {
     const [open, setOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const { id: projectId } = useParams<{ id: string }>();
@@ -98,7 +99,14 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                     size="icon"
                     className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                     title="Remove section"
-                    onClick={onRemove}
+                    onClick={() => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        onRemove();
+                    }}
+                    disabled={readOnly}
                 >
                     <X className="size-4" />
                 </Button>
@@ -108,7 +116,14 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -118,6 +133,10 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                                     options={comboboxOptions}
                                     value={basicAuthValue?.id ?? null}
                                     onChange={(_, option) => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         if (!option) {
                                             idField.onChange("");
                                             nameField.onChange("");
@@ -138,6 +157,7 @@ export function BasicAuthSection({ prefix, onRemove }: BasicAuthSectionProps) {
                                     onRefresh={() => void refetch()}
                                     isRefreshing={isRefetching}
                                     allowClear
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[nameError]} />
                                 <div className="text-xs">

@@ -1,14 +1,16 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
 import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -76,6 +78,7 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
 export function AppConfigDeploymentSettingsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigDeploymentSettingsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -101,6 +104,10 @@ export function AppConfigDeploymentSettingsRoute() {
     });
 
     function handleSubmit(values: AppConfigDeploymentSettingsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
@@ -122,16 +129,13 @@ export function AppConfigDeploymentSettingsRoute() {
                 ref={formRef}
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Deploy
-                    </Button>
+                    <ProjectPermissionSubmitButton
+                        isPending={isPending}
+                        label="Deploy"
+                    />
                 </div>
             </AppConfigDeploymentSettingsForm>
         </div>

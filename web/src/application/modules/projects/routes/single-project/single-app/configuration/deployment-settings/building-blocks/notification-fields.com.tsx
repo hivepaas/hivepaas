@@ -11,7 +11,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
 
-export function NotificationFields() {
+export function NotificationFields({ readOnly = false }: Props) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -41,16 +41,16 @@ export function NotificationFields() {
     });
 
     useEffect(() => {
-        if (useDefaultOnSuccess.value) {
+        if (!readOnly && useDefaultOnSuccess.value) {
             success.onChange(undefined);
         }
-    }, [useDefaultOnSuccess.value, success]);
+    }, [readOnly, useDefaultOnSuccess.value, success]);
 
     useEffect(() => {
-        if (useDefaultOnFailure.value) {
+        if (!readOnly && useDefaultOnFailure.value) {
             failure.onChange(undefined);
         }
-    }, [useDefaultOnFailure.value, failure]);
+    }, [readOnly, useDefaultOnFailure.value, failure]);
 
     return (
         <>
@@ -64,14 +64,21 @@ export function NotificationFields() {
             >
                 <Checkbox
                     checked={useDefaultOnSuccess.value}
-                    onCheckedChange={useDefaultOnSuccess.onChange}
+                    onCheckedChange={value => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        useDefaultOnSuccess.onChange(value);
+                    }}
+                    disabled={readOnly}
                 />
             </InfoBlock>
 
             <NotificationSelect
                 name="notification.success"
                 title="On Success"
-                disabled={useDefaultOnSuccess.value}
+                disabled={readOnly || useDefaultOnSuccess.value}
             />
 
             <InfoBlock
@@ -84,15 +91,26 @@ export function NotificationFields() {
             >
                 <Checkbox
                     checked={useDefaultOnFailure.value}
-                    onCheckedChange={useDefaultOnFailure.onChange}
+                    onCheckedChange={value => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        useDefaultOnFailure.onChange(value);
+                    }}
+                    disabled={readOnly}
                 />
             </InfoBlock>
 
             <NotificationSelect
                 name="notification.failure"
                 title="On Failure"
-                disabled={useDefaultOnFailure.value}
+                disabled={readOnly || useDefaultOnFailure.value}
             />
         </>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

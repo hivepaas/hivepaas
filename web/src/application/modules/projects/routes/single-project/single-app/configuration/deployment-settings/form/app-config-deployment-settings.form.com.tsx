@@ -75,7 +75,7 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
     };
 }
 
-export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapDefaultValues(defaultValues)
@@ -98,6 +98,10 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
     const activeMethod = methods.watch("activeMethod");
 
     function onValid(values: SchemaOutput) {
+        if (readOnly) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -137,33 +141,41 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
 
                         void methods.handleSubmit(onValid, onInvalid)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <ContentBlock label="Deployment Configuration">
-                        <div className="flex flex-col gap-6">
-                            <MethodSelector />
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ContentBlock label="Deployment Configuration">
+                            <div className="flex flex-col gap-6">
+                                <MethodSelector readOnly={readOnly} />
 
-                            {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields />}
-                            {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields />}
-                        </div>
-                    </ContentBlock>
+                                {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields readOnly={readOnly} />}
+                                {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields readOnly={readOnly} />}
+                            </div>
+                        </ContentBlock>
 
-                    <ContentBlock label="Run Configuration">
-                        <div className="flex flex-col gap-6">
-                            <RunConfigurationFields />
-                        </div>
-                    </ContentBlock>
+                        <ContentBlock label="Run Configuration">
+                            <div className="flex flex-col gap-6">
+                                <RunConfigurationFields />
+                            </div>
+                        </ContentBlock>
 
-                    <ContentBlock label="Notification Configuration">
-                        <div className="flex flex-col gap-6">
-                            <NotificationFields />
-                        </div>
-                    </ContentBlock>
+                        <ContentBlock label="Notification Configuration">
+                            <div className="flex flex-col gap-6">
+                                <NotificationFields readOnly={readOnly} />
+                            </div>
+                        </ContentBlock>
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -174,4 +186,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigDeploymentSettingsFormRef>;
     defaultValues?: AppDeploymentSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

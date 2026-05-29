@@ -7,8 +7,9 @@ import { ProjectAppsTableDefs } from "~/projects/module-shared/definitions/table
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { Button, DataTable, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
@@ -19,6 +20,7 @@ export function ProjectAppsTable({ projectId }: Props) {
             actions.close();
         },
     });
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { data: { data: apps } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectAppsQueries.useFindManyPaginated({
         projectID: projectId,
@@ -31,12 +33,16 @@ export function ProjectAppsTable({ projectId }: Props) {
     const columns = useMemo(() => ProjectAppsTableDefs.columns(projectId), [projectId]);
     const project = projectData?.data;
     const isProjectActive = project?.status === EProjectStatus.Active;
-    const isAddButtonDisabled = !isProjectActive;
+    const isAddButtonDisabled = !isProjectActive || !canWrite;
 
     const addNewAppButton = (
         <Button
             disabled={isAddButtonDisabled}
             onClick={() => {
+                if (!canWrite) {
+                    return;
+                }
+
                 actions.open(projectId);
             }}
         >
@@ -44,7 +50,14 @@ export function ProjectAppsTable({ projectId }: Props) {
         </Button>
     );
 
-    const renderActions = isAddButtonDisabled ? (
+    const renderActions = !canWrite ? (
+        <PermissionTooltipAction
+            id={MODULE_IDS.Project}
+            action="write"
+        >
+            {() => addNewAppButton}
+        </PermissionTooltipAction>
+    ) : isAddButtonDisabled ? (
         <Tooltip>
             <TooltipTrigger asChild>
                 <span className="inline-flex">{addNewAppButton}</span>

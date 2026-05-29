@@ -4,19 +4,30 @@ import { useImportProjectSettingsDialog } from "~/projects/dialogs/import-projec
 
 import { Button } from "@/components/ui";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
 export function ProjectSettingsImportButton({ projectId, settingKind }: Props) {
     const importDialog = useImportProjectSettingsDialog();
 
     return (
-        <Button
-            variant="outline"
-            onClick={() => {
-                importDialog.actions.open(projectId, settingKind);
-            }}
+        <PermissionTooltipAction
+            id={MODULE_IDS.Project}
+            action="write"
         >
-            <Plus className="size-4" />
-            Import
-        </Button>
+            {({ isDenied }) => (
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        importDialog.actions.open(projectId, settingKind);
+                    }}
+                    disabled={isDenied}
+                >
+                    <Plus className="size-4" />
+                    Import
+                </Button>
+            )}
+        </PermissionTooltipAction>
     );
 }
 

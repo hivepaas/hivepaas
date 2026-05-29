@@ -8,18 +8,15 @@ import { ProjectNotificationCommands } from "~/projects/data/commands";
 import { NotificationCommands } from "~/settings/data/commands";
 import { useUpdateNotificationTargetStatusDialog } from "~/settings/dialogs/update-notification-target-status";
 import type { SettingNotification } from "~/settings/domain";
+import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
-import { PopConfirm } from "@application/shared/components";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { NotificationTargetTableScope } from "../notification-target-table.types";
 
 function View({ scope, notificationTarget }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateNotificationTargetStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingNotification, isPending: isDeletingSetting } = NotificationCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Notification target deleted successfully");
@@ -39,12 +36,6 @@ function View({ scope, notificationTarget }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, notificationTarget.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.notificationTarget });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectNotification({ projectID: scope.projectId, id: notificationTarget.id });
             return;
@@ -86,42 +77,27 @@ function View({ scope, notificationTarget }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
                         onClick={handleChangeStatus}
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
-                    </Button>
-                    {isInheritedProject ? (
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </Button>
-                    ) : (
-                        <PopConfirm
-                            title="Delete notification target"
-                            variant="destructive"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                        >
-                            <Button
-                                className="justify-start py-1.5"
-                                variant="ghost"
-                                disabled={isDeleting}
-                            >
-                                <Trash2Icon className="mr-2 size-4" />
-                                Remove
-                            </Button>
-                        </PopConfirm>
-                    )}
+                    </SettingsScopeMenuButton>
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete notification target"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

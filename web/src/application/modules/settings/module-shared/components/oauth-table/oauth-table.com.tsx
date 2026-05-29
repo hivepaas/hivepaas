@@ -10,6 +10,9 @@ import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
 import { OAuthTableDefs } from "./oauth-table.defs";
 
 export function SettingsOAuthTable() {
@@ -26,14 +29,22 @@ export function SettingsOAuthTable() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            createOrEditDialog.actions.open();
-                        }}
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.Settings}
+                        action="write"
                     >
-                        <Plus className="size-4" />
-                        New OAuth
-                    </Button>
+                        {({ isDenied }) => (
+                            <Button
+                                onClick={() => {
+                                    createOrEditDialog.actions.open();
+                                }}
+                                disabled={isDenied}
+                            >
+                                <Plus className="size-4" />
+                                New OAuth
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 }
             />
             <DataTable

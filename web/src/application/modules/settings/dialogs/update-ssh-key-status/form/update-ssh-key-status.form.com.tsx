@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
@@ -27,8 +27,11 @@ export function UpdateSSHKeyStatusForm({
     onHasChanges,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -47,7 +50,7 @@ export function UpdateSSHKeyStatusForm({
     const { isDirty } = useFormState({ control });
 
     useUpdateEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
+        onHasChanges?.(isReadOnly ? false : isDirty);
     }, [isDirty]);
 
     const { field: status } = useController({ name: "status", control });
@@ -59,7 +62,7 @@ export function UpdateSSHKeyStatusForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: UpdateSSHKeyStatusFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -78,8 +81,9 @@ export function UpdateSSHKeyStatusForm({
             }}
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="border-0 p-0 m-0 min-w-0"
             >
                 <FieldGroup>
@@ -157,7 +161,7 @@ export function UpdateSSHKeyStatusForm({
                         </InfoBlock>
                     </Field>
 
-                    {!readOnlyInherited && (
+                    {!isReadOnly && (
                         <Field>
                             <div className="flex justify-end">
                                 <Button
@@ -171,7 +175,7 @@ export function UpdateSSHKeyStatusForm({
                     )}
                 </FieldGroup>
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -194,5 +198,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

@@ -11,9 +11,10 @@ const DEFAULT_STRATEGY_VALUE = "__default__";
 
 interface LBConfigSectionProps {
     prefix: string;
+    readOnly?: boolean;
 }
 
-export function LBConfigSection({ prefix }: LBConfigSectionProps) {
+export function LBConfigSection({ prefix, readOnly = false }: LBConfigSectionProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -46,8 +47,13 @@ export function LBConfigSection({ prefix }: LBConfigSectionProps) {
                     <Select
                         value={strategy.value === "" ? DEFAULT_STRATEGY_VALUE : strategy.value}
                         onValueChange={value => {
+                            if (readOnly) {
+                                return;
+                            }
+
                             strategy.onChange(value === DEFAULT_STRATEGY_VALUE ? "" : value);
                         }}
+                        disabled={readOnly}
                     >
                         <SelectTrigger
                             className="max-w-[320px]"

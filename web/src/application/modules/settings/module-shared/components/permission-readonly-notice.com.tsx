@@ -1,0 +1,9 @@
+import { getModulePermissionDeniedMessage } from "@application/shared/permissions";
+
+export function PermissionReadonlyNotice() {
+    return (
+        <div className="border border-dashed border-primary rounded-md bg-muted/40 px-5 py-4 text-center text-sm mb-6">
+            {getModulePermissionDeniedMessage("write")}
+        </div>
+    );
+}

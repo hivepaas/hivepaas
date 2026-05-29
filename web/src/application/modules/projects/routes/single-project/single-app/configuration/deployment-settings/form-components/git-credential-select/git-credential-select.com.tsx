@@ -14,7 +14,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
-export function GitCredentialSelect() {
+export function GitCredentialSelect({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
@@ -58,6 +58,10 @@ export function GitCredentialSelect() {
                         options={comboboxOptions}
                         value={credentialsField.value?.id ?? null}
                         onChange={(_, option) => {
+                            if (readOnly) {
+                                return;
+                            }
+
                             credentialsField.onChange(option ?? null);
                         }}
                         onSearch={setSearchQuery}
@@ -73,6 +77,7 @@ export function GitCredentialSelect() {
                         onRefresh={() => void refetch()}
                         isRefreshing={isRefetching}
                         splitLabelBadge
+                        disabled={readOnly}
                     />
                     <FieldError errors={[credentialsError]} />
                     <div className="text-xs">
@@ -91,3 +96,7 @@ export function GitCredentialSelect() {
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

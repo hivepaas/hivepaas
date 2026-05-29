@@ -10,9 +10,10 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable } from "@/components/ui";
+import { DataTable } from "@/components/ui";
 
 import { ProjectSettingsImportButton } from "../project-settings-import-button";
+import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { CloudStorageTableDefs } from "./cloud-storage-table.defs";
 import type { CloudStorageTableScope } from "./cloud-storage-table.types";
@@ -52,14 +53,15 @@ function CloudStorageTableView({ scope }: Props) {
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.CloudStorage}
                             />
                         )}
-                        <Button
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             New Cloud Storage
-                        </Button>
+                        </SettingsScopeCreateButton>
                     </div>
                 }
             />

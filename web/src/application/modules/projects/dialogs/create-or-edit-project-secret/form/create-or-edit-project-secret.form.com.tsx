@@ -12,7 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CreateOrEditProjectSecretFormInput, CreateOrEditProjectSecretFormOutput } from "../schemas";
 import { CreateOrEditProjectSecretFormSchema } from "../schemas";
 
-export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChanges, isEditMode, initialValues }: Props) {
+export function CreateOrEditProjectSecretForm({
+    isPending,
+    onSubmit,
+    onHasChanges,
+    isEditMode,
+    initialValues,
+    readOnly = false,
+}: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -35,8 +42,8 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     const {
         field: name,
@@ -65,6 +72,10 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
     });
 
     function onValid(values: CreateOrEditProjectSecretFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         void onSubmit(values);
     }
 
@@ -76,79 +87,87 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
         <form
             onSubmit={event => {
                 event.preventDefault();
+                if (readOnly) {
+                    return;
+                }
+
                 void handleSubmit(onValid, onInvalid)(event);
             }}
             className="flex flex-col gap-6"
         >
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Name"
-                        isRequired
-                    />
-                }
+            <fieldset
+                disabled={readOnly}
+                className="contents"
             >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            id="project-secret-name"
-                            {...name}
-                            placeholder="SECRET_NAME"
-                            aria-invalid={isNameInvalid}
-                            disabled={isEditMode}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Value Type"
-                        isRequired
-                    />
-                }
-            >
-                <Tabs
-                    value={valueType}
-                    onValueChange={nextValue => {
-                        valueTypeField.onChange(nextValue);
-                    }}
-                >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                        <TabsTrigger value="text">Text</TabsTrigger>
-                        <TabsTrigger value="binary">Binary</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </InfoBlock>
-
-            {valueType === "text" ? (
                 <InfoBlock
                     titleWidth={220}
                     title={
                         <LabelWithInfo
-                            label="Value"
-                            isRequired={!isEditMode}
+                            label="Name"
+                            isRequired
                         />
                     }
                 >
                     <FieldGroup>
                         <Field>
-                            <Textarea
-                                id="project-secret-text-value"
-                                {...textValue}
-                                placeholder={isEditMode ? "Leave empty to keep current value" : "Enter secret value"}
-                                rows={8}
-                                aria-invalid={isTextValueInvalid}
+                            <Input
+                                id="project-secret-name"
+                                {...name}
+                                placeholder="SECRET_NAME"
+                                aria-invalid={isNameInvalid}
+                                disabled={isEditMode}
                             />
-                            <p className="text-sm text-muted-foreground">Max size: 500kb</p>
-                            <FieldError errors={[errors.textValue]} />
+                            <FieldError errors={[errors.name]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Value Type"
+                            isRequired
+                    />
+                }
+            >
+                    <Tabs
+                        value={valueType}
+                        onValueChange={nextValue => {
+                        valueTypeField.onChange(nextValue);
+                    }}
+                >
+                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsTrigger value="text">Text</TabsTrigger>
+                            <TabsTrigger value="binary">Binary</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                {valueType === "text" ? (
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Value"
+                                isRequired={!isEditMode}
+                        />
+                    }
+                >
+                        <FieldGroup>
+                            <Field>
+                                <Textarea
+                                    id="project-secret-text-value"
+                                    {...textValue}
+                                    placeholder={isEditMode ? "Leave empty to keep current value" : "Enter secret value"}
+                                    rows={8}
+                                    aria-invalid={isTextValueInvalid}
+                            />
+                                <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                                <FieldError errors={[errors.textValue]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
             ) : (
                 <InfoBlock
                     titleWidth={220}
@@ -192,16 +211,18 @@ export function CreateOrEditProjectSecretForm({ isPending, onSubmit, onHasChange
                 </InfoBlock>
             )}
 
-            <Field>
-                <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                <Field>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            disabled={readOnly}
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </Field>
+            </fieldset>
         </form>
     );
 }
@@ -212,4 +233,5 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditProjectSecretFormInput>;
+    readOnly?: boolean;
 }

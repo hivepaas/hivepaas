@@ -65,6 +65,10 @@ export function NotificationSelect({ name, title, disabled = false }: Notificati
                     options={comboboxOptions}
                     value={field.value?.id ?? null}
                     onChange={(_, option) => {
+                        if (disabled) {
+                            return;
+                        }
+
                         field.onChange(option ?? undefined);
                     }}
                     onSearch={setSearchQuery}

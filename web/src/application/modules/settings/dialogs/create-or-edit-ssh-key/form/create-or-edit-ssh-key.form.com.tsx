@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESSHKeyType } from "@application/shared/enums";
@@ -40,8 +40,11 @@ export function CreateOrEditSSHKeyForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const form = useForm<CreateOrEditSSHKeyFormInput, unknown, CreateOrEditSSHKeyFormOutput>({
         defaultValues: {
             name: initialValues?.name ?? "",
@@ -66,8 +69,8 @@ export function CreateOrEditSSHKeyForm({
     } = form;
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const {
         field: name,
@@ -93,7 +96,7 @@ export function CreateOrEditSSHKeyForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditSSHKeyFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -101,7 +104,7 @@ export function CreateOrEditSSHKeyForm({
     }
 
     async function handleGenerate() {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -136,8 +139,9 @@ export function CreateOrEditSSHKeyForm({
                 className="flex flex-col gap-6"
             >
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
-                    disabled={readOnlyInherited}
+                    disabled={isReadOnly}
                     className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
                     <InfoBlock
@@ -198,6 +202,8 @@ export function CreateOrEditSSHKeyForm({
                                     {...publicKey}
                                     className="min-h-24"
                                     aria-invalid={isPublicKeyInvalid}
+                                    rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.publicKey]} />
                             </Field>
@@ -219,6 +225,8 @@ export function CreateOrEditSSHKeyForm({
                                     {...privateKey}
                                     className="min-h-24"
                                     aria-invalid={isPrivateKeyInvalid}
+                                    rows={4}
+                                    maxRows={7}
                                 />
                                 <FieldError errors={[errors.privateKey]} />
                             </Field>
@@ -275,7 +283,7 @@ export function CreateOrEditSSHKeyForm({
                         enhance security.
                     </div>
 
-                    {!readOnlyInherited && (
+                    {!isReadOnly && (
                         <Field>
                             <div className="flex justify-end gap-4">
                                 <Button
@@ -297,7 +305,7 @@ export function CreateOrEditSSHKeyForm({
                         </Field>
                     )}
                 </fieldset>
-                {readOnlyInherited && (
+                {isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
@@ -327,5 +335,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditSSHKeyFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

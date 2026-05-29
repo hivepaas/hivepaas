@@ -14,7 +14,7 @@ import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchema
 
 const portFieldsGridClass = "grid flex-1 min-w-0 w-full grid-cols-4 gap-3 items-center";
 
-export function EndpointPortConfigFields() {
+export function EndpointPortConfigFields({ readOnly = false }: Props) {
     const { control, watch, setValue } = useFormContext<
         AppConfigNetworksFormSchemaInput,
         unknown,
@@ -46,13 +46,27 @@ export function EndpointPortConfigFields() {
                         <Tabs
                             value={resolutionMode}
                             onValueChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setValue("resolutionMode", value as EEndpointResolutionMode);
                             }}
                             className="w-fit"
                         >
                             <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                                <TabsTrigger value={EEndpointResolutionMode.VIP}>VIP</TabsTrigger>
-                                <TabsTrigger value={EEndpointResolutionMode.DNSRR}>DNSRR</TabsTrigger>
+                                <TabsTrigger
+                                    value={EEndpointResolutionMode.VIP}
+                                    disabled={readOnly}
+                                >
+                                    VIP
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value={EEndpointResolutionMode.DNSRR}
+                                    disabled={readOnly}
+                                >
+                                    DNSRR
+                                </TabsTrigger>
                             </TabsList>
                         </Tabs>
                     </div>
@@ -83,21 +97,31 @@ export function EndpointPortConfigFields() {
                                 addonLeft="Host"
                                 value={published}
                                 onValueChange={v => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
                                     setPublished(v ?? 0);
                                 }}
                                 useGrouping={false}
                                 placeholder="8000"
                                 classNameContainer="min-w-0"
+                                disabled={readOnly}
                             />
                             <InputNumberWithAddon
                                 addonLeft="Container"
                                 value={target}
                                 onValueChange={v => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
                                     setTarget(v ?? 0);
                                 }}
                                 useGrouping={false}
                                 placeholder="80"
                                 classNameContainer="min-w-0"
+                                disabled={readOnly}
                             />
                             <div className="flex min-w-0 items-center rounded-md border border-input h-9">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
@@ -106,8 +130,13 @@ export function EndpointPortConfigFields() {
                                 <Select
                                     value={protocol}
                                     onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         setProtocol(value as EPortConfigProtocol);
                                     }}
+                                    disabled={readOnly}
                                 >
                                     <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
                                         <SelectValue />
@@ -126,8 +155,13 @@ export function EndpointPortConfigFields() {
                                 <Select
                                     value={publishMode}
                                     onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         setPublishMode(value as EPortConfigPublishMode);
                                     }}
+                                    disabled={readOnly}
                                 >
                                     <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
                                         <SelectValue />
@@ -141,11 +175,16 @@ export function EndpointPortConfigFields() {
                         </div>
                     }
                     onAdd={() => {
+                        if (readOnly) {
+                            return;
+                        }
+
                         append({ published, target, protocol, publishMode });
                         setPublished(0);
                         setTarget(0);
                     }}
-                    addDisabled={published === 0 || target === 0}
+                    addDisabled={readOnly || published === 0 || target === 0}
+                    disabled={readOnly}
                     items={fields.map((field, index) => ({
                         id: field.id,
                         content: (
@@ -165,3 +204,7 @@ export function EndpointPortConfigFields() {
         </>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

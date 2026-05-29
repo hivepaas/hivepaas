@@ -10,9 +10,10 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable } from "@/components/ui";
+import { DataTable } from "@/components/ui";
 
 import { ProjectSettingsImportButton } from "../project-settings-import-button";
+import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { EmailAccountTableDefs } from "./email-account-table.defs";
 import type { EmailAccountTableScope } from "./email-account-table.types";
@@ -60,14 +61,15 @@ function EmailAccountTableView({ scope }: Props) {
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.Email}
                             />
                         )}
-                        <Button
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             New Email Account
-                        </Button>
+                        </SettingsScopeCreateButton>
                     </div>
                 }
             />

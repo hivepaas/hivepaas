@@ -3,8 +3,9 @@ import { NodesQueries } from "~/cluster/data/queries";
 import { NodesTableDefs } from "~/cluster/module-shared/definitions/tables/nodes/nodes-table.defs";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { useJoinNewNodeDialog } from "@application/modules/cluster/dialogs";
 
@@ -29,9 +30,19 @@ export function NodesTable() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button onClick={dialog.actions.open}>
-                        <Plus /> Join Node
-                    </Button>
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.Cluster}
+                        action="write"
+                    >
+                        {({ isDenied }) => (
+                            <Button
+                                onClick={dialog.actions.open}
+                                disabled={isDenied}
+                            >
+                                <Plus /> Join Node
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 }
             />
             <DataTable

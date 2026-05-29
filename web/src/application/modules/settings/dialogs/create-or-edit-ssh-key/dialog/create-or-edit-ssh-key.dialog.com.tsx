@@ -8,6 +8,7 @@ import { SSHKeyCommands } from "~/settings/data/commands";
 import { SSHKeyQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditSSHKeyForm } from "../form";
 import { useCreateOrEditSSHKeyDialogState } from "../hooks";
@@ -16,6 +17,9 @@ import type { CreateOrEditSSHKeyFormOutput } from "../schemas";
 export function CreateOrEditSSHKeyDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useCreateOrEditSSHKeyDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: createSettingSSHKey, isPending: isCreatingSetting } = SSHKeyCommands.useCreateOne({
         onSuccess: () => {
@@ -112,6 +116,7 @@ export function CreateOrEditSSHKeyDialog() {
         if (isPending) return;
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         )
@@ -164,6 +169,7 @@ export function CreateOrEditSSHKeyDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

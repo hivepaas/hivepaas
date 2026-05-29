@@ -4,7 +4,7 @@ import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, InputWithAddOn, LabelWithInfo, SelectWithAddon } from "@application/shared/components";
 import { EEmailKind } from "@application/shared/enums";
@@ -57,8 +57,11 @@ export function CreateOrEditEmailAccountForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const form = useForm<CreateOrEditEmailAccountFormInput, unknown, CreateOrEditEmailAccountFormOutput>({
         defaultValues: {
             name: initialValues?.name ?? "",
@@ -90,8 +93,8 @@ export function CreateOrEditEmailAccountForm({
     } = form;
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const kindValue = useWatch({ control, name: "kind" });
     const fieldMapping = useFieldArray({ control, name: "fieldMapping" });
@@ -136,7 +139,7 @@ export function CreateOrEditEmailAccountForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditEmailAccountFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -178,8 +181,9 @@ export function CreateOrEditEmailAccountForm({
                 className="flex flex-col gap-6"
             >
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
-                    disabled={readOnlyInherited}
+                    disabled={isReadOnly}
                     className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
                     <FieldGroup>
@@ -463,7 +467,7 @@ export function CreateOrEditEmailAccountForm({
                         </InfoBlock>
                     </FieldGroup>
 
-                    {!readOnlyInherited && (
+                    {!isReadOnly && (
                         <Field>
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
@@ -487,7 +491,7 @@ export function CreateOrEditEmailAccountForm({
                         </Field>
                     )}
                 </fieldset>
-                {readOnlyInherited && (
+                {isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
@@ -512,5 +516,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditEmailAccountFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

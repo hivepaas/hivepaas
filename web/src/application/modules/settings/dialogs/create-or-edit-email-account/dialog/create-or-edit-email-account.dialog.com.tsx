@@ -9,6 +9,7 @@ import { EmailQueries } from "~/settings/data/queries";
 import type { SettingEmail } from "~/settings/domain";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { EEmailKind } from "@application/shared/enums";
 
 import { CreateOrEditEmailAccountForm } from "../form";
@@ -35,6 +36,9 @@ export function CreateOrEditEmailAccountDialog() {
         clear: clearDialog,
     } = useCreateOrEditEmailAccountDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const [testDialogOpen, setTestDialogOpen] = useState(false);
     const [testAccountValues, setTestAccountValues] = useState<CreateOrEditEmailAccountFormOutput | null>(null);
@@ -220,6 +224,7 @@ export function CreateOrEditEmailAccountDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -274,6 +279,7 @@ export function CreateOrEditEmailAccountDialog() {
                             initialValues={initialValues}
                             showAvailableInProjects={showAvailableInProjects}
                             readOnlyInherited={readOnlyInherited}
+                            readOnly={!canWrite}
                             onClose={handleClose}
                         />
                     )}

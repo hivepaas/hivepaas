@@ -4,6 +4,9 @@ import { Button } from "@components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { UsersCommands } from "~/user-management/data/commands";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
+
 import { LinkGenerate } from "../building-blocks";
 import { InviteUserForm } from "../form";
 import { useInviteUserDialogState } from "../hooks";
@@ -14,6 +17,7 @@ export function InviteUserDialog() {
     const [hasChanges, setHasChanges] = useState(false);
     const [inviteLink, setInviteLink] = useState<string | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.User });
 
     const { mutate: inviteUser, isPending: isGeneratingLink } = UsersCommands.useInviteOne();
 
@@ -31,6 +35,10 @@ export function InviteUserDialog() {
     }, [state.mode]);
 
     function onSubmit(values: InviteUserFormOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         inviteUser(
             { user: values, sendInviteEmail },
             {
@@ -47,7 +55,7 @@ export function InviteUserDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges && !isGeneratingLink) {
+        if (canWrite && hasChanges && !isGeneratingLink) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -72,6 +80,7 @@ export function InviteUserDialog() {
                 <div className="h-px bg-border" />
                 <InviteUserForm
                     ref={formRef}
+                    readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 >
@@ -80,27 +89,42 @@ export function InviteUserDialog() {
 
                     {/* Footer Actions */}
                     <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                        <Button
-                            type="submit"
-                            variant="default"
-                            isLoading={isGeneratingLink}
-                            onClick={() => {
-                                setSendInviteEmail(true);
-                            }}
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.User}
+                            action="write"
                         >
-                            Send Email
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="default"
-                            isLoading={isGeneratingLink}
-                            disabled={inviteLink !== null}
-                            onClick={() => {
-                                setSendInviteEmail(false);
-                            }}
+                            {({ isDenied }) => (
+                                <Button
+                                    type="submit"
+                                    variant="default"
+                                    isLoading={isGeneratingLink}
+                                    disabled={isDenied}
+                                    onClick={() => {
+                                        setSendInviteEmail(true);
+                                    }}
+                                >
+                                    Send Email
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.User}
+                            action="write"
                         >
-                            Generate Invite Link
-                        </Button>
+                            {({ isDenied }) => (
+                                <Button
+                                    type="submit"
+                                    variant="default"
+                                    isLoading={isGeneratingLink}
+                                    disabled={isDenied || inviteLink !== null}
+                                    onClick={() => {
+                                        setSendInviteEmail(false);
+                                    }}
+                                >
+                                    Generate Invite Link
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
                     </div>
                 </InviteUserForm>
             </DialogContent>

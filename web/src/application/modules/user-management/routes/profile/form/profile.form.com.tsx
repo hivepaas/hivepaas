@@ -11,6 +11,7 @@ import { UserRoleBadge, UserSecurityBadge } from "~/user-management/module-share
 import { UserInput } from "~/user-management/module-shared/form/user-input";
 import { mapModuleAccesses } from "~/user-management/module-shared/utils";
 
+import { type ProfilePhotoPayload } from "@application/shared/api/services";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { PhotoUploadDialog } from "@application/shared/dialogs";
 import { type Profile } from "@application/shared/entities";
@@ -34,13 +35,12 @@ const DEFAULTS: ProfileFormSchemaInput = {
     projectAccesses: [],
     moduleAccesses: [],
     photo: null,
-    photoUpload: null,
 };
 
 type SchemaInput = ProfileFormSchemaInput;
 type SchemaOutput = ProfileFormSchemaOutput;
 
-export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubmit, onPhotoSubmit, children }: Props) {
     const [openPhotoUpload, setOpenPhotoUpload] = useState(false);
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -51,7 +51,6 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
             email: defaultValues.email ?? "",
             moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
             photo: defaultValues.photo,
-            photoUpload: null,
         },
         resolver: zodResolver(ProfileFormSchema),
         mode: "onSubmit",
@@ -106,26 +105,18 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
     const photoUrl = methods.watch("photo");
 
     async function handlePhotoUpload(result: File | null) {
-        console.log(result);
         if (!result) {
-            methods.setValue("photo", null, { shouldDirty: true });
-            methods.setValue("photoUpload", null, { shouldDirty: true });
+            onPhotoSubmit({ delete: true });
             return;
         }
 
         try {
             const base64String = await ImageService.convertFileToBase64(result);
 
-            methods.setValue("photo", base64String, { shouldDirty: true });
-
-            methods.setValue(
-                "photoUpload",
-                {
-                    fileName: result.name,
-                    dataBase64: base64String,
-                },
-                { shouldDirty: true },
-            );
+            onPhotoSubmit({
+                fileName: result.name,
+                dataBase64: base64String,
+            });
         } catch (error) {
             console.error("Error converting file to base64:", error);
             toast.error("Failed to process image");
@@ -158,6 +149,7 @@ export function ProfileForm({ ref, defaultValues, onSubmit, children }: Props) {
                                 onClick={() => {
                                     setOpenPhotoUpload(true);
                                 }}
+                                disabled={isPhotoPending}
                                 aria-label="Edit photo"
                                 title="Edit photo"
                             >
@@ -248,4 +240,6 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<ProfileFormRef>;
     defaultValues: Profile;
     onSubmit: (values: SchemaOutput) => void;
+    onPhotoSubmit: (photo: ProfilePhotoPayload) => void;
+    isPhotoPending?: boolean;
 }>;

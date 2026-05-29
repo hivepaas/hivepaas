@@ -7,7 +7,8 @@ import invariant from "tiny-invariant";
 import { useQuickInstallSslCertDialog } from "~/projects/dialogs/quick-install-ssl-cert";
 
 import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { ProjectSslCertQueries } from "@application/modules/projects/data";
 
@@ -15,13 +16,14 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 import { SslInfo } from "./ssl-info.com";
 
-function View({ domainIndex }: SslCertProps) {
+function View({ domainIndex, readOnly = false }: SslCertProps) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
     const [searchQuery, setSearchQuery] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedSslId, setSelectedSslId] = useState<string | null>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -85,6 +87,10 @@ function View({ domainIndex }: SslCertProps) {
                                 options={comboboxOptions}
                                 value={sslCert.value?.id ?? null}
                                 onChange={(_, option) => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
                                     if (!option) {
                                         setValue(`domains.${domainIndex}.sslCert`, undefined, { shouldDirty: true });
                                         setSelectedSslId(null);
@@ -112,6 +118,7 @@ function View({ domainIndex }: SslCertProps) {
                                 isRefreshing={isRefetching}
                                 splitLabelBadge
                                 allowClear
+                                disabled={readOnly}
                             />
 
                             {sslCert.value?.id ? (
@@ -125,15 +132,28 @@ function View({ domainIndex }: SslCertProps) {
                                     Info
                                 </button>
                             ) : (
-                                <button
-                                    type="button"
-                                    className="text-blue-500 cursor-pointer hover:underline select-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                    onClick={() => {
-                                        quickInstallActions.open(projectId, domainValue);
-                                    }}
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                    triggerClassName="inline-flex"
                                 >
-                                    Quick Install
-                                </button>
+                                    {({ isDenied }) => (
+                                        <button
+                                            type="button"
+                                            className="text-blue-500 cursor-pointer hover:underline select-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={isDenied || readOnly}
+                                            onClick={() => {
+                                                if (!canWrite || readOnly) {
+                                                    return;
+                                                }
+
+                                                quickInstallActions.open(projectId, domainValue);
+                                            }}
+                                        >
+                                            Quick Install
+                                        </button>
+                                    )}
+                                </PermissionTooltipAction>
                             )}
                         </div>
                         <FieldError errors={[sslCertError]} />
@@ -164,6 +184,7 @@ function View({ domainIndex }: SslCertProps) {
 
 interface SslCertProps {
     domainIndex: number;
+    readOnly?: boolean;
 }
 
 export const SslCert = React.memo(View);

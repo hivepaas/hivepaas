@@ -14,7 +14,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
-export function DockerRegistryAuth() {
+export function DockerRegistryAuth({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
@@ -58,6 +58,10 @@ export function DockerRegistryAuth() {
                         options={comboboxOptions}
                         value={registryAuth.value?.id ?? null}
                         onChange={(_, option) => {
+                            if (readOnly) {
+                                return;
+                            }
+
                             registryAuth.onChange(option ?? null);
                         }}
                         onSearch={setSearchQuery}
@@ -72,6 +76,7 @@ export function DockerRegistryAuth() {
                         onRefresh={() => void refetch()}
                         isRefreshing={isRefetching}
                         splitLabelBadge
+                        disabled={readOnly}
                     />
                     <FieldError errors={[registryAuthError]} />
                     <div className="text-xs">
@@ -90,3 +95,7 @@ export function DockerRegistryAuth() {
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

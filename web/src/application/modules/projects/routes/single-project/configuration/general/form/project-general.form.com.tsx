@@ -83,7 +83,7 @@ function OwnerOptionRow({ user }: { user: OwnerOption }) {
     );
 }
 
-export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const [openPhotoUpload, setOpenPhotoUpload] = useState(false);
     const [ownerSearch, setOwnerSearch] = useState("");
     const [selectedOwner, setSelectedOwner] = useState<OwnerOption>(() => toOwnerOption(defaultValues.owner));
@@ -181,12 +181,20 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     });
 
     function handleCreateTag(tag: string) {
+        if (readOnly) {
+            return;
+        }
+
         if (!tags.includes(tag)) {
             setValue("tags", [...tags, tag]);
         }
     }
 
     function handleDeleteTag(tagToRemove: string) {
+        if (readOnly) {
+            return;
+        }
+
         setValue(
             "tags",
             tags.filter(tag => tag !== tagToRemove),
@@ -194,12 +202,20 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     }
 
     function handleCreateEnv(env: ProjectEnvEntity) {
+        if (readOnly) {
+            return;
+        }
+
         if (!envs.some(item => item.name === env.name)) {
             setValue("envs", [...envs, env], { shouldDirty: true });
         }
     }
 
     function handleDeleteEnv(envName: string) {
+        if (readOnly) {
+            return;
+        }
+
         setValue(
             "envs",
             envs.filter(env => env.name !== envName),
@@ -208,6 +224,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     }
 
     function handleUpdateEnvColor(envName: string, color: string) {
+        if (readOnly) {
+            return;
+        }
+
         setValue(
             "envs",
             envs.map(env => (env.name === envName ? { ...env, color } : env)),
@@ -216,6 +236,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
     }
 
     async function handlePhotoUpload(result: File | null) {
+        if (readOnly) {
+            return;
+        }
+
         if (!result) {
             setValue("photo", null, { shouldDirty: true });
             setValue("photoUpload", { delete: true }, { shouldDirty: true });
@@ -246,136 +270,151 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, children }: P
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
 
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    {/* Photo */}
-                    <InfoBlock title="Photo">
-                        <div className="relative size-24 rounded-full border">
-                            <Avatar
-                                key={photoPreviewUrl ?? "no-photo"}
-                                name={defaultValues.name}
-                                className="size-full text-2xl"
-                                src={photoPreviewUrl}
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        {/* Photo */}
+                        <InfoBlock title="Photo">
+                            <div className="relative size-24 rounded-full border">
+                                <Avatar
+                                    key={photoPreviewUrl ?? "no-photo"}
+                                    name={defaultValues.name}
+                                    className="size-full text-2xl"
+                                    src={photoPreviewUrl}
                             />
-                            <Button
-                                type="button"
-                                size="icon-sm"
-                                className="absolute -bottom-1 -right-1 rounded-full border"
-                                onClick={() => {
-                                    setOpenPhotoUpload(true);
-                                }}
-                                aria-label="Edit photo"
-                                title="Edit photo"
-                            >
-                                <Pencil />
-                            </Button>
-                        </div>
-                    </InfoBlock>
+                                <Button
+                                    type="button"
+                                    size="icon-sm"
+                                    className="absolute -bottom-1 -right-1 rounded-full border"
+                                    onClick={() => {
+                                        if (readOnly) {
+                                            return;
+                                        }
 
-                    {/* Name */}
-                    <InfoBlock title="Name">
-                        <Input
-                            {...name}
-                            value={name.value}
-                            onChange={name.onChange}
-                            type="text"
-                            className="max-w-[400px]"
-                            placeholder="Enter project name"
-                            aria-invalid={isNameInvalid}
+                                        setOpenPhotoUpload(true);
+                                    }}
+                                    disabled={readOnly}
+                                    aria-label="Edit photo"
+                                    title="Edit photo"
+                                >
+                                    <Pencil />
+                                </Button>
+                            </div>
+                        </InfoBlock>
+
+                        {/* Name */}
+                        <InfoBlock title="Name">
+                            <Input
+                                {...name}
+                                value={name.value}
+                                onChange={name.onChange}
+                                type="text"
+                                className="max-w-[400px]"
+                                placeholder="Enter project name"
+                                aria-invalid={isNameInvalid}
                         />
-                        <FieldError errors={[errors.name]} />
-                    </InfoBlock>
+                            <FieldError errors={[errors.name]} />
+                        </InfoBlock>
 
-                    {/* Key - Read Only */}
-                    <InfoBlock title="Key">
-                        <Input
-                            value={defaultValues.key}
-                            type="text"
-                            className="max-w-[400px]"
-                            disabled
-                            readOnly
+                        {/* Key - Read Only */}
+                        <InfoBlock title="Key">
+                            <Input
+                                value={defaultValues.key}
+                                type="text"
+                                className="max-w-[400px]"
+                                disabled
+                                readOnly
                         />
-                    </InfoBlock>
+                        </InfoBlock>
 
-                    {/* Status - Show Label */}
-                    <InfoBlock title="Status">
-                        <ProjectStatusBadge status={defaultValues.status} />
-                    </InfoBlock>
+                        {/* Status - Show Label */}
+                        <InfoBlock title="Status">
+                            <ProjectStatusBadge status={defaultValues.status} />
+                        </InfoBlock>
 
-                    {/* Project Owner */}
-                    <InfoBlock title="Project Owner">
-                        <div className="max-w-[400px]">
-                            <Combobox
-                                options={ownerComboboxOptions}
-                                value={ownerId.value}
-                                onChange={(value, option) => {
-                                    if (!value || !option) {
-                                        return;
-                                    }
+                        {/* Project Owner */}
+                        <InfoBlock title="Project Owner">
+                            <div className="max-w-[400px]">
+                                <Combobox
+                                    options={ownerComboboxOptions}
+                                    value={ownerId.value}
+                                    onChange={(value, option) => {
+                                        if (readOnly || !value || !option) {
+                                            return;
+                                        }
 
-                                    setSelectedOwner(option);
-                                    ownerId.onChange(value);
-                                }}
-                                onSearch={setOwnerSearch}
-                                placeholder="Select project owner"
-                                searchable
-                                emptyText="No users available"
-                                valueKey="id"
-                                loading={isFetchingOwnerUsers}
-                                disabled={ownerOptions.length === 0 && !isFetchingOwnerUsers}
-                                aria-invalid={isOwnerInvalid}
-                                renderSelectedOption={option => <OwnerSelectedOption user={option.value} />}
-                                renderOption={option => <OwnerOptionRow user={option.value} />}
+                                        setSelectedOwner(option);
+                                        ownerId.onChange(value);
+                                    }}
+                                    onSearch={setOwnerSearch}
+                                    placeholder="Select project owner"
+                                    searchable
+                                    emptyText="No users available"
+                                    valueKey="id"
+                                    loading={isFetchingOwnerUsers}
+                                    disabled={readOnly || (ownerOptions.length === 0 && !isFetchingOwnerUsers)}
+                                    aria-invalid={isOwnerInvalid}
+                                    renderSelectedOption={option => <OwnerSelectedOption user={option.value} />}
+                                    renderOption={option => <OwnerOptionRow user={option.value} />}
                             />
-                            <FieldError errors={[errors.ownerId]} />
-                        </div>
-                    </InfoBlock>
+                                <FieldError errors={[errors.ownerId]} />
+                            </div>
+                        </InfoBlock>
 
-                    {/* Environments */}
-                    <InfoBlock title="Environments">
-                        <div>
-                            <ProjectEnvInput
-                                envs={envs}
-                                onCreate={handleCreateEnv}
-                                onDelete={handleDeleteEnv}
-                                onUpdateColor={handleUpdateEnvColor}
-                                placeholder="Enter env"
-                            />
-                            <FieldError errors={[errors.envs]} />
-                        </div>
-                    </InfoBlock>
+                        {/* Environments */}
+                        <InfoBlock title="Environments">
+                            <div>
+                                <ProjectEnvInput
+                                    envs={envs}
+                                    onCreate={handleCreateEnv}
+                                    onDelete={handleDeleteEnv}
+                                    onUpdateColor={handleUpdateEnvColor}
+                                    placeholder="Enter env"
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.envs]} />
+                            </div>
+                        </InfoBlock>
 
-                    {/* Tags */}
-                    <InfoBlock title="Tags">
-                        <div>
-                            <TagInput
-                                tags={tags}
-                                onCreate={handleCreateTag}
-                                onDelete={handleDeleteTag}
-                                placeholder="Enter tag"
-                            />
-                            <FieldError errors={[errors.tags]} />
-                        </div>
-                    </InfoBlock>
+                        {/* Tags */}
+                        <InfoBlock title="Tags">
+                            <div>
+                                <TagInput
+                                    tags={tags}
+                                    onCreate={handleCreateTag}
+                                    onDelete={handleDeleteTag}
+                                    placeholder="Enter tag"
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.tags]} />
+                            </div>
+                        </InfoBlock>
 
-                    {/* Notes */}
-                    <InfoBlock title="Notes">
-                        <Textarea
-                            {...note}
-                            value={note.value}
-                            onChange={note.onChange}
-                            className="w-[100%] min-h-[120px]"
-                            placeholder="Enter project notes"
-                            rows={4}
-                            aria-invalid={isNoteInvalid}
+                        {/* Notes */}
+                        <InfoBlock title="Notes">
+                            <Textarea
+                                {...note}
+                                value={note.value}
+                                onChange={note.onChange}
+                                className="w-[100%] min-h-[120px]"
+                                placeholder="Enter project notes"
+                                rows={4}
+                                aria-invalid={isNoteInvalid}
                         />
-                        <FieldError errors={[errors.note]} />
-                    </InfoBlock>
+                            <FieldError errors={[errors.note]} />
+                        </InfoBlock>
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
             <PhotoUploadDialog
@@ -397,4 +436,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<ProjectGeneralFormRef>;
     defaultValues: ProjectDetailsEntity;
     onSubmit: (values: ProjectGeneralFormSchemaOutput) => void;
+    readOnly?: boolean;
 }>;

@@ -8,7 +8,7 @@ import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
 
-export function HostsFileEntriesFields() {
+export function HostsFileEntriesFields({ readOnly = false }: Props) {
     const { control } = useFormContext<AppConfigNetworksFormSchemaInput, unknown, AppConfigNetworksFormSchemaOutput>();
     const { fields, append, remove } = useFieldArray({
         control,
@@ -19,6 +19,10 @@ export function HostsFileEntriesFields() {
     const [hostnamesText, setHostnamesText] = useState("");
 
     const handleAdd = () => {
+        if (readOnly) {
+            return;
+        }
+
         if (!address.trim()) {
             toast.error("Host address is required");
             return;
@@ -48,22 +52,33 @@ export function HostsFileEntriesFields() {
                             addonLeft="Addr"
                             value={address}
                             onChange={e => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setAddress(e.target.value);
                             }}
                             placeholder="11.22.33.44"
+                            disabled={readOnly}
                         />
                         <InputWithAddOn
                             addonLeft="Name"
                             value={hostnamesText}
                             onChange={e => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setHostnamesText(e.target.value);
                             }}
                             placeholder="hostname alias1 alias2"
+                            disabled={readOnly}
                         />
                     </>
                 }
                 onAdd={handleAdd}
-                addDisabled={address.trim() === ""}
+                addDisabled={readOnly || address.trim() === ""}
+                disabled={readOnly}
                 items={fields.map((field, index) => ({
                     id: field.id,
                     content: (
@@ -80,3 +95,7 @@ export function HostsFileEntriesFields() {
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

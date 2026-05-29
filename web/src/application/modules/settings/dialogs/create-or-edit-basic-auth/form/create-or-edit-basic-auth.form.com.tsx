@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -19,8 +19,11 @@ export function CreateOrEditBasicAuthForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -38,8 +41,8 @@ export function CreateOrEditBasicAuthForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const {
         field: name,
@@ -57,7 +60,7 @@ export function CreateOrEditBasicAuthForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditBasicAuthFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -77,8 +80,9 @@ export function CreateOrEditBasicAuthForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <InfoBlock
@@ -163,7 +167,7 @@ export function CreateOrEditBasicAuthForm({
                     />
                 </InfoBlock>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
@@ -176,7 +180,7 @@ export function CreateOrEditBasicAuthForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -199,5 +203,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditBasicAuthFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

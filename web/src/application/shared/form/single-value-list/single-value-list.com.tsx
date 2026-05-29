@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { InputWithAddOn, PopConfirm } from "@application/shared/components";
 
-function View<T>({ name, label = "Value", placeholder, className, checkDuplicates = true }: Props<T>) {
+function View<T>({ name, label = "Value", placeholder, className, checkDuplicates = true, disabled = false }: Props<T>) {
     const { control } = useFormContext<Record<string, { value: string }[]>>();
     const { fields, append, remove } = useFieldArray({ control, name: name as string });
     const [input, setInput] = useState("");
@@ -20,15 +20,24 @@ function View<T>({ name, label = "Value", placeholder, className, checkDuplicate
                     addonLeft={label}
                     value={input}
                     onChange={e => {
+                        if (disabled) {
+                            return;
+                        }
+
                         setInput(e.target.value);
                     }}
                     placeholder={placeholder ?? label}
                     className="flex-1"
+                    disabled={disabled}
                 />
                 <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
+                        if (disabled) {
+                            return;
+                        }
+
                         const trimmed = input.trim();
                         if (!trimmed) return;
                         if (checkDuplicates) {
@@ -41,7 +50,7 @@ function View<T>({ name, label = "Value", placeholder, className, checkDuplicate
                         append({ value: trimmed } as never);
                         setInput("");
                     }}
-                    disabled={input.trim() === ""}
+                    disabled={disabled || input.trim() === ""}
                 >
                     <Plus className="size-4" /> Add
                 </Button>
@@ -64,6 +73,10 @@ function View<T>({ name, label = "Value", placeholder, className, checkDuplicate
                                     cancelText="Cancel"
                                     description="Are you sure you want to remove this item?"
                                     onConfirm={() => {
+                                        if (disabled) {
+                                            return;
+                                        }
+
                                         remove(index);
                                     }}
                                 >
@@ -72,6 +85,7 @@ function View<T>({ name, label = "Value", placeholder, className, checkDuplicate
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                        disabled={disabled}
                                     >
                                         <Trash2 className="size-3.5" />
                                     </Button>
@@ -91,6 +105,7 @@ type Props<T> = {
     placeholder?: string;
     className?: string;
     checkDuplicates?: boolean;
+    disabled?: boolean;
 };
 
 export const SingleValueList = React.memo(View) as typeof View;

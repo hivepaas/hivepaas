@@ -8,6 +8,7 @@ import { CloudStorageCommands } from "~/settings/data/commands";
 import { CloudStorageQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateCloudStorageStatusForm } from "../form";
@@ -22,6 +23,9 @@ export function UpdateCloudStorageStatusDialog() {
         clear: clearDialog,
     } = useUpdateCloudStorageStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = CloudStorageCommands.useUpdateMeta({
         onSuccess: () => {
@@ -84,6 +88,7 @@ export function UpdateCloudStorageStatusDialog() {
         if (isPending) return;
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         )
@@ -128,6 +133,7 @@ export function UpdateCloudStorageStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

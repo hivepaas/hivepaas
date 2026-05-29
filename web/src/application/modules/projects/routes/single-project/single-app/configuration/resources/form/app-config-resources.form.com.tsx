@@ -29,7 +29,7 @@ import { mapAppResourceSettingsToFormInput } from "./app-config-resources.form-m
 type SchemaInput = AppConfigResourcesFormSchemaInput;
 type SchemaOutput = AppConfigResourcesFormSchemaOutput;
 
-export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapAppResourceSettingsToFormInput(defaultValues)
@@ -78,28 +78,37 @@ export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, children 
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <ContentBlock label="Resource Reservation">
-                        <ResourceReservationFields />
-                    </ContentBlock>
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ContentBlock label="Resource Reservation">
+                            <ResourceReservationFields />
+                        </ContentBlock>
 
-                    <ContentBlock label="Resource Limit">
-                        <ResourceLimitFields />
-                    </ContentBlock>
-                    <ContentBlock label="Memory">
-                        <MemoryFields />
-                    </ContentBlock>
-                    <ContentBlock label="Ulimits">
-                        <UlimitsFields />
-                    </ContentBlock>
-                    <ContentBlock label="Capabilities">
-                        <CapabilitiesFields />
-                    </ContentBlock>
+                        <ContentBlock label="Resource Limit">
+                            <ResourceLimitFields />
+                        </ContentBlock>
+                        <ContentBlock label="Memory">
+                            <MemoryFields />
+                        </ContentBlock>
+                        <ContentBlock label="Ulimits">
+                            <UlimitsFields />
+                        </ContentBlock>
+                        <ContentBlock label="Capabilities">
+                            <CapabilitiesFields />
+                        </ContentBlock>
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -110,4 +119,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigResourcesFormRef>;
     defaultValues?: AppResourceSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

@@ -33,9 +33,10 @@ type Props = {
     onSubmit: (values: StorageMountFormOutput) => void;
     projectKey?: string;
     appLocalKey?: string;
+    readOnly?: boolean;
 };
 
-export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Props) {
+export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, readOnly = false }: Props) {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -122,6 +123,10 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Pr
     }, [storageSettings]);
 
     function onValid(data: StorageMountFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         onSubmit(data);
     }
 
@@ -135,60 +140,68 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Pr
             <form
                 onSubmit={e => {
                     e.preventDefault();
+                    if (readOnly) {
+                        return;
+                    }
+
                     void handleSubmit(onValid, onInvalid)(e);
                 }}
             >
-                <FieldGroup className="gap-6">
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Type"
-                                isRequired
+                <fieldset
+                    disabled={readOnly}
+                    className="contents"
+                >
+                    <FieldGroup className="gap-6">
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Type"
+                                    isRequired
                             />
                         }
-                        titleWidth={180}
+                            titleWidth={180}
                     >
-                        <Field>
-                            <Combobox
-                                options={typeOptions}
-                                value={typeField.value}
-                                onChange={value => {
+                            <Field>
+                                <Combobox
+                                    options={typeOptions}
+                                    value={typeField.value}
+                                    onChange={value => {
                                     typeField.onChange(value ?? undefined);
                                 }}
-                                placeholder="Type"
-                                searchable={false}
-                                closeOnSelect
-                                emptyText="No storage types available"
-                                className="w-[220px]"
-                                valueKey="id"
-                                aria-invalid={Boolean(errors.type)}
-                                loading={isFetchingStorageSettings}
-                                onRefresh={() => void refetchStorageSettings()}
-                                isRefreshing={isRefetchingStorageSettings}
+                                    placeholder="Type"
+                                    searchable={false}
+                                    closeOnSelect
+                                    emptyText="No storage types available"
+                                    className="w-[220px]"
+                                    valueKey="id"
+                                    aria-invalid={Boolean(errors.type)}
+                                    loading={isFetchingStorageSettings}
+                                    onRefresh={() => void refetchStorageSettings()}
+                                    isRefreshing={isRefetchingStorageSettings}
                             />
-                            <FieldError errors={[errors.type]} />
-                            <div className="text-xs">
-                                <p>
-                                    <Link
-                                        to={ROUTE.projects.single.configuration.general.$route(projectId)}
-                                        className="text-blue-500"
+                                <FieldError errors={[errors.type]} />
+                                <div className="text-xs">
+                                    <p>
+                                        <Link
+                                            to={ROUTE.projects.single.configuration.general.$route(projectId)}
+                                            className="text-blue-500"
                                     >
-                                        Configure storage settings in the project
-                                    </Link>
-                                </p>
-                            </div>
-                        </Field>
-                    </InfoBlock>
+                                            Configure storage settings in the project
+                                        </Link>
+                                    </p>
+                                </div>
+                            </Field>
+                        </InfoBlock>
 
-                    {storageType === EMountType.Bind && <BindFields storageSettings={storageSettings} />}
+                        {storageType === EMountType.Bind && <BindFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Volume && <VolumeFields storageSettings={storageSettings} />}
+                        {storageType === EMountType.Volume && <VolumeFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Cluster && <ClusterFields storageSettings={storageSettings} />}
+                        {storageType === EMountType.Cluster && <ClusterFields storageSettings={storageSettings} />}
 
-                    {storageType === EMountType.Tmpfs && <TmpfsFields storageSettings={storageSettings} />}
+                        {storageType === EMountType.Tmpfs && <TmpfsFields storageSettings={storageSettings} />}
 
-                    {storageType !== EMountType.Tmpfs && (
+                        {storageType !== EMountType.Tmpfs && (
                         <Field>
                             <InfoBlock
                                 title={<LabelWithInfo label="Read Only" />}
@@ -205,58 +218,60 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues }: Pr
                         </Field>
                     )}
 
-                    <Field>
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Target"
-                                    isRequired
+                        <Field>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Target"
+                                        isRequired
                                 />
                             }
-                            titleWidth={180}
+                                titleWidth={180}
                         >
-                            <Input
-                                {...targetField}
-                                id="target"
-                                placeholder="/path/in/container"
-                                aria-invalid={targetInvalid}
+                                <Input
+                                    {...targetField}
+                                    id="target"
+                                    placeholder="/path/in/container"
+                                    aria-invalid={targetInvalid}
                             />
-                            <FieldError errors={[errors.target]} />
-                        </InfoBlock>
-                    </Field>
+                                <FieldError errors={[errors.target]} />
+                            </InfoBlock>
+                        </Field>
 
-                    <Field>
-                        <InfoBlock
-                            title={<LabelWithInfo label="Consistency" />}
-                            titleWidth={180}
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Consistency" />}
+                                titleWidth={180}
                         >
-                            <Select
-                                {...consistencyField}
-                                value={consistencyField.value ?? EMountConsistency.Default}
-                                onValueChange={consistencyField.onChange}
+                                <Select
+                                    {...consistencyField}
+                                    value={consistencyField.value ?? EMountConsistency.Default}
+                                    onValueChange={consistencyField.onChange}
                             >
-                                <SelectTrigger className="w-[220px]">
-                                    <SelectValue placeholder="Consistency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={EMountConsistency.Default}>default</SelectItem>
-                                    <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
-                                    <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
-                                    <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </InfoBlock>
-                    </Field>
+                                    <SelectTrigger className="w-[220px]">
+                                        <SelectValue placeholder="Consistency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={EMountConsistency.Default}>default</SelectItem>
+                                        <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
+                                        <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
+                                        <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </InfoBlock>
+                        </Field>
 
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                disabled={readOnly}
                         >
-                            {defaultValues ? "Update" : "Add"}
-                        </Button>
-                    </div>
-                </FieldGroup>
+                                {defaultValues ? "Update" : "Add"}
+                            </Button>
+                        </div>
+                    </FieldGroup>
+                </fieldset>
             </form>
         </FormProvider>
     );

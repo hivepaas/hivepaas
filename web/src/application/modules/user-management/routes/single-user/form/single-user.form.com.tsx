@@ -32,7 +32,7 @@ const DEFAULTS: SingleUserFormSchemaInput = {
 type SchemaInput = SingleUserFormSchemaInput;
 type SchemaOutput = SingleUserFormSchemaOutput;
 
-export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             ...DEFAULTS,
@@ -44,6 +44,10 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
     });
 
     function onValid(values: SchemaOutput) {
+        if (readOnly) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -91,66 +95,71 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, children }: Props
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <Information />
-
-                    {/* Role */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock title="Role">
-                        <UserInput.Role<SingleUserFormSchemaInput> name="role" />
-                    </InfoBlock>
-
-                    {/* Joining date */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
-                        <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
-                    </InfoBlock>
-
-                    {/* Access Expiration */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock title="Access Expiration">
-                        <UserInput.AccessExpiration<SingleUserFormSchemaInput>
-                            className="md:min-w-[400px] w-fit"
-                            name="accessExpireAt"
-                        />
-                    </InfoBlock>
-
-                    {/* Security Option */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock title="Security Option">
-                        <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
-                    </InfoBlock>
-
-                    {/* Project Access */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Project Access"
-                                content="Project access description"
-                            />
-                        }
+                    <fieldset
+                        disabled={readOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
-                        <UserInput.ProjectAccess<SingleUserFormSchemaInput>
-                            name="projectAccesses"
-                            isAdmin={isAdmin}
-                        />
-                    </InfoBlock>
+                        <Information />
 
-                    {/* Module Access */}
-                    <div className="h-px bg-border" />
-                    <InfoBlock
-                        title={
-                            <LabelWithInfo
-                                label="Module Access"
-                                content="Module access description"
+                        {/* Role */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock title="Role">
+                            <UserInput.Role<SingleUserFormSchemaInput> name="role" />
+                        </InfoBlock>
+
+                        {/* Joining date */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
+                            <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
+                        </InfoBlock>
+
+                        {/* Access Expiration */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock title="Access Expiration">
+                            <UserInput.AccessExpiration<SingleUserFormSchemaInput>
+                                className="md:min-w-[400px] w-fit"
+                                name="accessExpireAt"
                             />
-                        }
-                    >
-                        <UserInput.ModuleAccess<SingleUserFormSchemaInput>
-                            name="moduleAccesses"
-                            isAdmin={isAdmin}
-                        />
-                    </InfoBlock>
+                        </InfoBlock>
+
+                        {/* Security Option */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock title="Security Option">
+                            <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
+                        </InfoBlock>
+
+                        {/* Project Access */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Project Access"
+                                    content="Project access description"
+                                />
+                            }
+                        >
+                            <UserInput.ProjectAccess<SingleUserFormSchemaInput>
+                                name="projectAccesses"
+                                isAdmin={isAdmin}
+                            />
+                        </InfoBlock>
+
+                        {/* Module Access */}
+                        <div className="h-px bg-border" />
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Module Access"
+                                    content="Module access description"
+                                />
+                            }
+                        >
+                            <UserInput.ModuleAccess<SingleUserFormSchemaInput>
+                                name="moduleAccesses"
+                                isAdmin={isAdmin}
+                            />
+                        </InfoBlock>
+                    </fieldset>
                     {children}
                 </form>
             </FormProvider>
@@ -162,4 +171,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<SingleUserFormRef>;
     defaultValues: Partial<SchemaInput> & { createdAt: Date };
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

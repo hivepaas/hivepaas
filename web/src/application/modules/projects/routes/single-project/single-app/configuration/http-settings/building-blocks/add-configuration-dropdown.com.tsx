@@ -42,10 +42,11 @@ function segmentAtPath(
 
 interface AddConfigurationDropdownProps {
     basePath: string;
+    readOnly?: boolean;
     onSectionAdded?: (key: ConfigSectionKey) => void;
 }
 
-export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfigurationDropdownProps) {
+export function AddConfigurationDropdown({ basePath, readOnly = false, onSectionAdded }: AddConfigurationDropdownProps) {
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -60,6 +61,10 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
     const availableOptions = useMemo(() => OPTIONS.filter(({ key }) => segment?.[key] == null), [segment]);
 
     function add(key: ConfigSectionKey) {
+        if (readOnly) {
+            return;
+        }
+
         const fieldPath = `${basePath}.${key}`;
         switch (key) {
             case "basicAuth":
@@ -94,6 +99,7 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
                     type="button"
                     variant="outline"
                     className="w-fit gap-2 rounded-lg"
+                    disabled={readOnly}
                 >
                     <Plus className="size-4" />
                     Add Configuration
@@ -104,6 +110,7 @@ export function AddConfigurationDropdown({ basePath, onSectionAdded }: AddConfig
                 {availableOptions.map(({ key, label }) => (
                     <DropdownMenuItem
                         key={key}
+                        disabled={readOnly}
                         onSelect={() => {
                             queueMicrotask(() => {
                                 add(key);

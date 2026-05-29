@@ -9,9 +9,10 @@ import { ProjectUserAccessesCommands } from "~/projects/data/commands";
 import { ProjectUserAccessesQueries } from "~/projects/data/queries";
 
 import { AppLoader, Combobox, type ComboboxOption, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { UsersPublicQueries } from "@application/shared/data-public/queries";
 import { EUserRole } from "@application/shared/enums";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { useProjectUserAccessesDialogState } from "../hooks";
 
@@ -70,6 +71,7 @@ export function ProjectUserAccessesDialog() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedUser, setSelectedUser] = useState<UserAccessOption | null>(null);
     const [projectAccesses, setProjectAccesses] = useState<ProjectUserAccessBase[]>([]);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const open = state.mode !== "closed";
     const projectId = state.mode === "open" ? state.projectId : "";
@@ -81,7 +83,7 @@ export function ProjectUserAccessesDialog() {
         },
     );
 
-    const canUpdateProjectAccess = accessQuery.data?.data.currentUserActions.canUpdateProjectUserAccesses === true;
+    const canUpdateProjectAccess = canWrite && accessQuery.data?.data.currentUserActions.canUpdateProjectUserAccesses === true;
     const canViewModuleAccess = accessQuery.data?.data.currentUserActions.canViewModuleUserAccesses === true;
 
     const { data: usersData, isFetching: isFetchingUsers } = UsersPublicQueries.useFindManyBase(
@@ -246,7 +248,7 @@ export function ProjectUserAccessesDialog() {
             return;
         }
 
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
+        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
             return;
         }
 
@@ -314,15 +316,22 @@ export function ProjectUserAccessesDialog() {
                                         loading={isFetchingUsers}
                                         disabled={!canUpdateProjectAccess}
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={!selectedUser || !canUpdateProjectAccess}
-                                        onClick={handleAddUser}
+                                    <PermissionTooltipAction
+                                        id={MODULE_IDS.Project}
+                                        action="write"
                                     >
-                                        <Plus className="size-4" />
-                                        Add
-                                    </Button>
+                                        {({ isDenied }) => (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={isDenied || !selectedUser || !canUpdateProjectAccess}
+                                                onClick={handleAddUser}
+                                            >
+                                                <Plus className="size-4" />
+                                                Add
+                                            </Button>
+                                        )}
+                                    </PermissionTooltipAction>
                                 </div>
 
                                 {projectAccesses.length > 0 && (
@@ -361,32 +370,48 @@ export function ProjectUserAccessesDialog() {
                                                         }}
                                                     />
                                                     <div className="flex items-center gap-1">
-                                                        <Button
-                                                            type="button"
-                                                            variant="link"
-                                                            className="size-7 p-0 text-foreground"
-                                                            aria-label="Toggle write and delete access"
-                                                            title="Toggle write and delete access"
-                                                            disabled={!canUpdateProjectAccess}
-                                                            onClick={() => {
-                                                                handleToggleAll(user.id);
-                                                            }}
+                                                        <PermissionTooltipAction
+                                                            id={MODULE_IDS.Project}
+                                                            action="write"
+                                                            triggerClassName="inline-flex"
                                                         >
-                                                            <CheckCheck className="size-4" />
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant="link"
-                                                            className="size-7 p-0 text-destructive"
-                                                            aria-label="Remove user access"
-                                                            title="Remove user access"
-                                                            disabled={!canUpdateProjectAccess}
-                                                            onClick={() => {
-                                                                handleRemoveUser(user.id);
-                                                            }}
+                                                            {({ isDenied }) => (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="link"
+                                                                    className="size-7 p-0 text-foreground"
+                                                                    aria-label="Toggle write and delete access"
+                                                                    title="Toggle write and delete access"
+                                                                    disabled={isDenied || !canUpdateProjectAccess}
+                                                                    onClick={() => {
+                                                                        handleToggleAll(user.id);
+                                                                    }}
+                                                                >
+                                                                    <CheckCheck className="size-4" />
+                                                                </Button>
+                                                            )}
+                                                        </PermissionTooltipAction>
+                                                        <PermissionTooltipAction
+                                                            id={MODULE_IDS.Project}
+                                                            action="write"
+                                                            triggerClassName="inline-flex"
                                                         >
-                                                            <Trash2 className="size-4" />
-                                                        </Button>
+                                                            {({ isDenied }) => (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="link"
+                                                                    className="size-7 p-0 text-destructive"
+                                                                    aria-label="Remove user access"
+                                                                    title="Remove user access"
+                                                                    disabled={isDenied || !canUpdateProjectAccess}
+                                                                    onClick={() => {
+                                                                        handleRemoveUser(user.id);
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="size-4" />
+                                                                </Button>
+                                                            )}
+                                                        </PermissionTooltipAction>
                                                     </div>
                                                 </div>
                                             </div>
@@ -455,15 +480,22 @@ export function ProjectUserAccessesDialog() {
                         )}
 
                         <div className="flex justify-end border-t pt-4">
-                            <Button
-                                type="button"
-                                className="min-w-[100px]"
-                                disabled={!canUpdateProjectAccess}
-                                isLoading={isUpdating}
-                                onClick={handleSubmit}
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.Project}
+                                action="write"
                             >
-                                Save
-                            </Button>
+                                {({ isDenied }) => (
+                                    <Button
+                                        type="button"
+                                        className="min-w-[100px]"
+                                        disabled={isDenied || !canUpdateProjectAccess}
+                                        isLoading={isUpdating}
+                                        onClick={handleSubmit}
+                                    >
+                                        Save
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
                         </div>
                     </div>
                 )}

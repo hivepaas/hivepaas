@@ -9,12 +9,16 @@ import { NodesCommands } from "~/cluster/data/commands/nodes";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput } from "../../schemas";
 
-function View({ onComplete }: Props) {
+function View({ readOnly = false, onComplete }: Props) {
     const { control } = useFormContext<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>();
     const joinAsManager = useWatch({ control, name: "joinAsManager" });
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Cluster });
+    const isReadOnly = readOnly || !canWrite;
 
     const {
         mutate: getJoinCommand,
@@ -30,6 +34,10 @@ function View({ onComplete }: Props) {
     const command = commandData?.data.command ?? null;
 
     function handleGetCommand() {
+        if (isReadOnly) {
+            return;
+        }
+
         getJoinCommand({ joinAsManager });
     }
 
@@ -76,20 +84,28 @@ function View({ onComplete }: Props) {
                 </div>
             </div>
             <div className="flex justify-end mt-2">
-                <Button
-                    type="button"
-                    onClick={handleGetCommand}
-                    isLoading={isGettingCommand}
-                    disabled={isGettingCommand}
+                <PermissionTooltipAction
+                    id={MODULE_IDS.Cluster}
+                    action="write"
                 >
-                    Get Join Command
-                </Button>
+                    {({ isDenied }) => (
+                        <Button
+                            type="button"
+                            onClick={handleGetCommand}
+                            isLoading={isGettingCommand}
+                            disabled={isDenied || readOnly || isGettingCommand}
+                        >
+                            Get Join Command
+                        </Button>
+                    )}
+                </PermissionTooltipAction>
             </div>
         </Field>
     );
 }
 
 interface Props {
+    readOnly?: boolean;
     onComplete: () => void;
 }
 

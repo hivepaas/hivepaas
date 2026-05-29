@@ -1,4 +1,5 @@
 export * from "./project-status-badge";
+export * from "./project-permission-submit-button";
 export * from "./project-app-status-badge";
 export * from "./project-secret-status-badge";
 export * from "./project-sidebar";

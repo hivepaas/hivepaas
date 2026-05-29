@@ -8,6 +8,7 @@ import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateBasicAuthStatusForm } from "../form";
@@ -22,6 +23,9 @@ export function UpdateBasicAuthStatusDialog() {
         clear: clearDialog,
     } = useUpdateBasicAuthStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = BasicAuthCommands.useUpdateStatus({
         onSuccess: () => {
@@ -101,6 +105,7 @@ export function UpdateBasicAuthStatusDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -147,6 +152,7 @@ export function UpdateBasicAuthStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

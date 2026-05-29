@@ -8,6 +8,7 @@ import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditBasicAuthForm } from "../form";
 import { useCreateOrEditBasicAuthDialogState } from "../hooks";
@@ -21,6 +22,9 @@ export function CreateOrEditBasicAuthDialog() {
         clear: clearDialog,
     } = useCreateOrEditBasicAuthDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: createSettingBasicAuth, isPending: isCreatingSetting } = BasicAuthCommands.useCreateOne({
         onSuccess: () => {
@@ -132,6 +136,7 @@ export function CreateOrEditBasicAuthDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -179,6 +184,7 @@ export function CreateOrEditBasicAuthDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

@@ -5,7 +5,7 @@ import { type AppConfigNetworksFormSchemaInput } from "../schemas";
 
 type DnsListName = "dnsConfig.nameservers" | "dnsConfig.search" | "dnsConfig.options";
 
-export function DNSFields() {
+export function DNSFields({ readOnly = false }: Props) {
     return (
         <div className="flex flex-col gap-6">
             {(
@@ -43,9 +43,14 @@ export function DNSFields() {
                         name={listName}
                         placeholder={placeholder}
                         className="max-w-[590px]"
+                        disabled={readOnly}
                     />
                 </InfoBlock>
             ))}
         </div>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

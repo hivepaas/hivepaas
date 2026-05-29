@@ -7,7 +7,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { RefreshCcw } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -31,8 +31,11 @@ export function CreateOrEditGithubAppForm({
     showAvailableInProjects,
     showTestConnection,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -55,8 +58,8 @@ export function CreateOrEditGithubAppForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const {
         field: name,
@@ -97,7 +100,7 @@ export function CreateOrEditGithubAppForm({
     ].some(value => Boolean(value));
 
     function onValid(values: CreateOrEditGithubAppFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -105,7 +108,7 @@ export function CreateOrEditGithubAppForm({
     }
 
     function onTestValid(values: CreateOrEditGithubAppFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -125,7 +128,8 @@ export function CreateOrEditGithubAppForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-            {onReprovision && !readOnlyInherited && (
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+            {onReprovision && !isReadOnly && (
                 <div className={cn(dashedBorderBox, "flex flex-col gap-4 text-center text-sm leading-6")}>
                     <div>
                         <span className="text-orange-500">Important:</span> It is recommended that you do not manually
@@ -145,7 +149,7 @@ export function CreateOrEditGithubAppForm({
                 </div>
             )}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <InfoBlock
@@ -359,7 +363,7 @@ export function CreateOrEditGithubAppForm({
                     />
                 </InfoBlock>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
@@ -388,7 +392,7 @@ export function CreateOrEditGithubAppForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -422,5 +426,6 @@ interface Props {
     showAvailableInProjects: boolean;
     showTestConnection: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

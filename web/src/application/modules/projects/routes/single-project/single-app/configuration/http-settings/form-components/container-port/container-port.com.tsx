@@ -21,7 +21,7 @@ interface CheckPortResult {
     open: boolean;
 }
 
-function View({ domainIndex }: ContainerPortProps) {
+function View({ domainIndex, readOnly = false }: ContainerPortProps) {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -48,6 +48,10 @@ function View({ domainIndex }: ContainerPortProps) {
     });
 
     function handleCheckPort() {
+        if (readOnly) {
+            return;
+        }
+
         const port = containerPort.value;
         if (!port || !projectId || !appId) return;
 
@@ -75,9 +79,13 @@ function View({ domainIndex }: ContainerPortProps) {
                                 name={containerPort.name}
                                 ref={containerPort.ref}
                                 onBlur={containerPort.onBlur}
-                                disabled={containerPort.disabled}
+                                disabled={readOnly || containerPort.disabled}
                                 value={containerPort.value}
                                 onValueChange={v => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
                                     containerPort.onChange(v ?? 0);
                                 }}
                                 useGrouping={false}
@@ -89,7 +97,7 @@ function View({ domainIndex }: ContainerPortProps) {
                                 type="button"
                                 className="text-blue-500 cursor-pointer hover:underline select-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={handleCheckPort}
-                                disabled={isPending}
+                                disabled={readOnly || isPending}
                                 aria-label="Check port availability"
                             >
                                 {isPending ? "Checking..." : "Check port"}
@@ -141,6 +149,7 @@ function View({ domainIndex }: ContainerPortProps) {
 
 interface ContainerPortProps {
     domainIndex: number;
+    readOnly?: boolean;
 }
 
 export const ContainerPort = React.memo(View);

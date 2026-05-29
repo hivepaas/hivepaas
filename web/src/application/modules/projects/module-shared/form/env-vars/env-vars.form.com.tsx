@@ -6,7 +6,7 @@ import { ConfigVariables } from "@application/shared/form";
 
 import { type EnvVarsFormBaseSchemaInput } from "../../schemas";
 
-function View({ search, viewMode, isRevealed, title, name }: Props) {
+function View({ search, viewMode, isRevealed, title, name, readOnly = false }: Props) {
     return (
         <Accordion
             type="single"
@@ -27,6 +27,7 @@ function View({ search, viewMode, isRevealed, title, name }: Props) {
                         search={search}
                         viewMode={viewMode}
                         isRevealed={isRevealed}
+                        readOnly={readOnly}
                     />
                 </AccordionContent>
             </AccordionItem>
@@ -40,6 +41,7 @@ type Props = {
     isRevealed: boolean;
     title: React.ReactNode;
     name: keyof EnvVarsFormBaseSchemaInput;
+    readOnly?: boolean;
 };
 
 export const EnvVarsBaseForm = React.memo(View);

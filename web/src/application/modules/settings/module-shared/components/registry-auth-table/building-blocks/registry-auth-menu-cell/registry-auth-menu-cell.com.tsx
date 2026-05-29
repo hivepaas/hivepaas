@@ -8,10 +8,9 @@ import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { useUpdateRegistryAuthStatusDialog } from "~/settings/dialogs/update-registry-auth-status";
 import type { SettingRegistryAuth } from "~/settings/domain";
+import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
-
-import { PopConfirm } from "@application/shared/components";
+import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { RegistryAuthTableScope } from "../../registry-auth-table.types";
 
@@ -19,8 +18,6 @@ function View({ scope, registryAuth }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateRegistryAuthStatusDialog();
-    const inheritedSettingAlert = useInheritedSettingAlert();
-
     const { mutate: deleteSettingRegistryAuth, isPending: isDeletingSetting } = RegistryAuthCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Registry auth deleted successfully");
@@ -40,12 +37,6 @@ function View({ scope, registryAuth }: Props) {
     const isInheritedProject = isInheritedProjectSetting(scope, registryAuth.inherited);
 
     function handleDelete() {
-        if (isInheritedProject) {
-            inheritedSettingAlert.open({ entityTitle: SETTINGS_ENTITY_TITLES.registryAuth });
-            setOpen(false);
-            return;
-        }
-
         if (scope.type === "project") {
             deleteProjectRegistryAuth({
                 projectID: scope.projectId,
@@ -90,42 +81,27 @@ function View({ scope, registryAuth }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
                         onClick={handleChangeStatus}
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
-                    </Button>
-                    {isInheritedProject ? (
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
-                            onClick={handleDelete}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove
-                        </Button>
-                    ) : (
-                        <PopConfirm
-                            title="Delete registry auth"
-                            variant="destructive"
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            description="Confirm deletion of this item?"
-                            onConfirm={handleDelete}
-                        >
-                            <Button
-                                className="justify-start py-1.5"
-                                variant="ghost"
-                                disabled={isDeleting}
-                            >
-                                <Trash2Icon className="mr-2 size-4" />
-                                Remove
-                            </Button>
-                        </PopConfirm>
-                    )}
+                    </SettingsScopeMenuButton>
+                    <SettingsScopePopConfirmButton
+                        scope={scope}
+                        action="delete"
+                        title="Delete registry auth"
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        description="Confirm deletion of this item?"
+                        onConfirm={handleDelete}
+                        isLoading={isDeleting}
+                    >
+                        <Trash2Icon className="mr-2 size-4" />
+                        Remove
+                    </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

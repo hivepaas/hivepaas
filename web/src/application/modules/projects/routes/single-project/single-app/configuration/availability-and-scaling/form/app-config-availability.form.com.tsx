@@ -20,7 +20,7 @@ import { type AppConfigAvailabilityFormRef } from "../types";
 type SchemaInput = AppConfigAvailabilitySchemaInput;
 type SchemaOutput = AppConfigAvailabilitySchemaOutput;
 
-export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             mode: defaultValues?.modeSpec.mode ?? EServiceMode.Replicated,
@@ -97,16 +97,25 @@ export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, childr
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-3"
                 >
-                    <ServiceModeFields />
-                    <div className="h-px bg-zinc-200" />
-                    <PlacementConstraintsFields />
-                    <div className="h-px bg-zinc-200" />
-                    <PlacementPreferencesFields />
-                    {children}
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ServiceModeFields />
+                        <div className="h-px bg-zinc-200" />
+                        <PlacementConstraintsFields />
+                        <div className="h-px bg-zinc-200" />
+                        <PlacementPreferencesFields />
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -117,4 +126,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigAvailabilityFormRef>;
     defaultValues?: AppServiceSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

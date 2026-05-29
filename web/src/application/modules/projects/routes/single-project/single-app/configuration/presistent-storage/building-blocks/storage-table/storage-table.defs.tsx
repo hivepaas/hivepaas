@@ -10,6 +10,8 @@ import type { AppStorageMount } from "~/projects/domain";
 import { EMountType } from "~/projects/module-shared/enums";
 
 import { PopConfirm } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
 
@@ -80,6 +82,7 @@ function getOptionsDisplay(mount: AppStorageMount): string {
 export function createStorageTableColumns(
     onEdit: (mount: StorageMountWithId) => void,
     onDelete: (mount: StorageMountWithId) => Promise<void> | void,
+    canWrite: boolean,
 ): ColumnDef<StorageMountWithId>[] {
     return [
         {
@@ -168,24 +171,43 @@ export function createStorageTableColumns(
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <div className="flex flex-col gap-0">
-                            <PopConfirm
-                                title="Remove Storage Mount"
-                                variant="destructive"
-                                confirmText="Remove"
-                                cancelText="Cancel"
-                                description="Are you sure you want to remove this storage mount?"
-                                onConfirm={() => {
-                                    void onDelete(row.original);
-                                }}
-                            >
-                                <Button
-                                    className="justify-start py-1.5"
-                                    variant="ghost"
+                            {canWrite ? (
+                                <PopConfirm
+                                    title="Remove Storage Mount"
+                                    variant="destructive"
+                                    confirmText="Remove"
+                                    cancelText="Cancel"
+                                    description="Are you sure you want to remove this storage mount?"
+                                    onConfirm={() => {
+                                        void onDelete(row.original);
+                                    }}
                                 >
-                                    <Trash2Icon className="mr-2 size-4" />
-                                    Remove
-                                </Button>
-                            </PopConfirm>
+                                    <Button
+                                        className="justify-start py-1.5"
+                                        variant="ghost"
+                                    >
+                                        <Trash2Icon className="mr-2 size-4" />
+                                        Remove
+                                    </Button>
+                                </PopConfirm>
+                            ) : (
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                    triggerClassName="w-full"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            className="justify-start py-1.5 w-full"
+                                            variant="ghost"
+                                            disabled={isDenied}
+                                        >
+                                            <Trash2Icon className="mr-2 size-4" />
+                                            Remove
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                            )}
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>

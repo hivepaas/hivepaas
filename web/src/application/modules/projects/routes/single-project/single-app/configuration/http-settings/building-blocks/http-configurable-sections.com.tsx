@@ -13,9 +13,10 @@ import { RateLimitConfigSection } from "./rate-limit-config-section.com";
 
 interface HttpConfigurableSectionsProps {
     basePath: string;
+    readOnly?: boolean;
 }
 
-export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsProps) {
+export function HttpConfigurableSections({ basePath, readOnly = false }: HttpConfigurableSectionsProps) {
     const { control, setValue, unregister } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -26,6 +27,10 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
     const [expandSignal, setExpandSignal] = useState<{ key: ConfigSectionKey; seq: number } | null>(null);
 
     const removeSection = (fieldPath: string) => {
+        if (readOnly) {
+            return;
+        }
+
         setFormValue(fieldPath, undefined, { shouldDirty: true, shouldValidate: true });
         unregister(fieldPath as never);
     };
@@ -35,6 +40,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["basicAuth"] != null && (
                 <BasicAuthSection
                     prefix={`${basePath}.basicAuth`}
+                    readOnly={readOnly}
                     onRemove={() => {
                         removeSection(`${basePath}.basicAuth`);
                     }}
@@ -44,6 +50,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["clientConfig"] != null && (
                 <ClientConfigSection
                     prefix={`${basePath}.clientConfig`}
+                    readOnly={readOnly}
                     autoExpandToken={expandSignal?.key === "clientConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.clientConfig`);
@@ -54,6 +61,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["compressionConfig"] != null && (
                 <CompressionConfigSection
                     prefix={`${basePath}.compressionConfig`}
+                    readOnly={readOnly}
                     autoExpandToken={expandSignal?.key === "compressionConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.compressionConfig`);
@@ -64,6 +72,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["headerConfig"] != null && (
                 <HeaderConfigSection
                     prefix={`${basePath}.headerConfig`}
+                    readOnly={readOnly}
                     autoExpandToken={expandSignal?.key === "headerConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.headerConfig`);
@@ -74,6 +83,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
             {segment?.["rateLimitConfig"] != null && (
                 <RateLimitConfigSection
                     prefix={`${basePath}.rateLimitConfig`}
+                    readOnly={readOnly}
                     autoExpandToken={expandSignal?.key === "rateLimitConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.rateLimitConfig`);
@@ -83,6 +93,7 @@ export function HttpConfigurableSections({ basePath }: HttpConfigurableSectionsP
 
             <AddConfigurationDropdown
                 basePath={basePath}
+                readOnly={readOnly}
                 onSectionAdded={key => {
                     setExpandSignal(prev => ({ key, seq: (prev?.seq ?? 0) + 1 }));
                 }}

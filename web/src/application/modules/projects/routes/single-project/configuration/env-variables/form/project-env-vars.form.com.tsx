@@ -25,7 +25,7 @@ type SchemaInput = ProjectEnvVarsFormSchemaInput;
 type SchemaOutput = ProjectEnvVarsFormSchemaOutput;
 
 export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>(function ProjectEnvVarsForm(
-    { defaultValues, onSubmit, children }: Props,
+    { defaultValues, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<ProjectEnvVarsFormRef>,
 ) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -44,6 +44,10 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
     const [viewMode, setViewMode] = useState<"merge" | "individual">("individual");
 
     function onValid(values: SchemaOutput) {
+        if (readOnly) {
+            return;
+        }
+
         if (!isDirty) {
             toast.info("No changes to save");
             return;
@@ -90,38 +94,48 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
 
                         void methods.handleSubmit(onValid, onInvalid)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <EnvVarsFormHeader
-                        search={{ value: search, onChange: setSearch }}
-                        isRevealed={isRevealed}
-                        onRevealToggle={() => {
-                            setIsRevealed(!isRevealed);
-                        }}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                    />
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <EnvVarsFormHeader
+                            search={{ value: search, onChange: setSearch }}
+                            isRevealed={isRevealed}
+                            onRevealToggle={() => {
+                                setIsRevealed(!isRevealed);
+                            }}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
 
-                    <EnvVarsBaseForm
-                        search={search}
-                        viewMode={viewMode}
-                        isRevealed={isRevealed}
-                        name="buildtime"
-                        title="Build Time Env Vars"
-                    />
-                    <div className="h-px bg-border" />
-                    <EnvVarsBaseForm
-                        search={search}
-                        viewMode={viewMode}
-                        isRevealed={isRevealed}
-                        name="runtime"
-                        title="Runtime Env Vars"
-                    />
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
+                            name="buildtime"
+                            title="Build Time Env Vars"
+                            readOnly={readOnly}
+                        />
+                        <div className="h-px bg-border" />
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
+                            name="runtime"
+                            title="Runtime Env Vars"
+                            readOnly={readOnly}
+                        />
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -132,4 +146,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<ProjectEnvVarsFormRef>;
     defaultValues: Partial<ProjectEnvVarsFormSchemaInput>;
     onSubmit: (values: ProjectEnvVarsFormSchemaOutput) => void;
+    readOnly?: boolean;
 }>;

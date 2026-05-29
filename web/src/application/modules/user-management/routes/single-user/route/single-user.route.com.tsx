@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { UsersCommands } from "@application/modules/user-management/data/commands";
 import { UsersQueries } from "@application/modules/user-management/data/queries";
@@ -24,6 +26,7 @@ export function SingleUserRoute() {
     const { id: userId } = useParams<{ id: string }>();
 
     const formRef = useRef<SingleUserFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.User });
 
     invariant(userId, "userId must be defined");
 
@@ -41,6 +44,10 @@ export function SingleUserRoute() {
     });
 
     function handleSubmit(values: SingleUserFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(userId, "userId must be defined");
 
         update({
@@ -77,16 +84,24 @@ export function SingleUserRoute() {
                 ref={formRef}
                 defaultValues={user}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.User}
+                        action="write"
                     >
-                        Save
-                    </Button>
+                        {({ isDenied }) => (
+                            <Button
+                                type="submit"
+                                className="min-w-[100px]"
+                                disabled={isPending || isDenied}
+                                isLoading={isPending}
+                            >
+                                Save
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 </div>
             </SingleUserForm>
         </div>

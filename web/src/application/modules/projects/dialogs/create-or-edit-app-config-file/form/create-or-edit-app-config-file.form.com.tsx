@@ -16,7 +16,14 @@ import {
     CreateOrEditAppConfigFileFormSchema,
 } from "../schemas";
 
-export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChanges, isEditMode, initialValues }: Props) {
+export function CreateOrEditAppConfigFileForm({
+    isPending,
+    onSubmit,
+    onHasChanges,
+    isEditMode,
+    initialValues,
+    readOnly = false,
+}: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -45,8 +52,8 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     const {
         field: name,
@@ -106,6 +113,10 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
     });
 
     function onValid(values: CreateOrEditAppConfigFileFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         void onSubmit(values);
     }
 
@@ -117,81 +128,89 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
         <form
             onSubmit={event => {
                 event.preventDefault();
+                if (readOnly) {
+                    return;
+                }
+
                 void handleSubmit(onValid, onInvalid)(event);
             }}
             className="flex flex-col gap-6"
         >
-            <InfoBlock
-                titleWidth={240}
-                title={
-                    <LabelWithInfo
-                        label="Name"
-                        isRequired
-                    />
-                }
+            <fieldset
+                disabled={readOnly}
+                className="contents"
             >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            id="app-config-file-name"
-                            {...name}
-                            placeholder="CONFIG_NAME"
-                            aria-invalid={isNameInvalid}
-                            disabled={isEditMode}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={240}
-                title={
-                    <LabelWithInfo
-                        label="Value Type"
-                        isRequired
-                    />
-                }
-            >
-                <Tabs
-                    value={valueType}
-                    onValueChange={nextValue => {
-                        valueTypeField.onChange(nextValue);
-                    }}
-                >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                        <TabsTrigger value="text">Text</TabsTrigger>
-                        <TabsTrigger value="binary">Binary</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </InfoBlock>
-
-            {valueType === "text" ? (
                 <InfoBlock
                     titleWidth={240}
                     title={
                         <LabelWithInfo
-                            label="Value"
-                            isRequired={!isEditMode}
+                            label="Name"
+                            isRequired
                         />
                     }
                 >
                     <FieldGroup>
                         <Field>
-                            <Textarea
-                                id="app-config-file-text-value"
-                                {...textValue}
-                                placeholder={
-                                    isEditMode ? "Leave empty to keep current content" : "Enter config content"
-                                }
-                                rows={8}
-                                aria-invalid={isTextValueInvalid}
+                            <Input
+                                id="app-config-file-name"
+                                {...name}
+                                placeholder="CONFIG_NAME"
+                                aria-invalid={isNameInvalid}
+                                disabled={isEditMode}
                             />
-                            <p className="text-sm text-muted-foreground">Max size: 1mb</p>
-                            <FieldError errors={[errors.textValue]} />
+                            <FieldError errors={[errors.name]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={240}
+                    title={
+                        <LabelWithInfo
+                            label="Value Type"
+                            isRequired
+                    />
+                }
+            >
+                    <Tabs
+                        value={valueType}
+                        onValueChange={nextValue => {
+                        valueTypeField.onChange(nextValue);
+                    }}
+                >
+                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsTrigger value="text">Text</TabsTrigger>
+                            <TabsTrigger value="binary">Binary</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                {valueType === "text" ? (
+                    <InfoBlock
+                        titleWidth={240}
+                        title={
+                            <LabelWithInfo
+                                label="Value"
+                                isRequired={!isEditMode}
+                        />
+                    }
+                >
+                        <FieldGroup>
+                            <Field>
+                                <Textarea
+                                    id="app-config-file-text-value"
+                                    {...textValue}
+                                    placeholder={
+                                    isEditMode ? "Leave empty to keep current content" : "Enter config content"
+                                }
+                                    rows={8}
+                                    aria-invalid={isTextValueInvalid}
+                            />
+                                <p className="text-sm text-muted-foreground">Max size: 1mb</p>
+                                <FieldError errors={[errors.textValue]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
             ) : (
                 <InfoBlock
                     titleWidth={240}
@@ -235,19 +254,19 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
                 </InfoBlock>
             )}
 
-            <InfoBlock
-                titleWidth={240}
-                title={<LabelWithInfo label="Mount into Filesystem" />}
+                <InfoBlock
+                    titleWidth={240}
+                    title={<LabelWithInfo label="Mount into Filesystem" />}
             >
-                <Checkbox
-                    checked={mountIntoFilesystem}
-                    onCheckedChange={checked => {
+                    <Checkbox
+                        checked={mountIntoFilesystem}
+                        onCheckedChange={checked => {
                         mountIntoFilesystemField.onChange(checked === true);
                     }}
                 />
-            </InfoBlock>
+                </InfoBlock>
 
-            {mountIntoFilesystem && (
+                {mountIntoFilesystem && (
                 <>
                     <InfoBlock
                         titleWidth={240}
@@ -320,16 +339,18 @@ export function CreateOrEditAppConfigFileForm({ isPending, onSubmit, onHasChange
                 </>
             )}
 
-            <Field>
-                <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                <Field>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            disabled={readOnly}
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </Field>
+            </fieldset>
         </form>
     );
 }
@@ -340,4 +361,5 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditAppConfigFileFormInput>;
+    readOnly?: boolean;
 }

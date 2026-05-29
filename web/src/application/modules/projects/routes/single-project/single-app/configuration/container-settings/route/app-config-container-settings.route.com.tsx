@@ -1,6 +1,5 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -12,9 +11,12 @@ import {
     type Privileges,
     type RestartPolicy,
 } from "~/projects/domain";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -136,6 +138,7 @@ function mapFormValuesToPayload(
 export function AppConfigContainerSettingsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigContainerSettingsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -161,6 +164,10 @@ export function AppConfigContainerSettingsRoute() {
     });
 
     function handleSubmit(values: AppConfigContainerSettingsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
         update({
@@ -192,16 +199,10 @@ export function AppConfigContainerSettingsRoute() {
                 ref={formRef}
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
+                    <ProjectPermissionSubmitButton isPending={isPending} />
                 </div>
             </AppConfigContainerSettingsForm>
         </div>

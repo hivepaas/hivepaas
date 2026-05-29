@@ -4,7 +4,7 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ECloudStorageKind } from "@application/shared/enums";
@@ -26,8 +26,11 @@ export function CreateOrEditCloudStorageForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -49,8 +52,8 @@ export function CreateOrEditCloudStorageForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const {
         field: name,
@@ -84,7 +87,7 @@ export function CreateOrEditCloudStorageForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditCloudStorageFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -108,8 +111,9 @@ export function CreateOrEditCloudStorageForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <InfoBlock
@@ -283,7 +287,7 @@ export function CreateOrEditCloudStorageForm({
                     />
                 </InfoBlock>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
@@ -312,7 +316,7 @@ export function CreateOrEditCloudStorageForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -338,5 +342,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditCloudStorageFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

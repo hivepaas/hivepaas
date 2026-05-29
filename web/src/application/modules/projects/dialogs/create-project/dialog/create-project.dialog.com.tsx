@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui
 import { toast } from "sonner";
 import { ProjectsCommands } from "~/projects/data/commands";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
 import { CreateProjectForm } from "../form";
 import { useCreateProjectDialogState } from "../hooks";
 import { type CreateProjectFormOutput } from "../schemas";
@@ -11,6 +14,7 @@ import { type CreateProjectFormOutput } from "../schemas";
 export function CreateProjectDialog() {
     const { state, props, ...actions } = useCreateProjectDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const open = state.mode !== "closed";
 
@@ -29,6 +33,10 @@ export function CreateProjectDialog() {
     }, [state.mode]);
 
     function onSubmit(values: CreateProjectFormOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         createProject({
             name: values.name,
             note: values.note,
@@ -38,7 +46,7 @@ export function CreateProjectDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -60,6 +68,7 @@ export function CreateProjectDialog() {
                 </DialogHeader>
                 <CreateProjectForm
                     isPending={isPending}
+                    readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />

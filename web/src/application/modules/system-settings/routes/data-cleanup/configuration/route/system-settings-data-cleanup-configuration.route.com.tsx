@@ -6,6 +6,8 @@ import type { SystemCleanup_UpdateOne_Req } from "~/system-settings/api/services
 import { SystemCleanupCommands, SystemCleanupQueries } from "~/system-settings/data";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -57,6 +59,7 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
 
 export function SystemSettingsDataCleanupConfigurationRoute() {
     const formRef = useRef<SystemCleanupConfigurationFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
 
     const { data, isLoading } = SystemCleanupQueries.useFindOne();
 
@@ -76,6 +79,10 @@ export function SystemSettingsDataCleanupConfigurationRoute() {
     });
 
     function handleSubmit(values: SystemCleanupConfigurationFormOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         update({
             payload: mapFormValuesToPayload(values, data?.data.updateVer ?? 0),
         });
@@ -90,16 +97,24 @@ export function SystemSettingsDataCleanupConfigurationRoute() {
             ref={formRef}
             defaultValues={data?.data}
             onSubmit={handleSubmit}
+            readOnly={!canWrite}
         >
             <div className="flex justify-end pt-4">
-                <Button
-                    type="submit"
-                    className="min-w-[100px]"
-                    disabled={isPending}
-                    isLoading={isPending}
+                <PermissionTooltipAction
+                    id={MODULE_IDS.System}
+                    action="write"
                 >
-                    Save
-                </Button>
+                    {({ isDenied }) => (
+                        <Button
+                            type="submit"
+                            className="min-w-[100px]"
+                            disabled={isPending || isDenied}
+                            isLoading={isPending}
+                        >
+                            Save
+                        </Button>
+                    )}
+                </PermissionTooltipAction>
             </div>
         </SystemCleanupConfigurationForm>
     );

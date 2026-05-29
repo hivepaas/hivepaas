@@ -16,12 +16,13 @@ type Props = {
     inputRow: ReactNode;
     onAdd: () => void;
     addDisabled?: boolean;
+    disabled?: boolean;
     items: FieldListItem[];
     className?: string;
     inputsClassName?: string;
 };
 
-export function FieldListLayout({ inputRow, onAdd, addDisabled, items, className, inputsClassName }: Props) {
+export function FieldListLayout({ inputRow, onAdd, addDisabled, disabled = false, items, className, inputsClassName }: Props) {
     return (
         <div className={cn("flex flex-col gap-3", className)}>
             <div className="flex gap-2 items-center">
@@ -30,7 +31,7 @@ export function FieldListLayout({ inputRow, onAdd, addDisabled, items, className
                     type="button"
                     variant="outline"
                     onClick={onAdd}
-                    disabled={addDisabled}
+                    disabled={disabled || addDisabled}
                 >
                     <Plus className="size-4" /> Add
                 </Button>
@@ -49,13 +50,20 @@ export function FieldListLayout({ inputRow, onAdd, addDisabled, items, className
                                 confirmText="Remove"
                                 cancelText="Cancel"
                                 description="Are you sure you want to remove this item?"
-                                onConfirm={item.onRemove}
+                                onConfirm={() => {
+                                    if (disabled) {
+                                        return;
+                                    }
+
+                                    item.onRemove();
+                                }}
                             >
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                    disabled={disabled}
                                 >
                                     <Trash2 className="size-4" />
                                 </Button>

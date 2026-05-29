@@ -6,7 +6,9 @@ import { OAuthCommands } from "~/settings/data/commands";
 import { OAuthQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
 import { EOAuthKind } from "@application/shared/enums";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { CreateOrEditOAuthForm } from "../form";
 import { useCreateOrEditOAuthDialogState } from "../hooks";
@@ -15,6 +17,7 @@ import type { CreateOrEditOAuthFormOutput } from "../schemas";
 export function CreateOrEditOAuthDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useCreateOrEditOAuthDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
 
     const { mutate: createOAuth, isPending: isCreating } = OAuthCommands.useCreateOne({
         onSuccess: () => {
@@ -62,7 +65,7 @@ export function CreateOrEditOAuthDialog() {
     }
 
     function onSubmit(values: CreateOrEditOAuthFormOutput) {
-        if (state.mode === "closed") return;
+        if (state.mode === "closed" || !canWrite) return;
         const payload = createPayload(values);
 
         if (state.mode === "edit" && oauth) {
@@ -75,7 +78,7 @@ export function CreateOrEditOAuthDialog() {
 
     function handleClose() {
         if (isPending) return;
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
+        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
         closeDialog();
         dialogOptions?.onClose?.();
     }
@@ -116,6 +119,8 @@ export function CreateOrEditOAuthDialog() {
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         disableProvider={state.mode === "edit"}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

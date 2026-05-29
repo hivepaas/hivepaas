@@ -78,7 +78,7 @@ function getSectionValueFromPath(path: string): SectionValue | undefined {
     return SECTION_BY_FIELD[field as keyof SchemaInput];
 }
 
-export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapAppContainerSettingsToFormInput(defaultValues)
@@ -145,32 +145,41 @@ export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, c
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <Accordion
-                        type="multiple"
-                        value={openSections}
-                        onValueChange={value => {
-                            setOpenSections(value as SectionValue[]);
-                        }}
-                        className="w-full flex flex-col gap-4"
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
                     >
-                        {CONTAINER_SETTINGS_SECTIONS.map(section => (
-                            <AccordionItem
-                                key={section.value}
-                                value={section.value}
-                                className="border-none"
-                            >
-                                <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
-                                    {section.title}
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-4 pb-0 pl-4">{section.content}</AccordionContent>
-                            </AccordionItem>
-                        ))}
-                    </Accordion>
-                    {children}
+                        <Accordion
+                            type="multiple"
+                            value={openSections}
+                            onValueChange={value => {
+                                setOpenSections(value as SectionValue[]);
+                            }}
+                            className="w-full flex flex-col gap-4"
+                        >
+                            {CONTAINER_SETTINGS_SECTIONS.map(section => (
+                                <AccordionItem
+                                    key={section.value}
+                                    value={section.value}
+                                    className="border-none"
+                                >
+                                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
+                                        {section.title}
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 pb-0 pl-4">{section.content}</AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -181,4 +190,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigContainerSettingsFormRef>;
     defaultValues?: AppContainerSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

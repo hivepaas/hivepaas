@@ -25,6 +25,23 @@ const SystemCleanupBackupCleanupSchema = z.object({
     localBackupRetention: z.string(),
 });
 
+const SystemCleanupScheduleSchema = z
+    .object({
+        cronExpr: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
+        interval: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
+        initialTime: z.coerce
+            .date()
+            .nullish()
+            .transform(value => value ?? null),
+    })
+    .default({ cronExpr: "", interval: "", initialTime: null });
+
 const SystemCleanupNotificationRefSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -41,16 +58,13 @@ const SystemCleanupNotificationSchema = z
 
 export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.literal(ESettingType.SystemCleanup),
-    scheduleInterval: z
-        .string()
-        .nullish()
-        .transform(value => value ?? ""),
-    scheduleFrom: z.coerce
-        .date()
-        .nullish()
-        .transform(value => value ?? undefined),
+    schedule: SystemCleanupScheduleSchema,
     dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
     clusterCleanup: SystemCleanupClusterCleanupSchema,
     backupCleanup: SystemCleanupBackupCleanupSchema,
     notification: SystemCleanupNotificationSchema,
+    nextRuns: z
+        .array(z.coerce.date())
+        .nullish()
+        .transform(value => value ?? []),
 });

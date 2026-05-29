@@ -2,11 +2,13 @@ import type { SystemCleanupSettings } from "~/system-settings/domain";
 
 import { ESettingStatus } from "@application/shared/enums";
 
-import type { SystemCleanupConfigurationFormInput } from "../schemas";
+import { SystemCleanupScheduleMode, type SystemCleanupConfigurationFormInput } from "../schemas";
 
 export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigurationFormInput = {
     status: ESettingStatus.Active,
+    scheduleMode: SystemCleanupScheduleMode.Interval,
     scheduleInterval: "24h",
+    scheduleCronExpr: "",
     scheduleFrom: null,
     dbObjectRetention: {
         enabled: true,
@@ -38,10 +40,14 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
 export function mapSystemCleanupSettingsToFormInput(
     settings: SystemCleanupSettings,
 ): SystemCleanupConfigurationFormInput {
+    const hasCronSchedule = settings.schedule.cronExpr.trim().length > 0;
+
     return {
         status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
-        scheduleInterval: settings.scheduleInterval,
-        scheduleFrom: settings.scheduleFrom ?? null,
+        scheduleMode: hasCronSchedule ? SystemCleanupScheduleMode.Cron : SystemCleanupScheduleMode.Interval,
+        scheduleInterval: settings.schedule.interval,
+        scheduleCronExpr: settings.schedule.cronExpr,
+        scheduleFrom: settings.schedule.initialTime ?? null,
         dbObjectRetention: {
             enabled: settings.dbObjectRetention.enabled,
             tasks: settings.dbObjectRetention.tasks,

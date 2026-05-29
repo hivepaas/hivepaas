@@ -24,7 +24,8 @@ const UserAccessSchema = z.object({
 
 const FindOneSchema = z.object({
     data: z.object({
-        projectUserAccesses: z.array(UserAccessSchema),
+        ownerAccess: UserAccessSchema,
+        userAccesses: z.array(UserAccessSchema),
         moduleUserAccesses: z.array(UserAccessSchema),
         currentUserActions: z.object({
             canUpdateProjectUserAccesses: z.boolean(),

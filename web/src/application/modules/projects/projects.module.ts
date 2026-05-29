@@ -41,6 +41,7 @@ export {
  * Layouts
  */
 export { ProjectsLayout, SingleProjectLayout, SingleAppLayout, SingleAppConfigurationLayout } from "./layouts";
+export { ProjectWithSidebar } from "./module-shared/components";
 
 /**
  * Dialogs

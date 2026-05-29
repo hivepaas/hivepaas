@@ -1,12 +1,27 @@
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Outlet, type RouteObject } from "react-router";
-import { ProjectGithubAppsLegacyRedirect } from "~/projects/routes/single-project/configuration/github-apps/route/project-github-apps-legacy-redirect.com";
+import { ProjectRouteRedirect } from "~/projects/routes/single-project/project-route-redirect.com";
 
 import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./projects.module");
 }
+
+const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
+    accessTokens: "projects/:id/configuration/access-tokens",
+    basicAuth: "projects/:id/configuration/basic-auth",
+    cloudStorages: "projects/:id/configuration/cloud-storages",
+    emailAccounts: "projects/:id/configuration/email-accounts",
+    envVariables: "projects/:id/configuration/env-variables",
+    githubApps: "projects/:id/configuration/github-apps",
+    imPlatforms: "projects/:id/configuration/im-platforms",
+    notificationTargets: "projects/:id/configuration/notification-targets",
+    registryAuth: "projects/:id/configuration/registry-auth",
+    secrets: "projects/:id/configuration/secrets",
+    sshKeys: "projects/:id/configuration/ssh-keys",
+    sslCertificates: "projects/:id/configuration/ssl-certificates",
+} as const;
 
 export const projectsRouter: RouteObject = {
     lazy: async () => {
@@ -26,7 +41,7 @@ export const projectsRouter: RouteObject = {
             path: "projects/:id/github-apps",
             element: (
                 <ConditionalModule id={MODULE_IDS.Project}>
-                    <ProjectGithubAppsLegacyRedirect />
+                    <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
                 </ConditionalModule>
             ),
         },
@@ -79,134 +94,238 @@ export const projectsRouter: RouteObject = {
                  * Single Project
                  */
                 {
-                    path: ROUTE.projects.single.configuration.general.$pattern,
-                    lazy: async () => {
-                        const { ProjectGeneralRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectGeneralRoute,
-                        };
-                    },
+                    path: ROUTE.projects.single.configuration.$pattern,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.general.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.configuration.envVariables.$pattern,
-                    lazy: async () => {
-                        const { ProjectEnvVariablesRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectEnvVariablesRoute,
-                        };
-                    },
+                    path: ROUTE.projects.single.providerConfiguration.$pattern,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.secrets.$pattern,
-                    lazy: async () => {
-                        const { ProjectSecretsRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectSecretsRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.basicAuth.$pattern,
-                    lazy: async () => {
-                        const { ProjectBasicAuthRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectBasicAuthRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.basicAuth,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.basicAuth.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.configuration.githubApps.$pattern,
-                    lazy: async () => {
-                        const { ProjectGithubAppsRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectGithubAppsRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.cloudStorages,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.cloudStorages.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.registryAuth.$pattern,
-                    lazy: async () => {
-                        const { ProjectRegistryAuthRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectRegistryAuthRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.emailAccounts,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.emailAccounts.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.sslCertificates.$pattern,
-                    lazy: async () => {
-                        const { ProjectSslCertificatesRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectSslCertificatesRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.envVariables,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.envVariables.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.emailAccounts.$pattern,
-                    lazy: async () => {
-                        const { ProjectEmailAccountsRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectEmailAccountsRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.githubApps,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.configuration.imPlatforms.$pattern,
-                    lazy: async () => {
-                        const { ProjectImPlatformsRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectImPlatformsRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.imPlatforms,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.imPlatforms.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.configuration.sshKeys.$pattern,
-                    lazy: async () => {
-                        const { ProjectSSHKeysRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectSSHKeysRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.notificationTargets,
+                    element: (
+                        <ProjectRouteRedirect
+                            to={ROUTE.projects.single.providerConfiguration.notificationTargets.$route}
+                        />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.accessTokens.$pattern,
-                    lazy: async () => {
-                        const { ProjectAccessTokensRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectAccessTokensRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.registryAuth,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.registryAuth.$route} />
+                    ),
                 },
                 {
-                    path: ROUTE.projects.single.configuration.cloudStorages.$pattern,
-                    lazy: async () => {
-                        const { ProjectCloudStoragesRoute } = await getLazyComponents();
-
-                        return {
-                            Component: ProjectCloudStoragesRoute,
-                        };
-                    },
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.secrets,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.secrets.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.configuration.notificationTargets.$pattern,
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.sshKeys,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sshKeys.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.sslCertificates,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sslCertificates.$route} />
+                    ),
+                },
+                {
                     lazy: async () => {
-                        const { ProjectNotificationTargetsRoute } = await getLazyComponents();
+                        const { ProjectWithSidebar } = await getLazyComponents();
 
                         return {
-                            Component: ProjectNotificationTargetsRoute,
+                            element: (
+                                <ProjectWithSidebar section="configuration">
+                                    <Outlet />
+                                </ProjectWithSidebar>
+                            ),
                         };
                     },
+                    children: [
+                        {
+                            path: ROUTE.projects.single.configuration.general.$pattern,
+                            lazy: async () => {
+                                const { ProjectGeneralRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectGeneralRoute,
+                                };
+                            },
+                        },
+                    ],
+                },
+                {
+                    lazy: async () => {
+                        const { ProjectWithSidebar } = await getLazyComponents();
+
+                        return {
+                            element: (
+                                <ProjectWithSidebar section="providerConfiguration">
+                                    <Outlet />
+                                </ProjectWithSidebar>
+                            ),
+                        };
+                    },
+                    children: [
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.accessTokens.$pattern,
+                            lazy: async () => {
+                                const { ProjectAccessTokensRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectAccessTokensRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.basicAuth.$pattern,
+                            lazy: async () => {
+                                const { ProjectBasicAuthRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectBasicAuthRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.cloudStorages.$pattern,
+                            lazy: async () => {
+                                const { ProjectCloudStoragesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectCloudStoragesRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.emailAccounts.$pattern,
+                            lazy: async () => {
+                                const { ProjectEmailAccountsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectEmailAccountsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.envVariables.$pattern,
+                            lazy: async () => {
+                                const { ProjectEnvVariablesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectEnvVariablesRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.$pattern,
+                            lazy: async () => {
+                                const { ProjectGithubAppsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectGithubAppsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.imPlatforms.$pattern,
+                            lazy: async () => {
+                                const { ProjectImPlatformsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectImPlatformsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.notificationTargets.$pattern,
+                            lazy: async () => {
+                                const { ProjectNotificationTargetsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectNotificationTargetsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.registryAuth.$pattern,
+                            lazy: async () => {
+                                const { ProjectRegistryAuthRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectRegistryAuthRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.secrets.$pattern,
+                            lazy: async () => {
+                                const { ProjectSecretsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSecretsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.sshKeys.$pattern,
+                            lazy: async () => {
+                                const { ProjectSSHKeysRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSSHKeysRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.sslCertificates.$pattern,
+                            lazy: async () => {
+                                const { ProjectSslCertificatesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSslCertificatesRoute,
+                                };
+                            },
+                        },
+                    ],
                 },
                 {
                     path: ROUTE.projects.single.apps.$pattern,

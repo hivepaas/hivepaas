@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
 import { ProjectEnvVarsQueries } from "~/projects/data/queries/project-env-vars";
-import { ProjectPermissionSubmitButton, ProjectWithSidebar } from "~/projects/module-shared/components";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -78,20 +78,18 @@ export function ProjectEnvVariablesRoute() {
     const { data: envVars } = envVarsData;
 
     return (
-        <ProjectWithSidebar projectId={projectId}>
-            <ProjectEnvVarsForm
-                ref={formRef}
-                defaultValues={{
-                    buildtime: envVars.buildtime,
-                    runtime: envVars.runtime,
-                }}
-                onSubmit={handleSubmit}
-                readOnly={!canWrite}
-            >
-                <div className="flex justify-end gap-2">
-                    <ProjectPermissionSubmitButton isPending={isPending} />
-                </div>
-            </ProjectEnvVarsForm>
-        </ProjectWithSidebar>
+        <ProjectEnvVarsForm
+            ref={formRef}
+            defaultValues={{
+                buildtime: envVars.buildtime,
+                runtime: envVars.runtime,
+            }}
+            onSubmit={handleSubmit}
+            readOnly={!canWrite}
+        >
+            <div className="flex justify-end gap-2">
+                <ProjectPermissionSubmitButton isPending={isPending} />
+            </div>
+        </ProjectEnvVarsForm>
     );
 }

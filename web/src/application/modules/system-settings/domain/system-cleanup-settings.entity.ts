@@ -2,6 +2,12 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus, ESettingType } from "@application/shared/enums";
 
+export interface SystemCleanupSchedule {
+    interval: string;
+    cronExpr: string;
+    initialTime?: Date | null;
+}
+
 export interface SystemCleanupDBObjectRetention {
     enabled: boolean;
     tasks: string;
@@ -40,10 +46,10 @@ export interface SystemCleanupNotification {
 export interface SystemCleanupSettings extends SettingsBaseEntity {
     type: typeof ESettingType.SystemCleanup;
     status: ESettingStatus;
-    scheduleInterval: string;
-    scheduleFrom?: Date | null;
+    schedule: SystemCleanupSchedule;
     dbObjectRetention: SystemCleanupDBObjectRetention;
     clusterCleanup: SystemCleanupClusterCleanup;
     backupCleanup: SystemCleanupBackupCleanup;
     notification?: SystemCleanupNotification | null;
+    nextRuns: Date[];
 }

@@ -10,8 +10,11 @@ export type SystemCleanup_FindOne_Res = ApiResponseBase<SystemCleanupSettings>;
 export type SystemCleanup_UpdateOne_Payload = {
     updateVer: number;
     status: ESettingStatus;
-    scheduleInterval: string;
-    scheduleFrom: Date | null;
+    schedule: {
+        interval: string;
+        cronExpr: string;
+        initialTime: Date | null;
+    };
     dbObjectRetention: {
         enabled: boolean;
         tasks: string;

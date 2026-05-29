@@ -23222,7 +23222,7 @@
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000, 864000000000000, 1296000000000000, 2592000000000000, 5184000000000000, 7776000000000000, 31536000000000000, 604800000000000, 1209600000000000, 2419200000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 86400000000000, 604800000000000, 864000000000000, 1296000000000000, 2592000000000000, 5184000000000000, 7776000000000000, 31536000000000000, 604800000000000, 1209600000000000, 2419200000000000 ],
         "format" : "int64",
         "type" : "integer",
         "x-enum-varnames" : [ "DurationDay", "Duration7Days", "Duration10Days", "Duration15Days", "Duration30Days", "Duration60Days", "Duration90Days", "Duration365Days", "DurationWeek", "Duration2Weeks", "Duration4Weeks" ]
@@ -29511,6 +29511,24 @@
         "required" : [ "addr", "returnStatus", "service", "version" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckGRPCResp" : {
+        "properties" : {
+          "addr" : {
+            "type" : "string"
+          },
+          "returnStatus" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HealthcheckGRPCStatus"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "version" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HealthcheckGRPCVersion"
+          }
+        },
+        "required" : [ "addr", "returnStatus", "service", "version" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReq" : {
         "properties" : {
           "body" : {
@@ -29523,19 +29541,94 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HTTPMethod"
           },
           "returnCode" : {
-            "type" : "integer"
+            "type" : "string"
           },
           "returnJSON" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnJSONReq"
           },
           "returnText" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnTextReq"
           },
           "url" : {
             "type" : "string"
           }
         },
         "required" : [ "body", "contentType", "method", "returnCode", "returnJSON", "returnText", "url" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTResp" : {
+        "properties" : {
+          "body" : {
+            "type" : "string"
+          },
+          "contentType" : {
+            "type" : "string"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "returnCode" : {
+            "type" : "string"
+          },
+          "returnJSON" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnJSONResp"
+          },
+          "returnText" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnTextResp"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "body", "contentType", "method", "returnCode", "returnJSON", "returnText", "url" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnJSONReq" : {
+        "properties" : {
+          "contain" : {
+            "type" : "string"
+          },
+          "exact" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "contain", "exact" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnJSONResp" : {
+        "properties" : {
+          "contain" : {
+            "type" : "string"
+          },
+          "exact" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "contain", "exact" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnTextReq" : {
+        "properties" : {
+          "exact" : {
+            "type" : "string"
+          },
+          "regex" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "exact", "regex" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReturnTextResp" : {
+        "properties" : {
+          "exact" : {
+            "type" : "string"
+          },
+          "regex" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "exact", "regex" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckResp" : {
@@ -29553,7 +29646,7 @@
             "type" : "string"
           },
           "grpc" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckGRPCReq"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckGRPCResp"
           },
           "healthcheckType" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.HealthcheckType"
@@ -29580,7 +29673,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationResp"
           },
           "rest" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTReq"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.HealthcheckRESTResp"
           },
           "retryDelay" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_timeutil.Duration"

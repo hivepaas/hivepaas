@@ -34,13 +34,23 @@ type Healthcheck struct {
 }
 
 type HealthcheckREST struct {
-	URL         string          `json:"url"`
-	Method      base.HTTPMethod `json:"method,omitempty"`
-	ContentType string          `json:"contentType,omitempty"`
-	Body        string          `json:"body,omitempty"`
-	ReturnCode  int             `json:"returnCode,omitempty"`
-	ReturnText  string          `json:"returnText,omitempty"`
-	ReturnJSON  string          `json:"returnJSON,omitempty"`
+	URL         string                     `json:"url"`
+	Method      base.HTTPMethod            `json:"method,omitempty"`
+	ContentType string                     `json:"contentType,omitempty"`
+	Body        string                     `json:"body,omitempty"`
+	ReturnCode  []int                      `json:"returnCode,omitempty"`
+	ReturnText  *HealthcheckRESTReturnText `json:"returnText,omitempty"`
+	ReturnJSON  *HealthcheckRESTReturnJSON `json:"returnJSON,omitempty"`
+}
+
+type HealthcheckRESTReturnText struct {
+	Exact string `json:"exact,omitempty"`
+	Regex string `json:"regex,omitempty"`
+}
+
+type HealthcheckRESTReturnJSON struct {
+	Exact   any `json:"exact,omitempty"`
+	Contain any `json:"contain,omitempty"`
 }
 
 type HealthcheckGRPC struct {

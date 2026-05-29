@@ -2,7 +2,9 @@ package taskhealthcheck
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/tiendc/gofn"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity/cacheentity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 )
@@ -78,6 +81,7 @@ func (e *Executor) sendNotification(
 	return nil
 }
 
+//nolint:nestif
 func (e *Executor) buildNotificationMsgData(
 	data *taskData,
 ) {
@@ -115,16 +119,29 @@ func (e *Executor) buildNotificationMsgData(
 		maxLen := 100
 		pad := "..."
 		if output.REST.ReturnCode != 0 {
-			msgData.Expect = fmt.Sprintf("Status code = %v", input.ReturnCode)
+			msgData.Expect = fmt.Sprintf("Status code = %v",
+				gofn.StringJoinBy(input.ReturnCode, ", ", strconv.Itoa))
 			msgData.Actual = fmt.Sprintf("Status code = %v", output.REST.ReturnCode)
 		}
-		if output.REST.ReturnText != "" {
-			msgData.Expect = fmt.Sprintf("Text = %v", strutil.CutShort(input.ReturnText, maxLen, pad))
-			msgData.Actual = fmt.Sprintf("Text = %v", strutil.CutShort(output.REST.ReturnText, maxLen, pad))
+		if output.REST.ReturnText != "" && input.ReturnText != nil {
+			expectStr := input.ReturnText.Exact
+			if input.ReturnText.Regex != "" {
+				expectStr = "Regex: " + input.ReturnText.Regex
+			}
+			msgData.Expect = strutil.CutShort(expectStr, maxLen, pad)
+			msgData.Actual = strutil.CutShort(output.REST.ReturnText, maxLen, pad)
 		}
-		if output.REST.ReturnJSON != "" {
-			msgData.Expect = fmt.Sprintf("JSON = %v", strutil.CutShort(input.ReturnJSON, maxLen, pad))
-			msgData.Actual = fmt.Sprintf("JSON = %v", strutil.CutShort(output.REST.ReturnJSON, maxLen, pad))
+		if output.REST.ReturnText != "" && input.ReturnJSON != nil {
+			var expectStr string
+			if input.ReturnJSON.Exact != nil {
+				expectBytes, _ := json.Marshal(input.ReturnJSON.Exact)
+				expectStr = "JSON Exact: " + reflectutil.UnsafeBytesToStr(expectBytes)
+			} else if input.ReturnJSON.Contain != nil {
+				expectBytes, _ := json.Marshal(input.ReturnJSON.Contain)
+				expectStr = "JSON Contain: " + reflectutil.UnsafeBytesToStr(expectBytes)
+			}
+			msgData.Expect = strutil.CutShort(expectStr, maxLen, pad)
+			msgData.Actual = strutil.CutShort(output.REST.ReturnText, maxLen, pad)
 		}
 	}
 	if output.GRPC != nil && data.Healthcheck.GRPC != nil {

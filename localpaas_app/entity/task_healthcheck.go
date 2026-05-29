@@ -13,7 +13,6 @@ type TaskHealthcheckOutput struct {
 type TaskHealthcheckOutputREST struct {
 	ReturnCode int    `json:"returnCode,omitempty"`
 	ReturnText string `json:"returnText,omitempty"`
-	ReturnJSON string `json:"returnJSON,omitempty"`
 }
 
 type TaskHealthcheckOutputGRPC struct {

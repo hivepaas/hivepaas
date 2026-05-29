@@ -1,7 +1,11 @@
 package healthcheckdto
 
 import (
+	"encoding/json"
 	"math"
+	"regexp"
+	"strconv"
+	"strings"
 
 	vld "github.com/tiendc/go-validator"
 
@@ -9,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
@@ -58,13 +63,50 @@ func (req *HealthcheckBaseReq) ToEntity() *entity.Healthcheck {
 }
 
 type HealthcheckRESTReq struct {
-	URL         string          `json:"url"`
-	Method      base.HTTPMethod `json:"method"`
-	ContentType string          `json:"contentType"`
-	Body        string          `json:"body"`
-	ReturnCode  int             `json:"returnCode"`
-	ReturnText  string          `json:"returnText"`
-	ReturnJSON  string          `json:"returnJSON"`
+	URL         string                        `json:"url"`
+	Method      base.HTTPMethod               `json:"method"`
+	ContentType string                        `json:"contentType"`
+	Body        string                        `json:"body"`
+	ReturnCode  string                        `json:"returnCode"`
+	ReturnText  *HealthcheckRESTReturnTextReq `json:"returnText"`
+	ReturnJSON  *HealthcheckRESTReturnJSONReq `json:"returnJSON"`
+
+	// Internal fields
+	returnCode []int
+}
+
+type HealthcheckRESTReturnTextReq struct {
+	Exact string `json:"exact"`
+	Regex string `json:"regex"`
+}
+
+func (req *HealthcheckRESTReturnTextReq) ToEntity() *entity.HealthcheckRESTReturnText {
+	if req == nil {
+		return nil
+	}
+	return &entity.HealthcheckRESTReturnText{
+		Exact: req.Exact,
+		Regex: req.Regex,
+	}
+}
+
+type HealthcheckRESTReturnJSONReq struct {
+	Exact   string `json:"exact"`
+	Contain string `json:"contain"`
+
+	// Internal fields
+	exactJSON   any
+	containJSON any
+}
+
+func (req *HealthcheckRESTReturnJSONReq) ToEntity() *entity.HealthcheckRESTReturnJSON {
+	if req == nil {
+		return nil
+	}
+	return &entity.HealthcheckRESTReturnJSON{
+		Exact:   req.exactJSON,
+		Contain: req.containJSON,
+	}
 }
 
 func (req *HealthcheckRESTReq) ToEntity() *entity.HealthcheckREST {
@@ -76,9 +118,9 @@ func (req *HealthcheckRESTReq) ToEntity() *entity.HealthcheckREST {
 		Method:      req.Method,
 		ContentType: req.ContentType,
 		Body:        req.Body,
-		ReturnCode:  req.ReturnCode,
-		ReturnText:  req.ReturnText,
-		ReturnJSON:  req.ReturnJSON,
+		ReturnCode:  req.returnCode,
+		ReturnText:  req.ReturnText.ToEntity(),
+		ReturnJSON:  req.ReturnJSON.ToEntity(),
 	}
 }
 
@@ -88,8 +130,38 @@ func (req *HealthcheckRESTReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, basedto.ValidateStr(&req.URL, true, 1, urlMaxLen, field+"url")...)
 	res = append(res, basedto.ValidateStrIn(&req.Method, true, base.AllHTTPMethods, field+"method")...)
-	res = append(res, basedto.ValidateValue(req.ReturnCode > 0 || req.ReturnText != "" ||
-		req.ReturnJSON != "", field+"returnCode|returnText|returnJSON")...)
+	res = append(res, basedto.ValidateValue(len(req.ReturnCode) > 0 || req.ReturnText != nil ||
+		req.ReturnJSON != nil, field+"returnCode|returnText|returnJSON")...)
+
+	if len(req.ReturnCode) > 0 {
+		items := strings.Split(req.ReturnCode, ",")
+		for _, item := range items {
+			code, err := strconv.Atoi(strings.TrimSpace(item))
+			if err != nil || code < 1 || code > math.MaxInt32 {
+				res = append(res, basedto.ValidateValue(false, field+"returnCode")...)
+				break
+			} else {
+				req.returnCode = append(req.returnCode, code)
+			}
+		}
+	}
+
+	if req.ReturnText != nil && req.ReturnText.Regex != "" {
+		_, err := regexp.Compile(req.ReturnText.Regex)
+		res = append(res, basedto.ValidateValue(err == nil, field+"returnText.regex")...)
+	}
+
+	if req.ReturnJSON != nil {
+		if req.ReturnJSON.Exact != "" {
+			err := json.Unmarshal(reflectutil.UnsafeStrToBytes(req.ReturnJSON.Exact), &req.ReturnJSON.exactJSON)
+			res = append(res, basedto.ValidateValue(err == nil, field+"returnJSON.exact")...)
+		}
+		if req.ReturnJSON.Contain != "" {
+			err := json.Unmarshal(reflectutil.UnsafeStrToBytes(req.ReturnJSON.Contain), &req.ReturnJSON.containJSON)
+			res = append(res, basedto.ValidateValue(err == nil, field+"returnJSON.contain")...)
+		}
+	}
+
 	return res
 }
 

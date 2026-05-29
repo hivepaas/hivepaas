@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/tiendc/gofn"
@@ -13,13 +14,17 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/httpclient"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/jsonutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 )
 
 const (
-	defaultRESTContentType = "application/json"
+	restContentTypeDefault = "application/json"
+	restBodySavingMaxLen   = 500
 )
 
+//nolint:gocognit
 func (s *service) doHealthcheckREST(
 	ctx context.Context,
 	data *healthcheckData,
@@ -45,7 +50,7 @@ func (s *service) doHealthcheckREST(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	req.Header.Set("Content-Type", gofn.Coalesce(healthchk.ContentType, defaultRESTContentType))
+	req.Header.Set("Content-Type", gofn.Coalesce(healthchk.ContentType, restContentTypeDefault))
 
 	resp, err := httpclient.DefaultClient.Do(req)
 	if err != nil {
@@ -56,44 +61,49 @@ func (s *service) doHealthcheckREST(
 	}
 
 	data.Output.REST.ReturnCode = resp.StatusCode
-	if healthchk.ReturnCode > 0 && healthchk.ReturnCode != resp.StatusCode {
+	if len(healthchk.ReturnCode) > 0 && !gofn.Contain(healthchk.ReturnCode, resp.StatusCode) {
 		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	//nolint:nestif
-	if healthchk.ReturnText != "" || healthchk.ReturnJSON != "" {
+	if healthchk.ReturnText != nil || healthchk.ReturnJSON != nil {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 		bodyStr := reflectutil.UnsafeBytesToStr(body)
-		if healthchk.ReturnText != "" {
-			data.Output.REST.ReturnText = bodyStr
-		}
-		if healthchk.ReturnJSON != "" {
-			data.Output.REST.ReturnJSON = bodyStr
-		}
+		data.Output.REST.ReturnText = strutil.CutShort(bodyStr, restBodySavingMaxLen, "...")
 
-		if healthchk.ReturnText != "" && healthchk.ReturnText != bodyStr {
-			return apperrors.Wrap(apperrors.ErrActionFailed)
+		if healthchk.ReturnText != nil {
+			if healthchk.ReturnText.Exact != "" && healthchk.ReturnText.Exact != bodyStr {
+				return apperrors.Wrap(apperrors.ErrActionFailed)
+			}
+			if healthchk.ReturnText.Regex != "" {
+				matched, _ := regexp.MatchString(healthchk.ReturnText.Regex, bodyStr)
+				if !matched {
+					return apperrors.Wrap(apperrors.ErrActionFailed)
+				}
+			}
 		}
-		if healthchk.ReturnJSON != "" && !compareRespJSON(body, healthchk.ReturnJSON) {
-			return apperrors.Wrap(apperrors.ErrActionFailed)
+		if healthchk.ReturnJSON != nil {
+			var actualObj any
+			err := json.Unmarshal(body, &actualObj)
+			if err != nil {
+				return apperrors.Wrap(apperrors.ErrActionFailed)
+			}
+
+			if healthchk.ReturnJSON.Exact != nil {
+				if !reflect.DeepEqual(actualObj, healthchk.ReturnJSON.Exact) {
+					return apperrors.Wrap(apperrors.ErrActionFailed)
+				}
+			}
+			if healthchk.ReturnJSON.Contain != nil {
+				if !jsonutil.Contains(actualObj, healthchk.ReturnJSON.Contain) {
+					return apperrors.Wrap(apperrors.ErrActionFailed)
+				}
+			}
 		}
 	}
 
 	return nil
-}
-
-func compareRespJSON(resp []byte, expected string) bool {
-	var actualObj, expectedObj any
-	err := json.Unmarshal(resp, &actualObj)
-	if err != nil {
-		return false
-	}
-	err = json.Unmarshal(reflectutil.UnsafeStrToBytes(expected), &expectedObj)
-	if err != nil {
-		return false
-	}
-	return reflect.DeepEqual(actualObj, expectedObj)
 }

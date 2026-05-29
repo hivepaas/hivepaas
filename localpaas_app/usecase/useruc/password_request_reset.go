@@ -18,6 +18,10 @@ func (uc *UC) RequestResetPassword(
 	auth *basedto.Auth,
 	req *userdto.RequestResetPasswordReq,
 ) (*userdto.RequestResetPasswordResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	user, err := uc.userRepo.GetByID(ctx, uc.db, req.ID,
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)

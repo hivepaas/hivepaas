@@ -30,6 +30,10 @@ func (uc *UC) UpdateProfile(
 	auth *basedto.Auth,
 	req *userdto.UpdateProfileReq,
 ) (*userdto.UpdateProfileResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		profileData := &userProfileData{}
 		err := uc.loadUserProfileData(ctx, db, auth, req, profileData)

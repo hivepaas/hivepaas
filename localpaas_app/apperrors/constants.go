@@ -55,6 +55,7 @@ var (
 // Errors for user
 var (
 	ErrUserUnavailable             = errors.New("ERR_USER_UNAVAILABLE")
+	ErrUserDemoUnauthorized        = errors.New("ERR_USER_DEMO_UNAUTHORIZED")
 	ErrUserStatusNotAllowAction    = errors.New("ERR_USER_STATUS_NOT_ALLOW_ACTION")
 	ErrUserAlreadySignUp           = errors.New("ERR_USER_ALREADY_SIGN_UP")
 	ErrUserNotCompleteMFASetup     = errors.New("ERR_USER_NOT_COMPLETE_MFA_SETUP")
@@ -170,6 +171,7 @@ var errorStatusMap = map[error]int{
 
 	// User errors
 	ErrUserUnavailable:             http.StatusUnprocessableEntity,
+	ErrUserDemoUnauthorized:        http.StatusUnauthorized,
 	ErrUserStatusNotAllowAction:    http.StatusUnprocessableEntity,
 	ErrUserAlreadySignUp:           http.StatusUnprocessableEntity,
 	ErrUserNotCompleteMFASetup:     http.StatusUnprocessableEntity,

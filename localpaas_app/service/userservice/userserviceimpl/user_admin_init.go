@@ -20,7 +20,7 @@ func (s *service) InitAdminUser(
 	ctx context.Context,
 	db database.IDB,
 ) (err error) {
-	accCfg := &config.Current.AdminAccount
+	accCfg := &config.Current.Users.Admin
 	email := accCfg.Email
 	password := accCfg.Password
 	if email == "" || password == "" {

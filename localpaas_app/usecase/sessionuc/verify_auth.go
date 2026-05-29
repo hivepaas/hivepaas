@@ -25,9 +25,15 @@ func (uc *UC) VerifyAuth(
 	// Requested action is higher than the one limited within the session settings
 	limitAccess := auth.User.AuthClaims.AccessAction
 	if limitAccess != nil && !base.ActionAllowed(accessCheck.Action, *limitAccess) {
+		// Special case: demo user
+		if auth.User.IsDemoUser() {
+			return apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		}
 		return apperrors.New(apperrors.ErrUnauthorized).
 			WithMsgLog("requested action is not allowed by session settings")
 	}
+
+	// Admins have all privileges
 	if auth.User.Role == base.UserRoleAdmin {
 		return nil
 	}

@@ -18,6 +18,10 @@ func (uc *UC) UpdatePassword(
 	auth *basedto.Auth,
 	req *userdto.UpdatePasswordReq,
 ) (*userdto.UpdatePasswordResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		user, err := uc.userRepo.GetByID(ctx, db, auth.User.ID,
 			bunex.SelectFor("UPDATE"),

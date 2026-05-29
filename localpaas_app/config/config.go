@@ -53,14 +53,14 @@ type Config struct {
 	Secret     string `toml:"secret" env:"LP_APP_SECRET" default:"abc123"`
 	AppPath    string `toml:"app_path" env:"LP_APP_PATH" default:"/var/lib/localpaas"`
 
-	AdminAccount AdminAccount `toml:"admin_account"`
-	HTTPServer   HTTPServer   `toml:"http_server"`
-	Storage      Storage      `toml:"storage"`
-	DB           DB           `toml:"db"`
-	Cache        Cache        `toml:"cache"`
-	Session      Session      `toml:"session"`
-	Proxy        Proxy        `toml:"proxy"`
-	Tasks        Tasks        `toml:"tasks"`
+	Users      Users      `toml:"users"`
+	HTTPServer HTTPServer `toml:"http_server"`
+	Storage    Storage    `toml:"storage"`
+	DB         DB         `toml:"db"`
+	Cache      Cache      `toml:"cache"`
+	Session    Session    `toml:"session"`
+	Proxy      Proxy      `toml:"proxy"`
+	Tasks      Tasks      `toml:"tasks"`
 
 	// Readonly
 	SystemInfo SystemInfo `toml:"-"`

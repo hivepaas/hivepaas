@@ -6,6 +6,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/jwtsession"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc/sessiondto"
@@ -19,6 +20,16 @@ func (uc *UC) createSession(
 	ctx context.Context,
 	req *sessiondto.BaseCreateSessionReq,
 ) (resp *sessiondto.BaseCreateSessionResp, err error) {
+	// If user is demo user, restrict permissions to READ only
+	if req.User.IsDemoUser() {
+		if req.AccessAction == nil {
+			req.AccessAction = &base.AccessActions{}
+		}
+		req.AccessAction.Read = true
+		req.AccessAction.Write = false
+		req.AccessAction.Delete = false
+	}
+
 	authClaims := &jwtsession.AuthClaims{
 		UID:          gofn.RandTokenAsHex(uidLen),
 		UserID:       req.User.ID,

@@ -43,6 +43,7 @@ ERR_TOO_MANY_PASSCODE_ATTEMPTS = "You made too many passcode attempts. Please st
 
 # User errors
 ERR_USER_UNAVAILABLE = "User is unavailable. Please contact administrator."
+ERR_USER_DEMO_UNAUTHORIZED = "Demo user is unauthorized to perform the action"
 ERR_USER_INVITE_TOKEN_INVALID = "Invite token is invalid or expired"
 ERR_USER_STATUS_NOT_ALLOW_ACTION = "User status does not allow the action"
 ERR_USER_ALREADY_SIGN_UP = "User already signs up"

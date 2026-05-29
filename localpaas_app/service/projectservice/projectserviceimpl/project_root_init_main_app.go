@@ -20,9 +20,9 @@ import (
 
 var (
 	localpaasAppInitExcludedEnvs = map[string]struct{}{
-		"LP_ADMIN_USERNAME": {},
-		"LP_ADMIN_PASSWORD": {},
-		"LP_ADMIN_EMAIL":    {},
+		"LP_USER_ADMIN_USERNAME": {},
+		"LP_USER_ADMIN_PASSWORD": {},
+		"LP_USER_ADMIN_EMAIL":    {},
 	}
 )
 

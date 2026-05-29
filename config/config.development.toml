@@ -7,10 +7,13 @@ base_url = "https://app.dev.localpaas.com" # dashboard base URL
 secret = "abc123"
 app_path = "/var/lib/localpaas"
 
-[admin_account]
+[users.admin]
     username = "admin"
     email = "tiendc.lp@gmail.com"
     password = "abc123"
+
+[users.demo]
+    user_id = "01JAB9XED0GTXBSQDFVYAJ8WA9"
 
 [db]
     host = "db"

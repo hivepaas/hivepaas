@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
@@ -58,4 +59,8 @@ func (u *User) GetSettingScope() *base.SettingScope {
 	return &base.SettingScope{
 		UserID: u.ID,
 	}
+}
+
+func (u *User) IsDemoUser() bool {
+	return u.ID == config.Current.Users.Demo.UserID
 }

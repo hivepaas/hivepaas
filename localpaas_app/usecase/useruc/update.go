@@ -22,6 +22,10 @@ func (uc *UC) UpdateUser(
 	auth *basedto.Auth,
 	req *userdto.UpdateUserReq,
 ) (*userdto.UpdateUserResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		userData := &userUpdateData{}
 		err := uc.loadUserDataForUpdate(ctx, db, auth, req, userData)

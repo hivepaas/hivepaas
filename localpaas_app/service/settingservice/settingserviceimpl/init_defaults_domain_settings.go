@@ -46,7 +46,7 @@ func (s *service) initDefaultDomainSettings(
 			CertType:    domainCertTypeDefault,
 			KeyType:     domainCertKeyTypeDefault,
 			ValidPeriod: timeutil.Duration(domainCertValidPeriodDefault),
-			Email:       config.Current.AdminAccount.Email,
+			Email:       config.Current.Users.Admin.Email,
 			AutoRenew:   domainCertAutoRenewDefault,
 		},
 	}

@@ -19,6 +19,10 @@ func (uc *UC) CompleteMFATotpSetup(
 	auth *basedto.Auth,
 	req *userdto.CompleteMFATotpSetupReq,
 ) (*userdto.CompleteMFATotpSetupResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	mfaTokenClaims, err := uc.userService.ParseMFATotpSetupToken(req.TotpToken)
 	if err != nil {
 		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)

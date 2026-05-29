@@ -6,15 +6,26 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { AppLink } from "..";
 
+function normalizePath(path: string) {
+    return path.replace(/\/+$/, "");
+}
+
+function isLinkActive(link: TabItem, pathname: string) {
+    const normalizedPathname = normalizePath(pathname);
+    const activePaths = [link.route, ...(link.activePathPrefixes ?? [])].map(normalizePath);
+
+    return activePaths.some(path => normalizedPathname === path || normalizedPathname.startsWith(`${path}/`));
+}
+
 function View({ links }: Props) {
     const location = useLocation();
 
-    const activeKey = links.find(({ route }) => route === location.pathname)?.route;
+    const activeKey = links.find(link => isLinkActive(link, location.pathname))?.route;
 
     return (
         <div className="w-full max-w-md">
             <Tabs
-                defaultValue={activeKey}
+                value={activeKey}
                 className="gap-4"
             >
                 <TabsList className="bg-background rounded-none border-b p-0 h-12">
@@ -44,6 +55,7 @@ interface TabItem {
     route: string;
     label: string | React.ReactNode;
     disabled?: boolean;
+    activePathPrefixes?: string[];
 }
 
 interface Props {

@@ -10,7 +10,7 @@ import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { SystemBackupConfigurationForm } from "../form";
-import type { SystemBackupConfigurationFormOutput } from "../schemas";
+import { type SystemBackupConfigurationFormOutput, SystemBackupScheduleMode } from "../schemas";
 import type { SystemBackupConfigurationFormRef } from "../types";
 
 type UpdatePayload = SystemBackup_UpdateOne_Req["data"]["payload"];
@@ -19,8 +19,11 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
     return {
         updateVer,
         status: values.status,
-        scheduleInterval: values.scheduleInterval,
-        scheduleFrom: values.scheduleFrom ?? null,
+        schedule: {
+            interval: values.scheduleMode === SystemBackupScheduleMode.Interval ? values.scheduleInterval : "",
+            cronExpr: values.scheduleMode === SystemBackupScheduleMode.Cron ? values.scheduleCronExpr : "",
+            initialTime: values.scheduleFrom ?? null,
+        },
         compression: {
             format: values.compressionFormat,
         },
@@ -57,6 +60,9 @@ export function SystemSettingsDataBackupConfigurationRoute() {
     const { mutate: update, isPending } = SystemBackupCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("System backup settings updated");
+            // window.setTimeout(() => {
+            //     window.location.reload();
+            // }, 300);
         },
         // onError: err => {
         //     if (isValidationException(err)) {

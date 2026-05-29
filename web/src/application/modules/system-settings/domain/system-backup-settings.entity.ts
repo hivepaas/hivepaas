@@ -4,6 +4,12 @@ import type { ESettingStatus, ESettingType } from "@application/shared/enums";
 
 import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../module-shared/enums";
 
+export interface SystemBackupSchedule {
+    interval: string;
+    cronExpr: string;
+    initialTime?: Date | null;
+}
+
 export interface SystemBackupCompression {
     format: ESystemBackupCompressionFormat;
 }
@@ -37,11 +43,11 @@ export interface SystemBackupNotification {
 export interface SystemBackupSettings extends SettingsBaseEntity {
     type: typeof ESettingType.SystemBackup;
     status: ESettingStatus;
-    scheduleInterval: string;
-    scheduleFrom?: Date | null;
+    schedule: SystemBackupSchedule;
     compression: SystemBackupCompression;
     encryption: SystemBackupEncryption;
     cloudStorage?: SystemBackupCloudStorage | null;
     dbBackupConfig: SystemBackupDBConfig;
     notification?: SystemBackupNotification | null;
+    nextRuns: Date[];
 }

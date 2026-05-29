@@ -164,7 +164,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                     <p>
                                         Need to add new basic auth?{" "}
                                         <Link
-                                            to={ROUTE.projects.single.configuration.basicAuth.$route(projectId)}
+                                            to={ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId)}
                                             className="text-blue-500"
                                         >
                                             Click here

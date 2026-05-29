@@ -2,6 +2,10 @@ import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo,
 
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { format } from "date-fns";
+import { ChevronDown } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { CloudStorageQueries, NotificationQueries } from "~/settings/data";
 import type { SystemBackupSettings } from "~/system-settings/domain";
@@ -12,7 +16,19 @@ import { ESettingStatus } from "@application/shared/enums";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import {
+    Checkbox,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../../../../module-shared/enums";
@@ -20,6 +36,7 @@ import {
     type SystemBackupConfigurationFormInput,
     type SystemBackupConfigurationFormOutput,
     SystemBackupConfigurationFormSchema,
+    SystemBackupScheduleMode,
 } from "../schemas";
 import type { SystemBackupConfigurationFormRef } from "../types";
 
@@ -51,7 +68,54 @@ function EnabledField() {
     );
 }
 
-function GeneralFields() {
+function NextRunsField({ nextRuns }: { nextRuns: Date[] }) {
+    const [open, setOpen] = useState(true);
+
+    return (
+        <InfoBlock title="Next Runs">
+            <Collapsible
+                open={open}
+                onOpenChange={setOpen}
+                className="max-w-[400px]"
+            >
+                <div className={cn(dashedBorderBox, "text-center text-sm leading-6 p-2")}>
+                    <CollapsibleTrigger asChild>
+                        <button
+                            type="button"
+                            aria-label={open ? "Collapse next runs" : "Expand next runs"}
+                            className="flex w-full items-center justify-end"
+                        >
+                            <ChevronDown
+                                className={cn(
+                                    "size-4 text-muted-foreground transition-transform duration-200",
+                                    open && "rotate-180",
+                                )}
+                            />
+                        </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        {nextRuns.length > 0 ? (
+                            <div className="flex flex-col gap-1 pt-3 text-sm">
+                                {nextRuns.map(runAt => (
+                                    <span
+                                        key={runAt.toISOString()}
+                                        className="text-orange-500"
+                                    >
+                                        {format(runAt, "yyyy-MM-dd HH:mm:ss")}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="pt-3 text-sm text-muted-foreground">No next runs available</div>
+                        )}
+                    </CollapsibleContent>
+                </div>
+            </Collapsible>
+        </InfoBlock>
+    );
+}
+
+function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const [cloudStorageSearch, setCloudStorageSearch] = useState("");
 
@@ -62,10 +126,15 @@ function GeneralFields() {
         isRefetching,
     } = CloudStorageQueries.useFindManyPaginated({ search: cloudStorageSearch });
 
+    const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
     const {
         field: scheduleInterval,
         fieldState: { error: scheduleIntervalError, invalid: isScheduleIntervalInvalid },
     } = useController({ control, name: "scheduleInterval" });
+    const {
+        field: scheduleCronExpr,
+        fieldState: { error: scheduleCronExprError, invalid: isScheduleCronExprInvalid },
+    } = useController({ control, name: "scheduleCronExpr" });
     const {
         field: scheduleFrom,
         fieldState: { error: scheduleFromError, invalid: isScheduleFromInvalid },
@@ -102,45 +171,77 @@ function GeneralFields() {
         <>
             <SectionHeader>General</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Run Interval">
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...scheduleInterval}
-                                placeholder="1d"
-                                className="max-w-[400px]"
-                                aria-invalid={isScheduleIntervalInvalid}
-                            />
-                            <FieldError errors={[scheduleIntervalError]} />
-                        </Field>
-                    </FieldGroup>
+                <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                    <span className="text-orange-500">Note:</span>{" "}
+                    <span>
+                        We encourage you to run this task during low server load periods (e.g., midnight). Additionally,
+                        you should schedule system tasks at different times (e.g., system cleanup at 1 AM, followed by
+                        data backup at 2 AM).
+                    </span>
+                </div>
+
+                <InfoBlock title="Scheduling Mode">
+                    <Tabs
+                        value={scheduleMode.value}
+                        onValueChange={scheduleMode.onChange}
+                    >
+                        <TabsList>
+                            <TabsTrigger value={SystemBackupScheduleMode.Interval}>Interval-based</TabsTrigger>
+                            <TabsTrigger value={SystemBackupScheduleMode.Cron}>Time-based</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                 </InfoBlock>
 
-                <InfoBlock title="First Run Starts At">
+                {scheduleMode.value === SystemBackupScheduleMode.Interval && (
+                    <InfoBlock title="Scheduling Interval">
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...scheduleInterval}
+                                    placeholder="1d, 1h30m"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isScheduleIntervalInvalid}
+                                />
+                                <FieldError errors={[scheduleIntervalError]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
+
+                {scheduleMode.value === SystemBackupScheduleMode.Cron && (
+                    <InfoBlock title="Cron Expression">
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...scheduleCronExpr}
+                                    placeholder="accepted form: * * * * *"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isScheduleCronExprInvalid}
+                                />
+                                <FieldError errors={[scheduleCronExprError]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
+
+                <InfoBlock title="Schedule From">
                     <FieldGroup>
                         <Field>
-                            <div className="flex items-center gap-4">
-                                <DateTimePicker
-                                    value={scheduleFrom.value ?? undefined}
-                                    onChange={scheduleFrom.onChange}
-                                    placeholder="select date time"
-                                    granularity="minute"
-                                    showClearButton
-                                    aria-invalid={isScheduleFromInvalid}
-                                    containerClassName="max-w-[400px]"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="px-0"
-                                >
-                                    See Next Runs
-                                </Button>
-                            </div>
+                            <DateTimePicker
+                                value={scheduleFrom.value ?? undefined}
+                                onChange={scheduleFrom.onChange}
+                                placeholder="select date time"
+                                granularity="minute"
+                                showClearButton
+                                aria-invalid={isScheduleFromInvalid}
+                                containerClassName="max-w-[400px]"
+                            />
                             <FieldError errors={[scheduleFromError]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
+
+                <NextRunsField nextRuns={nextRuns} />
 
                 <div className="border-t" />
 
@@ -152,6 +253,7 @@ function GeneralFields() {
                         <TabsList>
                             <TabsTrigger value={ESystemBackupCompressionFormat.None}>Disabled</TabsTrigger>
                             <TabsTrigger value={ESystemBackupCompressionFormat.Gzip}>Gzip</TabsTrigger>
+                            <TabsTrigger value={ESystemBackupCompressionFormat.Zstd}>Zstd</TabsTrigger>
                         </TabsList>
                     </Tabs>
                 </InfoBlock>
@@ -221,7 +323,7 @@ function GeneralFields() {
                         <Field>
                             <Input
                                 {...cloudStorageDestinationDir}
-                                placeholder="Destination directory"
+                                placeholder="path/to/sub/dir"
                                 className="max-w-[400px]"
                                 aria-invalid={isCloudStorageDestinationDirInvalid}
                             />
@@ -234,7 +336,7 @@ function GeneralFields() {
     );
 }
 
-function EnabledBackupConfigurationFields() {
+function EnabledBackupConfigurationFields({ nextRuns }: { nextRuns: Date[] }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const status = useWatch({ control, name: "status" });
 
@@ -244,28 +346,8 @@ function EnabledBackupConfigurationFields() {
 
     return (
         <>
-            <GeneralFields />
-            <BackupOptionsFields />
+            <GeneralFields nextRuns={nextRuns} />
             <NotificationFields />
-        </>
-    );
-}
-
-function BackupOptionsFields() {
-    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const { field: backupDeletedObjects } = useController({ control, name: "backupDeletedObjects" });
-
-    return (
-        <>
-            <SectionHeader>Backup Options</SectionHeader>
-            <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Backup Deleted DB Records">
-                    <Checkbox
-                        checked={backupDeletedObjects.value}
-                        onCheckedChange={backupDeletedObjects.onChange}
-                    />
-                </InfoBlock>
-            </div>
         </>
     );
 }
@@ -467,7 +549,7 @@ export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, re
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
                         <EnabledField />
-                        <EnabledBackupConfigurationFields />
+                        <EnabledBackupConfigurationFields nextRuns={defaultValues?.nextRuns ?? []} />
                     </fieldset>
                     {children}
                 </form>

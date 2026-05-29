@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
 import { ProjectsCommands } from "~/projects/data/commands";
-import { ProjectPermissionSubmitButton, ProjectWithSidebar } from "~/projects/module-shared/components";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -118,17 +118,15 @@ export function ProjectGeneralRoute() {
     const { data: project } = data;
 
     return (
-        <ProjectWithSidebar projectId={projectId}>
-            <ProjectGeneralForm
-                ref={formRef}
-                defaultValues={project}
-                onSubmit={handleSubmit}
-                readOnly={!canWrite}
-            >
-                <div className="flex justify-end mt-4">
-                    <ProjectPermissionSubmitButton isPending={isUpdating || isUpdatingPhoto} />
-                </div>
-            </ProjectGeneralForm>
-        </ProjectWithSidebar>
+        <ProjectGeneralForm
+            ref={formRef}
+            defaultValues={project}
+            onSubmit={handleSubmit}
+            readOnly={!canWrite}
+        >
+            <div className="flex justify-end mt-4">
+                <ProjectPermissionSubmitButton isPending={isUpdating || isUpdatingPhoto} />
+            </div>
+        </ProjectGeneralForm>
     );
 }

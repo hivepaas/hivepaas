@@ -1,6 +1,5 @@
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-import { ProjectWithSidebar } from "~/projects/module-shared/components";
 import { ProjectBasicAuthTable } from "~/settings/module-shared/components";
 
 export function ProjectBasicAuthRoute() {
@@ -8,9 +7,5 @@ export function ProjectBasicAuthRoute() {
 
     invariant(projectId, "projectId must be defined");
 
-    return (
-        <ProjectWithSidebar projectId={projectId}>
-            <ProjectBasicAuthTable projectId={projectId} />
-        </ProjectWithSidebar>
-    );
+    return <ProjectBasicAuthTable projectId={projectId} />;
 }

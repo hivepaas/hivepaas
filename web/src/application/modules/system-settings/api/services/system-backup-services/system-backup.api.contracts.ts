@@ -12,8 +12,11 @@ export type SystemBackup_FindOne_Res = ApiResponseBase<SystemBackupSettings>;
 export type SystemBackup_UpdateOne_Payload = {
     updateVer: number;
     status: ESettingStatus;
-    scheduleInterval: string;
-    scheduleFrom: Date | null;
+    schedule: {
+        interval: string;
+        cronExpr: string;
+        initialTime: Date | null;
+    };
     compression: {
         format: ESystemBackupCompressionFormat;
     };

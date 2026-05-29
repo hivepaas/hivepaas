@@ -53,10 +53,17 @@ function View({ projectId }: Props) {
         {
             route: ROUTE.projects.single.apps.$route(projectId),
             label: "Apps",
+            activePathPrefixes: [ROUTE.projects.single.apps.$route(projectId)],
         },
         {
             route: ROUTE.projects.single.configuration.general.$route(projectId),
             label: "Configuration",
+            activePathPrefixes: [ROUTE.projects.single.configuration.$route(projectId)],
+        },
+        {
+            route: ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId),
+            label: "Provider Configuration",
+            activePathPrefixes: [ROUTE.projects.single.providerConfiguration.$route(projectId)],
         },
     ];
     return (

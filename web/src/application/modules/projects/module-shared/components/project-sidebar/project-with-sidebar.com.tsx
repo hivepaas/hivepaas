@@ -2,7 +2,8 @@ import { type PropsWithChildren, memo } from "react";
 
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useLocation } from "react-router";
+import { useLocation, useParams } from "react-router";
+import invariant from "tiny-invariant";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -15,71 +16,97 @@ interface TabItem {
     disabled?: boolean;
 }
 
-function View({ projectId, children }: Props) {
-    const location = useLocation();
-    const tabs: TabItem[] = [
+function normalizePath(path: string) {
+    return path.replace(/\/+$/, "");
+}
+
+function isRouteActive(route: string, pathname: string) {
+    const normalizedRoute = normalizePath(route);
+    const normalizedPathname = normalizePath(pathname);
+
+    return normalizedPathname === normalizedRoute || normalizedPathname.startsWith(`${normalizedRoute}/`);
+}
+
+function createConfigurationTabs(projectId: string): TabItem[] {
+    return [
         {
             label: "General",
             route: ROUTE.projects.single.configuration.general.$route(projectId),
         },
+    ];
+}
+
+function createProviderConfigurationTabs(projectId: string): TabItem[] {
+    return [
         {
-            label: "Env Variables",
-            route: ROUTE.projects.single.configuration.envVariables.$route(projectId),
-        },
-        {
-            label: "Secrets",
-            route: ROUTE.projects.single.configuration.secrets.$route(projectId),
+            label: "Access Tokens",
+            route: ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId),
         },
         {
             label: "Basic Auth",
-            route: ROUTE.projects.single.configuration.basicAuth.$route(projectId),
-        },
-        {
-            label: "Github Apps",
-            route: ROUTE.projects.single.configuration.githubApps.$route(projectId),
-        },
-        {
-            label: "Registry Auth",
-            route: ROUTE.projects.single.configuration.registryAuth.$route(projectId),
-        },
-        {
-            label: "SSL Certificates",
-            route: ROUTE.projects.single.configuration.sslCertificates.$route(projectId),
-        },
-        {
-            label: "Email Accounts",
-            route: ROUTE.projects.single.configuration.emailAccounts.$route(projectId),
-        },
-        {
-            label: "IM Platforms",
-            route: ROUTE.projects.single.configuration.imPlatforms.$route(projectId),
-        },
-        {
-            label: "SSH Keys",
-            route: ROUTE.projects.single.configuration.sshKeys.$route(projectId),
-        },
-        {
-            label: "Access Tokens",
-            route: ROUTE.projects.single.configuration.accessTokens.$route(projectId),
+            route: ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId),
         },
         {
             label: "Cloud Storages",
-            route: ROUTE.projects.single.configuration.cloudStorages.$route(projectId),
+            route: ROUTE.projects.single.providerConfiguration.cloudStorages.$route(projectId),
+        },
+        {
+            label: "Email Accounts",
+            route: ROUTE.projects.single.providerConfiguration.emailAccounts.$route(projectId),
+        },
+        {
+            label: "Env Variables",
+            route: ROUTE.projects.single.providerConfiguration.envVariables.$route(projectId),
+        },
+        {
+            label: "Github Apps",
+            route: ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId),
+        },
+        {
+            label: "IM Platforms",
+            route: ROUTE.projects.single.providerConfiguration.imPlatforms.$route(projectId),
         },
         {
             label: "Notification Targets",
-            route: ROUTE.projects.single.configuration.notificationTargets.$route(projectId),
+            route: ROUTE.projects.single.providerConfiguration.notificationTargets.$route(projectId),
+        },
+        {
+            label: "Registry Auth",
+            route: ROUTE.projects.single.providerConfiguration.registryAuth.$route(projectId),
+        },
+        {
+            label: "Secrets",
+            route: ROUTE.projects.single.providerConfiguration.secrets.$route(projectId),
+        },
+        {
+            label: "SSH Keys",
+            route: ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId),
+        },
+        {
+            label: "SSL Certificates",
+            route: ROUTE.projects.single.providerConfiguration.sslCertificates.$route(projectId),
         },
     ];
+}
 
-    const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;
+function View({ projectId: projectIdProp, section = "providerConfiguration", children }: Props) {
+    const { id: routeProjectId } = useParams<{ id: string }>();
+    const location = useLocation();
+    const projectId = projectIdProp ?? routeProjectId;
+
+    invariant(projectId, "Project id must be defined");
+
+    const tabs =
+        section === "configuration" ? createConfigurationTabs(projectId) : createProviderConfigurationTabs(projectId);
+
+    const activeKey = tabs.find(({ route }) => isRouteActive(route, location.pathname))?.route;
     return (
         <div className="flex flex-col gap-5 md:flex-row w-fit mx-auto">
             <aside className="md:w-56 md:shrink-0">
                 <div className="sticky top-4">
                     <div className="bg-background rounded-lg py-4">
                         <Tabs
-                            defaultValue={activeKey}
+                            value={activeKey}
                             className="flex-row"
                         >
                             <TabsList className="bg-background h-full flex-col w-full rounded-none p-0">
@@ -110,7 +137,8 @@ function View({ projectId, children }: Props) {
 }
 
 interface Props extends PropsWithChildren {
-    projectId: string;
+    projectId?: string;
+    section?: "configuration" | "providerConfiguration";
 }
 
 export const ProjectWithSidebar = memo(View);

@@ -83,7 +83,9 @@ export function ProjectUserAccessesDialog() {
         },
     );
 
-    const canUpdateProjectAccess = canWrite && accessQuery.data?.data.currentUserActions.canUpdateProjectUserAccesses === true;
+    const ownerAccess = accessQuery.data?.data.ownerAccess;
+    const canUpdateProjectAccess =
+        canWrite && accessQuery.data?.data.currentUserActions.canUpdateProjectUserAccesses === true;
     const canViewModuleAccess = accessQuery.data?.data.currentUserActions.canViewModuleUserAccesses === true;
 
     const { data: usersData, isFetching: isFetchingUsers } = UsersPublicQueries.useFindManyBase(
@@ -119,16 +121,20 @@ export function ProjectUserAccessesDialog() {
             return;
         }
 
-        setProjectAccesses(accessQuery.data.data.projectUserAccesses);
+        setProjectAccesses(accessQuery.data.data.userAccesses);
         setHasChanges(false);
         setSelectedUser(null);
     }, [accessQuery.data, hasChanges, open]);
 
     const userOptions = useMemo<ComboboxOption<UserAccessOption>[]>(() => {
-        const projectAccessIds = new Set(projectAccesses.map(user => user.id));
+        const unavailableUserIds = new Set(projectAccesses.map(user => user.id));
+
+        if (ownerAccess) {
+            unavailableUserIds.add(ownerAccess.id);
+        }
 
         return (usersData?.data ?? [])
-            .filter(user => !projectAccessIds.has(user.id))
+            .filter(user => !unavailableUserIds.has(user.id))
             .map(user => ({
                 value: {
                     id: user.id,
@@ -140,7 +146,7 @@ export function ProjectUserAccessesDialog() {
                 },
                 label: getUserDisplayName(user),
             }));
-    }, [projectAccesses, usersData]);
+    }, [ownerAccess, projectAccesses, usersData]);
 
     function handleAddUser() {
         if (!selectedUser || !canUpdateProjectAccess) {
@@ -290,6 +296,47 @@ export function ProjectUserAccessesDialog() {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-6">
+                        {ownerAccess && (
+                            <>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Project Owner"
+                                            content="Project owner has full access to this project."
+                                        />
+                                    }
+                                    titleWidth={180}
+                                >
+                                    <div className="flex flex-wrap items-center gap-4 py-3">
+                                        <div className="min-w-[220px] flex-1">
+                                            <UserInfo user={ownerAccess} />
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <AccessCheckbox
+                                                id={`owner-${ownerAccess.id}-read`}
+                                                checked={ownerAccess.access.read}
+                                                disabled
+                                                label="Read"
+                                            />
+                                            <AccessCheckbox
+                                                id={`owner-${ownerAccess.id}-write`}
+                                                checked={ownerAccess.access.write}
+                                                disabled
+                                                label="Write"
+                                            />
+                                            <AccessCheckbox
+                                                id={`owner-${ownerAccess.id}-delete`}
+                                                checked={ownerAccess.access.delete}
+                                                disabled
+                                                label="Delete"
+                                            />
+                                            <div className="w-[60px]" />
+                                        </div>
+                                    </div>
+                                </InfoBlock>
+                                <hr className="border-border" />
+                            </>
+                        )}
                         <InfoBlock
                             title={
                                 <LabelWithInfo
@@ -423,7 +470,7 @@ export function ProjectUserAccessesDialog() {
 
                         {canViewModuleAccess && (
                             <>
-                                <div className="h-px bg-border" />
+                                <hr className="border-border" />
                                 <InfoBlock
                                     title={
                                         <LabelWithInfo

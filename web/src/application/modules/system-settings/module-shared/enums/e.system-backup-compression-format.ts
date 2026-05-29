@@ -1,6 +1,7 @@
 export const ESystemBackupCompressionFormat = {
     None: "",
     Gzip: "gzip",
+    Zstd: "zstd",
 } as const;
 
 export type ESystemBackupCompressionFormat =

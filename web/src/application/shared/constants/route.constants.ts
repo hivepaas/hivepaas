@@ -306,70 +306,76 @@ export const ROUTE = {
 
             configuration: {
                 $pattern: "projects/:id/configuration",
+                $route: (id: string) => `/projects/${id}/configuration/`,
 
                 general: {
                     $pattern: "projects/:id/configuration/general",
                     $route: (id: string) => `/projects/${id}/configuration/general/`,
                 },
+            },
 
-                envVariables: {
-                    $pattern: "projects/:id/configuration/env-variables",
-                    $route: (id: string) => `/projects/${id}/configuration/env-variables/`,
-                },
+            providerConfiguration: {
+                $pattern: "projects/:id/provider-configuration",
+                $route: (id: string) => `/projects/${id}/provider-configuration/`,
 
-                secrets: {
-                    $pattern: "projects/:id/configuration/secrets",
-                    $route: (id: string) => `/projects/${id}/configuration/secrets/`,
+                accessTokens: {
+                    $pattern: "projects/:id/provider-configuration/access-tokens",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/access-tokens/`,
                 },
 
                 basicAuth: {
-                    $pattern: "projects/:id/configuration/basic-auth",
-                    $route: (id: string) => `/projects/${id}/configuration/basic-auth/`,
-                },
-
-                githubApps: {
-                    $pattern: "projects/:id/configuration/github-apps",
-                    $route: (id: string) => `/projects/${id}/configuration/github-apps/`,
-                },
-
-                registryAuth: {
-                    $pattern: "projects/:id/configuration/registry-auth",
-                    $route: (id: string) => `/projects/${id}/configuration/registry-auth/`,
-                },
-
-                sslCertificates: {
-                    $pattern: "projects/:id/configuration/ssl-certificates",
-                    $route: (id: string) => `/projects/${id}/configuration/ssl-certificates/`,
-                },
-
-                emailAccounts: {
-                    $pattern: "projects/:id/configuration/email-accounts",
-                    $route: (id: string) => `/projects/${id}/configuration/email-accounts/`,
-                },
-
-                imPlatforms: {
-                    $pattern: "projects/:id/configuration/im-platforms",
-                    $route: (id: string) => `/projects/${id}/configuration/im-platforms/`,
-                },
-
-                sshKeys: {
-                    $pattern: "projects/:id/configuration/ssh-keys",
-                    $route: (id: string) => `/projects/${id}/configuration/ssh-keys/`,
-                },
-
-                accessTokens: {
-                    $pattern: "projects/:id/configuration/access-tokens",
-                    $route: (id: string) => `/projects/${id}/configuration/access-tokens/`,
+                    $pattern: "projects/:id/provider-configuration/basic-auth",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/basic-auth/`,
                 },
 
                 cloudStorages: {
-                    $pattern: "projects/:id/configuration/cloud-storages",
-                    $route: (id: string) => `/projects/${id}/configuration/cloud-storages/`,
+                    $pattern: "projects/:id/provider-configuration/cloud-storages",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/cloud-storages/`,
+                },
+
+                emailAccounts: {
+                    $pattern: "projects/:id/provider-configuration/email-accounts",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/email-accounts/`,
+                },
+
+                envVariables: {
+                    $pattern: "projects/:id/provider-configuration/env-variables",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/env-variables/`,
+                },
+
+                githubApps: {
+                    $pattern: "projects/:id/provider-configuration/github-apps",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/github-apps/`,
+                },
+
+                imPlatforms: {
+                    $pattern: "projects/:id/provider-configuration/im-platforms",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/im-platforms/`,
                 },
 
                 notificationTargets: {
-                    $pattern: "projects/:id/configuration/notification-targets",
-                    $route: (id: string) => `/projects/${id}/configuration/notification-targets/`,
+                    $pattern: "projects/:id/provider-configuration/notification-targets",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/notification-targets/`,
+                },
+
+                registryAuth: {
+                    $pattern: "projects/:id/provider-configuration/registry-auth",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/registry-auth/`,
+                },
+
+                secrets: {
+                    $pattern: "projects/:id/provider-configuration/secrets",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/secrets/`,
+                },
+
+                sshKeys: {
+                    $pattern: "projects/:id/provider-configuration/ssh-keys",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/ssh-keys/`,
+                },
+
+                sslCertificates: {
+                    $pattern: "projects/:id/provider-configuration/ssl-certificates",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/ssl-certificates/`,
                 },
             },
         },

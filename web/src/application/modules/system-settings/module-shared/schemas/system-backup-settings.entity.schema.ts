@@ -24,9 +24,28 @@ const SystemBackupCloudStorageSchema = SettingsBaseEntitySchema.omit({ descripti
     })
     .nullable();
 
-const SystemBackupDBConfigSchema = z.object({
-    backupDeletedObjects: z.boolean(),
-});
+const SystemBackupScheduleSchema = z
+    .object({
+        cronExpr: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
+        interval: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
+        initialTime: z.coerce
+            .date()
+            .nullish()
+            .transform(value => value ?? null),
+    })
+    .default({ cronExpr: "", interval: "", initialTime: null });
+
+const SystemBackupDBConfigSchema = z
+    .object({
+        backupDeletedObjects: z.boolean(),
+    })
+    .default({ backupDeletedObjects: false });
 
 const SystemBackupNotificationRefSchema = z.object({
     id: z.string(),
@@ -44,17 +63,14 @@ const SystemBackupNotificationSchema = z
 
 export const SystemBackupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.literal(ESettingType.SystemBackup),
-    scheduleInterval: z
-        .string()
-        .nullish()
-        .transform(value => value ?? ""),
-    scheduleFrom: z.coerce
-        .date()
-        .nullish()
-        .transform(value => value ?? undefined),
+    schedule: SystemBackupScheduleSchema,
     compression: SystemBackupCompressionSchema,
     encryption: SystemBackupEncryptionSchema,
     cloudStorage: SystemBackupCloudStorageSchema,
     dbBackupConfig: SystemBackupDBConfigSchema,
     notification: SystemBackupNotificationSchema,
+    nextRuns: z
+        .array(z.coerce.date())
+        .nullish()
+        .transform(value => value ?? []),
 });

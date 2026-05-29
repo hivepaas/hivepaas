@@ -14,7 +14,7 @@ import { isValidationException } from "@infrastructure/api";
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { SystemCleanupConfigurationForm } from "../form";
-import type { SystemCleanupConfigurationFormOutput } from "../schemas";
+import { SystemCleanupScheduleMode, type SystemCleanupConfigurationFormOutput } from "../schemas";
 import type { SystemCleanupConfigurationFormRef } from "../types";
 
 type UpdatePayload = SystemCleanup_UpdateOne_Req["data"]["payload"];
@@ -23,8 +23,11 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
     return {
         updateVer,
         status: values.status,
-        scheduleInterval: values.scheduleInterval,
-        scheduleFrom: values.scheduleFrom ?? null,
+        schedule: {
+            interval: values.scheduleMode === SystemCleanupScheduleMode.Interval ? values.scheduleInterval : "",
+            cronExpr: values.scheduleMode === SystemCleanupScheduleMode.Cron ? values.scheduleCronExpr : "",
+            initialTime: values.scheduleFrom ?? null,
+        },
         dbObjectRetention: {
             enabled: values.dbObjectRetention.enabled,
             tasks: values.dbObjectRetention.tasks,
@@ -66,6 +69,9 @@ export function SystemSettingsDataCleanupConfigurationRoute() {
     const { mutate: update, isPending } = SystemCleanupCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("System cleanup settings updated");
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 300);
         },
         onError: err => {
             if (isValidationException(err)) {

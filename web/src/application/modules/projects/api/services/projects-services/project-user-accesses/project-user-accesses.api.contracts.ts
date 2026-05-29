@@ -19,7 +19,8 @@ export interface ProjectUserAccessBase {
 }
 
 export interface ProjectUserAccessesData {
-    projectUserAccesses: ProjectUserAccessBase[];
+    ownerAccess: ProjectUserAccessBase;
+    userAccesses: ProjectUserAccessBase[];
     moduleUserAccesses: ProjectUserAccessBase[];
     currentUserActions: {
         canUpdateProjectUserAccesses: boolean;

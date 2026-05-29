@@ -1,6 +1,5 @@
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-import { ProjectWithSidebar } from "~/projects/module-shared/components";
 import { ProjectSslCertTable } from "~/settings/module-shared/components";
 
 export function ProjectSslCertificatesRoute() {
@@ -8,9 +7,5 @@ export function ProjectSslCertificatesRoute() {
 
     invariant(projectId, "projectId must be defined");
 
-    return (
-        <ProjectWithSidebar projectId={projectId}>
-            <ProjectSslCertTable projectId={projectId} />
-        </ProjectWithSidebar>
-    );
+    return <ProjectSslCertTable projectId={projectId} />;
 }

@@ -174,11 +174,11 @@ export function CreateOrEditNotificationTargetForm({
 
     const emailAccountsRoute =
         scope.type === "project"
-            ? ROUTE.projects.single.configuration.emailAccounts.$route(scope.projectId)
+            ? ROUTE.projects.single.providerConfiguration.emailAccounts.$route(scope.projectId)
             : ROUTE.settings.emailAccounts.$route;
     const imPlatformsRoute =
         scope.type === "project"
-            ? ROUTE.projects.single.configuration.imPlatforms.$route(scope.projectId)
+            ? ROUTE.projects.single.providerConfiguration.imPlatforms.$route(scope.projectId)
             : ROUTE.settings.imPlatforms.$route;
 
     function onValid(values: CreateOrEditNotificationTargetFormOutput) {

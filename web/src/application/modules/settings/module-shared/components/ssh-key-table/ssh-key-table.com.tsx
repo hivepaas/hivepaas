@@ -10,9 +10,10 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable } from "@/components/ui";
+import { DataTable } from "@/components/ui";
 
 import { ProjectSettingsImportButton } from "../project-settings-import-button";
+import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { SSHKeyTableDefs } from "./ssh-key-table.defs";
 import type { SSHKeyTableScope } from "./ssh-key-table.types";
@@ -52,14 +53,15 @@ function SSHKeyTableView({ scope }: Props) {
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.SSHKey}
                             />
                         )}
-                        <Button
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             New SSH Key
-                        </Button>
+                        </SettingsScopeCreateButton>
                     </div>
                 }
             />

@@ -13,10 +13,11 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 interface RateLimitConfigSectionProps {
     prefix: string;
     autoExpandToken?: number;
+    readOnly?: boolean;
     onRemove?: () => void;
 }
 
-export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: RateLimitConfigSectionProps) {
+export function RateLimitConfigSection({ prefix, autoExpandToken, readOnly = false, onRemove }: RateLimitConfigSectionProps) {
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (autoExpandToken !== undefined) {
@@ -93,7 +94,14 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                         size="icon"
                         className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
-                        onClick={onRemove}
+                        onClick={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            onRemove();
+                        }}
+                        disabled={readOnly}
                     >
                         <X className="size-4" />
                     </Button>
@@ -104,7 +112,14 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -117,6 +132,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                                     className="max-w-[100px]"
                                     useGrouping={false}
                                     aria-invalid={averageInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[averageError]} />
                             </InfoBlock>
@@ -130,6 +146,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                                     placeholder="1s"
                                     className="max-w-[100px]"
                                     aria-invalid={periodInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[periodError]} />
                             </InfoBlock>
@@ -142,6 +159,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                                     className="max-w-[100px]"
                                     useGrouping={false}
                                     aria-invalid={burstInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[burstError]} />
                             </InfoBlock>
@@ -154,6 +172,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, onRemove }: Ra
                                     className="max-w-[100px]"
                                     useGrouping={false}
                                     aria-invalid={maxInFlightReqInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[maxInFlightReqError]} />
                             </InfoBlock>

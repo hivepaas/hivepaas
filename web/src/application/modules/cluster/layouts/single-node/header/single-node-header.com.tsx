@@ -10,8 +10,9 @@ import { NodeStatusBadge } from "~/cluster/module-shared/components";
 
 import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { SingleNodeBreadcrumbs } from "../buidling-blocks";
 
@@ -20,6 +21,7 @@ import { SingleNodeHeaderSkeleton } from "./single-node-header.skeleton.com";
 function View({ nodeId }: Props) {
     const { data, isLoading, error } = NodesQueries.useFindOneById({ id: nodeId });
     const { navigate } = useAppNavigate();
+    const { canDelete } = useConditionalModule({ id: MODULE_IDS.Cluster });
 
     const { mutate: deleteOne, isPending: isDeleting } = NodesCommands.useDeleteOne({});
 
@@ -36,6 +38,10 @@ function View({ nodeId }: Props) {
     const { data: node } = data;
 
     const handleRemove = () => {
+        if (!canDelete) {
+            return;
+        }
+
         deleteOne(
             { id: node.id, force: false },
             {
@@ -52,22 +58,39 @@ function View({ nodeId }: Props) {
             <div className="flex items-center justify-between">
                 <SingleNodeBreadcrumbs node={node} />
                 <div className="flex items-center gap-2">
-                    <PopConfirm
-                        title="Remove node"
-                        variant="destructive"
-                        confirmText="Remove"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={handleRemove}
-                    >
-                        <Button
-                            variant="outline"
-                            disabled={isDeleting}
+                    {canDelete ? (
+                        <PopConfirm
+                            title="Remove node"
+                            variant="destructive"
+                            confirmText="Remove"
+                            cancelText="Cancel"
+                            description="Confirm deletion of this item?"
+                            onConfirm={handleRemove}
                         >
-                            <Trash2 className="mr-2 size-4" />
-                            Remove
-                        </Button>
-                    </PopConfirm>
+                            <Button
+                                variant="outline"
+                                disabled={isDeleting}
+                            >
+                                <Trash2 className="mr-2 size-4" />
+                                Remove
+                            </Button>
+                        </PopConfirm>
+                    ) : (
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Cluster}
+                            action="delete"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    variant="outline"
+                                    disabled={isDenied}
+                                >
+                                    <Trash2 className="mr-2 size-4" />
+                                    Remove
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    )}
                 </div>
             </div>
 

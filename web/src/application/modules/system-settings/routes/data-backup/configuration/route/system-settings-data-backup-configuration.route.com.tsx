@@ -6,6 +6,8 @@ import type { SystemBackup_UpdateOne_Req } from "~/system-settings/api/services"
 import { SystemBackupCommands, SystemBackupQueries } from "~/system-settings/data";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { SystemBackupConfigurationForm } from "../form";
 import type { SystemBackupConfigurationFormOutput } from "../schemas";
@@ -48,6 +50,7 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
 
 export function SystemSettingsDataBackupConfigurationRoute() {
     const formRef = useRef<SystemBackupConfigurationFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
 
     const { data, isLoading } = SystemBackupQueries.useFindOne();
 
@@ -67,6 +70,10 @@ export function SystemSettingsDataBackupConfigurationRoute() {
     });
 
     function handleSubmit(values: SystemBackupConfigurationFormOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         update({
             payload: mapFormValuesToPayload(values, data?.data.updateVer ?? 0),
         });
@@ -81,16 +88,24 @@ export function SystemSettingsDataBackupConfigurationRoute() {
             ref={formRef}
             defaultValues={data?.data}
             onSubmit={handleSubmit}
+            readOnly={!canWrite}
         >
             <div className="flex justify-end pt-4">
-                <Button
-                    type="submit"
-                    className="min-w-[100px]"
-                    disabled={isPending}
-                    isLoading={isPending}
+                <PermissionTooltipAction
+                    id={MODULE_IDS.System}
+                    action="write"
                 >
-                    Save
-                </Button>
+                    {({ isDenied }) => (
+                        <Button
+                            type="submit"
+                            className="min-w-[100px]"
+                            disabled={isPending || isDenied}
+                            isLoading={isPending}
+                        >
+                            Save
+                        </Button>
+                    )}
+                </PermissionTooltipAction>
             </div>
         </SystemBackupConfigurationForm>
     );

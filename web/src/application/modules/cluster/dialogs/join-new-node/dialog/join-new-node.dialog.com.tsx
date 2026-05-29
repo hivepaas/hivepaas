@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { NodesCommands } from "@application/modules/cluster/data";
 import { EJoinNodeMethod } from "@application/modules/cluster/module-shared/enums";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { JoinNewNodeForm } from "../form";
 import { useJoinNewNodeDialogState } from "../hooks";
@@ -13,6 +15,7 @@ import { type JoinNewNodeFormOutput } from "../schemas";
 export function JoinNewNodeDialog() {
     const { state, props, ...actions } = useJoinNewNodeDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Cluster });
 
     const open = state.mode !== "closed";
 
@@ -31,6 +34,10 @@ export function JoinNewNodeDialog() {
     }, [state.mode]);
 
     function onSubmit(values: JoinNewNodeFormOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         if (values.method === EJoinNodeMethod.RunCommandViaSSH && values.sshKey) {
             joinNode({
                 sshKey: {
@@ -45,7 +52,7 @@ export function JoinNewNodeDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -66,6 +73,7 @@ export function JoinNewNodeDialog() {
                     <DialogTitle>Join new node to the swarm cluster</DialogTitle>
                 </DialogHeader>
                 <JoinNewNodeForm
+                    readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />

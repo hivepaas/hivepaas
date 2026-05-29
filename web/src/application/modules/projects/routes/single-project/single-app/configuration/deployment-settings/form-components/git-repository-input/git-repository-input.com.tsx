@@ -14,7 +14,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
-export function GitRepositoryInput() {
+export function GitRepositoryInput({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
@@ -64,6 +64,10 @@ export function GitRepositoryInput() {
                 options={repoCloneUrls}
                 value={repoUrl.value}
                 onChange={v => {
+                    if (readOnly) {
+                        return;
+                    }
+
                     repoUrl.onChange(v);
                 }}
                 placeholder={
@@ -78,8 +82,13 @@ export function GitRepositoryInput() {
                 aria-invalid={isRepoUrlInvalid}
                 onRefresh={hasCredential ? () => void refetch() : undefined}
                 isRefreshing={isRefetching}
+                disabled={readOnly}
             />
             <FieldError errors={[repoUrlError]} />
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

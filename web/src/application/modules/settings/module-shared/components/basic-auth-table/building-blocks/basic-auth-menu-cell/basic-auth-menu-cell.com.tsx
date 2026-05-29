@@ -11,7 +11,7 @@ import type { SettingBasicAuth } from "~/settings/domain";
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting, useInheritedSettingAlert } from "~/settings/module-shared/hooks";
 
-import { PopConfirm } from "@application/shared/components";
+import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
 
 import type { BasicAuthTableScope } from "../../basic-auth-table.types";
 
@@ -89,41 +89,37 @@ function View({ scope, basicAuth }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    <Button
-                        className="justify-start py-1.5"
-                        variant="ghost"
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
                         onClick={handleChangeStatus}
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
-                    </Button>
+                    </SettingsScopeMenuButton>
                     {isInheritedProject ? (
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
+                        <SettingsScopeMenuButton
+                            scope={scope}
+                            action="delete"
                             onClick={handleDelete}
                         >
                             <Trash2Icon className="mr-2 size-4" />
                             Remove
-                        </Button>
+                        </SettingsScopeMenuButton>
                     ) : (
-                        <PopConfirm
+                        <SettingsScopePopConfirmButton
+                            scope={scope}
+                            action="delete"
                             title="Delete basic auth"
-                            variant="destructive"
                             confirmText="Delete"
                             cancelText="Cancel"
                             description="Confirm deletion of this item?"
                             onConfirm={handleDelete}
+                            isLoading={isDeleting}
                         >
-                            <Button
-                                className="justify-start py-1.5"
-                                variant="ghost"
-                                disabled={isDeleting}
-                            >
-                                <Trash2Icon className="mr-2 size-4" />
-                                Remove
-                            </Button>
-                        </PopConfirm>
+                            <Trash2Icon className="mr-2 size-4" />
+                            Remove
+                        </SettingsScopePopConfirmButton>
                     )}
                 </div>
             </DropdownMenuContent>

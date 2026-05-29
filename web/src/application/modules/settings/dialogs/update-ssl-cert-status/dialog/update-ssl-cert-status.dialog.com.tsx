@@ -8,6 +8,7 @@ import { SslCertCommands } from "~/settings/data/commands";
 import { SslCertQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateSslCertStatusForm } from "../form";
@@ -17,6 +18,9 @@ import type { UpdateSslCertStatusFormOutput } from "../schemas";
 export function UpdateSslCertStatusDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useUpdateSslCertStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = SslCertCommands.useUpdateStatus({
         onSuccess: () => {
@@ -98,6 +102,7 @@ export function UpdateSslCertStatusDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -144,6 +149,7 @@ export function UpdateSslCertStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

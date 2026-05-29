@@ -1,13 +1,15 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppNetworkSettingsCommands, AppNetworkSettingsQueries } from "~/projects/data";
 import { type AppNetworkSettings } from "~/projects/domain";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -55,6 +57,7 @@ function mapFormValuesToPayload(
 export function AppConfigNetworksRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigNetworksFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -80,6 +83,10 @@ export function AppConfigNetworksRoute() {
     });
 
     function handleSubmit(values: AppConfigNetworksFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
@@ -112,16 +119,10 @@ export function AppConfigNetworksRoute() {
                 ref={formRef}
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
+                    <ProjectPermissionSubmitButton isPending={isPending} />
                 </div>
             </AppConfigNetworksForm>
         </div>

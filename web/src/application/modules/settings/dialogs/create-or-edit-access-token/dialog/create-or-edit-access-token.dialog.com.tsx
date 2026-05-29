@@ -8,6 +8,7 @@ import { AccessTokenCommands } from "~/settings/data/commands";
 import { AccessTokenQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { EAccessTokenKind } from "@application/shared/enums";
 
 import { CreateOrEditAccessTokenForm } from "../form";
@@ -22,6 +23,9 @@ export function CreateOrEditAccessTokenDialog() {
         clear: clearDialog,
     } = useCreateOrEditAccessTokenDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
 
     const { mutate: createSettingAccessToken, isPending: isCreatingSetting } = AccessTokenCommands.useCreateOne({
@@ -143,6 +147,7 @@ export function CreateOrEditAccessTokenDialog() {
         if (isPending) return;
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         )
@@ -194,6 +199,7 @@ export function CreateOrEditAccessTokenDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

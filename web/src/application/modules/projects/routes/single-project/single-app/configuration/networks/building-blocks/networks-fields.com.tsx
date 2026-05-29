@@ -20,7 +20,7 @@ type NetworkOptionValue = {
     name: string;
 };
 
-export function NetworksFields() {
+export function NetworksFields({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
@@ -52,6 +52,10 @@ export function NetworksFields() {
     }, [projectNetworks]);
 
     const handleAdd = () => {
+        if (readOnly) {
+            return;
+        }
+
         if (!selectedNetwork) {
             toast.error("Please select a network");
             return;
@@ -79,6 +83,10 @@ export function NetworksFields() {
                             options={comboboxOptions}
                             value={selectedNetwork?.id ?? null}
                             onChange={(_, option) => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setSelectedNetwork(option ?? null);
                             }}
                             onSearch={setSearch}
@@ -89,18 +97,25 @@ export function NetworksFields() {
                             loading={isFetching}
                             onRefresh={() => void refetch()}
                             isRefreshing={isRefetching}
+                            disabled={readOnly}
                         />
                         <InputWithAddOn
                             addonLeft="Alias"
                             value={aliasesText}
                             onChange={e => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setAliasesText(e.target.value);
                             }}
                             placeholder="alias1 alias2"
+                            disabled={readOnly}
                         />
                     </>
                 }
                 onAdd={handleAdd}
+                disabled={readOnly}
                 items={fields.map((field, index) => ({
                     id: field.id,
                     content: (
@@ -117,3 +132,7 @@ export function NetworksFields() {
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

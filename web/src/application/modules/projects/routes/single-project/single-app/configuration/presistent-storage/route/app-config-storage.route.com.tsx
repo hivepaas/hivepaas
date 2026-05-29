@@ -11,7 +11,9 @@ import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
 import type { AppStorageMount } from "~/projects/domain";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { StorageTable } from "../building-blocks";
 import { StorageMountsProvider, useStorageMounts } from "../context";
@@ -21,6 +23,7 @@ type StorageMountWithId = AppStorageMount & { _id: string };
 function AppConfigStorageContent() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const { mounts, addMount, updateMount, removeMount } = useStorageMounts();
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -48,6 +51,10 @@ function AppConfigStorageContent() {
     const updateVer = appData?.data.updateVer ?? 0;
 
     async function persistMounts(nextMounts: StorageMountWithId[], successMessage: string) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
@@ -70,6 +77,10 @@ function AppConfigStorageContent() {
     }
 
     const handleAddMount = () => {
+        if (!canWrite) {
+            return;
+        }
+
         storageMountDialog.actions.open({
             projectKey,
             appLocalKey,
@@ -87,9 +98,14 @@ function AppConfigStorageContent() {
 
     const handleEditMount = (mount: StorageMountWithId) => {
         storageMountDialog.actions.openEdit(mount, {
+            readOnly: !canWrite,
             projectKey,
             appLocalKey,
             onSubmit: async (updatedMount: AppStorageMount) => {
+                if (!canWrite) {
+                    return;
+                }
+
                 const nextMounts = mounts.map(existing =>
                     existing._id === mount._id ? { ...updatedMount, _id: mount._id } : existing,
                 );
@@ -100,6 +116,10 @@ function AppConfigStorageContent() {
     };
 
     const handleDeleteMount = (mount: StorageMountWithId) => {
+        if (!canWrite) {
+            return;
+        }
+
         const nextMounts = mounts.filter(existing => existing._id !== mount._id);
         void persistMounts(nextMounts, "Storage mount removed").then(() => {
             removeMount(mount._id);
@@ -128,6 +148,7 @@ function AppConfigStorageContent() {
                 onAddMount={handleAddMount}
                 onEditMount={handleEditMount}
                 onDeleteMount={handleDeleteMount}
+                canWrite={canWrite}
             />
         </div>
     );

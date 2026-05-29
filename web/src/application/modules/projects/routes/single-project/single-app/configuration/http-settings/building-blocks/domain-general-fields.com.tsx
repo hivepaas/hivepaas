@@ -8,9 +8,10 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 interface DomainGeneralFieldsProps {
     domainIndex: number;
+    readOnly?: boolean;
 }
 
-export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
+export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGeneralFieldsProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -24,16 +25,32 @@ export function DomainGeneralFields({ domainIndex }: DomainGeneralFieldsProps) {
     return (
         <ContentBlock label="General">
             <div className="flex flex-col gap-6">
-                <ContainerPort domainIndex={domainIndex} />
-                <SslCert domainIndex={domainIndex} />
+                <ContainerPort
+                    domainIndex={domainIndex}
+                    readOnly={readOnly}
+                />
+                <SslCert
+                    domainIndex={domainIndex}
+                    readOnly={readOnly}
+                />
 
                 <InfoBlock title="Force HTTPS">
                     <Checkbox
                         checked={forceHttps.value}
-                        onCheckedChange={forceHttps.onChange}
+                        onCheckedChange={value => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            forceHttps.onChange(value);
+                        }}
+                        disabled={readOnly}
                     />
                 </InfoBlock>
-                <RedirectTo domainIndex={domainIndex} />
+                <RedirectTo
+                    domainIndex={domainIndex}
+                    readOnly={readOnly}
+                />
             </div>
         </ContentBlock>
     );

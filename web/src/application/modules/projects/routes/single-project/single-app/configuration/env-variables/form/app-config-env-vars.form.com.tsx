@@ -25,7 +25,7 @@ type SchemaInput = AppConfigEnvVarsFormSchemaInput;
 type SchemaOutput = AppConfigEnvVarsFormSchemaOutput;
 
 export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Props>(function AppConfigEnvVarsForm(
-    { defaultValues, inheritedValues, onSubmit, children }: Props,
+    { defaultValues, inheritedValues, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<AppConfigEnvVarsFormRef>,
 ) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -44,6 +44,10 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
     const [viewMode, setViewMode] = useState<"merge" | "individual">("individual");
 
     function onValid(values: SchemaOutput) {
+        if (readOnly) {
+            return;
+        }
+
         if (!isDirty) {
             toast.info("No changes to save");
             return;
@@ -90,54 +94,64 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
 
                         void methods.handleSubmit(onValid, onInvalid)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <EnvVarsFormHeader
-                        search={{ value: search, onChange: setSearch }}
-                        isRevealed={isRevealed}
-                        onRevealToggle={() => {
-                            setIsRevealed(!isRevealed);
-                        }}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                    />
-
-                    {inheritedValues && (
-                        <InheritedEnvVarsAccordion
-                            title="Inherited Build Time Env Variables"
-                            items={inheritedValues.buildtime}
-                            search={search}
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <EnvVarsFormHeader
+                            search={{ value: search, onChange: setSearch }}
                             isRevealed={isRevealed}
+                            onRevealToggle={() => {
+                                setIsRevealed(!isRevealed);
+                            }}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
                         />
-                    )}
-                    <EnvVarsBaseForm
-                        search={search}
-                        viewMode={viewMode}
-                        isRevealed={isRevealed}
-                        name="buildtime"
-                        title="Buildtime Env Vars"
-                    />
-                    <div className="h-px bg-border" />
-                    {inheritedValues && (
-                        <InheritedEnvVarsAccordion
-                            title="Inherited Runtime Env Variables"
-                            items={inheritedValues.runtime}
-                            search={search}
-                            isRevealed={isRevealed}
-                        />
-                    )}
-                    <EnvVarsBaseForm
-                        search={search}
-                        viewMode={viewMode}
-                        isRevealed={isRevealed}
-                        name="runtime"
-                        title="Runtime Env Vars"
-                    />
 
-                    {children}
+                        {inheritedValues && (
+                            <InheritedEnvVarsAccordion
+                                title="Inherited Build Time Env Variables"
+                                items={inheritedValues.buildtime}
+                                search={search}
+                                isRevealed={isRevealed}
+                            />
+                        )}
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
+                            name="buildtime"
+                            title="Buildtime Env Vars"
+                            readOnly={readOnly}
+                        />
+                        <div className="h-px bg-border" />
+                        {inheritedValues && (
+                            <InheritedEnvVarsAccordion
+                                title="Inherited Runtime Env Variables"
+                                items={inheritedValues.runtime}
+                                search={search}
+                                isRevealed={isRevealed}
+                            />
+                        )}
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
+                            name="runtime"
+                            title="Runtime Env Vars"
+                            readOnly={readOnly}
+                        />
+
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -150,4 +164,5 @@ type Props = PropsWithChildren<{
     defaultValues: Partial<AppConfigEnvVarsFormSchemaInput>;
     inheritedValues?: { buildtime: EnvVarRecord[]; runtime: EnvVarRecord[] };
     onSubmit: (values: AppConfigEnvVarsFormSchemaOutput) => void;
+    readOnly?: boolean;
 }>;

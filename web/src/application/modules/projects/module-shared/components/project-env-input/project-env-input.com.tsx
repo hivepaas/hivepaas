@@ -15,6 +15,7 @@ export interface ProjectEnvInputProps {
     onUpdateColor: (envName: string, color: string) => void;
     placeholder?: string;
     className?: string;
+    disabled?: boolean;
 }
 
 export function ProjectEnvInput({
@@ -24,6 +25,7 @@ export function ProjectEnvInput({
     onUpdateColor,
     placeholder = "Enter environment",
     className,
+    disabled = false,
 }: ProjectEnvInputProps) {
     const [isInputVisible, setIsInputVisible] = React.useState(false);
     const [inputValue, setInputValue] = React.useState("");
@@ -41,6 +43,14 @@ export function ProjectEnvInput({
     }, [isInputVisible]);
 
     React.useEffect(() => {
+        if (disabled) {
+            setIsInputVisible(false);
+            setInputValue("");
+            setSelectedColor(DEFAULT_ENV_COLOR);
+        }
+    }, [disabled]);
+
+    React.useEffect(() => {
         setDraftColors(previous => {
             const next: Record<string, string> = {};
             envs.forEach(env => {
@@ -54,6 +64,10 @@ export function ProjectEnvInput({
     }, [envs]);
 
     function handleCreateEnv() {
+        if (disabled) {
+            return;
+        }
+
         const trimmedValue = inputValue.trim();
         if (!hasReachedMax && trimmedValue && !envs.some(env => env.name === trimmedValue)) {
             onCreate({ name: trimmedValue, color: selectedColor });
@@ -85,6 +99,10 @@ export function ProjectEnvInput({
     }
 
     function handleDraftColor(envName: string, color: string) {
+        if (disabled) {
+            return;
+        }
+
         setDraftColors(previous => ({
             ...previous,
             [envName]: color,
@@ -92,6 +110,10 @@ export function ProjectEnvInput({
     }
 
     function handleCommitColor(env: ProjectEnvEntity) {
+        if (disabled) {
+            return;
+        }
+
         const draftColor = draftColors[env.name];
         if (!draftColor || draftColor === env.color) {
             return;
@@ -114,7 +136,10 @@ export function ProjectEnvInput({
                         <span className="text-sm font-medium">{env.name}</span>
                         <label
                             htmlFor={colorInputId}
-                            className="inline-flex size-5 cursor-pointer items-center justify-center rounded-sm border-2 border-white/80 transition-colors hover:border-white focus-within:ring-2 focus-within:ring-white/80"
+                            className={cn(
+                                "inline-flex size-5 cursor-pointer items-center justify-center rounded-sm border-2 border-white/80 transition-colors hover:border-white focus-within:ring-2 focus-within:ring-white/80",
+                                disabled && "cursor-not-allowed opacity-70",
+                            )}
                             style={{ backgroundColor: displayColor }}
                             aria-label={`Change ${env.name} color`}
                         >
@@ -129,14 +154,20 @@ export function ProjectEnvInput({
                                     handleCommitColor(env);
                                 }}
                                 className="sr-only"
+                                disabled={disabled}
                             />
                         </label>
                         <button
                             type="button"
                             onClick={() => {
+                                if (disabled) {
+                                    return;
+                                }
+
                                 onDelete(env.name);
                             }}
-                            className="rounded-sm p-0.5 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/80"
+                            disabled={disabled}
+                            className="rounded-sm p-0.5 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                             aria-label={`Remove ${env.name}`}
                         >
                             <X className="size-3.5 text-white/90" />
@@ -158,10 +189,14 @@ export function ProjectEnvInput({
                         onBlur={handleBlur}
                         placeholder={placeholder}
                         className="h-8 w-36"
+                        disabled={disabled}
                     />
                     <label
                         htmlFor={newColorInputId}
-                        className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md border border-border transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                        className={cn(
+                            "inline-flex size-8 cursor-pointer items-center justify-center rounded-md border border-border transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+                            disabled && "cursor-not-allowed opacity-70",
+                        )}
                         style={{ backgroundColor: selectedColor }}
                         aria-label="New environment color"
                     >
@@ -173,16 +208,17 @@ export function ProjectEnvInput({
                                 setSelectedColor(event.target.value);
                             }}
                             className="sr-only"
+                            disabled={disabled}
                         />
                     </label>
                 </div>
-            ) : hasReachedMax ? (
+            ) : hasReachedMax || disabled ? (
                 <button
                     type="button"
                     disabled
                     className="inline-flex size-8 cursor-not-allowed items-center justify-center rounded-md border border-border bg-secondary text-secondary-foreground opacity-50"
-                    title={`Maximum ${MAX_PROJECT_ENVS} environments`}
-                    aria-label={`Maximum ${MAX_PROJECT_ENVS} environments`}
+                    title={disabled ? "Environment editing is disabled" : `Maximum ${MAX_PROJECT_ENVS} environments`}
+                    aria-label={disabled ? "Environment editing is disabled" : `Maximum ${MAX_PROJECT_ENVS} environments`}
                 >
                     <Plus className="size-4" />
                 </button>

@@ -23,7 +23,7 @@ import { mapAppNetworkSettingsToFormInput } from "./app-config-networks.form-map
 type SchemaInput = AppConfigNetworksFormSchemaInput;
 type SchemaOutput = AppConfigNetworksFormSchemaOutput;
 
-export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapAppNetworkSettingsToFormInput(defaultValues)
@@ -72,23 +72,32 @@ export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, children }
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <ContentBlock label="Network Settings">
-                        <div className="flex flex-col gap-6">
-                            <NetworksFields />
-                            <HostsFileEntriesFields />
-                            <DNSFields />
-                        </div>
-                    </ContentBlock>
-                    <ContentBlock label="Endpoint & Port Config">
-                        <div className="flex flex-col gap-6">
-                            <EndpointPortConfigFields />
-                        </div>
-                    </ContentBlock>
-                    {children}
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ContentBlock label="Network Settings">
+                            <div className="flex flex-col gap-6">
+                                <NetworksFields readOnly={readOnly} />
+                                <HostsFileEntriesFields readOnly={readOnly} />
+                                <DNSFields readOnly={readOnly} />
+                            </div>
+                        </ContentBlock>
+                        <ContentBlock label="Endpoint & Port Config">
+                            <div className="flex flex-col gap-6">
+                                <EndpointPortConfigFields readOnly={readOnly} />
+                            </div>
+                        </ContentBlock>
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -99,4 +108,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigNetworksFormRef>;
     defaultValues?: AppNetworkSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

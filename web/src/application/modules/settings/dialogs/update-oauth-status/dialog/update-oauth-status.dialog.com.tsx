@@ -6,7 +6,9 @@ import { OAuthCommands } from "~/settings/data/commands";
 import { OAuthQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { UpdateOAuthStatusForm } from "../form";
 import { useUpdateOAuthStatusDialogState } from "../hooks";
@@ -15,6 +17,7 @@ import type { UpdateOAuthStatusFormOutput } from "../schemas";
 export function UpdateOAuthStatusDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useUpdateOAuthStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
 
     const { mutate: updateMeta, isPending } = OAuthCommands.useUpdateMeta({
         onSuccess: () => {
@@ -36,7 +39,7 @@ export function UpdateOAuthStatusDialog() {
     const oauth = detailQuery.data?.data;
 
     function onSubmit(values: UpdateOAuthStatusFormOutput) {
-        if (state.mode !== "open" || !oauth) return;
+        if (state.mode !== "open" || !oauth || !canWrite) return;
 
         updateMeta({
             id: oauth.id,
@@ -51,7 +54,7 @@ export function UpdateOAuthStatusDialog() {
 
     function handleClose() {
         if (isPending) return;
-        if (hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
+        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) return;
         closeDialog();
         dialogOptions?.onClose?.();
     }
@@ -82,6 +85,8 @@ export function UpdateOAuthStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

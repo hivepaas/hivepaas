@@ -17,6 +17,7 @@ interface DomainSelectorProps {
     setActiveDomainIndex: (index: number) => void;
     internalEndpoints: string[];
     domainSuggestion: string;
+    readOnly?: boolean;
 }
 
 export function DomainSelector({
@@ -24,6 +25,7 @@ export function DomainSelector({
     setActiveDomainIndex,
     internalEndpoints,
     domainSuggestion,
+    readOnly = false,
 }: DomainSelectorProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -54,6 +56,10 @@ export function DomainSelector({
     }, [domainSuggestion]);
 
     function handleDomainSelect(value: string) {
+        if (readOnly) {
+            return;
+        }
+
         const selectedIndex = domainValues.findIndex(
             domain => normalizeDomain(domain.domain) === normalizeDomain(value),
         );
@@ -67,6 +73,10 @@ export function DomainSelector({
     }
 
     function handleAddDomain() {
+        if (readOnly) {
+            return;
+        }
+
         const firstPort = domainValues[0]?.containerPort;
         const containerPort =
             typeof firstPort === "number" && Number.isInteger(firstPort) && firstPort >= 1 && firstPort <= 65535
@@ -120,7 +130,14 @@ export function DomainSelector({
             >
                 <Checkbox
                     checked={exposePublicly.value}
-                    onCheckedChange={exposePublicly.onChange}
+                    onCheckedChange={value => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        exposePublicly.onChange(value);
+                    }}
+                    disabled={readOnly}
                 />
             </InfoBlock>
             {exposePublicly.value && (
@@ -137,6 +154,10 @@ export function DomainSelector({
                             options={domainNames}
                             value={draft}
                             onInputChange={(value: string) => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setDraft(value);
                                 setDuplicateDomainError(null);
                             }}
@@ -146,6 +167,7 @@ export function DomainSelector({
                             emptyText="No domains configured"
                             className="max-w-[400px]"
                             disableFilter
+                            disabled={readOnly}
                         />
                         <div className="w-[74px]">
                             <Button
@@ -153,6 +175,7 @@ export function DomainSelector({
                                 variant="outline"
                                 title="Add domain"
                                 onClick={handleAddDomain}
+                                disabled={readOnly}
                             >
                                 <Plus className="size-4" /> Add
                             </Button>

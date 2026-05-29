@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui
 import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { EGithubAppOwnerType } from "~/settings/module-shared/enums";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { ProvisionGithubAppForm } from "../form";
 import { useProvisionGithubAppDialogState } from "../hooks";
@@ -12,6 +13,8 @@ import type { ProvisionGithubAppFormOutput } from "../schemas";
 export function ProvisionGithubAppDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useProvisionGithubAppDialogState();
     const [loginChecked, setLoginChecked] = useState(false);
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: beginSettingsManifestFlow, isPending: isBeginningSettings } =
         GithubAppCommands.useBeginManifestFlow({
@@ -36,12 +39,16 @@ export function ProvisionGithubAppDialog() {
     }, [clearDialog, state.mode]);
 
     function onLoginCheck() {
+        if (!canWrite) {
+            return;
+        }
+
         window.open("https://github.com/login", "_blank", "noopener,noreferrer");
         setLoginChecked(true);
     }
 
     function onSubmit(values: ProvisionGithubAppFormOutput) {
-        if (state.mode !== "open") {
+        if (state.mode !== "open" || !canWrite) {
             return;
         }
 
@@ -93,6 +100,8 @@ export function ProvisionGithubAppDialog() {
                         onLoginCheck={onLoginCheck}
                         onSubmit={onSubmit}
                         showAvailableInProjects={showAvailableInProjects}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
                     />
                 )}
             </DialogContent>

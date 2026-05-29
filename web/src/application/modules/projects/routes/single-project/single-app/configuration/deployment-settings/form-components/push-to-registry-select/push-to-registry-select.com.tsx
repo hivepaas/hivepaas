@@ -14,7 +14,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
-export function PushToRegistrySelect() {
+export function PushToRegistrySelect({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
@@ -57,6 +57,10 @@ export function PushToRegistrySelect() {
                     options={comboboxOptions}
                     value={pushToRegistry.value?.id ?? null}
                     onChange={(_, option) => {
+                        if (readOnly) {
+                            return;
+                        }
+
                         pushToRegistry.onChange(option ?? null);
                     }}
                     onSearch={setSearchQuery}
@@ -71,6 +75,7 @@ export function PushToRegistrySelect() {
                     onRefresh={() => void refetch()}
                     isRefreshing={isRefetching}
                     splitLabelBadge
+                    disabled={readOnly}
                 />
                 <FieldError errors={[pushToRegistryError]} />
                 <div className="text-xs">
@@ -88,3 +93,7 @@ export function PushToRegistrySelect() {
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

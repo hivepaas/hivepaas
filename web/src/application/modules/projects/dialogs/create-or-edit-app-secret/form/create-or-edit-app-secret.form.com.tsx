@@ -17,7 +17,14 @@ function getDefaultFilePath(name: string): string {
     return normalizedName ? `/run/secrets/${normalizedName}` : "/run/secrets/secret_name";
 }
 
-export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, isEditMode, initialValues }: Props) {
+export function CreateOrEditAppSecretForm({
+    isPending,
+    onSubmit,
+    onHasChanges,
+    isEditMode,
+    initialValues,
+    readOnly = false,
+}: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -48,8 +55,8 @@ export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, i
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     useEffect(() => {
         if (isEditMode || dirtyFields.filePath) {
@@ -117,6 +124,10 @@ export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, i
     });
 
     function onValid(values: CreateOrEditAppSecretFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         void onSubmit(values);
     }
 
@@ -128,79 +139,87 @@ export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, i
         <form
             onSubmit={event => {
                 event.preventDefault();
+                if (readOnly) {
+                    return;
+                }
+
                 void handleSubmit(onValid, onInvalid)(event);
             }}
             className="flex flex-col gap-6"
         >
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Name"
-                        isRequired
-                    />
-                }
+            <fieldset
+                disabled={readOnly}
+                className="contents"
             >
-                <FieldGroup>
-                    <Field>
-                        <Input
-                            id="app-secret-name"
-                            {...name}
-                            placeholder="SECRET_NAME"
-                            aria-invalid={isNameInvalid}
-                            disabled={isEditMode}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </Field>
-                </FieldGroup>
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Value Type"
-                        isRequired
-                    />
-                }
-            >
-                <Tabs
-                    value={valueType}
-                    onValueChange={nextValue => {
-                        valueTypeField.onChange(nextValue);
-                    }}
-                >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                        <TabsTrigger value="text">Text</TabsTrigger>
-                        <TabsTrigger value="binary">Binary</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </InfoBlock>
-
-            {valueType === "text" ? (
                 <InfoBlock
                     titleWidth={220}
                     title={
                         <LabelWithInfo
-                            label="Value"
-                            isRequired={!isEditMode}
+                            label="Name"
+                            isRequired
                         />
                     }
                 >
                     <FieldGroup>
                         <Field>
-                            <Textarea
-                                id="app-secret-text-value"
-                                {...textValue}
-                                placeholder={isEditMode ? "Leave empty to keep current value" : "Enter secret value"}
-                                rows={8}
-                                aria-invalid={isTextValueInvalid}
+                            <Input
+                                id="app-secret-name"
+                                {...name}
+                                placeholder="SECRET_NAME"
+                                aria-invalid={isNameInvalid}
+                                disabled={isEditMode}
                             />
-                            <p className="text-sm text-muted-foreground">Max size: 500kb</p>
-                            <FieldError errors={[errors.textValue]} />
+                            <FieldError errors={[errors.name]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title={
+                        <LabelWithInfo
+                            label="Value Type"
+                            isRequired
+                    />
+                }
+            >
+                    <Tabs
+                        value={valueType}
+                        onValueChange={nextValue => {
+                        valueTypeField.onChange(nextValue);
+                    }}
+                >
+                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsTrigger value="text">Text</TabsTrigger>
+                            <TabsTrigger value="binary">Binary</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                {valueType === "text" ? (
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Value"
+                                isRequired={!isEditMode}
+                        />
+                    }
+                >
+                        <FieldGroup>
+                            <Field>
+                                <Textarea
+                                    id="app-secret-text-value"
+                                    {...textValue}
+                                    placeholder={isEditMode ? "Leave empty to keep current value" : "Enter secret value"}
+                                    rows={8}
+                                    aria-invalid={isTextValueInvalid}
+                            />
+                                <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                                <FieldError errors={[errors.textValue]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
             ) : (
                 <InfoBlock
                     titleWidth={220}
@@ -244,19 +263,19 @@ export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, i
                 </InfoBlock>
             )}
 
-            <InfoBlock
-                titleWidth={220}
-                title={<LabelWithInfo label="Mount into Filesystem" />}
+                <InfoBlock
+                    titleWidth={220}
+                    title={<LabelWithInfo label="Mount into Filesystem" />}
             >
-                <Checkbox
-                    checked={mountIntoFilesystem}
-                    onCheckedChange={checked => {
+                    <Checkbox
+                        checked={mountIntoFilesystem}
+                        onCheckedChange={checked => {
                         mountIntoFilesystemField.onChange(checked === true);
                     }}
                 />
-            </InfoBlock>
+                </InfoBlock>
 
-            {mountIntoFilesystem && (
+                {mountIntoFilesystem && (
                 <>
                     <InfoBlock
                         titleWidth={220}
@@ -329,16 +348,18 @@ export function CreateOrEditAppSecretForm({ isPending, onSubmit, onHasChanges, i
                 </>
             )}
 
-            <Field>
-                <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
-                </div>
-            </Field>
+                <Field>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            disabled={readOnly}
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </Field>
+            </fieldset>
         </form>
     );
 }
@@ -349,4 +370,5 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditAppSecretFormInput>;
+    readOnly?: boolean;
 }

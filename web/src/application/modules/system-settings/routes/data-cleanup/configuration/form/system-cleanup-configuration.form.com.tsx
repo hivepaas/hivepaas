@@ -483,7 +483,7 @@ function useSystemCleanupFormMethods(defaultValues?: SystemCleanupSettings) {
     });
 }
 
-export function SystemCleanupConfigurationForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function SystemCleanupConfigurationForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useSystemCleanupFormMethods(defaultValues);
 
     useImperativeHandle(
@@ -520,12 +520,21 @@ export function SystemCleanupConfigurationForm({ ref, defaultValues, onSubmit, c
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <EnabledField />
-                    <EnabledCleanupConfigurationFields />
+                    <fieldset
+                        disabled={readOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <EnabledField />
+                        <EnabledCleanupConfigurationFields />
+                    </fieldset>
                     {children}
                 </form>
             </FormProvider>
@@ -537,4 +546,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<SystemCleanupConfigurationFormRef>;
     defaultValues?: SystemCleanupSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

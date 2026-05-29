@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ManualMethod, SshMethod } from "../building-blocks";
 import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput, JoinNewNodeFormSchema } from "../schemas";
 
-export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, children }: Props) {
+export function JoinNewNodeForm({ readOnly = false, onSubmit, onMethodChange, onHasChanges, children }: Props) {
     const [manualCompleted, setManualCompleted] = useState<boolean>(false);
     const methods = useForm<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>({
         defaultValues: {
@@ -30,8 +30,8 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
     } = methods;
 
     useEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty, onHasChanges]);
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     const method = useWatch({ control, name: "method" });
     const joinAsManager = useWatch({ control, name: "joinAsManager" });
@@ -53,6 +53,10 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
     });
 
     function onValid(values: JoinNewNodeFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
         void onSubmit(values);
     }
 
@@ -77,6 +81,10 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                             <Tabs
                                 value={methodField.value}
                                 onValueChange={value => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
                                     const newMethod = value as EJoinNodeMethod;
                                     methodField.onChange(newMethod);
                                     onMethodChange?.(newMethod);
@@ -87,7 +95,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                         value={EJoinNodeMethod.RunCommandManually}
                                         className="flex-1"
                                         aria-invalid={isMethodInvalid}
-                                        disabled={manualCompleted}
+                                        disabled={readOnly || manualCompleted}
                                     >
                                         Run command manually
                                     </TabsTrigger>
@@ -95,7 +103,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                         value={EJoinNodeMethod.RunCommandViaSSH}
                                         className="flex-1"
                                         aria-invalid={isMethodInvalid}
-                                        disabled={manualCompleted}
+                                        disabled={readOnly || manualCompleted}
                                     >
                                         Run command via SSH
                                     </TabsTrigger>
@@ -113,6 +121,10 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                 <Tabs
                                     value={joinAsManager ? "manager" : "worker"}
                                     onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
                                         joinAsManagerField.onChange(value === "manager");
                                     }}
                                 >
@@ -121,7 +133,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                             value="manager"
                                             className="flex-1"
                                             aria-invalid={isJoinAsManagerInvalid}
-                                            disabled={manualCompleted}
+                                            disabled={readOnly || manualCompleted}
                                         >
                                             Manager
                                         </TabsTrigger>
@@ -129,7 +141,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                                             value="worker"
                                             className="flex-1"
                                             aria-invalid={isJoinAsManagerInvalid}
-                                            disabled={manualCompleted}
+                                            disabled={readOnly || manualCompleted}
                                         >
                                             Worker
                                         </TabsTrigger>
@@ -142,6 +154,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                         {/* Manual Method: Command Display */}
                         {method === EJoinNodeMethod.RunCommandManually && (
                             <ManualMethod
+                                readOnly={readOnly}
                                 onComplete={() => {
                                     setManualCompleted(true);
                                 }}
@@ -149,7 +162,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
                         )}
 
                         {/* SSH Method: SSH Fields */}
-                        {method === EJoinNodeMethod.RunCommandViaSSH && <SshMethod />}
+                        {method === EJoinNodeMethod.RunCommandViaSSH && <SshMethod readOnly={readOnly} />}
                     </FieldGroup>
                     {children}
                 </form>
@@ -159,6 +172,7 @@ export function JoinNewNodeForm({ onSubmit, onMethodChange, onHasChanges, childr
 }
 
 interface Props extends PropsWithChildren {
+    readOnly?: boolean;
     onSubmit: (values: JoinNewNodeFormOutput) => Promise<void> | void;
     onMethodChange?: (method: EJoinNodeMethod) => void;
     onHasChanges?: (dirty: boolean) => void;

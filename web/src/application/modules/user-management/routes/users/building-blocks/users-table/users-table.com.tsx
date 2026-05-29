@@ -4,8 +4,9 @@ import { useInviteUserDialog } from "~/user-management/dialogs";
 import { UsersTableDefs } from "~/user-management/module-shared/definitions/tables";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -27,9 +28,19 @@ export function UsersTable() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button onClick={inviteUserDialog.actions.open}>
-                        <Plus /> Invite User
-                    </Button>
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.User}
+                        action="write"
+                    >
+                        {({ isDenied }) => (
+                            <Button
+                                onClick={inviteUserDialog.actions.open}
+                                disabled={isDenied}
+                            >
+                                <Plus /> Invite User
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 }
             />
             <DataTable

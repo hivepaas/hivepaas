@@ -5,6 +5,9 @@ import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
 import { ProjectsQueries } from "~/projects/data/queries";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
 import { CreateProjectAppForm } from "../form";
 import { useCreateProjectAppDialogState } from "../hooks";
 import { type CreateProjectAppFormOutput } from "../schemas";
@@ -12,6 +15,7 @@ import { type CreateProjectAppFormOutput } from "../schemas";
 export function CreateProjectAppDialog() {
     const { state, props, ...actions } = useCreateProjectAppDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const open = state.mode !== "closed";
     const { projectId } = state;
@@ -36,7 +40,7 @@ export function CreateProjectAppDialog() {
     }, [state.mode]);
 
     function onSubmit(values: CreateProjectAppFormOutput) {
-        if (!projectId) {
+        if (!projectId || !canWrite) {
             return;
         }
 
@@ -50,7 +54,7 @@ export function CreateProjectAppDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -77,6 +81,7 @@ export function CreateProjectAppDialog() {
                 <CreateProjectAppForm
                     envs={envs}
                     isPending={isPending}
+                    readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />

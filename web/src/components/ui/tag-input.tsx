@@ -11,9 +11,10 @@ export interface TagInputProps {
     onDelete: (tag: string) => void;
     placeholder?: string;
     className?: string;
+    disabled?: boolean;
 }
 
-export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", className }: TagInputProps) {
+export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", className, disabled = false }: TagInputProps) {
     const [isInputVisible, setIsInputVisible] = React.useState(false);
     const [inputValue, setInputValue] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -24,7 +25,18 @@ export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", 
         }
     }, [isInputVisible]);
 
+    React.useEffect(() => {
+        if (disabled) {
+            setIsInputVisible(false);
+            setInputValue("");
+        }
+    }, [disabled]);
+
     function handleCreateTag() {
+        if (disabled) {
+            return;
+        }
+
         const trimmedValue = inputValue.trim();
         if (trimmedValue && !tags.includes(trimmedValue)) {
             onCreate(trimmedValue);
@@ -63,9 +75,14 @@ export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", 
                     <button
                         type="button"
                         onClick={() => {
+                            if (disabled) {
+                                return;
+                            }
+
                             onDelete(tag);
                         }}
-                        className="ml-0.5 rounded-sm hover:bg-secondary-foreground/20 p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        disabled={disabled}
+                        className="ml-0.5 rounded-sm hover:bg-secondary-foreground/20 p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={`Remove ${tag}`}
                     >
                         <X className="h-3 w-3 text-secondary-foreground/70" />
@@ -85,14 +102,20 @@ export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", 
                     onBlur={handleBlur}
                     placeholder={placeholder}
                     className="h-8 w-24 min-w-[100px]"
+                    disabled={disabled}
                 />
             ) : (
                 <button
                     type="button"
                     onClick={() => {
+                        if (disabled) {
+                            return;
+                        }
+
                         setIsInputVisible(true);
                     }}
-                    className="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground h-8 w-8 hover:bg-secondary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border border-border"
+                    disabled={disabled}
+                    className="inline-flex items-center justify-center rounded-md bg-secondary text-secondary-foreground h-8 w-8 hover:bg-secondary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border border-border disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Add tag"
                 >
                     <Plus className="h-4 w-4" />

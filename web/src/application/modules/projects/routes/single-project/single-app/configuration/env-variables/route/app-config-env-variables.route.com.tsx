@@ -1,14 +1,16 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectAppEnvVarsCommands } from "~/projects/data/commands";
 import { ProjectAppEnvVarsQueries } from "~/projects/data/queries";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -21,6 +23,7 @@ import { type AppConfigEnvVarsFormRef } from "../types";
 export function AppConfigEnvVariablesRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigEnvVarsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -44,6 +47,10 @@ export function AppConfigEnvVariablesRoute() {
     });
 
     function handleSubmit(values: AppConfigEnvVarsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
         invariant(envVarsData, "envVarsData must be defined");
@@ -85,16 +92,10 @@ export function AppConfigEnvVariablesRoute() {
                 runtime: envVars.inheritedRuntimeEnvVars,
             }}
             onSubmit={handleSubmit}
+            readOnly={!canWrite}
         >
             <div className="flex justify-end gap-2 mt-4">
-                <Button
-                    type="submit"
-                    className="min-w-[100px]"
-                    disabled={isPending}
-                    isLoading={isPending}
-                >
-                    Save
-                </Button>
+                <ProjectPermissionSubmitButton isPending={isPending} />
             </div>
         </AppConfigEnvVarsForm>
     );

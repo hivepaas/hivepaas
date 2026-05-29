@@ -4,8 +4,9 @@ import { useCreateProjectDialog } from "~/projects/dialogs/create-project";
 import { ProjectsTableDefs } from "~/projects/module-shared/definitions/tables/projects/projects-table.defs";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -28,13 +29,21 @@ export function ProjectsTable() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            actions.open();
-                        }}
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.Project}
+                        action="write"
                     >
-                        <Plus /> New Project
-                    </Button>
+                        {({ isDenied }) => (
+                            <Button
+                                onClick={() => {
+                                    actions.open();
+                                }}
+                                disabled={isDenied}
+                            >
+                                <Plus /> New Project
+                            </Button>
+                        )}
+                    </PermissionTooltipAction>
                 }
             />
             <DataTable

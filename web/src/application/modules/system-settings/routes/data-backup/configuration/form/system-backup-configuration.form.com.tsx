@@ -417,10 +417,8 @@ function useSystemBackupFormMethods(defaultValues?: SystemBackupSettings) {
     });
 }
 
-export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useSystemBackupFormMethods(defaultValues);
-
-    console.log(defaultValues);
 
     useImperativeHandle(
         ref,
@@ -456,12 +454,21 @@ export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, ch
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <EnabledField />
-                    <EnabledBackupConfigurationFields />
+                    <fieldset
+                        disabled={readOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <EnabledField />
+                        <EnabledBackupConfigurationFields />
+                    </fieldset>
                     {children}
                 </form>
             </FormProvider>
@@ -473,4 +480,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<SystemBackupConfigurationFormRef>;
     defaultValues?: SystemBackupSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EImServiceKind } from "@application/shared/enums";
@@ -34,8 +34,11 @@ export function CreateOrEditImPlatformForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -53,8 +56,8 @@ export function CreateOrEditImPlatformForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const kindValue = useWatch({ control, name: "kind" });
 
@@ -74,7 +77,7 @@ export function CreateOrEditImPlatformForm({
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditImPlatformFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -98,8 +101,9 @@ export function CreateOrEditImPlatformForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <FieldGroup>
@@ -187,7 +191,7 @@ export function CreateOrEditImPlatformForm({
                     </InfoBlock>
                 </FieldGroup>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
@@ -216,7 +220,7 @@ export function CreateOrEditImPlatformForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -242,5 +246,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditImPlatformFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

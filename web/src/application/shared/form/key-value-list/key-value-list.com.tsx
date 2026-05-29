@@ -17,6 +17,7 @@ function View<T>({
     className,
     checkDuplicates = false,
     keyOptions,
+    disabled = false,
 }: Props<T>) {
     const { control } = useFormContext<Record<string, { key: string; value: string }[]>>();
     const { fields, append, remove } = useFieldArray({ control, name: name as string });
@@ -25,6 +26,10 @@ function View<T>({
     const [valueInput, setValueInput] = useState("");
 
     const handleAdd = () => {
+        if (disabled) {
+            return;
+        }
+
         const trimmedKey = keyInput.trim();
         if (!trimmedKey) return;
 
@@ -48,7 +53,14 @@ function View<T>({
                     {keyOptions ? (
                         <Select
                             value={keyInput}
-                            onValueChange={setKeyInput}
+                            onValueChange={value => {
+                                if (disabled) {
+                                    return;
+                                }
+
+                                setKeyInput(value);
+                            }}
+                            disabled={disabled}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder={keyPlaceholder ?? keyLabel} />
@@ -69,25 +81,35 @@ function View<T>({
                             addonLeft={keyLabel}
                             value={keyInput}
                             onChange={e => {
+                                if (disabled) {
+                                    return;
+                                }
+
                                 setKeyInput(e.target.value);
                             }}
                             placeholder={keyPlaceholder ?? keyLabel}
+                            disabled={disabled}
                         />
                     )}
                     <InputWithAddOn
                         addonLeft={valueLabel}
                         value={valueInput}
                         onChange={e => {
+                            if (disabled) {
+                                return;
+                            }
+
                             setValueInput(e.target.value);
                         }}
                         placeholder={valuePlaceholder ?? valueLabel}
+                        disabled={disabled}
                     />
                 </div>
                 <Button
                     type="button"
                     variant="outline"
                     onClick={handleAdd}
-                    disabled={keyInput.trim() === ""}
+                    disabled={disabled || keyInput.trim() === ""}
                     className="h-9 px-4"
                 >
                     <Plus className="size-4" /> Add
@@ -113,6 +135,10 @@ function View<T>({
                                     cancelText="Cancel"
                                     description="Are you sure you want to remove this item?"
                                     onConfirm={() => {
+                                        if (disabled) {
+                                            return;
+                                        }
+
                                         remove(index);
                                     }}
                                 >
@@ -121,6 +147,7 @@ function View<T>({
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                        disabled={disabled}
                                     >
                                         <Trash2 className="size-4" />
                                     </Button>
@@ -143,6 +170,7 @@ type Props<T> = {
     className?: string;
     checkDuplicates?: boolean;
     keyOptions?: { label: string; value: string }[];
+    disabled?: boolean;
 };
 
 export const KeyValueList = React.memo(View) as typeof View;

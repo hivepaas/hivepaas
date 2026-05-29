@@ -24,6 +24,7 @@ export interface EditableComboboxProps {
     "isRefreshing"?: boolean;
     "inputClassName"?: string;
     "disableFilter"?: boolean;
+    "disabled"?: boolean;
 }
 
 export function EditableCombobox({
@@ -40,6 +41,7 @@ export function EditableCombobox({
     inputClassName,
     isRefreshing = false,
     disableFilter = false,
+    disabled = false,
 }: EditableComboboxProps) {
     const [open, setOpen] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -53,19 +55,30 @@ export function EditableCombobox({
     }, [options, text, disableFilter]);
 
     const handleSelect = (selected: string) => {
+        if (disabled) {
+            return;
+        }
+
         onChange(selected);
         setOpen(false);
         inputRef.current?.focus();
     };
 
-    const showClear = allowClear && text.length > 0;
+    const showClear = allowClear && !disabled && text.length > 0;
 
     return (
         <div className={cn("flex w-full min-w-0 items-center gap-1.5", className)}>
             <div className="group/clear min-w-0 flex-1">
                 <Popover
-                    open={open}
-                    onOpenChange={setOpen}
+                    open={!disabled && open}
+                    onOpenChange={nextOpen => {
+                        if (disabled) {
+                            setOpen(false);
+                            return;
+                        }
+
+                        setOpen(nextOpen);
+                    }}
                 >
                     <PopoverAnchor asChild>
                         <div className="relative flex w-full items-center">
@@ -73,6 +86,10 @@ export function EditableCombobox({
                                 ref={inputRef}
                                 value={text}
                                 onChange={e => {
+                                    if (disabled) {
+                                        return;
+                                    }
+
                                     if (onInputChange) {
                                         onInputChange(e.target.value);
                                         return;
@@ -80,6 +97,10 @@ export function EditableCombobox({
                                     onChange(e.target.value);
                                 }}
                                 onFocus={() => {
+                                    if (disabled) {
+                                        return;
+                                    }
+
                                     setOpen(true);
                                 }}
                                 placeholder={placeholder}
@@ -89,6 +110,7 @@ export function EditableCombobox({
                                     showClear && "pr-9",
                                     inputClassName,
                                 )}
+                                disabled={disabled}
                             />
                             {showClear && (
                                 <button
@@ -161,8 +183,13 @@ export function EditableCombobox({
                     title="Refresh list"
                     className="size-9 shrink-0 shadow-none"
                     onClick={() => {
+                        if (disabled) {
+                            return;
+                        }
+
                         onRefresh?.();
                     }}
+                    disabled={disabled || isRefreshing}
                 >
                     <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
                 </Button>

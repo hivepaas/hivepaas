@@ -10,9 +10,10 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable } from "@/components/ui";
+import { DataTable } from "@/components/ui";
 
 import { ProjectSettingsImportButton } from "../project-settings-import-button";
+import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { AccessTokenTableDefs } from "./access-token-table.defs";
 import type { AccessTokenTableScope } from "./access-token-table.types";
@@ -52,14 +53,15 @@ function AccessTokenTableView({ scope }: Props) {
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.AccessToken}
                             />
                         )}
-                        <Button
+                        <SettingsScopeCreateButton
+                            scope={scope}
                             onClick={() => {
                                 createOrEditDialog.actions.open(scope);
                             }}
                         >
                             <Plus className="size-4" />
                             New Access Token
-                        </Button>
+                        </SettingsScopeCreateButton>
                     </div>
                 }
             />

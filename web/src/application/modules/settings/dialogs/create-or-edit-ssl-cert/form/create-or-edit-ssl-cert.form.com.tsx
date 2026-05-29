@@ -6,7 +6,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { ProjectNotificationQueries } from "~/projects/data/queries";
 import { NotificationQueries } from "~/settings/data/queries";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -152,8 +152,11 @@ export function CreateOrEditSslCertForm({
     scope,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const {
         handleSubmit,
         control,
@@ -224,8 +227,8 @@ export function CreateOrEditSslCertForm({
     ]);
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const certType = useWatch({ control, name: "certType" });
     const expireAt = useWatch({ control, name: "expireAt" });
@@ -305,7 +308,7 @@ export function CreateOrEditSslCertForm({
     const { field: failureUseDefaultField } = useController({ name: "notification.failureUseDefault", control });
 
     function onValid(values: CreateOrEditSslCertFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -325,8 +328,9 @@ export function CreateOrEditSslCertForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <FieldGroup>
@@ -598,7 +602,7 @@ export function CreateOrEditSslCertForm({
                     </div>
                 </ContentBlock>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
@@ -611,7 +615,7 @@ export function CreateOrEditSslCertForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -645,5 +649,6 @@ interface Props {
     scope: SslCertTableScope;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

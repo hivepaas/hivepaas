@@ -25,5 +25,6 @@ export interface StorageMountDialogOptions {
         onClose?: () => void;
         onSubmit?: (mount: AppStorageMount) => Promise<void>;
         onError?: (error: Error) => void;
+        readOnly?: boolean;
     };
 }

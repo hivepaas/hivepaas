@@ -6,7 +6,7 @@ import { ProjectEmailQueries, ProjectImServiceQueries } from "~/projects/data/qu
 import { EmailQueries, ImServiceQueries } from "~/settings/data/queries";
 import type { SettingEmail, SettingImService } from "~/settings/domain";
 import type { NotificationTargetTableScope } from "~/settings/module-shared/components";
-import { InheritedSettingReadonlyNotice } from "~/settings/module-shared/components/inherited-setting-readonly-notice.com";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { AppLink, Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -73,8 +73,11 @@ export function CreateOrEditNotificationTargetForm({
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
+    readOnly = false,
     onClose,
 }: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+
     const { emailQuery, imServiceQuery } = useNotificationSourceQueries(scope);
     const {
         handleSubmit,
@@ -102,8 +105,8 @@ export function CreateOrEditNotificationTargetForm({
     });
 
     useEffect(() => {
-        onHasChanges?.(readOnlyInherited ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnlyInherited]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, isReadOnly]);
 
     const {
         field: name,
@@ -179,7 +182,7 @@ export function CreateOrEditNotificationTargetForm({
             : ROUTE.settings.imPlatforms.$route;
 
     function onValid(values: CreateOrEditNotificationTargetFormOutput) {
-        if (readOnlyInherited) {
+        if (isReadOnly) {
             return;
         }
 
@@ -199,8 +202,9 @@ export function CreateOrEditNotificationTargetForm({
             className="flex flex-col gap-6"
         >
             {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
             <fieldset
-                disabled={readOnlyInherited}
+                disabled={isReadOnly}
                 className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
             >
                 <InfoBlock
@@ -466,7 +470,7 @@ export function CreateOrEditNotificationTargetForm({
                     />
                 </InfoBlock>
 
-                {!readOnlyInherited && (
+                {!isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
@@ -479,7 +483,7 @@ export function CreateOrEditNotificationTargetForm({
                     </Field>
                 )}
             </fieldset>
-            {readOnlyInherited && (
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
@@ -503,5 +507,6 @@ interface Props {
     initialValues?: Partial<CreateOrEditNotificationTargetFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
+    readOnly?: boolean;
     onClose?: () => void;
 }

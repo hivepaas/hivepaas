@@ -1,15 +1,16 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui/button";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
 import { ProjectEnvVarsQueries } from "~/projects/data/queries/project-env-vars";
-import { ProjectWithSidebar } from "~/projects/module-shared/components";
+import { ProjectPermissionSubmitButton, ProjectWithSidebar } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -22,6 +23,7 @@ import type { ProjectEnvVarsFormRef } from "../types";
 export function ProjectEnvVariablesRoute() {
     const { id: projectId } = useParams<{ id: string }>();
     const formRef = useRef<ProjectEnvVarsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
 
@@ -44,6 +46,10 @@ export function ProjectEnvVariablesRoute() {
     });
 
     function handleSubmit(values: ProjectEnvVarsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(envVarsData, "envVarsData must be defined");
 
@@ -80,16 +86,10 @@ export function ProjectEnvVariablesRoute() {
                     runtime: envVars.runtime,
                 }}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end gap-2">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
+                    <ProjectPermissionSubmitButton isPending={isPending} />
                 </div>
             </ProjectEnvVarsForm>
         </ProjectWithSidebar>

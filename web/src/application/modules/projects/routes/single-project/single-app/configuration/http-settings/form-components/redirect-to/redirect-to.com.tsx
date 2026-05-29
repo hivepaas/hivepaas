@@ -7,7 +7,7 @@ import { EditableCombobox, InfoBlock } from "@application/shared/components";
 
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../../schemas";
 
-function View({ domainIndex }: RedirectToProps) {
+function View({ domainIndex, readOnly = false }: RedirectToProps) {
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -40,12 +40,17 @@ function View({ domainIndex }: RedirectToProps) {
                 options={options}
                 value={domainRedirect.value}
                 onChange={value => {
+                    if (readOnly) {
+                        return;
+                    }
+
                     setValue(`domains.${domainIndex}.domainRedirect`, value, { shouldDirty: true });
                 }}
                 placeholder="https://other-domain.com"
                 className="max-w-[400px]"
                 allowClear
                 aria-invalid={isDomainRedirectInvalid}
+                disabled={readOnly}
             />
             <FieldError errors={[domainRedirectError]} />
         </InfoBlock>
@@ -54,6 +59,7 @@ function View({ domainIndex }: RedirectToProps) {
 
 interface RedirectToProps {
     domainIndex: number;
+    readOnly?: boolean;
 }
 
 export const RedirectTo = React.memo(View);

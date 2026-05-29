@@ -13,10 +13,11 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 interface ClientConfigSectionProps {
     prefix: string;
     autoExpandToken?: number;
+    readOnly?: boolean;
     onRemove?: () => void;
 }
 
-export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: ClientConfigSectionProps) {
+export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false, onRemove }: ClientConfigSectionProps) {
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (autoExpandToken !== undefined) {
@@ -84,7 +85,14 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                         size="icon"
                         className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
-                        onClick={onRemove}
+                        onClick={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            onRemove();
+                        }}
+                        disabled={readOnly}
                     >
                         <X className="size-4" />
                     </Button>
@@ -95,7 +103,14 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -106,6 +121,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                                     onChange={maxRequestBody.onChange}
                                     className="max-w-[100px]"
                                     aria-invalid={isMaxRequestBodyInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[maxRequestBodyError]} />
                             </InfoBlock>
@@ -116,6 +132,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                                     onChange={memRequestBody.onChange}
                                     className="max-w-[100px]"
                                     aria-invalid={isMemRequestBodyInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[memRequestBodyError]} />
                             </InfoBlock>
@@ -129,6 +146,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, onRemove }: Clien
                                         rows={2}
                                         className="resize-y"
                                         aria-invalid={isAllowedIPsInvalid}
+                                        disabled={readOnly}
                                     />
                                     <FieldError errors={[allowedIPsError]} />
                                 </div>

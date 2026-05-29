@@ -9,7 +9,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
 
-export function GitSourceFields() {
+export function GitSourceFields({ readOnly = false }: Props) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -38,9 +38,9 @@ export function GitSourceFields() {
 
     return (
         <>
-            <GitCredentialSelect />
+            <GitCredentialSelect readOnly={readOnly} />
 
-            <GitRepositoryInput />
+            <GitRepositoryInput readOnly={readOnly} />
 
             <InfoBlock
                 title={
@@ -57,6 +57,7 @@ export function GitSourceFields() {
                     placeholder="main, tags/v1.2.3"
                     aria-invalid={isRepoRefInvalid}
                     className="max-w-[400px]"
+                    disabled={readOnly}
                 />
                 <FieldError errors={[repoRefError]} />
             </InfoBlock>
@@ -69,6 +70,7 @@ export function GitSourceFields() {
                     placeholder="commit sha"
                     aria-invalid={isCommitHashInvalid}
                     className="max-w-[400px]"
+                    disabled={readOnly}
                 />
                 <FieldError errors={[commitHashError]} />
             </InfoBlock>
@@ -81,11 +83,12 @@ export function GitSourceFields() {
                     placeholder="path/to/Dockerfile"
                     aria-invalid={isDockerfilePathInvalid}
                     className="max-w-[400px]"
+                    disabled={readOnly}
                 />
                 <FieldError errors={[dockerfilePathError]} />
             </InfoBlock>
 
-            <PushToRegistrySelect />
+            <PushToRegistrySelect readOnly={readOnly} />
 
             <InfoBlock title="Image Repository Name">
                 <Input
@@ -95,6 +98,7 @@ export function GitSourceFields() {
                     placeholder="auto"
                     aria-invalid={isImageNameInvalid}
                     className="max-w-[400px]"
+                    disabled={readOnly}
                 />
                 <FieldError errors={[imageNameError]} />
             </InfoBlock>
@@ -135,3 +139,7 @@ export function GitSourceFields() {
         </>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

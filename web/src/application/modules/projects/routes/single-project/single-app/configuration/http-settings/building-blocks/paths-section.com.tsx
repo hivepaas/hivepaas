@@ -17,6 +17,7 @@ import { HttpConfigurableSections } from "./http-configurable-sections.com";
 
 interface PathsSectionProps {
     domainIndex: number;
+    readOnly?: boolean;
 }
 
 interface PathRowProps {
@@ -25,9 +26,10 @@ interface PathRowProps {
     expandedPaths: ReadonlySet<string>;
     onExpandedChange: (pathKey: string, open: boolean) => void;
     onRemove: () => void;
+    readOnly?: boolean;
 }
 
-function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRemove }: PathRowProps) {
+function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRemove, readOnly = false }: PathRowProps) {
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -76,12 +78,19 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
                     confirmText="Remove"
                     cancelText="Cancel"
                     variant="destructive"
-                    onConfirm={onRemove}
+                    onConfirm={() => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        onRemove();
+                    }}
                 >
                     <Button
                         type="button"
                         variant="ghost"
                         size="icon"
+                        disabled={readOnly}
                     >
                         <Trash2 className="size-3.5" />
                     </Button>
@@ -92,7 +101,14 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -111,6 +127,7 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
                                     onChange={path.onChange}
                                     placeholder="/api/v1"
                                     className="max-w-[400px]"
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[pathError]} />
                             </InfoBlock>
@@ -118,18 +135,42 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
                             <InfoBlock title="Match Mode">
                                 <Tabs
                                     value={mode.value}
-                                    onValueChange={mode.onChange}
+                                    onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        mode.onChange(value);
+                                    }}
                                     className="w-fit"
                                 >
                                     <TabsList>
-                                        <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
-                                        <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
-                                        <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
+                                        <TabsTrigger
+                                            value={EHttpPathMode.Exact}
+                                            disabled={readOnly}
+                                        >
+                                            Exact
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value={EHttpPathMode.Prefix}
+                                            disabled={readOnly}
+                                        >
+                                            Prefix
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value={EHttpPathMode.Regex}
+                                            disabled={readOnly}
+                                        >
+                                            Regex
+                                        </TabsTrigger>
                                     </TabsList>
                                 </Tabs>
                             </InfoBlock>
 
-                            <HttpConfigurableSections basePath={basePath} />
+                            <HttpConfigurableSections
+                                basePath={basePath}
+                                readOnly={readOnly}
+                            />
                         </>
                     )}
                 </div>
@@ -138,7 +179,7 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
     );
 }
 
-export function PathsSection({ domainIndex }: PathsSectionProps) {
+export function PathsSection({ domainIndex, readOnly = false }: PathsSectionProps) {
     const [newPath, setNewPath] = useState("");
     const [newMode, setNewMode] = useState<EHttpPathMode>(EHttpPathMode.Prefix);
     const [expandedPaths, setExpandedPaths] = useState(() => new Set<string>());
@@ -159,6 +200,10 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
     });
 
     function handleAdd() {
+        if (readOnly) {
+            return;
+        }
+
         if (!newPath.trim()) return;
         append({ enabled: true, path: newPath.trim(), mode: newMode });
         setNewPath("");
@@ -180,6 +225,10 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
                         <Input
                             value={newPath}
                             onChange={e => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setNewPath(e.target.value);
                             }}
                             placeholder="/api/admin"
@@ -190,25 +239,45 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
                                     handleAdd();
                                 }
                             }}
+                            disabled={readOnly}
                         />
                         <Tabs
                             value={newMode}
                             onValueChange={v => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 setNewMode(v as EHttpPathMode);
                             }}
                             className="w-fit"
                         >
                             <TabsList>
-                                <TabsTrigger value={EHttpPathMode.Exact}>Exact</TabsTrigger>
-                                <TabsTrigger value={EHttpPathMode.Prefix}>Prefix</TabsTrigger>
-                                <TabsTrigger value={EHttpPathMode.Regex}>Regex</TabsTrigger>
+                                <TabsTrigger
+                                    value={EHttpPathMode.Exact}
+                                    disabled={readOnly}
+                                >
+                                    Exact
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value={EHttpPathMode.Prefix}
+                                    disabled={readOnly}
+                                >
+                                    Prefix
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value={EHttpPathMode.Regex}
+                                    disabled={readOnly}
+                                >
+                                    Regex
+                                </TabsTrigger>
                             </TabsList>
                         </Tabs>
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleAdd}
-                            disabled={!newPath.trim()}
+                            disabled={readOnly || !newPath.trim()}
                         >
                             <Plus className="size-4" /> Add
                         </Button>
@@ -234,8 +303,13 @@ export function PathsSection({ domainIndex }: PathsSectionProps) {
                             });
                         }}
                         onRemove={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
                             remove(index);
                         }}
+                        readOnly={readOnly}
                     />
                 ))}
             </div>

@@ -10,7 +10,7 @@ const roleMap: Record<EUserRole, string> = {
     [EUserRole.Member]: "Member",
 };
 
-function View<T>({ name }: Props<T>) {
+function View<T>({ name, disabled = false }: Props<T>) {
     const { control } = useFormContext<Record<string, EUserRole>>();
 
     const {
@@ -25,6 +25,10 @@ function View<T>({ name }: Props<T>) {
         <Tabs
             value={role.value}
             onValueChange={value => {
+                if (disabled) {
+                    return;
+                }
+
                 role.onChange(value as EUserRole);
             }}
         >
@@ -35,6 +39,7 @@ function View<T>({ name }: Props<T>) {
                         value={value}
                         className="flex-1"
                         aria-invalid={invalid}
+                        disabled={disabled}
                     >
                         {label}
                     </TabsTrigger>
@@ -46,6 +51,7 @@ function View<T>({ name }: Props<T>) {
 
 interface Props<T> {
     name: Path<T>;
+    disabled?: boolean;
 }
 
 export const Role = React.memo(View) as typeof View;

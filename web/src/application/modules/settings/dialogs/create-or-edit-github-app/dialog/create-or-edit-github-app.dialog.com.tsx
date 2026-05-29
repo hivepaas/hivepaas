@@ -8,6 +8,7 @@ import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditGithubAppForm } from "../form";
 import { useCreateOrEditGithubAppDialogState } from "../hooks";
@@ -21,6 +22,9 @@ export function CreateOrEditGithubAppDialog() {
         clear: clearDialog,
     } = useCreateOrEditGithubAppDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
 
     const { mutate: createSettingsGithubApp, isPending: isCreatingSettings } = GithubAppCommands.useCreateOne({
@@ -204,6 +208,7 @@ export function CreateOrEditGithubAppDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -272,13 +277,14 @@ export function CreateOrEditGithubAppDialog() {
                         isReprovisioning={isReprovisioning}
                         onSubmit={onSubmit}
                         onTestConnection={onTestConnection}
-                        onReprovision={state.mode === "edit" && !readOnlyInherited ? onReprovision : undefined}
+                        onReprovision={state.mode === "edit" && !readOnlyInherited && canWrite ? onReprovision : undefined}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         readonlyValues={readonlyValues}
                         showAvailableInProjects={showAvailableInProjects}
                         showTestConnection={showTestConnection}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

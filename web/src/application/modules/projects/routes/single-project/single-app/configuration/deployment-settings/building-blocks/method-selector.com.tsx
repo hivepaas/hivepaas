@@ -6,7 +6,7 @@ import { InfoBlock } from "@application/shared/components";
 
 import { type AppConfigDeploymentSettingsFormSchemaInput, type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
 
-export function MethodSelector() {
+export function MethodSelector({ readOnly = false }: Props) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -19,13 +19,33 @@ export function MethodSelector() {
         <InfoBlock title="Method">
             <Tabs
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={value => {
+                    if (readOnly) {
+                        return;
+                    }
+
+                    field.onChange(value);
+                }}
             >
                 <TabsList>
-                    <TabsTrigger value={EAppDeploymentMethod.Image}>Docker Image</TabsTrigger>
-                    <TabsTrigger value={EAppDeploymentMethod.Repo}>Git Source</TabsTrigger>
+                    <TabsTrigger
+                        value={EAppDeploymentMethod.Image}
+                        disabled={readOnly}
+                    >
+                        Docker Image
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value={EAppDeploymentMethod.Repo}
+                        disabled={readOnly}
+                    >
+                        Git Source
+                    </TabsTrigger>
                 </TabsList>
             </Tabs>
         </InfoBlock>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

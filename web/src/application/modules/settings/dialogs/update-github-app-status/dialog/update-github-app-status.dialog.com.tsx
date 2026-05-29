@@ -8,6 +8,7 @@ import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateGithubAppStatusForm } from "../form";
@@ -22,6 +23,9 @@ export function UpdateGithubAppStatusDialog() {
         clear: clearDialog,
     } = useUpdateGithubAppStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingsStatus, isPending: isUpdatingSettings } = GithubAppCommands.useUpdateStatus({
         onSuccess: () => {
@@ -101,6 +105,7 @@ export function UpdateGithubAppStatusDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -147,6 +152,7 @@ export function UpdateGithubAppStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

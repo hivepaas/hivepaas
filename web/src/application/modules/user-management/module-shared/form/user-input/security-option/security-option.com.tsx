@@ -11,7 +11,7 @@ const securityOptionMap: Record<ESecuritySettings, string> = {
     [ESecuritySettings.PasswordOnly]: "Password Only",
 };
 
-function View<T>({ name }: Props<T>) {
+function View<T>({ name, disabled = false }: Props<T>) {
     const { control } = useFormContext<Record<string, ESecuritySettings>>();
 
     const {
@@ -26,6 +26,10 @@ function View<T>({ name }: Props<T>) {
         <Tabs
             value={securityOption.value}
             onValueChange={value => {
+                if (disabled) {
+                    return;
+                }
+
                 securityOption.onChange(value as ESecuritySettings);
             }}
         >
@@ -36,6 +40,7 @@ function View<T>({ name }: Props<T>) {
                         value={value}
                         className="flex-1"
                         aria-invalid={invalid}
+                        disabled={disabled}
                     >
                         {label}
                     </TabsTrigger>
@@ -47,6 +52,7 @@ function View<T>({ name }: Props<T>) {
 
 interface Props<T> {
     name: Path<T>;
+    disabled?: boolean;
 }
 
 export const SecurityOption = React.memo(View) as typeof View;

@@ -8,10 +8,13 @@ import { UsersCommands } from "~/user-management/data/commands";
 import type { UserBase } from "~/user-management/domain";
 
 import { PopConfirm } from "@application/shared/components/pop-confirm";
+import { MODULE_IDS } from "@application/shared/constants";
 import { EUserStatus } from "@application/shared/enums";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 function View({ user }: Props) {
     const [open, setOpen] = useState(false);
+    const { canWrite, canDelete } = useConditionalModule({ id: MODULE_IDS.User });
 
     // Logic: If status = 'active' or 'pending': show 'Disable User'
     //        If status = 'disabled': show 'Activate User'
@@ -55,19 +58,32 @@ function View({ user }: Props) {
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
                     {showActivateUser && (
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
-                            onClick={() => {
-                                updateOne({ user: { status: EUserStatus.Active, id: user.id } });
-                            }}
-                            isLoading={isUpdating}
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.User}
+                            action="write"
+                            triggerClassName="w-full"
                         >
-                            <Check className="mr-2 size-4" />
-                            Activate User
-                        </Button>
+                            {({ isDenied }) => (
+                                <Button
+                                    className="justify-start py-1.5 w-full"
+                                    variant="ghost"
+                                    onClick={() => {
+                                        if (!canWrite) {
+                                            return;
+                                        }
+
+                                        updateOne({ user: { status: EUserStatus.Active, id: user.id } });
+                                    }}
+                                    disabled={isDenied}
+                                    isLoading={isUpdating}
+                                >
+                                    <Check className="mr-2 size-4" />
+                                    Activate User
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
                     )}
-                    {showDisableUser && (
+                    {showDisableUser && canWrite && (
                         <PopConfirm
                             title="Disable User"
                             variant="destructive"
@@ -88,25 +104,62 @@ function View({ user }: Props) {
                             </Button>
                         </PopConfirm>
                     )}
-                    <PopConfirm
-                        title="Delete Item"
-                        variant="destructive"
-                        confirmText="Delete"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={() => {
-                            deleteOne({ id: user.id });
-                        }}
-                    >
-                        <Button
-                            className="justify-start py-1.5"
-                            variant="ghost"
-                            isLoading={isDeleting}
+                    {showDisableUser && !canWrite && (
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.User}
+                            action="write"
+                            triggerClassName="w-full"
                         >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Remove User
-                        </Button>
-                    </PopConfirm>
+                            {({ isDenied }) => (
+                                <Button
+                                    className="justify-start py-1.5 w-full"
+                                    variant="ghost"
+                                    disabled={isDenied}
+                                >
+                                    <Lock className="mr-2 size-4" />
+                                    Disable User
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    )}
+                    {canDelete ? (
+                        <PopConfirm
+                            title="Delete Item"
+                            variant="destructive"
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            description="Confirm deletion of this item?"
+                            onConfirm={() => {
+                                deleteOne({ id: user.id });
+                            }}
+                        >
+                            <Button
+                                className="justify-start py-1.5"
+                                variant="ghost"
+                                isLoading={isDeleting}
+                            >
+                                <Trash2Icon className="mr-2 size-4" />
+                                Remove User
+                            </Button>
+                        </PopConfirm>
+                    ) : (
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.User}
+                            action="delete"
+                            triggerClassName="w-full"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    className="justify-start py-1.5 w-full"
+                                    variant="ghost"
+                                    disabled={isDenied}
+                                >
+                                    <Trash2Icon className="mr-2 size-4" />
+                                    Remove User
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    )}
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui
 import { toast } from "sonner";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
 import { CreateOrEditAppSecretForm } from "../form";
 import { useCreateOrEditAppSecretDialogState } from "../hooks";
 import type { CreateOrEditAppSecretFormOutput } from "../schemas";
@@ -53,6 +56,7 @@ function getSwarmRef(values: CreateOrEditAppSecretFormOutput) {
 export function CreateOrEditAppSecretDialog() {
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppSecretDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { mode } = state;
     const open = mode !== "closed";
@@ -89,7 +93,7 @@ export function CreateOrEditAppSecretDialog() {
     }, [mode]);
 
     async function onSubmit(values: CreateOrEditAppSecretFormOutput) {
-        if (!projectId || !appId) {
+        if (!canWrite || !projectId || !appId) {
             return;
         }
 
@@ -124,7 +128,7 @@ export function CreateOrEditAppSecretDialog() {
     }
 
     function handleClose(): void {
-        if (hasChanges) {
+        if (canWrite && hasChanges) {
             const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -174,6 +178,7 @@ export function CreateOrEditAppSecretDialog() {
                     onHasChanges={setHasChanges}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
+                    readOnly={!canWrite}
                 />
             </DialogContent>
         </Dialog>

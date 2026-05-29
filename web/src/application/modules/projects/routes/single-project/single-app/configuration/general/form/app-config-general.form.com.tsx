@@ -17,7 +17,7 @@ import {
 } from "../schemas";
 import { type AppConfigGeneralFormRef } from "../types";
 
-export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, children }: Props) {
+export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<AppConfigGeneralFormSchemaInput, unknown, AppConfigGeneralFormSchemaOutput>({
         defaultValues: {
             name: defaultValues.name,
@@ -71,12 +71,20 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, child
     });
 
     function handleCreateTag(tag: string) {
+        if (readOnly) {
+            return;
+        }
+
         if (!tags.includes(tag)) {
             setValue("tags", [...tags, tag]);
         }
     }
 
     function handleDeleteTag(tagToRemove: string) {
+        if (readOnly) {
+            return;
+        }
+
         setValue(
             "tags",
             tags.filter(tag => tag !== tagToRemove),
@@ -89,77 +97,86 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, child
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
 
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    {/* Name */}
-                    <InfoBlock title="Name">
-                        <Input
-                            {...name}
-                            value={name.value}
-                            onChange={name.onChange}
-                            type="text"
-                            className="max-w-[400px]"
-                            placeholder="Enter app name"
-                            aria-invalid={isNameInvalid}
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        {/* Name */}
+                        <InfoBlock title="Name">
+                            <Input
+                                {...name}
+                                value={name.value}
+                                onChange={name.onChange}
+                                type="text"
+                                className="max-w-[400px]"
+                                placeholder="Enter app name"
+                                aria-invalid={isNameInvalid}
                         />
-                        <FieldError errors={[errors.name]} />
-                    </InfoBlock>
+                            <FieldError errors={[errors.name]} />
+                        </InfoBlock>
 
-                    {/* Key - Read Only */}
-                    <InfoBlock title="Key">
-                        <Input
-                            value={defaultValues.key}
-                            type="text"
-                            className="max-w-[400px]"
-                            disabled
-                            readOnly
+                        {/* Key - Read Only */}
+                        <InfoBlock title="Key">
+                            <Input
+                                value={defaultValues.key}
+                                type="text"
+                                className="max-w-[400px]"
+                                disabled
+                                readOnly
                         />
-                    </InfoBlock>
+                        </InfoBlock>
 
-                    {/* Status - Show Label */}
-                    <InfoBlock title="Status">
-                        <ProjectAppStatusBadge status={defaultValues.status} />
-                    </InfoBlock>
+                        {/* Status - Show Label */}
+                        <InfoBlock title="Status">
+                            <ProjectAppStatusBadge status={defaultValues.status} />
+                        </InfoBlock>
 
-                    {/* Environment - Read Only */}
-                    <InfoBlock title="Environment">
-                        <ProjectEnvBadge
-                            name={defaultValues.env}
-                            color={selectedEnv?.color}
+                        {/* Environment - Read Only */}
+                        <InfoBlock title="Environment">
+                            <ProjectEnvBadge
+                                name={defaultValues.env}
+                                color={selectedEnv?.color}
                         />
-                    </InfoBlock>
+                        </InfoBlock>
 
-                    {/* Tags */}
-                    <InfoBlock title="Tags">
-                        <div className="max-w-[400px]">
-                            <TagInput
-                                tags={tags}
-                                onCreate={handleCreateTag}
-                                onDelete={handleDeleteTag}
-                                placeholder="Enter tag"
-                            />
-                            <FieldError errors={[errors.tags]} />
-                        </div>
-                    </InfoBlock>
+                        {/* Tags */}
+                        <InfoBlock title="Tags">
+                            <div className="max-w-[400px]">
+                                <TagInput
+                                    tags={tags}
+                                    onCreate={handleCreateTag}
+                                    onDelete={handleDeleteTag}
+                                    placeholder="Enter tag"
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.tags]} />
+                            </div>
+                        </InfoBlock>
 
-                    {/* Notes */}
-                    <InfoBlock title="Notes">
-                        <Textarea
-                            {...note}
-                            value={note.value}
-                            onChange={note.onChange}
-                            className="w-full min-h-[120px]"
-                            placeholder="Enter app notes"
-                            rows={4}
-                            aria-invalid={isNoteInvalid}
+                        {/* Notes */}
+                        <InfoBlock title="Notes">
+                            <Textarea
+                                {...note}
+                                value={note.value}
+                                onChange={note.onChange}
+                                className="w-full min-h-[120px]"
+                                placeholder="Enter app notes"
+                                rows={4}
+                                aria-invalid={isNoteInvalid}
                         />
-                        <FieldError errors={[errors.note]} />
-                    </InfoBlock>
+                            <FieldError errors={[errors.note]} />
+                        </InfoBlock>
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -171,4 +188,5 @@ type Props = PropsWithChildren<{
     defaultValues: ProjectAppDetails;
     envs: ProjectEnvEntity[];
     onSubmit: (values: AppConfigGeneralFormSchemaOutput) => void;
+    readOnly?: boolean;
 }>;

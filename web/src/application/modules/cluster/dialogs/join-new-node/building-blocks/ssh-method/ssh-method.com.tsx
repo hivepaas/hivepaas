@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 
 import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput } from "../../schemas";
 
-function View() {
+function View({ readOnly = false }: Props) {
     const { control } = useFormContext<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>();
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -79,6 +79,7 @@ function View() {
                             {...hostField}
                             placeholder="11.22.33.44"
                             aria-invalid={isHostInvalid}
+                            disabled={readOnly}
                         />
                         <FieldError errors={[hostError]} />
                     </Field>
@@ -97,6 +98,7 @@ function View() {
                             onValueChange={portField.onChange}
                             placeholder="22"
                             aria-invalid={isPortInvalid}
+                            disabled={readOnly}
                         />
                         <FieldError errors={[portError]} />
                     </Field>
@@ -114,6 +116,7 @@ function View() {
                             {...userField}
                             placeholder="root"
                             aria-invalid={isUserInvalid}
+                            disabled={readOnly}
                         />
                         <FieldError errors={[userError]} />
                     </Field>
@@ -130,6 +133,10 @@ function View() {
                             options={comboboxOptions}
                             value={sshKeyField.value?.id ?? null}
                             onChange={(value, option) => {
+                                if (readOnly) {
+                                    return;
+                                }
+
                                 sshKeyField.onChange(option ?? null);
                             }}
                             onSearch={setSearchQuery}
@@ -141,6 +148,7 @@ function View() {
                             valueKey="id"
                             aria-invalid={isSshKeyInvalid}
                             loading={isFetching}
+                            disabled={readOnly}
                         />
                         <FieldError errors={[sshKeyError]} />
                         <div className="text-xs">
@@ -168,11 +176,20 @@ function View() {
             </Field>
             <Field>
                 <div className="flex justify-end">
-                    <Button type="submit">Join Node</Button>
+                    <Button
+                        type="submit"
+                        disabled={readOnly}
+                    >
+                        Join Node
+                    </Button>
                 </div>
             </Field>
         </>
     );
+}
+
+interface Props {
+    readOnly?: boolean;
 }
 
 export const SshMethod = React.memo(View);

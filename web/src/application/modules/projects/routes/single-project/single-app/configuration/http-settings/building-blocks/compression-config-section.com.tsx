@@ -14,10 +14,16 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 interface CompressionConfigSectionProps {
     prefix: string;
     autoExpandToken?: number;
+    readOnly?: boolean;
     onRemove?: () => void;
 }
 
-export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: CompressionConfigSectionProps) {
+export function CompressionConfigSection({
+    prefix,
+    autoExpandToken,
+    readOnly = false,
+    onRemove,
+}: CompressionConfigSectionProps) {
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (autoExpandToken !== undefined) {
@@ -85,7 +91,14 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                         size="icon"
                         className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
                         title="Remove section"
-                        onClick={onRemove}
+                        onClick={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            onRemove();
+                        }}
+                        disabled={readOnly}
                     >
                         <X className="size-4" />
                     </Button>
@@ -96,7 +109,14 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                     <InfoBlock title="Enabled">
                         <Checkbox
                             checked={isEnabled}
-                            onCheckedChange={enabled.onChange}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
                         />
                     </InfoBlock>
                     {isEnabled && (
@@ -104,7 +124,14 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                             <InfoBlock title="Default Encoding">
                                 <Select
                                     value={defaultEncoding.value}
-                                    onValueChange={defaultEncoding.onChange}
+                                    onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        defaultEncoding.onChange(value);
+                                    }}
+                                    disabled={readOnly}
                                 >
                                     <SelectTrigger
                                         className="max-w-[100px]"
@@ -130,6 +157,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                                     rows={2}
                                     className="resize-y max-w-[400px]"
                                     aria-invalid={isExcludedContentTypesInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[excludedContentTypesError]} />
                             </InfoBlock>
@@ -143,6 +171,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                                     rows={2}
                                     className="resize-y max-w-[400px]"
                                     aria-invalid={isIncludedContentTypesInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[includedContentTypesError]} />
                             </InfoBlock>
@@ -152,6 +181,7 @@ export function CompressionConfigSection({ prefix, autoExpandToken, onRemove }: 
                                     onChange={minResponseBody.onChange}
                                     className="max-w-[100px]"
                                     aria-invalid={isMinResponseBodyInvalid}
+                                    disabled={readOnly}
                                 />
                                 <FieldError errors={[minResponseBodyError]} />
                             </InfoBlock>

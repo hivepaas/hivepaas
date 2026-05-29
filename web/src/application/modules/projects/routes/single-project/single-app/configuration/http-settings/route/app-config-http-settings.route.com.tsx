@@ -1,12 +1,14 @@
 import { useRef } from "react";
 
-import { Button } from "@components/ui";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppHttpSettingsCommands, AppHttpSettingsQueries } from "~/projects/data";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
@@ -20,6 +22,7 @@ import { type AppConfigHttpSettingsFormRef } from "../types";
 export function AppConfigHttpSettingsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     const formRef = useRef<AppConfigHttpSettingsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -45,6 +48,10 @@ export function AppConfigHttpSettingsRoute() {
     });
 
     function handleSubmit(values: AppConfigHttpSettingsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
@@ -68,16 +75,10 @@ export function AppConfigHttpSettingsRoute() {
                 ref={formRef}
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
+                readOnly={!canWrite}
             >
                 <div className="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        className="min-w-[100px]"
-                        disabled={isPending}
-                        isLoading={isPending}
-                    >
-                        Save
-                    </Button>
+                    <ProjectPermissionSubmitButton isPending={isPending} />
                 </div>
             </AppConfigHttpSettingsForm>
         </div>

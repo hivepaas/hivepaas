@@ -8,6 +8,7 @@ import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { EImServiceKind } from "@application/shared/enums";
 
 import { CreateOrEditImPlatformForm } from "../form";
@@ -22,6 +23,9 @@ export function CreateOrEditImPlatformDialog() {
         clear: clearDialog,
     } = useCreateOrEditImPlatformDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
 
     const { mutate: createSettingImPlatform, isPending: isCreatingSetting } = ImServiceCommands.useCreateOne({
@@ -164,6 +168,7 @@ export function CreateOrEditImPlatformDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -217,6 +222,7 @@ export function CreateOrEditImPlatformDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

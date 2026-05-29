@@ -8,6 +8,7 @@ import type { SslCert_Notification_Payload } from "~/settings/api/services/ssl-c
 import { DomainSettingsQueries, SslCertCommands, SslCertQueries } from "~/settings/data";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
 import { CreateOrEditSslCertForm } from "../form";
@@ -38,6 +39,9 @@ function buildNotificationPayload(
 export function CreateOrEditSslCertDialog() {
     const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useCreateOrEditSslCertDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const open = state.mode !== "closed";
     const resolvedDialogOptions = dialogOptions ?? {};
@@ -195,6 +199,7 @@ export function CreateOrEditSslCertDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -266,6 +271,7 @@ export function CreateOrEditSslCertDialog() {
                         scope={state.scope}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

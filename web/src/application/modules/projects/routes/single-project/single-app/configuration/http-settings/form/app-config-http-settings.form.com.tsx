@@ -36,10 +36,12 @@ function ConditionalDomainDetailSections({
     activeDomainIndex,
     setActiveDomainIndex,
     onRemoveDomain,
+    readOnly,
 }: {
     activeDomainIndex: number;
     setActiveDomainIndex: React.Dispatch<React.SetStateAction<number>>;
     onRemoveDomain: (index: number) => void;
+    readOnly: boolean;
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
@@ -68,6 +70,10 @@ function ConditionalDomainDetailSections({
                     cancelText="Cancel"
                     variant="destructive"
                     onConfirm={() => {
+                        if (readOnly) {
+                            return;
+                        }
+
                         onRemoveDomain(activeDomainIndex);
                     }}
                 >
@@ -77,24 +83,37 @@ function ConditionalDomainDetailSections({
                         size="icon"
                         className="shrink-0 text-muted-foreground hover:text-destructive h-0"
                         title="Remove domain"
+                        disabled={readOnly}
                     >
                         <X className="size-4" />
                     </Button>
                 </PopConfirm>
             </h3>
             <div className="flex flex-col gap-6 px-2">
-                <DomainGeneralFields domainIndex={activeDomainIndex} />
-                <LBConfigSection prefix={`domains.${activeDomainIndex}.lbConfig`} />
+                <DomainGeneralFields
+                    domainIndex={activeDomainIndex}
+                    readOnly={readOnly}
+                />
+                <LBConfigSection
+                    prefix={`domains.${activeDomainIndex}.lbConfig`}
+                    readOnly={readOnly}
+                />
             </div>
             {!hasRedirect && (
                 <>
                     <div className="flex flex-col gap-6 px-2">
-                        <DomainConfigurableSections domainIndex={activeDomainIndex} />
+                        <DomainConfigurableSections
+                            domainIndex={activeDomainIndex}
+                            readOnly={readOnly}
+                        />
                     </div>
 
                     <ContentBlock label="Path Configuration">
                         <div className="flex flex-col gap-6">
-                            <PathsSection domainIndex={activeDomainIndex} />
+                            <PathsSection
+                                domainIndex={activeDomainIndex}
+                                readOnly={readOnly}
+                            />
                         </div>
                     </ContentBlock>
                 </>
@@ -103,7 +122,7 @@ function ConditionalDomainDetailSections({
     );
 }
 
-export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, children }: Props) {
+export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const [activeDomainIndex, setActiveDomainIndex] = useState(0);
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -118,6 +137,10 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
     const { remove } = useFieldArray({ control, name: "domains" });
 
     const handleRemoveDomain = (index: number) => {
+        if (readOnly) {
+            return;
+        }
+
         const before = methods.getValues().domains.length;
         remove(index);
         const after = before - 1;
@@ -177,28 +200,39 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, childr
                 <form
                     onSubmit={event => {
                         event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
                         void methods.handleSubmit(onSubmit)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <div className="flex flex-col gap-6 px-2">
-                        <DomainSelector
-                            activeDomainIndex={activeDomainIndex}
-                            setActiveDomainIndex={setActiveDomainIndex}
-                            internalEndpoints={defaultValues?.internalEndpoints ?? []}
-                            domainSuggestion={defaultValues?.domainSuggestion ?? ""}
-                        />
-                    </div>
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <div className="flex flex-col gap-6 px-2">
+                            <DomainSelector
+                                activeDomainIndex={activeDomainIndex}
+                                setActiveDomainIndex={setActiveDomainIndex}
+                                internalEndpoints={defaultValues?.internalEndpoints ?? []}
+                                domainSuggestion={defaultValues?.domainSuggestion ?? ""}
+                                readOnly={readOnly}
+                            />
+                        </div>
 
-                    {exposePublicly.value && (
-                        <ConditionalDomainDetailSections
-                            activeDomainIndex={activeDomainIndex}
-                            setActiveDomainIndex={setActiveDomainIndex}
-                            onRemoveDomain={handleRemoveDomain}
-                        />
-                    )}
+                        {exposePublicly.value && (
+                            <ConditionalDomainDetailSections
+                                activeDomainIndex={activeDomainIndex}
+                                setActiveDomainIndex={setActiveDomainIndex}
+                                onRemoveDomain={handleRemoveDomain}
+                                readOnly={readOnly}
+                            />
+                        )}
 
-                    {children}
+                        {children}
+                    </fieldset>
                 </form>
             </FormProvider>
         </div>
@@ -209,4 +243,5 @@ type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigHttpSettingsFormRef>;
     defaultValues?: AppHttpSettings;
     onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
 }>;

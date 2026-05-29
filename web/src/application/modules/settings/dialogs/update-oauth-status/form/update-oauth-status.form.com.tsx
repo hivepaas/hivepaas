@@ -4,6 +4,7 @@ import { useUpdateEffect } from "react-use";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
+import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -19,7 +20,16 @@ const statusMap = {
     [ESettingStatus.Disabled]: "Disabled",
 } as const;
 
-export function UpdateOAuthStatusForm({ isPending, onSubmit, initialValues, onHasChanges }: Props) {
+export function UpdateOAuthStatusForm({
+    isPending,
+    onSubmit,
+    initialValues,
+    onHasChanges,
+    readOnly = false,
+    onClose,
+}: Props) {
+    const isReadOnly = readOnly;
+
     const {
         handleSubmit,
         control,
@@ -37,8 +47,8 @@ export function UpdateOAuthStatusForm({ isPending, onSubmit, initialValues, onHa
     const { isDirty } = useFormState({ control });
 
     useUpdateEffect(() => {
-        onHasChanges?.(isDirty);
-    }, [isDirty]);
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, isReadOnly]);
 
     const { field: status } = useController({ name: "status", control });
     const {
@@ -48,6 +58,10 @@ export function UpdateOAuthStatusForm({ isPending, onSubmit, initialValues, onHa
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: UpdateOAuthStatusFormOutput) {
+        if (isReadOnly) {
+            return;
+        }
+
         onSubmit(values);
     }
 
@@ -62,76 +76,96 @@ export function UpdateOAuthStatusForm({ isPending, onSubmit, initialValues, onHa
                 void handleSubmit(onValid, onInvalid)(event);
             }}
         >
-            <FieldGroup>
-                <Field>
-                    <InfoBlock
-                        title="Status"
-                        titleWidth={160}
-                    >
-                        <Tabs
-                            value={status.value}
-                            onValueChange={value => {
-                                status.onChange(value as ESettingStatus);
-                            }}
+            {isReadOnly && <PermissionReadonlyNotice />}
+            <fieldset
+                disabled={isReadOnly}
+                className="border-0 p-0 m-0 min-w-0"
+            >
+                <FieldGroup>
+                    <Field>
+                        <InfoBlock
+                            title="Status"
+                            titleWidth={160}
                         >
-                            <TabsList>
-                                {Object.entries(statusMap).map(([value, label]) => (
-                                    <TabsTrigger
-                                        key={value}
-                                        value={value}
-                                    >
-                                        {label}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                    </InfoBlock>
-                </Field>
+                            <Tabs
+                                value={status.value}
+                                onValueChange={value => {
+                                    status.onChange(value as ESettingStatus);
+                                }}
+                            >
+                                <TabsList>
+                                    {Object.entries(statusMap).map(([value, label]) => (
+                                        <TabsTrigger
+                                            key={value}
+                                            value={value}
+                                        >
+                                            {label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </InfoBlock>
+                    </Field>
 
-                <Field>
-                    <InfoBlock
-                        title="Access expiration"
-                        titleWidth={160}
+                    <Field>
+                        <InfoBlock
+                            title="Access expiration"
+                            titleWidth={160}
                     >
-                        <DateTimePicker
-                            value={expireAt.value ?? undefined}
-                            onChange={date => {
+                            <DateTimePicker
+                                value={expireAt.value ?? undefined}
+                                onChange={date => {
                                 expireAt.onChange(date ?? null);
                             }}
-                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                            granularity="second"
-                            showClearButton
-                            aria-invalid={isExpireAtInvalid}
+                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                granularity="second"
+                                showClearButton
+                                aria-invalid={isExpireAtInvalid}
                         />
-                        <FieldError errors={[errors.expireAt]} />
-                    </InfoBlock>
-                </Field>
+                            <FieldError errors={[errors.expireAt]} />
+                        </InfoBlock>
+                    </Field>
 
-                <Field>
-                    <InfoBlock
-                        title={<LabelWithInfo label="Default" />}
-                        titleWidth={160}
+                    <Field>
+                        <InfoBlock
+                            title={<LabelWithInfo label="Default" />}
+                            titleWidth={160}
                     >
-                        <Checkbox
-                            checked={defaultField.value}
-                            onCheckedChange={checked => {
+                            <Checkbox
+                                checked={defaultField.value}
+                                onCheckedChange={checked => {
                                 defaultField.onChange(Boolean(checked));
                             }}
                         />
-                    </InfoBlock>
-                </Field>
+                        </InfoBlock>
+                    </Field>
 
+                    {!isReadOnly && (
+                        <Field>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </Field>
+                    )}
+                </FieldGroup>
+            </fieldset>
+            {isReadOnly && (
                 <Field>
                     <div className="flex justify-end">
                         <Button
-                            type="submit"
-                            isLoading={isPending}
+                            type="button"
+                            onClick={onClose}
                         >
-                            Save
+                            Close
                         </Button>
                     </div>
                 </Field>
-            </FieldGroup>
+            )}
         </form>
     );
 }
@@ -141,4 +175,6 @@ interface Props {
     onSubmit: (values: UpdateOAuthStatusFormOutput) => void;
     initialValues?: Partial<UpdateOAuthStatusFormInput>;
     onHasChanges?: (dirty: boolean) => void;
+    readOnly?: boolean;
+    onClose?: () => void;
 }

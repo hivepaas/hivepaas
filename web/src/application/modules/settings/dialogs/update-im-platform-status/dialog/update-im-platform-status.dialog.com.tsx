@@ -8,6 +8,7 @@ import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
 
 import { AppLoader } from "@application/shared/components";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateImPlatformStatusForm } from "../form";
@@ -22,6 +23,9 @@ export function UpdateImPlatformStatusDialog() {
         clear: clearDialog,
     } = useUpdateImPlatformStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
 
     const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = ImServiceCommands.useUpdateStatus({
         onSuccess: () => {
@@ -103,6 +107,7 @@ export function UpdateImPlatformStatusDialog() {
 
         if (
             !readOnlyInherited &&
+            canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
         ) {
@@ -149,6 +154,7 @@ export function UpdateImPlatformStatusDialog() {
                         initialValues={initialValues}
                         showAvailableInProjects={showAvailableInProjects}
                         readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
                         onClose={handleClose}
                     />
                 )}

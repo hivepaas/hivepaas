@@ -23,7 +23,7 @@ const DEFAULTS: InviteUserFormInput = {
 };
 
 export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
-    ({ defaultValues = {}, onSubmit, onHasChanges, children }, ref) => {
+    ({ defaultValues = {}, readOnly = false, onSubmit, onHasChanges, children }, ref) => {
         const methods = useForm<InviteUserFormInput, unknown, InviteUserFormOutput>({
             defaultValues: {
                 ...DEFAULTS,
@@ -41,10 +41,14 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
         } = methods;
 
         React.useEffect(() => {
-            onHasChanges?.(isDirty);
-        }, [isDirty, onHasChanges]);
+            onHasChanges?.(readOnly ? false : isDirty);
+        }, [isDirty, onHasChanges, readOnly]);
 
         function onValid(values: InviteUserFormOutput) {
+            if (readOnly) {
+                return;
+            }
+
             onSubmit(values);
             methods.reset(values);
         }
@@ -74,83 +78,98 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         }}
                         className="flex flex-col gap-6"
                     >
-                        {/* Email */}
-                        <InfoBlock
-                            titleWidth={150}
-                            title="Email"
+                        <fieldset
+                            disabled={readOnly}
+                            className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
                         >
-                            <FieldGroup>
-                                <Field>
-                                    <Input
-                                        id="email"
-                                        {...email}
-                                        placeholder="abc@domain.com"
-                                        className="max-w-[400px]"
-                                        aria-invalid={isEmailInvalid}
+                            {/* Email */}
+                            <InfoBlock
+                                titleWidth={150}
+                                title="Email"
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            id="email"
+                                            {...email}
+                                            placeholder="abc@domain.com"
+                                            className="max-w-[400px]"
+                                            aria-invalid={isEmailInvalid}
+                                            disabled={readOnly}
+                                        />
+                                        <FieldError errors={[errors.email]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+
+                            {/* Role */}
+                            <InfoBlock
+                                titleWidth={150}
+                                title="Role"
+                            >
+                                <UserInput.Role<InviteUserFormInput>
+                                    name="role"
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Access Expiration */}
+                            <InfoBlock
+                                titleWidth={150}
+                                title="Access Expiration"
+                            >
+                                <UserInput.AccessExpiration<InviteUserFormInput>
+                                    name="accessExpireAt"
+                                    className="md:min-w-[400px] w-fit"
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Security Option */}
+                            <InfoBlock
+                                titleWidth={150}
+                                title="Security Option"
+                            >
+                                <UserInput.SecurityOption<InviteUserFormInput>
+                                    name="securityOption"
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Project Access */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Project Access"
+                                        content="Project access description"
                                     />
-                                    <FieldError errors={[errors.email]} />
-                                </Field>
-                            </FieldGroup>
-                        </InfoBlock>
-
-                        {/* Role */}
-                        <InfoBlock
-                            titleWidth={150}
-                            title="Role"
-                        >
-                            <UserInput.Role<InviteUserFormInput> name="role" />
-                        </InfoBlock>
-
-                        {/* Access Expiration */}
-                        <InfoBlock
-                            titleWidth={150}
-                            title="Access Expiration"
-                        >
-                            <UserInput.AccessExpiration<InviteUserFormInput>
-                                name="accessExpireAt"
-                                className="md:min-w-[400px] w-fit"
-                            />
-                        </InfoBlock>
-
-                        {/* Security Option */}
-                        <InfoBlock
-                            titleWidth={150}
-                            title="Security Option"
-                        >
-                            <UserInput.SecurityOption<InviteUserFormInput> name="securityOption" />
-                        </InfoBlock>
-
-                        {/* Project Access */}
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Project Access"
-                                    content="Project access description"
+                                }
+                                titleWidth={150}
+                            >
+                                <UserInput.ProjectAccess<InviteUserFormInput>
+                                    name="projectAccesses"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
                                 />
-                            }
-                            titleWidth={150}
-                        >
-                            <UserInput.ProjectAccess<InviteUserFormInput>
-                                name="projectAccesses"
-                                isAdmin={isAdmin}
-                            />
-                        </InfoBlock>
+                            </InfoBlock>
 
-                        {/* Module Access */}
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Module Access"
-                                    content="Module access description"
+                            {/* Module Access */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Module Access"
+                                        content="Module access description"
+                                    />
+                                }
+                                titleWidth={150}
+                            >
+                                <UserInput.ModuleAccess<InviteUserFormInput>
+                                    name="moduleAccesses"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
                                 />
-                            }
-                            titleWidth={150}
-                        >
-                            <UserInput.ModuleAccess<InviteUserFormInput>
-                                name="moduleAccesses"
-                                isAdmin={isAdmin}
-                            />
-                        </InfoBlock>
+                            </InfoBlock>
+                        </fieldset>
 
                         {children}
                     </form>
@@ -164,6 +183,7 @@ InviteUserForm.displayName = "InviteUserForm";
 
 interface Props extends PropsWithChildren {
     defaultValues?: Partial<InviteUserFormInput>;
+    readOnly?: boolean;
     onSubmit: (values: InviteUserFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
 }

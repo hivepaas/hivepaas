@@ -9,7 +9,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
 
-export function DockerImageFields() {
+export function DockerImageFields({ readOnly = false }: Props) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -38,11 +38,16 @@ export function DockerImageFields() {
                     placeholder="image_name:latest"
                     aria-invalid={isImageInvalid}
                     className="max-w-[400px]"
+                    disabled={readOnly}
                 />
                 <FieldError errors={[imageError]} />
             </InfoBlock>
 
-            <DockerRegistryAuth />
+            <DockerRegistryAuth readOnly={readOnly} />
         </>
     );
 }
+
+type Props = {
+    readOnly?: boolean;
+};

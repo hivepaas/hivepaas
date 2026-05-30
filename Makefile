@@ -42,7 +42,7 @@ gen-swag:
 DB_MIGRATE_DIR := localpaas_app/db
 DB_CONN_STR := host=localhost port=35432 dbname=localpaas user=localpaas password=abc123
 DB_MIGRATE_BASE := $(DEVTOOLS_CMD) sql-migrate
-DB_MIGRATE_ENV := dev
+DB_MIGRATE_ENV := development
 DB_EXEC_BASE := $(DEVTOOLS_CMD) psql -d "$(DB_CONN_STR)"
 
 # This is considered the remote env

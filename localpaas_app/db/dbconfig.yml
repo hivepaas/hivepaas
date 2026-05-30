@@ -4,7 +4,7 @@ main:
   dir: localpaas_app/db/migrations
   table: migrations
 
-dev:
+development:
   dialect: postgres
   datasource: postgres://localpaas:abc123@localhost:35432/localpaas?sslmode=disable
   dir: localpaas_app/db/migrations

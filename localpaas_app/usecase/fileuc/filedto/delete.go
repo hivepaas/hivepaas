@@ -5,11 +5,10 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 type DeleteFileReq struct {
-	settings.DeleteSettingReq
+	ID string `json:"-" mapstructure:"-"`
 }
 
 func NewDeleteFileReq() *DeleteFileReq {
@@ -19,7 +18,7 @@ func NewDeleteFileReq() *DeleteFileReq {
 // Validate implements interface basedto.ReqValidator
 func (req *DeleteFileReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.DeleteSettingReq.Validate()...)
+	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

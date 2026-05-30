@@ -61,36 +61,28 @@ func (s *service) sysBackupSaveResultInLocal(
 	}
 
 	// Save file details in to DB
-	localFileSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
-		Type:      base.SettingTypeFile,
-		Kind:      string(base.FileKindSystemBackup),
-		Status:    base.SettingStatusActive,
-		Name:      data.OutFileName,
-		Version:   entity.CurrentFileVersion,
-		CreatedAt: data.TimeNow,
-		UpdatedAt: data.TimeNow,
-	}
 	localFile := &entity.File{
-		FileKind:    base.FileKindSystemBackup,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.FileTypeSystemBackup,
 		StorageType: base.FileStorageLocal,
-		Mimetype:    "application/octet-stream",
+		Status:      base.FileStatusActive,
 		Name:        data.OutFileName,
+		Mimetype:    "application/octet-stream",
 		Path:        strings.TrimPrefix(data.BackupSaveDir, config.Current.AppPath),
+		CreatedAt:   data.TimeNow,
+		UpdatedAt:   data.TimeNow,
 	}
 	localFileInfo, err := os.Stat(data.OutFilePath)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	localFile.Size = localFileInfo.Size()
+	data.LocalOutFile = localFile
 
-	localFileSetting.MustSetData(localFile)
-	data.LocalOutFile = localFileSetting
-
-	err = s.settingRepo.Insert(ctx, db, localFileSetting)
+	err = s.fileRepo.Insert(ctx, db, localFile)
 	if err != nil {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file record into DB with error: "+
+		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
 			err.Error(), tasklog.TsNow))
 		return apperrors.Wrap(err)
 	}

@@ -73,6 +73,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/devhelperuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/sessionuc"
@@ -84,7 +85,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/gitcredentialuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc"
@@ -266,6 +266,8 @@ var Provides = []any{
 	repository.NewTaskLogRepo,
 	// Repo: Setting
 	repository.NewSettingRepo,
+	// Repo: File
+	repository.NewFileRepo,
 	// Repo: Task
 	repository.NewTaskRepo,
 	// Repo: System

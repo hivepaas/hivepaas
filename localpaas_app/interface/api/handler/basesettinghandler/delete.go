@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imserviceuc/imservicedto"
@@ -44,7 +43,7 @@ func DeleteSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) error) 
 func (h *Handler) DeleteSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...DeleteSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -56,15 +55,15 @@ func (h *Handler) DeleteSetting(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeDelete, "itemID")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
@@ -163,11 +162,6 @@ func (h *Handler) DeleteSetting(
 		r := notificationdto.NewDeleteNotificationReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.NotificationUC.DeleteNotification(reqCtx, auth, r) }
-
-	case base.ResourceTypeFile:
-		r := filedto.NewDeleteFileReq()
-		r.Scope, r.ID = scope, itemID
-		req, ucFunc = r, func() (any, error) { return h.FileUC.DeleteFile(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

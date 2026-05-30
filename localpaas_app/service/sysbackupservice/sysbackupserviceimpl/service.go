@@ -31,6 +31,7 @@ type service struct {
 	deploymentRepo           repository.DeploymentRepo
 	taskLogRepo              repository.TaskLogRepo
 	settingRepo              repository.SettingRepo
+	fileRepo                 repository.FileRepo
 	taskRepo                 repository.TaskRepo
 	sysErrorRepo             repository.SysErrorRepo
 	loginTrustedDeviceRepo   repository.LoginTrustedDeviceRepo
@@ -59,6 +60,7 @@ func New(
 	deploymentRepo repository.DeploymentRepo,
 	taskLogRepo repository.TaskLogRepo,
 	settingRepo repository.SettingRepo,
+	fileRepo repository.FileRepo,
 	taskRepo repository.TaskRepo,
 	sysErrorRepo repository.SysErrorRepo,
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
@@ -85,6 +87,7 @@ func New(
 		deploymentRepo:           deploymentRepo,
 		taskLogRepo:              taskLogRepo,
 		settingRepo:              settingRepo,
+		fileRepo:                 fileRepo,
 		taskRepo:                 taskRepo,
 		sysErrorRepo:             sysErrorRepo,
 		loginTrustedDeviceRepo:   loginTrustedDeviceRepo,

@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth [get]
 func (h *Handler) ListOAuth(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }
 
 // GetOAuth Gets oauth setting details
@@ -38,7 +38,7 @@ func (h *Handler) ListOAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [get]
 func (h *Handler) GetOAuth(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }
 
 // CreateOAuth Creates a new oauth setting
@@ -53,7 +53,7 @@ func (h *Handler) GetOAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth [post]
 func (h *Handler) CreateOAuth(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }
 
 // UpdateOAuth Updates oauth
@@ -69,7 +69,7 @@ func (h *Handler) CreateOAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [put]
 func (h *Handler) UpdateOAuth(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }
 
 // UpdateOAuthStatus Updates oauth status
@@ -85,7 +85,7 @@ func (h *Handler) UpdateOAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID}/status [put]
 func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }
 
 // DeleteOAuth Deletes oauth setting
@@ -100,5 +100,5 @@ func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [delete]
 func (h *Handler) DeleteOAuth(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeOAuth, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
 }

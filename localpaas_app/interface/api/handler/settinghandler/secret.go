@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/secrets [get]
 func (h *Handler) ListSecret(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeGlobal)
 }
 
 // CreateSecret Creates a new secret
@@ -38,7 +38,7 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/secrets [post]
 func (h *Handler) CreateSecret(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeGlobal)
 }
 
 // UpdateSecret Updates secret
@@ -54,7 +54,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/secrets/{itemID} [put]
 func (h *Handler) UpdateSecret(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeGlobal)
 }
 
 // UpdateSecretStatus Updates secret status
@@ -70,7 +70,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/secrets/{itemID}/status [put]
 func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.ObjectScopeGlobal)
 }
 
 // DeleteSecret Deletes a secret
@@ -85,5 +85,5 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/secrets/{itemID} [delete]
 func (h *Handler) DeleteSecret(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeGlobal)
 }

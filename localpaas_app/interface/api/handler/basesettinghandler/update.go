@@ -42,7 +42,7 @@ func UpdateSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) error) 
 func (h *Handler) UpdateSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...UpdateSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -54,15 +54,15 @@ func (h *Handler) UpdateSetting(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "itemID")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
@@ -160,10 +160,6 @@ func (h *Handler) UpdateSetting(
 		r := notificationdto.NewUpdateNotificationReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.NotificationUC.UpdateNotification(reqCtx, auth, r) }
-
-	case base.ResourceTypeFile:
-		// NOTE: not implemented
-		err = apperrors.NewNotImplementedNT()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/service/fileservice"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc/filedto"
 )
 
 func (uc *UC) GetFileDownloadURL(
@@ -14,14 +16,16 @@ func (uc *UC) GetFileDownloadURL(
 	auth *basedto.Auth,
 	req *filedto.GetFileDownloadURLReq,
 ) (*filedto.GetFileDownloadURLResp, error) {
-	req.Type = currentSettingType
-	setting, err := uc.SettingRepo.GetByID(ctx, uc.DB, req.Scope, req.Type, req.ID, true)
+	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID,
+		bunex.SelectRelation("Storage"),
+		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
+	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp, err := uc.FileService.GetDownloadURL(ctx, uc.DB, auth, &fileservice.GetDownloadURLReq{
-		File:         setting,
+	resp, err := uc.fileService.GetDownloadURL(ctx, uc.db, auth, &fileservice.GetDownloadURLReq{
+		File:         file,
 		RequireLogin: req.RequireLogin,
 		Expiration:   req.Expiration.ToDuration(),
 		CloudPresign: req.CloudPresign,

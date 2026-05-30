@@ -161,7 +161,7 @@ func (uc *UC) preparePersistingProjectEnvs(
 	if envsSetting == nil {
 		envsSetting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.SettingScopeProject,
+			Scope:     base.ObjectScopeProject,
 			ObjectID:  project.ID,
 			Type:      base.SettingTypeProjectEnvs,
 			Status:    base.SettingStatusActive,
@@ -204,7 +204,7 @@ func (uc *UC) preparePersistingProjectWebhook(
 ) {
 	setting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeProject,
+		Scope:     base.ObjectScopeProject,
 		ObjectID:  project.ID,
 		Type:      base.SettingTypeRepoWebhook,
 		Status:    base.SettingStatusActive,

@@ -28,7 +28,7 @@ func GetUniqueSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) erro
 func (h *Handler) GetUniqueSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...GetUniqueSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -39,15 +39,15 @@ func (h *Handler) GetUniqueSetting(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")

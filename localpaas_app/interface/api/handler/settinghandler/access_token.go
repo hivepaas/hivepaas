@@ -26,7 +26,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens [get]
 func (h *Handler) ListAccessToken(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // GetAccessToken Gets access-token setting details
@@ -41,7 +41,7 @@ func (h *Handler) ListAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [get]
 func (h *Handler) GetAccessToken(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // CreateAccessToken Creates a new access-token setting
@@ -56,7 +56,7 @@ func (h *Handler) GetAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens [post]
 func (h *Handler) CreateAccessToken(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // UpdateAccessToken Updates access-token
@@ -72,7 +72,7 @@ func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [put]
 func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // UpdateAccessTokenStatus Updates access-token status
@@ -88,7 +88,7 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID}/status [put]
 func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // DeleteAccessToken Deletes access-token setting
@@ -103,7 +103,7 @@ func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [delete]
 func (h *Handler) DeleteAccessToken(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
 }
 
 // TestAccessTokenConn Test access-token connection

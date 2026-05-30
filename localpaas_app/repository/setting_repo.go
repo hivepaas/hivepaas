@@ -18,23 +18,23 @@ import (
 )
 
 type SettingRepo interface {
-	GetByID(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	GetByID(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		id string, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error)
-	GetByKind(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	GetByKind(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		kind string, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error)
-	GetByName(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	GetByName(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		name string, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error)
-	GetSingle(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	GetSingle(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error)
 
-	List(ctx context.Context, db database.IDB, scope *base.SettingScope, paging *basedto.Paging,
+	List(ctx context.Context, db database.IDB, scope *base.ObjectScope, paging *basedto.Paging,
 		opts ...bunex.SelectQueryOption) ([]*entity.Setting, *basedto.PagingMeta, error)
-	ListByIDs(ctx context.Context, db database.IDB, scope *base.SettingScope, ids []string, requireActive bool,
+	ListByIDs(ctx context.Context, db database.IDB, scope *base.ObjectScope, ids []string, requireActive bool,
 		opts ...bunex.SelectQueryOption) ([]*entity.Setting, error)
 
 	// EnsureUnique makes sure there is at most one active setting in the given scope.
 	// Inherited/imported settings are not taken into account.
-	EnsureUnique(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	EnsureUnique(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		opts ...bunex.SelectQueryOption) error
 
 	Insert(ctx context.Context, db database.IDB, setting *entity.Setting,
@@ -47,7 +47,7 @@ type SettingRepo interface {
 		conflictCols, updateCols []string, opts ...bunex.InsertQueryOption) error
 	Update(ctx context.Context, db database.IDB, setting *entity.Setting,
 		opts ...bunex.UpdateQueryOption) error
-	UpdateClearDefaultFlag(ctx context.Context, db database.IDB, scope *base.SettingScope, typ base.SettingType,
+	UpdateClearDefaultFlag(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		kind *string, exceptID string, opts ...bunex.UpdateQueryOption) error
 
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
@@ -63,14 +63,14 @@ func NewSettingRepo(appRepo AppRepo) SettingRepo {
 	}
 }
 
-func (repo *settingRepo) GetByID(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) GetByID(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, id string, requireActive bool,
 	opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	opts = repo.applyFilter(opts, typ, id, requireActive)
 	return repo.get(ctx, db, scope, opts...)
 }
 
-func (repo *settingRepo) GetByKind(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) GetByKind(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, kind string, requireActive bool,
 	opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	if kind == "" {
@@ -81,7 +81,7 @@ func (repo *settingRepo) GetByKind(ctx context.Context, db database.IDB, scope *
 	return repo.get(ctx, db, scope, opts...)
 }
 
-func (repo *settingRepo) GetByName(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) GetByName(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, name string, requireActive bool,
 	opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	if name == "" {
@@ -92,7 +92,7 @@ func (repo *settingRepo) GetByName(ctx context.Context, db database.IDB, scope *
 	return repo.get(ctx, db, scope, opts...)
 }
 
-func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	theOpts := opts
 	if scope != nil {
@@ -138,7 +138,7 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.S
 }
 
 //nolint:gocognit
-func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	opts = repo.applyFilter(opts, typ, "", requireActive)
 
@@ -204,7 +204,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 	return nil, apperrors.NewNotFound("Setting")
 }
 
-func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	paging *basedto.Paging, opts ...bunex.SelectQueryOption) ([]*entity.Setting, *basedto.PagingMeta, error) {
 	theOpts := opts
 	if scope != nil {
@@ -261,7 +261,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.
 	return settings, pagingMeta, nil
 }
 
-func (repo *settingRepo) ListByIDs(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) ListByIDs(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	ids []string, requireActive bool, opts ...bunex.SelectQueryOption) ([]*entity.Setting, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -346,20 +346,20 @@ func (repo *settingRepo) applyGlobalFilter(opts []bunex.SelectQueryOption) []bun
 	return opts
 }
 
-func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, opts ...bunex.SelectQueryOption) error {
 	query := db.NewSelect().Model((*entity.Setting)(nil)).
 		Where("setting.type = ?", typ).
 		Where("setting.status = ?", base.SettingStatusActive)
 	if scope != nil {
 		switch scope.ScopeType() {
-		case base.SettingScopeGlobal:
+		case base.ObjectScopeGlobal:
 			query = query.Where("setting.object_id IS NULL")
-		case base.SettingScopeProject:
+		case base.ObjectScopeProject:
 			query = query.Where("setting.object_id = ?", scope.ProjectID)
-		case base.SettingScopeApp:
+		case base.ObjectScopeApp:
 			query = query.Where("setting.object_id = ?", scope.AppID)
-		case base.SettingScopeUser:
+		case base.ObjectScopeUser:
 			query = query.Where("setting.object_id = ?", scope.UserID)
 		default:
 			// Do nothing
@@ -433,7 +433,7 @@ func (repo *settingRepo) Update(ctx context.Context, db database.IDB, setting *e
 	return nil
 }
 
-func (repo *settingRepo) UpdateClearDefaultFlag(ctx context.Context, db database.IDB, scope *base.SettingScope,
+func (repo *settingRepo) UpdateClearDefaultFlag(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, kind *string, exceptID string, opts ...bunex.UpdateQueryOption) error {
 	query := db.NewUpdate().Model((*entity.Setting)(nil)).
 		Where("setting.type = ?", typ).

@@ -74,6 +74,10 @@ var (
 			Type:  "db/bin-object",
 			Model: (*entity.BinObject)(nil),
 		},
+		{
+			Type:  "db/file",
+			Model: (*entity.File)(nil),
+		},
 	}
 )
 

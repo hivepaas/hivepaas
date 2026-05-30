@@ -1,14 +1,25 @@
 package base
 
-type FileKind string
+type FileStatus string
 
 const (
-	FileKindSystemBackup  FileKind = "system-backup"
-	FileKindSourceArchive FileKind = "source-archive"
+	FileStatusActive   FileStatus = "active"
+	FileStatusPending  FileStatus = "pending"
+	FileStatusDisabled FileStatus = "disabled"
 )
 
 var (
-	AllFileKinds = []FileKind{FileKindSystemBackup, FileKindSourceArchive}
+	AllFileStatuses = []FileStatus{FileStatusActive, FileStatusPending, FileStatusDisabled}
+)
+
+type FileType string
+
+const (
+	FileTypeSystemBackup FileType = "system-backup"
+)
+
+var (
+	AllFileTypes = []FileType{FileTypeSystemBackup}
 )
 
 type FileStorageType string

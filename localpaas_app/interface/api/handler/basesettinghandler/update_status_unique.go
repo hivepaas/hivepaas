@@ -16,7 +16,7 @@ import (
 func (h *Handler) UpdateUniqueSettingStatus(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...UpdateUniqueSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -27,15 +27,15 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")

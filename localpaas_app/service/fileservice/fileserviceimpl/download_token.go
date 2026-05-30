@@ -10,13 +10,13 @@ import (
 
 func (s *service) GenerateDownloadToken(
 	userID string,
-	fileOrSettingID string,
+	fileID string,
 	requireLogin bool,
 	expiration time.Duration,
 ) (string, error) {
 	fileToken, err := jwtsession.GenerateToken(&appentity.FileDownloadTokenClaims{
 		UserID:       userID,
-		FileID:       fileOrSettingID,
+		FileID:       fileID,
 		RequireLogin: requireLogin,
 	}, expiration)
 	if err != nil {

@@ -16,7 +16,7 @@ import (
 func (s *service) LoadReferenceObjects(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	inSettings ...*entity.Setting,
@@ -31,7 +31,7 @@ func (s *service) LoadReferenceObjects(
 func (s *service) LoadReferenceObjectsByIDs(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	refIDs *entity.RefObjectIDs,
@@ -95,7 +95,7 @@ func (s *service) LoadReferenceObjectsByIDs(
 func (s *service) LoadReferenceSettings(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	settingIDs []string,

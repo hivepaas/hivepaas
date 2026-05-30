@@ -3,7 +3,7 @@ package filehandler
 import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc"
 )
 
 type Handler struct {

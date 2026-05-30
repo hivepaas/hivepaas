@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs [get]
 func (h *Handler) ListSSLCert(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }
 
 // GetSSLCert Gets SSL cert details
@@ -38,7 +38,7 @@ func (h *Handler) ListSSLCert(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs/{itemID} [get]
 func (h *Handler) GetSSLCert(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }
 
 // CreateSSLCert Creates a new SSL cert
@@ -53,7 +53,7 @@ func (h *Handler) GetSSLCert(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs [post]
 func (h *Handler) CreateSSLCert(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }
 
 // UpdateSSLCert Updates SSL cert
@@ -69,7 +69,7 @@ func (h *Handler) CreateSSLCert(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs/{itemID} [put]
 func (h *Handler) UpdateSSLCert(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }
 
 // UpdateSSLCertStatus Updates SSL cert status
@@ -85,7 +85,7 @@ func (h *Handler) UpdateSSLCert(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs/{itemID}/status [put]
 func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }
 
 // DeleteSSLCert Deletes SSL cert
@@ -100,5 +100,5 @@ func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssl-certs/{itemID} [delete]
 func (h *Handler) DeleteSSLCert(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSSLCert, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeGlobal)
 }

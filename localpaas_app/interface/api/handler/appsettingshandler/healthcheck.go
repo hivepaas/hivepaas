@@ -25,7 +25,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks [get]
 func (h *Handler) ListAppHealthcheck(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.ListSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
 
 // GetAppHealthcheck Gets healthcheck details
@@ -42,7 +42,7 @@ func (h *Handler) ListAppHealthcheck(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [get]
 func (h *Handler) GetAppHealthcheck(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.GetSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
 
 // CreateAppHealthcheck Creates a new healthcheck
@@ -59,7 +59,7 @@ func (h *Handler) GetAppHealthcheck(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks [post]
 func (h *Handler) CreateAppHealthcheck(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.CreateSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
 
 // UpdateAppHealthcheck Updates a healthcheck
@@ -77,7 +77,7 @@ func (h *Handler) CreateAppHealthcheck(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [put]
 func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.UpdateSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
 
 // UpdateAppHealthcheckStatus Updates healthcheck status
@@ -95,7 +95,7 @@ func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID}/status [put]
 func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
 
 // DeleteAppHealthcheck Deletes healthcheck
@@ -112,5 +112,5 @@ func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [delete]
 func (h *Handler) DeleteAppHealthcheck(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeHealthcheck, base.SettingScopeApp)
+	h.DeleteSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }

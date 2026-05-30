@@ -28,7 +28,7 @@ func GetDownloadTokenPreRequestHandler(fn func(auth *basedto.Auth, req any) erro
 func (h *Handler) GetDownloadToken(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	dataType string,
 	expiration timeutil.Duration,
 	opts ...GetDownloadTokenOption,
@@ -42,15 +42,15 @@ func (h *Handler) GetDownloadToken(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "itemID")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")

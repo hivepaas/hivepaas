@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/emailuc/emaildto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imserviceuc/imservicedto"
@@ -44,7 +43,7 @@ func ListSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) error) Li
 func (h *Handler) ListSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...ListSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -55,15 +54,15 @@ func (h *Handler) ListSetting(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
@@ -163,11 +162,6 @@ func (h *Handler) ListSetting(
 		r := notificationdto.NewListNotificationReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.NotificationUC.ListNotification(reqCtx, auth, r) }
-
-	case base.ResourceTypeFile:
-		r := filedto.NewListFileReq()
-		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.FileUC.ListFile(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

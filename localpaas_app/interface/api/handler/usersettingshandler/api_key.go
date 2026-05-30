@@ -25,7 +25,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys [get]
 func (h *Handler) ListAPIKey(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser)
+	h.ListSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser)
 }
 
 // GetAPIKey Gets API key details
@@ -40,7 +40,7 @@ func (h *Handler) ListAPIKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID} [get]
 func (h *Handler) GetAPIKey(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser)
+	h.GetSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser)
 }
 
 // CreateAPIKey Creates a new API key
@@ -55,7 +55,7 @@ func (h *Handler) GetAPIKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys [post]
 func (h *Handler) CreateAPIKey(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser,
+	h.CreateSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.CreateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to create API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
@@ -79,7 +79,7 @@ func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID}/status [put]
 func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser,
+	h.UpdateSettingStatus(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.UpdateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to update API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
@@ -102,7 +102,7 @@ func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID} [delete]
 func (h *Handler) DeleteAPIKey(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeAPIKey, base.SettingScopeUser,
+	h.DeleteSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.DeleteSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to delete API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {

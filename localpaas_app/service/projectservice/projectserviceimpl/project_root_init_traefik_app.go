@@ -30,7 +30,7 @@ func (s *service) initRootProjectTraefikApp(
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
+		Scope:     base.ObjectScopeGlobal,
 		Type:      base.SettingTypeTraefikService,
 		Status:    base.SettingStatusActive,
 		Name:      "Service settings",
@@ -48,7 +48,7 @@ func (s *service) initRootProjectTraefikApp(
 	// Sync env-vars from the swarm service
 	dbEnvVarsSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeApp,
+		Scope:     base.ObjectScopeApp,
 		ObjectID:  app.ID,
 		Type:      base.SettingTypeEnvVar,
 		Status:    base.SettingStatusActive,

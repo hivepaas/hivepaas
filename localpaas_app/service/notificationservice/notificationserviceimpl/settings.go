@@ -17,7 +17,7 @@ import (
 func (s *service) GetNotificationForEvent(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	eventSetting *entity.BaseEventNotification,
 	eventSuccess bool,
 	refObjects *entity.RefObjects,
@@ -74,7 +74,7 @@ func (s *service) GetNotificationForEvent(
 func (s *service) GetDefaultNotification(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	refObjects *entity.RefObjects,
 	errorIfRefObjectsUnavail bool,
 ) (*entity.Notification, error) {

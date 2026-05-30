@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services [get]
 func (h *Handler) ListIMService(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }
 
 // GetIMService Gets IM service details
@@ -40,7 +40,7 @@ func (h *Handler) ListIMService(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [get]
 func (h *Handler) GetIMService(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }
 
 // CreateIMService Creates a new IM service
@@ -56,7 +56,7 @@ func (h *Handler) GetIMService(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services [post]
 func (h *Handler) CreateIMService(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }
 
 // UpdateIMService Updates IM service
@@ -73,7 +73,7 @@ func (h *Handler) CreateIMService(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [put]
 func (h *Handler) UpdateIMService(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }
 
 // UpdateIMServiceStatus Updates IM service status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateIMService(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID}/status [put]
 func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }
 
 // DeleteIMService Deletes IM service
@@ -106,5 +106,5 @@ func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [delete]
 func (h *Handler) DeleteIMService(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeIMService, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
 }

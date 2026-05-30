@@ -8,7 +8,7 @@ import (
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc/filedto"
 )
 
 const (
@@ -41,8 +41,7 @@ func (h *Handler) ListBackupFiles(ctx *gin.Context) {
 	}
 
 	req := filedto.NewListFileReq()
-	req.Scope = base.NewSettingScopeGlobal()
-	req.Kinds = []string{string(base.FileKindSystemBackup)}
+	req.Types = []base.FileType{base.FileTypeSystemBackup}
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -87,9 +86,8 @@ func (h *Handler) GetBackupFile(ctx *gin.Context) {
 	}
 
 	req := filedto.NewGetFileReq()
-	req.Scope = base.NewSettingScopeGlobal()
 	req.ID = fileID
-	req.Kind = string(base.FileKindSystemBackup)
+	req.Types = []base.FileType{base.FileTypeSystemBackup}
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -134,7 +132,6 @@ func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 	}
 
 	req := filedto.NewDownloadFileReq()
-	req.Scope = base.NewSettingScopeGlobal()
 	req.ID = fileID
 	req.UsePresignURLOnFileSize = defaultUsePresignURLOnFileSize
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {

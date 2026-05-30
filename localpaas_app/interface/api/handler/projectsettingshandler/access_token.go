@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens [get]
 func (h *Handler) ListAccessToken(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }
 
 // GetAccessToken Gets access-token setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens/{itemID} [get]
 func (h *Handler) GetAccessToken(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }
 
 // CreateAccessToken Creates a new access-token setting
@@ -56,7 +56,7 @@ func (h *Handler) GetAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens [post]
 func (h *Handler) CreateAccessToken(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }
 
 // UpdateAccessToken Updates access-token
@@ -73,7 +73,7 @@ func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens/{itemID} [put]
 func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }
 
 // UpdateAccessTokenStatus Updates access-token status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens/{itemID}/status [put]
 func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }
 
 // DeleteAccessToken Deletes access-token setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/access-tokens/{itemID} [delete]
 func (h *Handler) DeleteAccessToken(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeAccessToken, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeProject)
 }

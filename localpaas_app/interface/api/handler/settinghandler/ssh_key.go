@@ -26,7 +26,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys [get]
 func (h *Handler) ListSSHKey(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // GetSSHKey Gets ssh-key setting details
@@ -41,7 +41,7 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys/{itemID} [get]
 func (h *Handler) GetSSHKey(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // CreateSSHKey Creates a new ssh-key setting
@@ -56,7 +56,7 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys [post]
 func (h *Handler) CreateSSHKey(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // UpdateSSHKey Updates ssh-key
@@ -72,7 +72,7 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys/{itemID} [put]
 func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // UpdateSSHKeyStatus Updates ssh-key status
@@ -88,7 +88,7 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys/{itemID}/status [put]
 func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // DeleteSSHKey Deletes sshkey setting
@@ -103,7 +103,7 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/ssh-keys/{itemID} [delete]
 func (h *Handler) DeleteSSHKey(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeGlobal)
 }
 
 // GenerateSSHKey Generates an SSH key

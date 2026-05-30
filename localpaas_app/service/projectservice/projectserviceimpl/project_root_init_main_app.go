@@ -38,7 +38,7 @@ func (s *service) initRootProjectMainApp(
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
+		Scope:     base.ObjectScopeGlobal,
 		Type:      base.SettingTypeLocalPaaSService,
 		Status:    base.SettingStatusActive,
 		Name:      "Service settings",
@@ -68,7 +68,7 @@ func (s *service) initRootProjectMainApp(
 	// Add HTTP settings for the main app
 	dbHttpSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeApp,
+		Scope:     base.ObjectScopeApp,
 		ObjectID:  app.ID,
 		Type:      base.SettingTypeAppHttp,
 		Status:    base.SettingStatusActive,
@@ -98,7 +98,7 @@ func (s *service) initRootProjectMainApp(
 	// Sync env-vars from the swarm service
 	dbEnvVarsSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeApp,
+		Scope:     base.ObjectScopeApp,
 		ObjectID:  app.ID,
 		Type:      base.SettingTypeEnvVar,
 		Status:    base.SettingStatusActive,

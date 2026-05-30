@@ -6,11 +6,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 type GetFileDownloadURLReq struct {
-	settings.GetSettingReq
+	ID           string            `json:"-" mapstructure:"-"`
 	Expiration   timeutil.Duration `json:"-" mapstructure:"-"`
 	RequireLogin bool              `json:"-" mapstructure:"-"`
 	ViewInline   bool              `json:"-" mapstructure:"viewInline"`
@@ -23,7 +22,7 @@ func NewGetFileDownloadURLReq() *GetFileDownloadURLReq {
 
 func (req *GetFileDownloadURLReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.GetSettingReq.Validate()...)
+	// TODO: add validation
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

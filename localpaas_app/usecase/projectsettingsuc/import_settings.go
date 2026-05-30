@@ -69,7 +69,7 @@ func (uc *UC) loadSettingsForImport(
 	data.Project = project
 
 	settingIDs := req.Settings.ToIDStringSlice()
-	settings, err := uc.settingRepo.ListByIDs(ctx, db, base.NewSettingScopeGlobal(), settingIDs, false)
+	settings, err := uc.settingRepo.ListByIDs(ctx, db, base.NewObjectScopeGlobal(), settingIDs, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

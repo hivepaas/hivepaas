@@ -9,10 +9,10 @@ import (
 )
 
 type Service interface {
-	GetNotificationForEvent(ctx context.Context, db database.IDB, scope *base.SettingScope,
+	GetNotificationForEvent(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 		eventSetting *entity.BaseEventNotification, eventSuccess bool, refObjects *entity.RefObjects) (
 		*entity.Notification, error)
-	GetDefaultNotification(ctx context.Context, db database.IDB, scope *base.SettingScope,
+	GetDefaultNotification(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 		refObjects *entity.RefObjects, errorIfRefObjectsUnavail bool) (
 		*entity.Notification, error)
 	BuildTitlePrefix(project *entity.Project, app *entity.App, user *entity.User) string

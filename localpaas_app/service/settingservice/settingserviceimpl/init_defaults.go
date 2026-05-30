@@ -17,7 +17,7 @@ func (s *service) InitDefaults(
 	ctx context.Context,
 	db database.IDB,
 ) (err error) {
-	settings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeGlobal(), nil,
+	settings, _, err := s.settingRepo.List(ctx, db, base.NewObjectScopeGlobal(), nil,
 		bunex.SelectColumns("id", "type", "status"),
 	)
 	if err != nil {

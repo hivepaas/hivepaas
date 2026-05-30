@@ -230,7 +230,7 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	httpSettings := &entity.AppHttpSettings{}
 	dbHttpSettings := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeApp,
+		Scope:     base.ObjectScopeApp,
 		Type:      base.SettingTypeAppHttp,
 		Status:    base.SettingStatusActive,
 		ObjectID:  app.ID,

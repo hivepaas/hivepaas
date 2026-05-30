@@ -21,7 +21,7 @@ func (uc *UC) GetLoginOptions(
 	ctx context.Context,
 	req *sessiondto.GetLoginOptionsReq,
 ) (*sessiondto.GetLoginOptionsResp, error) {
-	settings, _, err := uc.settingRepo.List(ctx, uc.db, base.NewSettingScopeGlobal(), nil,
+	settings, _, err := uc.settingRepo.List(ctx, uc.db, base.NewObjectScopeGlobal(), nil,
 		bunex.SelectWhere("setting.type = ? OR setting.type = ?",
 			base.SettingTypeOAuth, base.SettingTypeGithubApp),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),

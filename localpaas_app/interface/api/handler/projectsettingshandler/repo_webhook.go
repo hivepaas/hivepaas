@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks [get]
 func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }
 
 // GetRepoWebhook Gets webhook setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks/{itemID} [get]
 func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }
 
 // CreateRepoWebhook Creates a new webhook setting
@@ -56,7 +56,7 @@ func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks [post]
 func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }
 
 // UpdateRepoWebhook Updates webhook
@@ -73,7 +73,7 @@ func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks/{itemID} [put]
 func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }
 
 // UpdateRepoWebhookStatus Updates webhook status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks/{itemID}/status [put]
 func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }
 
 // DeleteRepoWebhook Deletes webhook setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/repo-webhooks/{itemID} [delete]
 func (h *Handler) DeleteRepoWebhook(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeRepoWebhook, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeProject)
 }

@@ -57,7 +57,7 @@ func (uc *UC) ExecuteSSLRenewal(
 func (uc *UC) getRenewalSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	requireSettingActive bool,
 	requireJobActive bool,
 ) (cleanup *entity.Setting, job *entity.Setting, err error) {

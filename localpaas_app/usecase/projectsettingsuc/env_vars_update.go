@@ -94,7 +94,7 @@ func (uc *UC) prepareUpdatingProjectEnvVars(
 	if setting == nil {
 		setting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.SettingScopeProject,
+			Scope:     base.ObjectScopeProject,
 			ObjectID:  project.ID,
 			Type:      base.SettingTypeEnvVar,
 			CreatedAt: timeNow,

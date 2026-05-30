@@ -21,7 +21,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets [get]
 func (h *Handler) ListSecret(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.ListSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
 
 // GetSecret Get an app secret details
@@ -38,7 +38,7 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [get]
 func (h *Handler) GetSecret(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.GetSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
 
 // GetSecretDownloadToken Gets secret download token
@@ -55,7 +55,7 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download-token [get]
 func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
-	h.GetDownloadToken(ctx, base.ResourceTypeSecret, base.SettingScopeApp, "", 0)
+	h.GetDownloadToken(ctx, base.ResourceTypeSecret, base.ObjectScopeApp, "", 0)
 }
 
 // DownloadSecret Download a secret as a file
@@ -72,7 +72,7 @@ func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download [get]
 func (h *Handler) DownloadSecret(ctx *gin.Context) {
-	h.Download(ctx, base.ResourceTypeSecret, base.SettingScopeApp, "")
+	h.Download(ctx, base.ResourceTypeSecret, base.ObjectScopeApp, "")
 }
 
 // CreateSecret Creates an app secret
@@ -89,7 +89,7 @@ func (h *Handler) DownloadSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets [post]
 func (h *Handler) CreateSecret(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.CreateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
 
 // UpdateSecret Updates an app secret
@@ -107,7 +107,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [put]
 func (h *Handler) UpdateSecret(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
 
 // UpdateSecretStatus Updates app secret status
@@ -125,7 +125,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/status [put]
 func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
 
 // DeleteSecret Deletes an app secret
@@ -142,5 +142,5 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [delete]
 func (h *Handler) DeleteSecret(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.SettingScopeApp)
+	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }

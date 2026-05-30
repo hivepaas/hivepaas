@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails [get]
 func (h *Handler) ListEmail(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }
 
 // GetEmail Gets email setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails/{itemID} [get]
 func (h *Handler) GetEmail(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }
 
 // CreateEmail Creates a new email setting
@@ -56,7 +56,7 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails [post]
 func (h *Handler) CreateEmail(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }
 
 // UpdateEmail Updates email setting
@@ -73,7 +73,7 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails/{itemID} [put]
 func (h *Handler) UpdateEmail(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }
 
 // UpdateEmailStatus Updates Email status setting
@@ -90,7 +90,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails/{itemID}/status [put]
 func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }
 
 // DeleteEmail Deletes email setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/emails/{itemID} [delete]
 func (h *Handler) DeleteEmail(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeEmail, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeProject)
 }

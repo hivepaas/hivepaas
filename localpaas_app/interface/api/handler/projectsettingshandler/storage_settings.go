@@ -20,7 +20,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/storage-settings [get]
 func (h *Handler) GetStorageSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeProject)
+	h.GetUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeProject)
 }
 
 // UpdateStorageSettings Updates storage settings
@@ -36,7 +36,7 @@ func (h *Handler) GetStorageSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/storage-settings [put]
 func (h *Handler) UpdateStorageSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeProject)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeProject)
 }
 
 // UpdateStorageSettingsStatus Updates storage settings status
@@ -52,7 +52,7 @@ func (h *Handler) UpdateStorageSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/storage-settings/status [put]
 func (h *Handler) UpdateStorageSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeStorageSettings, base.SettingScopeProject)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeProject)
 }
 
 // DeleteStorageSettings Deletes storage settings setting
@@ -67,5 +67,5 @@ func (h *Handler) UpdateStorageSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/storage-settings [delete]
 func (h *Handler) DeleteStorageSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeProject)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeProject)
 }

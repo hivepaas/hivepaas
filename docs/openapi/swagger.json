@@ -20811,7 +20811,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.ListFileResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.ListFileResp"
                 }
               }
             },
@@ -20860,7 +20860,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.GetFileResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.GetFileResp"
                 }
               }
             },
@@ -22954,9 +22954,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -23075,10 +23075,20 @@
         "type" : "string",
         "x-enum-varnames" : [ "FileEncryptionNone", "FileEncryptionFormatAge" ]
       },
+      "github_com_localpaas_localpaas_localpaas_app_base.FileStatus" : {
+        "enum" : [ "active", "pending", "disabled" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "FileStatusActive", "FileStatusPending", "FileStatusDisabled" ]
+      },
       "github_com_localpaas_localpaas_localpaas_app_base.FileStorageType" : {
         "enum" : [ "local", "cloud" ],
         "type" : "string",
         "x-enum-varnames" : [ "FileStorageLocal", "FileStorageCloud" ]
+      },
+      "github_com_localpaas_localpaas_localpaas_app_base.FileType" : {
+        "enum" : [ "system-backup" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "FileTypeSystemBackup" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.HTTPMethod" : {
         "enum" : [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
@@ -23157,9 +23167,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.SettingType" : {
-        "enum" : [ "project", "project-envs", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "github-app", "access-token", "sched-job", "healthcheck", "email", "repo-webhook", "notification", "system-cleanup", "system-backup", "ssl-renewal", "file", "domain-settings", "storage-settings", "image-build-settings", "localpaas-service", "traefik-service" ],
+        "enum" : [ "project", "project-envs", "app", "app-deployment", "app-http", "env-var", "secret", "config-file", "cloud-storage", "oauth", "ssh-key", "api-key", "im-service", "registry-auth", "basic-auth", "ssl-cert", "github-app", "access-token", "sched-job", "healthcheck", "email", "repo-webhook", "notification", "system-cleanup", "system-backup", "ssl-renewal", "domain-settings", "storage-settings", "image-build-settings", "localpaas-service", "traefik-service" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeProjectEnvs", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeSchedJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeFile", "SettingTypeDomainSettings", "SettingTypeStorageSettings", "SettingTypeImageBuildSettings", "SettingTypeLocalPaaSService", "SettingTypeTraefikService" ]
+        "x-enum-varnames" : [ "SettingTypeProject", "SettingTypeProjectEnvs", "SettingTypeApp", "SettingTypeAppDeployment", "SettingTypeAppHttp", "SettingTypeEnvVar", "SettingTypeSecret", "SettingTypeConfigFile", "SettingTypeCloudStorage", "SettingTypeOAuth", "SettingTypeSSHKey", "SettingTypeAPIKey", "SettingTypeIMService", "SettingTypeRegistryAuth", "SettingTypeBasicAuth", "SettingTypeSSLCert", "SettingTypeGithubApp", "SettingTypeAccessToken", "SettingTypeSchedJob", "SettingTypeHealthcheck", "SettingTypeEmail", "SettingTypeRepoWebhook", "SettingTypeNotification", "SettingTypeSystemCleanup", "SettingTypeSystemBackup", "SettingTypeSSLRenewal", "SettingTypeDomainSettings", "SettingTypeStorageSettings", "SettingTypeImageBuildSettings", "SettingTypeLocalPaaSService", "SettingTypeTraefikService" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_base.TaskPriority" : {
         "enum" : [ "low", "default", "critical" ],
@@ -26812,6 +26822,84 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.FileResp" : {
+        "properties" : {
+          "bucket" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "mimetype" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "sizeStr" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.FileStatus"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
+          },
+          "storageType" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.FileStorageType"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.FileType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "id", "key", "mimetype", "name", "path", "size", "sizeStr", "status", "storageType", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.GetFileResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.FileResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.ListFileResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.FileResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_projectsettingsuc_projectsettingsdto.CreateProjectTagReq" : {
         "properties" : {
           "tag" : {
@@ -29275,93 +29363,6 @@
           }
         },
         "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.FileResp" : {
-        "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
-          "bucket" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "inherited" : {
-            "type" : "boolean"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "mimetype" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "path" : {
-            "type" : "string"
-          },
-          "size" : {
-            "type" : "integer"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingStatus"
-          },
-          "storage" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
-          },
-          "storageType" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.FileStorageType"
-          },
-          "type" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_base.SettingType"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "updatedAt" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "createdAt", "id", "mimetype", "name", "path", "size", "status", "storageType", "type", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.GetFileResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.FileResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.ListFileResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_fileuc_filedto.FileResp"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_gitcredentialuc_gitcredentialdto.GitCredentialResp" : {

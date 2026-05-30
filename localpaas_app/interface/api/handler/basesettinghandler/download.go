@@ -28,7 +28,7 @@ func DownloadPreRequestHandler(fn func(auth *basedto.Auth, req any) error) Downl
 func (h *Handler) Download(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	dataType string,
 	opts ...DownloadOption,
 ) {
@@ -41,15 +41,15 @@ func (h *Handler) Download(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		itemID, err = h.GetParamGlobalSettings(ctx, "itemID")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		scope.ProjectID, itemID, err = h.GetParamProjectSettings(ctx, "itemID")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		scope.ProjectID, scope.AppID, itemID, err = h.GetParamAppSettings(ctx, "itemID")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		itemID, err = h.GetParamUserSettings(ctx, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")

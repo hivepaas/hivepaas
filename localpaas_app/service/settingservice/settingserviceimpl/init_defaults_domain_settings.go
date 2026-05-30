@@ -30,7 +30,7 @@ func (s *service) initDefaultDomainSettings(
 ) (err error) {
 	domainSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.SettingScopeGlobal,
+		Scope:           base.ObjectScopeGlobal,
 		Type:            base.SettingTypeDomainSettings,
 		Status:          base.SettingStatusActive,
 		Name:            domainSettingName,

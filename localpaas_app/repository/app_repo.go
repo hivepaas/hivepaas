@@ -22,8 +22,6 @@ type AppRepo interface {
 		opts ...bunex.SelectQueryOption) (*entity.App, error)
 	GetByKey(ctx context.Context, db database.IDB, projectID, key string,
 		opts ...bunex.SelectQueryOption) (*entity.App, error)
-	GetByToken(ctx context.Context, db database.IDB, token string,
-		opts ...bunex.SelectQueryOption) (*entity.App, error)
 
 	List(ctx context.Context, db database.IDB, projectID string, paging *basedto.Paging,
 		opts ...bunex.SelectQueryOption) ([]*entity.App, *basedto.PagingMeta, error)
@@ -92,22 +90,6 @@ func (repo *appRepo) GetByKey(ctx context.Context, db database.IDB, projectID, k
 	if projectID != "" {
 		query = query.Where("app.project_id = ?", projectID)
 	}
-	query = bunex.ApplySelect(query, opts...)
-
-	err := query.Scan(ctx)
-	if app == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("App").WithCause(err)
-	}
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-	return app, nil
-}
-
-func (repo *appRepo) GetByToken(ctx context.Context, db database.IDB, token string,
-	opts ...bunex.SelectQueryOption) (*entity.App, error) {
-	app := &entity.App{}
-	query := db.NewSelect().Model(app).Where("app.token = ?", token).Limit(1)
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)

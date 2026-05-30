@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc/filedto"
 )
 
 // DownloadFile Downloads a file

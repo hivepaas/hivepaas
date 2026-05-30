@@ -43,7 +43,7 @@ func CreateSettingPreRequestHandler(fn func(auth *basedto.Auth, req any) error) 
 func (h *Handler) CreateSetting(
 	ctx *gin.Context,
 	resType base.ResourceType,
-	scopeType base.SettingScopeType,
+	scopeType base.ObjectScopeType,
 	opts ...CreateSettingOption,
 ) {
 	var auth *basedto.Auth
@@ -54,15 +54,15 @@ func (h *Handler) CreateSetting(
 		o(options)
 	}
 
-	scope := &base.SettingScope{}
+	scope := &base.ObjectScope{}
 	switch scopeType {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "")
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
@@ -161,14 +161,6 @@ func (h *Handler) CreateSetting(
 		r := notificationdto.NewCreateNotificationReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.NotificationUC.CreateNotification(reqCtx, auth, r) }
-
-	case base.ResourceTypeFile:
-		// NOTE: not implemented
-		err = apperrors.NewNotImplementedNT()
-	}
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
 	}
 
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {

@@ -16,9 +16,9 @@ import (
 )
 
 type BaseSettingReq struct {
-	Type  base.SettingType   `json:"-" mapstructure:"-"`
-	Kind  string             `json:"-" mapstructure:"-"`
-	Scope *base.SettingScope `json:"-" mapstructure:"-"`
+	Type  base.SettingType  `json:"-" mapstructure:"-"`
+	Kind  string            `json:"-" mapstructure:"-"`
+	Scope *base.ObjectScope `json:"-" mapstructure:"-"`
 }
 
 type BaseSettingResp struct {
@@ -51,10 +51,10 @@ func (uc *BaseUC) loadSettingScopeData(
 ) (err error) {
 	requireActive := !req.Scope.NotRequireActive
 	switch req.Scope.ScopeType() {
-	case base.SettingScopeGlobal:
+	case base.ObjectScopeGlobal:
 		return nil
 
-	case base.SettingScopeProject:
+	case base.ObjectScopeProject:
 		data.ScopeProject, err = uc.ProjectService.LoadProject(ctx, db, req.Scope.ProjectID, requireActive,
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		)
@@ -62,7 +62,7 @@ func (uc *BaseUC) loadSettingScopeData(
 			return apperrors.Wrap(err)
 		}
 
-	case base.SettingScopeApp:
+	case base.ObjectScopeApp:
 		data.ScopeApp, err = uc.AppService.LoadApp(ctx, db, req.Scope.ProjectID, req.Scope.AppID,
 			requireActive, requireActive,
 			bunex.SelectRelation("Project",
@@ -78,7 +78,7 @@ func (uc *BaseUC) loadSettingScopeData(
 		}
 		data.ScopeProject = data.ScopeApp.Project
 
-	case base.SettingScopeUser:
+	case base.ObjectScopeUser:
 		data.ScopeUser, err = uc.UserService.LoadUserEx(ctx, db, req.Scope.UserID, requireActive)
 		if err != nil {
 			return apperrors.Wrap(err)

@@ -20,11 +20,7 @@ func (s *service) GetDownloadURL(
 	auth *basedto.Auth,
 	req *fileservice.GetDownloadURLReq,
 ) (*fileservice.GetDownloadURLResp, error) {
-	if req.File.Type != base.SettingTypeFile {
-		return nil, apperrors.NewTypeInvalid()
-	}
-
-	file := req.File.MustAsFile()
+	file := req.File
 	if file.StorageType == base.FileStorageLocal || !req.CloudPresign {
 		token, err := s.GenerateDownloadToken(auth.User.ID, req.File.ID, req.RequireLogin, req.Expiration)
 		if err != nil {
@@ -42,12 +38,7 @@ func (s *service) GetDownloadURL(
 	}
 
 	// File is stored in an external cloud and presign allowed
-	refObjects, err := s.settingService.LoadReferenceObjects(ctx, db, nil, true,
-		false, req.File)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-	storageSttg := refObjects.RefSettings[file.Storage.ID]
+	storageSttg := file.Storage
 
 	switch base.CloudStorageKind(storageSttg.Kind) {
 	case base.CloudStorageKindS3:

@@ -74,36 +74,27 @@ func (s *service) sysBackupSaveResultInStorage(
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup file uploaded to "+storageName+
 		" in "+time.Since(start).String(), tasklog.TsNow))
 
-	localFile := data.LocalOutFile.MustAsFile()
-	remoteFileSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
-		Type:      base.SettingTypeFile,
-		Kind:      string(base.FileKindSystemBackup),
-		Status:    base.SettingStatusActive,
-		Name:      data.OutFileName,
-		Version:   entity.CurrentFileVersion,
-		CreatedAt: data.TimeNow,
-		UpdatedAt: data.TimeNow,
-	}
-
+	localFile := data.LocalOutFile
 	remoteFile := &entity.File{
-		FileKind:    base.FileKindSystemBackup,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.FileTypeSystemBackup,
+		Status:      base.FileStatusActive,
 		StorageType: base.FileStorageCloud,
-		Storage:     entity.ObjectID{ID: data.SysBackupSettings.CloudStorage.ID},
+		StorageID:   data.SysBackupSettings.CloudStorage.ID,
 		Bucket:      storageBucket,
-		Mimetype:    localFile.Mimetype,
 		Name:        data.OutFileName,
-		Size:        localFile.Size,
 		Path:        data.SysBackupSettings.CloudStorage.DestinationDir,
+		Mimetype:    localFile.Mimetype,
+		Size:        localFile.Size,
+		CreatedAt:   data.TimeNow,
+		UpdatedAt:   data.TimeNow,
 	}
+	data.RemoteOutFile = remoteFile
 
-	remoteFileSetting.MustSetData(remoteFile)
-	data.RemoteOutFile = remoteFileSetting
-
-	err = s.settingRepo.Insert(ctx, db, remoteFileSetting)
+	err = s.fileRepo.Insert(ctx, db, remoteFile)
 	if err != nil {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file record into DB with error: "+
+		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
 			err.Error(), tasklog.TsNow))
 		return apperrors.Wrap(err)
 	}

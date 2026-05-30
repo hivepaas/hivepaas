@@ -50,7 +50,7 @@ func (uc *UC) ExecuteSystemBackup(
 func (uc *UC) getBackupSettingAndJob(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.SettingScope,
+	scope *base.ObjectScope,
 	requireSettingActive bool,
 	requireJobActive bool,
 ) (backup *entity.Setting, job *entity.Setting, err error) {

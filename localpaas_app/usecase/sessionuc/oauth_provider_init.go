@@ -21,7 +21,7 @@ func (uc *UC) InitOAuthProvider(
 	ctx context.Context,
 	req *sessiondto.InitOAuthProviderReq,
 ) error {
-	setting, err := uc.settingRepo.GetByID(ctx, uc.db, base.NewSettingScopeGlobal(), "", req.Provider, true)
+	setting, err := uc.settingRepo.GetByID(ctx, uc.db, base.NewObjectScopeGlobal(), "", req.Provider, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

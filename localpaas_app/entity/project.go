@@ -46,8 +46,8 @@ func (p *Project) GetName() string {
 	return p.Name
 }
 
-func (p *Project) GetSettingScope() *base.SettingScope {
-	return &base.SettingScope{
+func (p *Project) GetSettingScope() *base.ObjectScope {
+	return &base.ObjectScope{
 		ProjectID: p.ID,
 	}
 }

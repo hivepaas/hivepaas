@@ -53,14 +53,14 @@ func (s *service) sslGetNotification(
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
 
-	var scope *base.SettingScope
+	var scope *base.ObjectScope
 	switch {
 	case sslSetting.BelongToApp != nil:
 		scope = sslSetting.BelongToApp.GetSettingScope()
 	case sslSetting.BelongToProject != nil:
 		scope = sslSetting.BelongToProject.GetSettingScope()
 	default:
-		scope = base.NewSettingScopeGlobal()
+		scope = base.NewObjectScopeGlobal()
 	}
 
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,

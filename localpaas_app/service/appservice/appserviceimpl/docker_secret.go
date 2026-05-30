@@ -116,7 +116,7 @@ func (s *service) DeleteSwarmSecret(
 		}
 	} else {
 		// This is a child app, we may need to restore the inherited secret having the same name as this
-		inheritedSecretSetting, err := s.settingRepo.GetByName(ctx, db, base.NewSettingScopeApp(app.ParentID, app.ProjectID),
+		inheritedSecretSetting, err := s.settingRepo.GetByName(ctx, db, base.NewObjectScopeApp(app.ParentID, app.ProjectID),
 			base.SettingTypeSecret, secret.Key, false)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)

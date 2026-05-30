@@ -26,7 +26,7 @@ func (s *service) initDefaultStorageSettings(
 ) (err error) {
 	storageSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.SettingScopeGlobal,
+		Scope:           base.ObjectScopeGlobal,
 		Type:            base.SettingTypeStorageSettings,
 		Status:          base.SettingStatusActive,
 		Name:            storageSettingName,

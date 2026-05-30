@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys [get]
 func (h *Handler) ListSSHKey(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }
 
 // GetSSHKey Gets ssh-key setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys/{itemID} [get]
 func (h *Handler) GetSSHKey(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }
 
 // CreateSSHKey Creates a new ssh-key setting
@@ -56,7 +56,7 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys [post]
 func (h *Handler) CreateSSHKey(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }
 
 // UpdateSSHKey Updates ssh-key
@@ -73,7 +73,7 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys/{itemID} [put]
 func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }
 
 // UpdateSSHKeyStatus Updates ssh-key status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys/{itemID}/status [put]
 func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }
 
 // DeleteSSHKey Deletes ssh-key setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/ssh-keys/{itemID} [delete]
 func (h *Handler) DeleteSSHKey(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProject)
 }

@@ -19,7 +19,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/domain-settings [get]
 func (h *Handler) GetDomainSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.SettingScopeGlobal)
+	h.GetUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateDomainSettings Updates domain settings
@@ -34,7 +34,7 @@ func (h *Handler) GetDomainSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/domain-settings [put]
 func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateDomainSettingsStatus Updates domain settings status
@@ -49,7 +49,7 @@ func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/domain-settings/status [put]
 func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeDomainSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
 }
 
 // DeleteDomainSettings Deletes domain settings setting
@@ -63,5 +63,5 @@ func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/domain-settings [delete]
 func (h *Handler) DeleteDomainSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.SettingScopeGlobal)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
 }

@@ -55,22 +55,21 @@ func (s *service) sysCleanupLocalBackupFiles(
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.LocalBackupRetention.ToDuration()
 
-	deletingFileSettings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeGlobal(), nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeFile),
-		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectWhere("setting.kind = ?", base.FileKindSystemBackup),
-		bunex.SelectWhere("setting.data->>'storageType' = ?", base.FileStorageLocal),
-		bunex.SelectWhere("setting.created_at < ?", timeNow.Add(-retention)),
+	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
+		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),
+		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
+		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
+		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	for _, setting := range deletingFileSettings {
-		setting.DeletedAt = timeNow
+	for _, file := range deletingFiles {
+		file.DeletedAt = timeNow
 	}
-	err = s.settingRepo.UpsertMulti(ctx, db, deletingFileSettings,
-		entity.SettingUpsertingConflictCols, []string{"deleted_at"})
+	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
+		[]string{"deleted_at"})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -85,8 +84,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 		return nil
 	}
 
-	for _, setting := range deletingFileSettings {
-		file := setting.MustAsFile()
+	for _, file := range deletingFiles {
 		filePath := filepath.Join(file.Path, file.Name)
 		err := os.Remove(filePath)
 		if err != nil {
@@ -113,33 +111,25 @@ func (s *service) sysCleanupCloudBackupFiles(
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.CloudBackupRetention.ToDuration()
 
-	deletingFileSettings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeGlobal(), nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeFile),
-		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectWhere("setting.kind = ?", base.FileKindSystemBackup),
-		bunex.SelectWhere("setting.data->>'storageType' = ?", base.FileStorageCloud),
-		bunex.SelectWhere("setting.created_at < ?", timeNow.Add(-retention)),
+	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
+		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),
+		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
+		bunex.SelectWhere("file.storage_type = ?", base.FileStorageCloud),
+		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
+		bunex.SelectRelation("Storage"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	for _, setting := range deletingFileSettings {
-		setting.DeletedAt = timeNow
+	for _, file := range deletingFiles {
+		file.DeletedAt = timeNow
 	}
-	err = s.settingRepo.UpsertMulti(ctx, db, deletingFileSettings,
-		entity.SettingUpsertingConflictCols, []string{"deleted_at"})
+	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.SettingUpsertingConflictCols,
+		[]string{"deleted_at"})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
-	// Load all reference objects from the files
-	refObjects, err := s.settingService.LoadReferenceObjects(ctx, db, nil, true,
-		false, deletingFileSettings...)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	data.AddRefObjects(refObjects)
 
 	// Delete real files in cloud
 	mapDelFuncByStorage := map[string]func(*entity.File) error{}
@@ -149,28 +139,25 @@ func (s *service) sysCleanupCloudBackupFiles(
 		if exists {
 			return delFunc, nil
 		}
-
-		storageSttg := data.RefObjects.RefSettings[file.Storage.ID]
-		if storageSttg == nil {
+		if file.Storage == nil {
 			return nil, apperrors.NewNotFound(fmt.Sprintf("Storage setting '%v'", file.Storage.ID))
 		}
 
-		switch base.CloudStorageKind(storageSttg.Kind) { //nolint:gocritic
+		switch base.CloudStorageKind(file.Storage.Kind) { //nolint:gocritic
 		case base.CloudStorageKindS3:
-			s3Client, err := s3.NewClientFromSetting(ctx, storageSttg)
+			s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 			if err != nil {
 				return nil, apperrors.Wrap(err)
 			}
 			delFunc = func(file *entity.File) error {
 				return s3Client.DeleteObject(ctx, file.Bucket, filepath.Join(file.Path, file.Name))
 			}
-			mapDelFuncByStorage[storageSttg.ID] = delFunc
+			mapDelFuncByStorage[file.StorageID] = delFunc
 		}
 		return delFunc, nil
 	}
 
-	for _, setting := range deletingFileSettings {
-		file := setting.MustAsFile()
+	for _, file := range deletingFiles {
 		filePath := filepath.Join(file.Path, file.Name)
 
 		delFunc, err := getDelFunc(file)

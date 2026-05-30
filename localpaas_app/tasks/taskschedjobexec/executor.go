@@ -163,7 +163,7 @@ func (e *Executor) loadSchedJobData(
 ) (err error) {
 	schedJob := data.SchedJob.MustAsSchedJob()
 	// Load reference objects
-	scope := &base.SettingScope{AppID: schedJob.App.ID} // ID can be empty
+	scope := &base.ObjectScope{AppID: schedJob.App.ID} // ID can be empty
 	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope,
 		true, false, data.SchedJob)
 	if err != nil {

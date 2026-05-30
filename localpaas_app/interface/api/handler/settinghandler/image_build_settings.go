@@ -19,7 +19,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings [get]
 func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
+	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateImageBuildSettings Updates image build settings
@@ -34,7 +34,7 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings [put]
 func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateImageBuildSettingsStatus Updates image build settings status
@@ -49,7 +49,7 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings/status [put]
 func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeGlobal)
 }
 
 // DeleteImageBuildSettings Deletes image build settings
@@ -63,5 +63,5 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings [delete]
 func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.SettingScopeGlobal)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeGlobal)
 }

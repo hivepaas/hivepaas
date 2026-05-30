@@ -26,7 +26,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails [get]
 func (h *Handler) ListEmail(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // GetEmail Gets e-mail setting details
@@ -41,7 +41,7 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [get]
 func (h *Handler) GetEmail(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // CreateEmail Creates a new e-mail setting
@@ -56,7 +56,7 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails [post]
 func (h *Handler) CreateEmail(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // UpdateEmail Updates e-mail setting
@@ -72,7 +72,7 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [put]
 func (h *Handler) UpdateEmail(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // UpdateEmailStatus Updates email setting status
@@ -88,7 +88,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails/{itemID}/status [put]
 func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // DeleteEmail Deletes e-mail setting
@@ -103,7 +103,7 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [delete]
 func (h *Handler) DeleteEmail(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeEmail, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
 }
 
 // TestSendMail Tests sending an email

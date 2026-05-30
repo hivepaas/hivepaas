@@ -34,7 +34,7 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListGitCredentialReq()
-	req.Scope = base.NewSettingScopeProject(projectID)
+	req.Scope = base.NewObjectScopeProject(projectID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -73,7 +73,7 @@ func (h *Handler) ListGitRepo(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListRepoReq()
-	req.Scope = base.NewSettingScopeProject(projectID)
+	req.Scope = base.NewObjectScopeProject(projectID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)

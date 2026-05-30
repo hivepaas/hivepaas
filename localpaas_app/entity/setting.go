@@ -33,18 +33,18 @@ func registerSettingParser(typ base.SettingType, parser SettingParser) bool {
 }
 
 type Setting struct {
-	ID              string                `bun:",pk" json:"id"`
-	Scope           base.SettingScopeType `json:"scope"`
-	ObjectID        string                `bun:",nullzero" json:"objectId,omitempty"`
-	Type            base.SettingType      `json:"type"`
-	Kind            string                `bun:",nullzero" json:"kind,omitempty"`
-	Status          base.SettingStatus    `json:"status"`
-	Name            string                `bun:",nullzero" json:"name"`
-	Data            string                `bun:",nullzero" json:"data"`
-	AvailInProjects bool                  `json:"availInProjects,omitempty"`
-	Default         bool                  `bun:"is_default" json:"isDefault,omitempty"`
-	Version         int                   `json:"version"`
-	UpdateVer       int                   `json:"updateVer"`
+	ID              string               `bun:",pk" json:"id"`
+	Scope           base.ObjectScopeType `json:"scope"`
+	ObjectID        string               `bun:",nullzero" json:"objectId,omitempty"`
+	Type            base.SettingType     `json:"type"`
+	Kind            string               `bun:",nullzero" json:"kind,omitempty"`
+	Status          base.SettingStatus   `json:"status"`
+	Name            string               `bun:",nullzero" json:"name"`
+	Data            string               `bun:",nullzero" json:"data"`
+	AvailInProjects bool                 `json:"availInProjects,omitempty"`
+	Default         bool                 `bun:"is_default" json:"isDefault,omitempty"`
+	Version         int                  `json:"version"`
+	UpdateVer       int                  `json:"updateVer"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`

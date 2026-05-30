@@ -41,8 +41,8 @@ type sysBackupData struct {
 
 	OutFileName   string
 	OutFilePath   string
-	LocalOutFile  *entity.Setting
-	RemoteOutFile *entity.Setting
+	LocalOutFile  *entity.File
+	RemoteOutFile *entity.File
 }
 
 func (s *service) Backup(

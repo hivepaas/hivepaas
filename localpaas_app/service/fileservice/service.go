@@ -13,7 +13,7 @@ type Service interface {
 	GetDownloadURL(ctx context.Context, db database.IDB, auth *basedto.Auth, req *GetDownloadURLReq) (
 		*GetDownloadURLResp, error)
 
-	GenerateDownloadToken(userID string, fileOrSettingID string, requireLogin bool,
+	GenerateDownloadToken(userID string, fileID string, requireLogin bool,
 		expiration time.Duration) (string, error)
 	ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error)
 }

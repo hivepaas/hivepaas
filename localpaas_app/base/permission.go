@@ -46,7 +46,6 @@ const (
 	ResourceTypeSystemCleanup      ResourceType = "system-cleanup"
 	ResourceTypeSystemBackup       ResourceType = "system-backup"
 	ResourceTypeSSLRenewal         ResourceType = "ssl-renewal"
-	ResourceTypeFile               ResourceType = "file"
 	ResourceTypeDomainSettings     ResourceType = "domain-settings"
 	ResourceTypeStorageSettings    ResourceType = "storage-settings"
 	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"

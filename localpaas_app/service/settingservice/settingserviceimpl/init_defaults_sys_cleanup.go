@@ -38,7 +38,7 @@ func (s *service) initDefaultSystemCleanup(
 	// Cleanup settings
 	cleanupSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
+		Scope:     base.ObjectScopeGlobal,
 		Type:      base.SettingTypeSystemCleanup,
 		Status:    sysCleanupDefaultStatus,
 		Name:      sysCleanupSettingName,
@@ -80,7 +80,7 @@ func (s *service) initDefaultSystemCleanup(
 	// Cleanup job
 	jobSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.SettingScopeGlobal,
+		Scope:     base.ObjectScopeGlobal,
 		Type:      base.SettingTypeSchedJob,
 		Kind:      string(base.SchedJobTypeSystemCleanup),
 		Status:    sysCleanupDefaultStatus,

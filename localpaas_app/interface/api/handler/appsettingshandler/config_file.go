@@ -21,7 +21,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files [get]
 func (h *Handler) ListConfigFile(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.ListSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }
 
 // GetConfigFile Get an app config file details
@@ -38,7 +38,7 @@ func (h *Handler) ListConfigFile(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID} [get]
 func (h *Handler) GetConfigFile(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.GetSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }
 
 // GetConfigFileDownloadToken Gets config file download token
@@ -55,7 +55,7 @@ func (h *Handler) GetConfigFile(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID}/download-token [get]
 func (h *Handler) GetConfigFileDownloadToken(ctx *gin.Context) {
-	h.GetDownloadToken(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp, "", 0)
+	h.GetDownloadToken(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp, "", 0)
 }
 
 // DownloadConfigFile Download a config file
@@ -72,7 +72,7 @@ func (h *Handler) GetConfigFileDownloadToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID}/download [get]
 func (h *Handler) DownloadConfigFile(ctx *gin.Context) {
-	h.Download(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp, "")
+	h.Download(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp, "")
 }
 
 // CreateConfigFile Creates an app config file
@@ -89,7 +89,7 @@ func (h *Handler) DownloadConfigFile(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files [post]
 func (h *Handler) CreateConfigFile(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.CreateSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }
 
 // UpdateConfigFile Updates an app config file
@@ -107,7 +107,7 @@ func (h *Handler) CreateConfigFile(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID} [put]
 func (h *Handler) UpdateConfigFile(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.UpdateSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }
 
 // UpdateConfigFileStatus Updates app config file status
@@ -125,7 +125,7 @@ func (h *Handler) UpdateConfigFile(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID}/status [put]
 func (h *Handler) UpdateConfigFileStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }
 
 // DeleteConfigFile Deletes an app config file
@@ -142,5 +142,5 @@ func (h *Handler) UpdateConfigFileStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/config-files/{itemID} [delete]
 func (h *Handler) DeleteConfigFile(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeConfigFile, base.SettingScopeApp)
+	h.DeleteSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
 }

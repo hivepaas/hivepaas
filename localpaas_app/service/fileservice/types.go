@@ -7,7 +7,7 @@ import (
 )
 
 type GetDownloadURLReq struct {
-	File         *entity.Setting
+	File         *entity.File
 	RequireLogin bool
 	Expiration   time.Duration
 	CloudPresign bool

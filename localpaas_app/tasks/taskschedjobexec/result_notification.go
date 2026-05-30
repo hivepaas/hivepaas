@@ -24,14 +24,14 @@ func (e *Executor) sendNotification(
 		return nil
 	}
 
-	var scope *base.SettingScope
+	var scope *base.ObjectScope
 	switch {
 	case data.App != nil:
 		scope = data.App.GetSettingScope()
 	case data.Project != nil:
 		scope = data.Project.GetSettingScope()
 	default:
-		scope = base.NewSettingScopeGlobal()
+		scope = base.NewObjectScopeGlobal()
 	}
 
 	isSucceeded := data.Task.IsDone()

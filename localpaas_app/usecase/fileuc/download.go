@@ -14,7 +14,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/fileuc/filedto"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc/filedto"
 	"github.com/localpaas/localpaas/services/aws/s3"
 )
 
@@ -27,11 +28,9 @@ func (uc *UC) DownloadFile(
 	auth *basedto.Auth,
 	req *filedto.DownloadFileReq,
 ) (_ *filedto.DownloadFileResp, err error) {
-	req.Type = currentSettingType
-
 	needParseToken := req.Token != "" || auth == nil || auth.User.Role != base.UserRoleAdmin
 	if needParseToken {
-		tokenClaims, err := uc.FileService.ParseDownloadToken(req.Token)
+		tokenClaims, err := uc.fileService.ParseDownloadToken(req.Token)
 		if err != nil {
 			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 		}
@@ -43,21 +42,23 @@ func (uc *UC) DownloadFile(
 		}
 	}
 
-	setting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, req.Type, req.ID, true)
+	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID,
+		bunex.SelectRelation("Storage"),
+		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
+	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	file := setting.MustAsFile()
-	if !setting.IsActive() || file.Deleted {
+	if !file.IsActive() || file.Deleted {
 		return nil, apperrors.NewNotFound("File")
 	}
 
 	switch file.StorageType {
 	case base.FileStorageLocal:
-		return uc.downloadLocalFile(ctx, req, setting)
+		return uc.downloadLocalFile(ctx, req, file)
 	case base.FileStorageCloud:
-		return uc.downloadCloudFile(ctx, req, setting)
+		return uc.downloadCloudFile(ctx, req, file)
 	default:
 		return nil, apperrors.NewUnsupported("Storage type")
 	}
@@ -66,9 +67,8 @@ func (uc *UC) DownloadFile(
 func (uc *UC) downloadLocalFile(
 	_ context.Context,
 	req *filedto.DownloadFileReq,
-	setting *entity.Setting,
+	file *entity.File,
 ) (_ *filedto.DownloadFileResp, err error) {
-	file := setting.MustAsFile()
 	respData := &filedto.DownloadFileDataResp{
 		ContentType:   file.Mimetype,
 		ContentLength: file.Size,
@@ -95,18 +95,9 @@ func (uc *UC) downloadLocalFile(
 func (uc *UC) downloadCloudFile(
 	ctx context.Context,
 	req *filedto.DownloadFileReq,
-	setting *entity.Setting,
+	file *entity.File,
 ) (_ *filedto.DownloadFileResp, err error) {
-	file := setting.MustAsFile()
-
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, nil,
-		true, false, setting)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	storageSttg := refObjects.RefSettings[file.Storage.ID]
-	if storageSttg == nil {
+	if file.Storage == nil {
 		return nil, apperrors.NewInactive("Storage setting")
 	}
 
@@ -120,9 +111,9 @@ func (uc *UC) downloadCloudFile(
 		}
 	}
 
-	switch base.CloudStorageKind(storageSttg.Kind) {
+	switch base.CloudStorageKind(file.Storage.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSttg)
+		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

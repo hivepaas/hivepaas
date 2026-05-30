@@ -33,7 +33,7 @@ func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
 	}
 
 	req := sslrenewaldto.NewGetSSLRenewalReq()
-	req.Scope = base.NewSettingScopeGlobal()
+	req.Scope = base.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -71,7 +71,7 @@ func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
 	}
 
 	req := sslrenewaldto.NewUpdateSSLRenewalReq()
-	req.Scope = base.NewSettingScopeGlobal()
+	req.Scope = base.NewObjectScopeGlobal()
 	if err = h.ParseJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -109,7 +109,7 @@ func (h *Handler) ExecuteSSLRenewal(ctx *gin.Context) {
 	}
 
 	req := sslrenewaldto.NewExecuteSSLRenewalReq()
-	req.Scope = base.NewSettingScopeGlobal()
+	req.Scope = base.NewObjectScopeGlobal()
 	if err = h.ParseJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

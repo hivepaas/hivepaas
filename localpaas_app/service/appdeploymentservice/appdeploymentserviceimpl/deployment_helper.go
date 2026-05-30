@@ -133,7 +133,7 @@ func (s *service) calcBuildRegistryAuths(
 ) (map[string]registry.AuthConfig, error) {
 	app := data.App
 
-	settings, _, err := s.settingRepo.List(ctx, db, base.NewSettingScopeProject(app.ProjectID), nil,
+	settings, _, err := s.settingRepo.List(ctx, db, base.NewObjectScopeProject(app.ProjectID), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
@@ -167,7 +167,7 @@ func (s *service) loadImageBuildSettings(
 	data *repoDeploymentData,
 ) error {
 	app := data.App
-	setting, err := s.settingRepo.GetSingle(ctx, db, base.NewSettingScopeProject(app.ProjectID),
+	setting, err := s.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeImageBuildSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)

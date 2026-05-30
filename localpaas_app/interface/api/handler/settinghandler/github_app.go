@@ -26,7 +26,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps [get]
 func (h *Handler) ListGithubApp(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // GetGithubApp Gets github-app setting details
@@ -41,7 +41,7 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [get]
 func (h *Handler) GetGithubApp(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // CreateGithubApp Creates a new github-app setting
@@ -56,7 +56,7 @@ func (h *Handler) GetGithubApp(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps [post]
 func (h *Handler) CreateGithubApp(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // UpdateGithubApp Updates github-app
@@ -72,7 +72,7 @@ func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [put]
 func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // UpdateGithubAppStatus Updates github-app status
@@ -88,7 +88,7 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/status [put]
 func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // DeleteGithubApp Deletes github-app setting
@@ -103,7 +103,7 @@ func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [delete]
 func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeGithubApp, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
 }
 
 // TestGithubAppConn Test github app connection
@@ -188,7 +188,7 @@ func (h *Handler) ListAppInstallation(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/manifest-flow/begin [post]
 func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
-	h.GithubAppManifestFlowBegin(ctx, base.SettingScopeGlobal)
+	h.GithubAppManifestFlowBegin(ctx, base.ObjectScopeGlobal)
 }
 
 // BeginGithubAppManifestFlowCreation Begins a github-app manifest flow of creation
@@ -203,7 +203,7 @@ func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/manifest-flow/begin [get]
 func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
-	h.GithubAppManifestFlowBeginCreation(ctx, base.SettingScopeGlobal)
+	h.GithubAppManifestFlowBeginCreation(ctx, base.ObjectScopeGlobal)
 }
 
 // HandleGithubAppManifestFlowProgress Handles progress of github-app manifest flow
@@ -218,7 +218,7 @@ func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/manifest-flow/progress [get]
 func (h *Handler) HandleGithubAppManifestFlowProgress(ctx *gin.Context) {
-	h.GithubAppManifestFlowProgress(ctx, base.SettingScopeGlobal)
+	h.GithubAppManifestFlowProgress(ctx, base.ObjectScopeGlobal)
 }
 
 // BeginReprovisionGithubApp Begins reprovisioning a github-app through manifest flow
@@ -234,5 +234,5 @@ func (h *Handler) HandleGithubAppManifestFlowProgress(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/begin-reprovision [post]
 func (h *Handler) BeginReprovisionGithubApp(ctx *gin.Context) {
-	h.GithubAppBeginReprovision(ctx, base.SettingScopeGlobal)
+	h.GithubAppBeginReprovision(ctx, base.ObjectScopeGlobal)
 }

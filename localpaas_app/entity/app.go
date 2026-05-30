@@ -49,8 +49,8 @@ func (app *App) GetName() string {
 	return app.Name
 }
 
-func (app *App) GetSettingScope() *base.SettingScope {
-	return &base.SettingScope{
+func (app *App) GetSettingScope() *base.ObjectScope {
+	return &base.ObjectScope{
 		AppID:       app.ID,
 		ParentAppID: app.ParentID,
 		ProjectID:   app.ProjectID,

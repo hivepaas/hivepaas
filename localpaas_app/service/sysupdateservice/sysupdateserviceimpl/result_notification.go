@@ -17,7 +17,7 @@ func (s *service) notifyForSystemUpdate(
 	db database.IDB,
 	data *sysUpdateData,
 ) (err error) {
-	notification, err := s.notificationService.GetDefaultNotification(ctx, db, base.NewSettingScopeGlobal(),
+	notification, err := s.notificationService.GetDefaultNotification(ctx, db, base.NewObjectScopeGlobal(),
 		data.RefObjects, false)
 	if err != nil {
 		return apperrors.Wrap(err)

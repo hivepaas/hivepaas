@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth [get]
 func (h *Handler) ListRegistryAuth(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }
 
 // GetRegistryAuth Gets registry auth setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListRegistryAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth/{itemID} [get]
 func (h *Handler) GetRegistryAuth(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }
 
 // CreateRegistryAuth Creates a new registry auth setting
@@ -56,7 +56,7 @@ func (h *Handler) GetRegistryAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth [post]
 func (h *Handler) CreateRegistryAuth(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }
 
 // UpdateRegistryAuth Updates registry auth
@@ -73,7 +73,7 @@ func (h *Handler) CreateRegistryAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth/{itemID} [put]
 func (h *Handler) UpdateRegistryAuth(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }
 
 // UpdateRegistryAuthStatus Updates registry auth status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateRegistryAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth/{itemID}/status [put]
 func (h *Handler) UpdateRegistryAuthStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }
 
 // DeleteRegistryAuth Deletes registry auth setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateRegistryAuthStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/registry-auth/{itemID} [delete]
 func (h *Handler) DeleteRegistryAuth(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeRegistryAuth, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeRegistryAuth, base.ObjectScopeProject)
 }

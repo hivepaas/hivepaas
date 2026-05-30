@@ -19,7 +19,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/storage-settings [get]
 func (h *Handler) GetStorageSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeGlobal)
+	h.GetUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateStorageSettings Updates storage settings
@@ -34,7 +34,7 @@ func (h *Handler) GetStorageSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/storage-settings [put]
 func (h *Handler) UpdateStorageSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeGlobal)
 }
 
 // UpdateStorageSettingsStatus Updates storage settings status
@@ -49,7 +49,7 @@ func (h *Handler) UpdateStorageSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/storage-settings/status [put]
 func (h *Handler) UpdateStorageSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeStorageSettings, base.SettingScopeGlobal)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeGlobal)
 }
 
 // DeleteStorageSettings Deletes storage settings setting
@@ -63,5 +63,5 @@ func (h *Handler) UpdateStorageSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/storage-settings [delete]
 func (h *Handler) DeleteStorageSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.SettingScopeGlobal)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeStorageSettings, base.ObjectScopeGlobal)
 }

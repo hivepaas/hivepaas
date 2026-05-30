@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages [get]
 func (h *Handler) ListCloudStorage(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }
 
 // GetCloudStorage Gets cloud storage details
@@ -40,7 +40,7 @@ func (h *Handler) ListCloudStorage(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages/{itemID} [get]
 func (h *Handler) GetCloudStorage(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }
 
 // CreateCloudStorage Creates a new cloud storage
@@ -56,7 +56,7 @@ func (h *Handler) GetCloudStorage(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages [post]
 func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }
 
 // UpdateCloudStorage Updates cloud storage
@@ -73,7 +73,7 @@ func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages/{itemID} [put]
 func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }
 
 // UpdateCloudStorageStatus Updates cloud storage status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages/{itemID}/status [put]
 func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }
 
 // DeleteCloudStorage Deletes a cloud storage
@@ -106,5 +106,5 @@ func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/cloud-storages/{itemID} [delete]
 func (h *Handler) DeleteCloudStorage(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeCloudStorage, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeProject)
 }

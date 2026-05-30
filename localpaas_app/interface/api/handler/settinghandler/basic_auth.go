@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth [get]
 func (h *Handler) ListBasicAuth(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.ListSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }
 
 // GetBasicAuth Gets basic auth setting details
@@ -38,7 +38,7 @@ func (h *Handler) ListBasicAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [get]
 func (h *Handler) GetBasicAuth(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.GetSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }
 
 // CreateBasicAuth Creates a new basic auth setting
@@ -53,7 +53,7 @@ func (h *Handler) GetBasicAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth [post]
 func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.CreateSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }
 
 // UpdateBasicAuth Updates basic auth
@@ -69,7 +69,7 @@ func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [put]
 func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.UpdateSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }
 
 // UpdateBasicAuthStatus Updates basic auth status
@@ -85,7 +85,7 @@ func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID}/status [put]
 func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }
 
 // DeleteBasicAuth Deletes basic auth setting
@@ -100,5 +100,5 @@ func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [delete]
 func (h *Handler) DeleteBasicAuth(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeBasicAuth, base.SettingScopeGlobal)
+	h.DeleteSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
 }

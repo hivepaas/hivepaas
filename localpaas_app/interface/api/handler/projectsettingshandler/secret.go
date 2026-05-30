@@ -21,7 +21,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets [get]
 func (h *Handler) ListSecret(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }
 
 // GetSecret Gets secret details
@@ -37,7 +37,7 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets/{itemID} [get]
 func (h *Handler) GetSecret(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }
 
 // CreateSecret Creates a project secret
@@ -53,7 +53,7 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets [post]
 func (h *Handler) CreateSecret(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }
 
 // UpdateSecret Updates a project secret
@@ -70,7 +70,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets/{itemID} [put]
 func (h *Handler) UpdateSecret(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }
 
 // UpdateSecretStatus Updates project secret status
@@ -87,7 +87,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets/{itemID}/status [put]
 func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }
 
 // DeleteSecret Deletes a project secret
@@ -103,5 +103,5 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/secrets/{itemID} [delete]
 func (h *Handler) DeleteSecret(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeProject)
 }

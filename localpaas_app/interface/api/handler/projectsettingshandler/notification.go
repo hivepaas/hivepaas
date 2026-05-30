@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications [get]
 func (h *Handler) ListNotification(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }
 
 // GetNotification Gets notification setting details
@@ -40,7 +40,7 @@ func (h *Handler) ListNotification(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [get]
 func (h *Handler) GetNotification(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }
 
 // CreateNotification Creates a new notification setting
@@ -56,7 +56,7 @@ func (h *Handler) GetNotification(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications [post]
 func (h *Handler) CreateNotification(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }
 
 // UpdateNotification Updates notification
@@ -73,7 +73,7 @@ func (h *Handler) CreateNotification(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [put]
 func (h *Handler) UpdateNotification(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }
 
 // UpdateNotificationStatus Updates notification status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID}/status [put]
 func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }
 
 // DeleteNotification Deletes notification setting
@@ -106,5 +106,5 @@ func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [delete]
 func (h *Handler) DeleteNotification(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeNotification, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
 }

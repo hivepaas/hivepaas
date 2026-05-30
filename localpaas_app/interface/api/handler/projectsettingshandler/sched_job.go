@@ -24,7 +24,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs [get]
 func (h *Handler) ListSchedJob(ctx *gin.Context) {
-	h.ListSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.ListSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }
 
 // GetSchedJob Gets sched-job details
@@ -40,7 +40,7 @@ func (h *Handler) ListSchedJob(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs/{itemID} [get]
 func (h *Handler) GetSchedJob(ctx *gin.Context) {
-	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }
 
 // CreateSchedJob Creates a new sched-job
@@ -56,7 +56,7 @@ func (h *Handler) GetSchedJob(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs [post]
 func (h *Handler) CreateSchedJob(ctx *gin.Context) {
-	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }
 
 // UpdateSchedJob Updates sched-job
@@ -73,7 +73,7 @@ func (h *Handler) CreateSchedJob(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs/{itemID} [put]
 func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
-	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }
 
 // UpdateSchedJobStatus Updates sched-job status
@@ -90,7 +90,7 @@ func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs/{itemID}/status [put]
 func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
-	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }
 
 // DeleteSchedJob Deletes sched-job
@@ -106,5 +106,5 @@ func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/sched-jobs/{itemID} [delete]
 func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
-	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.SettingScopeProject)
+	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProject)
 }

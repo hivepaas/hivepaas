@@ -32,7 +32,7 @@ func (h *Handler) ListGitCredential(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListGitCredentialReq()
-	req.Scope = base.NewSettingScopeGlobal()
+	req.Scope = base.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return

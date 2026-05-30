@@ -28,12 +28,7 @@ func (uc *UC) GetDeploymentStatus(
 		}
 	}
 
-	resp, err := appdeploymentdto.TransformDeploymentStatus(deployment, deploymentInfo)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
 	return &appdeploymentdto.GetDeploymentStatusResp{
-		Data: resp,
+		Data: appdeploymentdto.TransformDeploymentStatus(deployment, deploymentInfo),
 	}, nil
 }

@@ -40,12 +40,12 @@ type DeploymentStatusResp struct {
 func TransformDeploymentStatus(
 	deployment *entity.Deployment,
 	deploymentInfo *cacheentity.DeploymentInfo,
-) (resp *DeploymentStatusResp, err error) {
-	resp = &DeploymentStatusResp{
+) *DeploymentStatusResp {
+	resp := &DeploymentStatusResp{
 		Status: deployment.Status,
 	}
 	if deploymentInfo != nil {
 		resp.Status = deploymentInfo.Status
 	}
-	return resp, nil
+	return resp
 }

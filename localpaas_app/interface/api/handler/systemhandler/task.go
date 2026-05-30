@@ -98,6 +98,57 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// GetTaskStatus Gets task status
+// @Summary Gets task status
+// @Description Gets task status
+// @Tags    system_tasks
+// @Produce json
+// @Produce plain
+// @Id      getTaskStatus
+// @Param   taskID path string true "task ID"
+// @Success 200 {object} taskdto.GetTaskStatusResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /tasks/{taskID}/status [get]
+func (h *Handler) GetTaskStatus(ctx *gin.Context) {
+	taskID, err := h.ParseStringParam(ctx, "taskID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSystem,
+		ResourceType:   base.ResourceTypeTask,
+		ResourceID:     taskID,
+		Action:         base.ActionTypeRead,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := taskdto.NewGetTaskStatusReq()
+	req.ID = taskID
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.taskUC.GetTaskStatus(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	if ctx.ContentType() == "text/plain" {
+		ctx.String(http.StatusOK, "status=%v", resp.Data.Status)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // CancelTask Cancels a task
 // @Summary Cancels a task
 // @Description Cancels a task

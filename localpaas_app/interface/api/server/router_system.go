@@ -12,6 +12,7 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		taskGroup := systemGroup.Group("/tasks")
 		taskGroup.GET("", systemHandler.ListTask)
 		taskGroup.GET("/:taskID", systemHandler.GetTask)
+		taskGroup.GET("/:taskID/status", systemHandler.GetTaskStatus)
 		taskGroup.POST("/:taskID/cancel", systemHandler.CancelTask)
 	}
 

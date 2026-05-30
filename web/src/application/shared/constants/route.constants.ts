@@ -245,6 +245,11 @@ export const ROUTE = {
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/http-settings/`,
                         },
 
+                        healthChecks: {
+                            $pattern: "projects/:id/apps/:appId/health-checks",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/health-checks/`,
+                        },
+
                         envVariables: {
                             $pattern: "projects/:id/apps/:appId/env-variables",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/env-variables/`,

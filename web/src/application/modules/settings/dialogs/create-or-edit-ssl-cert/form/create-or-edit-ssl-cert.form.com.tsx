@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
-import { ProjectNotificationQueries } from "~/projects/data/queries";
-import { NotificationQueries } from "~/settings/data/queries";
+import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
+import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 
-import { Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
+import { NotificationSettings } from "@application/shared/form";
 
 import {
     Button,
@@ -50,8 +49,6 @@ const CUSTOM_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.RSA4096,
 ];
 
-type NotificationFieldName = "notification.success" | "notification.failure";
-
 function formatKeyTypeLabel(value: ESslKeyType): string {
     switch (value) {
         case ESslKeyType.ECP256:
@@ -77,73 +74,6 @@ function addDays(date: Date, days: number): Date {
     return result;
 }
 
-function NotificationSelect({ control, disabled, name, scope, title }: NotificationSelectProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-
-    const settingsQuery = NotificationQueries.useFindManyPaginated(
-        {
-            search: searchQuery,
-        },
-        {
-            enabled: scope.type === "settings",
-        },
-    );
-
-    const projectQuery = ProjectNotificationQueries.useFindManyPaginated(
-        {
-            projectID: scope.type === "project" ? scope.projectId : "",
-            search: searchQuery,
-        },
-        {
-            enabled: scope.type === "project",
-        },
-    );
-
-    const query = scope.type === "project" ? projectQuery : settingsQuery;
-    const { data: { data: notifications } = DEFAULT_PAGINATED_DATA, isFetching, refetch, isRefetching } = query;
-
-    const {
-        field,
-        fieldState: { error, invalid },
-    } = useController({ control, name });
-
-    const comboboxOptions = useMemo(() => {
-        return notifications.map(notification => ({
-            value: { id: notification.id, name: notification.name },
-            label: notification.name,
-        }));
-    }, [notifications]);
-
-    return (
-        <InfoBlock
-            title={title}
-            titleWidth={220}
-        >
-            <Field>
-                <Combobox
-                    options={comboboxOptions}
-                    value={field.value?.id ?? null}
-                    onChange={(_, option) => {
-                        field.onChange(option ?? undefined);
-                    }}
-                    onSearch={setSearchQuery}
-                    placeholder="None"
-                    searchable
-                    closeOnSelect
-                    emptyText="No notifications available"
-                    valueKey="id"
-                    aria-invalid={invalid}
-                    loading={isFetching}
-                    disabled={disabled}
-                    onRefresh={() => void refetch()}
-                    isRefreshing={isRefetching}
-                />
-                <FieldError errors={[error]} />
-            </Field>
-        </InfoBlock>
-    );
-}
-
 export function CreateOrEditSslCertForm({
     isPending,
     onSubmit,
@@ -157,13 +87,7 @@ export function CreateOrEditSslCertForm({
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
 
-    const {
-        handleSubmit,
-        control,
-        formState: { errors, isDirty },
-        reset,
-        setValue,
-    } = useForm<CreateOrEditSslCertFormInput, unknown, CreateOrEditSslCertFormOutput>({
+    const methods = useForm<CreateOrEditSslCertFormInput, unknown, CreateOrEditSslCertFormOutput>({
         defaultValues: {
             domain: initialValues?.domain ?? "",
             certType: initialValues?.certType ?? ESslCertType.LetsEncrypt,
@@ -186,6 +110,14 @@ export function CreateOrEditSslCertForm({
         resolver: zodResolver(CreateOrEditSslCertFormSchema),
         mode: "onSubmit",
     });
+
+    const {
+        handleSubmit,
+        control,
+        formState: { errors, isDirty },
+        reset,
+        setValue,
+    } = methods;
 
     useEffect(() => {
         reset({
@@ -233,11 +165,8 @@ export function CreateOrEditSslCertForm({
     const certType = useWatch({ control, name: "certType" });
     const expireAt = useWatch({ control, name: "expireAt" });
     const notifyFrom = useWatch({ control, name: "notifyFrom" });
-    const successUseDefault = useWatch({ control, name: "notification.successUseDefault" });
-    const success = useWatch({ control, name: "notification.success" });
-    const failureUseDefault = useWatch({ control, name: "notification.failureUseDefault" });
-    const failure = useWatch({ control, name: "notification.failure" });
     const isLetsEncrypt = certType === ESslCertType.LetsEncrypt;
+    const { sources: notificationSources, manageLink: notificationManageLink } = useNotificationSettingsSources(scope);
 
     useEffect(() => {
         if (isLetsEncrypt) {
@@ -252,18 +181,6 @@ export function CreateOrEditSslCertForm({
 
         setValue("notifyFrom", addDays(expireAt, -30), { shouldDirty: true });
     }, [expireAt, notifyFrom, setValue]);
-
-    useEffect(() => {
-        if (successUseDefault && success) {
-            setValue("notification.success", undefined);
-        }
-    }, [setValue, success, successUseDefault]);
-
-    useEffect(() => {
-        if (failureUseDefault && failure) {
-            setValue("notification.failure", undefined);
-        }
-    }, [failure, failureUseDefault, setValue]);
 
     const keyTypeOptions = useMemo(() => {
         return (isLetsEncrypt ? LETS_ENCRYPT_KEY_TYPES : CUSTOM_KEY_TYPES).map(value => ({
@@ -304,8 +221,6 @@ export function CreateOrEditSslCertForm({
     } = useController({ name: "notifyFrom", control });
     const { field: availableInProjects } = useController({ name: "availableInProjects", control });
     const { field: defaultField } = useController({ name: "default", control });
-    const { field: successUseDefaultField } = useController({ name: "notification.successUseDefault", control });
-    const { field: failureUseDefaultField } = useController({ name: "notification.failureUseDefault", control });
 
     function onValid(values: CreateOrEditSslCertFormOutput) {
         if (isReadOnly) {
@@ -320,325 +235,278 @@ export function CreateOrEditSslCertForm({
     }
 
     return (
-        <form
-            onSubmit={event => {
-                event.preventDefault();
-                void handleSubmit(onValid, onInvalid)(event);
-            }}
-            className="flex flex-col gap-6"
-        >
-            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-            <fieldset
-                disabled={isReadOnly}
-                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+        <FormProvider {...methods}>
+            <form
+                onSubmit={event => {
+                    event.preventDefault();
+                    void handleSubmit(onValid, onInvalid)(event);
+                }}
+                className="flex flex-col gap-6"
             >
-                <FieldGroup>
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Domain" />}
-                    >
-                        <Field>
-                            <Input
-                                {...domain}
-                                aria-invalid={isDomainInvalid}
-                            />
-                            <FieldError errors={[errors.domain]} />
-                        </Field>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Certificate Type"
-                                isRequired
-                            />
-                        }
-                    >
-                        <Tabs
-                            value={certType}
-                            onValueChange={value => {
-                                certTypeField.onChange(value);
-                            }}
+                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                <fieldset
+                    disabled={isReadOnly}
+                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                >
+                    <FieldGroup>
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Domain" />}
                         >
-                            <TabsList>
-                                <TabsTrigger value={ESslCertType.LetsEncrypt}>Let&apos;s Encrypt</TabsTrigger>
-                                <TabsTrigger value={ESslCertType.Custom}>Custom</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </InfoBlock>
+                            <Field>
+                                <Input
+                                    {...domain}
+                                    aria-invalid={isDomainInvalid}
+                                />
+                                <FieldError errors={[errors.domain]} />
+                            </Field>
+                        </InfoBlock>
 
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
-                                isRequired
-                            />
-                        }
-                    >
-                        <Field>
-                            <Input
-                                {...email}
-                                type="email"
-                                aria-invalid={isEmailInvalid}
-                            />
-                            <FieldError errors={[errors.email]} />
-                        </Field>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Key Type"
-                                isRequired
-                            />
-                        }
-                    >
-                        <Field>
-                            <Select
-                                value={keyType.value}
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Certificate Type"
+                                    isRequired
+                                />
+                            }
+                        >
+                            <Tabs
+                                value={certType}
                                 onValueChange={value => {
-                                    keyType.onChange(value);
+                                    certTypeField.onChange(value);
                                 }}
                             >
-                                <SelectTrigger aria-invalid={isKeyTypeInvalid}>
-                                    <SelectValue placeholder="Select key type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {keyTypeOptions.map(option => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError errors={[errors.keyType]} />
-                        </Field>
-                    </InfoBlock>
+                                <TabsList>
+                                    <TabsTrigger value={ESslCertType.LetsEncrypt}>Let&apos;s Encrypt</TabsTrigger>
+                                    <TabsTrigger value={ESslCertType.Custom}>Custom</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </InfoBlock>
 
-                    {isLetsEncrypt ? (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Auto-renew" />}
+                            title={
+                                <LabelWithInfo
+                                    label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
+                                    isRequired
+                                />
+                            }
+                        >
+                            <Field>
+                                <Input
+                                    {...email}
+                                    type="email"
+                                    aria-invalid={isEmailInvalid}
+                                />
+                                <FieldError errors={[errors.email]} />
+                            </Field>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Key Type"
+                                    isRequired
+                                />
+                            }
+                        >
+                            <Field>
+                                <Select
+                                    value={keyType.value}
+                                    onValueChange={value => {
+                                        keyType.onChange(value);
+                                    }}
+                                >
+                                    <SelectTrigger aria-invalid={isKeyTypeInvalid}>
+                                        <SelectValue placeholder="Select key type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {keyTypeOptions.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.keyType]} />
+                            </Field>
+                        </InfoBlock>
+
+                        {isLetsEncrypt ? (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Auto-renew" />}
+                            >
+                                <Checkbox
+                                    checked={autoRenew.value}
+                                    onCheckedChange={checked => {
+                                        autoRenew.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                        ) : (
+                            <>
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Certificate"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <Textarea
+                                            {...certificate}
+                                            aria-invalid={isCertificateInvalid}
+                                            rows={4}
+                                            maxRows={7}
+                                        />
+                                        <FieldError errors={[errors.certificate]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Private Key"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <Textarea
+                                            {...privateKey}
+                                            aria-invalid={isPrivateKeyInvalid}
+                                            rows={4}
+                                            maxRows={7}
+                                        />
+                                        <FieldError errors={[errors.privateKey]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Expire At"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <DateTimePicker
+                                            value={expireAtField.value ?? undefined}
+                                            onChange={date => {
+                                                expireAtField.onChange(date ?? null);
+                                            }}
+                                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                            granularity="second"
+                                            showClearButton
+                                            aria-invalid={isExpireAtInvalid}
+                                        />
+                                        <FieldError errors={[errors.expireAt]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Notify From" />}
+                                >
+                                    <Field>
+                                        <DateTimePicker
+                                            value={notifyFromField.value ?? undefined}
+                                            onChange={date => {
+                                                notifyFromField.onChange(date ?? null);
+                                            }}
+                                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                            granularity="second"
+                                            showClearButton
+                                            aria-invalid={isNotifyFromInvalid}
+                                        />
+                                        <FieldError errors={[errors.notifyFrom]} />
+                                    </Field>
+                                </InfoBlock>
+                            </>
+                        )}
+
+                        {showAvailableInProjects && (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Available in Projects" />}
+                            >
+                                <Checkbox
+                                    checked={availableInProjects.value}
+                                    onCheckedChange={checked => {
+                                        availableInProjects.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                        )}
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Default" />}
                         >
                             <Checkbox
-                                checked={autoRenew.value}
+                                checked={defaultField.value}
                                 onCheckedChange={checked => {
-                                    autoRenew.onChange(Boolean(checked));
+                                    defaultField.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>
-                    ) : (
-                        <>
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Certificate"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <Textarea
-                                        {...certificate}
-                                        aria-invalid={isCertificateInvalid}
-                                        rows={4}
-                                        maxRows={7}
-                                    />
-                                    <FieldError errors={[errors.certificate]} />
-                                </Field>
-                            </InfoBlock>
+                    </FieldGroup>
 
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Private Key"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <Textarea
-                                        {...privateKey}
-                                        aria-invalid={isPrivateKeyInvalid}
-                                        rows={4}
-                                        maxRows={7}
-                                    />
-                                    <FieldError errors={[errors.privateKey]} />
-                                </Field>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Expire At"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <DateTimePicker
-                                        value={expireAtField.value ?? undefined}
-                                        onChange={date => {
-                                            expireAtField.onChange(date ?? null);
-                                        }}
-                                        displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                                        granularity="second"
-                                        showClearButton
-                                        aria-invalid={isExpireAtInvalid}
-                                    />
-                                    <FieldError errors={[errors.expireAt]} />
-                                </Field>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={<LabelWithInfo label="Notify From" />}
-                            >
-                                <Field>
-                                    <DateTimePicker
-                                        value={notifyFromField.value ?? undefined}
-                                        onChange={date => {
-                                            notifyFromField.onChange(date ?? null);
-                                        }}
-                                        displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                                        granularity="second"
-                                        showClearButton
-                                        aria-invalid={isNotifyFromInvalid}
-                                    />
-                                    <FieldError errors={[errors.notifyFrom]} />
-                                </Field>
-                            </InfoBlock>
-                        </>
-                    )}
-
-                    {showAvailableInProjects && (
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
-                        >
-                            <Checkbox
-                                checked={availableInProjects.value}
-                                onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                    )}
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Default" />}
-                    >
-                        <Checkbox
-                            checked={defaultField.value}
-                            onCheckedChange={checked => {
-                                defaultField.onChange(Boolean(checked));
+                    <ContentBlock label="Notification Configuration">
+                        <NotificationSettings<CreateOrEditSslCertFormInput>
+                            names={{
+                                successUseDefault: "notification.successUseDefault",
+                                success: "notification.success",
+                                failureUseDefault: "notification.failureUseDefault",
+                                failure: "notification.failure",
                             }}
-                        />
-                    </InfoBlock>
-                </FieldGroup>
-
-                <ContentBlock label="Notification Configuration">
-                    <div className="flex flex-col gap-6">
-                        <InfoBlock
+                            sources={notificationSources}
+                            manageLink={notificationManageLink}
+                            readOnly={isReadOnly}
                             titleWidth={220}
-                            title={
-                                <LabelWithInfo
-                                    label="On Success Use Default"
-                                    content="Use the default notification settings on success"
-                                />
-                            }
-                        >
-                            <Checkbox
-                                checked={successUseDefaultField.value}
-                                onCheckedChange={checked => {
-                                    successUseDefaultField.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-
-                        <NotificationSelect
-                            control={control}
-                            disabled={successUseDefault}
-                            name="notification.success"
-                            scope={scope}
-                            title="On Success"
                         />
+                    </ContentBlock>
 
-                        <InfoBlock
-                            titleWidth={220}
-                            title={
-                                <LabelWithInfo
-                                    label="On Failure Use Default"
-                                    content="Use the default notification settings on failure"
-                                />
-                            }
-                        >
-                            <Checkbox
-                                checked={failureUseDefaultField.value}
-                                onCheckedChange={checked => {
-                                    failureUseDefaultField.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-
-                        <NotificationSelect
-                            control={control}
-                            disabled={failureUseDefault}
-                            name="notification.failure"
-                            scope={scope}
-                            title="On Failure"
-                        />
-                    </div>
-                </ContentBlock>
-
-                {!isReadOnly && (
+                    {!isReadOnly && (
+                        <Field>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </Field>
+                    )}
+                </fieldset>
+                {isReadOnly && (
                     <Field>
                         <div className="flex justify-end">
                             <Button
-                                type="submit"
-                                isLoading={isPending}
+                                type="button"
+                                onClick={onClose}
                             >
-                                Save
+                                Close
                             </Button>
                         </div>
                     </Field>
                 )}
-            </fieldset>
-            {isReadOnly && (
-                <Field>
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </Field>
-            )}
-        </form>
+            </form>
+        </FormProvider>
     );
-}
-
-interface NotificationSelectProps {
-    control: ReturnType<
-        typeof useForm<CreateOrEditSslCertFormInput, unknown, CreateOrEditSslCertFormOutput>
-    >["control"];
-    disabled: boolean;
-    name: NotificationFieldName;
-    scope: SslCertTableScope;
-    title: string;
 }
 
 interface Props {

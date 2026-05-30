@@ -42,6 +42,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
         },
         {
+            label: "Health Checks",
+            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
+        },
+        {
             label: "Env Variables",
             route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
         },

@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import React, { type PropsWithChildren, useImperativeHandle, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
@@ -6,12 +6,12 @@ import { cn } from "@lib/utils";
 import { format } from "date-fns";
 import { ChevronDown } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
-import { NotificationQueries } from "~/settings/data";
+import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 import type { SystemCleanupSettings } from "~/system-settings/domain";
 
-import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { InfoBlock } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
+import { NotificationSettings } from "@application/shared/form";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -418,144 +418,30 @@ function BackupCleanupOptionsFields() {
     );
 }
 
-function NotificationFields() {
-    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const [successSearch, setSuccessSearch] = useState("");
-    const [failureSearch, setFailureSearch] = useState("");
-
-    const successQuery = NotificationQueries.useFindManyPaginated({ search: successSearch });
-    const failureQuery = NotificationQueries.useFindManyPaginated({ search: failureSearch });
-
-    const { field: successUseDefault } = useController({ control, name: "notification.successUseDefault" });
-    const { field: success } = useController({ control, name: "notification.success" });
-    const { field: failureUseDefault } = useController({ control, name: "notification.failureUseDefault" });
-    const { field: failure } = useController({ control, name: "notification.failure" });
-
-    useEffect(() => {
-        if (successUseDefault.value) {
-            success.onChange(undefined);
-        }
-    }, [successUseDefault.value, success]);
-
-    useEffect(() => {
-        if (failureUseDefault.value) {
-            failure.onChange(undefined);
-        }
-    }, [failureUseDefault.value, failure]);
-
-    const successOptions = useMemo(() => {
-        return (successQuery.data ?? DEFAULT_PAGINATED_DATA).data.map(item => ({
-            value: { id: item.id, name: item.name },
-            label: item.name,
-        }));
-    }, [successQuery.data]);
-
-    const failureOptions = useMemo(() => {
-        return (failureQuery.data ?? DEFAULT_PAGINATED_DATA).data.map(item => ({
-            value: { id: item.id, name: item.name },
-            label: item.name,
-        }));
-    }, [failureQuery.data]);
+function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
+    const { sources, manageLink } = useNotificationSettingsSources({ type: "settings" });
 
     return (
         <>
             <SectionHeader>Notification Configuration</SectionHeader>
-            <div className="flex flex-col gap-6 px-3">
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="On Success Use Default"
-                            content="Use the default notification settings on success"
-                        />
-                    }
-                >
-                    <Checkbox
-                        checked={successUseDefault.value}
-                        onCheckedChange={successUseDefault.onChange}
-                    />
-                </InfoBlock>
-
-                <InfoBlock title="On Success">
-                    <Field>
-                        <Combobox
-                            options={successOptions}
-                            value={success.value?.id ?? null}
-                            onChange={(_, option) => {
-                                success.onChange(option ?? undefined);
-                            }}
-                            onSearch={setSuccessSearch}
-                            placeholder="None"
-                            emptyText="No notifications available"
-                            className="max-w-[400px]"
-                            valueKey="id"
-                            searchable
-                            closeOnSelect
-                            allowClear
-                            loading={successQuery.isFetching}
-                            onRefresh={() => void successQuery.refetch()}
-                            isRefreshing={successQuery.isRefetching}
-                            disabled={successUseDefault.value}
-                        />
-                        <AppLink.Basic
-                            to={ROUTE.settings.notificationTargets.$route}
-                            className="text-sm text-blue-500"
-                            ignorePrevPath
-                        >
-                            Manage Notification Settings
-                        </AppLink.Basic>
-                    </Field>
-                </InfoBlock>
-
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="On Failure Use Default"
-                            content="Use the default notification settings on failure"
-                        />
-                    }
-                >
-                    <Checkbox
-                        checked={failureUseDefault.value}
-                        onCheckedChange={failureUseDefault.onChange}
-                    />
-                </InfoBlock>
-
-                <InfoBlock title="On Failure">
-                    <Field>
-                        <Combobox
-                            options={failureOptions}
-                            value={failure.value?.id ?? null}
-                            onChange={(_, option) => {
-                                failure.onChange(option ?? undefined);
-                            }}
-                            onSearch={setFailureSearch}
-                            placeholder="None"
-                            emptyText="No notifications available"
-                            className="max-w-[400px]"
-                            valueKey="id"
-                            searchable
-                            closeOnSelect
-                            allowClear
-                            loading={failureQuery.isFetching}
-                            onRefresh={() => void failureQuery.refetch()}
-                            isRefreshing={failureQuery.isRefetching}
-                            disabled={failureUseDefault.value}
-                        />
-                        <AppLink.Basic
-                            to={ROUTE.settings.notificationTargets.$route}
-                            className="text-sm text-blue-500"
-                            ignorePrevPath
-                        >
-                            Manage Notification Settings
-                        </AppLink.Basic>
-                    </Field>
-                </InfoBlock>
+            <div className="px-3">
+                <NotificationSettings<SchemaInput>
+                    names={{
+                        successUseDefault: "notification.successUseDefault",
+                        success: "notification.success",
+                        failureUseDefault: "notification.failureUseDefault",
+                        failure: "notification.failure",
+                    }}
+                    sources={sources}
+                    manageLink={manageLink}
+                    readOnly={readOnly}
+                />
             </div>
         </>
     );
 }
 
-function EnabledCleanupConfigurationFields({ nextRuns }: { nextRuns: Date[] }) {
+function EnabledCleanupConfigurationFields({ nextRuns, readOnly }: { nextRuns: Date[]; readOnly: boolean }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const status = useWatch({ control, name: "status" });
 
@@ -569,7 +455,7 @@ function EnabledCleanupConfigurationFields({ nextRuns }: { nextRuns: Date[] }) {
             <DBCleanupOptionsFields />
             <DockerSwarmCleanupOptionsFields />
             <BackupCleanupOptionsFields />
-            <NotificationFields />
+            <NotificationFields readOnly={readOnly} />
         </>
     );
 }
@@ -634,7 +520,10 @@ export function SystemCleanupConfigurationForm({ ref, defaultValues, onSubmit, r
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
                         <EnabledField />
-                        <EnabledCleanupConfigurationFields nextRuns={defaultValues?.nextRuns ?? []} />
+                        <EnabledCleanupConfigurationFields
+                            nextRuns={defaultValues?.nextRuns ?? []}
+                            readOnly={readOnly}
+                        />
                     </fieldset>
                     {children}
                 </form>

@@ -1,113 +1,29 @@
-import { useEffect } from "react";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
-import { Checkbox } from "@components/ui";
-import { useController, useFormContext } from "react-hook-form";
+import { NotificationSettings } from "@application/shared/form";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-
-import { NotificationSelect } from "../form-components";
-import {
-    type AppConfigDeploymentSettingsFormSchemaInput,
-    type AppConfigDeploymentSettingsFormSchemaOutput,
-} from "../schemas";
+import { type AppConfigDeploymentSettingsFormSchemaInput } from "../schemas";
 
 export function NotificationFields({ readOnly = false }: Props) {
-    const { control } = useFormContext<
-        AppConfigDeploymentSettingsFormSchemaInput,
-        unknown,
-        AppConfigDeploymentSettingsFormSchemaOutput
-    >();
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
 
-    const { field: useDefaultOnSuccess } = useController({
-        control,
-        name: "notification.successUseDefault",
-        defaultValue: true,
-    });
-
-    const { field: success } = useController({
-        control,
-        name: "notification.success",
-    });
-
-    const { field: useDefaultOnFailure } = useController({
-        control,
-        name: "notification.failureUseDefault",
-        defaultValue: true,
-    });
-
-    const { field: failure } = useController({
-        control,
-        name: "notification.failure",
-    });
-
-    useEffect(() => {
-        if (!readOnly && useDefaultOnSuccess.value) {
-            success.onChange(undefined);
-        }
-    }, [readOnly, useDefaultOnSuccess.value, success]);
-
-    useEffect(() => {
-        if (!readOnly && useDefaultOnFailure.value) {
-            failure.onChange(undefined);
-        }
-    }, [readOnly, useDefaultOnFailure.value, failure]);
+    const { sources, manageLink } = useProjectNotificationSettingsSources(projectId);
 
     return (
-        <>
-            <InfoBlock
-                title={
-                    <LabelWithInfo
-                        label="On Success Use Default"
-                        content="Use the default notification settings on success"
-                    />
-                }
-            >
-                <Checkbox
-                    checked={useDefaultOnSuccess.value}
-                    onCheckedChange={value => {
-                        if (readOnly) {
-                            return;
-                        }
-
-                        useDefaultOnSuccess.onChange(value);
-                    }}
-                    disabled={readOnly}
-                />
-            </InfoBlock>
-
-            <NotificationSelect
-                name="notification.success"
-                title="On Success"
-                disabled={readOnly || useDefaultOnSuccess.value}
-            />
-
-            <InfoBlock
-                title={
-                    <LabelWithInfo
-                        label="On Failure Use Default"
-                        content="Use the default notification settings on failure"
-                    />
-                }
-            >
-                <Checkbox
-                    checked={useDefaultOnFailure.value}
-                    onCheckedChange={value => {
-                        if (readOnly) {
-                            return;
-                        }
-
-                        useDefaultOnFailure.onChange(value);
-                    }}
-                    disabled={readOnly}
-                />
-            </InfoBlock>
-
-            <NotificationSelect
-                name="notification.failure"
-                title="On Failure"
-                disabled={readOnly || useDefaultOnFailure.value}
-            />
-        </>
+        <NotificationSettings<AppConfigDeploymentSettingsFormSchemaInput>
+            names={{
+                successUseDefault: "notification.successUseDefault",
+                success: "notification.success",
+                failureUseDefault: "notification.failureUseDefault",
+                failure: "notification.failure",
+            }}
+            sources={sources}
+            manageLink={manageLink}
+            readOnly={readOnly}
+        />
     );
 }
 

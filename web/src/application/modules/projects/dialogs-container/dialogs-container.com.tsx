@@ -6,6 +6,10 @@ import {
     useCreateOrEditAppConfigFileDialogState,
 } from "~/projects/dialogs/create-or-edit-app-config-file";
 import {
+    CreateOrEditAppHealthCheckDialog,
+    useCreateOrEditAppHealthCheckDialogState,
+} from "~/projects/dialogs/create-or-edit-app-health-check";
+import {
     CreateOrEditAppSecretDialog,
     useCreateOrEditAppSecretDialogState,
 } from "~/projects/dialogs/create-or-edit-app-secret";
@@ -25,6 +29,10 @@ import {
     useQuickInstallSslCertDialogState,
 } from "~/projects/dialogs/quick-install-ssl-cert";
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
+import {
+    UpdateAppHealthCheckStatusDialog,
+    useUpdateAppHealthCheckStatusDialogState,
+} from "~/projects/dialogs/update-app-health-check-status";
 import {
     CreateOrEditAccessTokenDialog,
     CreateOrEditBasicAuthDialog,
@@ -76,6 +84,8 @@ function View() {
     const createProjectAppDialog = useCreateProjectAppDialogState();
     const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
     const createOrEditAppConfigFileDialog = useCreateOrEditAppConfigFileDialogState();
+    const createOrEditAppHealthCheckDialog = useCreateOrEditAppHealthCheckDialogState();
+    const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
     const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
@@ -108,6 +118,8 @@ function View() {
         createProjectAppDialog.destroy();
         createOrEditProjectSecretDialog.destroy();
         createOrEditAppConfigFileDialog.destroy();
+        createOrEditAppHealthCheckDialog.destroy();
+        updateAppHealthCheckStatusDialog.destroy();
         createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
@@ -142,6 +154,8 @@ function View() {
             <CreateProjectAppDialog />
             <CreateOrEditProjectSecretDialog />
             <CreateOrEditAppConfigFileDialog />
+            <CreateOrEditAppHealthCheckDialog />
+            <UpdateAppHealthCheckStatusDialog />
             <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
             <StorageMountDialog />

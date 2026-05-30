@@ -33,11 +33,11 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
         preDeploymentCommand: data.preDeploymentCommand ?? "",
         postDeploymentCommand: data.postDeploymentCommand ?? "",
         notification: {
-            successUseDefault: data.notification?.successUseDefault ?? false,
+            successUseDefault: data.notification?.successUseDefault ?? true,
             success: data.notification?.success
                 ? { id: data.notification.success.id, name: data.notification.success.name }
                 : undefined,
-            failureUseDefault: data.notification?.failureUseDefault ?? false,
+            failureUseDefault: data.notification?.failureUseDefault ?? true,
             failure: data.notification?.failure
                 ? { id: data.notification.failure.id, name: data.notification.failure.name }
                 : undefined,
@@ -157,7 +157,9 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                             <div className="flex flex-col gap-6">
                                 <MethodSelector readOnly={readOnly} />
 
-                                {activeMethod === EAppDeploymentMethod.Image && <DockerImageFields readOnly={readOnly} />}
+                                {activeMethod === EAppDeploymentMethod.Image && (
+                                    <DockerImageFields readOnly={readOnly} />
+                                )}
                                 {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields readOnly={readOnly} />}
                             </div>
                         </ContentBlock>

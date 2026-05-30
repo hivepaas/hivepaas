@@ -9,3 +9,4 @@ export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";
 export * from "./app-storage-settings.commands";
 export * from "./app-http-settings.commands";
+export * from "./app-health-checks.commands";

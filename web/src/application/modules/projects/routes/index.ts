@@ -24,6 +24,7 @@ export {
     AppConfigDeploymentSettingsRoute,
     AppConfigContainerSettingsRoute,
     AppConfigHttpSettingsRoute,
+    AppHealthChecksRoute,
     AppConfigEnvVariablesRoute,
     AppConfigSecretsRoute,
     AppConfigFilesRoute,

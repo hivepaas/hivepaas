@@ -68,6 +68,11 @@ export const QK = {
      */
     "projects.apps.http-settings.$.find-one": "projects.apps.http-settings.$.find-one",
     /*
+     * Project App Health Checks
+     */
+    "projects.apps.health-checks.$.find-many-paginated": "projects.apps.health-checks.$.find-many-paginated",
+    "projects.apps.health-checks.$.find-one-by-id": "projects.apps.health-checks.$.find-one-by-id",
+    /*
      * Project Git Credentials
      */
     "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",

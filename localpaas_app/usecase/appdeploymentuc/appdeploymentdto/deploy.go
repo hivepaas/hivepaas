@@ -1,6 +1,8 @@
-package webhookdto
+package appdeploymentdto
 
 import (
+	"strings"
+
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
@@ -8,25 +10,27 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
 )
 
 const (
 	imageNameMaxLen = 200
-	appTokenMaxLen  = 100
 )
 
 type DeployAppReq struct {
-	AppToken string `json:"-"`
+	ProjectID string `json:"-"`
+	AppID     string `json:"-"`
 
-	ImageSource         *DeploymentImageSourceReq `json:"imageSource"`
-	RepoSource          *DeploymentRepoSourceReq  `json:"repoSource"`
-	ActiveMethod        base.DeploymentMethod     `json:"activeMethod"`
-	DeploymentTriggerID string                    `json:"deploymentTriggerId"`
+	ImageSource  *DeploymentImageSourceReq `json:"imageSource"`
+	RepoSource   *DeploymentRepoSourceReq  `json:"repoSource"`
+	ActiveMethod base.DeploymentMethod     `json:"activeMethod"`
+	ChangeID     string                    `json:"changeId"`
 }
 
 func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 	setting.ActiveMethod = gofn.Coalesce(req.ActiveMethod, setting.ActiveMethod)
+	if setting.ActiveMethod == "" {
+		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
+	}
 	if err := req.ImageSource.ApplyTo(setting.ImageSource); err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -37,15 +41,18 @@ func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 }
 
 type DeploymentImageSourceReq struct {
-	Image string `json:"image"`
+	ImageTag string `json:"imageTag"`
 }
 
 func (req *DeploymentImageSourceReq) ApplyTo(setting *entity.DeploymentImageSource) error {
-	if req != nil {
-		setting.Image = gofn.Coalesce(req.Image, setting.Image)
-	}
 	if setting.Image == "" {
 		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
+	}
+	if req != nil {
+		if req.ImageTag != "" {
+			imageName, _, _ := strings.Cut(setting.Image, ":")
+			setting.Image = imageName + ":" + req.ImageTag
+		}
 	}
 	return nil
 }
@@ -57,27 +64,29 @@ func (req *DeploymentImageSourceReq) validate(field string) (res []vld.Validator
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&req.Image, true, 1, imageNameMaxLen, field+"image")...)
+	res = append(res, basedto.ValidateStr(&req.ImageTag, false,
+		1, imageNameMaxLen, field+"imageTag")...)
 	return res
 }
 
 type DeploymentRepoSourceReq struct {
-	RepoRef        string   `json:"repoRef"`        // can be branch name, tag...
+	RepoRef        string   `json:"repoRef"`
+	CommitHash     *string  `json:"commitHash"`
 	DockerfilePath string   `json:"dockerfilePath"` // for BuildToolDockerfile only
 	ImageTags      []string `json:"imageTags"`
 }
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
+	if setting.RepoURL == "" {
+		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
+	}
 	if req != nil {
-		if req.RepoRef != "" {
-			setting.RepoRef = req.RepoRef
-			if setting.RepoType == base.RepoTypeGit {
-				setting.RepoRef = string(githelper.NormalizeRepoRef(setting.RepoRef))
-			}
+		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
+		if req.CommitHash != nil {
+			setting.CommitHash = *req.CommitHash
 		}
-
 		setting.DockerfilePath = gofn.Coalesce(req.DockerfilePath, setting.DockerfilePath)
-		if len(req.ImageTags) > 0 {
+		if req.ImageTags != nil {
 			setting.ImageTags = req.ImageTags
 		}
 	}
@@ -87,7 +96,6 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 	return nil
 }
 
-// nolint
 func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator) {
 	if req == nil {
 		return
@@ -95,7 +103,7 @@ func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator)
 	if field != "" {
 		field += "."
 	}
-	// TODO: add implementation
+	res = append(res, basedto.ValidateGitCommitHash(req.CommitHash, false, field+"commitHash")...)
 	return res
 }
 
@@ -106,8 +114,8 @@ func NewDeployAppReq() *DeployAppReq {
 // Validate implements interface basedto.ReqValidator
 func (req *DeployAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateStr(&req.AppToken, true,
-		1, appTokenMaxLen, "appToken")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.ActiveMethod, false,
 		base.AllDeploymentMethods, "activeMethod")...)
 	validators = append(validators, req.ImageSource.validate("imageSource")...)

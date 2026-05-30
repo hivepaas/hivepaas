@@ -32,7 +32,7 @@ func (uc *UC) UpdateAppDeploymentSettings(
 		}
 
 		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppDeploymentSettings(ctx, data, persistingData)
+		err = uc.prepareUpdatingAppDeploymentSettings(ctx, auth, data, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -119,6 +119,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 
 func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	_ context.Context,
+	auth *basedto.Auth,
 	data *updateAppDeploymentSettingsData,
 	persistingData *persistingAppData,
 ) error {
@@ -152,6 +153,7 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
 		Source: base.DeploymentTriggerSourceUser,
+		ID:     auth.User.ID,
 	}
 
 	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)

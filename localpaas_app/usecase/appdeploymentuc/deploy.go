@@ -1,4 +1,4 @@
-package webhookuc
+package appdeploymentuc
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
@@ -15,13 +16,14 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
 func (uc *UC) DeployApp(
 	ctx context.Context,
-	req *webhookdto.DeployAppReq,
-) (*webhookdto.DeployAppResp, error) {
+	auth *basedto.Auth,
+	req *appdeploymentdto.DeployAppReq,
+) (*appdeploymentdto.DeployAppResp, error) {
 	var data *deployAppData
 	var persistingData *persistingAppData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -32,7 +34,7 @@ func (uc *UC) DeployApp(
 		}
 
 		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppDeploymentSettings(req, data, persistingData)
+		err = uc.prepareUpdatingAppDeploymentSettings(auth, req, data, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -53,8 +55,8 @@ func (uc *UC) DeployApp(
 	}
 
 	deployment, _ := gofn.First(persistingData.UpsertingDeployments)
-	return &webhookdto.DeployAppResp{
-		Data: &webhookdto.DeployAppDataResp{DeploymentID: deployment.ID},
+	return &appdeploymentdto.DeployAppResp{
+		Data: &appdeploymentdto.DeployAppDataResp{DeploymentID: deployment.ID},
 	}, nil
 }
 
@@ -71,12 +73,14 @@ type persistingAppData struct {
 func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
-	req *webhookdto.DeployAppReq,
+	req *appdeploymentdto.DeployAppReq,
 	data *deployAppData,
 ) error {
-	app, err := uc.appService.LoadAppByToken(ctx, db, req.AppToken, true, true,
+	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
 		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project"),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 		),
@@ -116,7 +120,8 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 }
 
 func (uc *UC) prepareUpdatingAppDeploymentSettings(
-	req *webhookdto.DeployAppReq,
+	auth *basedto.Auth,
+	req *appdeploymentdto.DeployAppReq,
 	data *deployAppData,
 	persistingData *persistingAppData,
 ) error {
@@ -143,8 +148,9 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	}
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
-		Source: base.DeploymentTriggerSourceAPIWebhook,
-		ID:     req.DeploymentTriggerID,
+		Source:   base.DeploymentTriggerSourceAPI,
+		ID:       auth.User.ID,
+		ChangeID: req.ChangeID,
 	}
 
 	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)

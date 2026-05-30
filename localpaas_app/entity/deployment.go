@@ -83,8 +83,9 @@ func (d *Deployment) GetRefObjectIDs() *RefObjectIDs {
 }
 
 type AppDeploymentTrigger struct {
-	Source base.DeploymentTriggerSource `json:"source"`
-	ID     string                       `json:"id"`
+	Source   base.DeploymentTriggerSource `json:"source"`
+	ID       string                       `json:"id"`
+	ChangeID string                       `json:"changeId"`
 }
 
 type AppDeploymentOutput struct {

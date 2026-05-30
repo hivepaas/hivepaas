@@ -196,7 +196,7 @@ func (uc *UC) shouldRedeployAppByPushEvent(
 		bunex.SelectLimit(1),
 		bunex.SelectWhere("deployment.created_at > ?", timeutil.NowUTC().Add(-time.Minute)),
 		bunex.SelectWhere("deployment.trigger->>'source' = ?", base.DeploymentTriggerSourceRepoWebhook),
-		bunex.SelectWhere("deployment.trigger->>'id' = ?", pushEvent.ChangeID),
+		bunex.SelectWhere("deployment.trigger->>'changeId' = ?", pushEvent.ChangeID),
 	)
 	if err != nil {
 		return false, apperrors.Wrap(err)
@@ -230,8 +230,8 @@ func (uc *UC) createAppDeploymentByPushEvent(
 	deployment.Settings.RepoSource.CommitHash = pushEvent.ChangeID
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
-		Source: base.DeploymentTriggerSourceRepoWebhook,
-		ID:     pushEvent.ChangeID,
+		Source:   base.DeploymentTriggerSourceRepoWebhook,
+		ChangeID: pushEvent.ChangeID,
 	}
 
 	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)

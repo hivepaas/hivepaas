@@ -75,7 +75,6 @@ func (s *service) SyncProject(
 				CreatedAt: timeNow,
 				UpdatedAt: timeNow,
 			}
-			newApp.ResetToken()
 			newApps = append(newApps, newApp)
 		}
 	}

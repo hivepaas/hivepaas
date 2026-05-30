@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/config"
 )
@@ -14,12 +12,8 @@ import (
 var (
 	AppUpsertingConflictCols = []string{"id"}
 	AppUpsertingUpdateCols   = []string{"name", "key", "local_key", "project_id", "parent_id", "service_id",
-		"status", "env", "token", "note", "update_ver", "updated_at", "deleted_at"}
+		"status", "env", "note", "update_ver", "updated_at", "deleted_at"}
 	AppDefaultExcludeColumns = []string{"note"}
-)
-
-const (
-	appTokenLen = 24
 )
 
 type App struct {
@@ -32,7 +26,6 @@ type App struct {
 	ServiceID string         `bun:",nullzero" json:"serviceId"`
 	Status    base.AppStatus `json:"status"`
 	Env       string         `bun:",nullzero" json:"env"`
-	Token     string         `json:"token"`
 	Note      string         `bun:",nullzero" json:"note,omitempty"`
 	UpdateVer int            `json:"updateVer"`
 
@@ -88,10 +81,6 @@ func (app *App) GetAutoImageName() string {
 		name = name[:base.ImageNameMaxLen]
 	}
 	return name
-}
-
-func (app *App) ResetToken() {
-	app.Token = gofn.RandTokenAsHex(appTokenLen)
 }
 
 func (app *App) TraefikConfigPath() string {

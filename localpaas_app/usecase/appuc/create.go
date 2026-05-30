@@ -141,8 +141,6 @@ func (uc *UC) preparePersistingApp(
 		LocalKey:  data.AppLocalKey,
 		CreatedAt: timeNow,
 	}
-	app.ResetToken()
-
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)
 	uc.preparePersistingAppSettingsDefault(app, timeNow, data, persistingData)

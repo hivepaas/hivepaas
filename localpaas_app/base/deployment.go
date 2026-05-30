@@ -27,10 +27,10 @@ type DeploymentTriggerSource string
 const (
 	DeploymentTriggerSourceUser        DeploymentTriggerSource = "user"
 	DeploymentTriggerSourceRepoWebhook DeploymentTriggerSource = "repo-webhook"
-	DeploymentTriggerSourceAPIWebhook  DeploymentTriggerSource = "api-webhook"
+	DeploymentTriggerSourceAPI         DeploymentTriggerSource = "api"
 )
 
 var (
 	AllDeploymentTriggerSources = []DeploymentTriggerSource{DeploymentTriggerSourceUser,
-		DeploymentTriggerSourceRepoWebhook, DeploymentTriggerSourceAPIWebhook}
+		DeploymentTriggerSourceRepoWebhook, DeploymentTriggerSourceAPI}
 )

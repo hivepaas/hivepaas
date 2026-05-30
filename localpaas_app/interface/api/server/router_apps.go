@@ -20,8 +20,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		appGroup.DELETE("/:appID", appHandler.DeleteApp)
 		// Status Update
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
-		// Token
-		appGroup.PUT("/:appID/token", appHandler.UpdateAppToken)
 		// Logs
 		appGroup.GET("/:appID/runtime-logs", func(ctx *gin.Context) {
 			appHandler.GetAppRuntimeLogs(ctx, s.websocket)
@@ -132,6 +130,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		deploymentGroup.GET("/:deploymentID/logs", func(ctx *gin.Context) {
 			appDeploymentHandler.GetAppDeploymentLogs(ctx, s.websocket)
 		})
+		// Deployments via API key
+		appGroup.POST("/:appID/deploy", appDeploymentHandler.DeployApp)
 	}
 
 	return appGroup

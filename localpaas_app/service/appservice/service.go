@@ -20,7 +20,7 @@ type Service interface {
 	LoadApp(ctx context.Context, db database.IDB, projectID, appID string,
 		requireProjectActive, requireAppActive bool, extraOpts ...bunex.SelectQueryOption) (
 		*entity.App, error)
-	LoadAppByToken(ctx context.Context, db database.IDB, appToken string,
+	LoadAppByKey(ctx context.Context, db database.IDB, projectID, appKey string,
 		requireProjectActive, requireAppActive bool, extraOpts ...bunex.SelectQueryOption) (
 		*entity.App, error)
 

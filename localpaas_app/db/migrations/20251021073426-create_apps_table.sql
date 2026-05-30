@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS apps
     env            VARCHAR(100) NULL,
     status         VARCHAR NOT NULL CONSTRAINT chk_status CHECK
                         (status IN ('active','disabled','deleting')),
-    token          VARCHAR(100) NOT NULL,
     note           VARCHAR(10000) NULL,
     update_ver     INT4 NOT NULL DEFAULT 1,
 
@@ -28,7 +27,6 @@ CREATE UNIQUE INDEX idx_uq_apps_local_key ON apps(project_id, local_key, COALESC
 CREATE INDEX idx_apps_project_id ON apps(project_id);
 CREATE INDEX idx_apps_parent_id ON apps(parent_id);
 CREATE INDEX idx_apps_env ON apps(env);
-CREATE INDEX idx_apps_token ON apps(token);
 CREATE INDEX idx_apps_updated_at ON apps(updated_at);
 CREATE INDEX idx_apps_deleted_at ON apps(deleted_at);
 

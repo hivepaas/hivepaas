@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/projectuc/projectdto"
 )
 
 type GetUserAccessesReq struct {
@@ -71,18 +72,8 @@ func TransformUserAccesses(input *UserAccessesTransformInput) *UserAccessesDataR
 }
 
 func TransformOwnerAccessOnProject(input *UserAccessesTransformInput) *ProjectUserAccessResp {
-	var userResp *basedto.UserBaseResp
-	if input.Project.Owner == nil {
-		userResp = &basedto.UserBaseResp{
-			ID:       input.Project.OwnerID,
-			Email:    "<missing>",
-			FullName: "<missing>",
-		}
-	} else {
-		userResp = basedto.TransformUserBase(input.Project.Owner)
-	}
 	return &ProjectUserAccessResp{
-		UserBaseResp: userResp,
+		UserBaseResp: projectdto.TransformProjectOwner(input.Project),
 		Access: base.AccessActions{
 			Read:   true,
 			Write:  true,

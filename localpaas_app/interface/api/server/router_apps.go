@@ -124,6 +124,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		// Info
 		deploymentGroup.GET("/:deploymentID", appDeploymentHandler.GetAppDeployment)
 		deploymentGroup.GET("", appDeploymentHandler.ListAppDeployment)
+		deploymentGroup.GET("/:deploymentID/status", appDeploymentHandler.GetAppDeploymentStatus)
 		// Cancel
 		deploymentGroup.POST("/:deploymentID/cancel", appDeploymentHandler.CancelAppDeployment)
 		// Logs

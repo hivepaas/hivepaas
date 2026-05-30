@@ -10,11 +10,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
-func (uc *UC) GetDeployment(
+func (uc *UC) GetDeploymentStatus(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appdeploymentdto.GetDeploymentReq,
-) (*appdeploymentdto.GetDeploymentResp, error) {
+	req *appdeploymentdto.GetDeploymentStatusReq,
+) (*appdeploymentdto.GetDeploymentStatusResp, error) {
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -28,12 +28,12 @@ func (uc *UC) GetDeployment(
 		}
 	}
 
-	resp, err := appdeploymentdto.TransformDeployment(deployment, deploymentInfo)
+	resp, err := appdeploymentdto.TransformDeploymentStatus(deployment, deploymentInfo)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appdeploymentdto.GetDeploymentResp{
+	return &appdeploymentdto.GetDeploymentStatusResp{
 		Data: resp,
 	}, nil
 }

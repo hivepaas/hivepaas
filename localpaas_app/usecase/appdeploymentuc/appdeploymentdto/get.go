@@ -49,8 +49,10 @@ type DeploymentResp struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func TransformDeployment(deployment *entity.Deployment, deploymentInfo *cacheentity.DeploymentInfo) (
-	resp *DeploymentResp, err error) {
+func TransformDeployment(
+	deployment *entity.Deployment,
+	deploymentInfo *cacheentity.DeploymentInfo,
+) (resp *DeploymentResp, err error) {
 	if err = copier.Copy(&resp, &deployment); err != nil {
 		return nil, apperrors.Wrap(err)
 	}

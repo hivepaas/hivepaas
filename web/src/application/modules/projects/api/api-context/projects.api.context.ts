@@ -9,6 +9,8 @@ import {
     AppDeploymentSettingsApiValidator,
     AppHealthChecksApi,
     AppHealthChecksApiValidator,
+    AppScheduledJobsApi,
+    AppScheduledJobsApiValidator,
     AppSecretsApi,
     AppSecretsApiValidator,
     AppServiceSettingsApi,
@@ -97,6 +99,7 @@ function createApi() {
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
+    const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
@@ -139,6 +142,9 @@ function createApi() {
                 },
                 healthChecks: {
                     $: new AppHealthChecksApi(appHealthChecksApiValidator),
+                },
+                scheduledJobs: {
+                    $: new AppScheduledJobsApi(appScheduledJobsApiValidator),
                 },
                 networkSettings: {
                     $: new AppNetworkSettingsApi(appNetworkSettingsApiValidator),

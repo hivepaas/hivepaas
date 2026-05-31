@@ -19,6 +19,7 @@ export const ESettingType = {
     GithubApp: "github-app",
     AccessToken: "access-token",
     CronJob: "cron-job",
+    SchedJob: "sched-job",
     Healthcheck: "healthcheck",
     Email: "email",
     RepoWebhook: "repo-webhook",

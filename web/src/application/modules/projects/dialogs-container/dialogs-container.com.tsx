@@ -10,6 +10,10 @@ import {
     useCreateOrEditAppHealthCheckDialogState,
 } from "~/projects/dialogs/create-or-edit-app-health-check";
 import {
+    CreateOrEditAppScheduledJobDialog,
+    useCreateOrEditAppScheduledJobDialogState,
+} from "~/projects/dialogs/create-or-edit-app-scheduled-job";
+import {
     CreateOrEditAppSecretDialog,
     useCreateOrEditAppSecretDialogState,
 } from "~/projects/dialogs/create-or-edit-app-secret";
@@ -28,11 +32,16 @@ import {
     QuickInstallSslCertDialog,
     useQuickInstallSslCertDialogState,
 } from "~/projects/dialogs/quick-install-ssl-cert";
+import { RunNowTaskCreatedDialog, useRunNowTaskCreatedDialogState } from "~/projects/dialogs/run-now-task-created";
 import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
     UpdateAppHealthCheckStatusDialog,
     useUpdateAppHealthCheckStatusDialogState,
 } from "~/projects/dialogs/update-app-health-check-status";
+import {
+    UpdateAppScheduledJobStatusDialog,
+    useUpdateAppScheduledJobStatusDialogState,
+} from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
     CreateOrEditAccessTokenDialog,
     CreateOrEditBasicAuthDialog,
@@ -85,7 +94,10 @@ function View() {
     const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
     const createOrEditAppConfigFileDialog = useCreateOrEditAppConfigFileDialogState();
     const createOrEditAppHealthCheckDialog = useCreateOrEditAppHealthCheckDialogState();
+    const createOrEditAppScheduledJobDialog = useCreateOrEditAppScheduledJobDialogState();
     const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
+    const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
+    const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
     const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
@@ -119,7 +131,10 @@ function View() {
         createOrEditProjectSecretDialog.destroy();
         createOrEditAppConfigFileDialog.destroy();
         createOrEditAppHealthCheckDialog.destroy();
+        createOrEditAppScheduledJobDialog.destroy();
         updateAppHealthCheckStatusDialog.destroy();
+        updateAppScheduledJobStatusDialog.destroy();
+        runNowTaskCreatedDialog.destroy();
         createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
@@ -155,7 +170,10 @@ function View() {
             <CreateOrEditProjectSecretDialog />
             <CreateOrEditAppConfigFileDialog />
             <CreateOrEditAppHealthCheckDialog />
+            <CreateOrEditAppScheduledJobDialog />
             <UpdateAppHealthCheckStatusDialog />
+            <UpdateAppScheduledJobStatusDialog />
+            <RunNowTaskCreatedDialog />
             <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
             <StorageMountDialog />

@@ -467,6 +467,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$pattern,
+                            lazy: async () => {
+                                const { AppScheduledJobsRoute } = await getLazyComponents();
+
+                                return { Component: AppScheduledJobsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.envVariables.$pattern,
                             lazy: async () => {
                                 const { AppConfigEnvVariablesRoute } = await getLazyComponents();

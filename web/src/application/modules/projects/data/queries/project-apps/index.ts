@@ -10,3 +10,4 @@ export * from "./app-resource-settings.queries";
 export * from "./app-storage-settings.queries";
 export * from "./app-http-settings.queries";
 export * from "./app-health-checks.queries";
+export * from "./app-scheduled-jobs.queries";

@@ -10,3 +10,4 @@ export * from "./resource-settings";
 export * from "./storage-settings";
 export * from "./http-settings";
 export * from "./health-checks";
+export * from "./scheduled-jobs";

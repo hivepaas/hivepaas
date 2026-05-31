@@ -1,7 +1,13 @@
 import { type AxiosInstance, type InternalAxiosRequestConfig, isAxiosError } from "axios";
 import { match } from "oxide.ts";
 
-import { isTokenExpired, isTokenExpiredException, refreshToken, session } from "@infrastructure/api";
+import {
+    isSessionInvalidException,
+    isTokenExpired,
+    isTokenExpiredException,
+    refreshToken,
+    session,
+} from "@infrastructure/api";
 import { RefreshQueue } from "@infrastructure/api/queues";
 
 function setAuthorizationHeader(request: InternalAxiosRequestConfig, token: string) {
@@ -91,6 +97,14 @@ export function initAuthInterceptors(client: AxiosInstance): void {
              * Skip if the error is not an Axios error or the request is not set
              */
             if (!isAxiosError(error) || error.config === undefined) {
+                return Promise.reject(error);
+            }
+
+            if (isSessionInvalidException(error)) {
+                session.removeToken();
+
+                window.location.href = `/auth/sign-in/?next=${encodeURIComponent(window.location.pathname)}`;
+
                 return Promise.reject(error);
             }
 

@@ -1,4 +1,4 @@
-import { type AxiosError } from "axios";
+import { type AxiosError, isAxiosError } from "axios";
 
 import { CancelException } from "@infrastructure/exceptions/cancel";
 import {
@@ -60,6 +60,12 @@ export function isUnauthorizedException(error: Error): boolean {
  * Check if the error is a session invalid error
  */
 export function isSessionInvalidException(error: Error): boolean {
+    if (isAxiosError(error)) {
+        const err = parseApiError(error);
+
+        return err instanceof Http401Exception && err.code === "ERR_SESSION_JWT_INVALID";
+    }
+
     return error instanceof Http401Exception && error.code === "ERR_SESSION_JWT_INVALID";
 }
 

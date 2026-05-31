@@ -12,3 +12,4 @@ export * from "./access-token-services";
 export * from "./cloud-storage-services";
 export * from "./oauth-services";
 export * from "./github-app-services";
+export * from "./repo-webhook-services";

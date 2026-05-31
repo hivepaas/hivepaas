@@ -11,6 +11,8 @@ export * from "./notification-target-table";
 export * from "./oauth-table";
 export * from "./github-app-status-badge";
 export * from "./github-app-table";
+export * from "./repo-webhook-kind-badge";
+export * from "./repo-webhook-table";
 export * from "./inherited-setting-readonly-notice.com";
 export * from "./project-settings-import-button";
 export * from "./permission-readonly-notice.com";

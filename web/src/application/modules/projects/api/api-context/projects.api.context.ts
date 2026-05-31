@@ -45,6 +45,8 @@ import {
     ProjectNotificationApiValidator,
     ProjectRegistryAuthApi,
     ProjectRegistryAuthApiValidator,
+    ProjectRepoWebhookApi,
+    ProjectRepoWebhookApiValidator,
     ProjectSSHKeyApi,
     ProjectSSHKeyApiValidator,
     ProjectSecretsApi,
@@ -89,6 +91,7 @@ function createApi() {
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
     const projectSettingsImportApiValidator = new ProjectSettingsImportApiValidator();
     const projectGithubAppApiValidator = new ProjectGithubAppApiValidator();
+    const projectRepoWebhookApiValidator = new ProjectRepoWebhookApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
@@ -173,6 +176,9 @@ function createApi() {
             },
             githubApp: {
                 $: new ProjectGithubAppApi(projectGithubAppApiValidator),
+            },
+            repoWebhook: {
+                $: new ProjectRepoWebhookApi(projectRepoWebhookApiValidator),
             },
             envVars: {
                 $: new ProjectEnvVarsApi(projectEnvVarsApiValidator),

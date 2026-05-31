@@ -2,6 +2,7 @@ export * from "./project-apps";
 export * from "./project-basic-auth";
 export * from "./project-settings-import";
 export * from "./project-github-app";
+export * from "./project-repo-webhook";
 export * from "./project-domain-settings";
 export * from "./project-env-vars";
 export * from "./project-registry-auth";

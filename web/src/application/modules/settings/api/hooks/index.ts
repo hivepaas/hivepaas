@@ -12,3 +12,4 @@ export * from "./use-access-token.api";
 export * from "./use-cloud-storage.api";
 export * from "./use-oauth.api";
 export * from "./use-github-app.api";
+export * from "./use-repo-webhook.api";

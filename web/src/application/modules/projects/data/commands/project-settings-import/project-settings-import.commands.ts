@@ -14,6 +14,7 @@ export const PROJECT_SETTINGS_IMPORT_KIND = {
     CloudStorage: "cloudStorage",
     Notification: "notification",
     GithubApp: "githubApp",
+    RepoWebhook: "repoWebhook",
 } as const;
 
 export type ProjectSettingsImportKind =
@@ -30,6 +31,7 @@ const PROJECT_SETTINGS_IMPORT_LIST_QUERY_KEYS = {
     [PROJECT_SETTINGS_IMPORT_KIND.CloudStorage]: QK["projects.cloud-storage.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: QK["projects.notifications.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: QK["projects.github-app.$.find-many-paginated"],
+    [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: QK["projects.repo-webhook.$.find-many-paginated"],
 } as const satisfies Record<ProjectSettingsImportKind, (typeof QK)[keyof typeof QK]>;
 
 type ImportSettingsReq = ProjectSettingsImport_Import_Req["data"] & {

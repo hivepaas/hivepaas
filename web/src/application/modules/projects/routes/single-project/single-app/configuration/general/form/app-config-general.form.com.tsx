@@ -109,6 +109,17 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                         disabled={readOnly}
                         className="contents"
                     >
+                        {/* ID - Read Only */}
+                        <InfoBlock title="ID">
+                            <Input
+                                value={defaultValues.id}
+                                type="text"
+                                className="max-w-[400px]"
+                                disabled
+                                readOnly
+                            />
+                        </InfoBlock>
+
                         {/* Name */}
                         <InfoBlock title="Name">
                             <Input
@@ -119,7 +130,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                                 className="max-w-[400px]"
                                 placeholder="Enter app name"
                                 aria-invalid={isNameInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.name]} />
                         </InfoBlock>
 
@@ -131,7 +142,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                                 className="max-w-[400px]"
                                 disabled
                                 readOnly
-                        />
+                            />
                         </InfoBlock>
 
                         {/* Status - Show Label */}
@@ -144,7 +155,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                             <ProjectEnvBadge
                                 name={defaultValues.env}
                                 color={selectedEnv?.color}
-                        />
+                            />
                         </InfoBlock>
 
                         {/* Tags */}
@@ -171,7 +182,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                                 placeholder="Enter app notes"
                                 rows={4}
                                 aria-invalid={isNoteInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.note]} />
                         </InfoBlock>
 

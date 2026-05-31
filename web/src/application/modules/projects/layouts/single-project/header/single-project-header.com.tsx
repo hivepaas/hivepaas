@@ -104,7 +104,7 @@ function View({ projectId }: Props) {
                             <ProjectStatusBadge status={project.status} />
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">Project Owner</span>
+                            <span className="text-sm text-muted-foreground">Owner</span>
                             <Avatar
                                 name={project.owner.fullName}
                                 src={project.owner.photo}

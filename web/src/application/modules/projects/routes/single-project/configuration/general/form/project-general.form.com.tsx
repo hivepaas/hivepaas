@@ -290,7 +290,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                     name={defaultValues.name}
                                     className="size-full text-2xl"
                                     src={photoPreviewUrl}
-                            />
+                                />
                                 <Button
                                     type="button"
                                     size="icon-sm"
@@ -311,6 +311,17 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                             </div>
                         </InfoBlock>
 
+                        {/* ID - Read Only */}
+                        <InfoBlock title="ID">
+                            <Input
+                                value={defaultValues.id}
+                                type="text"
+                                className="max-w-[400px]"
+                                disabled
+                                readOnly
+                            />
+                        </InfoBlock>
+
                         {/* Name */}
                         <InfoBlock title="Name">
                             <Input
@@ -321,7 +332,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                 className="max-w-[400px]"
                                 placeholder="Enter project name"
                                 aria-invalid={isNameInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.name]} />
                         </InfoBlock>
 
@@ -333,7 +344,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                 className="max-w-[400px]"
                                 disabled
                                 readOnly
-                        />
+                            />
                         </InfoBlock>
 
                         {/* Status - Show Label */}
@@ -341,8 +352,8 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                             <ProjectStatusBadge status={defaultValues.status} />
                         </InfoBlock>
 
-                        {/* Project Owner */}
-                        <InfoBlock title="Project Owner">
+                        {/* Owner */}
+                        <InfoBlock title="Owner">
                             <div className="max-w-[400px]">
                                 <Combobox
                                     options={ownerComboboxOptions}
@@ -365,7 +376,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                     aria-invalid={isOwnerInvalid}
                                     renderSelectedOption={option => <OwnerSelectedOption user={option.value} />}
                                     renderOption={option => <OwnerOptionRow user={option.value} />}
-                            />
+                                />
                                 <FieldError errors={[errors.ownerId]} />
                             </div>
                         </InfoBlock>
@@ -409,7 +420,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                 placeholder="Enter project notes"
                                 rows={4}
                                 aria-invalid={isNoteInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.note]} />
                         </InfoBlock>
 

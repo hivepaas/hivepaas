@@ -358,6 +358,11 @@ export const ROUTE = {
                     $route: (id: string) => `/projects/${id}/provider-configuration/github-apps/`,
                 },
 
+                webhooks: {
+                    $pattern: "projects/:id/provider-configuration/webhooks",
+                    $route: (id: string) => `/projects/${id}/provider-configuration/webhooks/`,
+                },
+
                 imPlatforms: {
                     $pattern: "projects/:id/provider-configuration/im-platforms",
                     $route: (id: string) => `/projects/${id}/provider-configuration/im-platforms/`,

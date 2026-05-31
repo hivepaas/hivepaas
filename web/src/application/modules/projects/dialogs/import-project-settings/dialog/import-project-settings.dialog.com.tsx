@@ -16,6 +16,7 @@ import {
     ProjectImServiceQueries,
     ProjectNotificationQueries,
     ProjectRegistryAuthQueries,
+    ProjectRepoWebhookQueries,
     ProjectSSHKeyQueries,
     ProjectSslCertQueries,
 } from "~/projects/data/queries";
@@ -28,6 +29,7 @@ import {
     ImServiceQueries,
     NotificationQueries,
     RegistryAuthQueries,
+    RepoWebhookQueries,
     SSHKeyQueries,
     SslCertQueries,
 } from "~/settings/data/queries";
@@ -40,6 +42,7 @@ import { GithubAppTableDefs } from "~/settings/module-shared/components/github-a
 import { ImPlatformTableDefs } from "~/settings/module-shared/components/im-platform-table/im-platform-table.defs";
 import { NotificationTargetTableDefs } from "~/settings/module-shared/components/notification-target-table/notification-target-table.defs";
 import { RegistryAuthTableDefs } from "~/settings/module-shared/components/registry-auth-table/registry-auth-table.defs";
+import { RepoWebhookTableDefs } from "~/settings/module-shared/components/repo-webhook-table/repo-webhook-table.defs";
 import { SSHKeyTableDefs } from "~/settings/module-shared/components/ssh-key-table/ssh-key-table.defs";
 import { SslCertTableDefs } from "~/settings/module-shared/components/ssl-cert-table/ssl-cert-table.defs";
 
@@ -70,6 +73,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.CloudStorage]: "Cloud Storages",
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: "Notification Targets",
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: "Github Apps",
+    [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: "Webhooks",
 } as const satisfies Record<ProjectSettingsImportKind, string>;
 
 function castColumns<T extends ImportableSetting>(columns: ColumnDef<T>[]): ColumnDef<ImportableSetting>[] {
@@ -110,6 +114,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(NotificationTargetTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.GithubApp:
             return castColumns(GithubAppTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
+            return castColumns(RepoWebhookTableDefs.columns({ type: "settings" }));
         default:
             return [];
     }
@@ -217,6 +223,13 @@ export function ImportProjectSettingsDialog() {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.GithubApp,
     });
 
+    const repoWebhookSettingsQuery = RepoWebhookQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+    const repoWebhookProjectQuery = ProjectRepoWebhookQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+
     let settings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
     let projectSettings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
     let isFetching = false;
@@ -322,6 +335,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void githubAppSettingsQuery.refetch();
                 void githubAppProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
+            settings = repoWebhookSettingsQuery.data?.data ?? [];
+            projectSettings = repoWebhookProjectQuery.data?.data ?? [];
+            isFetching = repoWebhookSettingsQuery.isFetching || repoWebhookProjectQuery.isFetching;
+            hasError = Boolean(repoWebhookSettingsQuery.error ?? repoWebhookProjectQuery.error);
+            refetch = () => {
+                void repoWebhookSettingsQuery.refetch();
+                void repoWebhookProjectQuery.refetch();
             };
             break;
     }

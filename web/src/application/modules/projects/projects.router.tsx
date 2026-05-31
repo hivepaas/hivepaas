@@ -15,6 +15,7 @@ const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     emailAccounts: "projects/:id/configuration/email-accounts",
     envVariables: "projects/:id/configuration/env-variables",
     githubApps: "projects/:id/configuration/github-apps",
+    webhooks: "projects/:id/configuration/webhooks",
     imPlatforms: "projects/:id/configuration/im-platforms",
     notificationTargets: "projects/:id/configuration/notification-targets",
     registryAuth: "projects/:id/configuration/registry-auth",
@@ -136,6 +137,10 @@ export const projectsRouter: RouteObject = {
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
                     ),
+                },
+                {
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.webhooks,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.webhooks.$route} />,
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.imPlatforms,
@@ -266,6 +271,16 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectGithubAppsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.$pattern,
+                            lazy: async () => {
+                                const { ProjectWebhooksRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectWebhooksRoute,
                                 };
                             },
                         },

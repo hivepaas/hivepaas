@@ -21,3 +21,5 @@ export * from "./update-notification-target-status";
 export * from "./create-or-edit-github-app";
 export * from "./provision-github-app";
 export * from "./update-github-app-status";
+export * from "./create-or-edit-repo-webhook";
+export * from "./update-repo-webhook-status";

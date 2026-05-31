@@ -51,6 +51,7 @@ import {
     CreateOrEditImPlatformDialog,
     CreateOrEditNotificationTargetDialog,
     CreateOrEditRegistryAuthDialog,
+    CreateOrEditRepoWebhookDialog,
     CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
     ProvisionGithubAppDialog,
@@ -62,6 +63,7 @@ import {
     UpdateImPlatformStatusDialog,
     UpdateNotificationTargetStatusDialog,
     UpdateRegistryAuthStatusDialog,
+    UpdateRepoWebhookStatusDialog,
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     useCreateOrEditAccessTokenDialogState,
@@ -72,6 +74,7 @@ import {
     useCreateOrEditImPlatformDialogState,
     useCreateOrEditNotificationTargetDialogState,
     useCreateOrEditRegistryAuthDialogState,
+    useCreateOrEditRepoWebhookDialogState,
     useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
     useProvisionGithubAppDialogState,
@@ -83,6 +86,7 @@ import {
     useUpdateImPlatformStatusDialogState,
     useUpdateNotificationTargetStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
+    useUpdateRepoWebhookStatusDialogState,
     useUpdateSSHKeyStatusDialogState,
     useUpdateSslCertStatusDialogState,
 } from "~/settings/dialogs";
@@ -123,6 +127,8 @@ function View() {
     const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
+    const createOrEditRepoWebhookDialog = useCreateOrEditRepoWebhookDialogState();
+    const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
     const importProjectSettingsDialog = useImportProjectSettingsDialogState();
 
     useUpdateEffect(() => {
@@ -160,6 +166,8 @@ function View() {
         createOrEditGithubAppDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
+        createOrEditRepoWebhookDialog.destroy();
+        updateRepoWebhookStatusDialog.destroy();
         importProjectSettingsDialog.destroy();
     }, [location]);
 
@@ -199,6 +207,8 @@ function View() {
             <CreateOrEditGithubAppDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
+            <CreateOrEditRepoWebhookDialog />
+            <UpdateRepoWebhookStatusDialog />
             <ImportProjectSettingsDialog />
             {/* TODO: Add other dialogs here */}
         </>

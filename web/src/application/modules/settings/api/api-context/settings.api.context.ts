@@ -23,6 +23,8 @@ import {
     OAuthApiValidator,
     RegistryAuthApi,
     RegistryAuthApiValidator,
+    RepoWebhookApi,
+    RepoWebhookApiValidator,
     SSHKeyApi,
     SSHKeyApiValidator,
     SslCertApi,
@@ -49,6 +51,7 @@ function createApi() {
     const cloudStorageValidator = new CloudStorageApiValidator();
     const oauthValidator = new OAuthApiValidator();
     const githubAppValidator = new GithubAppApiValidator();
+    const repoWebhookValidator = new RepoWebhookApiValidator();
 
     return {
         settings: {
@@ -66,6 +69,7 @@ function createApi() {
             cloudStorage: new CloudStorageApi(cloudStorageValidator),
             oauth: new OAuthApi(oauthValidator),
             githubApp: new GithubAppApi(githubAppValidator),
+            repoWebhook: new RepoWebhookApi(repoWebhookValidator),
         },
     };
 }

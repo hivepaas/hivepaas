@@ -3,6 +3,7 @@ export * from "./project-domain-settings";
 export * from "./project-basic-auth";
 export * from "./project-settings-import";
 export * from "./project-github-app";
+export * from "./project-repo-webhook";
 export * from "./project-git-credentials";
 export * from "./project-networks";
 export * from "./project-registry-auth";

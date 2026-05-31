@@ -19,6 +19,8 @@ export const QK = {
     "projects.basic-auth.$.find-one-by-id": "projects.basic-auth.$.find-one-by-id",
     "projects.github-app.$.find-many-paginated": "projects.github-app.$.find-many-paginated",
     "projects.github-app.$.find-one-by-id": "projects.github-app.$.find-one-by-id",
+    "projects.repo-webhook.$.find-many-paginated": "projects.repo-webhook.$.find-many-paginated",
+    "projects.repo-webhook.$.find-one-by-id": "projects.repo-webhook.$.find-one-by-id",
     "projects.env-vars.$.find-one": "projects.env-vars.$.find-one",
     "projects.domain-settings.$.find-one": "projects.domain-settings.$.find-one",
     "projects.networks.$.find-many-paginated": "projects.networks.$.find-many-paginated",

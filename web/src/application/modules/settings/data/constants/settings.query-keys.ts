@@ -23,6 +23,8 @@ export const QK = {
     "settings.github-app.find-many-paginated": "settings.github-app.find-many-paginated",
     "settings.github-app.find-one-by-id": "settings.github-app.find-one-by-id",
     "settings.github-app.list-installations": "settings.github-app.list-installations",
+    "settings.repo-webhook.find-many-paginated": "settings.repo-webhook.find-many-paginated",
+    "settings.repo-webhook.find-one-by-id": "settings.repo-webhook.find-one-by-id",
     "settings.domain-settings.find-one": "settings.domain-settings.find-one",
     "settings.storage-settings.find-one": "settings.storage-settings.find-one",
 } as const;

@@ -57,7 +57,7 @@ func (uc *UC) loadUserAccessesForUpdate(
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF project"),
 		bunex.SelectRelation("Accesses",
-			bunex.SelectWhere("acl_permission.subject_type = ?", base.SubjectTypeUser),
+			bunex.SelectWhere("acl_permission.subj_type = ?", base.SubjectTypeUser),
 		),
 	)
 	if err != nil {

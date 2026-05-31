@@ -101,7 +101,7 @@ func (h *Handler) ExecuteCleanup(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
 		ResourceModule: base.ResourceModuleSystem,
 		ResourceType:   base.ResourceTypeSystemCleanup,
-		Action:         base.ActionTypeWrite,
+		Action:         base.ActionTypeExecute,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

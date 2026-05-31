@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 )
 
-//nolint:gocognit
 func (p *manager) CheckAccess(
 	ctx context.Context,
 	db database.IDB,
@@ -38,43 +37,32 @@ func (p *manager) CheckAccess(
 		// This is usually to allow users listing accessible objects when they don't have permission on the module.
 		if !hasPerm && check.ResourceID == "" {
 			for _, perm := range objPerms {
-				if p.hasPermission(perm, check.Action) {
+				if p.hasPermission(perm, check) {
 					auth.AllowObjectIDs = append(auth.AllowObjectIDs, perm.ResourceID)
 				}
 			}
-			if len(auth.AllowObjectIDs) > 0 {
-				hasPerm = true
-			}
+			hasPerm = len(auth.AllowObjectIDs) > 0
 		}
 	}()
 
 	if check.ResourceType != "" && check.ResourceID != "" {
 		for _, perm := range objPerms {
-			if p.hasPermission(perm, check.Action) {
-				hasPerm = true
-			}
-			// This record denies access to the resource
-			return hasPerm, nil //nolint
+			hasPerm = p.hasPermission(perm, check)
+			return hasPerm, nil
 		}
 	}
 
 	if check.ParentResourceType != "" && check.ParentResourceID != "" {
 		for _, perm := range parentPerms {
-			if p.hasPermission(perm, check.Action) {
-				hasPerm = true
-			}
-			// This record denies access to the resource
-			return hasPerm, nil //nolint
+			hasPerm = p.hasPermission(perm, check)
+			return hasPerm, nil
 		}
 	}
 
 	if check.ResourceModule != "" {
 		for _, perm := range modPerms {
-			if p.hasPermission(perm, check.Action) {
-				hasPerm = true
-			}
-			// This record denies access to the resource
-			return hasPerm, nil //nolint
+			hasPerm = p.hasPermission(perm, check)
+			return hasPerm, nil
 		}
 	}
 
@@ -106,7 +94,11 @@ func (p *manager) checkProjectAccess(
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return false, apperrors.Wrap(err)
 	}
-	return project != nil, nil
+
+	if project == nil {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (p *manager) loadPermissions(
@@ -160,15 +152,23 @@ func (p *manager) loadPermissions(
 	return modPerms, parentPerms, objPerms, nil
 }
 
-func (p *manager) hasPermission(perm *entity.ACLPermission, action base.ActionType) bool {
-	if action == base.ActionTypeRead && (perm.Actions.Read || perm.Actions.Write || perm.Actions.Delete) {
-		return true
-	}
-	if action == base.ActionTypeWrite && perm.Actions.Write {
-		return true
-	}
-	if action == base.ActionTypeDelete && perm.Actions.Delete {
-		return true
+func (p *manager) hasPermission(
+	perm *entity.ACLPermission,
+	check *permission.AccessCheck,
+) bool {
+	switch {
+	case check.Action != "":
+		if perm.Actions.Allows(check.Action) {
+			return true
+		}
+	case len(check.AllOf) > 0:
+		if perm.Actions.AllowsAll(check.AllOf) {
+			return true
+		}
+	case len(check.AnyOf) > 0:
+		if perm.Actions.AllowsAny(check.AnyOf) {
+			return true
+		}
 	}
 	return false
 }
@@ -186,7 +186,7 @@ func (p *manager) LoadObjectAccesses(
 		bunex.SelectRelation("SubjectUser",
 			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 		),
-		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subject_id"),
+		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subj_id"),
 		bunex.SelectWhere("users.deleted_at IS NULL"),
 		bunex.SelectWhere("users.status = ?", base.UserStatusActive),
 		bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),

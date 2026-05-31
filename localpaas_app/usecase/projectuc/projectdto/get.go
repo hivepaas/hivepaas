@@ -140,7 +140,7 @@ func TransformUserAccesses(project *entity.Project) []*ProjectUserAccessResp {
 			}
 			accesses = append([]*entity.ACLPermission{ownerAccess}, accesses...)
 		}
-		ownerAccess.Actions = base.AccessActions{Read: true, Write: true, Delete: true}
+		ownerAccess.Actions = base.NewFullAccessActions()
 	}
 
 	resp := make([]*ProjectUserAccessResp, 0, len(accesses))

@@ -25,9 +25,7 @@ func (uc *UC) createSession(
 		if req.AccessAction == nil {
 			req.AccessAction = &base.AccessActions{}
 		}
-		req.AccessAction.Read = true
-		req.AccessAction.Write = false
-		req.AccessAction.Delete = false
+		req.AccessAction.Reset(true, false, false, false)
 	}
 
 	authClaims := &jwtsession.AuthClaims{

@@ -74,11 +74,7 @@ func TransformUserAccesses(input *UserAccessesTransformInput) *UserAccessesDataR
 func TransformOwnerAccessOnProject(input *UserAccessesTransformInput) *ProjectUserAccessResp {
 	return &ProjectUserAccessResp{
 		UserBaseResp: projectdto.TransformProjectOwner(input.Project),
-		Access: base.AccessActions{
-			Read:   true,
-			Write:  true,
-			Delete: true,
-		},
+		Access:       base.NewFullAccessActions(),
 	}
 }
 

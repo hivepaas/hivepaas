@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS project_shared_settings
     CONSTRAINT fk_project_shared_settings_setting_id FOREIGN KEY (setting_id) REFERENCES settings (id)
 );
 
+CREATE INDEX idx_project_shared_settings_setting_id ON project_shared_settings(setting_id);
 CREATE INDEX idx_project_shared_settings_created_at ON project_shared_settings(created_at);
 CREATE INDEX idx_project_shared_settings_deleted_at ON project_shared_settings(deleted_at);
 

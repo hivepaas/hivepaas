@@ -101,7 +101,7 @@ func (h *Handler) ExecuteSSLRenewal(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
 		ResourceModule: base.ResourceModuleSystem,
 		ResourceType:   base.ResourceTypeSSLRenewal,
-		Action:         base.ActionTypeWrite,
+		Action:         base.ActionTypeExecute,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

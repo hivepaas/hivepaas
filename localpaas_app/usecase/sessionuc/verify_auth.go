@@ -21,16 +21,29 @@ func (uc *UC) VerifyAuth(
 	if accessCheck == nil {
 		return nil
 	}
+	if !accessCheck.IsValid() {
+		return apperrors.NewParamInvalid("Either 'Action' or 'AllOf' or 'AnyOf'")
+	}
 
 	// Requested action is higher than the one limited within the session settings
 	limitAccess := auth.User.AuthClaims.AccessAction
-	if limitAccess != nil && !base.ActionAllowed(accessCheck.Action, *limitAccess) {
-		// Special case: demo user
-		if auth.User.IsDemoUser() {
-			return apperrors.New(apperrors.ErrUserDemoUnauthorized)
+	if limitAccess != nil {
+		allowed := false
+		switch {
+		case accessCheck.Action != "":
+			allowed = limitAccess.Allows(accessCheck.Action)
+		case len(accessCheck.AllOf) > 0:
+			allowed = limitAccess.AllowsAll(accessCheck.AllOf)
+		case len(accessCheck.AnyOf) > 0:
+			allowed = limitAccess.AllowsAny(accessCheck.AnyOf)
 		}
-		return apperrors.New(apperrors.ErrUnauthorized).
-			WithMsgLog("requested action is not allowed by session settings")
+		if !allowed {
+			if auth.User.IsDemoUser() { // Special case: demo user
+				return apperrors.New(apperrors.ErrUserDemoUnauthorized)
+			}
+			return apperrors.New(apperrors.ErrUnauthorized).
+				WithMsgLog("requested action is not allowed by session settings")
+		}
 	}
 
 	// Admins have all privileges
@@ -42,11 +55,11 @@ func (uc *UC) VerifyAuth(
 		accessCheck.SubjectType = base.SubjectTypeUser
 		accessCheck.SubjectID = auth.User.ID
 	}
-	checkResult, err := uc.permissionManager.CheckAccess(ctx, uc.db, auth, accessCheck)
+	hasPerm, err := uc.permissionManager.CheckAccess(ctx, uc.db, auth, accessCheck)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	if !checkResult {
+	if !hasPerm {
 		return apperrors.New(apperrors.ErrUnauthorized)
 	}
 	return nil

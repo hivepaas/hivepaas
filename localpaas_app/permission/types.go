@@ -1,6 +1,10 @@
 package permission
 
-import "github.com/localpaas/localpaas/localpaas_app/base"
+import (
+	"github.com/tiendc/gofn"
+
+	"github.com/localpaas/localpaas/localpaas_app/base"
+)
 
 type AccessCheck struct {
 	SubjectType        base.SubjectType
@@ -10,5 +14,15 @@ type AccessCheck struct {
 	ResourceID         string
 	ParentResourceType base.ResourceType
 	ParentResourceID   string
-	Action             base.ActionType
+
+	// The below are mutual exclusive
+	Action base.ActionType
+	AllOf  []base.ActionType
+	AnyOf  []base.ActionType
+}
+
+func (ac *AccessCheck) IsValid() bool {
+	return gofn.If(ac.Action != "", 1, 0)+
+		gofn.If(len(ac.AllOf) > 0, 1, 0)+
+		gofn.If(len(ac.AnyOf) > 0, 1, 0) == 1
 }

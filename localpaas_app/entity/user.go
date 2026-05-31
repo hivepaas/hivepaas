@@ -39,7 +39,7 @@ type User struct {
 	LastAccess     time.Time `bun:",nullzero" json:"lastAccess,omitzero"`
 
 	PhotoData *BinObject       `bun:"rel:has-one,join:photo_id=id" json:"photoData,omitempty"`
-	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=subject_id" json:"accesses,omitempty"`
+	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=subj_id" json:"accesses,omitempty"`
 }
 
 // GetID implements IDEntity interface

@@ -47,16 +47,16 @@ func (repo *aclPermissionRepo) ListByResources(ctx context.Context, db database.
 	var condition string
 	args := make([]any, 0, len(resources)*2) //nolint:mnd
 	for _, res := range resources {
-		subjectCol := "subject_id"
+		subjectCol := "subj_id"
 		subjectArg := res.SubjectID
 		if res.SubjectID == "" {
-			subjectCol = "subject_type"
+			subjectCol = "subj_type"
 			subjectArg = string(res.SubjectType)
 		}
-		resCol := "resource_id"
+		resCol := "res_id"
 		resArg := res.ResourceID
 		if res.ResourceID == "" {
-			resCol = "resource_type"
+			resCol = "res_type"
 			resArg = string(res.ResourceType)
 		}
 		if condition == "" {
@@ -84,7 +84,7 @@ func (repo *aclPermissionRepo) ListByUsers(ctx context.Context, db database.IDB,
 		return nil, nil
 	}
 	var permissions []*entity.ACLPermission
-	query := db.NewSelect().Model(&permissions).Where("subject_id IN (?)", bun.List(userIDs))
+	query := db.NewSelect().Model(&permissions).Where("subj_id IN (?)", bun.List(userIDs))
 	query = bunex.ApplySelect(query, opts...)
 
 	err := query.Scan(ctx)
@@ -147,16 +147,16 @@ func (repo *aclPermissionRepo) DeleteByResources(ctx context.Context, db databas
 	var condition string
 	args := make([]any, 0, len(resources)*2) //nolint:mnd
 	for _, res := range resources {
-		subjectCol := "subject_id"
+		subjectCol := "subj_id"
 		subjectArg := res.SubjectID
 		if res.SubjectID == "" {
-			subjectCol = "subject_type"
+			subjectCol = "subj_type"
 			subjectArg = string(res.SubjectType)
 		}
-		resCol := "resource_id"
+		resCol := "res_id"
 		resArg := res.ResourceID
 		if res.ResourceID == "" {
-			resCol = "resource_type"
+			resCol = "res_type"
 			resArg = string(res.ResourceType)
 		}
 		if condition == "" {
@@ -186,7 +186,7 @@ func (repo *aclPermissionRepo) DeleteByUsers(ctx context.Context, db database.ID
 		return nil
 	}
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).
-		Where("subject_id IN (?)", bun.List(userIDs))
+		Where("subj_id IN (?)", bun.List(userIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

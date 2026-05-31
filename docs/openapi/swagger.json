@@ -22954,9 +22954,9 @@
   "components" : {
     "schemas" : {
       "github_com_localpaas_localpaas_localpaas_app_apperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_apperrors.ErrorInfo" : {
         "properties" : {
@@ -23020,6 +23020,9 @@
           "delete" : {
             "type" : "boolean"
           },
+          "execute" : {
+            "type" : "boolean"
+          },
           "read" : {
             "type" : "boolean"
           },
@@ -23027,7 +23030,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "delete", "read", "write" ],
+        "required" : [ "delete", "execute", "read", "write" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_base.AccessTokenKind" : {
@@ -23597,29 +23600,6 @@
         },
         "required" : [ "priority" ],
         "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
-        "format" : "int32",
-        "type" : "integer",
-        "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits, 0o777",
-          "ModeSetgid" : "g: setgid",
-          "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
-        },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -25281,7 +25261,7 @@
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.TmpfsOptions" : {
         "properties" : {
           "mode" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+            "type" : "integer"
           },
           "options" : {
             "items" : {
@@ -28755,7 +28735,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"
@@ -28773,7 +28753,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"
@@ -32480,7 +32460,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"
@@ -32498,7 +32478,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+            "type" : "integer"
           },
           "name" : {
             "type" : "string"

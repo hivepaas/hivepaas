@@ -101,7 +101,7 @@ func (h *Handler) ExecuteBackup(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
 		ResourceModule: base.ResourceModuleSystem,
 		ResourceType:   base.ResourceTypeSystemBackup,
-		Action:         base.ActionTypeWrite,
+		Action:         base.ActionTypeExecute,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

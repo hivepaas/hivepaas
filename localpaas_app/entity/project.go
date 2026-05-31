@@ -33,7 +33,7 @@ type Project struct {
 	Settings  []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
 	Apps      []*App           `bun:"rel:has-many,join:id=project_id" json:"apps,omitempty"`
 	Tags      []*ProjectTag    `bun:"rel:has-many,join:id=project_id" json:"tags,omitempty"`
-	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=resource_id" json:"accesses,omitempty"`
+	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=res_id" json:"accesses,omitempty"`
 }
 
 // GetID implements IDEntity interface

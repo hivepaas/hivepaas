@@ -14,7 +14,7 @@ import { isValidationException } from "@infrastructure/api";
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { SystemCleanupConfigurationForm } from "../form";
-import { SystemCleanupScheduleMode, type SystemCleanupConfigurationFormOutput } from "../schemas";
+import { type SystemCleanupConfigurationFormOutput, SystemCleanupScheduleMode } from "../schemas";
 import type { SystemCleanupConfigurationFormRef } from "../types";
 
 type UpdatePayload = SystemCleanup_UpdateOne_Req["data"]["payload"];
@@ -50,11 +50,11 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
         notification: {
             successUseDefault: values.notification.successUseDefault,
             success: {
-                id: values.notification.success?.id ?? "",
+                id: values.notification.successUseDefault ? "" : (values.notification.success?.id ?? ""),
             },
             failureUseDefault: values.notification.failureUseDefault,
             failure: {
-                id: values.notification.failure?.id ?? "",
+                id: values.notification.failureUseDefault ? "" : (values.notification.failure?.id ?? ""),
             },
         },
     };

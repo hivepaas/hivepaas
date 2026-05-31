@@ -133,11 +133,15 @@ export const projectsRouter: RouteObject = {
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.githubApps,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
+                    ),
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.imPlatforms,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.imPlatforms.$route} />,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.imPlatforms.$route} />
+                    ),
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.notificationTargets,
@@ -452,6 +456,22 @@ export const projectsRouter: RouteObject = {
                                 const { AppConfigHttpSettingsRoute } = await getLazyComponents();
 
                                 return { Component: AppConfigHttpSettingsRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.$pattern,
+                            lazy: async () => {
+                                const { AppHealthChecksRoute } = await getLazyComponents();
+
+                                return { Component: AppHealthChecksRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$pattern,
+                            lazy: async () => {
+                                const { AppScheduledJobsRoute } = await getLazyComponents();
+
+                                return { Component: AppScheduledJobsRoute };
                             },
                         },
                         {

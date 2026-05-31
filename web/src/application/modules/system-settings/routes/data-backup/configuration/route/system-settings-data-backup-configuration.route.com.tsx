@@ -41,11 +41,11 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
         notification: {
             successUseDefault: values.notification.successUseDefault,
             success: {
-                id: values.notification.success?.id ?? "",
+                id: values.notification.successUseDefault ? "" : (values.notification.success?.id ?? ""),
             },
             failureUseDefault: values.notification.failureUseDefault,
             failure: {
-                id: values.notification.failure?.id ?? "",
+                id: values.notification.failureUseDefault ? "" : (values.notification.failure?.id ?? ""),
             },
         },
     };

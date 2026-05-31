@@ -27,15 +27,20 @@ function buildNotificationPayload(
 ): DeploymentSettingsUpdatePayload["notification"] {
     if (!notification) {
         return {
-            successUseDefault: false,
-            failureUseDefault: false,
+            successUseDefault: true,
+            failureUseDefault: true,
         };
     }
+
     return {
         successUseDefault: notification.successUseDefault,
-        ...(notification.success?.id ? { success: { id: notification.success.id } } : {}),
+        ...(!notification.successUseDefault && notification.success?.id
+            ? { success: { id: notification.success.id } }
+            : {}),
         failureUseDefault: notification.failureUseDefault,
-        ...(notification.failure?.id ? { failure: { id: notification.failure.id } } : {}),
+        ...(!notification.failureUseDefault && notification.failure?.id
+            ? { failure: { id: notification.failure.id } }
+            : {}),
     };
 }
 

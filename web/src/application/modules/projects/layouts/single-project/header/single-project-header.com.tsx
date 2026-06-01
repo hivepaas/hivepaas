@@ -9,7 +9,7 @@ import { useProjectUserAccessesDialog } from "~/projects/dialogs/project-user-ac
 import { BackButton, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
-import { ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
+import { ProjectEnvFilter, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
 import { SingleProjectBreadcrumbs } from "../buidling-blocks";
 
@@ -68,8 +68,14 @@ function View({ projectId }: Props) {
     ];
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
-            <div className="flex items-center justify-between">
-                <SingleProjectBreadcrumbs project={project} />
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex justify-between w-full min-w-0 flex-wrap items-center gap-3">
+                    <SingleProjectBreadcrumbs project={project} />
+                    <ProjectEnvFilter
+                        projectId={projectId}
+                        envs={project.envs}
+                    />
+                </div>
                 {/* <div className="flex items-center gap-2">
                     <PopConfirm
                         title="Remove project"

@@ -29,11 +29,15 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, search, pagination, sorting, env } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
-        query.pagination(pagination).sorting(sorting).search(search);
+        query
+            .pagination(pagination)
+            .sorting(sorting)
+            .search(search)
+            .filterBy({ env: [env] });
 
         return lastValueFrom(
             from(

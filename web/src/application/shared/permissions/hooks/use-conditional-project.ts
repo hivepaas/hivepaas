@@ -44,6 +44,7 @@ export function useConditionalProject<const T extends string>({
         project,
         actions,
         canRead: hasAccess("read"),
+        canExecute: hasAccess("execute"),
         canWrite: hasAccess("write"),
         canDelete: hasAccess("delete"),
         hasAccess,

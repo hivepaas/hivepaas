@@ -12,5 +12,5 @@ export const InviteUserFormSchema = z.object({
     moduleAccesses: z.array(AccessSchema),
 });
 
-export type InviteUserFormInput = z.input<typeof InviteUserFormSchema>;
+export type InviteUserFormInput = z.output<typeof InviteUserFormSchema>;
 export type InviteUserFormOutput = z.output<typeof InviteUserFormSchema>;

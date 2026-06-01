@@ -2,16 +2,18 @@ import { MODULES } from "@application/shared/constants";
 
 import type { ModuleAction, ModuleId, ModulePermission } from "../types";
 
-export const MODULE_ACTIONS = ["read", "write", "delete"] as const satisfies readonly ModuleAction[];
+export const MODULE_ACTIONS = ["read", "execute", "write", "delete"] as const satisfies readonly ModuleAction[];
 
 export const DENIED_ACTIONS: ModulePermission["actions"] = Object.freeze({
     read: false,
+    execute: false,
     write: false,
     delete: false,
 });
 
 export const FULL_ACTIONS: ModulePermission["actions"] = Object.freeze({
     read: true,
+    execute: true,
     write: true,
     delete: true,
 });

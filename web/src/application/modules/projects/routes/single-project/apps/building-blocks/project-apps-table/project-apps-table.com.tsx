@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Plus } from "lucide-react";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
 import { ProjectAppsTableDefs } from "~/projects/module-shared/definitions/tables/project-apps";
 import { EProjectStatus } from "~/projects/module-shared/enums";
+import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
@@ -15,6 +16,8 @@ import { Button, DataTable, Tooltip, TooltipContent, TooltipTrigger } from "@/co
 
 export function ProjectAppsTable({ projectId }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
+    const selectedEnv = useSelectedProjectEnv(projectId);
+    const env = getProjectEnvFilterParam(selectedEnv);
     const { actions } = useCreateProjectAppDialog({
         onClose: () => {
             actions.close();
@@ -22,11 +25,16 @@ export function ProjectAppsTable({ projectId }: Props) {
     });
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
+    useEffect(() => {
+        setPagination(prev => ({ ...prev, page: 1 }));
+    }, [env, setPagination]);
+
     const { data: { data: apps } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectAppsQueries.useFindManyPaginated({
         projectID: projectId,
         pagination,
         sorting,
         search,
+        env,
     });
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
 

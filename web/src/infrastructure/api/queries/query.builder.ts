@@ -17,7 +17,47 @@ interface Pagination {
     pageOffset: number;
 }
 
-type QueryObject = Record<string, string | number | (string | number)[]>;
+type QueryValue = string | number | boolean;
+type QueryValueArray = (QueryValue | null | undefined)[];
+type QueryObject = Record<string, QueryValue>;
+type QueryObjectInput = Record<string, QueryValue | QueryValueArray>;
+
+function serializeQueryValue(value: QueryValue | QueryValueArray): QueryValue | undefined {
+    if (!Array.isArray(value)) {
+        return value;
+    }
+
+    const values = value.filter((item): item is QueryValue => item !== undefined && item !== null && item !== "");
+
+    if (values.length === 0) {
+        return undefined;
+    }
+
+    if (values.length === 1) {
+        return values[0];
+    }
+
+    return values.join(",");
+}
+
+function serializeQueryObject(query?: QueryObjectInput | null): QueryObject {
+    if (!query) {
+        return {};
+    }
+
+    return Object.entries(query).reduce<QueryObject>((acc, [key, value]) => {
+        const serializedValue = serializeQueryValue(value);
+
+        if (serializedValue === undefined) {
+            return acc;
+        }
+
+        return {
+            ...acc,
+            [key]: serializedValue,
+        };
+    }, {});
+}
 
 class Builder {
     #pagination: Pagination | null = null;
@@ -154,10 +194,10 @@ class Builder {
 
         return {
             ...pagination,
-            ...sorting,
+            ...serializeQueryObject(sorting ? { sort: sorting.sort } : null),
             ...search,
             ...context,
-            ...filterBy,
+            ...serializeQueryObject(filterBy),
         };
     }
 

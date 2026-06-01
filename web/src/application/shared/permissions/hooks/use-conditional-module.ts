@@ -41,6 +41,7 @@ export function useConditionalModule<const T extends ModuleId>({
         module,
         actions,
         canRead: hasAccess("read"),
+        canExecute: hasAccess("execute"),
         canWrite: hasAccess("write"),
         canDelete: hasAccess("delete"),
         hasAccess,

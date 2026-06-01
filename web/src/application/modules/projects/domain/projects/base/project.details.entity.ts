@@ -14,6 +14,7 @@ export interface ProjectDetailsEntity extends ProjectBaseEntity {
     userAccesses: (ProjectUserBaseEntity & {
         access: {
             read: boolean;
+            execute: boolean;
             write: boolean;
             delete: boolean;
         };

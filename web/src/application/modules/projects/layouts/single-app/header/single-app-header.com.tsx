@@ -2,7 +2,7 @@ import { memo } from "react";
 
 import invariant from "tiny-invariant";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
-import { ProjectAppStatusBadge } from "~/projects/module-shared/components";
+import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
 import { BackButton, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -32,6 +32,7 @@ function View({ projectId, appId }: Props) {
     invariant(app, "app must be defined");
     const { data: project } = data;
     const { data: appData } = app;
+    const appEnv = project.envs.find(env => env.name === appData.env);
 
     const links = [
         {
@@ -67,6 +68,12 @@ function View({ projectId, appId }: Props) {
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{appData.name}</h2>
                             <ProjectAppStatusBadge status={appData.status} />
+                            {appData.env && (
+                                <ProjectEnvBadge
+                                    name={appData.env}
+                                    color={appEnv?.color}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

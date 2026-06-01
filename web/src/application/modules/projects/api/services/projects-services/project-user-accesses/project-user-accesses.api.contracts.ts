@@ -4,6 +4,7 @@ import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
 export interface ProjectUserAccessActions {
     read: boolean;
+    execute: boolean;
     write: boolean;
     delete: boolean;
 }

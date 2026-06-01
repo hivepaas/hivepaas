@@ -15,6 +15,7 @@ export interface UseConditionalProjectResult<T extends ProjectId> {
     project: ProjectPermission<T> | null;
     actions: ProjectPermission["actions"];
     canRead: boolean;
+    canExecute: boolean;
     canWrite: boolean;
     canDelete: boolean;
     hasAccess: (action: ModuleAction) => boolean;

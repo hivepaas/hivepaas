@@ -51,6 +51,7 @@ export interface Profile {
         name: string;
         access: {
             read: boolean;
+            execute: boolean;
             write: boolean;
             delete: boolean;
         };
@@ -61,6 +62,7 @@ export interface Profile {
         name: string;
         access: {
             read: boolean;
+            execute: boolean;
             write: boolean;
             delete: boolean;
         };

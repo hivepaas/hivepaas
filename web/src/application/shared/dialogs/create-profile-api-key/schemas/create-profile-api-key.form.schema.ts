@@ -4,6 +4,7 @@ export const CreateProfileApiKeyFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     accessAction: z.object({
         read: z.boolean(),
+        execute: z.boolean().optional().default(false),
         write: z.boolean(),
         delete: z.boolean(),
     }),
@@ -20,5 +21,5 @@ export const CreateProfileApiKeyFormSchema = z.object({
         .optional(),
 });
 
-export type CreateProfileApiKeyFormSchemaInput = z.input<typeof CreateProfileApiKeyFormSchema>;
+export type CreateProfileApiKeyFormSchemaInput = z.output<typeof CreateProfileApiKeyFormSchema>;
 export type CreateProfileApiKeyFormSchemaOutput = z.output<typeof CreateProfileApiKeyFormSchema>;

@@ -14,6 +14,7 @@ interface ProjectAccess {
     name: string;
     access: {
         read: boolean;
+        execute: boolean;
         write: boolean;
         delete: boolean;
     };
@@ -61,12 +62,13 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
         const project = watchedFields[index];
         if (!project) return;
 
-        const shouldCheckAll = !(project.access.write && project.access.delete);
+        const shouldCheckAll = !(project.access.execute && project.access.write && project.access.delete);
 
         update(index, {
             ...project,
             access: {
                 ...project.access,
+                execute: shouldCheckAll,
                 write: shouldCheckAll,
                 delete: shouldCheckAll,
             },
@@ -83,6 +85,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
             name: project.name,
             access: {
                 read: true,
+                execute: false,
                 write: false,
                 delete: false,
             },
@@ -153,6 +156,18 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                         disabled
                                     />
                                     <label
+                                        htmlFor="all-project-execute"
+                                        className="text-sm"
+                                    >
+                                        Execute
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked
+                                        disabled
+                                    />
+                                    <label
                                         htmlFor="all-project-write"
                                         className="text-sm"
                                     >
@@ -194,6 +209,26 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                             className="text-sm"
                                         >
                                             Read
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            checked={project.access.execute}
+                                            disabled={disabled}
+                                            onCheckedChange={checked => {
+                                                if (!disabled) {
+                                                    update(index, {
+                                                        ...project,
+                                                        access: { ...project.access, execute: checked === true },
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor={`${project.id}-execute`}
+                                            className="text-sm"
+                                        >
+                                            Execute
                                         </label>
                                     </div>
                                     <div className="flex items-center gap-2">

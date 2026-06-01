@@ -26,6 +26,7 @@ import type { CreateOrEditAppHealthCheckFormInput, CreateOrEditAppHealthCheckFor
 import { CreateOrEditAppHealthCheckFormSchema } from "../schemas";
 
 const BODY_METHODS = [EAppHealthCheckRestMethod.POST, EAppHealthCheckRestMethod.PUT] as const;
+// eslint-disable-next-line quotes
 const JSON_PLACEHOLDER = '{\n  "status": "up"\n}';
 
 function getReturnBodyMode(rest: AppHealthCheck["rest"]): EAppHealthCheckReturnBodyMode {

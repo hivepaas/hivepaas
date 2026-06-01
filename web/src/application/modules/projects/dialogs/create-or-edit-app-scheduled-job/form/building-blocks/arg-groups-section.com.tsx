@@ -39,6 +39,7 @@ function quoteArgValue(value: string) {
         return value;
     }
 
+    // eslint-disable-next-line quotes
     return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 

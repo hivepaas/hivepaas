@@ -90,61 +90,63 @@ function View({ projectId }: Props) {
                 </div> */}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 mt-4 pb-4">
+            <div className="flex items-center gap-4 mt-4 pb-4">
                 <BackButton />
-                <div className="flex min-w-0 items-center gap-4">
-                    <Avatar
-                        name={project.name}
-                        src={project.photo}
-                        className="size-20 text-2xl"
-                    />
-                    <div className="flex min-w-0 flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>
-                            <ProjectStatusBadge status={project.status} />
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">Owner</span>
-                            <Avatar
-                                name={project.owner.fullName}
-                                src={project.owner.photo}
-                                className="size-8"
-                                borderless
-                            />
-                            <span className="truncate text-sm font-medium">{project.owner.fullName}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="ml-auto flex flex-wrap items-center justify-end gap-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">Access</span>
-                        <div className="flex -space-x-2">
-                            {visibleAccessUsers.map(user => (
+                <div className="w-full flex flex-wrap items-end gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
+                        <Avatar
+                            name={project.name}
+                            src={project.photo}
+                            className="size-20 text-2xl"
+                        />
+                        <div className="flex min-w-0 flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>
+                                <ProjectStatusBadge status={project.status} />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-muted-foreground">Owner</span>
                                 <Avatar
-                                    key={user.id}
-                                    name={user.fullName || user.email || user.username}
-                                    src={user.photo}
-                                    className="size-8 border-2 border-background"
+                                    name={project.owner.fullName}
+                                    src={project.owner.photo}
+                                    className="size-8"
+                                    borderless
                                 />
-                            ))}
-                            {extraAccessUsers > 0 && (
-                                <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary/10 text-xs font-semibold text-primary">
-                                    +{extraAccessUsers}
-                                </span>
-                            )}
+                                <span className="truncate text-sm font-medium">{project.owner.fullName}</span>
+                            </div>
                         </div>
                     </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                            projectUserAccessesDialog.actions.open(project.id, project.name);
-                        }}
-                    >
-                        <PlusCircle className="size-4" />
-                        Add User
-                    </Button>
+
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground">Access</span>
+                            <div className="flex -space-x-2">
+                                {visibleAccessUsers.map(user => (
+                                    <Avatar
+                                        key={user.id}
+                                        name={user.fullName || user.email || user.username}
+                                        src={user.photo}
+                                        className="size-8 border-2 border-background"
+                                    />
+                                ))}
+                                {extraAccessUsers > 0 && (
+                                    <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary/10 text-xs font-semibold text-primary">
+                                        +{extraAccessUsers}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                projectUserAccessesDialog.actions.open(project.id, project.name);
+                            }}
+                        >
+                            <PlusCircle className="size-4" />
+                            Add User
+                        </Button>
+                    </div>
                 </div>
             </div>
 

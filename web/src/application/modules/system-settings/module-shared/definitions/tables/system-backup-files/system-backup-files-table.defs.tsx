@@ -7,7 +7,7 @@ import type { SystemBackupFile } from "~/system-settings/domain";
 import { Button } from "@/components/ui";
 
 import { BackupFileMenuCell } from "./building-blocks";
-import { formatBackupFileSize, getBackupFileStorageLabel } from "./utils";
+import { getBackupFileStorageLabel } from "./utils";
 
 function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<SystemBackupFile>[] {
     return [
@@ -44,7 +44,7 @@ function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<Syst
         {
             accessorKey: "size",
             header: "Size",
-            cell: ({ row: { original } }) => formatBackupFileSize(original.size),
+            cell: ({ row: { original } }) => original.sizeStr,
         },
         {
             accessorKey: "storage",

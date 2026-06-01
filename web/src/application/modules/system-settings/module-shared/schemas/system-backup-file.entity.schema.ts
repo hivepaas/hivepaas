@@ -1,19 +1,27 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
+import { ESettingStatus } from "@application/shared/enums";
 
-import { ESystemBackupFileStorageType } from "../enums";
+import { ESystemBackupFileStorageType, ESystemBackupFileType } from "../enums";
 
-export const SystemBackupFileEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.File),
-    storageType: z.nativeEnum(ESystemBackupFileStorageType),
-    storage: SettingsBaseEntitySchema.omit({ description: true }).nullish(),
+export const SystemBackupFileEntitySchema = z.object({
+    id: z.string(),
+    type: z.literal(ESystemBackupFileType.SystemBackup),
+    status: z.nativeEnum(ESettingStatus),
+    key: z.string(),
+    name: z.string(),
+    path: z.string(),
     bucket: z
         .string()
         .nullish()
         .transform(value => value ?? undefined),
     mimetype: z.string(),
     size: z.number(),
-    path: z.string(),
+    sizeStr: z.string(),
+    storageType: z.nativeEnum(ESystemBackupFileStorageType),
+    storage: SettingsBaseEntitySchema.omit({ description: true }).nullish(),
+    updateVer: z.number(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
 });

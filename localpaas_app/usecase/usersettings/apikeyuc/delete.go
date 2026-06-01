@@ -15,6 +15,10 @@ func (uc *UC) DeleteAPIKey(
 	auth *basedto.Auth,
 	req *apikeydto.DeleteAPIKeyReq,
 ) (*apikeydto.DeleteAPIKeyResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	req.Type = currentSettingType
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		ExtraLoadOpts: []bunex.SelectQueryOption{

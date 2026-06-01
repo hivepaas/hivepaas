@@ -29,6 +29,10 @@ func (uc *UC) CreateAPIKey(
 	auth *basedto.Auth,
 	req *apikeydto.CreateAPIKeyReq,
 ) (*apikeydto.CreateAPIKeyResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	actingUser := auth.User.User
 	// Generate key and secret
 	keyID, secretKey := gofn.RandTokenAsHex(keyLen), gofn.RandTokenAsHex(secretLen)

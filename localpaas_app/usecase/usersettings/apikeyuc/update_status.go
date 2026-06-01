@@ -14,6 +14,10 @@ func (uc *UC) UpdateAPIKeyStatus(
 	auth *basedto.Auth,
 	req *apikeydto.UpdateAPIKeyStatusReq,
 ) (*apikeydto.UpdateAPIKeyStatusResp, error) {
+	if auth.User.IsDemoUser() {
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+	}
+
 	req.Type = currentSettingType
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {

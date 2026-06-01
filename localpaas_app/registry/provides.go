@@ -6,6 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
 	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appactionhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appbasehandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/apphandler"
@@ -64,6 +65,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/tasks/taskschedjobexec"
 	"github.com/localpaas/localpaas/localpaas_app/updater/tasksystemupdate"
 	"github.com/localpaas/localpaas/localpaas_app/updater/updaterimpl"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/appactionuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc"
@@ -164,6 +166,7 @@ var Provides = []any{
 	apphandler.New,
 	appsettingshandler.New,
 	appdeploymenthandler.New,
+	appactionhandler.New,
 	settinghandler.New,
 	usersettingshandler.New,
 	systemhandler.New,
@@ -188,6 +191,7 @@ var Provides = []any{
 	appuc.New,
 	appsettingsuc.New,
 	appdeploymentuc.New,
+	appactionuc.New,
 	settings.New,
 	cloudstorageuc.New,
 	sshkeyuc.New,

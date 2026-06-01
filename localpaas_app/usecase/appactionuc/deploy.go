@@ -1,4 +1,4 @@
-package appdeploymentuc
+package appactionuc
 
 import (
 	"context"
@@ -16,25 +16,25 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/appactionuc/appactiondto"
 )
 
 func (uc *UC) DeployApp(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appdeploymentdto.DeployAppReq,
-) (*appdeploymentdto.DeployAppResp, error) {
+	req *appactiondto.DeployAppReq,
+) (*appactiondto.DeployAppResp, error) {
 	var data *deployAppData
 	var persistingData *persistingAppData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data = &deployAppData{}
-		err := uc.loadAppDeploymentSettingsForUpdate(ctx, db, req, data)
+		err := uc.loadAppActionSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
 		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppDeploymentSettings(auth, req, data, persistingData)
+		err = uc.prepareUpdatingAppActionSettings(auth, req, data, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -49,14 +49,14 @@ func (uc *UC) DeployApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = uc.postTransactionAppDeploymentSettings(ctx, persistingData)
+	err = uc.postTransactionAppActionSettings(ctx, persistingData)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	deployment, _ := gofn.First(persistingData.UpsertingDeployments)
-	return &appdeploymentdto.DeployAppResp{
-		Data: &appdeploymentdto.DeployAppDataResp{DeploymentID: deployment.ID},
+	return &appactiondto.DeployAppResp{
+		Data: &appactiondto.DeployAppDataResp{DeploymentID: deployment.ID},
 	}, nil
 }
 
@@ -70,10 +70,10 @@ type persistingAppData struct {
 	appservice.PersistingAppData
 }
 
-func (uc *UC) loadAppDeploymentSettingsForUpdate(
+func (uc *UC) loadAppActionSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
-	req *appdeploymentdto.DeployAppReq,
+	req *appactiondto.DeployAppReq,
 	data *deployAppData,
 ) error {
 	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
@@ -92,7 +92,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	data.DeploymentSettings, _ = gofn.First(app.Settings)
 
 	if data.DeploymentSettings == nil || !data.DeploymentSettings.IsActive() {
-		return apperrors.NewNotFound("AppDeploymentSettings").
+		return apperrors.NewNotFound("AppActionSettings").
 			WithMsgLog("app deployment settings not found")
 	}
 
@@ -119,9 +119,9 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingAppDeploymentSettings(
+func (uc *UC) prepareUpdatingAppActionSettings(
 	auth *basedto.Auth,
-	req *appdeploymentdto.DeployAppReq,
+	req *appactiondto.DeployAppReq,
 	data *deployAppData,
 	persistingData *persistingAppData,
 ) error {
@@ -171,7 +171,7 @@ func (uc *UC) persistAppData(
 	return nil
 }
 
-func (uc *UC) postTransactionAppDeploymentSettings(
+func (uc *UC) postTransactionAppActionSettings(
 	ctx context.Context,
 	persistingData *persistingAppData,
 ) error {

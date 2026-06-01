@@ -7,6 +7,7 @@ import (
 	swaggoFiles "github.com/swaggo/files"
 	swaggoGin "github.com/swaggo/gin-swagger"
 
+	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appactionhandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/apphandler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/appsettingshandler"
@@ -38,6 +39,7 @@ type HandlerRegistry struct {
 	appHandler             *apphandler.Handler
 	appSettingsHandler     *appsettingshandler.Handler
 	appDeploymentHandler   *appdeploymenthandler.Handler
+	appActionHandler       *appactionhandler.Handler
 	settingHandler         *settinghandler.Handler
 	userSettingsHandler    *usersettingshandler.Handler
 	systemHandler          *systemhandler.Handler
@@ -60,6 +62,7 @@ func NewHandlerRegistry(
 	appHandler *apphandler.Handler,
 	appSettingsHandler *appsettingshandler.Handler,
 	appDeploymentHandler *appdeploymenthandler.Handler,
+	appActionHandler *appactionhandler.Handler,
 	settingHandler *settinghandler.Handler,
 	userSettingsHandler *usersettingshandler.Handler,
 	systemHandler *systemhandler.Handler,
@@ -81,6 +84,7 @@ func NewHandlerRegistry(
 		appHandler:             appHandler,
 		appSettingsHandler:     appSettingsHandler,
 		appDeploymentHandler:   appDeploymentHandler,
+		appActionHandler:       appActionHandler,
 		settingHandler:         settingHandler,
 		userSettingsHandler:    userSettingsHandler,
 		systemHandler:          systemHandler,

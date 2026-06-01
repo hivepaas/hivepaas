@@ -1,4 +1,4 @@
-package appdeploymentdto
+package appactiondto
 
 import (
 	"strings"
@@ -31,11 +31,15 @@ func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 	if setting.ActiveMethod == "" {
 		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
 	}
-	if err := req.ImageSource.ApplyTo(setting.ImageSource); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.RepoSource.ApplyTo(setting.RepoSource); err != nil {
-		return apperrors.Wrap(err)
+	switch setting.ActiveMethod {
+	case base.DeploymentMethodImage:
+		if err := req.ImageSource.ApplyTo(setting.ImageSource); err != nil {
+			return apperrors.Wrap(err)
+		}
+	case base.DeploymentMethodRepo:
+		if err := req.RepoSource.ApplyTo(setting.RepoSource); err != nil {
+			return apperrors.Wrap(err)
+		}
 	}
 	return nil
 }
@@ -45,7 +49,7 @@ type DeploymentImageSourceReq struct {
 }
 
 func (req *DeploymentImageSourceReq) ApplyTo(setting *entity.DeploymentImageSource) error {
-	if setting.Image == "" {
+	if setting == nil || setting.Image == "" {
 		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
 	}
 	if req != nil {
@@ -77,7 +81,7 @@ type DeploymentRepoSourceReq struct {
 }
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
-	if setting.RepoURL == "" {
+	if setting == nil || setting.RepoURL == "" {
 		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
 	}
 	if req != nil {

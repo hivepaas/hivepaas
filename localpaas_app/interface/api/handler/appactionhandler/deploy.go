@@ -1,4 +1,4 @@
-package appdeploymenthandler
+package appactionhandler
 
 import (
 	"net/http"
@@ -7,19 +7,19 @@ import (
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/appactionuc/appactiondto"
 )
 
 // DeployApp Deploys an app
 // @Summary Deploys an app
 // @Description Deploys an app
-// @Tags    app_deployments
+// @Tags    app_actions
 // @Produce json
-// @Id      apiDeployApp
+// @Id      appActionDeploy
 // @Param   projectID path string true "project ID"
 // @Param   appID path string true "app ID"
-// @Param   body body appdeploymentdto.DeployAppReq true "request data"
-// @Success 200 {object} appdeploymentdto.DeployAppResp
+// @Param   body body appactiondto.DeployAppReq true "request data"
+// @Success 200 {object} appactiondto.DeployAppResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/deploy [post]
@@ -30,7 +30,7 @@ func (h *Handler) DeployApp(ctx *gin.Context) {
 		return
 	}
 
-	req := appdeploymentdto.NewDeployAppReq()
+	req := appactiondto.NewDeployAppReq()
 	req.ProjectID = projectID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
@@ -38,7 +38,7 @@ func (h *Handler) DeployApp(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appDeploymentUC.DeployApp(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appActionUC.DeployApp(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

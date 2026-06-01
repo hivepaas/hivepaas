@@ -9,6 +9,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 	appHandler := s.handlerRegistry.appHandler
 	appSettingsHandler := s.handlerRegistry.appSettingsHandler
 	appDeploymentHandler := s.handlerRegistry.appDeploymentHandler
+	appActionHandler := s.handlerRegistry.appActionHandler
 
 	{ // Base
 		appGroup.GET("/base", appHandler.ListAppBase)
@@ -131,8 +132,12 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		deploymentGroup.GET("/:deploymentID/logs", func(ctx *gin.Context) {
 			appDeploymentHandler.GetAppDeploymentLogs(ctx, s.websocket)
 		})
-		// Deployments via API key
-		appGroup.POST("/:appID/deploy", appDeploymentHandler.DeployApp)
+	}
+
+	{ // Actions
+		appActionGroup := appGroup.Group("/:appID")
+		// Re-deploy app
+		appActionGroup.POST("/deploy", appActionHandler.DeployApp)
 	}
 
 	return appGroup

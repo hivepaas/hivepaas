@@ -3,7 +3,9 @@ import { type PropsWithChildren } from "react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 
-import { Page404NotFound, PageError } from "@application/shared/pages";
+import { useProfileContext } from "@application/shared/context";
+import { Page404NotFound, PageError, PageNoAccess } from "@application/shared/pages";
+import { useConditionalProject } from "@application/shared/permissions";
 
 import { ProjectsQueries } from "@application/modules/projects/data";
 
@@ -16,7 +18,16 @@ export function SingleProjectLayout({ children }: PropsWithChildren) {
 
     invariant(id, "Project id must be defined");
 
-    const { error, refetch } = ProjectsQueries.useFindOneById({ projectID: id });
+    const { profile } = useProfileContext();
+    const { canRead } = useConditionalProject({ projectId: id });
+    const { data, error, refetch } = ProjectsQueries.useFindOneById({ projectID: id });
+
+    const project = data?.data;
+    const hasProjectReadAccess =
+        project && profile
+            ? project.owner.id === profile.id ||
+              project.userAccesses.some(user => user.id === profile.id && user.access.read)
+            : false;
 
     if (error) {
         if (isHttp404Exception(error)) {
@@ -29,6 +40,10 @@ export function SingleProjectLayout({ children }: PropsWithChildren) {
                 onRetry={refetch}
             />
         );
+    }
+
+    if (project && !canRead && !hasProjectReadAccess) {
+        return <PageNoAccess />;
     }
 
     return (

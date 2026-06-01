@@ -63,10 +63,6 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId),
         },
         {
-            label: "Webhooks",
-            route: ROUTE.projects.single.providerConfiguration.webhooks.$route(projectId),
-        },
-        {
             label: "IM Platforms",
             route: ROUTE.projects.single.providerConfiguration.imPlatforms.$route(projectId),
         },
@@ -89,6 +85,10 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
         {
             label: "SSL Certificates",
             route: ROUTE.projects.single.providerConfiguration.sslCertificates.$route(projectId),
+        },
+        {
+            label: "Webhooks",
+            route: ROUTE.projects.single.providerConfiguration.webhooks.$route(projectId),
         },
     ];
 }

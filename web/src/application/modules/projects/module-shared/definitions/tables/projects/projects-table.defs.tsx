@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import type { ProjectBaseEntity } from "~/projects/domain";
 import { ProjectStatusBadge } from "~/projects/module-shared/components";
 
-import { ActionsCell, MenuCell } from "./building-blocks";
+import { ActionsCell } from "./building-blocks";
 
 const columns: ColumnDef<ProjectBaseEntity>[] = [
     {
@@ -57,12 +57,6 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
             } catch {
                 return "-";
             }
-        },
-    },
-    {
-        header: "Actions",
-        cell: ({ row: { original } }) => {
-            return <MenuCell project={original} />;
         },
     },
 ];

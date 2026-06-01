@@ -34,32 +34,24 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, appId),
         },
         {
-            label: "Container Settings",
-            route: ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
-        },
-        {
             label: "HTTP Settings",
             route: ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
-        },
-        {
-            label: "Health Checks",
-            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
-        },
-        {
-            label: "Scheduled Jobs",
-            route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
         },
         {
             label: "Env Variables",
             route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
         },
         {
+            label: "Secrets",
+            route: ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
+        },
+        {
             label: "Config Files",
             route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
         },
         {
-            label: "Secrets",
-            route: ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
+            label: "Container Settings",
+            route: ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
         },
         {
             label: "Availability & Scaling",
@@ -76,6 +68,14 @@ function View({ children }: PropsWithChildren) {
         {
             label: "Resources",
             route: ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, appId),
+        },
+        {
+            label: "Health Checks",
+            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
+        },
+        {
+            label: "Scheduled Jobs",
+            route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
         },
         {
             label: "Danger Zone",

@@ -1,12 +1,16 @@
 import { Button } from "@/components/ui";
 
-import { MODULE_IDS } from "@application/shared/constants";
-import { PermissionTooltipAction } from "@application/shared/permissions";
+import { ProjectPermissionTooltipAction } from "../project-permission-tooltip-action";
 
-export function ProjectPermissionSubmitButton({ isPending, label = "Save", className = "min-w-[100px]" }: Props) {
+export function ProjectPermissionSubmitButton({
+    projectId,
+    isPending,
+    label = "Save",
+    className = "min-w-[100px]",
+}: Props) {
     return (
-        <PermissionTooltipAction
-            id={MODULE_IDS.Project}
+        <ProjectPermissionTooltipAction
+            projectId={projectId}
             action="write"
         >
             {({ isDenied }) => (
@@ -19,11 +23,12 @@ export function ProjectPermissionSubmitButton({ isPending, label = "Save", class
                     {label}
                 </Button>
             )}
-        </PermissionTooltipAction>
+        </ProjectPermissionTooltipAction>
     );
 }
 
 interface Props {
+    projectId?: string;
     isPending: boolean;
     label?: string;
     className?: string;

@@ -1,5 +1,5 @@
 import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
-import type { ModulePermission } from "@application/shared/permissions/types";
+import type { ModulePermission, ProjectPermission } from "@application/shared/permissions/types";
 
 export interface Profile {
     /**
@@ -67,6 +67,8 @@ export interface Profile {
     }[];
 
     modulePermissions: ModulePermission[];
+
+    projectPermissions: ProjectPermission[];
 
     mfaTotpActivated?: boolean;
 }

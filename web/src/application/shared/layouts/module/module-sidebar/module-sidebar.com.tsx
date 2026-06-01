@@ -26,6 +26,7 @@ interface SidebarItem {
     pattern: string;
     icon?: LucideIcon;
     moduleId?: ResourceModuleId;
+    alwaysVisible?: boolean;
     items?: {
         title: string;
         route: string;
@@ -42,27 +43,7 @@ const navMain: SidebarItem[] = [
         pattern: ROUTE.projects.list.$pattern,
         icon: LayoutGrid,
         moduleId: MODULE_IDS.Project,
-    },
-    {
-        title: "Cluster",
-        route: "#",
-        pattern: "#",
-        icon: Container,
-        moduleId: MODULE_IDS.Cluster,
-        items: [
-            {
-                title: "Nodes",
-                route: ROUTE.cluster.nodes.$route,
-                pattern: ROUTE.cluster.nodes.$pattern,
-            },
-        ],
-    },
-    {
-        title: "User Management",
-        route: ROUTE.userManagement.users.$route,
-        pattern: ROUTE.userManagement.users.$pattern,
-        icon: Users,
-        moduleId: MODULE_IDS.User,
+        alwaysVisible: true,
     },
     {
         title: "Sources",
@@ -91,19 +72,19 @@ const navMain: SidebarItem[] = [
         moduleId: MODULE_IDS.Settings,
         items: [
             {
+                title: "Access Tokens",
+                route: ROUTE.settings.accessTokens.$route,
+                pattern: ROUTE.settings.accessTokens.$pattern,
+            },
+            {
                 title: "Basic Auth",
                 route: ROUTE.settings.basicAuth.$route,
                 pattern: ROUTE.settings.basicAuth.$pattern,
             },
             {
-                title: "Registry Auth",
-                route: ROUTE.settings.registryAuth.$route,
-                pattern: ROUTE.settings.registryAuth.$pattern,
-            },
-            {
-                title: "SSL Certificates",
-                route: ROUTE.settings.sslCertificates.$route,
-                pattern: ROUTE.settings.sslCertificates.$pattern,
+                title: "Cloud Storages",
+                route: ROUTE.settings.cloudStorages.$route,
+                pattern: ROUTE.settings.cloudStorages.$pattern,
             },
             {
                 title: "Email Accounts",
@@ -116,19 +97,9 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.settings.imPlatforms.$pattern,
             },
             {
-                title: "SSH Keys",
-                route: ROUTE.settings.sshKeys.$route,
-                pattern: ROUTE.settings.sshKeys.$pattern,
-            },
-            {
-                title: "Access Tokens",
-                route: ROUTE.settings.accessTokens.$route,
-                pattern: ROUTE.settings.accessTokens.$pattern,
-            },
-            {
-                title: "Cloud Storages",
-                route: ROUTE.settings.cloudStorages.$route,
-                pattern: ROUTE.settings.cloudStorages.$pattern,
+                title: "Notification Targets",
+                route: ROUTE.settings.notificationTargets.$route,
+                pattern: ROUTE.settings.notificationTargets.$pattern,
             },
             {
                 title: "OAuth",
@@ -136,9 +107,19 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.settings.oauth.$pattern,
             },
             {
-                title: "Notification Targets",
-                route: ROUTE.settings.notificationTargets.$route,
-                pattern: ROUTE.settings.notificationTargets.$pattern,
+                title: "Registry Auth",
+                route: ROUTE.settings.registryAuth.$route,
+                pattern: ROUTE.settings.registryAuth.$pattern,
+            },
+            {
+                title: "SSH Keys",
+                route: ROUTE.settings.sshKeys.$route,
+                pattern: ROUTE.settings.sshKeys.$pattern,
+            },
+            {
+                title: "SSL Certificates",
+                route: ROUTE.settings.sslCertificates.$route,
+                pattern: ROUTE.settings.sslCertificates.$pattern,
             },
         ],
     },
@@ -161,10 +142,31 @@ const navMain: SidebarItem[] = [
             },
         ],
     },
+    {
+        title: "Cluster",
+        route: "#",
+        pattern: "#",
+        icon: Container,
+        moduleId: MODULE_IDS.Cluster,
+        items: [
+            {
+                title: "Nodes",
+                route: ROUTE.cluster.nodes.$route,
+                pattern: ROUTE.cluster.nodes.$pattern,
+            },
+        ],
+    },
+    {
+        title: "User Management",
+        route: ROUTE.userManagement.users.$route,
+        pattern: ROUTE.userManagement.users.$pattern,
+        icon: Users,
+        moduleId: MODULE_IDS.User,
+    },
 ];
 
 function hasReadableModuleAccess(item: SidebarItem, permissions: ReadonlyMap<ModuleId, ModulePermission>) {
-    return !item.moduleId || permissions.get(item.moduleId)?.actions.read === true;
+    return (item.alwaysVisible ?? false) || !item.moduleId || permissions.get(item.moduleId)?.actions.read === true;
 }
 
 function filterSidebarItems(items: readonly SidebarItem[], permissions: ReadonlyMap<ModuleId, ModulePermission>) {

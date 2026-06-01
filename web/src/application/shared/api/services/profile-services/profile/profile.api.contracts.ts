@@ -87,6 +87,7 @@ export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
     name: string;
     accessAction: {
         read: boolean;
+        execute: boolean;
         write: boolean;
         delete: boolean;
     };

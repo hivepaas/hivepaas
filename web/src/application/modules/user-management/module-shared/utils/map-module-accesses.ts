@@ -5,6 +5,7 @@ import { MODULES } from "@application/shared/constants";
 
 const DEFAULT_ACCESS = {
     read: false,
+    execute: false,
     write: false,
     delete: false,
 } as const;

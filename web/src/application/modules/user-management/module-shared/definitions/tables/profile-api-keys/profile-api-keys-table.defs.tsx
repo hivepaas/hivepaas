@@ -34,6 +34,14 @@ const columns: ColumnDef<ProfileApiKey>[] = [
                             Read
                         </Badge>
                     )}
+                    {accessAction.execute && (
+                        <Badge
+                            variant="default"
+                            className="bg-violet-500"
+                        >
+                            Execute
+                        </Badge>
+                    )}
                     {accessAction.write && (
                         <Badge
                             variant="default"

@@ -5,6 +5,7 @@ export const AccessSchema = z.object({
     name: z.string(),
     access: z.object({
         read: z.boolean(),
+        execute: z.boolean(),
         write: z.boolean(),
         delete: z.boolean(),
     }),

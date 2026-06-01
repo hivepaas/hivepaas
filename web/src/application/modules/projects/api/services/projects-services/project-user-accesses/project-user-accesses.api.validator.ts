@@ -8,6 +8,7 @@ import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const AccessActionsSchema = z.object({
     read: z.boolean(),
+    execute: z.boolean().optional().default(false),
     write: z.boolean(),
     delete: z.boolean(),
 });

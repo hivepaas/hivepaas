@@ -64,6 +64,7 @@ const ProjectUserAccessSchema = z.object({
     ...UserBaseSchema.shape,
     access: z.object({
         read: z.boolean(),
+        execute: z.boolean().optional().default(false),
         write: z.boolean(),
         delete: z.boolean(),
     }),

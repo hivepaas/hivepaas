@@ -19,6 +19,7 @@ export interface UserBase {
         name: string;
         access: {
             read: boolean;
+            execute: boolean;
             write: boolean;
             delete: boolean;
         };
@@ -29,6 +30,7 @@ export interface UserBase {
         name: string;
         access: {
             read: boolean;
+            execute: boolean;
             write: boolean;
             delete: boolean;
         };

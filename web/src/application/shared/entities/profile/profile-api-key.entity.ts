@@ -7,6 +7,7 @@ export interface ProfileApiKey {
     updateVer: number;
     accessAction: {
         read: boolean;
+        execute: boolean;
         write: boolean;
         delete: boolean;
     } | null;

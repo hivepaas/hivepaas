@@ -169,6 +169,7 @@ export function ProjectUserAccessesDialog() {
                     role: selectedUser.role,
                     access: {
                         read: true,
+                        execute: false,
                         write: false,
                         delete: false,
                     },
@@ -191,11 +192,12 @@ export function ProjectUserAccessesDialog() {
                     return user;
                 }
 
-                const shouldCheck = !(user.access.write && user.access.delete);
+                const shouldCheck = !(user.access.execute && user.access.write && user.access.delete);
                 return {
                     ...user,
                     access: {
                         ...user.access,
+                        execute: shouldCheck,
                         write: shouldCheck,
                         delete: shouldCheck,
                     },
@@ -205,7 +207,7 @@ export function ProjectUserAccessesDialog() {
         setHasChanges(true);
     }
 
-    function handleChangeAccess(userId: string, key: "write" | "delete", checked: boolean) {
+    function handleChangeAccess(userId: string, key: "execute" | "write" | "delete", checked: boolean) {
         if (!canUpdateProjectAccess) {
             return;
         }
@@ -319,6 +321,12 @@ export function ProjectUserAccessesDialog() {
                                                 label="Read"
                                             />
                                             <AccessCheckbox
+                                                id={`owner-${ownerAccess.id}-execute`}
+                                                checked={ownerAccess.access.execute}
+                                                disabled
+                                                label="Execute"
+                                            />
+                                            <AccessCheckbox
                                                 id={`owner-${ownerAccess.id}-write`}
                                                 checked={ownerAccess.access.write}
                                                 disabled
@@ -399,6 +407,15 @@ export function ProjectUserAccessesDialog() {
                                                         label="Read"
                                                     />
                                                     <AccessCheckbox
+                                                        id={`project-${user.id}-execute`}
+                                                        checked={user.access.execute}
+                                                        disabled={!canUpdateProjectAccess}
+                                                        label="Execute"
+                                                        onCheckedChange={checked => {
+                                                            handleChangeAccess(user.id, "execute", checked === true);
+                                                        }}
+                                                    />
+                                                    <AccessCheckbox
                                                         id={`project-${user.id}-write`}
                                                         checked={user.access.write}
                                                         disabled={!canUpdateProjectAccess}
@@ -427,8 +444,8 @@ export function ProjectUserAccessesDialog() {
                                                                     type="button"
                                                                     variant="link"
                                                                     className="size-7 p-0 text-foreground"
-                                                                    aria-label="Toggle write and delete access"
-                                                                    title="Toggle write and delete access"
+                                                                    aria-label="Toggle execute, write and delete access"
+                                                                    title="Toggle execute, write and delete access"
                                                                     disabled={isDenied || !canUpdateProjectAccess}
                                                                     onClick={() => {
                                                                         handleToggleAll(user.id);
@@ -496,6 +513,12 @@ export function ProjectUserAccessesDialog() {
                                                             checked={user.access.read}
                                                             disabled
                                                             label="Read"
+                                                        />
+                                                        <AccessCheckbox
+                                                            id={`module-${user.id}-execute`}
+                                                            checked={user.access.execute}
+                                                            disabled
+                                                            label="Execute"
                                                         />
                                                         <AccessCheckbox
                                                             id={`module-${user.id}-write`}

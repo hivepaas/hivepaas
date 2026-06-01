@@ -9,6 +9,7 @@ interface ModuleAccess {
     name: string;
     access: {
         read: boolean;
+        execute: boolean;
         write: boolean;
         delete: boolean;
     };
@@ -34,13 +35,14 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
         const module = watchedFields[index];
         if (!module) return;
 
-        const allChecked = module.access.read && module.access.write && module.access.delete;
+        const allChecked = module.access.read && module.access.execute && module.access.write && module.access.delete;
         const shouldCheckAll = !allChecked;
 
         update(index, {
             ...module,
             access: {
                 read: shouldCheckAll,
+                execute: shouldCheckAll,
                 write: shouldCheckAll,
                 delete: shouldCheckAll,
             },
@@ -65,6 +67,18 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                     className="text-sm"
                                 >
                                     Read
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    checked
+                                    disabled
+                                />
+                                <label
+                                    htmlFor="all-modules-execute"
+                                    className="text-sm"
+                                >
+                                    Execute
                                 </label>
                             </div>
                             <div className="flex items-center gap-2">
@@ -122,6 +136,26 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                         className="text-sm"
                                     >
                                         Read
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        checked={module.access.execute}
+                                        disabled={disabled}
+                                        onCheckedChange={checked => {
+                                            if (!disabled) {
+                                                update(index, {
+                                                    ...module,
+                                                    access: { ...module.access, execute: checked === true },
+                                                });
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor={`${module.id}-execute`}
+                                        className="text-sm"
+                                    >
+                                        Execute
                                     </label>
                                 </div>
                                 <div className="flex items-center gap-2">

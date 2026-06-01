@@ -1,4 +1,4 @@
-export type ModuleAction = "read" | "write" | "delete";
+export type ModuleAction = "read" | "execute" | "write" | "delete";
 
 export type ModuleId = string;
 
@@ -15,6 +15,7 @@ export interface UseConditionalModuleResult<T extends ModuleId> {
     module: ModulePermission<T> | null;
     actions: ModulePermission["actions"];
     canRead: boolean;
+    canExecute: boolean;
     canWrite: boolean;
     canDelete: boolean;
     hasAccess: (action: ModuleAction) => boolean;

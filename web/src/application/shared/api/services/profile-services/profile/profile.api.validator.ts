@@ -29,14 +29,16 @@ const GetProfile2FASetupSchema = z.object({
 const ProfileApiKeySchema = z.object({
     id: z.string(),
     name: z.string(),
-    keyID: z.string(),
+    keyId: z.string(),
     updateVer: z.number(),
     accessAction: z
         .object({
             read: z.boolean(),
+            execute: z.boolean().optional().default(false),
             write: z.boolean(),
             delete: z.boolean(),
         })
+        .nullable()
         .optional(),
     expireAt: z.coerce.date().optional(),
     status: z.nativeEnum(EProfileApiKeyStatus),
@@ -93,7 +95,7 @@ export class ProfileApiValidator {
             data: data.map(apiKey => ({
                 id: apiKey.id,
                 name: apiKey.name,
-                keyId: apiKey.keyID,
+                keyId: apiKey.keyId,
                 updateVer: apiKey.updateVer,
                 accessAction: apiKey.accessAction ?? null,
                 expireAt: apiKey.expireAt,

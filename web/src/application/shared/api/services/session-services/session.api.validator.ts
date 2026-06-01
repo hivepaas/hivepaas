@@ -16,6 +16,7 @@ const ModuleAccessSchema = AccessSchema.extend({
     access: z
         .object({
             read: z.boolean().nullable().optional(),
+            execute: z.boolean().nullable().optional(),
             write: z.boolean().nullable().optional(),
             delete: z.boolean().nullable().optional(),
         })
@@ -26,6 +27,7 @@ const ModuleAccessSchema = AccessSchema.extend({
     name: moduleAccess.name,
     access: {
         read: moduleAccess.access?.read === true,
+        execute: moduleAccess.access?.execute === true,
         write: moduleAccess.access?.write === true,
         delete: moduleAccess.access?.delete === true,
     },
@@ -36,6 +38,7 @@ const ProjectAccessSchema = AccessSchema.extend({
     access: z
         .object({
             read: z.boolean().nullable().optional(),
+            execute: z.boolean().nullable().optional(),
             write: z.boolean().nullable().optional(),
             delete: z.boolean().nullable().optional(),
         })
@@ -46,6 +49,7 @@ const ProjectAccessSchema = AccessSchema.extend({
     name: projectAccess.name,
     access: {
         read: projectAccess.access?.read === true,
+        execute: projectAccess.access?.execute === true,
         write: projectAccess.access?.write === true,
         delete: projectAccess.access?.delete === true,
     },
@@ -58,6 +62,7 @@ function mapModuleAccessesToModulePermissions(
         moduleId: moduleAccess.id,
         actions: {
             read: moduleAccess.access.read,
+            execute: moduleAccess.access.execute,
             write: moduleAccess.access.write,
             delete: moduleAccess.access.delete,
         },
@@ -71,6 +76,7 @@ function mapProjectAccessesToProjectPermissions(
         projectId: projectAccess.id,
         actions: {
             read: projectAccess.access.read,
+            execute: projectAccess.access.execute,
             write: projectAccess.access.write,
             delete: projectAccess.access.delete,
         },

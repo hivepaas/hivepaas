@@ -23,7 +23,7 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
     } = useForm<CreateProfileApiKeyFormSchemaInput, unknown, CreateProfileApiKeyFormSchemaOutput>({
         defaultValues: {
             name: "",
-            accessAction: { read: true, write: false, delete: false },
+            accessAction: { read: true, execute: false, write: false, delete: false },
             expireAt: undefined,
         },
         resolver: zodResolver(CreateProfileApiKeyFormSchema),
@@ -111,6 +111,24 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
                                     Read
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="execute"
+                                    checked={accessAction.value.execute}
+                                    onCheckedChange={checked => {
+                                        accessAction.onChange({
+                                            ...accessAction.value,
+                                            execute: checked === true,
+                                        });
+                                    }}
+                                />
+                                <label
+                                    htmlFor="execute"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Execute
                                 </label>
                             </div>
                             <div className="flex items-center gap-2">

@@ -225,7 +225,7 @@ export class ProfileApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/users/current/settings/api-keys/${id}/meta`, { status, expireAt, updateVer }),
+                this.client.v1.put(`/users/current/settings/api-keys/${id}/status`, { status, expireAt, updateVer }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" as const } })),
                 catchError(error => of(Err(parseApiError(error)))),

@@ -1,10 +1,7 @@
 import { format } from "date-fns";
 import { SystemBackupFileQueries } from "~/system-settings/data";
 import type { SystemBackupFile } from "~/system-settings/domain";
-import {
-    formatBackupFileSize,
-    getBackupFileStorageLabel,
-} from "~/system-settings/module-shared/definitions/tables/system-backup-files";
+import { getBackupFileStorageLabel } from "~/system-settings/module-shared/definitions/tables/system-backup-files";
 import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
@@ -30,12 +27,16 @@ function BackupFileInfoContent({ file }: { file: SystemBackupFile }) {
                 value={file.name}
             />
             <InfoRow
+                label="Key"
+                value={file.key}
+            />
+            <InfoRow
                 label="Mimetype"
                 value={file.mimetype}
             />
             <InfoRow
                 label="Size"
-                value={formatBackupFileSize(file.size)}
+                value={file.sizeStr}
             />
             <InfoRow
                 label="Storage"

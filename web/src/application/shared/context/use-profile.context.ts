@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 import { type Profile } from "@application/shared/entities";
 import { EUserRole } from "@application/shared/enums";
-import { useModulePermissionsStore } from "@application/shared/permissions/store";
+import { useModulePermissionsStore, useProjectPermissionsStore } from "@application/shared/permissions/store";
 
 import { useAuthContext } from "@application/authentication/context";
 
@@ -74,12 +74,15 @@ useProfileContext.subscribe((state, prevState) => {
 
     const auth = useAuthContext.getState();
     const modulePermissions = useModulePermissionsStore.getState();
+    const projectPermissions = useProjectPermissionsStore.getState();
 
     if (state.profile !== null) {
         if (state.profile.role === EUserRole.Admin) {
             modulePermissions.setFullModules();
+            projectPermissions.clearProjects();
         } else {
             modulePermissions.setModules(state.profile.modulePermissions);
+            projectPermissions.setProjects(state.profile.projectPermissions);
         }
 
         auth.clear();
@@ -88,4 +91,5 @@ useProfileContext.subscribe((state, prevState) => {
     }
 
     modulePermissions.clearModules();
+    projectPermissions.clearProjects();
 });

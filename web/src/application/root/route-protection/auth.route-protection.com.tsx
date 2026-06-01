@@ -6,7 +6,13 @@ import { useCookie } from "react-use";
 import { AppNavigate } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
-import { type ModuleId, type ModulePermission, useConditionalModuleCollections } from "@application/shared/permissions";
+import {
+    type ModuleId,
+    type ModulePermission,
+    type ProjectPermission,
+    useConditionalModuleCollections,
+    useConditionalProjectCollections,
+} from "@application/shared/permissions";
 
 import { AuthCommands } from "@application/authentication/data/commands";
 import { SsoRoute } from "@application/authentication/routes";
@@ -34,16 +40,27 @@ const DEFAULT_MODULE_ROUTES = [
     },
 ] as const;
 
-function getDefaultRoute(modulePermissions: ReadonlyMap<ModuleId, ModulePermission>) {
+function hasReadableProjectAccess(projectPermissions: readonly ProjectPermission[]) {
+    return projectPermissions.some(project => project.actions.read);
+}
+
+function getDefaultRoute(
+    modulePermissions: ReadonlyMap<ModuleId, ModulePermission>,
+    projectPermissions: readonly ProjectPermission[],
+) {
     return (
-        DEFAULT_MODULE_ROUTES.find(item => modulePermissions.get(item.moduleId)?.actions.read === true)?.route ??
-        ROUTE.currentUser.profile.$route
+        DEFAULT_MODULE_ROUTES.find(
+            item =>
+                modulePermissions.get(item.moduleId)?.actions.read === true ||
+                (item.moduleId === MODULE_IDS.Project && hasReadableProjectAccess(projectPermissions)),
+        )?.route ?? ROUTE.currentUser.profile.$route
     );
 }
 
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
     const { map: modulePermissionMap } = useConditionalModuleCollections();
+    const { list: projectPermissions } = useConditionalProjectCollections();
     const [token, , deleteToken] = useCookie("access_token");
 
     const { setProfile } = useProfileContext();
@@ -99,7 +116,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
         } else {
             return (
                 <AppNavigate.Basic
-                    to={getDefaultRoute(modulePermissionMap)}
+                    to={getDefaultRoute(modulePermissionMap, projectPermissions)}
                     replace
                 />
             );

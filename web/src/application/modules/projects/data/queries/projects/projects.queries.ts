@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useProjectsApi } from "~/projects/api";
 import {
@@ -7,6 +9,10 @@ import {
     type Projects_FindOneById_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
+
+import { useProfileContext } from "@application/shared/context";
+import { useProjectPermissionsStore } from "@application/shared/permissions/store";
+import { FULL_ACTIONS } from "@application/shared/permissions/utils";
 
 /**
  * Find many projects paginated query
@@ -37,12 +43,45 @@ type FindOneByIdOptions = Omit<UseQueryOptions<FindOneByIdRes>, "queryKey" | "qu
 
 function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {}) {
     const { queries } = useProjectsApi();
+    const profile = useProfileContext(state => state.profile);
+    const upsertProject = useProjectPermissionsStore(state => state.upsertProject);
+    const removeProject = useProjectPermissionsStore(state => state.removeProject);
 
-    return useQuery({
+    const query = useQuery({
         queryKey: [QK["projects.$.find-one-by-id"], request],
         queryFn: ({ signal }) => queries.findOneById(request, signal),
         ...options,
     });
+
+    useEffect(() => {
+        const project = query.data?.data;
+
+        if (!project || !profile) {
+            return;
+        }
+
+        if (project.owner.id === profile.id) {
+            upsertProject({
+                projectId: project.id,
+                actions: FULL_ACTIONS,
+            });
+            return;
+        }
+
+        const currentUserAccess = project.userAccesses.find(user => user.id === profile.id);
+
+        if (!currentUserAccess) {
+            removeProject(project.id);
+            return;
+        }
+
+        upsertProject({
+            projectId: project.id,
+            actions: currentUserAccess.access,
+        });
+    }, [profile, query.data?.data, removeProject, upsertProject]);
+
+    return query;
 }
 
 export const ProjectsQueries = Object.freeze({

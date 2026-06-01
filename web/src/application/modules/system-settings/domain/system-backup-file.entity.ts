@@ -1,20 +1,27 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
-import type { ESystemBackupFileStorageType } from "../module-shared/enums";
+import type { ESystemBackupFileStorageType, ESystemBackupFileType } from "../module-shared/enums";
 
 export interface SystemBackupFileStorage extends SettingsBaseEntity {
     status: ESettingStatus;
 }
 
-export interface SystemBackupFile extends SettingsBaseEntity {
-    type: typeof ESettingType.File;
+export interface SystemBackupFile {
+    id: string;
+    type: ESystemBackupFileType;
     status: ESettingStatus;
-    storageType: ESystemBackupFileStorageType;
-    storage?: SystemBackupFileStorage | null;
+    key: string;
+    name: string;
+    path: string;
     bucket?: string;
     mimetype: string;
     size: number;
-    path: string;
+    sizeStr: string;
+    storageType: ESystemBackupFileStorageType;
+    storage?: SystemBackupFileStorage | null;
+    updateVer: number;
+    createdAt: Date;
+    updatedAt: Date;
 }

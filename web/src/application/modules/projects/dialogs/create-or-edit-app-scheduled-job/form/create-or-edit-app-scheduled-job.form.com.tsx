@@ -416,7 +416,7 @@ export function CreateOrEditAppScheduledJobForm({
                                 sources={notificationSources}
                                 manageLink={notificationManageLink}
                                 readOnly={readOnly}
-                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                titleWidth={220}
                             />
                         </ContentBlock>
 

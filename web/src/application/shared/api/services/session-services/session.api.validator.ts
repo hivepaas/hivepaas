@@ -4,7 +4,7 @@ import { AccessSchema } from "~/user-management/module-shared/schemas";
 
 import { type Session_GetProfile_Res, type Session_Logout_Res } from "@application/shared/api/services";
 import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
-import type { ModulePermission } from "@application/shared/permissions";
+import type { ModulePermission, ProjectPermission } from "@application/shared/permissions";
 
 import { parseApiResponse } from "@infrastructure/api";
 
@@ -31,6 +31,26 @@ const ModuleAccessSchema = AccessSchema.extend({
     },
 }));
 
+const ProjectAccessSchema = AccessSchema.extend({
+    name: z.string().optional().default(""),
+    access: z
+        .object({
+            read: z.boolean().nullable().optional(),
+            write: z.boolean().nullable().optional(),
+            delete: z.boolean().nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+}).transform(projectAccess => ({
+    id: projectAccess.id,
+    name: projectAccess.name,
+    access: {
+        read: projectAccess.access?.read === true,
+        write: projectAccess.access?.write === true,
+        delete: projectAccess.access?.delete === true,
+    },
+}));
+
 function mapModuleAccessesToModulePermissions(
     moduleAccesses: readonly z.output<typeof ModuleAccessSchema>[],
 ): ModulePermission[] {
@@ -40,6 +60,19 @@ function mapModuleAccessesToModulePermissions(
             read: moduleAccess.access.read,
             write: moduleAccess.access.write,
             delete: moduleAccess.access.delete,
+        },
+    }));
+}
+
+function mapProjectAccessesToProjectPermissions(
+    projectAccesses: readonly z.output<typeof ProjectAccessSchema>[],
+): ProjectPermission[] {
+    return projectAccesses.map(projectAccess => ({
+        projectId: projectAccess.id,
+        actions: {
+            read: projectAccess.access.read,
+            write: projectAccess.access.write,
+            delete: projectAccess.access.delete,
         },
     }));
 }
@@ -62,7 +95,7 @@ const GetProfileSchema = z.object({
             createdAt: z.coerce.date(),
             status: z.nativeEnum(EUserStatus),
             mfaSecret: z.string().optional(),
-            projectAccesses: z.array(AccessSchema).nullable().optional(),
+            projectAccesses: z.array(ProjectAccessSchema).nullable().optional(),
             moduleAccesses: z.array(ModuleAccessSchema).nullable().optional(),
             mfaTotpActivated: z.boolean().optional(),
         }),
@@ -82,6 +115,7 @@ export class SessionApiValidator {
         });
 
         const moduleAccesses = user.moduleAccesses ?? [];
+        const projectAccesses = user.projectAccesses ?? [];
 
         return {
             data: {
@@ -100,9 +134,10 @@ export class SessionApiValidator {
                 nextStep,
                 position: user.position ?? "",
                 status: user.status,
-                projectAccesses: user.projectAccesses ?? [],
+                projectAccesses,
                 moduleAccesses,
                 modulePermissions: mapModuleAccessesToModulePermissions(moduleAccesses),
+                projectPermissions: mapProjectAccessesToProjectPermissions(projectAccesses),
                 mfaTotpActivated: user.mfaTotpActivated,
             },
         };

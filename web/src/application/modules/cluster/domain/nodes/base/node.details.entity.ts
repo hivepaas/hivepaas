@@ -13,7 +13,7 @@ export interface NodeDetails extends NodeBase {
     } | null;
     resources: {
         cpus: number;
-        memoryMB: number;
+        memory: string;
     } | null;
 
     engineDesc: {

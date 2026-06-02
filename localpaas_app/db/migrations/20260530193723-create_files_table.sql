@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS files
     type            VARCHAR(100) NOT NULL,
     key             VARCHAR(100) NULL,
     status          VARCHAR NOT NULL CONSTRAINT chk_status CHECK
-                        (status IN ('active','pending','disabled','expired')) DEFAULT 'active',
+                        (status IN ('active','pending','disabled','deleting')) DEFAULT 'active',
     name            VARCHAR(100) NOT NULL,
     path            VARCHAR(100) NOT NULL,
     size            BIGINT NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS files
     storage_type    VARCHAR(100) NOT NULL,
     storage_id      VARCHAR(100) NULL,
     bucket          VARCHAR(200) NULL,
-    deleted         BOOL NULL,
+    deleted         BOOL NOT NULL DEFAULT FALSE,
     update_ver      INT4 NOT NULL DEFAULT 1,
 
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

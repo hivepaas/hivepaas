@@ -30,7 +30,7 @@ func (h *Handler) GetAccessibleByProjects(ctx *gin.Context) {
 	}
 
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
+		ResourceModule: base.ResourceModuleSettings,
 		Action:         base.ActionTypeRead,
 	})
 	if err != nil {
@@ -74,7 +74,7 @@ func (h *Handler) UpdateAccessibleByProjects(ctx *gin.Context) {
 	}
 
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
+		ResourceModule: base.ResourceModuleSettings,
 		Action:         base.ActionTypeWrite,
 	})
 	if err != nil {

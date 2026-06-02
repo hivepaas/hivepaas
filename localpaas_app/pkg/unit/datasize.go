@@ -108,23 +108,28 @@ func (b DataSize) HR() string {
 }
 
 func (b DataSize) HumanReadable() string {
-	switch {
-	case b == 0:
-		return "0"
-	case b > EB:
-		return fmt.Sprintf("%.1f EB", b.EBytes())
-	case b > PB:
-		return fmt.Sprintf("%.1f PB", b.PBytes())
-	case b > TB:
-		return fmt.Sprintf("%.1f TB", b.TBytes())
-	case b > GB:
-		return fmt.Sprintf("%.1f GB", b.GBytes())
-	case b > MB:
-		return fmt.Sprintf("%.1f MB", b.MBytes())
-	case b > KB:
-		return fmt.Sprintf("%.1f KB", b.KBytes())
-	default:
-		return fmt.Sprintf("%d B", b)
+	if b >= GB {
+		switch {
+		case b >= EB:
+			return fmt.Sprintf("%.1f EB", b.EBytes())
+		case b >= PB:
+			return fmt.Sprintf("%.1f PB", b.PBytes())
+		case b >= TB:
+			return fmt.Sprintf("%.1f TB", b.TBytes())
+		default:
+			return fmt.Sprintf("%.1f GB", b.GBytes())
+		}
+	} else {
+		switch {
+		case b >= MB:
+			return fmt.Sprintf("%.1f MB", b.MBytes())
+		case b >= KB:
+			return fmt.Sprintf("%.1f KB", b.KBytes())
+		case b >= B:
+			return fmt.Sprintf("%d B", b)
+		default:
+			return "0"
+		}
 	}
 }
 

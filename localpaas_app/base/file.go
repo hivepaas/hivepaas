@@ -11,10 +11,11 @@ const (
 	FileStatusActive   FileStatus = "active"
 	FileStatusPending  FileStatus = "pending"
 	FileStatusDisabled FileStatus = "disabled"
+	FileStatusDeleting FileStatus = "deleting"
 )
 
 var (
-	AllFileStatuses = []FileStatus{FileStatusActive, FileStatusPending, FileStatusDisabled}
+	AllFileStatuses = []FileStatus{FileStatusActive, FileStatusPending, FileStatusDisabled, FileStatusDeleting}
 )
 
 type FileType string

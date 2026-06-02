@@ -24,7 +24,7 @@ type File struct {
 	Path        string               `json:"path"`
 	Size        int64                `json:"size"`
 	Mimetype    string               `bun:",nullzero" json:"mimetype"`
-	Deleted     bool                 `bun:",nullzero" json:"deleted,omitempty"`
+	Deleted     bool                 `json:"deleted,omitempty"`
 	StorageType base.FileStorageType `json:"storageType"`
 	StorageID   string               `bun:",nullzero" json:"storageId,omitempty"`
 	Bucket      string               `bun:",nullzero" json:"bucket,omitempty"`

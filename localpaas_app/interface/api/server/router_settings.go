@@ -201,5 +201,8 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		imageBuildSettingsGroup.PUT("", settingHandler.UpdateImageBuildSettings)
 		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
 		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
+		// Repo cache
+		imageBuildSettingsGroup.GET("/repo-cache", settingHandler.GetRepoCacheInfo)
+		imageBuildSettingsGroup.POST("/repo-cache/clear", settingHandler.ClearRepoCache)
 	}
 }

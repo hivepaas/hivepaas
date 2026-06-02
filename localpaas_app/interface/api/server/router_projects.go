@@ -212,6 +212,9 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		imageBuildSettingsGroup.PUT("", projectSettingsHandler.UpdateImageBuildSettings)
 		imageBuildSettingsGroup.PUT("/status", projectSettingsHandler.UpdateImageBuildSettingsStatus)
 		imageBuildSettingsGroup.DELETE("", projectSettingsHandler.DeleteImageBuildSettings)
+		// Repo cache
+		imageBuildSettingsGroup.GET("/repo-cache", projectSettingsHandler.GetRepoCacheInfo)
+		imageBuildSettingsGroup.POST("/repo-cache/clear", projectSettingsHandler.ClearRepoCache)
 	}
 
 	{ // Docker network group

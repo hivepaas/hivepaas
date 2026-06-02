@@ -1,11 +1,14 @@
 package settinghandler
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	_ "github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/permission"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
 
 // GetImageBuildSettings Gets image build settings
@@ -64,4 +67,77 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // @Router  /settings/image-build-settings [delete]
 func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeGlobal)
+}
+
+// GetRepoCacheInfo Gets repo cache info
+// @Summary Gets repo cache info
+// @Description Gets repo cache info
+// @Tags    settings
+// @Produce json
+// @Id      getSettingRepoCacheInfo
+// @Success 200 {object} imagebuildsettingsdto.GetRepoCacheInfoResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /settings/image-build-settings/repo-cache [get]
+func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSettings,
+		Action:         base.ActionTypeRead,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := imagebuildsettingsdto.NewGetRepoCacheInfoReq()
+	req.Scope = base.NewObjectScopeGlobal()
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.ImageBuildUC.GetRepoCacheInfo(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// ClearRepoCache Clears repo cache
+// @Summary Clears repo cache
+// @Description Clears repo cache
+// @Tags    settings
+// @Produce json
+// @Id      clearSettingRepoCache
+// @Param   body body imagebuildsettingsdto.ClearRepoCacheReq true "request data"
+// @Success 200 {object} imagebuildsettingsdto.ClearRepoCacheResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /settings/image-build-settings/repo-cache/clear [post]
+func (h *Handler) ClearRepoCache(ctx *gin.Context) {
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSettings,
+		Action:         base.ActionTypeExecute,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := imagebuildsettingsdto.NewClearRepoCacheReq()
+	req.Scope = base.NewObjectScopeGlobal()
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.ImageBuildUC.ClearRepoCache(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
 }

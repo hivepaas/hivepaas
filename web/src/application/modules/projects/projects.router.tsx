@@ -1,5 +1,5 @@
 import { ROUTE } from "@/application/shared/constants";
-import { Outlet, type RouteObject } from "react-router";
+import { Navigate, Outlet, type RouteObject, useParams } from "react-router";
 import { ConditionalProjectsAccess } from "~/projects/routes/conditional-projects-access.com";
 import { ProjectRouteRedirect } from "~/projects/routes/single-project/project-route-redirect.com";
 
@@ -22,6 +22,22 @@ const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     sshKeys: "projects/:id/configuration/ssh-keys",
     sslCertificates: "projects/:id/configuration/ssl-certificates",
 } as const;
+
+// eslint-disable-next-line react-refresh/only-export-components
+function SingleAppRouteRedirect() {
+    const { id, appId } = useParams<{ id: string; appId: string }>();
+
+    return (
+        <Navigate
+            to={
+                id && appId
+                    ? ROUTE.projects.single.apps.single.configuration.general.$route(id, appId)
+                    : ROUTE.projects.list.$route
+            }
+            replace
+        />
+    );
+}
 
 export const projectsRouter: RouteObject = {
     lazy: async () => {
@@ -369,13 +385,7 @@ export const projectsRouter: RouteObject = {
                  */
                 {
                     path: ROUTE.projects.single.apps.single.$pattern,
-                    lazy: async () => {
-                        const { SingleAppRoute } = await getLazyComponents();
-
-                        return {
-                            Component: SingleAppRoute,
-                        };
-                    },
+                    element: <SingleAppRouteRedirect />,
                 },
                 /**
                  * Single App – Deployments

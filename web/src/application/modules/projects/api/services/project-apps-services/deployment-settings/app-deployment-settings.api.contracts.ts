@@ -26,6 +26,10 @@ export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
             repoUrl: string;
             repoRef: string;
             commitHash: string;
+            repoOptions: {
+                gitSubmodulesEnabled: boolean;
+                gitLfsEnabled: boolean;
+            };
             credentials: {
                 id: string;
             };

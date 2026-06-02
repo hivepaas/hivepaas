@@ -5,10 +5,13 @@ import type {
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
     ProjectApps_DeleteOne_Res,
+    ProjectApps_Deploy_Req,
+    ProjectApps_Deploy_Res,
+    ProjectApps_Restart_Req,
+    ProjectApps_Restart_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
 } from "~/projects/api/services";
-
 import { QK } from "~/projects/data/constants";
 
 /**
@@ -96,8 +99,70 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
+/**
+ * Deploy a project app command
+ */
+type DeployReq = ProjectApps_Deploy_Req["data"];
+type DeployRes = ProjectApps_Deploy_Res;
+type DeployOptions = Omit<UseMutationOptions<DeployRes, Error, DeployReq>, "mutationFn">;
+
+function useDeploy({ onSuccess, ...options }: DeployOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deploy,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    QK["projects.apps.$.find-one-by-id"],
+                    { projectID: request.projectID, appID: request.appID },
+                ],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Restart a project app command
+ */
+type RestartReq = ProjectApps_Restart_Req["data"];
+type RestartRes = ProjectApps_Restart_Res;
+type RestartOptions = Omit<UseMutationOptions<RestartRes, Error, RestartReq>, "mutationFn">;
+
+function useRestart({ onSuccess, ...options }: RestartOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.restart,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    QK["projects.apps.$.find-one-by-id"],
+                    { projectID: request.projectID, appID: request.appID },
+                ],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
     useDeleteOne,
     useUpdateOne,
+    useDeploy,
+    useRestart,
 });

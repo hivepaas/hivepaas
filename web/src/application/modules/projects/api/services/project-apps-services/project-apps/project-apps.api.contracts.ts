@@ -70,3 +70,27 @@ export type ProjectApps_UpdateOne_Req = ApiRequestBase<
 export type ProjectApps_UpdateOne_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Deploy project app
+ */
+export type ProjectApps_Deploy_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+}>;
+
+export type ProjectApps_Deploy_Res = ApiResponseBase<{
+    deploymentId: string;
+}>;
+
+/**
+ * Restart project app
+ */
+export type ProjectApps_Restart_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+}>;
+
+export type ProjectApps_Restart_Res = ApiResponseBase<{
+    type: "success";
+}>;

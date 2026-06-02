@@ -1,5 +1,6 @@
-import { FieldError, Input } from "@components/ui";
+import { Checkbox, FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { EDeploymentRepoOption } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -10,6 +11,9 @@ import {
 } from "../schemas";
 
 export function GitSourceFields({ readOnly = false }: Props) {
+    const gitSubmodulesOptionId = "repo-options-git-submodules";
+    const gitLfsOptionId = "repo-options-git-lfs";
+
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -25,6 +29,18 @@ export function GitSourceFields({ readOnly = false }: Props) {
         field: commitHash,
         fieldState: { invalid: isCommitHashInvalid, error: commitHashError },
     } = useController({ control, name: "repoSource.commitHash" });
+
+    const { field: gitSubmodulesEnabled } = useController({
+        control,
+        name: `repoSource.repoOptions.${EDeploymentRepoOption.GitSubmodulesEnabled}`,
+        defaultValue: true,
+    });
+
+    const { field: gitLfsEnabled } = useController({
+        control,
+        name: `repoSource.repoOptions.${EDeploymentRepoOption.GitLfsEnabled}`,
+        defaultValue: true,
+    });
 
     const {
         field: dockerfilePath,
@@ -73,6 +89,43 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     disabled={readOnly}
                 />
                 <FieldError errors={[commitHashError]} />
+            </InfoBlock>
+
+            <InfoBlock title="Repository Options">
+                <div className="flex flex-wrap items-center gap-8">
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id={gitSubmodulesOptionId}
+                            checked={gitSubmodulesEnabled.value}
+                            onCheckedChange={checked => {
+                                gitSubmodulesEnabled.onChange(checked === true);
+                            }}
+                            disabled={readOnly}
+                        />
+                        <label
+                            htmlFor={gitSubmodulesOptionId}
+                            className="text-sm"
+                        >
+                            Git Submodules
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id={gitLfsOptionId}
+                            checked={gitLfsEnabled.value}
+                            onCheckedChange={checked => {
+                                gitLfsEnabled.onChange(checked === true);
+                            }}
+                            disabled={readOnly}
+                        />
+                        <label
+                            htmlFor={gitLfsOptionId}
+                            className="text-sm"
+                        >
+                            Git LFS
+                        </label>
+                    </div>
+                </div>
             </InfoBlock>
 
             <InfoBlock title="Dockerfile Path">

@@ -2,6 +2,7 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ProjectApps_CreateOne_Res,
+    ProjectApps_Deploy_Res,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Res,
 } from "~/projects/api/services";
@@ -62,6 +63,16 @@ const CreateOneSchema = z.object({
 });
 
 /**
+ * Deploy project app API response schema
+ */
+const DeploySchema = z.object({
+    data: z.object({
+        deploymentId: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+/**
  * Project app stats schema
  */
 const ProjectAppStatsSchema = z.object({
@@ -114,6 +125,16 @@ export class ProjectAppsApiValidator {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
+        });
+    };
+
+    /**
+     * Validate and transform deploy project app API response
+     */
+    deploy = (response: AxiosResponse): ProjectApps_Deploy_Res => {
+        return parseApiResponse({
+            response,
+            schema: DeploySchema,
         });
     };
 

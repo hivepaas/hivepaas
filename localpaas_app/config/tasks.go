@@ -8,7 +8,7 @@ type Tasks struct {
 }
 
 type TaskQueue struct {
-	Concurrency        int           `toml:"concurrency" env:"LP_TASKS_QUEUE_CONCURRENCY" default:"5"`
+	Concurrency        int           `toml:"concurrency" env:"LP_TASKS_QUEUE_CONCURRENCY" default:"10"`
 	TaskCheckInterval  time.Duration `toml:"task_check_interval" env:"LP_TASKS_QUEUE_TASK_CHECK_INTERVAL" default:"10m"`
 	TaskCreateInterval time.Duration `toml:"task_create_interval" env:"LP_TASKS_QUEUE_TASK_CREATE_INTERVAL" default:"10m"`
 }

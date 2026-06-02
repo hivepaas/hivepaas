@@ -33,8 +33,9 @@ type GetDomainSettingsResp struct {
 
 type DomainSettingsResp struct {
 	*settings.BaseSettingResp
-	RootDomain   string                  `json:"rootDomain"`
-	CertSettings *DomainCertSettingsResp `json:"certSettings"`
+	RootDomain     string                  `json:"rootDomain"`
+	AllowedDomains []string                `json:"allowedDomains"`
+	CertSettings   *DomainCertSettingsResp `json:"certSettings"`
 }
 
 type DomainCertSettingsResp struct {

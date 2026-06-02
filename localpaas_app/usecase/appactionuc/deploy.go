@@ -28,13 +28,13 @@ func (uc *UC) DeployApp(
 	var persistingData *persistingAppData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data = &deployAppData{}
-		err := uc.loadAppActionSettingsForUpdate(ctx, db, req, data)
+		err := uc.loadAppDeploymentSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
 		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppActionSettings(auth, req, data, persistingData)
+		err = uc.prepareUpdatingAppDeploymentSettings(auth, req, data, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -49,7 +49,7 @@ func (uc *UC) DeployApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = uc.postTransactionAppActionSettings(ctx, persistingData)
+	err = uc.postTransactionAppDeploymentSettings(ctx, persistingData)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -70,7 +70,7 @@ type persistingAppData struct {
 	appservice.PersistingAppData
 }
 
-func (uc *UC) loadAppActionSettingsForUpdate(
+func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *appactiondto.DeployAppReq,
@@ -92,7 +92,7 @@ func (uc *UC) loadAppActionSettingsForUpdate(
 	data.DeploymentSettings, _ = gofn.First(app.Settings)
 
 	if data.DeploymentSettings == nil || !data.DeploymentSettings.IsActive() {
-		return apperrors.NewNotFound("AppActionSettings").
+		return apperrors.NewNotFound("AppDeploymentSettings").
 			WithMsgLog("app deployment settings not found")
 	}
 
@@ -119,7 +119,7 @@ func (uc *UC) loadAppActionSettingsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingAppActionSettings(
+func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	auth *basedto.Auth,
 	req *appactiondto.DeployAppReq,
 	data *deployAppData,
@@ -171,7 +171,7 @@ func (uc *UC) persistAppData(
 	return nil
 }
 
-func (uc *UC) postTransactionAppActionSettings(
+func (uc *UC) postTransactionAppDeploymentSettings(
 	ctx context.Context,
 	persistingData *persistingAppData,
 ) error {

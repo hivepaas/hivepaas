@@ -22,8 +22,9 @@ func (s *domainSettingsParser) New() SettingData {
 }
 
 type DomainSettings struct {
-	RootDomain   string              `json:"rootDomain"`
-	CertSettings *DomainCertSettings `json:"certSettings"`
+	RootDomain     string              `json:"rootDomain"`
+	AllowedDomains []string            `json:"allowedDomains"`
+	CertSettings   *DomainCertSettings `json:"certSettings"`
 }
 
 type DomainCertSettings struct {

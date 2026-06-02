@@ -17,14 +17,16 @@ type UpdateDomainSettingsReq struct {
 }
 
 type DomainSettingsBaseReq struct {
-	RootDomain   string                 `json:"rootDomain"`
-	CertSettings *DomainCertSettingsReq `json:"certSettings"`
+	RootDomain     string                 `json:"rootDomain"`
+	AllowedDomains []string               `json:"allowedDomains"`
+	CertSettings   *DomainCertSettingsReq `json:"certSettings"`
 }
 
 func (req *DomainSettingsBaseReq) ToEntity() *entity.DomainSettings {
 	return &entity.DomainSettings{
-		RootDomain:   req.RootDomain,
-		CertSettings: req.CertSettings.ToEntity(),
+		RootDomain:     req.RootDomain,
+		AllowedDomains: req.AllowedDomains,
+		CertSettings:   req.CertSettings.ToEntity(),
 	}
 }
 

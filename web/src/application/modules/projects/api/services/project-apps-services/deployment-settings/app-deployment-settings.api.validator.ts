@@ -42,6 +42,13 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
         repoUrl: z.string(),
         repoRef: z.string(),
         commitHash: z.string(),
+        repoOptions: z
+            .object({
+                gitSubmodulesEnabled: z.boolean().default(true),
+                gitLfsEnabled: z.boolean().default(true),
+            })
+            .nullish()
+            .transform(val => val ?? { gitSubmodulesEnabled: true, gitLfsEnabled: true }),
         credentials: SettingsBaseEntitySchema,
         dockerfilePath: z.string(),
         imageName: z.string(),

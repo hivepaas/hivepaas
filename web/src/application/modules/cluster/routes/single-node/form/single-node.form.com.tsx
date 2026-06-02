@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
 import { type NodeDetails } from "~/cluster/domain";
 import { ENodeAvailability, ENodeRole } from "~/cluster/module-shared/enums";
+import { formatNodeMemory } from "~/cluster/module-shared/utils";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
@@ -93,7 +94,9 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         {/* Resources */}
                         <InfoBlock title="Resources">
                             <span className="text-sm font-normal">
-                                {defaultValues.resources?.cpus} CPU, {defaultValues.resources?.memoryMB} MB RAM
+                                {defaultValues.resources
+                                    ? `${defaultValues.resources.cpus} CPU, ${formatNodeMemory(defaultValues.resources.memory)} RAM`
+                                    : "-"}
                             </span>
                         </InfoBlock>
 

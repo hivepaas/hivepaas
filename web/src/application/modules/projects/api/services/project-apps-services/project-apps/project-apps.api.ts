@@ -6,10 +6,14 @@ import type {
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
     ProjectApps_DeleteOne_Res,
+    ProjectApps_Deploy_Req,
+    ProjectApps_Deploy_Res,
     ProjectApps_FindManyPaginated_Req,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Req,
     ProjectApps_FindOneById_Res,
+    ProjectApps_Restart_Req,
+    ProjectApps_Restart_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
 } from "~/projects/api/services";
@@ -158,6 +162,35 @@ export class ProjectAppsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Deploy a project app using existing deployment settings
+     */
+    async deploy(request: ProjectApps_Deploy_Req): Promise<Result<ProjectApps_Deploy_Res, Error>> {
+        const { projectID, appID } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/deploy`, {})).pipe(
+                map(this.validator.deploy),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Restart a project app
+     */
+    async restart(request: ProjectApps_Restart_Req): Promise<Result<ProjectApps_Restart_Res, Error>> {
+        const { projectID, appID } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/restart`, {})).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

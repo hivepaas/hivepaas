@@ -54,6 +54,10 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                 repoUrl: data.repoSource.repoUrl,
                 repoRef: data.repoSource.repoRef,
                 commitHash: data.repoSource.commitHash,
+                repoOptions: {
+                    gitSubmodulesEnabled: data.repoSource.repoOptions.gitSubmodulesEnabled,
+                    gitLfsEnabled: data.repoSource.repoOptions.gitLfsEnabled,
+                },
                 credentials: { id: data.repoSource.credentials.id, name: data.repoSource.credentials.name },
                 dockerfilePath: data.repoSource.dockerfilePath,
                 imageName: data.repoSource.imageName,

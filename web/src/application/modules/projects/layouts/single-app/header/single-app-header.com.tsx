@@ -1,7 +1,10 @@
 import { memo } from "react";
 
+import { Button } from "@components/ui";
+import { Power, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
+import { ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
 import { BackButton, TabNavigation } from "@application/shared/components";
@@ -19,6 +22,16 @@ function View({ projectId, appId }: Props) {
         isLoading: isLoadingApp,
         error: errorApp,
     } = ProjectAppsQueries.useFindOneById({ projectID: projectId, appID: appId });
+    const { mutate: deploy, isPending: isDeploying } = ProjectAppsCommands.useDeploy({
+        onSuccess: () => {
+            toast.success("Re-deploy started");
+        },
+    });
+    const { mutate: restart, isPending: isRestarting } = ProjectAppsCommands.useRestart({
+        onSuccess: () => {
+            toast.success("Restart started");
+        },
+    });
 
     if (isLoading || isLoadingApp) {
         return <SingleAppHeaderSkeleton />;
@@ -81,9 +94,38 @@ function View({ projectId, appId }: Props) {
 
             <div className="border-b border-border" />
 
-            <div className="flex gap-2">
-                <TabNavigation links={links} />
-                <AppAccessLinksDropdown accessLinks={appData.accessLinks} />
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <TabNavigation links={links} />
+                    <AppAccessLinksDropdown accessLinks={appData.accessLinks} />
+                </div>
+
+                <div className="ml-auto flex items-center gap-2 pb-1">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        isLoading={isDeploying}
+                        disabled={isRestarting}
+                        onClick={() => {
+                            deploy({ projectID: projectId, appID: appId });
+                        }}
+                    >
+                        <RefreshCw className="size-4 text-orange-600" />
+                        Re-deploy
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        isLoading={isRestarting}
+                        disabled={isDeploying}
+                        onClick={() => {
+                            restart({ projectID: projectId, appID: appId });
+                        }}
+                    >
+                        <Power className="size-4 text-orange-600" />
+                        Restart
+                    </Button>
+                </div>
             </div>
         </div>
     );

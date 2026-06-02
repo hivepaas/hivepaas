@@ -9,12 +9,18 @@ export type RepoMethod = BaseDeploymentSettings & {
         repoUrl: string;
         repoRef: string;
         commitHash: string;
+        repoOptions: DeploymentRepoOptions;
         credentials: SettingsBaseEntity;
         dockerfilePath: string;
         imageName: string;
         imageTags: string;
         pushToRegistry: SettingsBaseEntity;
     };
+};
+
+export type DeploymentRepoOptions = {
+    gitSubmodulesEnabled: boolean;
+    gitLfsEnabled: boolean;
 };
 
 export type ImageMethod = BaseDeploymentSettings & {

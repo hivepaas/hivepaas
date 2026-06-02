@@ -29,6 +29,10 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
         repoUrl: z.string().min(1, "Repository URL is required"),
         repoRef: z.string().min(1, "Branch is required"),
         commitHash: z.string().optional(),
+        repoOptions: z.object({
+            gitSubmodulesEnabled: z.boolean(),
+            gitLfsEnabled: z.boolean(),
+        }),
         credentials: SettingsRefSchema.optional(),
         dockerfilePath: z.string().optional(),
         imageName: z.string().optional(),

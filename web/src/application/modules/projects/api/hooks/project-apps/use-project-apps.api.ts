@@ -5,8 +5,10 @@ import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
     ProjectApps_CreateOne_Req,
     ProjectApps_DeleteOne_Req,
+    ProjectApps_Deploy_Req,
     ProjectApps_FindManyPaginated_Req,
     ProjectApps_FindOneById_Req,
+    ProjectApps_Restart_Req,
     ProjectApps_UpdateOne_Req,
 } from "~/projects/api/services";
 
@@ -76,11 +78,9 @@ function createHook() {
                  * Create a project app
                  */
                 createOne: async (data: ProjectApps_CreateOne_Req["data"]) => {
-                    const result = await api.projects.apps.$.createOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.apps.$.createOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
@@ -98,11 +98,9 @@ function createHook() {
                  * Delete a project app
                  */
                 deleteOne: async (data: ProjectApps_DeleteOne_Req["data"]) => {
-                    const result = await api.projects.apps.$.deleteOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.apps.$.deleteOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
@@ -120,17 +118,55 @@ function createHook() {
                  * Update a project app
                  */
                 updateOne: async (data: ProjectApps_UpdateOne_Req["data"]) => {
-                    const result = await api.projects.apps.$.updateOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.apps.$.updateOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({
                                 message: "Failed to update project app",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Deploy a project app using existing deployment settings
+                 */
+                deploy: async (data: ProjectApps_Deploy_Req["data"]) => {
+                    const result = await api.projects.apps.$.deploy({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to re-deploy project app",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Restart a project app
+                 */
+                restart: async (data: ProjectApps_Restart_Req["data"]) => {
+                    const result = await api.projects.apps.$.restart({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to restart project app",
                                 error,
                             });
 

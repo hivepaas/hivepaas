@@ -6,10 +6,10 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useController, useFormContext } from "react-hook-form";
 import { Link } from "react-router";
+import { SSHKeyQueries } from "~/settings/data";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
-import { SshKeysPublicQueries } from "@application/shared/data/queries";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,12 @@ function View({ readOnly = false }: Props) {
     const { control } = useFormContext<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>();
     const [searchQuery, setSearchQuery] = useState("");
 
-    const { data: { data: sshKeys } = DEFAULT_PAGINATED_DATA, isFetching } = SshKeysPublicQueries.useFindManyPaginated({
+    const {
+        data: { data: sshKeys } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        isRefetching,
+        refetch,
+    } = SSHKeyQueries.useFindManyPaginated({
         search: searchQuery,
     });
 
@@ -148,6 +153,8 @@ function View({ readOnly = false }: Props) {
                             valueKey="id"
                             aria-invalid={isSshKeyInvalid}
                             loading={isFetching}
+                            onRefresh={() => void refetch()}
+                            isRefreshing={isRefetching}
                             disabled={readOnly}
                         />
                         <FieldError errors={[sshKeyError]} />
@@ -155,10 +162,12 @@ function View({ readOnly = false }: Props) {
                             <p>
                                 Need to add a new SSH key?{" "}
                                 <Link
-                                    to="#"
+                                    to={ROUTE.settings.sshKeys.$route}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="text-blue-500"
                                 >
-                                    Click here
+                                    Manage SSH key settings
                                 </Link>
                             </p>
                         </div>

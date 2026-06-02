@@ -8,9 +8,4 @@ export const QK = {
      * Profile API Keys
      */
     "profile-api-keys.$.find-many-paginated": "profile-api-keys.$.find-many-paginated",
-
-    /*
-     * SSH Keys
-     */
-    "ssh-keys.$.find-many-paginated": "ssh-keys.$.find-many-paginated",
 } as const;

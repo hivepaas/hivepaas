@@ -46,11 +46,27 @@ function View({ projectId, appId }: Props) {
     const { data: project } = data;
     const { data: appData } = app;
     const appEnv = project.envs.find(env => env.name === appData.env);
+    const configurationActivePathPrefixes = [
+        ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, appId),
+    ];
 
     const links = [
         {
             route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId),
             label: "Configuration",
+            activePathPrefixes: configurationActivePathPrefixes,
         },
         {
             route: ROUTE.projects.single.apps.single.deployments.$route(projectId, appId),

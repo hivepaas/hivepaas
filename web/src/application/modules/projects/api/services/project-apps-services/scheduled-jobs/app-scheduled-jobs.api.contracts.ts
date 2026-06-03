@@ -15,9 +15,9 @@ export type AppScheduledJobs_RefObject_Payload = {
 };
 
 export type AppScheduledJobs_Schedule_Payload = {
-    cronExpr: string;
-    interval: string;
-    initialTime: Date | null;
+    cronExpr?: string;
+    interval?: string;
+    initialTime?: Date;
 };
 
 export type AppScheduledJobs_EnvVar_Payload = {
@@ -39,11 +39,11 @@ export type AppScheduledJobs_CommandArgGroup_Payload = {
 };
 
 export type AppScheduledJobs_Command_Payload = {
-    runInShell: string;
+    runInShell?: string;
     command: string;
-    workingDir: string;
-    envVars: AppScheduledJobs_EnvVar_Payload[];
-    argGroups: AppScheduledJobs_CommandArgGroup_Payload[];
+    workingDir?: string;
+    envVars?: AppScheduledJobs_EnvVar_Payload[];
+    argGroups?: AppScheduledJobs_CommandArgGroup_Payload[];
 };
 
 export type AppScheduledJobs_Notification_Payload = {
@@ -61,9 +61,9 @@ export type AppScheduledJobs_Upsert_Payload = {
     schedule: AppScheduledJobs_Schedule_Payload;
     app: AppScheduledJobs_RefObject_Payload;
     priority: EAppScheduledJobTaskPriority;
-    maxRetry: number;
-    retryDelay: string;
-    timeout: string;
+    maxRetry?: number;
+    retryDelay?: string;
+    timeout?: string;
     controlDisabled: boolean;
     command: AppScheduledJobs_Command_Payload;
     notification: AppScheduledJobs_Notification_Payload;

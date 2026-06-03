@@ -538,7 +538,7 @@ export function ProjectUserAccessesDialog() {
                                                             rel="noreferrer"
                                                             className="text-sm font-medium text-primary hover:underline"
                                                         >
-                                                            Go to Settings
+                                                            Settings
                                                         </a>
                                                     </div>
                                                 </div>

@@ -25,6 +25,7 @@ const ResourceLimitsSchema = z.object({
 const ResourceMemorySchema = z.object({
     swap: z.string().optional(),
     swappiness: z.number().nullish(),
+    shmSize: z.string().optional(),
 });
 
 // BE Ulimit struct has no json tags, so fields are PascalCase
@@ -83,6 +84,7 @@ export class AppResourceSettingsApiValidator {
                     ? {
                           swap: data.memory.swap,
                           swappiness: data.memory.swappiness ?? undefined,
+                          shmSize: data.memory.shmSize,
                       }
                     : null,
                 ulimits:

@@ -14,36 +14,53 @@ import { CreateOrEditAppScheduledJobForm } from "../form";
 import { useCreateOrEditAppScheduledJobDialogState } from "../hooks";
 import type { CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 
+function hasText(value: string): boolean {
+    return value.trim().length > 0;
+}
+
 function mapFormValuesToPayload(
     values: CreateOrEditAppScheduledJobFormOutput,
     appId: string,
 ): AppScheduledJobs_Upsert_Payload {
+    const scheduleInterval =
+        values.scheduleMode === EAppScheduledJobScheduleMode.Interval && hasText(values.scheduleInterval)
+            ? values.scheduleInterval
+            : undefined;
+    const scheduleCronExpr =
+        values.scheduleMode === EAppScheduledJobScheduleMode.Cron && hasText(values.scheduleCronExpr)
+            ? values.scheduleCronExpr
+            : undefined;
+
     return {
         availableInProjects: false,
         default: false,
         name: values.name,
         jobType: EAppScheduledJobType.ContainerCommand,
         schedule: {
-            interval: values.scheduleMode === EAppScheduledJobScheduleMode.Interval ? values.scheduleInterval : "",
-            cronExpr: values.scheduleMode === EAppScheduledJobScheduleMode.Cron ? values.scheduleCronExpr : "",
-            initialTime: values.scheduleFrom ?? new Date(),
+            ...(scheduleInterval ? { interval: scheduleInterval } : {}),
+            ...(scheduleCronExpr ? { cronExpr: scheduleCronExpr } : {}),
+            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
         },
         app: {
             id: appId,
         },
         priority: values.priority,
         maxRetry: values.maxRetry,
-        retryDelay: values.retryDelay,
-        timeout: values.timeout,
+        ...(hasText(values.retryDelay) ? { retryDelay: values.retryDelay } : {}),
+        ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
         controlDisabled: !values.controlEnabled,
         command: {
-            runInShell: values.runInShell,
             command: values.command,
-            workingDir: values.workingDir,
-            envVars: values.envVars.map(envVar => ({
-                ...envVar,
-            })),
-            argGroups: values.argGroups,
+            ...(hasText(values.runInShell) ? { runInShell: values.runInShell } : {}),
+            ...(hasText(values.workingDir) ? { workingDir: values.workingDir } : {}),
+            ...(values.envVars.length > 0
+                ? {
+                      envVars: values.envVars.map(envVar => ({
+                          ...envVar,
+                      })),
+                  }
+                : {}),
+            ...(values.argGroups.length > 0 ? { argGroups: values.argGroups } : {}),
         },
         notification: {
             successUseDefault: values.notification.successUseDefault,

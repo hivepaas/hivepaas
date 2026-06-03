@@ -20,6 +20,7 @@ export function mapAppResourceSettingsToFormInput(data: AppResourceSettings): Ap
         memory: {
             swap: data.memory?.swap,
             swappiness: data.memory?.swappiness,
+            shmSize: data.memory?.shmSize,
         },
         ulimits: data.ulimits.map(item => ({
             name: item.name,

@@ -15,6 +15,7 @@ export function MemoryFields() {
 
     const { field: swapField } = useController({ control, name: "memory.swap" });
     const { field: swappinessField } = useController({ control, name: "memory.swappiness" });
+    const { field: shmSizeField } = useController({ control, name: "memory.shmSize" });
 
     return (
         <div className="flex flex-col gap-6">
@@ -51,6 +52,25 @@ export function MemoryFields() {
                     decimalScale={0}
                     fixedDecimalScale={false}
                 />
+            </InfoBlock>
+
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Shm Size"
+                        content="Size of the tmpfs mounted to /dev/shm. Use DataSize values like 1gb."
+                    />
+                }
+            >
+                <div className="flex items-center gap-6">
+                    <Input
+                        value={shmSizeField.value ?? ""}
+                        onChange={shmSizeField.onChange}
+                        className="max-w-[100px]"
+                        placeholder="1gb"
+                    />
+                    <span className="text-sm">This will mount a tmpfs to /dev/shm.</span>
+                </div>
             </InfoBlock>
         </div>
     );

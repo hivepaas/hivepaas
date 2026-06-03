@@ -208,6 +208,16 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.configuration.buildSettings.$pattern,
+                            lazy: async () => {
+                                const { ProjectImageBuildSettingsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectImageBuildSettingsRoute,
+                                };
+                            },
+                        },
                     ],
                 },
                 {

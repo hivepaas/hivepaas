@@ -17,13 +17,7 @@ import { InputNumber } from "@/components/ui/input-number";
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
 
-import {
-    ArgGroupsSection,
-    INFO_BLOCK_TITLE_WIDTH,
-    NextRunsField,
-    PriorityTabsField,
-    SectionHeader,
-} from "./building-blocks";
+import { ArgGroupsSection, INFO_BLOCK_TITLE_WIDTH, NextRunsField, PriorityTabsField } from "./building-blocks";
 import {
     createEmptyAppScheduledJobFormDefaults,
     mapAppScheduledJobToFormInput,
@@ -198,12 +192,7 @@ export function CreateOrEditAppScheduledJobForm({
 
                                 {scheduleMode.value === EAppScheduledJobScheduleMode.Interval && (
                                     <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="Scheduling Interval"
-                                                isRequired
-                                            />
-                                        }
+                                        title="Scheduling Interval"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
                                         <Field>
@@ -221,12 +210,7 @@ export function CreateOrEditAppScheduledJobForm({
 
                                 {scheduleMode.value === EAppScheduledJobScheduleMode.Cron && (
                                     <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="Cron Expression"
-                                                isRequired
-                                            />
-                                        }
+                                        title="Cron Expression"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
                                         <Field>
@@ -266,12 +250,7 @@ export function CreateOrEditAppScheduledJobForm({
                                 <NextRunsField nextRuns={initialValues?.nextRuns ?? []} />
 
                                 <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Timeout"
-                                            isRequired
-                                        />
-                                    }
+                                    title="Timeout"
                                     titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                 >
                                     <Field>
@@ -287,24 +266,23 @@ export function CreateOrEditAppScheduledJobForm({
                                 </InfoBlock>
 
                                 <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Max Retry"
-                                            isRequired
-                                        />
-                                    }
+                                    title="Max Retry"
                                     titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                 >
                                     <Field>
                                         <InputNumber
                                             value={maxRetry.value}
                                             onValueChange={value => {
-                                                maxRetry.onChange(value ?? 0);
+                                                const nextValue =
+                                                    value !== undefined && Number.isFinite(value) ? value : undefined;
+
+                                                maxRetry.onChange(nextValue);
                                             }}
                                             min={0}
                                             useGrouping={false}
+                                            placeholder="3"
                                             aria-invalid={isMaxRetryInvalid}
-                                            className="max-w-[260px]"
+                                            className="max-w-[100px]"
                                             disabled={readOnly}
                                         />
                                         <FieldError errors={[errors.maxRetry]} />
@@ -312,12 +290,7 @@ export function CreateOrEditAppScheduledJobForm({
                                 </InfoBlock>
 
                                 <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Retry Delay"
-                                            isRequired
-                                        />
-                                    }
+                                    title="Retry Delay"
                                     titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                 >
                                     <Field>
@@ -361,8 +334,8 @@ export function CreateOrEditAppScheduledJobForm({
                                     <Field>
                                         <Input
                                             {...command}
-                                            placeholder='my_app --arg1=123 --arg2="my data"'
-                                            className="max-w-[520px]"
+                                            placeholder="echo “$CMD_ARG_GROUP_1”"
+                                            className="max-w-[400px]"
                                             aria-invalid={isCommandInvalid}
                                             disabled={readOnly}
                                         />
@@ -399,10 +372,11 @@ export function CreateOrEditAppScheduledJobForm({
                                         disabled={readOnly}
                                     />
                                 </InfoBlock>
-
-                                <SectionHeader>Arg Groups</SectionHeader>
-                                <ArgGroupsSection readOnly={readOnly} />
                             </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Arg Groups">
+                            <ArgGroupsSection readOnly={readOnly} />
                         </ContentBlock>
 
                         <ContentBlock label="Notification Configuration">

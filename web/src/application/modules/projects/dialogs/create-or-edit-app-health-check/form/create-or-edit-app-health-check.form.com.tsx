@@ -311,7 +311,7 @@ export function CreateOrEditAppHealthCheckForm({
                                         min={0}
                                         useGrouping={false}
                                         aria-invalid={isMaxRetryInvalid}
-                                        className="max-w-[260px]"
+                                        className="max-w-[100px]"
                                     />
                                     <FieldError errors={[errors.maxRetry]} />
                                 </Field>

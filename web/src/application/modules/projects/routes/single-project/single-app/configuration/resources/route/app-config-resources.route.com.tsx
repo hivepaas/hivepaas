@@ -34,6 +34,7 @@ function mapFormValuesToPayload(
     const reservationMemory = normalizeMemoryValue(values.reservations.memory);
     const limitMemory = normalizeMemoryValue(values.limits.memory);
     const swapMemory = normalizeMemoryValue(values.memory.swap);
+    const shmSize = normalizeMemoryValue(values.memory.shmSize);
     const sysctls: Record<string, string> = {};
     for (const row of values.capabilities.sysctls) {
         sysctls[row.name] = row.value;
@@ -60,10 +61,11 @@ function mapFormValuesToPayload(
                   }
                 : null,
         memory:
-            swapMemory || values.memory.swappiness != null
+            swapMemory || values.memory.swappiness != null || shmSize
                 ? {
                       swap: swapMemory,
                       swappiness: values.memory.swappiness,
+                      shmSize,
                   }
                 : null,
         ulimits: values.ulimits.map(item => ({

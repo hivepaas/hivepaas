@@ -61,7 +61,7 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
                             return;
                         }
 
-                        pushToRegistry.onChange(option ?? null);
+                        pushToRegistry.onChange(option ?? undefined);
                     }}
                     onSearch={setSearchQuery}
                     placeholder="Select registry to push image to"

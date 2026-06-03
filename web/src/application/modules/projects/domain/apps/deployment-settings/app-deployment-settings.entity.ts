@@ -10,11 +10,11 @@ export type RepoMethod = BaseDeploymentSettings & {
         repoRef: string;
         commitHash: string;
         repoOptions: DeploymentRepoOptions;
-        credentials: SettingsBaseEntity;
+        credentials: SettingsBaseEntity | null;
         dockerfilePath: string;
         imageName: string;
         imageTags: string;
-        pushToRegistry: SettingsBaseEntity;
+        pushToRegistry: SettingsBaseEntity | null;
     };
 };
 

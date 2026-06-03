@@ -32,6 +32,7 @@ export const AppConfigResourcesFormSchema = z.object({
     memory: z.object({
         swap: z.string().optional(),
         swappiness: z.number().optional(),
+        shmSize: z.string().optional(),
     }),
 
     ulimits: z.array(UlimitFormSchema),
@@ -64,6 +65,7 @@ export const emptyAppConfigResourcesFormDefaults: AppConfigResourcesFormSchemaIn
     memory: {
         swap: undefined,
         swappiness: undefined,
+        shmSize: undefined,
     },
 
     ulimits: [],

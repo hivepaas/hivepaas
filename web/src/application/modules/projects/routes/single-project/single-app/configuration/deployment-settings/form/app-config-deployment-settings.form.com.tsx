@@ -58,11 +58,15 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                     gitSubmodulesEnabled: data.repoSource.repoOptions.gitSubmodulesEnabled,
                     gitLfsEnabled: data.repoSource.repoOptions.gitLfsEnabled,
                 },
-                credentials: { id: data.repoSource.credentials.id, name: data.repoSource.credentials.name },
+                credentials: data.repoSource.credentials
+                    ? { id: data.repoSource.credentials.id, name: data.repoSource.credentials.name }
+                    : undefined,
                 dockerfilePath: data.repoSource.dockerfilePath,
                 imageName: data.repoSource.imageName,
                 imageTags: data.repoSource.imageTags,
-                pushToRegistry: { id: data.repoSource.pushToRegistry.id, name: data.repoSource.pushToRegistry.name },
+                pushToRegistry: data.repoSource.pushToRegistry
+                    ? { id: data.repoSource.pushToRegistry.id, name: data.repoSource.pushToRegistry.name }
+                    : undefined,
             },
         };
     }

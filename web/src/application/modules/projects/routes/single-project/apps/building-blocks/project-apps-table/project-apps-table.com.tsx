@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
+import type { ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppsTableDefs } from "~/projects/module-shared/definitions/tables/project-apps";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
@@ -13,6 +14,8 @@ import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { Button, DataTable, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
+
+const EMPTY_PROJECT_ENVS: readonly ProjectEnvEntity[] = [];
 
 export function ProjectAppsTable({ projectId }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
@@ -35,11 +38,13 @@ export function ProjectAppsTable({ projectId }: Props) {
         sorting,
         search,
         env,
+        getStats: true,
     });
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
-    const columns = useMemo(() => ProjectAppsTableDefs.columns(projectId), [projectId]);
     const project = projectData?.data;
+    const projectEnvs = project?.envs ?? EMPTY_PROJECT_ENVS;
+    const columns = useMemo(() => ProjectAppsTableDefs.columns(projectId, projectEnvs), [projectId, projectEnvs]);
     const isProjectActive = project?.status === EProjectStatus.Active;
     const isAddButtonDisabled = !isProjectActive || !canWrite;
 

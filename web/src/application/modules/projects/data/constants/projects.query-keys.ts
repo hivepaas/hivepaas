@@ -65,6 +65,8 @@ export const QK = {
      */
     "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",
     "projects.storage-settings.$.find-one": "projects.storage-settings.$.find-one",
+    "projects.image-build-settings.$.find-one": "projects.image-build-settings.$.find-one",
+    "projects.image-build-settings.repo-cache.$.find-one": "projects.image-build-settings.repo-cache.$.find-one",
     /*
      * Project App HTTP Settings
      */

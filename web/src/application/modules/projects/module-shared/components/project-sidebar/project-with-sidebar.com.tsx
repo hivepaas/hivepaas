@@ -37,6 +37,10 @@ function createConfigurationTabs(projectId: string): TabItem[] {
             label: "Build Settings",
             route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
         },
+        {
+            label: "Domain Settings",
+            route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
+        },
     ];
 }
 

@@ -4,14 +4,15 @@ import type { SettingsBaseEntity } from "./settings.base.entity";
 
 export interface DomainCertSettings {
     certType: ESslCertType;
-    keyType: ESslKeyType;
+    keyType?: ESslKeyType;
     /** Duration string from API (e.g. `720h`, `30d`). */
-    validPeriod: string;
+    validPeriod?: string;
     email: string;
-    autoRenew: boolean;
+    autoRenew?: boolean;
 }
 
 export interface SettingDomainSettings extends SettingsBaseEntity {
     rootDomain: string;
+    allowedDomains: string[];
     certSettings?: DomainCertSettings | null;
 }

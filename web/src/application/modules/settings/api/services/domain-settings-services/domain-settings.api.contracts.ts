@@ -10,6 +10,7 @@ export type DomainSettings_FindOne_Res = ApiResponseBase<SettingDomainSettings>;
 export type DomainSettings_UpdateOne_Payload = {
     updateVer: number;
     rootDomain: string;
+    allowedDomains: string[];
     certSettings?: SettingDomainSettings["certSettings"];
 };
 

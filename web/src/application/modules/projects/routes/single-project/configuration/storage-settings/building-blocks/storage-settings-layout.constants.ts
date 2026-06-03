@@ -1,0 +1,2 @@
+export const STORAGE_SETTINGS_FIELD_TITLE_WIDTH = 420;
+export const STORAGE_SETTINGS_CONTROL_CLASS_NAME = "w-full max-w-[760px]";

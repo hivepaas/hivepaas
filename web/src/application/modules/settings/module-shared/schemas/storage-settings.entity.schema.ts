@@ -9,23 +9,32 @@ const NamedObjectSchema = z.object({
 
 const StorageBindSettingsSchema = z.object({
     enabled: z.boolean().optional(),
-    baseDirs: z.array(z.string()).nullish(),
-    baseSubpath: z.string().optional(),
-    appsMustUseSubPaths: z.boolean().optional(),
+    baseDirs: z
+        .array(z.string())
+        .nullish()
+        .transform(value => value ?? []),
+    subpathTemplate: z.string().optional(),
+    subpathRequired: z.string().optional(),
 });
 
 const StorageVolumeSettingsSchema = z.object({
     enabled: z.boolean().optional(),
-    volumes: z.array(NamedObjectSchema).nullish(),
-    baseSubpath: z.string().optional(),
-    appsMustUseSubPaths: z.boolean().optional(),
+    volumes: z
+        .array(NamedObjectSchema)
+        .nullish()
+        .transform(value => value ?? []),
+    subpathTemplate: z.string().optional(),
+    subpathRequired: z.string().optional(),
 });
 
 const StorageClusterVolumeSettingsSchema = z.object({
     enabled: z.boolean().optional(),
-    volumes: z.array(NamedObjectSchema).nullish(),
-    baseSubpath: z.string().optional(),
-    appsMustUseSubPaths: z.boolean().optional(),
+    volumes: z
+        .array(NamedObjectSchema)
+        .nullish()
+        .transform(value => value ?? []),
+    subpathTemplate: z.string().optional(),
+    subpathRequired: z.string().optional(),
 });
 
 const StorageTmpfsSettingsSchema = z.object({
@@ -34,8 +43,8 @@ const StorageTmpfsSettingsSchema = z.object({
 });
 
 export const StorageSettingsEntitySchema = SettingsBaseEntitySchema.extend({
-    bindSettings: StorageBindSettingsSchema.optional(),
-    volumeSettings: StorageVolumeSettingsSchema.optional(),
-    clusterVolumeSettings: StorageClusterVolumeSettingsSchema.optional(),
-    tmpfsSettings: StorageTmpfsSettingsSchema.optional(),
+    bindSettings: StorageBindSettingsSchema.nullish().transform(value => value ?? undefined),
+    volumeSettings: StorageVolumeSettingsSchema.nullish().transform(value => value ?? undefined),
+    clusterVolumeSettings: StorageClusterVolumeSettingsSchema.nullish().transform(value => value ?? undefined),
+    tmpfsSettings: StorageTmpfsSettingsSchema.nullish().transform(value => value ?? undefined),
 });

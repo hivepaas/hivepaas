@@ -5,6 +5,7 @@ export {
     ProjectsRoute,
     ProjectGeneralRoute,
     ProjectImageBuildSettingsRoute,
+    ProjectStorageSettingsRoute,
     ProjectDomainSettingsRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,

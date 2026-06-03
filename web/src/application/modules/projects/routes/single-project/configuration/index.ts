@@ -13,4 +13,5 @@ export * from "./access-tokens";
 export * from "./cloud-storages";
 export * from "./notification-targets";
 export * from "./build-settings";
+export * from "./storage-settings";
 export * from "./domain-settings";

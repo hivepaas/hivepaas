@@ -36,9 +36,9 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         scheduleInterval: z.string().trim(),
         scheduleCronExpr: z.string().trim(),
         scheduleFrom: z.date().nullable(),
-        timeout: z.string().trim().min(1, "Timeout is required"),
-        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0"),
-        retryDelay: z.string().trim().min(1, "Retry delay is required"),
+        timeout: z.string().trim(),
+        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0").optional(),
+        retryDelay: z.string().trim(),
         priority: z.nativeEnum(EAppScheduledJobTaskPriority),
         controlEnabled: z.boolean(),
         runInShell: z.string().trim(),
@@ -54,22 +54,6 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         }),
     })
     .superRefine((value, ctx) => {
-        if (value.scheduleMode === EAppScheduledJobScheduleMode.Interval && !value.scheduleInterval) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Scheduling interval is required",
-                path: ["scheduleInterval"],
-            });
-        }
-
-        if (value.scheduleMode === EAppScheduledJobScheduleMode.Cron && !value.scheduleCronExpr) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Cron expression is required",
-                path: ["scheduleCronExpr"],
-            });
-        }
-
         value.argGroups.forEach((group, groupIndex) => {
             if (!group.enabled) {
                 return;

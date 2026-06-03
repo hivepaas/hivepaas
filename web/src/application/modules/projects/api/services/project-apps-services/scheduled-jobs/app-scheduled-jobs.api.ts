@@ -27,16 +27,30 @@ function toObjectIdPayload(ref?: { id: string } | null) {
     };
 }
 
+function toOptionalObjectIdPayload(ref?: { id: string } | null) {
+    if (!ref?.id) {
+        return undefined;
+    }
+
+    return {
+        id: ref.id,
+    };
+}
+
 function toUpsertPayload(
     payload: AppScheduledJobs_Upsert_Payload | (AppScheduledJobs_Upsert_Payload & { updateVer: number }),
 ) {
+    const { success, failure, ...notification } = payload.notification;
+    const successPayload = toOptionalObjectIdPayload(success);
+    const failurePayload = toOptionalObjectIdPayload(failure);
+
     return {
         ...payload,
         app: toObjectIdPayload(payload.app),
         notification: {
-            ...payload.notification,
-            success: toObjectIdPayload(payload.notification.success),
-            failure: toObjectIdPayload(payload.notification.failure),
+            ...notification,
+            ...(successPayload ? { success: successPayload } : {}),
+            ...(failurePayload ? { failure: failurePayload } : {}),
         },
     };
 }

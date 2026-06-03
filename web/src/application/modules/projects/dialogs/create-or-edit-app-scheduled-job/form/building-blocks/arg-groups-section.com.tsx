@@ -34,12 +34,22 @@ type SchemaOutput = CreateOrEditAppScheduledJobFormOutput;
 
 const CONTENT_COLUMN_OFFSET = INFO_BLOCK_TITLE_WIDTH + 12;
 
-function quoteArgValue(value: string) {
-    if (!/[\s"\\]/.test(value)) {
+function isQuoted(value: unknown): boolean {
+    if (typeof value !== "string" || value.length < 2) {
+        return false;
+    }
+
+    const firstChar = value[0];
+    const lastChar = value[value.length - 1];
+
+    return (firstChar === "'" || firstChar === '"') && firstChar === lastChar;
+}
+
+function quotePreviewValue(value: string) {
+    if (isQuoted(value)) {
         return value;
     }
 
-    // eslint-disable-next-line quotes
     return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
@@ -55,7 +65,7 @@ function buildArgGroupPreview(group: SchemaInput["argGroups"][number] | undefine
                 return arg.name.trim();
             }
 
-            return `${arg.name.trim()}${group.separator}${quoteArgValue(arg.value)}`;
+            return `${arg.name.trim()}${group.separator}${quotePreviewValue(arg.value)}`;
         });
 
     if (args.length === 0) {
@@ -131,7 +141,7 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false }: ArgItemPr
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground"
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
                     onClick={onRemove}
                     disabled={readOnly}
                 >
@@ -171,7 +181,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex items-center gap-2 rounded-md border p-2 bg-accent">
+            <div className="flex items-center gap-2 rounded-md border px-2 py-0 bg-accent">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
@@ -310,7 +320,6 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                                 className={cn(dashedBorderBox, "max-w-[760px] text-center text-sm")}
                                 style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
                             >
-                                <div className="text-link">Re-calculate</div>
                                 <div className="break-all">
                                     <span className="text-orange-500">{exportEnvValue}</span>
                                     {preview ? preview.slice(exportEnvValue.length) : "="}

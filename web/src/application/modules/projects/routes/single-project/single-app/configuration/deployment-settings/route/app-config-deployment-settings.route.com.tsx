@@ -6,7 +6,7 @@ import invariant from "tiny-invariant";
 import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
 import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
-import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -58,8 +58,8 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
             ...base,
             activeMethod: values.activeMethod,
             repoSource: {
-                buildTool: "docker", // hardcoded for now, we'll handle this in the future
-                repoType: "git", // hardcoded for now, we'll handle this in the future
+                buildTool: EBuildTool.Docker,
+                repoType: ERepoType.Git,
                 repoUrl: values.repoSource.repoUrl,
                 repoRef: values.repoSource.repoRef,
                 commitHash: values.repoSource.commitHash ?? "",
@@ -68,12 +68,14 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
                     gitLfsEnabled: values.repoSource.repoOptions.gitLfsEnabled,
                 },
                 credentials: { id: values.repoSource.credentials?.id ?? "" },
+                dockerfilePath: values.repoSource.dockerfilePath ?? "",
                 imageName: values.repoSource.imageName ?? "",
+                imageTags: values.repoSource.imageTags ?? "",
+                pushToRegistry: { id: values.repoSource.pushToRegistry?.id ?? "" },
             },
         };
     }
 
-    // Contract marks `repoSource` required on payload; Image flow only sends `imageSource`.
     return {
         ...base,
         activeMethod: values.activeMethod,
@@ -81,7 +83,7 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
             image: values.imageSource.image,
             registryAuth: { id: values.imageSource.registryAuth?.id ?? "" },
         },
-    } as DeploymentSettingsUpdatePayload;
+    };
 }
 
 export function AppConfigDeploymentSettingsRoute() {

@@ -62,7 +62,7 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
                                 return;
                             }
 
-                            registryAuth.onChange(option ?? null);
+                            registryAuth.onChange(option ?? undefined);
                         }}
                         onSearch={setSearchQuery}
                         placeholder="Select registry credentials"

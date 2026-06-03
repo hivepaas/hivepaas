@@ -60,6 +60,8 @@ function NotificationSelect<TFieldValues extends FieldValues>({
                 />
                 <FieldError errors={[error]} />
                 <AppLink.Basic
+                    target="_blank"
+                    rel="noreferrer"
                     to={manageLink.to}
                     className="text-sm text-link"
                     ignorePrevPath

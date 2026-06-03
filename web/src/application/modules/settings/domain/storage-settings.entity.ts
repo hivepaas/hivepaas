@@ -2,23 +2,23 @@ import type { SettingsBaseEntity } from "./settings.base.entity";
 
 export interface StorageBindSettings {
     enabled?: boolean;
-    baseDirs?: string[] | null;
-    baseSubpath?: string;
-    appsMustUseSubPaths?: boolean;
+    baseDirs: string[];
+    subpathTemplate?: string;
+    subpathRequired?: string;
 }
 
 export interface StorageVolumeSettings {
     enabled?: boolean;
-    volumes?: { id: string; name: string }[] | null;
-    baseSubpath?: string;
-    appsMustUseSubPaths?: boolean;
+    volumes: { id: string; name: string }[];
+    subpathTemplate?: string;
+    subpathRequired?: string;
 }
 
 export interface StorageClusterVolumeSettings {
     enabled?: boolean;
-    volumes?: { id: string; name: string }[] | null;
-    baseSubpath?: string;
-    appsMustUseSubPaths?: boolean;
+    volumes: { id: string; name: string }[];
+    subpathTemplate?: string;
+    subpathRequired?: string;
 }
 
 export interface StorageTmpfsSettings {

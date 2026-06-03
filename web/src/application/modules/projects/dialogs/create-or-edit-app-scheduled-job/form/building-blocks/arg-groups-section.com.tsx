@@ -42,7 +42,7 @@ function isQuoted(value: unknown): boolean {
     const firstChar = value[0];
     const lastChar = value[value.length - 1];
 
-    return (firstChar === "'" || firstChar === '"') && firstChar === lastChar;
+    return (firstChar === "'" || firstChar === '"') && firstChar === lastChar; // eslint-disable-line quotes
 }
 
 function quotePreviewValue(value: string) {

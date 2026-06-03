@@ -7,11 +7,22 @@ import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 export type StorageSettings_FindOne_Req = ApiRequestBase<Record<string, never>>;
 export type StorageSettings_FindOne_Res = ApiResponseBase<SettingStorageSettings>;
 
+export type StorageSettings_NamedObject_Payload = {
+    id: string;
+};
+
 export type StorageSettings_UpdateOne_Payload = {
     updateVer: number;
-    bindSettings?: SettingStorageSettings["bindSettings"];
-    volumeSettings?: SettingStorageSettings["volumeSettings"];
-    clusterVolumeSettings?: SettingStorageSettings["clusterVolumeSettings"];
+    bindSettings?: Omit<NonNullable<SettingStorageSettings["bindSettings"]>, "subpathRequired">;
+    volumeSettings?: Omit<NonNullable<SettingStorageSettings["volumeSettings"]>, "volumes" | "subpathRequired"> & {
+        volumes: StorageSettings_NamedObject_Payload[];
+    };
+    clusterVolumeSettings?: Omit<
+        NonNullable<SettingStorageSettings["clusterVolumeSettings"]>,
+        "volumes" | "subpathRequired"
+    > & {
+        volumes: StorageSettings_NamedObject_Payload[];
+    };
     tmpfsSettings?: SettingStorageSettings["tmpfsSettings"];
 };
 

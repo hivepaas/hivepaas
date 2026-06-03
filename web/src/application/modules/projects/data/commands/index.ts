@@ -17,3 +17,4 @@ export * from "./project-access-token";
 export * from "./project-cloud-storage";
 export * from "./project-notification";
 export * from "./project-image-build-settings";
+export * from "./project-settings";

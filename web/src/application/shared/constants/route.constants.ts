@@ -328,6 +328,11 @@ export const ROUTE = {
                     $route: (id: string) => `/projects/${id}/configuration/build-settings/`,
                 },
 
+                storageSettings: {
+                    $pattern: "projects/:id/configuration/storage-settings",
+                    $route: (id: string) => `/projects/${id}/configuration/storage-settings/`,
+                },
+
                 domainSettings: {
                     $pattern: "projects/:id/configuration/domain-settings",
                     $route: (id: string) => `/projects/${id}/configuration/domain-settings/`,

@@ -38,6 +38,10 @@ function createConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
         },
         {
+            label: "Storage Settings",
+            route: ROUTE.projects.single.configuration.storageSettings.$route(projectId),
+        },
+        {
             label: "Domain Settings",
             route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
         },

@@ -218,6 +218,16 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.configuration.domainSettings.$pattern,
+                            lazy: async () => {
+                                const { ProjectDomainSettingsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectDomainSettingsRoute,
+                                };
+                            },
+                        },
                     ],
                 },
                 {

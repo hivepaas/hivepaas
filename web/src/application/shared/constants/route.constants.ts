@@ -327,6 +327,11 @@ export const ROUTE = {
                     $pattern: "projects/:id/configuration/build-settings",
                     $route: (id: string) => `/projects/${id}/configuration/build-settings/`,
                 },
+
+                domainSettings: {
+                    $pattern: "projects/:id/configuration/domain-settings",
+                    $route: (id: string) => `/projects/${id}/configuration/domain-settings/`,
+                },
             },
 
             providerConfiguration: {

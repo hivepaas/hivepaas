@@ -1,7 +1,7 @@
 env = "development"
 platform = "remote"
 run_mode = "app+worker"
-root_domain = "dev.localpaas.com"
+root_domain = "localpaas.com"
 app_domain = "app.dev.localpaas.com"
 base_url = "https://app.dev.localpaas.com" # dashboard base URL
 secret = "abc123"

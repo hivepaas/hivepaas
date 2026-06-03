@@ -59,7 +59,7 @@ func Compress(
 		return CompressGz(srcFilename, destFilename, level)
 
 	default:
-		err = apperrors.NewUnsupported(fmt.Sprintf("Archive format '%s'", format))
+		err = apperrors.NewUnsupported(apperrors.Fmt("Archive format '%v'", format))
 		return err.Error(), err
 	}
 }

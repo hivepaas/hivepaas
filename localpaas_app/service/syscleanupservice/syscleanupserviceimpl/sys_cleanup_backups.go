@@ -3,7 +3,6 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -133,7 +132,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 			return delFunc, nil
 		}
 		if file.Storage == nil {
-			return nil, apperrors.NewNotFound(fmt.Sprintf("Storage setting '%v'", file.Storage.ID))
+			return nil, apperrors.NewNotFound(apperrors.Fmt("Storage setting '%v'", file.Storage.ID))
 		}
 
 		switch base.CloudStorageKind(file.Storage.Kind) { //nolint:gocritic

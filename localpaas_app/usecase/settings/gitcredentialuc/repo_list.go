@@ -2,7 +2,6 @@ package gitcredentialuc
 
 import (
 	"context"
-	"fmt"
 
 	gogithub "github.com/google/go-github/v79/github"
 
@@ -41,10 +40,10 @@ func (uc *UC) ListRepo(
 		case base.GitSourceGitea:
 			return uc.listGiteaRepo(ctx, req, setting)
 		default:
-			return nil, apperrors.NewUnsupported(fmt.Sprintf("Git source '%v'", setting.Kind))
+			return nil, apperrors.NewUnsupported(apperrors.Fmt("Git source '%v'", setting.Kind))
 		}
 	default:
-		return nil, apperrors.NewUnsupported(fmt.Sprintf("Setting type '%v'", setting.Type))
+		return nil, apperrors.NewUnsupported(apperrors.Fmt("Setting type '%v'", setting.Type))
 	}
 }
 

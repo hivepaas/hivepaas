@@ -2,7 +2,6 @@ package healthcheckserviceimpl
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -52,7 +51,7 @@ func (s *service) doHealthcheckGRPC(
 		}
 
 	default:
-		return apperrors.NewUnsupported(fmt.Sprintf("gRPC health version '%v'", healthchk.Version))
+		return apperrors.NewUnsupported(apperrors.Fmt("gRPC health version '%v'", healthchk.Version))
 	}
 
 	return nil

@@ -3,7 +3,6 @@ package appsettingsuc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/netip"
 	"strings"
 
@@ -203,7 +202,7 @@ func (uc *UC) prepareUpdatingAppDNSConfig(
 	for _, addr := range req.DNSConfig.Nameservers {
 		netAddr, err := netip.ParseAddr(addr)
 		if err != nil {
-			return apperrors.NewParamInvalid(fmt.Sprintf("Addr '%v'", addr))
+			return apperrors.NewParamInvalid(apperrors.Fmt("Addr '%v'", addr))
 		}
 		containerSpec.DNSConfig.Nameservers = append(containerSpec.DNSConfig.Nameservers, netAddr)
 	}

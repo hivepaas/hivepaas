@@ -2,7 +2,6 @@ package appserviceimpl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -29,7 +28,7 @@ func (s *service) LoadApps(
 	appMap := entityutil.SliceToIDMap(apps)
 	for _, appID := range appIDs {
 		if _, exists := appMap[appID]; !exists {
-			return nil, apperrors.NewNotFound(fmt.Sprintf("App '%v'", appID))
+			return nil, apperrors.NewNotFound(apperrors.Fmt("App '%v'", appID))
 		}
 	}
 

@@ -2,7 +2,6 @@ package projectserviceimpl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -60,7 +59,7 @@ func (s *service) LoadProjects(
 	projectMap := entityutil.SliceToIDMap(projects)
 	for _, id := range projectIDs {
 		if _, exist := projectMap[id]; !exist {
-			return nil, apperrors.NewNotFound(fmt.Sprintf("Project '%v'", id))
+			return nil, apperrors.NewNotFound(apperrors.Fmt("Project '%v'", id))
 		}
 	}
 

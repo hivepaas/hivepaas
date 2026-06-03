@@ -3,7 +3,6 @@ package sslserviceimpl
 import (
 	"context"
 	"crypto/x509/pkix"
-	"fmt"
 
 	"github.com/tiendc/gofn"
 
@@ -31,7 +30,7 @@ func (s *service) ObtainCert(
 		// No need to init as it's custom by user
 		return false, nil
 	default:
-		return false, apperrors.NewUnsupported(fmt.Sprintf("Unknown cert type: %s", ssl.CertType))
+		return false, apperrors.NewUnsupported(apperrors.Fmt("Unknown cert type '%v'", ssl.CertType))
 	}
 	if err != nil {
 		return false, apperrors.Wrap(err)

@@ -215,7 +215,7 @@ func (s *service) sslRenew(
 	case base.SSLCertTypeSelfSigned:
 		err = s.sslRenewSelfSignedCert(ctx, ssl, data)
 	default:
-		return apperrors.NewUnsupported(fmt.Sprintf("SSL type '%v'", ssl.CertType))
+		return apperrors.NewUnsupported(apperrors.Fmt("SSL type '%v'", ssl.CertType))
 	}
 	if err != nil {
 		return apperrors.Wrap(err)

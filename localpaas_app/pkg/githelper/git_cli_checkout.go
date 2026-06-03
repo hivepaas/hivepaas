@@ -117,7 +117,7 @@ func gitCliCheckoutTargetCommit(
 	if commit == nil {
 		addLog(ctx, fmt.Sprintf("Failed to checkout commit: %v, commit is too deep or doesn't exist.",
 			checkoutOpts.CommitHash), err != nil, checkoutOpts)
-		return nil, apperrors.NewNotFound(fmt.Sprintf("Commit '%v'", checkoutOpts.CommitHash))
+		return nil, apperrors.NewNotFound(apperrors.Fmt("Commit '%v'", checkoutOpts.CommitHash))
 	}
 
 	// Checkout target commit

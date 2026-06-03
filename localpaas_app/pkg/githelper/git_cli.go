@@ -145,7 +145,7 @@ func gitCliProcessCheckoutOpts(
 		default:
 			addLog(ctx, fmt.Sprintf("Git auth method '%v' is unsupported", auth.Name()),
 				true, checkoutOpts)
-			return apperrors.NewUnsupported(fmt.Sprintf("Git auth method '%v'", auth.Name()))
+			return apperrors.NewUnsupported(apperrors.Fmt("Git auth method '%v'", auth.Name()))
 		}
 	}
 

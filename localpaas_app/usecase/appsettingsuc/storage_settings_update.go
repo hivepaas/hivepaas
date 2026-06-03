@@ -119,7 +119,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 
 	for _, reqMnt := range req.Mounts {
 		if !gofn.Contain(supportedMountTypes, reqMnt.Type) {
-			return apperrors.NewUnsupported(fmt.Sprintf("Mount type '%v'", reqMnt.Type))
+			return apperrors.NewUnsupported(apperrors.Fmt("Mount type '%v'", reqMnt.Type))
 		}
 		switch reqMnt.Type { //nolint:exhaustive
 		case mount.TypeBind:

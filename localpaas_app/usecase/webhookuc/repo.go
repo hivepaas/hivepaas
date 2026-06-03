@@ -2,7 +2,6 @@ package webhookuc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gitsight/go-vcsurl"
@@ -91,7 +90,7 @@ func (uc *UC) processRepoWebhook(
 	case base.WebhookKindGogs:
 		err = uc.parseGogsWebhook(req.Request, data.RepoWebhook.Secret, eventData)
 	default:
-		return apperrors.NewUnsupported(fmt.Sprintf("Webhook kind '%v'", data.RepoWebhook.Kind))
+		return apperrors.NewUnsupported(apperrors.Fmt("Webhook kind '%v'", data.RepoWebhook.Kind))
 	}
 	if err != nil {
 		return apperrors.Wrap(err)

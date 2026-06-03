@@ -33,7 +33,7 @@ func (uc *UC) CreateVolume(
 	}
 	if res != nil && len(res.Items) > 0 {
 		return nil, apperrors.New(apperrors.ErrInfraAlreadyExists).
-			WithNTParam("Error", fmt.Sprintf("volume '%s' already exists", req.Name))
+			WithNTParam("Error", apperrors.Fmt("Volume '%v' already exists", req.Name))
 	}
 
 	driverOpts := map[string]string{}

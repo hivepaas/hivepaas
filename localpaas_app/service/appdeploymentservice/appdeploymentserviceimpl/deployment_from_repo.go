@@ -3,7 +3,6 @@ package appdeploymentserviceimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -147,7 +146,7 @@ func (s *service) repoDeployStepSourceCheckout(
 	if repoSource.RepoType != base.RepoTypeGit {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout source: "+
 			"unsupported repository type: "+string(repoSource.RepoType), tasklog.TsNow))
-		return apperrors.NewUnsupported(fmt.Sprintf("Repository type '%v'", repoSource.RepoType))
+		return apperrors.NewUnsupported(apperrors.Fmt("Repository type '%v'", repoSource.RepoType))
 	}
 
 	s.addStepStartLog(ctx, data.appDeploymentData, "Start cloning Git repository...")

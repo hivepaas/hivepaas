@@ -3,7 +3,6 @@ package projectuc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -70,7 +69,7 @@ func (uc *UC) loadProjectData(
 ) error {
 	data.ProjectKey = projecthelper.CalcProjectKey(req.Name)
 	if gofn.Contain(base.UnallowedProjectKeys, data.ProjectKey) {
-		return apperrors.NewParamInvalid(fmt.Sprintf("Project name '%v'", req.Name)).
+		return apperrors.NewParamInvalid(apperrors.Fmt("Project name '%v'", req.Name)).
 			WithMsgLog("project name is not allowed")
 	}
 

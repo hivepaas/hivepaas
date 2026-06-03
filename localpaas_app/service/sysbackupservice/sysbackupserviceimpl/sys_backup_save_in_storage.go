@@ -50,7 +50,7 @@ func (s *service) sysBackupSaveResultInStorage(
 				0, 0, input)
 		}
 	default:
-		return apperrors.NewUnsupported(fmt.Sprintf("Storage type '%v'", storageSttg.Kind))
+		return apperrors.NewUnsupported(apperrors.Fmt("Storage type '%v'", storageSttg.Kind))
 	}
 
 	targetFilePath := filepath.Join(data.SysBackupSettings.CloudStorage.DestinationDir, data.OutFileName)

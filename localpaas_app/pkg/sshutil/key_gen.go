@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/pem"
-	"fmt"
 
 	"golang.org/x/crypto/ssh"
 
@@ -37,7 +36,7 @@ func GenerateKey(keyType base.PrivateKeyType, passphrase string) (privKeyStr str
 	case base.PrivateKeyTypeRSA8192:
 		privKey, err = rsa.GenerateKey(rand.Reader, 8192)
 	default:
-		return "", "", apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", keyType))
+		return "", "", apperrors.NewUnsupported(apperrors.Fmt("Key type '%v'", keyType))
 	}
 	if err != nil {
 		return "", "", apperrors.Wrap(err)

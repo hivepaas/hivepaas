@@ -12,6 +12,7 @@ export type ProjectApps_FindManyPaginated_Req = ApiRequestBase<{
     sorting?: SortingState;
     search?: string;
     env?: string;
+    getStats?: boolean;
 }>;
 
 export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;

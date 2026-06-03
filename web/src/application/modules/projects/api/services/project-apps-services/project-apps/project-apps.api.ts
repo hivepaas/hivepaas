@@ -33,7 +33,7 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting, env } = request.data;
+        const { projectID, search, pagination, sorting, env, getStats } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -46,7 +46,10 @@ export class ProjectAppsApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.get(`/projects/${projectID}/apps`, {
-                    params: query.build(),
+                    params: {
+                        ...query.build(),
+                        ...(getStats === undefined ? {} : { getStats }),
+                    },
                     signal,
                 }),
             ).pipe(

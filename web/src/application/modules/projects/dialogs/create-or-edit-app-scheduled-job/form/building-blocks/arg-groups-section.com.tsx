@@ -50,7 +50,7 @@ function quotePreviewValue(value: string) {
         return value;
     }
 
-    return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`; // eslint-disable-line quotes
 }
 
 function buildArgGroupPreview(group: SchemaInput["argGroups"][number] | undefined) {

@@ -322,6 +322,11 @@ export const ROUTE = {
                     $pattern: "projects/:id/configuration/general",
                     $route: (id: string) => `/projects/${id}/configuration/general/`,
                 },
+
+                buildSettings: {
+                    $pattern: "projects/:id/configuration/build-settings",
+                    $route: (id: string) => `/projects/${id}/configuration/build-settings/`,
+                },
             },
 
             providerConfiguration: {

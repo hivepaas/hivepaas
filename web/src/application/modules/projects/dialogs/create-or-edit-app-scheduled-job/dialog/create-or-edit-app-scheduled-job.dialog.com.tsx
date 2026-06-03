@@ -45,7 +45,7 @@ function mapFormValuesToPayload(
             id: appId,
         },
         priority: values.priority,
-        ...(values.maxRetry !== undefined ? { maxRetry: values.maxRetry } : {}),
+        maxRetry: values.maxRetry,
         ...(hasText(values.retryDelay) ? { retryDelay: values.retryDelay } : {}),
         ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
         controlDisabled: !values.controlEnabled,

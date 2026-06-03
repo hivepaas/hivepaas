@@ -1,6 +1,7 @@
 export { ProjectsRoute } from "./projects";
 export {
     ProjectGeneralRoute,
+    ProjectImageBuildSettingsRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,
     ProjectGithubAppsRoute,

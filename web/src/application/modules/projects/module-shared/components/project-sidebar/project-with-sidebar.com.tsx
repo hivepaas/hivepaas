@@ -33,6 +33,10 @@ function createConfigurationTabs(projectId: string): TabItem[] {
             label: "General",
             route: ROUTE.projects.single.configuration.general.$route(projectId),
         },
+        {
+            label: "Build Settings",
+            route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
+        },
     ];
 }
 

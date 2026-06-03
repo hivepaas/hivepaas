@@ -20,3 +20,4 @@ export * from "./project-docker-volumes";
 export * from "./project-ssh-key";
 export * from "./project-access-token";
 export * from "./project-cloud-storage";
+export * from "./project-image-build-settings";

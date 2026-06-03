@@ -39,6 +39,8 @@ import {
     ProjectGithubAppApiValidator,
     ProjectImServiceApi,
     ProjectImServiceApiValidator,
+    ProjectImageBuildSettingsApi,
+    ProjectImageBuildSettingsApiValidator,
     ProjectNetworksApi,
     ProjectNetworksApiValidator,
     ProjectNotificationApi,
@@ -119,6 +121,7 @@ function createApi() {
     const projectAccessTokenApiValidator = new ProjectAccessTokenApiValidator();
     const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
     const projectUserAccessesApiValidator = new ProjectUserAccessesApiValidator();
+    const projectImageBuildSettingsApiValidator = new ProjectImageBuildSettingsApiValidator();
 
     return {
         projects: {
@@ -212,6 +215,9 @@ function createApi() {
             },
             storageSettings: {
                 $: new ProjectStorageSettingsApi(projectStorageSettingsApiValidator),
+            },
+            imageBuildSettings: {
+                $: new ProjectImageBuildSettingsApi(projectImageBuildSettingsApiValidator),
             },
             sshKey: {
                 $: new ProjectSSHKeyApi(projectSSHKeyApiValidator),

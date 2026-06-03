@@ -4,6 +4,7 @@
 export {
     ProjectsRoute,
     ProjectGeneralRoute,
+    ProjectImageBuildSettingsRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,
     ProjectGithubAppsRoute,

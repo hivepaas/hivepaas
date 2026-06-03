@@ -27,6 +27,7 @@ export type ResourceLimits = {
 export type ResourceMemory = {
     swap?: string;
     swappiness?: number;
+    shmSize?: string;
 };
 
 export type Ulimit = {

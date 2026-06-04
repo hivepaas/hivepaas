@@ -1,6 +1,17 @@
-import { BadgeCheck, ChevronsUpDown, LogOut, MessageSquarePlus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    BadgeCheck,
+    ChevronsUpDown,
+    LogOut,
+    type LucideIcon,
+    MessageSquarePlus,
+    Monitor,
+    Moon,
+    Sun,
+} from "lucide-react";
 import invariant from "tiny-invariant";
 
+import { type ColorMode, useColorModeContext } from "@application/shared/color-mode";
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
@@ -20,9 +31,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
+const colorModeOptions: {
+    value: ColorMode;
+    label: string;
+    icon: LucideIcon;
+}[] = [
+    {
+        value: "dark",
+        label: "Dark",
+        icon: Moon,
+    },
+    {
+        value: "light",
+        label: "Light",
+        icon: Sun,
+    },
+    {
+        value: "system",
+        label: "System",
+        icon: Monitor,
+    },
+];
+
 export function NavUser({ user }: { user: Profile }) {
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
+    const colorMode = useColorModeContext(state => state.mode);
+    const setColorMode = useColorModeContext(state => state.setMode);
     const createFeedbackDialog = useCreateFeedbackDialog();
 
     const { mutate: logout, isPending } = SessionCommands.useLogout({
@@ -79,6 +114,30 @@ export function NavUser({ user }: { user: Profile }) {
                                 </div>
                             </div>
                         </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup className="grid grid-cols-3 gap-1 p-1">
+                            {colorModeOptions.map(option => {
+                                const Icon = option.icon;
+                                const isSelected = colorMode === option.value;
+
+                                return (
+                                    <DropdownMenuItem
+                                        key={option.value}
+                                        className={cn(
+                                            "flex h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs",
+                                            isSelected && "bg-accent text-accent-foreground",
+                                        )}
+                                        onSelect={event => {
+                                            event.preventDefault();
+                                            setColorMode(option.value);
+                                        }}
+                                    >
+                                        <Icon className="size-5 text-current" />
+                                        <span className="truncate leading-none">{option.label}</span>
+                                    </DropdownMenuItem>
+                                );
+                            })}
+                        </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <AppLink.Modules to={ROUTE.currentUser.profile.$route}>

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppConfigFilesQueries } from "~/projects/data/queries";
 import { useCreateOrEditAppConfigFileDialog } from "~/projects/dialogs/create-or-edit-app-config-file/hooks";
 import { AppConfigFilesTableDefs } from "~/projects/module-shared/definitions/tables/app-config-files";
@@ -25,13 +26,16 @@ export function AppConfigFilesRoute() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: configFiles, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppConfigFilesQueries.useFindManyPaginated({
-            projectID: projectId,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+        AppConfigFilesQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            APP_CONFIGURATION_QUERY_OPTIONS,
+        );
 
     const ownConfigFiles = useMemo(() => configFiles.filter(configFile => !configFile.inherited), [configFiles]);
     const inheritedConfigFiles = useMemo(() => configFiles.filter(configFile => configFile.inherited), [configFiles]);

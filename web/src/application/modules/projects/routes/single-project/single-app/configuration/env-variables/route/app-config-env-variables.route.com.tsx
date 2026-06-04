@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectAppEnvVarsCommands } from "~/projects/data/commands";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppEnvVarsQueries } from "~/projects/data/queries";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
@@ -33,7 +34,7 @@ export function AppConfigEnvVariablesRoute() {
         isLoading: isLoadingEnvVars,
         error: envVarsError,
         refetch: refetchEnvVars,
-    } = ProjectAppEnvVarsQueries.useFindOne({ projectID: projectId, appID: appId });
+    } = ProjectAppEnvVarsQueries.useFindOne({ projectID: projectId, appID: appId }, APP_CONFIGURATION_QUERY_OPTIONS);
 
     const { mutate: update, isPending } = ProjectAppEnvVarsCommands.useUpdateOne({
         onSuccess: () => {

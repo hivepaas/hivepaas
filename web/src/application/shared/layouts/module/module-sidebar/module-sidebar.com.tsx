@@ -131,6 +131,16 @@ const navMain: SidebarItem[] = [
         moduleId: MODULE_IDS.System,
         items: [
             {
+                title: "LocalPaaS",
+                route: ROUTE.systemSettings.localpaas.general.$route,
+                pattern: ROUTE.systemSettings.localpaas.$pattern,
+            },
+            {
+                title: "Traefik",
+                route: ROUTE.systemSettings.traefik.general.$route,
+                pattern: ROUTE.systemSettings.traefik.$pattern,
+            },
+            {
                 title: "Data Backup",
                 route: ROUTE.systemSettings.dataBackup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataBackup.$pattern,

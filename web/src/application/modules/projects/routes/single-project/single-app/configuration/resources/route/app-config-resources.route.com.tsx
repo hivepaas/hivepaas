@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppResourceSettingsCommands, AppResourceSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { type AppResourceSettings } from "~/projects/domain";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
@@ -92,10 +93,13 @@ export function AppConfigResourcesRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppResourceSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data, isLoading } = AppResourceSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = AppResourceSettingsCommands.useUpdateOne({
         onSuccess: () => {

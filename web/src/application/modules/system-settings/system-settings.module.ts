@@ -2,6 +2,8 @@
  * System Settings
  */
 export {
+    SystemSettingsLocalPaaSGeneralRoute,
+    SystemSettingsTraefikGeneralRoute,
     SystemSettingsDataBackupActionsRoute,
     SystemSettingsDataBackupBackupFilesRoute,
     SystemSettingsDataBackupConfigurationRoute,
@@ -12,4 +14,4 @@ export {
 /**
  * Layouts
  */
-export { DataBackupLayout, DataCleanupLayout } from "./layouts";
+export { DataBackupLayout, DataCleanupLayout, LocalPaaSLayout, TraefikLayout } from "./layouts";

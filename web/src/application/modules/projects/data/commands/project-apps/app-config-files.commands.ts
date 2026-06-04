@@ -8,7 +8,8 @@ import type {
     AppConfigFiles_UpdateOne_Req,
     AppConfigFiles_UpdateOne_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 /**
  * Create an app config file command
@@ -24,13 +25,14 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.createOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.config-files.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -51,13 +53,14 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.deleteOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.config-files.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -78,17 +81,14 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.config-files.$.find-many-paginated"]],
-            });
-
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.config-files.$.find-one-by-id"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import type { AppStorageMount } from "~/projects/domain";
 
@@ -29,12 +29,20 @@ interface StorageMountsProviderProps {
 }
 
 export function StorageMountsProvider({ initialMounts = [], children }: StorageMountsProviderProps) {
-    const [mounts, setMounts] = useState<StorageMountWithId[]>(() =>
-        initialMounts.map((mount, index) => ({
-            ...mount,
-            _id: `mount-${Date.now()}-${index}`,
-        })),
+    const buildMountsWithIds = useCallback(
+        () =>
+            initialMounts.map((mount, index) => ({
+                ...mount,
+                _id: `mount-${Date.now()}-${index}`,
+            })),
+        [initialMounts],
     );
+
+    const [mounts, setMounts] = useState<StorageMountWithId[]>(buildMountsWithIds);
+
+    useEffect(() => {
+        setMounts(buildMountsWithIds());
+    }, [buildMountsWithIds]);
 
     const addMount = useCallback((mount: AppStorageMount) => {
         const newMount: StorageMountWithId = {

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppSecretsQueries } from "~/projects/data/queries";
 import { useCreateOrEditAppSecretDialog } from "~/projects/dialogs/create-or-edit-app-secret/hooks";
 import { AppSecretsTableDefs } from "~/projects/module-shared/definitions/tables/app-secrets";
@@ -25,13 +26,16 @@ export function AppConfigSecretsRoute() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: secrets, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        ProjectAppSecretsQueries.useFindManyPaginated({
-            projectID: projectId,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+        ProjectAppSecretsQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            APP_CONFIGURATION_QUERY_OPTIONS,
+        );
 
     const ownSecrets = useMemo(() => secrets.filter(s => !s.inherited), [secrets]);
     const inheritedSecrets = useMemo(() => secrets.filter(s => s.inherited), [secrets]);

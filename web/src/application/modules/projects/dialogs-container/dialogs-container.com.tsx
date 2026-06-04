@@ -2,6 +2,10 @@ import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
+    ConfirmAppDangerActionDialog,
+    useConfirmAppDangerActionDialogState,
+} from "~/projects/dialogs/confirm-app-danger-action";
+import {
     CreateOrEditAppConfigFileDialog,
     useCreateOrEditAppConfigFileDialogState,
 } from "~/projects/dialogs/create-or-edit-app-config-file";
@@ -105,6 +109,7 @@ function View() {
     const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
+    const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
     const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
@@ -144,6 +149,7 @@ function View() {
         createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
+        confirmAppDangerActionDialog.destroy();
         createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
         createOrEditRegistryAuthDialog.destroy();
@@ -185,6 +191,7 @@ function View() {
             <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
             <StorageMountDialog />
+            <ConfirmAppDangerActionDialog />
             <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
             <CreateOrEditRegistryAuthDialog />

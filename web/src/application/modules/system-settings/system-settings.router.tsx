@@ -13,6 +13,82 @@ export const systemSettingsRouter: RouteObject = {
     children: [
         {
             lazy: async () => {
+                const { LocalPaaSLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="LocalPaaS">
+                                <LocalPaaSLayout>
+                                    <Outlet />
+                                </LocalPaaSLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.localpaas.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.localpaas.general.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "general",
+                    lazy: async () => {
+                        const { SystemSettingsLocalPaaSGeneralRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsLocalPaaSGeneralRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
+                const { TraefikLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Traefik">
+                                <TraefikLayout>
+                                    <Outlet />
+                                </TraefikLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.traefik.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.traefik.general.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "general",
+                    lazy: async () => {
+                        const { SystemSettingsTraefikGeneralRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsTraefikGeneralRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { DataBackupLayout } = await getLazyComponents();
 
                 return {

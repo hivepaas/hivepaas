@@ -1,4 +1,5 @@
 export * from "./change-password";
+export * from "./create-feedback";
 export * from "./f2a-setup";
 export * from "./photo-upload";
 export * from "./create-profile-api-key";

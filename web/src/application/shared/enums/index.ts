@@ -13,3 +13,4 @@ export * from "./e.email-kind";
 export * from "./e.access-token-kind";
 export * from "./e.cloud-storage-kind";
 export * from "./e.oauth-kind";
+export * from "./e.support-feedback-category";

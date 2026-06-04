@@ -36,7 +36,7 @@ const DEFAULT_MODULE_ROUTES = [
     },
     {
         moduleId: MODULE_IDS.System,
-        route: ROUTE.systemSettings.dataBackup.configuration.$route,
+        route: ROUTE.systemSettings.localpaas.general.$route,
     },
 ] as const;
 

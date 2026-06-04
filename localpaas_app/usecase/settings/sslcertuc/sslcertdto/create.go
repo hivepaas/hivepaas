@@ -86,7 +86,7 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, requireCert, 1, keyMaxLen, field+"privateKey")...)
 	res = append(res, basedto.ValidateEmail(&req.Email, false, field+"email")...)
 
-	res = append(res, vld.Must(netutil.IsSubDomain(cfg.RootDomain, req.Domain)).OnError(
+	res = append(res, vld.Must(netutil.IsSubdomainOrEqual(cfg.RootDomain, req.Domain)).OnError(
 		vld.SetField(field+"domain", nil),
 		vld.SetCustomKey("ERR_VLD_SUBDOMAIN_REQUIRED"),
 		vld.SetParam("Domain", cfg.RootDomain),

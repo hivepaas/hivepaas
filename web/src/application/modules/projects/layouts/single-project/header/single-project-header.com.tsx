@@ -65,6 +65,11 @@ function View({ projectId }: Props) {
             label: "Provider Configuration",
             activePathPrefixes: [ROUTE.projects.single.providerConfiguration.$route(projectId)],
         },
+        {
+            route: ROUTE.projects.single.clusterResources.networks.$route(projectId),
+            label: "Cluster Resources",
+            activePathPrefixes: [ROUTE.projects.single.clusterResources.$route(projectId)],
+        },
     ];
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">

@@ -19,6 +19,7 @@ export {
     ProjectSecretsRoute,
     ProjectRegistryAuthRoute,
     ProjectSslCertificatesRoute,
+    ProjectNetworksRoute,
     SingleAppRoute,
     // Single App Tabs
     AppDeploymentsRoute,

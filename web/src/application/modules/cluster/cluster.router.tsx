@@ -53,6 +53,36 @@ export const clusterRouter: RouteObject = {
         },
         {
             lazy: async () => {
+                const { NetworksLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.Cluster}>
+                            <NetworksLayout>
+                                <Outlet />
+                            </NetworksLayout>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            children: [
+                /**
+                 * Networks
+                 */
+                {
+                    path: ROUTE.cluster.networks.$pattern,
+                    lazy: async () => {
+                        const { NetworksRoute } = await getLazyComponents();
+
+                        return {
+                            Component: NetworksRoute,
+                        };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { SingleNodeLayout } = await getLazyComponents();
 
                 return {

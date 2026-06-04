@@ -114,6 +114,10 @@ export const projectsRouter: RouteObject = {
                     ),
                 },
                 {
+                    path: ROUTE.projects.single.clusterResources.$pattern,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.clusterResources.networks.$route} />,
+                },
+                {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
@@ -390,6 +394,31 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectSslCertificatesRoute,
+                                };
+                            },
+                        },
+                    ],
+                },
+                {
+                    lazy: async () => {
+                        const { ProjectWithSidebar } = await getLazyComponents();
+
+                        return {
+                            element: (
+                                <ProjectWithSidebar section="clusterResources">
+                                    <Outlet />
+                                </ProjectWithSidebar>
+                            ),
+                        };
+                    },
+                    children: [
+                        {
+                            path: ROUTE.projects.single.clusterResources.networks.$pattern,
+                            lazy: async () => {
+                                const { ProjectNetworksRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectNetworksRoute,
                                 };
                             },
                         },

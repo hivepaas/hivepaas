@@ -82,6 +82,11 @@ export const ROUTE = {
                 $route: (id: string) => `/cluster/nodes/${id}/`,
             },
         },
+
+        networks: {
+            $pattern: "cluster/networks",
+            $route: "/cluster/networks/",
+        },
     },
 
     /**
@@ -431,6 +436,16 @@ export const ROUTE = {
                 sslCertificates: {
                     $pattern: "projects/:id/provider-configuration/ssl-certificates",
                     $route: (id: string) => `/projects/${id}/provider-configuration/ssl-certificates/`,
+                },
+            },
+
+            clusterResources: {
+                $pattern: "projects/:id/cluster-resources",
+                $route: (id: string) => `/projects/${id}/cluster-resources/`,
+
+                networks: {
+                    $pattern: "projects/:id/cluster-resources/networks",
+                    $route: (id: string) => `/projects/${id}/cluster-resources/networks/`,
                 },
             },
         },

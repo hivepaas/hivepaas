@@ -2,6 +2,12 @@ import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
+    CreateNetworkDialog,
+    ViewNetworkDialog,
+    useCreateNetworkDialogState,
+    useViewNetworkDialogState,
+} from "~/cluster/dialogs";
+import {
     ConfirmAppDangerActionDialog,
     useConfirmAppDangerActionDialogState,
 } from "~/projects/dialogs/confirm-app-danger-action";
@@ -115,6 +121,8 @@ function View() {
     const storageMountDialog = useStorageMountDialogState();
     const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
     const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
+    const createNetworkDialog = useCreateNetworkDialogState();
+    const viewNetworkDialog = useViewNetworkDialogState();
     const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
@@ -156,6 +164,8 @@ function View() {
         storageMountDialog.destroy();
         confirmAppDangerActionDialog.destroy();
         confirmProjectDangerActionDialog.destroy();
+        createNetworkDialog.destroy();
+        viewNetworkDialog.destroy();
         createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
         createOrEditRegistryAuthDialog.destroy();
@@ -199,6 +209,8 @@ function View() {
             <StorageMountDialog />
             <ConfirmAppDangerActionDialog />
             <ConfirmProjectDangerActionDialog />
+            <CreateNetworkDialog />
+            <ViewNetworkDialog />
             <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
             <CreateOrEditRegistryAuthDialog />

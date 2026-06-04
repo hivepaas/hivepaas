@@ -26627,9 +26627,12 @@
           },
           "memory" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+          },
+          "memoryHR" : {
+            "type" : "integer"
           }
         },
-        "required" : [ "cpus", "memory" ],
+        "required" : [ "cpus", "memory", "memoryHR" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_nodeuc_nodedto.NodeResp" : {
@@ -35790,10 +35793,10 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       }
     },
     "securitySchemes" : {

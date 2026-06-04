@@ -121,15 +121,13 @@ function RunWorkerInMainAppField() {
                 />
             }
         >
-            <FieldGroup>
-                <Field>
-                    <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                    />
-                    <FieldError errors={[error]} />
-                </Field>
-            </FieldGroup>
+            <>
+                <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                />
+                <FieldError errors={[error]} />
+            </>
         </InfoBlock>
     );
 }

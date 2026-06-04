@@ -175,6 +175,16 @@ export const ROUTE = {
             },
         },
 
+        traefik: {
+            $pattern: "system-settings/traefik",
+            $route: "/system-settings/traefik/general/",
+
+            general: {
+                $pattern: "system-settings/traefik/general",
+                $route: "/system-settings/traefik/general/",
+            },
+        },
+
         dataBackup: {
             $pattern: "system-settings/data-backup",
             $route: "/system-settings/data-backup/configuration/",

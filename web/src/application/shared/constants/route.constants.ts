@@ -357,6 +357,11 @@ export const ROUTE = {
                     $pattern: "projects/:id/configuration/domain-settings",
                     $route: (id: string) => `/projects/${id}/configuration/domain-settings/`,
                 },
+
+                dangerZone: {
+                    $pattern: "projects/:id/configuration/danger-zone",
+                    $route: (id: string) => `/projects/${id}/configuration/danger-zone/`,
+                },
             },
 
             providerConfiguration: {

@@ -6,6 +6,10 @@ import {
     useConfirmAppDangerActionDialogState,
 } from "~/projects/dialogs/confirm-app-danger-action";
 import {
+    ConfirmProjectDangerActionDialog,
+    useConfirmProjectDangerActionDialogState,
+} from "~/projects/dialogs/confirm-project-danger-action";
+import {
     CreateOrEditAppConfigFileDialog,
     useCreateOrEditAppConfigFileDialogState,
 } from "~/projects/dialogs/create-or-edit-app-config-file";
@@ -110,6 +114,7 @@ function View() {
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const storageMountDialog = useStorageMountDialogState();
     const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
+    const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
     const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
@@ -150,6 +155,7 @@ function View() {
         quickInstallSslCertDialog.destroy();
         storageMountDialog.destroy();
         confirmAppDangerActionDialog.destroy();
+        confirmProjectDangerActionDialog.destroy();
         createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
         createOrEditRegistryAuthDialog.destroy();
@@ -192,6 +198,7 @@ function View() {
             <QuickInstallSslCertDialog />
             <StorageMountDialog />
             <ConfirmAppDangerActionDialog />
+            <ConfirmProjectDangerActionDialog />
             <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
             <CreateOrEditRegistryAuthDialog />

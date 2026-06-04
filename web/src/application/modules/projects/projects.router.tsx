@@ -238,6 +238,16 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.configuration.dangerZone.$pattern,
+                            lazy: async () => {
+                                const { ProjectDangerZoneRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectDangerZoneRoute,
+                                };
+                            },
+                        },
                     ],
                 },
                 {

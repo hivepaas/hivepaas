@@ -33,6 +33,7 @@ const NodeSchema = z.object({
         .object({
             cpus: z.number(),
             memory: z.string(),
+            memoryHR: z.string().nullish(),
         })
         .nullable(),
     engineDesc: z
@@ -103,6 +104,7 @@ export class NodesApiValidator {
                 resources: {
                     cpus: node.resources?.cpus ?? 0,
                     memory: node.resources?.memory ?? "",
+                    memoryHR: node.resources?.memoryHR ?? "",
                 },
                 engineDesc: node.engineDesc,
                 updateVer: node.updateVer,
@@ -137,6 +139,7 @@ export class NodesApiValidator {
                 resources: {
                     cpus: data.resources?.cpus ?? 0,
                     memory: data.resources?.memory ?? "",
+                    memoryHR: data.resources?.memoryHR ?? "",
                 },
                 engineDesc: data.engineDesc,
                 updateVer: data.updateVer,

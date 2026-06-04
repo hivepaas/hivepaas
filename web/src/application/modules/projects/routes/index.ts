@@ -4,6 +4,7 @@ export {
     ProjectImageBuildSettingsRoute,
     ProjectStorageSettingsRoute,
     ProjectDomainSettingsRoute,
+    ProjectDangerZoneRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,
     ProjectGithubAppsRoute,

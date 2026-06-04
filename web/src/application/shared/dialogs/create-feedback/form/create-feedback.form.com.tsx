@@ -148,7 +148,9 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                     <Textarea
                         id="feedback-description"
                         aria-invalid={Boolean(errors.description)}
-                        className="min-h-[220px] resize-none"
+                        className="min-h-[220px]"
+                        minRows={3}
+                        maxRows={6}
                         {...register("description")}
                     />
                     <FieldError errors={[errors.description]} />

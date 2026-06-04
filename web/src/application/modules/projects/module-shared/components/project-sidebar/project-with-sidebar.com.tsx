@@ -45,6 +45,10 @@ function createConfigurationTabs(projectId: string): TabItem[] {
             label: "Domain Settings",
             route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
         },
+        {
+            label: "Danger Zone",
+            route: ROUTE.projects.single.configuration.dangerZone.$route(projectId),
+        },
     ];
 }
 

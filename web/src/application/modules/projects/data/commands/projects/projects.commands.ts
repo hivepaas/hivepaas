@@ -9,8 +9,9 @@ import type {
     Projects_UpdateOne_Res,
     Projects_UpdatePhoto_Req,
     Projects_UpdatePhoto_Res,
+    Projects_UpdateStatus_Req,
+    Projects_UpdateStatus_Res,
 } from "~/projects/api/services";
-
 import { QK } from "~/projects/data/constants";
 
 /**
@@ -54,13 +55,19 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.deleteOne,
-        onSuccess: (response, ...rest) => {
+        onSuccess: (response, request, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.$.find-many-paginated"]],
             });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -92,6 +99,42 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
             if (onSuccess) {
                 onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project status command
+ */
+type UpdateStatusReq = Projects_UpdateStatus_Req["data"];
+type UpdateStatusRes = Projects_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
+
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateStatus,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -133,5 +176,6 @@ export const ProjectsCommands = Object.freeze({
     useCreateOne,
     useDeleteOne,
     useUpdateOne,
+    useUpdateStatus,
     useUpdatePhoto,
 });

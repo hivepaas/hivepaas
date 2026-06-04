@@ -165,6 +165,16 @@ export const ROUTE = {
     systemSettings: {
         $pattern: "system-settings",
 
+        localpaas: {
+            $pattern: "system-settings/localpaas",
+            $route: "/system-settings/localpaas/general/",
+
+            general: {
+                $pattern: "system-settings/localpaas/general",
+                $route: "/system-settings/localpaas/general/",
+            },
+        },
+
         dataBackup: {
             $pattern: "system-settings/data-backup",
             $route: "/system-settings/data-backup/configuration/",

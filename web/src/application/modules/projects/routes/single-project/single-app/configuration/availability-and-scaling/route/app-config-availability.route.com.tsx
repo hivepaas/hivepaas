@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppServiceSettingsCommands, AppServiceSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
@@ -28,10 +29,13 @@ export function AppConfigAvailabilityRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppServiceSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data, isLoading } = AppServiceSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = AppServiceSettingsCommands.useUpdateOne({
         onSuccess: () => {
@@ -55,8 +59,6 @@ export function AppConfigAvailabilityRoute() {
 
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
-
-        console.log(data?.data.updateVer);
 
         update({
             projectID: projectId,

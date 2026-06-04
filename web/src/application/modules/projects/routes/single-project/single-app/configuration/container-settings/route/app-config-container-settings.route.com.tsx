@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppContainerSettingsCommands, AppContainerSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import {
     type AppContainerSettings,
     type Healthcheck,
@@ -143,10 +144,13 @@ export function AppConfigContainerSettingsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppContainerSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data, isLoading } = AppContainerSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = AppContainerSettingsCommands.useUpdateOne({
         onSuccess: () => {

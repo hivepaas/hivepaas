@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectAppsCommands } from "~/projects/data/commands";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
@@ -28,14 +29,24 @@ export function AppConfigGeneralRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading, error, refetch } = ProjectAppsQueries.useFindOneById({
-        projectID: projectId,
-        appID: appId,
-    });
-    const { data: projectData, isLoading: isProjectLoading, error: projectError, refetch: refetchProject } =
-        ProjectsQueries.useFindOneById({
+    const { data, isLoading, error, refetch } = ProjectAppsQueries.useFindOneById(
+        {
             projectID: projectId,
-        });
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+    const {
+        data: projectData,
+        isLoading: isProjectLoading,
+        error: projectError,
+        refetch: refetchProject,
+    } = ProjectsQueries.useFindOneById(
+        {
+            projectID: projectId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = ProjectAppsCommands.useUpdateOne({
         onSuccess: () => {

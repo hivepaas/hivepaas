@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
 import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
 
@@ -94,10 +95,13 @@ export function AppConfigDeploymentSettingsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = AppDeploymentSettingsCommands.useUpdateOne({
         onSuccess: () => {

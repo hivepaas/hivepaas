@@ -1,7 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectAppEnvVarsApi } from "~/projects/api/hooks/project-apps";
 import type { ProjectAppEnvVars_UpdateOne_Req, ProjectAppEnvVars_UpdateOne_Res } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 /**
  * Update a project app env vars command
@@ -17,13 +18,14 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.env-vars.$.find-one"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,

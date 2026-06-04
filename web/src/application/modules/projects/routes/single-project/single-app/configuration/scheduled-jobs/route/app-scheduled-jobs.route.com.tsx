@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppScheduledJobsQueries } from "~/projects/data/queries";
 import { useCreateOrEditAppScheduledJobDialog } from "~/projects/dialogs/create-or-edit-app-scheduled-job";
 import { AppScheduledJobsTableDefs } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
@@ -24,13 +25,16 @@ export function AppScheduledJobsRoute() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: scheduledJobs, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppScheduledJobsQueries.useFindManyPaginated({
-            projectID: projectId,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+        AppScheduledJobsQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            APP_CONFIGURATION_QUERY_OPTIONS,
+        );
 
     const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, appId), [projectId, appId]);
 

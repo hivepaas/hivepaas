@@ -12,16 +12,8 @@ import type {
     AppScheduledJobs_UpdateStatus_Req,
     AppScheduledJobs_UpdateStatus_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
 
-function invalidateScheduledJobs(queryClient: ReturnType<typeof useQueryClient>) {
-    void queryClient.invalidateQueries({
-        queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]],
-    });
-    void queryClient.invalidateQueries({
-        queryKey: [QK["projects.apps.scheduled-jobs.$.find-one-by-id"]],
-    });
-}
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 type CreateOneReq = AppScheduledJobs_CreateOne_Req["data"];
 type CreateOneRes = AppScheduledJobs_CreateOne_Res;
@@ -33,11 +25,12 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.createOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
-            onSuccess?.(response, ...rest);
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -53,9 +46,12 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
-        onSuccess: (response, ...rest) => {
-            invalidateScheduledJobs(queryClient);
-            onSuccess?.(response, ...rest);
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
+            });
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -71,9 +67,12 @@ function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateStatus,
-        onSuccess: (response, ...rest) => {
-            invalidateScheduledJobs(queryClient);
-            onSuccess?.(response, ...rest);
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
+            });
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -89,9 +88,12 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.deleteOne,
-        onSuccess: (response, ...rest) => {
-            invalidateScheduledJobs(queryClient);
-            onSuccess?.(response, ...rest);
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
+            });
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -107,9 +109,12 @@ function useRunNow({ onSuccess, ...options }: RunNowOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.runNow,
-        onSuccess: (response, ...rest) => {
-            invalidateScheduledJobs(queryClient);
-            onSuccess?.(response, ...rest);
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
+            });
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });

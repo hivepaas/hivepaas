@@ -14,6 +14,8 @@ import type {
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
+import { invalidateSingleAppSummaryQueries } from "./app-configuration-cache.helpers";
+
 /**
  * Create a project app command
  */
@@ -82,17 +84,11 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.$.find-many-paginated"]],
-            });
-
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.$.find-one-by-id"]],
-            });
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -114,12 +110,7 @@ function useDeploy({ onSuccess, ...options }: DeployOptions = {}) {
     return useMutation({
         mutationFn: mutations.deploy,
         onSuccess: (response, request, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [
-                    QK["projects.apps.$.find-one-by-id"],
-                    { projectID: request.projectID, appID: request.appID },
-                ],
-            });
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
 
             if (onSuccess) {
                 onSuccess(response, request, ...rest);
@@ -144,12 +135,7 @@ function useRestart({ onSuccess, ...options }: RestartOptions = {}) {
     return useMutation({
         mutationFn: mutations.restart,
         onSuccess: (response, request, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [
-                    QK["projects.apps.$.find-one-by-id"],
-                    { projectID: request.projectID, appID: request.appID },
-                ],
-            });
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
 
             if (onSuccess) {
                 onSuccess(response, request, ...rest);

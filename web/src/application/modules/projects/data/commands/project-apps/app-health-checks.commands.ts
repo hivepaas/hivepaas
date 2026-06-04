@@ -10,7 +10,8 @@ import type {
     AppHealthChecks_UpdateStatus_Req,
     AppHealthChecks_UpdateStatus_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 type CreateOneReq = AppHealthChecks_CreateOne_Req["data"];
 type CreateOneRes = AppHealthChecks_CreateOne_Res;
@@ -22,11 +23,12 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.createOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
-            onSuccess?.(response, ...rest);
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -42,14 +44,12 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-one-by-id"]],
-            });
-            onSuccess?.(response, ...rest);
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -65,14 +65,12 @@ function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateStatus,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-one-by-id"]],
-            });
-            onSuccess?.(response, ...rest);
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -88,14 +86,12 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.deleteOne,
-        onSuccess: (response, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-many-paginated"]],
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.health-checks.$.find-one-by-id"]],
-            });
-            onSuccess?.(response, ...rest);
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });

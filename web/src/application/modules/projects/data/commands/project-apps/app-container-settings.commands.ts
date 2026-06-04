@@ -7,7 +7,8 @@ import {
     type AppContainerSettings_UpdateOne_Req,
     type AppContainerSettings_UpdateOne_Res,
 } from "../../../api/services";
-import { QK } from "../../constants/projects.query-keys";
+
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 type UpdateOneReq = AppContainerSettings_UpdateOne_Req["data"];
 type UpdateOneRes = AppContainerSettings_UpdateOne_Res;
@@ -20,11 +21,9 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     return useMutation({
         mutationFn: mutations.updateOne,
         onSuccess: (response, request, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [
-                    QK["projects.apps.container-settings.$.find-one"],
-                    { projectID: request.projectID, appID: request.appID },
-                ],
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
             onSuccess?.(response, request, ...rest);
         },

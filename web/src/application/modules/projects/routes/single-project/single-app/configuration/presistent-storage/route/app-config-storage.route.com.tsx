@@ -7,6 +7,7 @@ import {
     ProjectAppsQueries,
     ProjectsQueries,
 } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
 import type { AppStorageMount } from "~/projects/domain";
 
@@ -28,19 +29,28 @@ function AppConfigStorageContent() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
-    const { data: projectData, isLoading: projectMetaLoading } = ProjectsQueries.useFindOneById({
-        projectID: projectId,
-    });
+    const { data: projectData, isLoading: projectMetaLoading } = ProjectsQueries.useFindOneById(
+        {
+            projectID: projectId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
-    const { data: appDetailsData, isLoading: appDetailsLoading } = ProjectAppsQueries.useFindOneById({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data: appDetailsData, isLoading: appDetailsLoading } = ProjectAppsQueries.useFindOneById(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutateAsync: update } = AppStorageSettingsCommands.useUpdateOne();
 
@@ -160,10 +170,13 @@ export function AppConfigStorageRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading, error, refetch } = AppStorageSettingsQueries.useFindOne({
-        projectID: projectId,
-        appID: appId,
-    });
+    const { data, isLoading, error, refetch } = AppStorageSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     if (isLoading) {
         return <AppLoader />;

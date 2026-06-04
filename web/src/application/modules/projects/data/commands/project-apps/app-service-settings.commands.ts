@@ -2,7 +2,8 @@ import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/
 
 import { useAppServiceSettingsApi } from "../../../api/hooks/project-apps";
 import { type AppServiceSettings_UpdateOne_Req, type AppServiceSettings_UpdateOne_Res } from "../../../api/services";
-import { QK } from "../../constants/projects.query-keys";
+
+import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
 type UpdateOneReq = AppServiceSettings_UpdateOne_Req["data"];
 type UpdateOneRes = AppServiceSettings_UpdateOne_Res;
@@ -15,11 +16,9 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     return useMutation({
         mutationFn: mutations.updateOne,
         onSuccess: (response, request, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [
-                    QK["projects.apps.service-settings.$.find-one"],
-                    { projectID: request.projectID, appID: request.appID },
-                ],
+            invalidateSingleAppConfigurationQueries(queryClient, {
+                projectID: request.projectID,
+                appID: request.appID,
             });
             onSuccess?.(response, request, ...rest);
         },

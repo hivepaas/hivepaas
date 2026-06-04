@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppHealthChecksQueries } from "~/projects/data/queries";
 import { useCreateOrEditAppHealthCheckDialog } from "~/projects/dialogs/create-or-edit-app-health-check";
 import { AppHealthChecksTableDefs } from "~/projects/module-shared/definitions/tables/app-health-checks";
@@ -24,13 +25,16 @@ export function AppHealthChecksRoute() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: healthChecks, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppHealthChecksQueries.useFindManyPaginated({
-            projectID: projectId,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+        AppHealthChecksQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            APP_CONFIGURATION_QUERY_OPTIONS,
+        );
 
     const columns = useMemo(() => AppHealthChecksTableDefs.columns(projectId, appId), [projectId, appId]);
 

@@ -1,6 +1,10 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import type { ProjectNetworks_FindManyPaginated_Res } from "~/projects/api/services/projects-services";
+import type {
+    ProjectNetworks_CreateOne_Res,
+    ProjectNetworks_FindManyPaginated_Res,
+    ProjectNetworks_FindOneById_Res,
+} from "~/projects/api/services/projects-services";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -32,6 +36,16 @@ const FindManyPaginatedSchema = z.object({
     meta: PagingMetaApiSchema,
 });
 
+const FindOneByIdSchema = z.object({
+    data: ProjectNetworkSchema,
+});
+
+const CreateOneSchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+});
+
 export class ProjectNetworksApiValidator {
     findManyPaginated = (response: AxiosResponse): ProjectNetworks_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
@@ -42,6 +56,28 @@ export class ProjectNetworksApiValidator {
         return {
             data,
             meta,
+        };
+    };
+
+    findOneById = (response: AxiosResponse): ProjectNetworks_FindOneById_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data,
+        };
+    };
+
+    createOne = (response: AxiosResponse): ProjectNetworks_CreateOne_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+
+        return {
+            data,
         };
     };
 }

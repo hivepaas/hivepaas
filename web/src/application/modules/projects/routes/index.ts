@@ -4,6 +4,7 @@ export {
     ProjectImageBuildSettingsRoute,
     ProjectStorageSettingsRoute,
     ProjectDomainSettingsRoute,
+    ProjectDangerZoneRoute,
     ProjectAppsRoute,
     ProjectBasicAuthRoute,
     ProjectGithubAppsRoute,
@@ -18,6 +19,7 @@ export {
     ProjectSecretsRoute,
     ProjectRegistryAuthRoute,
     ProjectSslCertificatesRoute,
+    ProjectNetworksRoute,
     SingleAppRoute,
     // Single App Tabs
     AppDeploymentsRoute,

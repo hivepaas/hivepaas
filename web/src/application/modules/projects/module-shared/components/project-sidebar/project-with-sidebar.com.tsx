@@ -45,6 +45,10 @@ function createConfigurationTabs(projectId: string): TabItem[] {
             label: "Domain Settings",
             route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
         },
+        {
+            label: "Danger Zone",
+            route: ROUTE.projects.single.configuration.dangerZone.$route(projectId),
+        },
     ];
 }
 
@@ -105,6 +109,15 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
     ];
 }
 
+function createClusterResourcesTabs(projectId: string): TabItem[] {
+    return [
+        {
+            label: "Networks",
+            route: ROUTE.projects.single.clusterResources.networks.$route(projectId),
+        },
+    ];
+}
+
 function View({ projectId: projectIdProp, section = "providerConfiguration", children }: Props) {
     const { id: routeProjectId } = useParams<{ id: string }>();
     const location = useLocation();
@@ -113,7 +126,11 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
     invariant(projectId, "Project id must be defined");
 
     const tabs =
-        section === "configuration" ? createConfigurationTabs(projectId) : createProviderConfigurationTabs(projectId);
+        section === "configuration"
+            ? createConfigurationTabs(projectId)
+            : section === "clusterResources"
+              ? createClusterResourcesTabs(projectId)
+              : createProviderConfigurationTabs(projectId);
 
     const activeKey = tabs.find(({ route }) => isRouteActive(route, location.pathname))?.route;
     return (
@@ -154,7 +171,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
 interface Props extends PropsWithChildren {
     projectId?: string;
-    section?: "configuration" | "providerConfiguration";
+    section?: "configuration" | "providerConfiguration" | "clusterResources";
 }
 
 export const ProjectWithSidebar = memo(View);

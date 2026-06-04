@@ -14,6 +14,8 @@ import type {
     Projects_UpdateOne_Res,
     Projects_UpdatePhoto_Req,
     Projects_UpdatePhoto_Res,
+    Projects_UpdateStatus_Req,
+    Projects_UpdateStatus_Res,
 } from "~/projects/api/services/projects-services/projects";
 import { EProjectStatus } from "~/projects/module-shared/enums";
 
@@ -152,6 +154,27 @@ export class ProjectsApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.put(`/projects/${projectID}`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update a project status
+     */
+    async updateStatus(
+        request: Projects_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Projects_UpdateStatus_Res, Error>> {
+        const { projectID, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}/status`, payload, {
                     signal,
                 }),
             ).pipe(

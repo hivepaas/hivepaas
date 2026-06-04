@@ -1,5 +1,10 @@
 export const QK = {
     /*
+     * Networks
+     */
+    "networks.$.find-many-paginated": "networks.$.find-many-paginated",
+    "networks.$.find-one-by-id": "networks.$.find-one-by-id",
+    /*
      * Nodes
      */
     "nodes.$.find-many-paginated": "nodes.$.find-many-paginated",

@@ -11,6 +11,8 @@ import type {
     ProjectApps_Restart_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
+    ProjectApps_UpdateStatus_Req,
+    ProjectApps_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -61,13 +63,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.apps.$.find-many-paginated"]],
             });
-            queryClient.removeQueries({
-                queryKey: [
-                    QK["projects.apps.$.find-one-by-id"],
-                    { projectID: request.projectID, appID: request.appID },
-                ],
-                exact: true,
-            });
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
             });
@@ -94,6 +89,31 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.updateOne,
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project app status command
+ */
+type UpdateStatusReq = ProjectApps_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectApps_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
+
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, request, ...rest) => {
             invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
 
@@ -159,6 +179,7 @@ export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
     useDeleteOne,
     useUpdateOne,
+    useUpdateStatus,
     useDeploy,
     useRestart,
 });

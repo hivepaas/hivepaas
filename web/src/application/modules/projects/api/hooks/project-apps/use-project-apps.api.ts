@@ -10,6 +10,7 @@ import type {
     ProjectApps_FindOneById_Req,
     ProjectApps_Restart_Req,
     ProjectApps_UpdateOne_Req,
+    ProjectApps_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -127,6 +128,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update project app",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update a project app status
+                 */
+                updateStatus: async (data: ProjectApps_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.apps.$.updateStatus({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project app status",
                                 error,
                             });
 

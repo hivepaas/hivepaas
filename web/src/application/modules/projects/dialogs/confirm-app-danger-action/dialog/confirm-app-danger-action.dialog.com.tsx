@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
+import { QK } from "~/projects/data/constants";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -21,16 +23,19 @@ const dialogTitle = {
 export function ConfirmAppDangerActionDialog() {
     const { state, props: dialogOptions, ...actions } = useConfirmAppDangerActionDialogState();
     const { navigate } = useAppNavigate();
+    const queryClient = useQueryClient();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const open = state.mode !== "closed";
     const action = state.mode === "open" ? state.action : null;
     const target = state.mode === "open" ? state.target : null;
 
-    const { mutate: updateApp, isPending: isUpdating } = ProjectAppsCommands.useUpdateOne({
+    const { mutate: updateAppStatus, isPending: isUpdating } = ProjectAppsCommands.useUpdateStatus({
         onSuccess: (_response, request) => {
             const nextAction =
-                request.status === EProjectAppStatus.Active ? AppDangerAction.ReEnable : AppDangerAction.Disable;
+                request.payload.status === EProjectAppStatus.Active
+                    ? AppDangerAction.ReEnable
+                    : AppDangerAction.Disable;
 
             toast.success(nextAction === AppDangerAction.ReEnable ? "App re-enabled" : "App disabled");
             actions.close();
@@ -47,6 +52,15 @@ export function ConfirmAppDangerActionDialog() {
             actions.close();
             dialogOptions?.onSuccess?.(AppDangerAction.Delete);
             navigate.modules(ROUTE.projects.single.apps.$route(request.projectID), { ignorePrevPath: true });
+            window.setTimeout(() => {
+                queryClient.removeQueries({
+                    queryKey: [
+                        QK["projects.apps.$.find-one-by-id"],
+                        { projectID: request.projectID, appID: request.appID },
+                    ],
+                    exact: true,
+                });
+            }, 0);
         },
         onError: error => {
             dialogOptions?.onError?.(error);
@@ -68,11 +82,13 @@ export function ConfirmAppDangerActionDialog() {
             return;
         }
 
-        updateApp({
+        updateAppStatus({
             projectID: target.projectId,
             appID: target.appId,
-            updateVer: target.updateVer,
-            status: action === AppDangerAction.ReEnable ? EProjectAppStatus.Active : EProjectAppStatus.Disabled,
+            payload: {
+                updateVer: target.updateVer,
+                status: action === AppDangerAction.ReEnable ? EProjectAppStatus.Active : EProjectAppStatus.Disabled,
+            },
         });
     }
 

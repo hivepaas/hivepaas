@@ -1,5 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type ProjectAppBase, type ProjectAppDetails } from "~/projects/domain";
+import type { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -69,6 +70,22 @@ export type ProjectApps_UpdateOne_Req = ApiRequestBase<
 >;
 
 export type ProjectApps_UpdateOne_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Update project app status
+ */
+export type ProjectApps_UpdateStatus_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    payload: {
+        updateVer: number;
+        status: EProjectAppStatus;
+    };
+}>;
+
+export type ProjectApps_UpdateStatus_Res = ApiResponseBase<{
     type: "success";
 }>;
 

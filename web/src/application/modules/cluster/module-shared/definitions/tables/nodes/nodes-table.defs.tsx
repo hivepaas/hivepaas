@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { NodeDetails } from "~/cluster/domain";
 import { NodeAvailabilityBadge, NodeRoleBadge } from "~/cluster/module-shared/components";
-import { formatNodeMemory } from "~/cluster/module-shared/utils";
 
 import { ActionsCell, MenuCell } from "./building-blocks";
 
@@ -48,7 +47,7 @@ const columns: ColumnDef<NodeDetails>[] = [
         cell: ({ row: { original } }) => {
             const { resources } = original;
             if (!resources) return "-";
-            return formatNodeMemory(resources.memory);
+            return resources.memoryHR || "-";
         },
         meta: {
             align: "center",

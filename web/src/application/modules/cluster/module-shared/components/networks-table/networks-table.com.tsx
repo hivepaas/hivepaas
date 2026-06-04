@@ -1,0 +1,113 @@
+import { useMemo } from "react";
+
+import { Button } from "@components/ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
+import { Plus } from "lucide-react";
+import { ClusterNetworksQueries } from "~/cluster/data/queries";
+import { NetworksTableDefs } from "~/cluster/module-shared/definitions/tables/networks/networks-table.defs";
+import type { NetworkManagementScope } from "~/cluster/module-shared/types";
+import { ProjectNetworksQueries } from "~/projects/data/queries";
+
+import { TableActions } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { useTableState } from "@application/shared/hooks/table";
+import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
+
+import { useCreateNetworkDialog } from "@application/modules/cluster/dialogs";
+
+import { DataTable } from "@/components/ui";
+
+export function NetworkManagementTable({ scope }: Props) {
+    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
+    const clusterPermission = useConditionalModule({ id: MODULE_IDS.Cluster });
+    const projectPermission = useConditionalProject({
+        projectId: scope.type === "project" ? scope.projectId : "",
+    });
+
+    const clusterNetworksQuery = ClusterNetworksQueries.useFindManyPaginated(
+        {
+            pagination,
+            sorting,
+            search,
+        },
+        {
+            enabled: scope.type === "cluster",
+        },
+    );
+    const projectNetworksQuery = ProjectNetworksQueries.useFindManyPaginated(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            pagination,
+            sorting,
+            search,
+        },
+        {
+            enabled: scope.type === "project",
+        },
+    );
+
+    const { data: { data: networks } = DEFAULT_PAGINATED_DATA, isFetching } =
+        scope.type === "cluster" ? clusterNetworksQuery : projectNetworksQuery;
+
+    const dialog = useCreateNetworkDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
+
+    const columns = useMemo(() => NetworksTableDefs.columns(scope), [scope]);
+    const canCreate = scope.type === "cluster" ? clusterPermission.canWrite : projectPermission.canWrite;
+    const deniedMessage =
+        scope.type === "cluster"
+            ? "You only have view access. Create actions are disabled."
+            : "You only have view access in this project. Create actions are disabled.";
+    const createButton = (
+        <Button
+            onClick={() => {
+                dialog.actions.open(scope);
+            }}
+            disabled={!canCreate}
+        >
+            <Plus /> New Network
+        </Button>
+    );
+
+    return (
+        <div className="flex flex-col gap-4">
+            <TableActions
+                search={{ value: search, onChange: setSearch }}
+                renderActions={
+                    canCreate ? (
+                        createButton
+                    ) : (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="inline-flex">{createButton}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>{deniedMessage}</TooltipContent>
+                        </Tooltip>
+                    )
+                }
+            />
+            <DataTable
+                columns={columns}
+                data={networks}
+                pageSize={pagination.size}
+                enablePagination
+                manualSorting
+                enableSorting
+                isLoading={isFetching}
+                onPaginationChange={value => {
+                    setPagination(value);
+                }}
+                onSortingChange={value => {
+                    setSorting(value);
+                }}
+            />
+        </div>
+    );
+}
+
+interface Props {
+    scope: NetworkManagementScope;
+}

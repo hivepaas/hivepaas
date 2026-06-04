@@ -3,6 +3,8 @@ import { useProjectNetworksApi } from "~/projects/api";
 import {
     type ProjectNetworks_FindManyPaginated_Req,
     type ProjectNetworks_FindManyPaginated_Res,
+    type ProjectNetworks_FindOneById_Req,
+    type ProjectNetworks_FindOneById_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -22,6 +24,21 @@ function useFindManyPaginated(request: FindManyPaginatedReq, options: FindManyPa
     });
 }
 
+type FindOneByIdReq = ProjectNetworks_FindOneById_Req["data"];
+type FindOneByIdRes = ProjectNetworks_FindOneById_Res;
+type FindOneByIdOptions = Omit<UseQueryOptions<FindOneByIdRes>, "queryKey" | "queryFn">;
+
+function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {}) {
+    const { queries } = useProjectNetworksApi();
+
+    return useQuery({
+        queryKey: [QK["projects.networks.$.find-one-by-id"], request],
+        queryFn: ({ signal }) => queries.findOneById(request, signal),
+        ...options,
+    });
+}
+
 export const ProjectNetworksQueries = Object.freeze({
     useFindManyPaginated,
+    useFindOneById,
 });

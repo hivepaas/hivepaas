@@ -9,6 +9,7 @@ import type {
     Projects_FindOneById_Req,
     Projects_UpdateOne_Req,
     Projects_UpdatePhoto_Req,
+    Projects_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -77,11 +78,9 @@ function createHook() {
                  * Create a project
                  */
                 createOne: async (data: Projects_CreateOne_Req["data"]) => {
-                    const result = await api.projects.$.createOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.$.createOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
@@ -99,11 +98,9 @@ function createHook() {
                  * Delete a project
                  */
                 deleteOne: async (data: Projects_DeleteOne_Req["data"]) => {
-                    const result = await api.projects.$.deleteOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.$.deleteOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
@@ -121,11 +118,9 @@ function createHook() {
                  * Update a project
                  */
                 updateOne: async (data: Projects_UpdateOne_Req["data"]) => {
-                    const result = await api.projects.$.updateOne(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.$.updateOne({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,
@@ -140,14 +135,32 @@ function createHook() {
                     });
                 },
                 /**
+                 * Update a project status
+                 */
+                updateStatus: async (data: Projects_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.$.updateStatus({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project status",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
                  * Update a project photo
                  */
                 updatePhoto: async (data: Projects_UpdatePhoto_Req["data"]) => {
-                    const result = await api.projects.$.updatePhoto(
-                        {
-                            data,
-                        },
-                    );
+                    const result = await api.projects.$.updatePhoto({
+                        data,
+                    });
 
                     return match(result, {
                         Ok: _ => _,

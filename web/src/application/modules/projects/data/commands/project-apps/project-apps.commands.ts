@@ -57,13 +57,23 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.deleteOne,
-        onSuccess: (response, ...rest) => {
+        onSuccess: (response, request, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.apps.$.find-many-paginated"]],
             });
+            queryClient.removeQueries({
+                queryKey: [
+                    QK["projects.apps.$.find-one-by-id"],
+                    { projectID: request.projectID, appID: request.appID },
+                ],
+                exact: true,
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
 
             if (onSuccess) {
-                onSuccess(response, ...rest);
+                onSuccess(response, request, ...rest);
             }
         },
         ...options,

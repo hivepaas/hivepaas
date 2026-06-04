@@ -6,6 +6,11 @@ import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared
 
 import { ActionsCell } from "./building-blocks";
 
+const centerMeta = {
+    align: "center",
+    titleAlign: "center",
+} as const;
+
 function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity[]): ColumnDef<ProjectAppDetails>[] {
     return [
         {
@@ -13,10 +18,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
             header: "",
             minSize: 80,
             size: 80,
-            meta: {
-                align: "center",
-                titleAlign: "center",
-            },
+            meta: centerMeta,
             cell: ({ row: { original } }) => {
                 return (
                     <ActionsCell
@@ -36,6 +38,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         },
         {
             header: "Replicas",
+            meta: centerMeta,
             cell: ({ row: { original } }) => {
                 const { stats } = original;
                 const runningTasks = stats?.runningTasks ?? 0;
@@ -48,7 +51,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                 const replicaDotClass = runningTasks < desiredTasks ? "bg-orange-500" : "bg-green-500";
 
                 return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                         <span>
                             {runningTasks}/{desiredTasks}
                         </span>
@@ -59,7 +62,12 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         },
         {
             header: "Env",
+            meta: centerMeta,
             cell: ({ row: { original } }) => {
+                if (!original.env) {
+                    return <span className="text-muted-foreground">-</span>;
+                }
+
                 const projectEnv = projectEnvs.find(env => env.name === original.env);
 
                 return (
@@ -72,18 +80,16 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         },
         {
             header: "Status",
+            meta: centerMeta,
             cell: ({ row: { original } }) => {
                 const { status } = original;
                 return <ProjectAppStatusBadge status={status} />;
-            },
-            meta: {
-                align: "center",
-                titleAlign: "center",
             },
         },
         {
             accessorKey: "updatedAt",
             header: "Last Updated",
+            meta: centerMeta,
             cell: ({ row: { original } }) => {
                 const updatedAt = original.updatedAt ?? original.createdAt;
                 return format(updatedAt, "yyyy-MM-dd HH:mm:ss");

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 function InfoRow({ label, value }: InfoRowProps) {
     return (
-        <div className="grid grid-cols-[220px_1fr] gap-6 text-sm">
+        <div className="grid grid-cols-[120px_1fr] gap-6 text-sm">
             <div className="font-semibold text-foreground">{label}</div>
             <div className="text-foreground break-words">{value ?? "-"}</div>
         </div>
@@ -25,10 +25,6 @@ function BackupFileInfoContent({ file }: { file: SystemBackupFile }) {
             <InfoRow
                 label="Name"
                 value={file.name}
-            />
-            <InfoRow
-                label="Key"
-                value={file.key}
             />
             <InfoRow
                 label="Mimetype"

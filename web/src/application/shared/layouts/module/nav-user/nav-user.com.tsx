@@ -1,10 +1,11 @@
-import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, LogOut, MessageSquarePlus } from "lucide-react";
 import invariant from "tiny-invariant";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
+import { useCreateFeedbackDialog } from "@application/shared/dialogs";
 import type { Profile } from "@application/shared/entities";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -22,6 +23,7 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/c
 export function NavUser({ user }: { user: Profile }) {
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
+    const createFeedbackDialog = useCreateFeedbackDialog();
 
     const { mutate: logout, isPending } = SessionCommands.useLogout({
         onSuccess: () => {
@@ -85,6 +87,10 @@ export function NavUser({ user }: { user: Profile }) {
                                     Account
                                 </DropdownMenuItem>
                             </AppLink.Modules>
+                            <DropdownMenuItem onClick={createFeedbackDialog.actions.open}>
+                                <MessageSquarePlus />
+                                Feedback
+                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

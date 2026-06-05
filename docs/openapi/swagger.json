@@ -23738,7 +23738,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -23757,8 +23757,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -31107,9 +31107,12 @@
           },
           "viaSlack" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaSlackReq"
+          },
+          "viaTelegram" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "viaDiscord", "viaEmail", "viaSlack" ],
+        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.CreateNotificationResp" : {
@@ -31209,9 +31212,12 @@
           },
           "viaSlack" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaSlackResp"
+          },
+          "viaTelegram" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramResp"
           }
         },
-        "required" : [ "createdAt", "id", "minSendInterval", "name", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack" ],
+        "required" : [ "createdAt", "id", "minSendInterval", "name", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaDiscordReq" : {
@@ -31219,11 +31225,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "useDefault" : {
+            "type" : "boolean"
+          },
           "webhook" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
           }
         },
-        "required" : [ "enabled", "webhook" ],
+        "required" : [ "enabled", "useDefault", "webhook" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaDiscordResp" : {
@@ -31231,11 +31240,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "useDefault" : {
+            "type" : "boolean"
+          },
           "webhook" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
           }
         },
-        "required" : [ "enabled", "webhook" ],
+        "required" : [ "enabled", "useDefault", "webhook" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaEmailReq" : {
@@ -31260,9 +31272,12 @@
           },
           "toProjectOwners" : {
             "type" : "boolean"
+          },
+          "useDefault" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "enabled", "sender", "toAddresses", "toAllAdmins", "toProjectMembers", "toProjectOwners" ],
+        "required" : [ "enabled", "sender", "toAddresses", "toAllAdmins", "toProjectMembers", "toProjectOwners", "useDefault" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaEmailResp" : {
@@ -31287,9 +31302,12 @@
           },
           "toProjectOwners" : {
             "type" : "boolean"
+          },
+          "useDefault" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "enabled", "sender", "toAddresses", "toAllAdmins", "toProjectMembers", "toProjectOwners" ],
+        "required" : [ "enabled", "sender", "toAddresses", "toAllAdmins", "toProjectMembers", "toProjectOwners", "useDefault" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaSlackReq" : {
@@ -31297,11 +31315,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "useDefault" : {
+            "type" : "boolean"
+          },
           "webhook" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
           }
         },
-        "required" : [ "enabled", "webhook" ],
+        "required" : [ "enabled", "useDefault", "webhook" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaSlackResp" : {
@@ -31309,11 +31330,44 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "useDefault" : {
+            "type" : "boolean"
+          },
           "webhook" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
           }
         },
-        "required" : [ "enabled", "webhook" ],
+        "required" : [ "enabled", "useDefault", "webhook" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "setting" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ObjectIDReq"
+          },
+          "useDefault" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled", "setting", "useDefault" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "setting" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings.BaseSettingResp"
+          },
+          "useDefault" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled", "setting", "useDefault" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationReq" : {
@@ -31341,9 +31395,12 @@
           },
           "viaSlack" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaSlackReq"
+          },
+          "viaTelegram" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "updateVer", "viaDiscord", "viaEmail", "viaSlack" ],
+        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "updateVer", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.UpdateNotificationResp" : {
@@ -35847,10 +35904,10 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       }
     },
     "securitySchemes" : {

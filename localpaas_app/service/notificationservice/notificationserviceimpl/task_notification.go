@@ -7,7 +7,10 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/services/email"
@@ -24,6 +27,11 @@ func (s *service) NotifyForTaskResult(
 	notification := data.Notification
 	if notification == nil {
 		return resp, nil
+	}
+
+	err = s.loadDefaultNotificationSourceSettings(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	currEvent := gofn.If(data.ActionSucceeded, "success", "failure")
@@ -70,6 +78,104 @@ func (s *service) NotifyForTaskResult(
 		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
+}
+
+//nolint:gocognit
+func (s *service) loadDefaultNotificationSourceSettings(
+	ctx context.Context,
+	db database.IDB,
+	data *notificationservice.TaskResultNotificationReq,
+) (err error) {
+	notif := data.Notification
+	var settingTypes []base.SettingType
+	needLoadEmail := false
+	if notif.ViaEmail != nil && notif.ViaEmail.UseDefault {
+		needLoadEmail = true
+		settingTypes = append(settingTypes, base.SettingTypeEmail)
+	}
+	needLoadSlack := notif.ViaSlack != nil && notif.ViaSlack.UseDefault
+	needLoadDiscord := notif.ViaDiscord != nil && notif.ViaDiscord.UseDefault
+	needLoadTelegram := notif.ViaTelegram != nil && notif.ViaTelegram.UseDefault
+	if needLoadSlack || needLoadDiscord || needLoadTelegram {
+		settingTypes = append(settingTypes, base.SettingTypeIMService)
+	}
+
+	if len(settingTypes) == 0 {
+		return nil
+	}
+
+	var scope *base.ObjectScope
+	var objectID, parentObjectID string
+	switch {
+	case data.ScopeApp != nil:
+		objectID, parentObjectID = data.ScopeApp.ID, data.ScopeApp.ProjectID
+		scope = base.NewObjectScopeApp(objectID, parentObjectID)
+	case data.ScopeProject != nil:
+		objectID = data.ScopeProject.ID
+		scope = base.NewObjectScopeProject(objectID)
+	case data.ScopeUser != nil:
+		objectID = data.ScopeUser.ID
+		scope = base.NewObjectScopeUser(objectID)
+	default:
+		scope = base.NewObjectScopeGlobal()
+	}
+
+	settings, _, err := s.settingRepo.List(ctx, db, scope, nil,
+		bunex.SelectWhereIn("setting.type IN (?)", settingTypes...),
+		bunex.SelectWhere("setting.is_default IS TRUE"),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	findFunc := func(typ base.SettingType, kind *string) *entity.Setting {
+		var defaultInParent *entity.Setting
+		var defaultInGlobal *entity.Setting
+		for _, setting := range settings {
+			if setting.Type != typ || (kind != nil && setting.Kind != *kind) {
+				continue
+			}
+			if setting.ObjectID == objectID {
+				return setting // found the default setting in current scope
+			}
+			if setting.ObjectID == parentObjectID {
+				defaultInParent = setting
+				continue
+			}
+			if setting.Scope == base.ObjectScopeGlobal {
+				defaultInGlobal = setting
+				continue
+			}
+		}
+		return gofn.Coalesce(defaultInParent, defaultInGlobal)
+	}
+
+	if needLoadEmail {
+		if setting := findFunc(base.SettingTypeEmail, nil); setting != nil {
+			data.RefObjects.RefSettings[setting.ID] = setting
+			notif.ViaEmail.Sender.ID = setting.ID
+		}
+	}
+	if needLoadSlack {
+		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindSlack))); setting != nil {
+			data.RefObjects.RefSettings[setting.ID] = setting
+			notif.ViaSlack.Webhook.ID = setting.ID
+		}
+	}
+	if needLoadDiscord {
+		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindDiscord))); setting != nil {
+			data.RefObjects.RefSettings[setting.ID] = setting
+			notif.ViaDiscord.Webhook.ID = setting.ID
+		}
+	}
+	if needLoadTelegram {
+		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindTelegram))); setting != nil {
+			data.RefObjects.RefSettings[setting.ID] = setting
+			notif.ViaTelegram.Setting.ID = setting.ID
+		}
+	}
+
+	return nil
 }
 
 func (s *service) notifyForTaskResultViaEmail(

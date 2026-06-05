@@ -69,7 +69,7 @@ func (e *Executor) Execute(
 	data := &taskData{
 		TaskExecData: &queue.TaskExecData{
 			Task:       task,
-			RefObjects: &entity.RefObjects{},
+			RefObjects: entity.NewRefObjects(),
 			LogStore:   tasklog.NewLocalStore(fmt.Sprintf("task:%s:log", task.ID)),
 		},
 	}

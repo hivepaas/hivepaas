@@ -26,7 +26,7 @@ func (s *service) GetNotificationForEvent(
 		return nil, nil
 	}
 	if refObjects == nil {
-		refObjects = &entity.RefObjects{}
+		refObjects = entity.NewRefObjects()
 	}
 
 	notifSettingID := gofn.If(eventSuccess, eventSetting.Success.ID, eventSetting.Failure.ID)
@@ -63,9 +63,6 @@ func (s *service) GetNotificationForEvent(
 		return nil, apperrors.Wrap(err)
 	}
 	refObjects.AddRefObjects(refs)
-	if refObjects.RefSettings == nil {
-		refObjects.RefSettings = make(map[string]*entity.Setting)
-	}
 	refObjects.RefSettings[setting.ID] = setting
 
 	return setting.MustAsNotification(), nil

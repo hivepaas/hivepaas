@@ -21,21 +21,21 @@ func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
 		return
 	}
 
-	if len(refObjects.RefSettings) > 0 && r.RefSettings == nil {
+	if r.RefSettings == nil {
 		r.RefSettings = make(map[string]*Setting, len(refObjects.RefSettings))
 	}
 	for _, refSetting := range refObjects.RefSettings {
 		r.RefSettings[refSetting.ID] = refSetting
 	}
 
-	if len(refObjects.RefApps) > 0 && r.RefApps == nil {
+	if r.RefApps == nil {
 		r.RefApps = make(map[string]*App, len(refObjects.RefApps))
 	}
 	for _, refApp := range refObjects.RefApps {
 		r.RefApps[refApp.ID] = refApp
 	}
 
-	if len(refObjects.RefUsers) > 0 && r.RefUsers == nil {
+	if r.RefUsers == nil {
 		r.RefUsers = make(map[string]*User, len(refObjects.RefUsers))
 	}
 	for _, refUser := range refObjects.RefUsers {

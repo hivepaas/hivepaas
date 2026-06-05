@@ -27,14 +27,16 @@ func (req *GetNotificationReq) Validate() apperrors.ValidationErrors {
 
 type NotificationResp struct {
 	*settings.BaseSettingResp
-	ViaEmail        *NotificationViaEmailResp   `json:"viaEmail"`
-	ViaSlack        *NotificationViaSlackResp   `json:"viaSlack"`
-	ViaDiscord      *NotificationViaDiscordResp `json:"viaDiscord"`
-	MinSendInterval timeutil.Duration           `json:"minSendInterval"`
+	ViaEmail        *NotificationViaEmailResp    `json:"viaEmail"`
+	ViaSlack        *NotificationViaSlackResp    `json:"viaSlack"`
+	ViaDiscord      *NotificationViaDiscordResp  `json:"viaDiscord"`
+	ViaTelegram     *NotificationViaTelegramResp `json:"viaTelegram"`
+	MinSendInterval timeutil.Duration            `json:"minSendInterval"`
 }
 
 type NotificationViaEmailResp struct {
 	Enabled          bool                      `json:"enabled"`
+	UseDefault       bool                      `json:"useDefault"`
 	Sender           *settings.BaseSettingResp `json:"sender"`
 	ToProjectMembers bool                      `json:"toProjectMembers"`
 	ToProjectOwners  bool                      `json:"toProjectOwners"`
@@ -43,13 +45,21 @@ type NotificationViaEmailResp struct {
 }
 
 type NotificationViaSlackResp struct {
-	Enabled bool                      `json:"enabled"`
-	Webhook *settings.BaseSettingResp `json:"webhook"`
+	Enabled    bool                      `json:"enabled"`
+	UseDefault bool                      `json:"useDefault"`
+	Webhook    *settings.BaseSettingResp `json:"webhook"`
 }
 
 type NotificationViaDiscordResp struct {
-	Enabled bool                      `json:"enabled"`
-	Webhook *settings.BaseSettingResp `json:"webhook"`
+	Enabled    bool                      `json:"enabled"`
+	UseDefault bool                      `json:"useDefault"`
+	Webhook    *settings.BaseSettingResp `json:"webhook"`
+}
+
+type NotificationViaTelegramResp struct {
+	Enabled    bool                      `json:"enabled"`
+	UseDefault bool                      `json:"useDefault"`
+	Setting    *settings.BaseSettingResp `json:"setting"`
 }
 
 type GetNotificationResp struct {
@@ -82,6 +92,10 @@ func TransformNotification(
 	if resp.ViaDiscord != nil && resp.ViaDiscord.Webhook != nil {
 		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaDiscord.Webhook.ID])
 		resp.ViaDiscord.Webhook = itemResp
+	}
+	if resp.ViaTelegram != nil && resp.ViaTelegram.Setting != nil {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaTelegram.Setting.ID])
+		resp.ViaTelegram.Setting = itemResp
 	}
 
 	return resp, nil

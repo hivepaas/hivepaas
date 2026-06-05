@@ -54,6 +54,7 @@ func (s *Notification) HasNotificationViaTelegram() bool {
 
 type NotificationViaEmail struct {
 	Enabled          bool     `json:"enabled"`
+	UseDefault       bool     `json:"useDefault"`
 	Sender           ObjectID `json:"sender"`
 	ToProjectMembers bool     `json:"toProjectMembers,omitempty"`
 	ToProjectOwners  bool     `json:"toProjectOwners,omitempty"`
@@ -70,8 +71,9 @@ func (s *NotificationViaEmail) GetRefSettingIDs() (res []string) {
 }
 
 type NotificationViaSlack struct {
-	Enabled bool     `json:"enabled"`
-	Webhook ObjectID `json:"webhook"`
+	Enabled    bool     `json:"enabled"`
+	UseDefault bool     `json:"useDefault"`
+	Webhook    ObjectID `json:"webhook"`
 }
 
 func (s *NotificationViaSlack) GetRefSettingIDs() (res []string) {
@@ -83,8 +85,9 @@ func (s *NotificationViaSlack) GetRefSettingIDs() (res []string) {
 }
 
 type NotificationViaDiscord struct {
-	Enabled bool     `json:"enabled"`
-	Webhook ObjectID `json:"webhook"`
+	Enabled    bool     `json:"enabled"`
+	UseDefault bool     `json:"useDefault"`
+	Webhook    ObjectID `json:"webhook"`
 }
 
 func (s *NotificationViaDiscord) GetRefSettingIDs() (res []string) {
@@ -96,8 +99,9 @@ func (s *NotificationViaDiscord) GetRefSettingIDs() (res []string) {
 }
 
 type NotificationViaTelegram struct {
-	Enabled bool     `json:"enabled"`
-	Setting ObjectID `json:"setting"`
+	Enabled    bool     `json:"enabled"`
+	UseDefault bool     `json:"useDefault"`
+	Setting    ObjectID `json:"setting"`
 }
 
 func (s *NotificationViaTelegram) GetRefSettingIDs() (res []string) {

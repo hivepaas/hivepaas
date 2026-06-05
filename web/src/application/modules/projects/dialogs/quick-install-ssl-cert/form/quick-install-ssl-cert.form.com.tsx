@@ -61,7 +61,14 @@ function addDays(date: Date, days: number): Date {
     return result;
 }
 
-export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly = false, onSubmit, onHasChanges }: Props) {
+export function QuickInstallSslCertForm({
+    domain,
+    isPending,
+    prefill,
+    readOnly = false,
+    onSubmit,
+    onHasChanges,
+}: Props) {
     const defaultEmail = "";
     const defaultKeyType = ESslKeyType.ECP256;
     const defaultAutoRenew = true;
@@ -186,7 +193,7 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                         <Input
                             value={domain}
                             disabled
-                    />
+                        />
                     </Field>
                     <Field>
                         <InfoBlock
@@ -194,33 +201,33 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                                 <LabelWithInfo
                                     label="Certificate Type"
                                     isRequired
-                            />
-                        }
+                                />
+                            }
                             titleWidth={150}
-                    >
+                        >
                             <Tabs
                                 value={certType}
                                 onValueChange={value => {
-                                if (readOnly) {
-                                    return;
-                                }
+                                    if (readOnly) {
+                                        return;
+                                    }
 
-                                certTypeField.onChange(value);
-                            }}
-                        >
+                                    certTypeField.onChange(value);
+                                }}
+                            >
                                 <TabsList>
                                     <TabsTrigger
                                         value={ESslCertType.LetsEncrypt}
                                         className="flex-1"
                                         disabled={readOnly}
-                                >
+                                    >
                                         Let&apos;s Encrypt
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value={ESslCertType.Custom}
                                         className="flex-1"
                                         disabled={readOnly}
-                                >
+                                    >
                                         Custom
                                     </TabsTrigger>
                                 </TabsList>
@@ -234,16 +241,16 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                                 <LabelWithInfo
                                     label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
                                     isRequired
-                            />
-                        }
+                                />
+                            }
                             titleWidth={150}
-                    >
+                        >
                             <Input
                                 {...email}
                                 type="email"
                                 aria-invalid={isEmailInvalid}
                                 disabled={readOnly}
-                        />
+                            />
                             <FieldError errors={[errors.email]} />
                         </InfoBlock>
                     </Field>
@@ -254,21 +261,21 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                                 <LabelWithInfo
                                     label="Key Type"
                                     isRequired
-                            />
-                        }
+                                />
+                            }
                             titleWidth={150}
-                    >
+                        >
                             <Select
                                 value={keyType.value}
                                 onValueChange={value => {
-                                if (readOnly) {
-                                    return;
-                                }
+                                    if (readOnly) {
+                                        return;
+                                    }
 
-                                keyType.onChange(value);
-                            }}
+                                    keyType.onChange(value);
+                                }}
                                 disabled={readOnly}
-                        >
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select key type" />
                                 </SelectTrigger>
@@ -277,10 +284,10 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
-                                    >
+                                        >
                                             {option.label}
                                         </SelectItem>
-                                ))}
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <FieldError errors={[errors.keyType]} />
@@ -294,95 +301,95 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                                     <LabelWithInfo
                                         label="Auto-renew"
                                         isRequired
-                                />
-                            }
+                                    />
+                                }
                                 titleWidth={150}
-                        >
+                            >
                                 <Checkbox
                                     checked={autoRenew.value}
                                     onCheckedChange={value => {
-                                    if (readOnly) {
-                                        return;
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        autoRenew.onChange(value === true);
+                                    }}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    ) : (
+                        <>
+                            <Field>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Certificate"
+                                            isRequired
+                                        />
                                     }
-
-                                    autoRenew.onChange(value === true);
-                                }}
-                                    disabled={readOnly}
-                            />
-                            </InfoBlock>
-                        </Field>
-                ) : (
-                    <>
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label="Certificate"
-                                        isRequired
+                                    titleWidth={150}
+                                >
+                                    <Textarea
+                                        {...certificate}
+                                        aria-invalid={isCertificateInvalid}
+                                        rows={4}
+                                        disabled={readOnly}
                                     />
-                                }
-                                titleWidth={150}
-                            >
-                                <Textarea
-                                    {...certificate}
-                                    aria-invalid={isCertificateInvalid}
-                                    rows={4}
-                                    disabled={readOnly}
-                                />
-                            </InfoBlock>
-                        </Field>
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label="Expire At"
-                                        isRequired
+                                </InfoBlock>
+                            </Field>
+                            <Field>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Expire At"
+                                            isRequired
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <DatePicker
+                                        value={expireAtField.value ?? undefined}
+                                        onChange={date => {
+                                            if (readOnly) {
+                                                return;
+                                            }
+
+                                            expireAtField.onChange(date ?? null);
+                                        }}
+                                        aria-invalid={isExpireAtInvalid}
+                                        placeholder="Select date"
+                                        allowClear
+                                        disabled={readOnly}
                                     />
-                                }
-                                titleWidth={150}
-                            >
-                                <DatePicker
-                                    value={expireAtField.value ?? undefined}
-                                    onChange={date => {
-                                        if (readOnly) {
-                                            return;
-                                        }
+                                    <FieldError errors={[errors.expireAt]} />
+                                </InfoBlock>
+                            </Field>
 
-                                        expireAtField.onChange(date ?? null);
-                                    }}
-                                    aria-invalid={isExpireAtInvalid}
-                                    placeholder="Select date"
-                                    allowClear
-                                    disabled={readOnly}
-                                />
-                                <FieldError errors={[errors.expireAt]} />
-                            </InfoBlock>
-                        </Field>
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Notify From" />}
+                                    titleWidth={150}
+                                >
+                                    <DatePicker
+                                        value={notifyFromField.value ?? undefined}
+                                        onChange={date => {
+                                            if (readOnly) {
+                                                return;
+                                            }
 
-                        <Field>
-                            <InfoBlock
-                                title={<LabelWithInfo label="Notify From" />}
-                                titleWidth={150}
-                            >
-                                <DatePicker
-                                    value={notifyFromField.value ?? undefined}
-                                    onChange={date => {
-                                        if (readOnly) {
-                                            return;
-                                        }
-
-                                        notifyFromField.onChange(date ?? null);
-                                    }}
-                                    aria-invalid={isNotifyFromInvalid}
-                                    placeholder="Select date"
-                                    allowClear
-                                    disabled={readOnly}
-                                />
-                                <FieldError errors={[errors.notifyFrom]} />
-                            </InfoBlock>
-                        </Field>
-                    </>
-                )}
+                                            notifyFromField.onChange(date ?? null);
+                                        }}
+                                        aria-invalid={isNotifyFromInvalid}
+                                        placeholder="Select date"
+                                        allowClear
+                                        disabled={readOnly}
+                                    />
+                                    <FieldError errors={[errors.notifyFrom]} />
+                                </InfoBlock>
+                            </Field>
+                        </>
+                    )}
                 </FieldGroup>
             </fieldset>
 
@@ -390,6 +397,7 @@ export function QuickInstallSslCertForm({ domain, isPending, prefill, readOnly =
                 <Button
                     type="submit"
                     isLoading={isPending}
+                    className="min-w-[100px]"
                     disabled={readOnly}
                 >
                     Save

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectImServiceCommands } from "~/projects/data/commands";
 import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateImPlatformStatusForm } from "../form";
@@ -141,11 +141,15 @@ export function UpdateImPlatformStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="sm:max-w-[560px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateImPlatformStatusForm
                         isPending={isPending}
@@ -158,7 +162,7 @@ export function UpdateImPlatformStatusDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

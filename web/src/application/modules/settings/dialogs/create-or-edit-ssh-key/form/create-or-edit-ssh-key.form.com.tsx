@@ -12,7 +12,16 @@ import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/sett
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESSHKeyType } from "@application/shared/enums";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    DialogActionFooter,
+    DialogBody,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+} from "@/components/ui";
 
 import type { CreateOrEditSSHKeyFormInput, CreateOrEditSSHKeyFormOutput } from "../schemas";
 import { CreateOrEditSSHKeyFormSchema } from "../schemas";
@@ -136,177 +145,179 @@ export function CreateOrEditSSHKeyForm({
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
-                className="flex flex-col gap-6"
+                className="min-h-0 flex flex-1 flex-col"
             >
-                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-                <fieldset
-                    disabled={isReadOnly}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-                >
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Name" />}
+                <DialogBody className="flex flex-col gap-6">
+                    {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                    {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                    <fieldset
+                        disabled={isReadOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
-                        <FieldGroup>
-                            <Field>
-                                <Input
-                                    {...name}
-                                    aria-invalid={isNameInvalid}
-                                />
-                                <FieldError errors={[errors.name]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Key Type" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Select
-                                    value={keyType.value || UNSPECIFIED_KEY_TYPE_VALUE}
-                                    onValueChange={value => {
-                                        const nextValue =
-                                            value === UNSPECIFIED_KEY_TYPE_VALUE ? "" : (value as ESSHKeyType);
-                                        keyType.onChange(nextValue);
-                                    }}
-                                >
-                                    <SelectTrigger aria-invalid={isKeyTypeInvalid}>
-                                        <SelectValue placeholder="Select key type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {keyTypeOptions.map(option => (
-                                            <SelectItem
-                                                key={option.value || UNSPECIFIED_KEY_TYPE_VALUE}
-                                                value={option.value || UNSPECIFIED_KEY_TYPE_VALUE}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FieldError errors={[errors.keyType]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Public Key" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Textarea
-                                    {...publicKey}
-                                    className="min-h-24"
-                                    aria-invalid={isPublicKeyInvalid}
-                                    rows={4}
-                                    maxRows={7}
-                                />
-                                <FieldError errors={[errors.publicKey]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Private Key"
-                                isRequired
-                            />
-                        }
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Textarea
-                                    {...privateKey}
-                                    className="min-h-24"
-                                    aria-invalid={isPrivateKeyInvalid}
-                                    rows={4}
-                                    maxRows={7}
-                                />
-                                <FieldError errors={[errors.privateKey]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Passphrase" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <PasswordInput
-                                    value={passphrase.value}
-                                    onChange={passphrase.onChange}
-                                    aria-invalid={isPassphraseInvalid}
-                                />
-                                <FieldError errors={[errors.passphrase]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    {showAvailableInProjects && (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title={<LabelWithInfo label="Name" />}
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...name}
+                                        aria-invalid={isNameInvalid}
+                                    />
+                                    <FieldError errors={[errors.name]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Key Type" />}
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Select
+                                        value={keyType.value || UNSPECIFIED_KEY_TYPE_VALUE}
+                                        onValueChange={value => {
+                                            const nextValue =
+                                                value === UNSPECIFIED_KEY_TYPE_VALUE ? "" : (value as ESSHKeyType);
+                                            keyType.onChange(nextValue);
+                                        }}
+                                    >
+                                        <SelectTrigger aria-invalid={isKeyTypeInvalid}>
+                                            <SelectValue placeholder="Select key type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {keyTypeOptions.map(option => (
+                                                <SelectItem
+                                                    key={option.value || UNSPECIFIED_KEY_TYPE_VALUE}
+                                                    value={option.value || UNSPECIFIED_KEY_TYPE_VALUE}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError errors={[errors.keyType]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Public Key" />}
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Textarea
+                                        {...publicKey}
+                                        className="min-h-24"
+                                        aria-invalid={isPublicKeyInvalid}
+                                        rows={4}
+                                        maxRows={7}
+                                    />
+                                    <FieldError errors={[errors.publicKey]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Private Key"
+                                    isRequired
+                                />
+                            }
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Textarea
+                                        {...privateKey}
+                                        className="min-h-24"
+                                        aria-invalid={isPrivateKeyInvalid}
+                                        rows={4}
+                                        maxRows={7}
+                                    />
+                                    <FieldError errors={[errors.privateKey]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Passphrase" />}
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <PasswordInput
+                                        value={passphrase.value}
+                                        onChange={passphrase.onChange}
+                                        aria-invalid={isPassphraseInvalid}
+                                    />
+                                    <FieldError errors={[errors.passphrase]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        {showAvailableInProjects && (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Available in Projects" />}
+                            >
+                                <Checkbox
+                                    checked={availableInProjects.value}
+                                    onCheckedChange={checked => {
+                                        availableInProjects.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                        )}
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Default" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={defaultField.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    defaultField.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>
-                    )}
 
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Default" />}
-                    >
-                        <Checkbox
-                            checked={defaultField.value}
-                            onCheckedChange={checked => {
-                                defaultField.onChange(Boolean(checked));
-                            }}
-                        />
-                    </InfoBlock>
-
-                    <div className={cn(dashedBorderBox, "text-center")}>
-                        <span className="text-orange-500">Note:</span> You can use the Public Key on GitHub or GitLab.
-                        If you intend to use it on GitHub, it is recommended to add it under the{" "}
-                        <span className="text-orange-500">Deploy Keys</span> section of a specific repository instead of
-                        adding it to the user&apos;s <span className="text-orange-500">SSH Keys</span> section to
-                        enhance security.
-                    </div>
-
-                    {!isReadOnly && (
-                        <Field>
-                            <div className="flex justify-end gap-4">
-                                <Button
-                                    type="button"
-                                    isLoading={isGenerating}
-                                    onClick={() => {
-                                        void handleGenerate();
-                                    }}
-                                >
-                                    Generate
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </Field>
-                    )}
-                </fieldset>
+                        <div className={cn(dashedBorderBox, "text-center")}>
+                            <span className="text-orange-500">Note:</span> You can use the Public Key on GitHub or
+                            GitLab. If you intend to use it on GitHub, it is recommended to add it under the{" "}
+                            <span className="text-orange-500">Deploy Keys</span> section of a specific repository
+                            instead of adding it to the user&apos;s <span className="text-orange-500">SSH Keys</span>{" "}
+                            section to enhance security.
+                        </div>
+                    </fieldset>
+                </DialogBody>
+                {!isReadOnly && (
+                    <DialogActionFooter>
+                        <div className="flex justify-end gap-4">
+                            <Button
+                                type="button"
+                                isLoading={isGenerating}
+                                onClick={() => {
+                                    void handleGenerate();
+                                }}
+                            >
+                                Generate
+                            </Button>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </DialogActionFooter>
+                )}
                 {isReadOnly && (
-                    <Field>
+                    <DialogActionFooter>
                         <div className="flex justify-end">
                             <Button
                                 type="button"
@@ -315,7 +326,7 @@ export function CreateOrEditSSHKeyForm({
                                 Close
                             </Button>
                         </div>
-                    </Field>
+                    </DialogActionFooter>
                 )}
             </form>
         </FormProvider>

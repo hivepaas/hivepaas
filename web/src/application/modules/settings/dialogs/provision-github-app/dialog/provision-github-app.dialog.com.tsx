@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { EGithubAppOwnerType } from "~/settings/module-shared/enums";
@@ -89,7 +89,7 @@ export function ProvisionGithubAppDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[840px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[840px]">
                 <DialogHeader>
                     <DialogTitle>Provision Github app</DialogTitle>
                 </DialogHeader>
@@ -104,7 +104,7 @@ export function ProvisionGithubAppDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -12,7 +12,16 @@ import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    DialogActionFooter,
+    DialogBody,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+} from "@/components/ui";
 
 import type { CreateOrEditRepoWebhookFormInput, CreateOrEditRepoWebhookFormOutput } from "../schemas";
 import { CreateOrEditRepoWebhookFormSchema } from "../schemas";
@@ -110,161 +119,162 @@ export function CreateOrEditRepoWebhookForm({
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}
-            className="flex flex-col gap-6"
+            className="min-h-0 flex flex-1 flex-col"
         >
-            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-            <fieldset
-                disabled={isReadOnly}
-                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-            >
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Name"
-                            isRequired
-                        />
-                    }
+            <DialogBody className="flex flex-col gap-6">
+                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                <fieldset
+                    disabled={isReadOnly}
+                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...name}
-                                placeholder="webhook name"
-                                aria-invalid={isNameInvalid}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Type"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Select
-                                value={kind.value}
-                                onValueChange={kind.onChange}
-                            >
-                                <SelectTrigger aria-invalid={isKindInvalid}>
-                                    <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {resolvedKindOptions.map(option => (
-                                        <SelectItem
-                                            key={option}
-                                            value={option}
-                                        >
-                                            {option}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError errors={[errors.kind]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Secret" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...secret}
-                                placeholder="auto-generate if empty"
-                                aria-invalid={isSecretInvalid}
-                            />
-                            <FieldError errors={[errors.secret]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Webhook URL" />}
-                >
-                    {webhookURL ? (
-                        <div
-                            className={cn(
-                                dashedBorderBox,
-                                "flex min-h-12 items-center justify-center gap-3 break-all text-center text-sm",
-                            )}
-                        >
-                            <span>{webhookURL}</span>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="shrink-0 text-link"
-                                onClick={handleCopyWebhookURL}
-                            >
-                                <Clipboard className="size-4" />
-                                <span className="sr-only">Copy webhook URL</span>
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className={cn(dashedBorderBox, "text-center text-sm p-2")}>
-                            please create a webhook first
-                        </div>
-                    )}
-                </InfoBlock>
-
-                {showAvailableInProjects && (
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Available in Projects" />}
+                        title={
+                            <LabelWithInfo
+                                label="Name"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...name}
+                                    placeholder="webhook name"
+                                    aria-invalid={isNameInvalid}
+                                />
+                                <FieldError errors={[errors.name]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Type"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Select
+                                    value={kind.value}
+                                    onValueChange={kind.onChange}
+                                >
+                                    <SelectTrigger aria-invalid={isKindInvalid}>
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {resolvedKindOptions.map(option => (
+                                            <SelectItem
+                                                key={option}
+                                                value={option}
+                                            >
+                                                {option}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.kind]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Secret" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...secret}
+                                    placeholder="auto-generate if empty"
+                                    aria-invalid={isSecretInvalid}
+                                />
+                                <FieldError errors={[errors.secret]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Webhook URL" />}
+                    >
+                        {webhookURL ? (
+                            <div
+                                className={cn(
+                                    dashedBorderBox,
+                                    "flex min-h-12 items-center justify-center gap-3 break-all text-center text-sm",
+                                )}
+                            >
+                                <span>{webhookURL}</span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-link"
+                                    onClick={handleCopyWebhookURL}
+                                >
+                                    <Clipboard className="size-4" />
+                                    <span className="sr-only">Copy webhook URL</span>
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className={cn(dashedBorderBox, "text-center text-sm p-2")}>
+                                please create a webhook first
+                            </div>
+                        )}
+                    </InfoBlock>
+
+                    {showAvailableInProjects && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Available in Projects" />}
+                        >
+                            <Checkbox
+                                checked={availableInProjects.value}
+                                onCheckedChange={checked => {
+                                    availableInProjects.onChange(Boolean(checked));
+                                }}
+                            />
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
                     >
                         <Checkbox
-                            checked={availableInProjects.value}
+                            checked={defaultField.value}
                             onCheckedChange={checked => {
-                                availableInProjects.onChange(Boolean(checked));
+                                defaultField.onChange(Boolean(checked));
                             }}
                         />
                     </InfoBlock>
-                )}
 
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Default" />}
-                >
-                    <Checkbox
-                        checked={defaultField.value}
-                        onCheckedChange={checked => {
-                            defaultField.onChange(Boolean(checked));
-                        }}
-                    />
-                </InfoBlock>
-
-                <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
-                    After creating it, you can use the information above to configure the webhook on GitHub, GitLab, or
-                    wherever your source code is hosted.
-                </div>
-
-                {!isReadOnly && (
-                    <Field>
-                        <div className="flex justify-end">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                            >
-                                Submit
-                            </Button>
-                        </div>
-                    </Field>
-                )}
-            </fieldset>
+                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                        After creating it, you can use the information above to configure the webhook on GitHub, GitLab,
+                        or wherever your source code is hosted.
+                    </div>
+                </fieldset>
+            </DialogBody>
+            {!isReadOnly && (
+                <DialogActionFooter>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                        >
+                            Submit
+                        </Button>
+                    </div>
+                </DialogActionFooter>
+            )}
             {isReadOnly && (
-                <Field>
+                <DialogActionFooter>
                     <div className="flex justify-end">
                         <Button
                             type="button"
@@ -273,7 +283,7 @@ export function CreateOrEditRepoWebhookForm({
                             Close
                         </Button>
                     </div>
-                </Field>
+                </DialogActionFooter>
             )}
         </form>
     );

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectBasicAuthCommands } from "~/projects/data/commands";
 import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditBasicAuthForm } from "../form";
 import { useCreateOrEditBasicAuthDialogState } from "../hooks";
@@ -171,11 +171,15 @@ export function CreateOrEditBasicAuthDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[760px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditBasicAuthForm
                         isPending={isPending}
@@ -188,7 +192,7 @@ export function CreateOrEditBasicAuthDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

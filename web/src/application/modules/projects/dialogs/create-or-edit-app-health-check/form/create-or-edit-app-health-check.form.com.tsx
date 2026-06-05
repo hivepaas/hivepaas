@@ -662,6 +662,7 @@ export function CreateOrEditAppHealthCheckForm({
                         <Button
                             type="submit"
                             isLoading={isPending}
+                            className="min-w-[100px]"
                             disabled={readOnly}
                         >
                             Save

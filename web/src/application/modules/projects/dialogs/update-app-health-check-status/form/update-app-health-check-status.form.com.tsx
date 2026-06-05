@@ -158,7 +158,7 @@ export function UpdateAppHealthCheckStatusForm({
                                 type="submit"
                                 isLoading={isPending}
                                 disabled={readOnly}
-                                className="min-w-[140px]"
+                                className="min-w-[100px]"
                             >
                                 Save
                             </Button>

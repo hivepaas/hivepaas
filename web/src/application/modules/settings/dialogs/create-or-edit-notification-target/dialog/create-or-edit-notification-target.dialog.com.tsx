@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectNotificationCommands } from "~/projects/data/commands";
 import { ProjectNotificationQueries } from "~/projects/data/queries";
 import { NotificationCommands } from "~/settings/data/commands";
 import { NotificationQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditNotificationTargetForm } from "../form";
 import { useCreateOrEditNotificationTargetDialogState } from "../hooks";
@@ -202,11 +202,15 @@ export function CreateOrEditNotificationTargetDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[760px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditNotificationTargetForm
                         scope={state.scope}
@@ -220,7 +224,7 @@ export function CreateOrEditNotificationTargetDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

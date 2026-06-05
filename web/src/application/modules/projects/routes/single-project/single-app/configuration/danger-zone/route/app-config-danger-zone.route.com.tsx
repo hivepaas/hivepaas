@@ -64,7 +64,7 @@ export function AppConfigDangerZoneRoute() {
     return (
         <div className="flex flex-col gap-5">
             <DangerActionPanel>
-                <p className="text-base font-semibold leading-7 text-foreground">
+                <p className="text-sm leading-6 text-foreground">
                     Disabling an application means setting its number of instances to 0, so the application will no
                     longer consume system resources such as CPU or memory. However, the application&apos;s information
                     will still remain in the system, and you can restore it at any time.
@@ -94,7 +94,7 @@ export function AppConfigDangerZoneRoute() {
             </DangerActionPanel>
 
             <DangerActionPanel>
-                <p className="text-base font-semibold leading-7 text-foreground">
+                <p className="text-sm leading-6 text-foreground">
                     Deleting an application will remove all of its information and release all system resources
                     allocated to it. You will not be able to recover it after deletion.
                 </p>

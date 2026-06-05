@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
@@ -77,7 +84,7 @@ export function TestSendMailDialog({ open, isPending, testStatus, onOpenChange, 
             open={open}
             onOpenChange={handleOpenChange}
         >
-            <DialogContent className="min-w-[390px] w-[680px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[680px]">
                 <DialogHeader>
                     <DialogTitle>Test Send Mail</DialogTitle>
                 </DialogHeader>
@@ -87,83 +94,85 @@ export function TestSendMailDialog({ open, isPending, testStatus, onOpenChange, 
                         event.preventDefault();
                         void handleSubmit(onValid, onInvalid)(event);
                     }}
+                    className="min-h-0 flex flex-1 flex-col"
                 >
-                    <FieldGroup>
-                        <InfoBlock
-                            titleWidth={160}
-                            title={
-                                <LabelWithInfo
-                                    label="Recipient"
-                                    isRequired
-                                />
-                            }
-                        >
-                            <Field>
-                                <Input
-                                    {...testRecipient}
-                                    placeholder="my-email@domain.name"
-                                    aria-invalid={isTestRecipientInvalid}
-                                />
-                                <FieldError errors={[errors.testRecipient]} />
-                            </Field>
-                        </InfoBlock>
+                    <DialogBody>
+                        <FieldGroup>
+                            <InfoBlock
+                                titleWidth={160}
+                                title={
+                                    <LabelWithInfo
+                                        label="Recipient"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <Field>
+                                    <Input
+                                        {...testRecipient}
+                                        placeholder="my-email@domain.name"
+                                        aria-invalid={isTestRecipientInvalid}
+                                    />
+                                    <FieldError errors={[errors.testRecipient]} />
+                                </Field>
+                            </InfoBlock>
 
-                        <InfoBlock
-                            titleWidth={160}
-                            title={
-                                <LabelWithInfo
-                                    label="Subject"
-                                    isRequired
-                                />
-                            }
-                        >
-                            <Field>
-                                <Input
-                                    {...testSubject}
-                                    aria-invalid={isTestSubjectInvalid}
-                                />
-                                <FieldError errors={[errors.testSubject]} />
-                            </Field>
-                        </InfoBlock>
+                            <InfoBlock
+                                titleWidth={160}
+                                title={
+                                    <LabelWithInfo
+                                        label="Subject"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <Field>
+                                    <Input
+                                        {...testSubject}
+                                        aria-invalid={isTestSubjectInvalid}
+                                    />
+                                    <FieldError errors={[errors.testSubject]} />
+                                </Field>
+                            </InfoBlock>
 
-                        <InfoBlock
-                            titleWidth={160}
-                            title={
-                                <LabelWithInfo
-                                    label="Content"
-                                    isRequired
-                                />
-                            }
-                        >
-                            <Field>
-                                <Textarea
-                                    {...testContent}
-                                    minRows={6}
-                                    aria-invalid={isTestContentInvalid}
-                                />
-                                <FieldError errors={[errors.testContent]} />
-                            </Field>
-                        </InfoBlock>
-
-                        <Field>
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                >
-                                    Send Test Email
-                                </Button>
-                                {testStatus === "succeeded" && (
-                                    <span className="text-sm font-medium text-green-600">Succeeded</span>
-                                )}
-                                {testStatus === "failed" && (
-                                    <span className="text-sm font-medium text-destructive">Failed</span>
-                                )}
-                            </div>
-                        </Field>
-                    </FieldGroup>
+                            <InfoBlock
+                                titleWidth={160}
+                                title={
+                                    <LabelWithInfo
+                                        label="Content"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <Field>
+                                    <Textarea
+                                        {...testContent}
+                                        minRows={6}
+                                        aria-invalid={isTestContentInvalid}
+                                    />
+                                    <FieldError errors={[errors.testContent]} />
+                                </Field>
+                            </InfoBlock>
+                        </FieldGroup>
+                    </DialogBody>
+                    <DialogActionFooter>
+                        <div className="flex items-center gap-4">
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                Send Test Email
+                            </Button>
+                            {testStatus === "succeeded" && (
+                                <span className="text-sm font-medium text-green-600">Succeeded</span>
+                            )}
+                            {testStatus === "failed" && (
+                                <span className="text-sm font-medium text-destructive">Failed</span>
+                            )}
+                        </div>
+                    </DialogActionFooter>
                 </form>
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -87,6 +87,38 @@ function DialogContent({
     );
 }
 
+function DialogFixedContent({ className, ...props }: React.ComponentProps<typeof DialogContent>) {
+    return (
+        <DialogContent
+            className={cn(
+                "max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0 [&>[data-slot=dialog-header]]:shrink-0 [&>[data-slot=dialog-header]]:px-6 [&>[data-slot=dialog-header]]:pt-6 [&>[data-slot=dialog-header]]:pb-4",
+                className,
+            )}
+            {...props}
+        />
+    );
+}
+
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+    return (
+        <div
+            data-slot="dialog-body"
+            className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-4", className)}
+            {...props}
+        />
+    );
+}
+
+function DialogActionFooter({ className, ...props }: React.ComponentProps<"div">) {
+    return (
+        <div
+            data-slot="dialog-action-footer"
+            className={cn("shrink-0 border-t bg-background px-6 pt-4 pb-6", className)}
+            {...props}
+        />
+    );
+}
+
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
@@ -129,9 +161,12 @@ function DialogDescription({ className, ...props }: React.ComponentProps<typeof 
 
 export {
     Dialog,
+    DialogActionFooter,
+    DialogBody,
     DialogClose,
     DialogContent,
     DialogDescription,
+    DialogFixedContent,
     DialogFooter,
     DialogHeader,
     DialogOverlay,

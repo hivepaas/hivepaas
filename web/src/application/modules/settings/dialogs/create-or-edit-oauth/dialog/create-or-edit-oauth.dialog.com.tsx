@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { OAuthCommands } from "~/settings/data/commands";
 import { OAuthQueries } from "~/settings/data/queries";
@@ -107,11 +107,15 @@ export function CreateOrEditOAuthDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[820px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[820px]">
                 <DialogHeader>
                     <DialogTitle>Create or update an OAuth</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditOAuthForm
                         isPending={isPending}
@@ -123,7 +127,7 @@ export function CreateOrEditOAuthDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

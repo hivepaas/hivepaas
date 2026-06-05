@@ -63,9 +63,9 @@ type NodePlatformResp struct {
 }
 
 type NodeResources struct {
-	CPUs     int64           `json:"cpus"`
-	Memory   unit.DataSize   `json:"memory"`
-	MemoryHR unit.DataSizeHR `json:"memoryHR"`
+	CPUs        int64         `json:"cpus"`
+	Memory      unit.DataSize `json:"memory"`
+	MemoryBytes int64         `json:"memoryBytes"`
 }
 
 type NodeEngineDescResp struct {
@@ -95,9 +95,9 @@ func TransformNode(node *swarm.Node, detailed bool) *NodeResp {
 			OS:           node.Description.Platform.OS,
 		},
 		Resources: &NodeResources{
-			CPUs:     node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
-			Memory:   unit.DataSize(node.Description.Resources.MemoryBytes),
-			MemoryHR: unit.DataSizeHR(node.Description.Resources.MemoryBytes),
+			CPUs:        node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
+			Memory:      unit.DataSize(node.Description.Resources.MemoryBytes),
+			MemoryBytes: node.Description.Resources.MemoryBytes,
 		},
 		UpdateVer: int(node.Version.Index), //nolint:gosec
 		CreatedAt: node.CreatedAt,

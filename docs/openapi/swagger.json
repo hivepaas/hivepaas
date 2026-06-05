@@ -23738,7 +23738,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -26646,11 +26646,11 @@
           "memory" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
           },
-          "memoryHR" : {
+          "memoryBytes" : {
             "type" : "integer"
           }
         },
-        "required" : [ "cpus", "memory", "memoryHR" ],
+        "required" : [ "cpus", "memory", "memoryBytes" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_nodeuc_nodedto.NodeResp" : {
@@ -27061,10 +27061,7 @@
           "path" : {
             "type" : "string"
           },
-          "size" : {
-            "type" : "integer"
-          },
-          "sizeStr" : {
+          "sizeBytes" : {
             "type" : "integer"
           },
           "status" : {
@@ -27086,7 +27083,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "id", "key", "mimetype", "name", "path", "size", "sizeStr", "status", "storageType", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "id", "key", "mimetype", "name", "path", "sizeBytes", "status", "storageType", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.GetFileResp" : {
@@ -30720,12 +30717,11 @@
           "totalFiles" : {
             "type" : "integer"
           },
-          "totalSizeHR" : {
-            "description" : "human-readable",
+          "totalSizeBytes" : {
             "type" : "integer"
           }
         },
-        "required" : [ "totalFiles", "totalSizeHR" ],
+        "required" : [ "totalFiles", "totalSizeBytes" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.UpdateImageBuildSettingsReq" : {
@@ -35904,10 +35900,10 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       }
     },
     "securitySchemes" : {

@@ -5,7 +5,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 )
 
 type GetRepoCacheInfoReq struct {
@@ -27,20 +26,19 @@ type GetRepoCacheInfoResp struct {
 }
 
 type RepoCacheInfoResp struct {
-	TotalFiles  int             `json:"totalFiles"`
-	TotalSizeHR unit.DataSizeHR `json:"totalSizeHR"` // human-readable
+	TotalFiles     int   `json:"totalFiles"`
+	TotalSizeBytes int64 `json:"totalSizeBytes"`
 }
 
 func TransformRepoCacheInfo(files []*entity.File) (resp *RepoCacheInfoResp) {
 	resp = &RepoCacheInfoResp{}
-	var totalSize int64
+	resp.TotalSizeBytes = 0
 	for _, file := range files {
 		if file.Deleted {
 			continue
 		}
 		resp.TotalFiles++
-		totalSize += file.Size
+		resp.TotalSizeBytes += file.Size
 	}
-	resp.TotalSizeHR = unit.DataSizeHR(totalSize)
 	return resp
 }

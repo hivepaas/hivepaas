@@ -10,7 +10,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
@@ -43,8 +42,7 @@ type FileResp struct {
 	Path        string                    `json:"path"`
 	Bucket      string                    `json:"bucket,omitempty"`
 	Mimetype    string                    `json:"mimetype"`
-	Size        int64                     `json:"size"`
-	SizeStr     unit.DataSizeHR           `json:"sizeStr"`
+	SizeBytes   int64                     `json:"sizeBytes"`
 	StorageType base.FileStorageType      `json:"storageType"`
 	Storage     *settings.BaseSettingResp `json:"storage,omitempty"`
 	UpdateVer   int                       `json:"updateVer"`
@@ -58,8 +56,7 @@ func TransformFile(file *entity.File) (resp *FileResp, err error) {
 		return nil, apperrors.Wrap(err)
 	}
 
-	// Extra fields
-	resp.SizeStr = unit.DataSizeHR(resp.Size)
+	resp.SizeBytes = file.Size
 
 	return resp, nil
 }

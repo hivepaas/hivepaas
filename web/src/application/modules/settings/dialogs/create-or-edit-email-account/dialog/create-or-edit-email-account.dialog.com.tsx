@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectEmailCommands } from "~/projects/data/commands";
 import { ProjectEmailQueries } from "~/projects/data/queries";
 import { EmailCommands } from "~/settings/data/commands";
 import { EmailQueries } from "~/settings/data/queries";
 import type { SettingEmail } from "~/settings/domain";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { EEmailKind } from "@application/shared/enums";
 
 import { CreateOrEditEmailAccountForm } from "../form";
@@ -265,11 +265,15 @@ export function CreateOrEditEmailAccountDialog() {
                 open={open}
                 onOpenChange={handleClose}
             >
-                <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+                <DialogFixedContent className="min-w-[390px] w-[760px]">
                     <DialogHeader>
                         <DialogTitle>{dialogTitle}</DialogTitle>
                     </DialogHeader>
-                    {isDetailLoading && <AppLoader />}
+                    {isDetailLoading && (
+                        <DialogBody>
+                            <AppLoader />
+                        </DialogBody>
+                    )}
                     {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                         <CreateOrEditEmailAccountForm
                             isPending={isPending}
@@ -283,7 +287,7 @@ export function CreateOrEditEmailAccountDialog() {
                             onClose={handleClose}
                         />
                     )}
-                </DialogContent>
+                </DialogFixedContent>
             </Dialog>
             <TestSendMailDialog
                 open={open && testDialogOpen}

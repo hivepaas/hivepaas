@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectBasicAuthCommands } from "~/projects/data/commands";
 import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { ESettingStatus } from "@application/shared/enums";
 
 import { UpdateBasicAuthStatusForm } from "../form";
@@ -139,11 +139,15 @@ export function UpdateBasicAuthStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="sm:max-w-[560px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateBasicAuthStatusForm
                         isPending={isPending}
@@ -156,7 +160,7 @@ export function UpdateBasicAuthStatusDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

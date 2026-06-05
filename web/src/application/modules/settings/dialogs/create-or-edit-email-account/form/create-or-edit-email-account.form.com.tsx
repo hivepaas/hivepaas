@@ -13,6 +13,8 @@ import { FieldListLayout, KeyValueList } from "@application/shared/form";
 import {
     Button,
     Checkbox,
+    DialogActionFooter,
+    DialogBody,
     Field,
     FieldError,
     FieldGroup,
@@ -178,322 +180,323 @@ export function CreateOrEditEmailAccountForm({
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
-                className="flex flex-col gap-6"
+                className="min-h-0 flex flex-1 flex-col"
             >
-                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-                <fieldset
-                    disabled={isReadOnly}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-                >
-                    <FieldGroup>
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Name" />}
-                        >
-                            <Field>
-                                <Input
-                                    {...name}
-                                    aria-invalid={isNameInvalid}
-                                />
-                                <FieldError errors={[errors.name]} />
-                            </Field>
-                        </InfoBlock>
-
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Email Type" />}
-                        >
-                            <Tabs
-                                value={kind.value}
-                                onValueChange={value => {
-                                    kind.onChange(value);
-                                }}
-                            >
-                                <TabsList>
-                                    <TabsTrigger value={EEmailKind.SMTP}>SMTP</TabsTrigger>
-                                    <TabsTrigger value={EEmailKind.HTTP}>HTTP</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </InfoBlock>
-
-                        {kindValue === EEmailKind.SMTP && (
-                            <>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Host"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Input
-                                            {...smtpHost}
-                                            aria-invalid={isSmtpHostInvalid}
-                                        />
-                                        <FieldError errors={[errors.smtpHost]} />
-                                    </Field>
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Port"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Input
-                                            type="number"
-                                            min={1}
-                                            max={65535}
-                                            {...smtpPort}
-                                            aria-invalid={isSmtpPortInvalid}
-                                        />
-                                        <FieldError errors={[errors.smtpPort]} />
-                                    </Field>
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Username"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Input
-                                            {...smtpUsername}
-                                            aria-invalid={isSmtpUsernameInvalid}
-                                        />
-                                        <FieldError errors={[errors.smtpUsername]} />
-                                    </Field>
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Display Name" />}
-                                >
-                                    <Input {...smtpDisplayName} />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Password"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <PasswordInput
-                                            {...smtpPassword}
-                                            aria-invalid={isSmtpPasswordInvalid}
-                                        />
-                                        <FieldError errors={[errors.smtpPassword]} />
-                                    </Field>
-                                </InfoBlock>
-                            </>
-                        )}
-
-                        {kindValue === EEmailKind.HTTP && (
-                            <>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Endpoint"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Input
-                                            {...httpEndpoint}
-                                            aria-invalid={isHttpEndpointInvalid}
-                                        />
-                                        <FieldError errors={[errors.httpEndpoint]} />
-                                    </Field>
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="Method"
-                                            isRequired
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Select
-                                            value={httpMethod.value}
-                                            onValueChange={value => {
-                                                httpMethod.onChange(value);
-                                            }}
-                                        >
-                                            <SelectTrigger aria-invalid={isHttpMethodInvalid}>
-                                                <SelectValue placeholder="Select method" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {EMAIL_HTTP_METHODS.map(method => (
-                                                    <SelectItem
-                                                        key={method}
-                                                        value={method}
-                                                    >
-                                                        {method}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FieldError errors={[errors.httpMethod]} />
-                                    </Field>
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Username" />}
-                                >
-                                    <Input {...httpUsername} />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Display Name" />}
-                                >
-                                    <Input {...httpDisplayName} />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Password" />}
-                                >
-                                    <PasswordInput {...httpPassword} />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Content Type" />}
-                                >
-                                    <Input {...httpContentType} />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Headers" />}
-                                >
-                                    <KeyValueList<CreateOrEditEmailAccountFormInput>
-                                        name="headers"
-                                        keyLabel="Name"
-                                        valueLabel="Value"
-                                        keyPlaceholder="name"
-                                        valuePlaceholder="value"
-                                        checkDuplicates
-                                    />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Field Mappings" />}
-                                >
-                                    <FieldListLayout
-                                        inputsClassName="grid flex-1 grid-cols-2 gap-2"
-                                        inputRow={
-                                            <>
-                                                <SelectWithAddon
-                                                    addonLeft="Name"
-                                                    value={mappingKey}
-                                                    onValueChange={setMappingKey}
-                                                    placeholder="select field"
-                                                >
-                                                    {FIELD_MAPPING_OPTIONS.map(option => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectWithAddon>
-                                                <InputWithAddOn
-                                                    addonLeft="Value"
-                                                    value={mappingValue}
-                                                    onChange={event => {
-                                                        setMappingValue(event.target.value);
-                                                    }}
-                                                    placeholder="value"
-                                                />
-                                            </>
-                                        }
-                                        onAdd={handleAddFieldMapping}
-                                        addDisabled={!mappingKey.trim()}
-                                        items={fieldMapping.fields.map((field, index) => ({
-                                            id: field.id,
-                                            content: (
-                                                <div className="grid flex-1 grid-cols-2 gap-2">
-                                                    <div className="break-words text-sm">{field.key}</div>
-                                                    <div className="break-words text-sm">{field.value}</div>
-                                                </div>
-                                            ),
-                                            onRemove: () => {
-                                                fieldMapping.remove(index);
-                                            },
-                                        }))}
-                                    />
-                                </InfoBlock>
-                            </>
-                        )}
-
-                        {showAvailableInProjects && (
+                <DialogBody className="flex flex-col gap-6">
+                    {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                    {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                    <fieldset
+                        disabled={isReadOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <FieldGroup>
                             <InfoBlock
                                 titleWidth={220}
-                                title={<LabelWithInfo label="Available in Projects" />}
+                                title={<LabelWithInfo label="Name" />}
+                            >
+                                <Field>
+                                    <Input
+                                        {...name}
+                                        aria-invalid={isNameInvalid}
+                                    />
+                                    <FieldError errors={[errors.name]} />
+                                </Field>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Email Type" />}
+                            >
+                                <Tabs
+                                    value={kind.value}
+                                    onValueChange={value => {
+                                        kind.onChange(value);
+                                    }}
+                                >
+                                    <TabsList>
+                                        <TabsTrigger value={EEmailKind.SMTP}>SMTP</TabsTrigger>
+                                        <TabsTrigger value={EEmailKind.HTTP}>HTTP</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                            </InfoBlock>
+
+                            {kindValue === EEmailKind.SMTP && (
+                                <>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Host"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...smtpHost}
+                                                aria-invalid={isSmtpHostInvalid}
+                                            />
+                                            <FieldError errors={[errors.smtpHost]} />
+                                        </Field>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Port"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                max={65535}
+                                                {...smtpPort}
+                                                aria-invalid={isSmtpPortInvalid}
+                                            />
+                                            <FieldError errors={[errors.smtpPort]} />
+                                        </Field>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Username"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...smtpUsername}
+                                                aria-invalid={isSmtpUsernameInvalid}
+                                            />
+                                            <FieldError errors={[errors.smtpUsername]} />
+                                        </Field>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Display Name" />}
+                                    >
+                                        <Input {...smtpDisplayName} />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Password"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <PasswordInput
+                                                {...smtpPassword}
+                                                aria-invalid={isSmtpPasswordInvalid}
+                                            />
+                                            <FieldError errors={[errors.smtpPassword]} />
+                                        </Field>
+                                    </InfoBlock>
+                                </>
+                            )}
+
+                            {kindValue === EEmailKind.HTTP && (
+                                <>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Endpoint"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...httpEndpoint}
+                                                aria-invalid={isHttpEndpointInvalid}
+                                            />
+                                            <FieldError errors={[errors.httpEndpoint]} />
+                                        </Field>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Method"
+                                                isRequired
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Select
+                                                value={httpMethod.value}
+                                                onValueChange={value => {
+                                                    httpMethod.onChange(value);
+                                                }}
+                                            >
+                                                <SelectTrigger aria-invalid={isHttpMethodInvalid}>
+                                                    <SelectValue placeholder="Select method" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {EMAIL_HTTP_METHODS.map(method => (
+                                                        <SelectItem
+                                                            key={method}
+                                                            value={method}
+                                                        >
+                                                            {method}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FieldError errors={[errors.httpMethod]} />
+                                        </Field>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Username" />}
+                                    >
+                                        <Input {...httpUsername} />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Display Name" />}
+                                    >
+                                        <Input {...httpDisplayName} />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Password" />}
+                                    >
+                                        <PasswordInput {...httpPassword} />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Content Type" />}
+                                    >
+                                        <Input {...httpContentType} />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Headers" />}
+                                    >
+                                        <KeyValueList<CreateOrEditEmailAccountFormInput>
+                                            name="headers"
+                                            keyLabel="Name"
+                                            valueLabel="Value"
+                                            keyPlaceholder="name"
+                                            valuePlaceholder="value"
+                                            checkDuplicates
+                                        />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Field Mappings" />}
+                                    >
+                                        <FieldListLayout
+                                            inputsClassName="grid flex-1 grid-cols-2 gap-2"
+                                            inputRow={
+                                                <>
+                                                    <SelectWithAddon
+                                                        addonLeft="Name"
+                                                        value={mappingKey}
+                                                        onValueChange={setMappingKey}
+                                                        placeholder="select field"
+                                                    >
+                                                        {FIELD_MAPPING_OPTIONS.map(option => (
+                                                            <SelectItem
+                                                                key={option.value}
+                                                                value={option.value}
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectWithAddon>
+                                                    <InputWithAddOn
+                                                        addonLeft="Value"
+                                                        value={mappingValue}
+                                                        onChange={event => {
+                                                            setMappingValue(event.target.value);
+                                                        }}
+                                                        placeholder="value"
+                                                    />
+                                                </>
+                                            }
+                                            onAdd={handleAddFieldMapping}
+                                            addDisabled={!mappingKey.trim()}
+                                            items={fieldMapping.fields.map((field, index) => ({
+                                                id: field.id,
+                                                content: (
+                                                    <div className="grid flex-1 grid-cols-2 gap-2">
+                                                        <div className="break-words text-sm">{field.key}</div>
+                                                        <div className="break-words text-sm">{field.value}</div>
+                                                    </div>
+                                                ),
+                                                onRemove: () => {
+                                                    fieldMapping.remove(index);
+                                                },
+                                            }))}
+                                        />
+                                    </InfoBlock>
+                                </>
+                            )}
+
+                            {showAvailableInProjects && (
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Available in Projects" />}
+                                >
+                                    <Checkbox
+                                        checked={availableInProjects.value}
+                                        onCheckedChange={checked => {
+                                            availableInProjects.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                </InfoBlock>
+                            )}
+
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Default" />}
                             >
                                 <Checkbox
-                                    checked={availableInProjects.value}
+                                    checked={defaultField.value}
                                     onCheckedChange={checked => {
-                                        availableInProjects.onChange(Boolean(checked));
+                                        defaultField.onChange(Boolean(checked));
                                     }}
                                 />
                             </InfoBlock>
-                        )}
-
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Default" />}
-                        >
-                            <Checkbox
-                                checked={defaultField.value}
-                                onCheckedChange={checked => {
-                                    defaultField.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                    </FieldGroup>
-
-                    {!isReadOnly && (
-                        <Field>
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={() => {
-                                            void handleSubmit(onTestValid, onInvalid)();
-                                        }}
-                                    >
-                                        Test Send Email
-                                    </Button>
-                                </div>
+                        </FieldGroup>
+                    </fieldset>
+                </DialogBody>
+                {!isReadOnly && (
+                    <DialogActionFooter>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
                                 <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                    className="min-w-[100px]"
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => {
+                                        void handleSubmit(onTestValid, onInvalid)();
+                                    }}
                                 >
-                                    Save
+                                    Test Send Email
                                 </Button>
                             </div>
-                        </Field>
-                    )}
-                </fieldset>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </DialogActionFooter>
+                )}
                 {isReadOnly && (
-                    <Field>
+                    <DialogActionFooter>
                         <div className="flex justify-end">
                             <Button
                                 type="button"
@@ -502,7 +505,7 @@ export function CreateOrEditEmailAccountForm({
                                 Close
                             </Button>
                         </div>
-                    </Field>
+                    </DialogActionFooter>
                 )}
             </form>
         </FormProvider>

@@ -9,7 +9,16 @@ import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EOAuthKind } from "@application/shared/enums";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    DialogActionFooter,
+    DialogBody,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+} from "@/components/ui";
 
 import type { CreateOrEditOAuthFormInput, CreateOrEditOAuthFormOutput } from "../schemas";
 import { CreateOrEditOAuthFormSchema } from "../schemas";
@@ -123,230 +132,231 @@ export function CreateOrEditOAuthForm({
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}
-            className="flex flex-col gap-6"
+            className="min-h-0 flex flex-1 flex-col"
         >
-            {isReadOnly && <PermissionReadonlyNotice />}
-            <fieldset
-                disabled={isReadOnly}
-                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-            >
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Name" />}
+            <DialogBody className="flex flex-col gap-6">
+                {isReadOnly && <PermissionReadonlyNotice />}
+                <fieldset
+                    disabled={isReadOnly}
+                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...name}
-                                aria-invalid={isNameInvalid}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Provider"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Select
-                                value={kind.value}
-                                onValueChange={kind.onChange}
-                                disabled={disableProvider || isReadOnly}
-                            >
-                                <SelectTrigger aria-invalid={isKindInvalid}>
-                                    <SelectValue placeholder="Select provider" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {providerOptions.map(option => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FieldError errors={[errors.kind]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Organization"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...organization}
-                                aria-invalid={isOrganizationInvalid}
-                            />
-                            <FieldError errors={[errors.organization]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Client ID"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...clientId}
-                                aria-invalid={isClientIdInvalid}
-                            />
-                            <FieldError errors={[errors.clientId]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Client Secret"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <PasswordInput
-                                value={clientSecret.value}
-                                onChange={clientSecret.onChange}
-                                aria-invalid={isClientSecretInvalid}
-                            />
-                            <FieldError errors={[errors.clientSecret]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Auth URL" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...authURL}
-                                aria-invalid={isAuthURLInvalid}
-                            />
-                            <FieldError errors={[errors.authURL]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Token URL" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...tokenURL}
-                                aria-invalid={isTokenURLInvalid}
-                            />
-                            <FieldError errors={[errors.tokenURL]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Profile URL" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...profileURL}
-                                aria-invalid={isProfileURLInvalid}
-                            />
-                            <FieldError errors={[errors.profileURL]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                {showAutoDiscoveryURL && (
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Auto-Discovery URL" />}
+                        title={<LabelWithInfo label="Name" />}
                     >
                         <FieldGroup>
                             <Field>
                                 <Input
-                                    {...autoDiscoveryURL}
-                                    aria-invalid={isAutoDiscoveryURLInvalid}
+                                    {...name}
+                                    aria-invalid={isNameInvalid}
                                 />
-                                <FieldError errors={[errors.autoDiscoveryURL]} />
+                                <FieldError errors={[errors.name]} />
                             </Field>
                         </FieldGroup>
                     </InfoBlock>
-                )}
 
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Scopes" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...scopes}
-                                placeholder="email, profile, ..."
-                                aria-invalid={isScopesInvalid}
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Provider"
+                                isRequired
                             />
-                            <FieldError errors={[errors.scopes]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Select
+                                    value={kind.value}
+                                    onValueChange={kind.onChange}
+                                    disabled={disableProvider || isReadOnly}
+                                >
+                                    <SelectTrigger aria-invalid={isKindInvalid}>
+                                        <SelectValue placeholder="Select provider" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {providerOptions.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.kind]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Default" />}
-                >
-                    <Checkbox
-                        checked={defaultField.value}
-                        onCheckedChange={checked => {
-                            defaultField.onChange(Boolean(checked));
-                        }}
-                    />
-                </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Organization"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...organization}
+                                    aria-invalid={isOrganizationInvalid}
+                                />
+                                <FieldError errors={[errors.organization]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                {!isReadOnly && (
-                    <Field>
-                        <div className="flex items-center justify-end gap-4">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </Field>
-                )}
-            </fieldset>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Client ID"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...clientId}
+                                    aria-invalid={isClientIdInvalid}
+                                />
+                                <FieldError errors={[errors.clientId]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Client Secret"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <PasswordInput
+                                    value={clientSecret.value}
+                                    onChange={clientSecret.onChange}
+                                    aria-invalid={isClientSecretInvalid}
+                                />
+                                <FieldError errors={[errors.clientSecret]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Auth URL" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...authURL}
+                                    aria-invalid={isAuthURLInvalid}
+                                />
+                                <FieldError errors={[errors.authURL]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Token URL" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...tokenURL}
+                                    aria-invalid={isTokenURLInvalid}
+                                />
+                                <FieldError errors={[errors.tokenURL]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Profile URL" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...profileURL}
+                                    aria-invalid={isProfileURLInvalid}
+                                />
+                                <FieldError errors={[errors.profileURL]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    {showAutoDiscoveryURL && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Auto-Discovery URL" />}
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...autoDiscoveryURL}
+                                        aria-invalid={isAutoDiscoveryURLInvalid}
+                                    />
+                                    <FieldError errors={[errors.autoDiscoveryURL]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Scopes" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...scopes}
+                                    placeholder="email, profile, ..."
+                                    aria-invalid={isScopesInvalid}
+                                />
+                                <FieldError errors={[errors.scopes]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
+                    >
+                        <Checkbox
+                            checked={defaultField.value}
+                            onCheckedChange={checked => {
+                                defaultField.onChange(Boolean(checked));
+                            }}
+                        />
+                    </InfoBlock>
+                </fieldset>
+            </DialogBody>
+            {!isReadOnly && (
+                <DialogActionFooter>
+                    <div className="flex items-center justify-end gap-4">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </DialogActionFooter>
+            )}
             {isReadOnly && (
-                <Field>
+                <DialogActionFooter>
                     <div className="flex justify-end">
                         <Button
                             type="button"
@@ -355,7 +365,7 @@ export function CreateOrEditOAuthForm({
                             Close
                         </Button>
                     </div>
-                </Field>
+                </DialogActionFooter>
             )}
         </form>
     );

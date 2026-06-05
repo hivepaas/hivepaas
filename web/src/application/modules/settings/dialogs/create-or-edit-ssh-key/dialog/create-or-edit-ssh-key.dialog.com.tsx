@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSSHKeyCommands } from "~/projects/data/commands";
 import { ProjectSSHKeyQueries } from "~/projects/data/queries";
 import { SSHKeyCommands } from "~/settings/data/commands";
 import { SSHKeyQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditSSHKeyForm } from "../form";
 import { useCreateOrEditSSHKeyDialogState } from "../hooks";
@@ -151,11 +151,15 @@ export function CreateOrEditSSHKeyDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[760px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode !== "closed" && !isDetailLoading && (state.mode === "open" || initialValues) && (
                     <CreateOrEditSSHKeyForm
                         isPending={isPending}
@@ -173,7 +177,7 @@ export function CreateOrEditSSHKeyDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

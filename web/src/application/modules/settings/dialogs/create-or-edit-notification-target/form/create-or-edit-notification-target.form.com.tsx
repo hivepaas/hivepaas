@@ -12,7 +12,16 @@ import { AppLink, Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@appl
 import { ROUTE } from "@application/shared/constants";
 import { EImServiceKind } from "@application/shared/enums";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    DialogActionFooter,
+    DialogBody,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+} from "@/components/ui";
 
 import type { CreateOrEditNotificationTargetFormInput, CreateOrEditNotificationTargetFormOutput } from "../schemas";
 import { CreateOrEditNotificationTargetFormSchema } from "../schemas";
@@ -199,293 +208,294 @@ export function CreateOrEditNotificationTargetForm({
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}
-            className="flex flex-col gap-6"
+            className="min-h-0 flex flex-1 flex-col"
         >
-            {readOnlyInherited && <InheritedSettingReadonlyNotice />}
-            {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-            <fieldset
-                disabled={isReadOnly}
-                className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-            >
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Name" />}
+            <DialogBody className="flex flex-col gap-6">
+                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                <fieldset
+                    disabled={isReadOnly}
+                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...name}
-                                aria-invalid={isNameInvalid}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Name" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...name}
+                                    aria-invalid={isNameInvalid}
+                                />
+                                <FieldError errors={[errors.name]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
-                <ContentBlock label="Email Notification">
-                    <div className="flex flex-col gap-6">
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Enabled" />}
-                        >
-                            <Checkbox
-                                checked={emailEnabled.value}
-                                onCheckedChange={checked => {
-                                    emailEnabled.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                        {emailEnabled.value && (
-                            <>
+                    <ContentBlock label="Email Notification">
+                        <div className="flex flex-col gap-6">
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Enabled" />}
+                            >
+                                <Checkbox
+                                    checked={emailEnabled.value}
+                                    onCheckedChange={checked => {
+                                        emailEnabled.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                            {emailEnabled.value && (
+                                <>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Sender Email Account" />}
+                                    >
+                                        <FieldGroup>
+                                            <Field>
+                                                <Combobox
+                                                    options={emailOptions}
+                                                    value={senderEmailAccountId.value}
+                                                    onChange={value => {
+                                                        senderEmailAccountId.onChange(value ?? "");
+                                                    }}
+                                                    placeholder="None"
+                                                    emptyText="No email accounts available"
+                                                    searchable={false}
+                                                    allowClear
+                                                    loading={emailQuery.isLoading}
+                                                    onRefresh={() => {
+                                                        void emailQuery.refetch();
+                                                    }}
+                                                    isRefreshing={emailQuery.isRefetching}
+                                                    aria-invalid={isSenderEmailAccountInvalid}
+                                                />
+                                                <AppLink.Basic
+                                                    className="text-sm text-link"
+                                                    to={emailAccountsRoute}
+                                                    ignorePrevPath
+                                                >
+                                                    Configure email accounts
+                                                </AppLink.Basic>
+                                                <FieldError errors={[errors.senderEmailAccountId]} />
+                                            </Field>
+                                        </FieldGroup>
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Notify Admins" />}
+                                    >
+                                        <Checkbox
+                                            checked={notifyAdmins.value}
+                                            onCheckedChange={checked => {
+                                                notifyAdmins.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Notify Project Owners" />}
+                                    >
+                                        <Checkbox
+                                            checked={notifyProjectOwners.value}
+                                            onCheckedChange={checked => {
+                                                notifyProjectOwners.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Notify Project Members" />}
+                                    >
+                                        <Checkbox
+                                            checked={notifyProjectMembers.value}
+                                            onCheckedChange={checked => {
+                                                notifyProjectMembers.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                    </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Custom Addresses" />}
+                                    >
+                                        <FieldGroup>
+                                            <Field>
+                                                <Input
+                                                    {...customAddresses}
+                                                    placeholder="email1, email2"
+                                                    aria-invalid={isCustomAddressesInvalid}
+                                                />
+                                                <FieldError errors={[errors.customAddresses]} />
+                                            </Field>
+                                        </FieldGroup>
+                                    </InfoBlock>
+                                </>
+                            )}
+                        </div>
+                    </ContentBlock>
+
+                    <ContentBlock label="Slack Notification">
+                        <div className="flex flex-col gap-6">
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Enabled" />}
+                            >
+                                <Checkbox
+                                    checked={slackEnabled.value}
+                                    onCheckedChange={checked => {
+                                        slackEnabled.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                            {slackEnabled.value && (
                                 <InfoBlock
                                     titleWidth={220}
-                                    title={<LabelWithInfo label="Sender Email Account" />}
+                                    title={<LabelWithInfo label="Webhook" />}
                                 >
                                     <FieldGroup>
                                         <Field>
                                             <Combobox
-                                                options={emailOptions}
-                                                value={senderEmailAccountId.value}
+                                                options={slackOptions}
+                                                value={slackWebhookId.value}
                                                 onChange={value => {
-                                                    senderEmailAccountId.onChange(value ?? "");
+                                                    slackWebhookId.onChange(value ?? "");
                                                 }}
                                                 placeholder="None"
-                                                emptyText="No email accounts available"
+                                                emptyText="No Slack webhooks available"
                                                 searchable={false}
                                                 allowClear
-                                                loading={emailQuery.isLoading}
+                                                loading={imServiceQuery.isLoading}
                                                 onRefresh={() => {
-                                                    void emailQuery.refetch();
+                                                    void imServiceQuery.refetch();
                                                 }}
-                                                isRefreshing={emailQuery.isRefetching}
-                                                aria-invalid={isSenderEmailAccountInvalid}
+                                                isRefreshing={imServiceQuery.isRefetching}
+                                                aria-invalid={isSlackWebhookInvalid}
                                             />
                                             <AppLink.Basic
                                                 className="text-sm text-link"
-                                                to={emailAccountsRoute}
+                                                to={imPlatformsRoute}
                                                 ignorePrevPath
                                             >
-                                                Configure email accounts
+                                                Configure IM platforms
                                             </AppLink.Basic>
-                                            <FieldError errors={[errors.senderEmailAccountId]} />
+                                            <FieldError errors={[errors.slackWebhookId]} />
                                         </Field>
                                     </FieldGroup>
                                 </InfoBlock>
+                            )}
+                        </div>
+                    </ContentBlock>
+
+                    {/* <SectionTitle>Discord Notification</SectionTitle> */}
+                    <ContentBlock label="Discord Notification">
+                        <div className="flex flex-col gap-6">
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Enabled" />}
+                            >
+                                <Checkbox
+                                    checked={discordEnabled.value}
+                                    onCheckedChange={checked => {
+                                        discordEnabled.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                            {discordEnabled.value && (
                                 <InfoBlock
                                     titleWidth={220}
-                                    title={<LabelWithInfo label="Notify Admins" />}
-                                >
-                                    <Checkbox
-                                        checked={notifyAdmins.value}
-                                        onCheckedChange={checked => {
-                                            notifyAdmins.onChange(Boolean(checked));
-                                        }}
-                                    />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Notify Project Owners" />}
-                                >
-                                    <Checkbox
-                                        checked={notifyProjectOwners.value}
-                                        onCheckedChange={checked => {
-                                            notifyProjectOwners.onChange(Boolean(checked));
-                                        }}
-                                    />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Notify Project Members" />}
-                                >
-                                    <Checkbox
-                                        checked={notifyProjectMembers.value}
-                                        onCheckedChange={checked => {
-                                            notifyProjectMembers.onChange(Boolean(checked));
-                                        }}
-                                    />
-                                </InfoBlock>
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="Custom Addresses" />}
+                                    title={<LabelWithInfo label="Webhook" />}
                                 >
                                     <FieldGroup>
                                         <Field>
-                                            <Input
-                                                {...customAddresses}
-                                                placeholder="email1, email2"
-                                                aria-invalid={isCustomAddressesInvalid}
+                                            <Combobox
+                                                options={discordOptions}
+                                                value={discordWebhookId.value}
+                                                onChange={value => {
+                                                    discordWebhookId.onChange(value ?? "");
+                                                }}
+                                                placeholder="None"
+                                                emptyText="No Discord webhooks available"
+                                                searchable={false}
+                                                allowClear
+                                                loading={imServiceQuery.isLoading}
+                                                onRefresh={() => {
+                                                    void imServiceQuery.refetch();
+                                                }}
+                                                isRefreshing={imServiceQuery.isRefetching}
+                                                aria-invalid={isDiscordWebhookInvalid}
                                             />
-                                            <FieldError errors={[errors.customAddresses]} />
+                                            <AppLink.Basic
+                                                className="text-sm text-link"
+                                                to={imPlatformsRoute}
+                                                ignorePrevPath
+                                            >
+                                                Configure IM platforms
+                                            </AppLink.Basic>
+                                            <FieldError errors={[errors.discordWebhookId]} />
                                         </Field>
                                     </FieldGroup>
                                 </InfoBlock>
-                            </>
-                        )}
-                    </div>
-                </ContentBlock>
-
-                <ContentBlock label="Slack Notification">
-                    <div className="flex flex-col gap-6">
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Enabled" />}
-                        >
-                            <Checkbox
-                                checked={slackEnabled.value}
-                                onCheckedChange={checked => {
-                                    slackEnabled.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                        {slackEnabled.value && (
-                            <InfoBlock
-                                titleWidth={220}
-                                title={<LabelWithInfo label="Webhook" />}
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Combobox
-                                            options={slackOptions}
-                                            value={slackWebhookId.value}
-                                            onChange={value => {
-                                                slackWebhookId.onChange(value ?? "");
-                                            }}
-                                            placeholder="None"
-                                            emptyText="No Slack webhooks available"
-                                            searchable={false}
-                                            allowClear
-                                            loading={imServiceQuery.isLoading}
-                                            onRefresh={() => {
-                                                void imServiceQuery.refetch();
-                                            }}
-                                            isRefreshing={imServiceQuery.isRefetching}
-                                            aria-invalid={isSlackWebhookInvalid}
-                                        />
-                                        <AppLink.Basic
-                                            className="text-sm text-link"
-                                            to={imPlatformsRoute}
-                                            ignorePrevPath
-                                        >
-                                            Configure IM platforms
-                                        </AppLink.Basic>
-                                        <FieldError errors={[errors.slackWebhookId]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-                        )}
-                    </div>
-                </ContentBlock>
-
-                {/* <SectionTitle>Discord Notification</SectionTitle> */}
-                <ContentBlock label="Discord Notification">
-                    <div className="flex flex-col gap-6">
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="Enabled" />}
-                        >
-                            <Checkbox
-                                checked={discordEnabled.value}
-                                onCheckedChange={checked => {
-                                    discordEnabled.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                        {discordEnabled.value && (
-                            <InfoBlock
-                                titleWidth={220}
-                                title={<LabelWithInfo label="Webhook" />}
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Combobox
-                                            options={discordOptions}
-                                            value={discordWebhookId.value}
-                                            onChange={value => {
-                                                discordWebhookId.onChange(value ?? "");
-                                            }}
-                                            placeholder="None"
-                                            emptyText="No Discord webhooks available"
-                                            searchable={false}
-                                            allowClear
-                                            loading={imServiceQuery.isLoading}
-                                            onRefresh={() => {
-                                                void imServiceQuery.refetch();
-                                            }}
-                                            isRefreshing={imServiceQuery.isRefetching}
-                                            aria-invalid={isDiscordWebhookInvalid}
-                                        />
-                                        <AppLink.Basic
-                                            className="text-sm text-link"
-                                            to={imPlatformsRoute}
-                                            ignorePrevPath
-                                        >
-                                            Configure IM platforms
-                                        </AppLink.Basic>
-                                        <FieldError errors={[errors.discordWebhookId]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-                        )}
-                    </div>
-                </ContentBlock>
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Override Min Send Interval" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...minSendInterval}
-                                placeholder="3m"
-                                aria-invalid={isMinSendIntervalInvalid}
-                            />
-                            <FieldError errors={[errors.minSendInterval]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                {showAvailableInProjects && (
+                            )}
+                        </div>
+                    </ContentBlock>
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Available in Projects" />}
+                        title={<LabelWithInfo label="Override Min Send Interval" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...minSendInterval}
+                                    placeholder="3m"
+                                    aria-invalid={isMinSendIntervalInvalid}
+                                />
+                                <FieldError errors={[errors.minSendInterval]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    {showAvailableInProjects && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Available in Projects" />}
+                        >
+                            <Checkbox
+                                checked={availableInProjects.value}
+                                onCheckedChange={checked => {
+                                    availableInProjects.onChange(Boolean(checked));
+                                }}
+                            />
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
                     >
                         <Checkbox
-                            checked={availableInProjects.value}
+                            checked={defaultField.value}
                             onCheckedChange={checked => {
-                                availableInProjects.onChange(Boolean(checked));
+                                defaultField.onChange(Boolean(checked));
                             }}
                         />
                     </InfoBlock>
-                )}
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Default" />}
-                >
-                    <Checkbox
-                        checked={defaultField.value}
-                        onCheckedChange={checked => {
-                            defaultField.onChange(Boolean(checked));
-                        }}
-                    />
-                </InfoBlock>
-
-                {!isReadOnly && (
-                    <Field>
-                        <div className="flex justify-end">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </Field>
-                )}
-            </fieldset>
+                </fieldset>
+            </DialogBody>
+            {!isReadOnly && (
+                <DialogActionFooter>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </DialogActionFooter>
+            )}
             {isReadOnly && (
-                <Field>
+                <DialogActionFooter>
                     <div className="flex justify-end">
                         <Button
                             type="button"
@@ -494,7 +504,7 @@ export function CreateOrEditNotificationTargetForm({
                             Close
                         </Button>
                     </div>
-                </Field>
+                </DialogActionFooter>
             )}
         </form>
     );

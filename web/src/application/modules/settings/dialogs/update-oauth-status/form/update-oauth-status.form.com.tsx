@@ -6,7 +6,18 @@ import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    DialogActionFooter,
+    DialogBody,
+    Field,
+    FieldError,
+    FieldGroup,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import {
@@ -75,88 +86,90 @@ export function UpdateOAuthStatusForm({
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}
+            className="min-h-0 flex flex-1 flex-col"
         >
-            {isReadOnly && <PermissionReadonlyNotice />}
-            <fieldset
-                disabled={isReadOnly}
-                className="border-0 p-0 m-0 min-w-0"
-            >
-                <FieldGroup>
-                    <Field>
-                        <InfoBlock
-                            title="Status"
-                            titleWidth={160}
-                        >
-                            <Tabs
-                                value={status.value}
-                                onValueChange={value => {
-                                    status.onChange(value as ESettingStatus);
-                                }}
-                            >
-                                <TabsList>
-                                    {Object.entries(statusMap).map(([value, label]) => (
-                                        <TabsTrigger
-                                            key={value}
-                                            value={value}
-                                        >
-                                            {label}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
-                        </InfoBlock>
-                    </Field>
-
-                    <Field>
-                        <InfoBlock
-                            title="Access expiration"
-                            titleWidth={160}
-                        >
-                            <DateTimePicker
-                                value={expireAt.value ?? undefined}
-                                onChange={date => {
-                                    expireAt.onChange(date ?? null);
-                                }}
-                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                                granularity="second"
-                                showClearButton
-                                aria-invalid={isExpireAtInvalid}
-                            />
-                            <FieldError errors={[errors.expireAt]} />
-                        </InfoBlock>
-                    </Field>
-
-                    <Field>
-                        <InfoBlock
-                            title={<LabelWithInfo label="Default" />}
-                            titleWidth={160}
-                        >
-                            <Checkbox
-                                checked={defaultField.value}
-                                onCheckedChange={checked => {
-                                    defaultField.onChange(Boolean(checked));
-                                }}
-                            />
-                        </InfoBlock>
-                    </Field>
-
-                    {!isReadOnly && (
+            <DialogBody className="flex flex-col gap-4">
+                {isReadOnly && <PermissionReadonlyNotice />}
+                <fieldset
+                    disabled={isReadOnly}
+                    className="border-0 p-0 m-0 min-w-0"
+                >
+                    <FieldGroup>
                         <Field>
-                            <div className="flex justify-end">
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                    className="min-w-[100px]"
+                            <InfoBlock
+                                title="Status"
+                                titleWidth={160}
+                            >
+                                <Tabs
+                                    value={status.value}
+                                    onValueChange={value => {
+                                        status.onChange(value as ESettingStatus);
+                                    }}
                                 >
-                                    Save
-                                </Button>
-                            </div>
+                                    <TabsList>
+                                        {Object.entries(statusMap).map(([value, label]) => (
+                                            <TabsTrigger
+                                                key={value}
+                                                value={value}
+                                            >
+                                                {label}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
+                            </InfoBlock>
                         </Field>
-                    )}
-                </FieldGroup>
-            </fieldset>
+
+                        <Field>
+                            <InfoBlock
+                                title="Access expiration"
+                                titleWidth={160}
+                            >
+                                <DateTimePicker
+                                    value={expireAt.value ?? undefined}
+                                    onChange={date => {
+                                        expireAt.onChange(date ?? null);
+                                    }}
+                                    displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                    granularity="second"
+                                    showClearButton
+                                    aria-invalid={isExpireAtInvalid}
+                                />
+                                <FieldError errors={[errors.expireAt]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Default" />}
+                                titleWidth={160}
+                            >
+                                <Checkbox
+                                    checked={defaultField.value}
+                                    onCheckedChange={checked => {
+                                        defaultField.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    </FieldGroup>
+                </fieldset>
+            </DialogBody>
+            {!isReadOnly && (
+                <DialogActionFooter>
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </div>
+                </DialogActionFooter>
+            )}
             {isReadOnly && (
-                <Field>
+                <DialogActionFooter>
                     <div className="flex justify-end">
                         <Button
                             type="button"
@@ -165,7 +178,7 @@ export function UpdateOAuthStatusForm({
                             Close
                         </Button>
                     </div>
-                </Field>
+                </DialogActionFooter>
             )}
         </form>
     );

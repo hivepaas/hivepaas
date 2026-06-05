@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { OAuthCommands } from "~/settings/data/commands";
 import { OAuthQueries } from "~/settings/data/queries";
@@ -74,11 +74,15 @@ export function UpdateOAuthStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="sm:max-w-[560px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateOAuthStatusForm
                         isPending={isPending}
@@ -89,7 +93,7 @@ export function UpdateOAuthStatusDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

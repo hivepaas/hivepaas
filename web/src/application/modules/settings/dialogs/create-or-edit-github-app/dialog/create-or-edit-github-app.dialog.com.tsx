@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { CreateOrEditGithubAppForm } from "../form";
 import { useCreateOrEditGithubAppDialogState } from "../hooks";
@@ -264,11 +264,15 @@ export function CreateOrEditGithubAppDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[840px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[840px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode !== "closed" && !isDetailLoading && canRenderForm && (
                     <CreateOrEditGithubAppForm
                         isPending={isPending}
@@ -277,7 +281,9 @@ export function CreateOrEditGithubAppDialog() {
                         isReprovisioning={isReprovisioning}
                         onSubmit={onSubmit}
                         onTestConnection={onTestConnection}
-                        onReprovision={state.mode === "edit" && !readOnlyInherited && canWrite ? onReprovision : undefined}
+                        onReprovision={
+                            state.mode === "edit" && !readOnlyInherited && canWrite ? onReprovision : undefined
+                        }
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         readonlyValues={readonlyValues}
@@ -288,7 +294,7 @@ export function CreateOrEditGithubAppDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

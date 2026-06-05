@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectRepoWebhookCommands } from "~/projects/data/commands";
 import { ProjectRepoWebhookQueries } from "~/projects/data/queries";
@@ -139,11 +139,15 @@ export function UpdateRepoWebhookStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="sm:max-w-[560px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
-                {isDetailLoading && <AppLoader />}
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateRepoWebhookStatusForm
                         isPending={isPending}
@@ -156,7 +160,7 @@ export function UpdateRepoWebhookStatusDialog() {
                         onClose={handleClose}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

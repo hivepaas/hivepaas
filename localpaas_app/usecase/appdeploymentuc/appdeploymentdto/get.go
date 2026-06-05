@@ -48,10 +48,10 @@ type DeploymentResp struct {
 	Trigger   *DeploymentTriggerResp        `json:"trigger"`
 	Output    *DeploymentOutputResp         `json:"output"`
 
-	StartedAt time.Time `json:"startedAt"`
-	EndedAt   time.Time `json:"endedAt"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	StartedAt *time.Time `json:"startedAt" copy:",nilonzero"`
+	EndedAt   *time.Time `json:"endedAt" copy:",nilonzero"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 type DeploymentTriggerResp struct {
@@ -80,7 +80,7 @@ func TransformDeployment(
 	if deploymentInfo != nil {
 		resp.Status = deploymentInfo.Status
 		if deploymentInfo.Status == base.DeploymentStatusInProgress {
-			resp.StartedAt = deploymentInfo.StartedAt
+			resp.StartedAt = &deploymentInfo.StartedAt
 		}
 	}
 

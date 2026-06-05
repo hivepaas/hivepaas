@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
+import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
-import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -111,17 +111,17 @@ export function UpdateOAuthStatusForm({
                         <InfoBlock
                             title="Access expiration"
                             titleWidth={160}
-                    >
+                        >
                             <DateTimePicker
                                 value={expireAt.value ?? undefined}
                                 onChange={date => {
-                                expireAt.onChange(date ?? null);
-                            }}
+                                    expireAt.onChange(date ?? null);
+                                }}
                                 displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
                                 granularity="second"
                                 showClearButton
                                 aria-invalid={isExpireAtInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.expireAt]} />
                         </InfoBlock>
                     </Field>
@@ -130,13 +130,13 @@ export function UpdateOAuthStatusForm({
                         <InfoBlock
                             title={<LabelWithInfo label="Default" />}
                             titleWidth={160}
-                    >
+                        >
                             <Checkbox
                                 checked={defaultField.value}
                                 onCheckedChange={checked => {
-                                defaultField.onChange(Boolean(checked));
-                            }}
-                        />
+                                    defaultField.onChange(Boolean(checked));
+                                }}
+                            />
                         </InfoBlock>
                     </Field>
 
@@ -146,6 +146,7 @@ export function UpdateOAuthStatusForm({
                                 <Button
                                     type="submit"
                                     isLoading={isPending}
+                                    className="min-w-[100px]"
                                 >
                                     Save
                                 </Button>

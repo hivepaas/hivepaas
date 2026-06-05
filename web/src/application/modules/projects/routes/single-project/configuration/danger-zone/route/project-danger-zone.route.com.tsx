@@ -59,7 +59,7 @@ export function ProjectDangerZoneRoute() {
     return (
         <div className="flex flex-col gap-5">
             <DangerActionPanel>
-                <p className="text-base font-semibold leading-7 text-foreground">
+                <p className="text-sm leading-6 text-foreground">
                     Disabling a project disables all apps in the project, so they will no longer consume system
                     resources such as CPU or memory. However, the project&apos;s information will still remain in the
                     system, and you can restore it at any time.
@@ -89,7 +89,7 @@ export function ProjectDangerZoneRoute() {
             </DangerActionPanel>
 
             <DangerActionPanel>
-                <p className="text-base font-semibold leading-7 text-foreground">
+                <p className="text-sm leading-6 text-foreground">
                     Deleting a project will remove all of its information, apps, and allocated system resources. You
                     will not be able to recover it after deletion.
                 </p>

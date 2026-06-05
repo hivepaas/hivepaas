@@ -4,10 +4,10 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
+import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EOAuthKind } from "@application/shared/enums";
-import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -151,16 +151,16 @@ export function CreateOrEditOAuthForm({
                         <LabelWithInfo
                             label="Provider"
                             isRequired
-                    />
-                }
-            >
+                        />
+                    }
+                >
                     <FieldGroup>
                         <Field>
                             <Select
                                 value={kind.value}
                                 onValueChange={kind.onChange}
                                 disabled={disableProvider || isReadOnly}
-                        >
+                            >
                                 <SelectTrigger aria-invalid={isKindInvalid}>
                                     <SelectValue placeholder="Select provider" />
                                 </SelectTrigger>
@@ -169,10 +169,10 @@ export function CreateOrEditOAuthForm({
                                         <SelectItem
                                             key={option.value}
                                             value={option.value}
-                                    >
+                                        >
                                             {option.label}
                                         </SelectItem>
-                                ))}
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <FieldError errors={[errors.kind]} />
@@ -186,15 +186,15 @@ export function CreateOrEditOAuthForm({
                         <LabelWithInfo
                             label="Organization"
                             isRequired
-                    />
-                }
-            >
+                        />
+                    }
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...organization}
                                 aria-invalid={isOrganizationInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.organization]} />
                         </Field>
                     </FieldGroup>
@@ -206,15 +206,15 @@ export function CreateOrEditOAuthForm({
                         <LabelWithInfo
                             label="Client ID"
                             isRequired
-                    />
-                }
-            >
+                        />
+                    }
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...clientId}
                                 aria-invalid={isClientIdInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.clientId]} />
                         </Field>
                     </FieldGroup>
@@ -226,16 +226,16 @@ export function CreateOrEditOAuthForm({
                         <LabelWithInfo
                             label="Client Secret"
                             isRequired
-                    />
-                }
-            >
+                        />
+                    }
+                >
                     <FieldGroup>
                         <Field>
                             <PasswordInput
                                 value={clientSecret.value}
                                 onChange={clientSecret.onChange}
                                 aria-invalid={isClientSecretInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.clientSecret]} />
                         </Field>
                     </FieldGroup>
@@ -244,13 +244,13 @@ export function CreateOrEditOAuthForm({
                 <InfoBlock
                     titleWidth={220}
                     title={<LabelWithInfo label="Auth URL" />}
-            >
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...authURL}
                                 aria-invalid={isAuthURLInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.authURL]} />
                         </Field>
                     </FieldGroup>
@@ -259,13 +259,13 @@ export function CreateOrEditOAuthForm({
                 <InfoBlock
                     titleWidth={220}
                     title={<LabelWithInfo label="Token URL" />}
-            >
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...tokenURL}
                                 aria-invalid={isTokenURLInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.tokenURL]} />
                         </Field>
                     </FieldGroup>
@@ -274,46 +274,46 @@ export function CreateOrEditOAuthForm({
                 <InfoBlock
                     titleWidth={220}
                     title={<LabelWithInfo label="Profile URL" />}
-            >
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...profileURL}
                                 aria-invalid={isProfileURLInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.profileURL]} />
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
 
                 {showAutoDiscoveryURL && (
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Auto-Discovery URL" />}
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                {...autoDiscoveryURL}
-                                aria-invalid={isAutoDiscoveryURLInvalid}
-                            />
-                            <FieldError errors={[errors.autoDiscoveryURL]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-            )}
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Auto-Discovery URL" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...autoDiscoveryURL}
+                                    aria-invalid={isAutoDiscoveryURLInvalid}
+                                />
+                                <FieldError errors={[errors.autoDiscoveryURL]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
 
                 <InfoBlock
                     titleWidth={220}
                     title={<LabelWithInfo label="Scopes" />}
-            >
+                >
                     <FieldGroup>
                         <Field>
                             <Input
                                 {...scopes}
                                 placeholder="email, profile, ..."
                                 aria-invalid={isScopesInvalid}
-                        />
+                            />
                             <FieldError errors={[errors.scopes]} />
                         </Field>
                     </FieldGroup>
@@ -322,13 +322,13 @@ export function CreateOrEditOAuthForm({
                 <InfoBlock
                     titleWidth={220}
                     title={<LabelWithInfo label="Default" />}
-            >
+                >
                     <Checkbox
                         checked={defaultField.value}
                         onCheckedChange={checked => {
-                        defaultField.onChange(Boolean(checked));
-                    }}
-                />
+                            defaultField.onChange(Boolean(checked));
+                        }}
+                    />
                 </InfoBlock>
 
                 {!isReadOnly && (
@@ -337,6 +337,7 @@ export function CreateOrEditOAuthForm({
                             <Button
                                 type="submit"
                                 isLoading={isPending}
+                                className="min-w-[100px]"
                             >
                                 Save
                             </Button>

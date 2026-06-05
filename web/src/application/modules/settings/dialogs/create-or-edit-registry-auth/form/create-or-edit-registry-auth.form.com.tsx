@@ -235,6 +235,7 @@ export function CreateOrEditRegistryAuthForm({
                             <Button
                                 type="submit"
                                 isLoading={isPending}
+                                className="min-w-[100px]"
                             >
                                 Save
                             </Button>

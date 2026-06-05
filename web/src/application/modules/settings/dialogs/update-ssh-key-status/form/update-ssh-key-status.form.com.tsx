@@ -167,6 +167,7 @@ export function UpdateSSHKeyStatusForm({
                                 <Button
                                     type="submit"
                                     isLoading={isPending}
+                                    className="min-w-[100px]"
                                 >
                                     Save
                                 </Button>

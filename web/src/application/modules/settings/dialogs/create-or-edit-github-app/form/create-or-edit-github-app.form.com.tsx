@@ -385,6 +385,7 @@ export function CreateOrEditGithubAppForm({
                             <Button
                                 type="submit"
                                 isLoading={isPending}
+                                className="min-w-[100px]"
                             >
                                 Save
                             </Button>

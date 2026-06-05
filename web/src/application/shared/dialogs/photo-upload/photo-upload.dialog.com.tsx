@@ -58,7 +58,12 @@ export function PhotoUploadDialog({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit">Save</Button>
+                        <Button
+                            type="submit"
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
                     </DialogFooter>
                 </UploadPhotoForm>
             </DialogContent>

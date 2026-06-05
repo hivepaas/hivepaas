@@ -69,7 +69,13 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
             <div className={cn(dashedBorderBox, "text-center text-sm leading-6 px-4 py-3")}>
                 <span className="text-orange-500">Note:</span> If you want to interact with the LocalPaaS development
                 team and user community, you can join our chat channel at{" "}
-                <span className="text-primary">this link</span>.
+                <a
+                    href="https://discord.gg/2TgD3zDb2e"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span className="text-primary">this link</span>.
+                </a>
             </div>
 
             <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">

@@ -138,6 +138,14 @@
 						{{.CommitMsg}}
 					</td>
 				</tr>
+				<tr class="text_default">
+					<td class="col_left">
+						<b>Commit author:</b>
+					</td>
+					<td class="col_main">
+						{{.CommitAuthor}}
+					</td>
+				</tr>
 				{{else if .Method | eq "image"}}
 				<tr class="text_default">
 					<td class="col_left">

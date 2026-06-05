@@ -72,7 +72,8 @@ func (s *service) buildDeploymentNotifMsgData(
 		msgData.RepoURL = deployment.Settings.RepoSource.RepoURL
 		msgData.RepoRef = deployment.Settings.RepoSource.RepoRef
 		if deployment.Output != nil {
-			msgData.CommitMsg = deployment.Output.CommitMessage
+			msgData.CommitMsg = deployment.Output.CommitTitle
+			msgData.CommitAuthor = deployment.Output.CommitAuthor
 		}
 	case base.DeploymentMethodImage:
 		msgData.Image = deployment.Settings.ImageSource.Image

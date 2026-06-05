@@ -2,6 +2,8 @@ package discord
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
@@ -22,9 +24,16 @@ func (c *Client) WebhookExecute(_ context.Context, webhookURL string, wait bool,
 		return nil, apperrors.New(err)
 	}
 
-	msg := &discordgo.WebhookParams{
-		Content: content,
+	msg := &discordgo.WebhookParams{}
+	trimmed := strings.TrimSpace(content)
+	if strings.HasPrefix(trimmed, "{") && strings.HasSuffix(trimmed, "}") {
+		if err := json.Unmarshal([]byte(content), msg); err != nil {
+			msg.Content = content
+		}
+	} else {
+		msg.Content = content
 	}
+
 	for _, opt := range options {
 		opt(msg)
 	}

@@ -196,7 +196,7 @@ func (s *service) notifyForTaskResultViaDiscord(
 		return apperrors.Wrap(err)
 	}
 
-	err = s.discordSendMsg(ctx, imService.Discord, strutil.RemoveEmptyLines(buf.String(), false))
+	err = s.discordSendMsg(ctx, imService.Discord, buf.String())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

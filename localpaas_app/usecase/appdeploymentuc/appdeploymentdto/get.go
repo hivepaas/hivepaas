@@ -11,7 +11,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 )
 
 const (
@@ -66,6 +65,7 @@ type DeploymentOutputResp struct {
 	CommitURL       string `json:"commitURL,omitempty"`
 	CommitTitle     string `json:"commitTitle,omitempty"`
 	CommitMessage   string `json:"commitMessage,omitempty"`
+	CommitAuthor    string `json:"commitAuthor,omitempty"`
 }
 
 func TransformDeployment(
@@ -99,8 +99,6 @@ func TransformDeployment(
 		if len(resp.Output.CommitHashShort) > commitHashShortLen { // shorten to some characters if possible
 			resp.Output.CommitHashShort = resp.Output.CommitHashShort[:commitHashShortLen]
 		}
-		resp.Output.CommitTitle = strutil.GetFirstLine(resp.Output.CommitMessage)
-
 		if resp.Output.CommitHash != "" && deployment.Settings.RepoSource != nil {
 			repoURL := deployment.Settings.RepoSource.RepoID
 			resp.Output.CommitURL = githelper.GetCommitHttpsUrl(repoURL, resp.Output.CommitHash)

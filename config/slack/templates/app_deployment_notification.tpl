@@ -5,6 +5,7 @@
 > Repository: `{{.RepoURL}}`
 > Branch/Ref: `{{.RepoRef}}`
 > Commit message: `{{.CommitMsg}}`
+> Commit author: `{{.CommitAuthor}}`
 > {{else if .Method | eq "image"}}
 > Image: `{{.Image}}`
 > {{else if .Method | eq "tarball"}}

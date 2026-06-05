@@ -23,6 +23,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/services/docker"
@@ -217,6 +218,8 @@ func (s *service) repoDeployStepSourceCheckout(
 	data.CheckoutDuration = time.Since(checkoutStart)
 	data.DeploymentOutput.CommitHash = commit.Hash.String()
 	data.DeploymentOutput.CommitMessage = commit.Message
+	data.DeploymentOutput.CommitTitle = strutil.GetFirstLine(commit.Message)
+	data.DeploymentOutput.CommitAuthor = commit.Author.Name
 
 	// Cache the latest repo source if satisfied our condition
 	ee := s.repoCheckoutSaveCache(ctx, data)

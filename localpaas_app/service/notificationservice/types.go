@@ -78,6 +78,7 @@ type TemplateDataAppDeployment struct {
 	RepoURL       string
 	RepoRef       string
 	CommitMsg     string
+	CommitAuthor  string
 	Image         string
 	StartedAt     time.Time
 	Duration      time.Duration

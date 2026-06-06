@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	gogitea "code.gitea.io/sdk/gitea"
-	"github.com/google/go-github/v79/github"
+	"github.com/google/go-github/v85/github"
 	vld "github.com/tiendc/go-validator"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 

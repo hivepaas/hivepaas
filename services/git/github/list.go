@@ -1,7 +1,7 @@
 package github
 
 import (
-	gogithub "github.com/google/go-github/v79/github"
+	gogithub "github.com/google/go-github/v85/github"
 
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 )

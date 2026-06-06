@@ -3,14 +3,14 @@ package github
 import (
 	"context"
 
-	gogithub "github.com/google/go-github/v79/github"
+	gogithub "github.com/google/go-github/v85/github"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/infra/httpclient"
 )
 
 // AppManifest
-//nolint https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest#github-app-manifest-parameters
+// nolint https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest#github-app-manifest-parameters
 type AppManifest struct {
 	Name                  string            `json:"name,omitempty"`
 	URL                   string            `json:"url"`

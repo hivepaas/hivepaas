@@ -1,7 +1,7 @@
 package githubappdto
 
 import (
-	"github.com/google/go-github/v79/github"
+	"github.com/google/go-github/v85/github"
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"

@@ -4,6 +4,7 @@ import type { SettingsBaseEntity } from "./settings.base.entity";
 
 export interface NotificationViaEmail {
     enabled: boolean;
+    useDefault: boolean;
     sender?: SettingsBaseEntity;
     toProjectMembers: boolean;
     toProjectOwners: boolean;
@@ -13,16 +14,19 @@ export interface NotificationViaEmail {
 
 export interface NotificationViaSlack {
     enabled: boolean;
+    useDefault: boolean;
     webhook?: SettingsBaseEntity;
 }
 
 export interface NotificationViaDiscord {
     enabled: boolean;
+    useDefault: boolean;
     webhook?: SettingsBaseEntity;
 }
 
 export interface NotificationViaTelegram {
     enabled: boolean;
+    useDefault: boolean;
     setting?: SettingsBaseEntity;
 }
 

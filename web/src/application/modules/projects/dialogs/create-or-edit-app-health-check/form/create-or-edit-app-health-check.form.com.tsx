@@ -45,16 +45,16 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
     return {
         name: healthCheck?.name ?? "",
         interval: healthCheck?.interval ?? "30s",
-        timeout: healthCheck?.timeout ?? "15s",
-        maxRetry: healthCheck?.maxRetry ?? 1,
-        retryDelay: healthCheck?.retryDelay ?? "5s",
+        timeout: healthCheck?.timeout ?? "",
+        maxRetry: healthCheck?.maxRetry,
+        retryDelay: healthCheck?.retryDelay ?? "",
         healthcheckType: healthCheck?.healthcheckType ?? EAppHealthCheckType.REST,
         rest: {
             url: healthCheck?.rest?.url ?? "",
             method: healthCheck?.rest?.method ?? EAppHealthCheckRestMethod.GET,
             contentType: healthCheck?.rest?.contentType ?? "application/json",
             body: healthCheck?.rest?.body ?? "",
-            returnCode: healthCheck?.rest?.returnCode ?? "200",
+            returnCode: healthCheck?.rest?.returnCode ?? "",
             returnBodyMode: getReturnBodyMode(healthCheck?.rest ?? null),
             textExact: healthCheck?.rest?.returnText?.exact ?? "",
             textRegex: healthCheck?.rest?.returnText?.regex ?? "",
@@ -72,7 +72,7 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
             success: healthCheck?.notification?.success,
             failureUseDefault: healthCheck?.notification?.failureUseDefault ?? true,
             failure: healthCheck?.notification?.failure,
-            minSendInterval: healthCheck?.notification?.minSendInterval ?? "10m",
+            minSendInterval: healthCheck?.notification?.minSendInterval ?? "",
         },
     };
 }
@@ -273,12 +273,7 @@ export function CreateOrEditAppHealthCheckForm({
 
                             <InfoBlock
                                 titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Timeout"
-                                        isRequired
-                                    />
-                                }
+                                title={<LabelWithInfo label="Timeout" />}
                             >
                                 <Field>
                                     <Input
@@ -294,22 +289,21 @@ export function CreateOrEditAppHealthCheckForm({
 
                             <InfoBlock
                                 titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Max Retry"
-                                        isRequired
-                                    />
-                                }
+                                title={<LabelWithInfo label="Max Retry" />}
                             >
                                 <Field>
                                     <InputNumber
                                         id="app-health-check-max-retry"
                                         value={maxRetry.value}
                                         onValueChange={value => {
-                                            maxRetry.onChange(value ?? 0);
+                                            const nextValue =
+                                                value !== undefined && Number.isFinite(value) ? value : undefined;
+
+                                            maxRetry.onChange(nextValue);
                                         }}
                                         min={0}
                                         useGrouping={false}
+                                        placeholder="1"
                                         aria-invalid={isMaxRetryInvalid}
                                         className="max-w-[100px]"
                                     />
@@ -319,12 +313,7 @@ export function CreateOrEditAppHealthCheckForm({
 
                             <InfoBlock
                                 titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Retry Delay"
-                                        isRequired
-                                    />
-                                }
+                                title={<LabelWithInfo label="Retry Delay" />}
                             >
                                 <Field>
                                     <Input
@@ -417,7 +406,6 @@ export function CreateOrEditAppHealthCheckForm({
                                             id="app-health-check-rest-content-type"
                                             {...restContentType}
                                             placeholder="application/json"
-                                            className="max-w-[360px]"
                                         />
                                     </InfoBlock>
 
@@ -442,7 +430,7 @@ export function CreateOrEditAppHealthCheckForm({
                                             <Input
                                                 id="app-health-check-rest-return-code"
                                                 {...restReturnCode}
-                                                placeholder="200, 201, 202"
+                                                placeholder="200,201,202"
                                                 aria-invalid={isRestReturnCodeInvalid}
                                             />
                                             <FieldError errors={[errors.rest?.returnCode]} />
@@ -637,12 +625,7 @@ export function CreateOrEditAppHealthCheckForm({
 
                             <InfoBlock
                                 titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Min Send Interval"
-                                        isRequired
-                                    />
-                                }
+                                title={<LabelWithInfo label="Min Send Interval" />}
                             >
                                 <Field>
                                     <Input

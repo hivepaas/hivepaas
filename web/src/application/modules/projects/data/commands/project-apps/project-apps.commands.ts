@@ -140,6 +140,9 @@ function useDeploy({ onSuccess, ...options }: DeployOptions = {}) {
     return useMutation({
         mutationFn: mutations.deploy,
         onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.deployments.$.find-many-paginated"]],
+            });
             invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
 
             if (onSuccess) {

@@ -57,7 +57,7 @@ const NotificationSchema = z
         success: NamedRefSchema,
         failureUseDefault: z.boolean(),
         failure: NamedRefSchema,
-        minSendInterval: z.string(),
+        minSendInterval: z.string().optional().default(""),
     })
     .nullish()
     .transform(value => value ?? null);
@@ -77,9 +77,9 @@ const AppHealthCheckSchema = z.object({
     expireAt: z.coerce.date().nullable().optional().default(null),
     healthcheckType: z.nativeEnum(EAppHealthCheckType),
     interval: z.string(),
-    maxRetry: z.number(),
-    retryDelay: z.string(),
-    timeout: z.string(),
+    maxRetry: z.number().optional().default(0),
+    retryDelay: z.string().optional().default(""),
+    timeout: z.string().optional().default(""),
     saveResultTasks: z.boolean(),
     rest: RestSchema.nullish().transform(value => value ?? null),
     grpc: GrpcSchema.nullish().transform(value => value ?? null),

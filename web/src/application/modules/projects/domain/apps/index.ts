@@ -1,6 +1,7 @@
 export * from "./base";
 export * from "./config-file";
 export * from "./container-settings";
+export * from "./deployment";
 export * from "./deployment-settings";
 export * from "./health-check";
 export * from "./secret";

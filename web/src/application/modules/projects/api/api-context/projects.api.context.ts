@@ -7,6 +7,8 @@ import {
     AppContainerSettingsApiValidator,
     AppDeploymentSettingsApi,
     AppDeploymentSettingsApiValidator,
+    AppDeploymentsApi,
+    AppDeploymentsApiValidator,
     AppHealthChecksApi,
     AppHealthChecksApiValidator,
     AppScheduledJobsApi,
@@ -102,6 +104,7 @@ function createApi() {
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
+    const appDeploymentsApiValidator = new AppDeploymentsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
     const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
@@ -139,6 +142,9 @@ function createApi() {
                 },
                 configFiles: {
                     $: new AppConfigFilesApi(appConfigFilesApiValidator),
+                },
+                deployments: {
+                    $: new AppDeploymentsApi(appDeploymentsApiValidator),
                 },
                 containerSettings: {
                     $: new AppContainerSettingsApi(appContainerSettingsApiValidator),

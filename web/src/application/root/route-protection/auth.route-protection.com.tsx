@@ -57,6 +57,85 @@ function getDefaultRoute(
     );
 }
 
+function normalizePathname(pathname: string) {
+    const withLeadingSlash = pathname.startsWith("/") ? pathname : `/${pathname}`;
+
+    return withLeadingSlash.replace(/\/+$/, "") || "/";
+}
+
+function isAuthPath(pathname: string) {
+    const normalizedPathname = normalizePathname(pathname);
+
+    return normalizedPathname === "/auth" || normalizedPathname.startsWith("/auth/");
+}
+
+function parseSameOriginUrl(path: string | null) {
+    const trimmedPath = path?.trim();
+
+    if (!trimmedPath) {
+        return null;
+    }
+
+    try {
+        const url = new URL(trimmedPath, `${window.location.origin}/`);
+
+        if (url.origin !== window.location.origin) {
+            return null;
+        }
+
+        return url;
+    } catch {
+        return null;
+    }
+}
+
+function getSafeNextPath(path: string | null) {
+    const url = parseSameOriginUrl(path);
+
+    if (url === null || isAuthPath(url.pathname)) {
+        return null;
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function isSsoSuccessPath(path: string | null) {
+    const url = parseSameOriginUrl(path);
+
+    return normalizePathname(url?.pathname ?? "") === normalizePathname(ROUTE.auth.sso.success.$route);
+}
+
+function getAuthHandoff(path: string | null) {
+    const url = parseSameOriginUrl(path);
+
+    if (url === null) {
+        return null;
+    }
+
+    const pathname = normalizePathname(url.pathname);
+
+    const authRouteMap: Record<string, string> = {
+        "auth/sign-up": ROUTE.auth.signUp.$route,
+        "auth/reset-password": ROUTE.auth.resetPassword.$route,
+        "auth/forgot-password": ROUTE.auth.forgotPassword.$route,
+    };
+
+    const redirectTo = Object.entries(authRouteMap).find(([pattern]) => pathname.includes(pattern))?.[1];
+
+    if (redirectTo === undefined) {
+        return null;
+    }
+
+    return {
+        pathname: redirectTo,
+        search: url.searchParams.toString(),
+    };
+}
+
+function getCurrentPath(location: ReturnType<typeof useLocation>) {
+    return `${location.pathname}${location.search}${location.hash}`;
+}
+
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
     const { map: modulePermissionMap } = useConditionalModuleCollections();
@@ -81,11 +160,12 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const isAuthGroup = useMatch("auth/*") !== null;
 
     const nextPath = params.get("next");
+    const safeNextPath = getSafeNextPath(nextPath);
 
     /**
      * If the next path is "auth/sso/success", redirect to the sso success page
      */
-    if (nextPath === "auth/sso/success") {
+    if (isSsoSuccessPath(nextPath)) {
         if (token) {
             signInSSO({
                 token,
@@ -94,72 +174,26 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
         return <SsoRoute />;
     }
 
-    if (profile && isAuthGroup && params.has("next")) {
-        // TODO get page to redirect from query, "?next=/modules/projects/dashboard/" for example
-
+    if (profile && (isMain || isAuthGroup)) {
         return (
             <AppNavigate.Basic
-                to={params.get("next")!}
+                to={safeNextPath ?? getDefaultRoute(modulePermissionMap, projectPermissions)}
                 replace
             />
         );
     }
 
-    if (profile && (isMain || isAuthGroup)) {
-        if (params.has("next")) {
-            return (
-                <AppNavigate.Basic
-                    to={params.get("next")!}
-                    replace
-                />
-            );
-        } else {
-            return (
-                <AppNavigate.Basic
-                    to={getDefaultRoute(modulePermissionMap, projectPermissions)}
-                    replace
-                />
-            );
-        }
-    }
-
     if (!profile && !isAuthGroup) {
-        const { search } = location;
-
-        const raw = search.replace(/^\?/, "");
-
-        const currentFullPath = raw.replace(/^next=/, "");
-
-        let pathPart = "";
-        let searchPart = "";
-
-        try {
-            const url = new URL(currentFullPath, window.location.origin);
-            pathPart = url.pathname;
-            searchPart = url.searchParams.toString();
-        } catch {
-            const [fallbackPath = "", fallbackSearch = ""] = currentFullPath.split("?");
-            pathPart = fallbackPath;
-            searchPart = fallbackSearch;
-        }
-
-        // Map route patterns to their destinations
-        const authRouteMap: Record<string, string> = {
-            "sign-up": ROUTE.auth.signUp.$route,
-            "reset-password": ROUTE.auth.resetPassword.$route,
-            "forgot-password": ROUTE.auth.forgotPassword.$route,
-        };
-
-        const redirectTo =
-            Object.entries(authRouteMap).find(([pattern]) => pathPart.includes(pattern))?.[1] ??
-            ROUTE.auth.signIn.$route;
+        const authHandoff = isMain ? getAuthHandoff(nextPath) : null;
 
         return (
             <AppNavigate.Basic
-                to={{
-                    pathname: redirectTo,
-                    search: searchPart,
-                }}
+                to={
+                    authHandoff ?? {
+                        pathname: ROUTE.auth.signIn.$route,
+                        search: isMain ? "" : new URLSearchParams({ next: getCurrentPath(location) }).toString(),
+                    }
+                }
                 replace
             />
         );

@@ -22,9 +22,9 @@ export const CreateOrEditAppHealthCheckFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
         interval: z.string().trim().min(1, "Interval is required"),
-        timeout: z.string().trim().min(1, "Timeout is required"),
-        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0"),
-        retryDelay: z.string().trim().min(1, "Retry delay is required"),
+        timeout: z.string().trim(),
+        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0").optional(),
+        retryDelay: z.string().trim(),
         healthcheckType: z.nativeEnum(EAppHealthCheckType),
         rest: z.object({
             url: z.string().trim(),
@@ -49,7 +49,7 @@ export const CreateOrEditAppHealthCheckFormSchema = z
             success: NotificationRefSchema.optional(),
             failureUseDefault: z.boolean(),
             failure: NotificationRefSchema.optional(),
-            minSendInterval: z.string().trim().min(1, "Min send interval is required"),
+            minSendInterval: z.string().trim(),
         }),
     })
     .superRefine((value, ctx) => {
@@ -64,14 +64,6 @@ export const CreateOrEditAppHealthCheckFormSchema = z
 
             if (!VisibleRestMethodSchema.safeParse(value.rest.method).success) {
                 return;
-            }
-
-            if (!value.rest.returnCode && value.rest.returnBodyMode === EAppHealthCheckReturnBodyMode.Skipped) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "Return code or return body rule is required",
-                    path: ["rest", "returnCode"],
-                });
             }
 
             if (value.rest.returnBodyMode === EAppHealthCheckReturnBodyMode.Text && value.rest.textRegex) {

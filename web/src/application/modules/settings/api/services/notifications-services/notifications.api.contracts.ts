@@ -11,6 +11,7 @@ export type Notification_RefObject_Payload = {
 
 export type Notification_ViaEmail_Payload = {
     enabled: boolean;
+    useDefault: boolean;
     sender: Notification_RefObject_Payload;
     toProjectMembers: boolean;
     toProjectOwners: boolean;
@@ -20,16 +21,19 @@ export type Notification_ViaEmail_Payload = {
 
 export type Notification_ViaSlack_Payload = {
     enabled: boolean;
+    useDefault: boolean;
     webhook: Notification_RefObject_Payload;
 };
 
 export type Notification_ViaDiscord_Payload = {
     enabled: boolean;
+    useDefault: boolean;
     webhook: Notification_RefObject_Payload;
 };
 
 export type Notification_ViaTelegram_Payload = {
     enabled: boolean;
+    useDefault: boolean;
     setting: Notification_RefObject_Payload;
 };
 

@@ -92,38 +92,38 @@ export function CreateOrEditNotificationTargetDialog() {
     const notificationTarget = detailQuery.data?.data;
 
     function createPayload(values: CreateOrEditNotificationTargetFormOutput) {
-        const viaEmail =
-            !values.emailEnabled && !values.senderEmailAccountId
-                ? null
-                : {
-                      enabled: values.emailEnabled,
-                      sender: { id: values.senderEmailAccountId },
-                      toProjectMembers: values.notifyProjectMembers,
-                      toProjectOwners: values.notifyProjectOwners,
-                      toAllAdmins: values.notifyAdmins,
-                      toAddresses: splitCommaSeparated(values.customAddresses),
-                  };
-        const viaSlack =
-            !values.slackEnabled && !values.slackWebhookId
-                ? null
-                : {
-                      enabled: values.slackEnabled,
-                      webhook: { id: values.slackWebhookId },
-                  };
-        const viaDiscord =
-            !values.discordEnabled && !values.discordWebhookId
-                ? null
-                : {
-                      enabled: values.discordEnabled,
-                      webhook: { id: values.discordWebhookId },
-                  };
-        const viaTelegram =
-            !values.telegramEnabled && !values.telegramSettingId
-                ? null
-                : {
-                      enabled: values.telegramEnabled,
-                      setting: { id: values.telegramSettingId },
-                  };
+        const viaEmail = values.emailEnabled
+            ? {
+                  enabled: values.emailEnabled,
+                  useDefault: values.emailUseDefault,
+                  sender: { id: values.emailUseDefault ? "" : values.senderEmailAccountId },
+                  toProjectMembers: values.notifyProjectMembers,
+                  toProjectOwners: values.notifyProjectOwners,
+                  toAllAdmins: values.notifyAdmins,
+                  toAddresses: splitCommaSeparated(values.customAddresses),
+              }
+            : null;
+        const viaSlack = values.slackEnabled
+            ? {
+                  enabled: values.slackEnabled,
+                  useDefault: values.slackUseDefault,
+                  webhook: { id: values.slackUseDefault ? "" : values.slackWebhookId },
+              }
+            : null;
+        const viaDiscord = values.discordEnabled
+            ? {
+                  enabled: values.discordEnabled,
+                  useDefault: values.discordUseDefault,
+                  webhook: { id: values.discordUseDefault ? "" : values.discordWebhookId },
+              }
+            : null;
+        const viaTelegram = values.telegramEnabled
+            ? {
+                  enabled: values.telegramEnabled,
+                  useDefault: values.telegramUseDefault,
+                  setting: { id: values.telegramUseDefault ? "" : values.telegramSettingId },
+              }
+            : null;
 
         return {
             availableInProjects:
@@ -189,16 +189,20 @@ export function CreateOrEditNotificationTargetDialog() {
         ? {
               name: notificationTarget.name,
               emailEnabled: notificationTarget.viaEmail?.enabled ?? false,
+              emailUseDefault: notificationTarget.viaEmail?.useDefault ?? true,
               senderEmailAccountId: notificationTarget.viaEmail?.sender?.id ?? "",
               notifyAdmins: notificationTarget.viaEmail?.toAllAdmins ?? false,
               notifyProjectOwners: notificationTarget.viaEmail?.toProjectOwners ?? false,
               notifyProjectMembers: notificationTarget.viaEmail?.toProjectMembers ?? false,
               customAddresses: joinAddresses(notificationTarget.viaEmail?.toAddresses),
               slackEnabled: notificationTarget.viaSlack?.enabled ?? false,
+              slackUseDefault: notificationTarget.viaSlack?.useDefault ?? true,
               slackWebhookId: notificationTarget.viaSlack?.webhook?.id ?? "",
               discordEnabled: notificationTarget.viaDiscord?.enabled ?? false,
+              discordUseDefault: notificationTarget.viaDiscord?.useDefault ?? true,
               discordWebhookId: notificationTarget.viaDiscord?.webhook?.id ?? "",
               telegramEnabled: notificationTarget.viaTelegram?.enabled ?? false,
+              telegramUseDefault: notificationTarget.viaTelegram?.useDefault ?? true,
               telegramSettingId: notificationTarget.viaTelegram?.setting?.id ?? "",
               minSendInterval: notificationTarget.minSendInterval || "3m",
               availableInProjects: notificationTarget.availableInProjects ?? false,

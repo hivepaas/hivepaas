@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 
@@ -24,20 +31,22 @@ export function RunNowTaskCreatedDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[680px]">
+            <DialogFixedContent className="min-w-[390px] w-[680px]">
                 <DialogHeader>
                     <DialogTitle>Task created</DialogTitle>
                 </DialogHeader>
 
-                <div className={cn(dashedBorderBox, "text-center text-base leading-7")}>
-                    <p>The task has been added to the execution queue.</p>
-                    <p>
-                        You can view the execution details via the job&apos;s{" "}
-                        <span className="text-link">View Tasks</span> link or click the button below.
-                    </p>
-                </div>
+                <DialogBody>
+                    <div className={cn(dashedBorderBox, "text-center text-base leading-7")}>
+                        <p>The task has been added to the execution queue.</p>
+                        <p>
+                            You can view the execution details via the job&apos;s{" "}
+                            <span className="text-link">View Tasks</span> link or click the button below.
+                        </p>
+                    </div>
+                </DialogBody>
 
-                <div className="flex justify-end gap-4">
+                <DialogActionFooter className="flex justify-end gap-4">
                     <Button
                         type="button"
                         disabled
@@ -50,8 +59,8 @@ export function RunNowTaskCreatedDialog() {
                     >
                         Close
                     </Button>
-                </div>
-            </DialogContent>
+                </DialogActionFooter>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -14,6 +14,24 @@ function setAuthorizationHeader(request: InternalAxiosRequestConfig, token: stri
     request.headers.Authorization = `Bearer ${token}`; // eslint-disable-line no-param-reassign
 }
 
+function isAuthPath(pathname: string) {
+    const normalizedPathname = pathname.replace(/\/+$/, "");
+
+    return normalizedPathname === "/auth" || normalizedPathname.startsWith("/auth/");
+}
+
+function redirectToSignIn() {
+    session.removeToken();
+
+    if (isAuthPath(window.location.pathname)) {
+        return;
+    }
+
+    const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    window.location.href = `/auth/sign-in/?next=${encodeURIComponent(next)}`;
+}
+
 const attempts = new WeakMap<object, boolean>();
 const refreshQueue = new RefreshQueue();
 
@@ -78,9 +96,7 @@ export function initAuthInterceptors(client: AxiosInstance): void {
             Err: () => {
                 refreshQueue.failed();
 
-                session.removeToken();
-
-                window.location.href = `/auth/sign-in/?next=${encodeURIComponent(window.location.pathname)}`;
+                redirectToSignIn();
 
                 return request;
             },
@@ -101,9 +117,7 @@ export function initAuthInterceptors(client: AxiosInstance): void {
             }
 
             if (isSessionInvalidException(error)) {
-                session.removeToken();
-
-                window.location.href = `/auth/sign-in/?next=${encodeURIComponent(window.location.pathname)}`;
+                redirectToSignIn();
 
                 return Promise.reject(error);
             }
@@ -164,9 +178,7 @@ export function initAuthInterceptors(client: AxiosInstance): void {
                 Err: () => {
                     refreshQueue.failed();
 
-                    session.removeToken();
-
-                    window.location.href = `/auth/sign-in/?next=${encodeURIComponent(window.location.pathname)}`;
+                    redirectToSignIn();
 
                     return Promise.reject(error);
                 },

@@ -1,6 +1,6 @@
 import React, { type PropsWithChildren, forwardRef } from "react";
 
-import { Field, FieldError, FieldGroup, Input } from "@components/ui";
+import { DialogBody, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useController } from "react-hook-form";
@@ -23,7 +23,7 @@ const DEFAULTS: InviteUserFormInput = {
 };
 
 export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
-    ({ defaultValues = {}, readOnly = false, onSubmit, onHasChanges, children }, ref) => {
+    ({ defaultValues = {}, readOnly = false, onSubmit, onHasChanges, children, footer }, ref) => {
         const methods = useForm<InviteUserFormInput, unknown, InviteUserFormOutput>({
             defaultValues: {
                 ...DEFAULTS,
@@ -68,16 +68,16 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
         const isAdmin = methods.watch("role") === EUserRole.Admin;
 
         return (
-            <div className="invite-user-form">
-                <FormProvider {...methods}>
-                    <form
-                        ref={ref}
-                        onSubmit={event => {
-                            event.preventDefault();
-                            void handleSubmit(onValid, onInvalid)(event);
-                        }}
-                        className="flex flex-col gap-6"
-                    >
+            <FormProvider {...methods}>
+                <form
+                    ref={ref}
+                    onSubmit={event => {
+                        event.preventDefault();
+                        void handleSubmit(onValid, onInvalid)(event);
+                    }}
+                    className="min-h-0 flex flex-1 flex-col"
+                >
+                    <DialogBody className="flex flex-col gap-6">
                         <fieldset
                             disabled={readOnly}
                             className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
@@ -172,9 +172,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         </fieldset>
 
                         {children}
-                    </form>
-                </FormProvider>
-            </div>
+                    </DialogBody>
+                    {footer}
+                </form>
+            </FormProvider>
         );
     },
 );
@@ -186,4 +187,5 @@ interface Props extends PropsWithChildren {
     readOnly?: boolean;
     onSubmit: (values: InviteUserFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    footer?: React.ReactNode;
 }

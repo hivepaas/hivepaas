@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { AppConfigFilesCommands } from "~/projects/data/commands";
 
@@ -168,7 +168,7 @@ export function CreateOrEditAppConfigFileDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[820px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[820px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a config file</DialogTitle>
                 </DialogHeader>
@@ -180,7 +180,7 @@ export function CreateOrEditAppConfigFileDialog() {
                     initialValues={initialValues}
                     readOnly={!canWrite}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

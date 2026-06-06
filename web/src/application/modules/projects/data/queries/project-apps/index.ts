@@ -1,4 +1,5 @@
 export * from "./project-apps.queries";
+export * from "./app-deployments.queries";
 export * from "./project-app-env-vars.queries";
 export * from "./project-app-secrets.queries";
 export * from "./app-config-files.queries";

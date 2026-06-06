@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
 
@@ -168,7 +168,7 @@ export function CreateOrEditAppSecretDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[760px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[760px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a secret</DialogTitle>
                 </DialogHeader>
@@ -180,7 +180,7 @@ export function CreateOrEditAppSecretDialog() {
                     initialValues={initialValues}
                     readOnly={!canWrite}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

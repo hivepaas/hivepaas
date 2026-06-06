@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import type { AppStorageMount } from "~/projects/domain";
@@ -66,30 +66,29 @@ export function StorageMountDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[680px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[680px]">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit storage" : "Add a new storage to the app"}</DialogTitle>
                 </DialogHeader>
 
                 {open && (
-                    <>
+                    <StorageMountForm
+                        ref={formRef}
+                        isPending={isSubmitting}
+                        onSubmit={values => void handleSubmit(values)}
+                        defaultValues={defaultValues}
+                        projectKey={projectKey}
+                        appLocalKey={appLocalKey}
+                        readOnly={readOnly}
+                    >
                         <div className={cn(dashedBorderBox, "text-[12px] text-center")}>
                             <span className="font-bold text-orange-500">Important:</span> If your cluster consists of
                             more than 1 node, you need to ensure that the directories or volumes are accessible from all
                             nodes. Otherwise, your apps may not function properly.
                         </div>
-                        <StorageMountForm
-                            ref={formRef}
-                            isPending={isSubmitting}
-                            onSubmit={values => void handleSubmit(values)}
-                            defaultValues={defaultValues}
-                            projectKey={projectKey}
-                            appLocalKey={appLocalKey}
-                            readOnly={readOnly}
-                        />
-                    </>
+                    </StorageMountForm>
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

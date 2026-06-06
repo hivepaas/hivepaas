@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 import { PhotoEditor, type PhotoEditorRef } from "@application/shared/components/photo-editor/component";
 
+import { DialogBody } from "@/components/ui/dialog";
+
 import {
     type UploadPhotoFormInput,
     type UploadPhotoFormOutput,
@@ -27,6 +29,7 @@ export function UploadPhotoForm({
     onEditingEnd,
     filename = "profile-photo",
     children,
+    footer,
 }: Props) {
     const { handleSubmit: originalHandleSubmit, setValue } = useForm<
         UploadPhotoFormInput,
@@ -86,23 +89,26 @@ export function UploadPhotoForm({
 
     return (
         <form
-            className={cx("upload-photo-form")}
+            className={`${cx("upload-photo-form")} min-h-0 flex flex-1 flex-col`}
             onSubmit={event => {
                 event.preventDefault();
 
                 void handleSubmit(event);
             }}
         >
-            <div className={cx("photo")}>
-                <PhotoEditor
-                    ref={editorRef}
-                    src={photo}
-                    onEditingStart={onEditingStart}
-                    onEditingEnd={onEditingEnd}
-                />
-            </div>
+            <DialogBody className="flex flex-col gap-4">
+                <div className={cx("photo")}>
+                    <PhotoEditor
+                        ref={editorRef}
+                        src={photo}
+                        onEditingStart={onEditingStart}
+                        onEditingEnd={onEditingEnd}
+                    />
+                </div>
 
-            {children}
+                {children}
+            </DialogBody>
+            {footer}
         </form>
     );
 }
@@ -113,4 +119,5 @@ type Props = PropsWithChildren<{
     onEditingStart?: () => void;
     onEditingEnd?: () => void;
     filename?: string;
+    footer?: React.ReactNode;
 }>;

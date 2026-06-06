@@ -19,6 +19,7 @@ import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/comp
 import { NotificationSettings } from "@application/shared/form";
 
 import { Button, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { InputNumber } from "@/components/ui/input-number";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -45,16 +46,16 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
     return {
         name: healthCheck?.name ?? "",
         interval: healthCheck?.interval ?? "30s",
-        timeout: healthCheck?.timeout ?? "15s",
-        maxRetry: healthCheck?.maxRetry ?? 1,
-        retryDelay: healthCheck?.retryDelay ?? "5s",
+        timeout: healthCheck?.timeout ?? "",
+        maxRetry: healthCheck?.maxRetry,
+        retryDelay: healthCheck?.retryDelay ?? "",
         healthcheckType: healthCheck?.healthcheckType ?? EAppHealthCheckType.REST,
         rest: {
             url: healthCheck?.rest?.url ?? "",
             method: healthCheck?.rest?.method ?? EAppHealthCheckRestMethod.GET,
             contentType: healthCheck?.rest?.contentType ?? "application/json",
             body: healthCheck?.rest?.body ?? "",
-            returnCode: healthCheck?.rest?.returnCode ?? "200",
+            returnCode: healthCheck?.rest?.returnCode ?? "",
             returnBodyMode: getReturnBodyMode(healthCheck?.rest ?? null),
             textExact: healthCheck?.rest?.returnText?.exact ?? "",
             textRegex: healthCheck?.rest?.returnText?.regex ?? "",
@@ -72,7 +73,7 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
             success: healthCheck?.notification?.success,
             failureUseDefault: healthCheck?.notification?.failureUseDefault ?? true,
             failure: healthCheck?.notification?.failure,
-            minSendInterval: healthCheck?.notification?.minSendInterval ?? "10m",
+            minSendInterval: healthCheck?.notification?.minSendInterval ?? "",
         },
     };
 }
@@ -220,445 +221,433 @@ export function CreateOrEditAppHealthCheckForm({
 
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
-                className="flex flex-col gap-6"
+                className="min-h-0 flex flex-1 flex-col"
             >
                 <fieldset
                     disabled={readOnly}
                     className="contents"
                 >
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Name"
-                                isRequired
-                            />
-                        }
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Input
-                                    id="app-health-check-name"
-                                    {...name}
-                                    placeholder="health check name"
-                                    aria-invalid={isNameInvalid}
+                    <DialogBody className="flex flex-col gap-6">
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Name"
+                                    isRequired
                                 />
-                                <FieldError errors={[errors.name]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <ContentBlock label="Scheduling">
-                        <div className="flex flex-col gap-6">
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Interval"
-                                        isRequired
-                                    />
-                                }
-                            >
+                            }
+                        >
+                            <FieldGroup>
                                 <Field>
                                     <Input
-                                        id="app-health-check-interval"
-                                        {...interval}
-                                        placeholder="30s"
-                                        aria-invalid={isIntervalInvalid}
-                                        className="max-w-[260px]"
+                                        id="app-health-check-name"
+                                        {...name}
+                                        placeholder="health check name"
+                                        aria-invalid={isNameInvalid}
                                     />
-                                    <FieldError errors={[errors.interval]} />
+                                    <FieldError errors={[errors.name]} />
                                 </Field>
-                            </InfoBlock>
+                            </FieldGroup>
+                        </InfoBlock>
 
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Timeout"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <Input
-                                        id="app-health-check-timeout"
-                                        {...timeout}
-                                        placeholder="15s"
-                                        aria-invalid={isTimeoutInvalid}
-                                        className="max-w-[260px]"
-                                    />
-                                    <FieldError errors={[errors.timeout]} />
-                                </Field>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Max Retry"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <InputNumber
-                                        id="app-health-check-max-retry"
-                                        value={maxRetry.value}
-                                        onValueChange={value => {
-                                            maxRetry.onChange(value ?? 0);
-                                        }}
-                                        min={0}
-                                        useGrouping={false}
-                                        aria-invalid={isMaxRetryInvalid}
-                                        className="max-w-[100px]"
-                                    />
-                                    <FieldError errors={[errors.maxRetry]} />
-                                </Field>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Retry Delay"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <Input
-                                        id="app-health-check-retry-delay"
-                                        {...retryDelay}
-                                        placeholder="5s"
-                                        aria-invalid={isRetryDelayInvalid}
-                                        className="max-w-[260px]"
-                                    />
-                                    <FieldError errors={[errors.retryDelay]} />
-                                </Field>
-                            </InfoBlock>
-                        </div>
-                    </ContentBlock>
-
-                    <ContentBlock label="Health Check">
-                        <div className="flex flex-col gap-6">
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Type"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Tabs
-                                    value={healthcheckType}
-                                    onValueChange={nextValue => {
-                                        typeField.onChange(nextValue);
-                                    }}
+                        <ContentBlock label="Scheduling">
+                            <div className="flex flex-col gap-6">
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Interval"
+                                            isRequired
+                                        />
+                                    }
                                 >
-                                    <TabsList>
-                                        <TabsTrigger value={EAppHealthCheckType.REST}>REST</TabsTrigger>
-                                        <TabsTrigger value={EAppHealthCheckType.GRPC}>GRPC</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                            </InfoBlock>
-
-                            {healthcheckType === EAppHealthCheckType.REST ? (
-                                <>
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={
-                                            <LabelWithInfo
-                                                label="URL"
-                                                isRequired
-                                            />
-                                        }
-                                    >
-                                        <Field>
-                                            <Input
-                                                id="app-health-check-rest-url"
-                                                {...restUrl}
-                                                placeholder="https://your-addr/path"
-                                                aria-invalid={isRestUrlInvalid}
-                                            />
-                                            <FieldError errors={[errors.rest?.url]} />
-                                        </Field>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={
-                                            <LabelWithInfo
-                                                label="Method"
-                                                isRequired
-                                            />
-                                        }
-                                    >
-                                        <Tabs
-                                            value={restMethod}
-                                            onValueChange={nextValue => {
-                                                restMethodField.onChange(nextValue);
-                                            }}
-                                        >
-                                            <TabsList>
-                                                <TabsTrigger value={EAppHealthCheckRestMethod.GET}>GET</TabsTrigger>
-                                                <TabsTrigger value={EAppHealthCheckRestMethod.POST}>POST</TabsTrigger>
-                                                <TabsTrigger value={EAppHealthCheckRestMethod.PUT}>PUT</TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={<LabelWithInfo label="Content Type" />}
-                                    >
+                                    <Field>
                                         <Input
-                                            id="app-health-check-rest-content-type"
-                                            {...restContentType}
-                                            placeholder="application/json"
-                                            className="max-w-[360px]"
-                                        />
-                                    </InfoBlock>
-
-                                    {showBody && (
-                                        <InfoBlock
-                                            titleWidth={220}
-                                            title={<LabelWithInfo label="Body" />}
-                                        >
-                                            <Textarea
-                                                id="app-health-check-rest-body"
-                                                {...restBody}
-                                                rows={5}
-                                            />
-                                        </InfoBlock>
-                                    )}
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={<LabelWithInfo label="Return Code Must Be" />}
-                                    >
-                                        <Field>
-                                            <Input
-                                                id="app-health-check-rest-return-code"
-                                                {...restReturnCode}
-                                                placeholder="200, 201, 202"
-                                                aria-invalid={isRestReturnCodeInvalid}
-                                            />
-                                            <FieldError errors={[errors.rest?.returnCode]} />
-                                        </Field>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={<LabelWithInfo label="Return Body Must Be" />}
-                                    >
-                                        <Tabs
-                                            value={returnBodyMode}
-                                            onValueChange={nextValue => {
-                                                returnBodyModeField.onChange(nextValue);
-                                            }}
-                                        >
-                                            <TabsList>
-                                                <TabsTrigger value={EAppHealthCheckReturnBodyMode.Skipped}>
-                                                    Skipped
-                                                </TabsTrigger>
-                                                <TabsTrigger value={EAppHealthCheckReturnBodyMode.Text}>
-                                                    Text
-                                                </TabsTrigger>
-                                                <TabsTrigger value={EAppHealthCheckReturnBodyMode.JSON}>
-                                                    JSON
-                                                </TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </InfoBlock>
-
-                                    {returnBodyMode === EAppHealthCheckReturnBodyMode.Text && (
-                                        <>
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={<LabelWithInfo label="Text Exact" />}
-                                            >
-                                                <Textarea
-                                                    id="app-health-check-rest-text-exact"
-                                                    {...textExact}
-                                                    placeholder="value"
-                                                    rows={4}
-                                                />
-                                            </InfoBlock>
-
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={<LabelWithInfo label="Text Regex" />}
-                                            >
-                                                <Field>
-                                                    <Input
-                                                        id="app-health-check-rest-text-regex"
-                                                        {...textRegex}
-                                                        placeholder="regular expression"
-                                                        aria-invalid={isTextRegexInvalid}
-                                                    />
-                                                    <FieldError errors={[errors.rest?.textRegex]} />
-                                                </Field>
-                                            </InfoBlock>
-                                        </>
-                                    )}
-
-                                    {returnBodyMode === EAppHealthCheckReturnBodyMode.JSON && (
-                                        <>
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={<LabelWithInfo label="JSON Exact" />}
-                                            >
-                                                <Field>
-                                                    <Textarea
-                                                        id="app-health-check-rest-json-exact"
-                                                        {...jsonExact}
-                                                        placeholder={JSON_PLACEHOLDER}
-                                                        rows={5}
-                                                        aria-invalid={isJsonExactInvalid}
-                                                    />
-                                                    <FieldError errors={[errors.rest?.jsonExact]} />
-                                                </Field>
-                                            </InfoBlock>
-
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={<LabelWithInfo label="JSON Contains" />}
-                                            >
-                                                <Field>
-                                                    <Textarea
-                                                        id="app-health-check-rest-json-contain"
-                                                        {...jsonContain}
-                                                        placeholder={JSON_PLACEHOLDER}
-                                                        rows={4}
-                                                        aria-invalid={isJsonContainInvalid}
-                                                    />
-                                                    <FieldError errors={[errors.rest?.jsonContain]} />
-                                                </Field>
-                                            </InfoBlock>
-                                        </>
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={<LabelWithInfo label="Healthcheck Version" />}
-                                    >
-                                        <Tabs
-                                            value={grpcVersion.value}
-                                            onValueChange={nextValue => {
-                                                grpcVersion.onChange(nextValue);
-                                            }}
-                                        >
-                                            <TabsList>
-                                                <TabsTrigger value={EAppHealthCheckGrpcVersion.V1}>v1</TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={
-                                            <LabelWithInfo
-                                                label="Address"
-                                                isRequired
-                                            />
-                                        }
-                                    >
-                                        <Field>
-                                            <Input
-                                                id="app-health-check-grpc-address"
-                                                {...grpcAddr}
-                                                placeholder="grpc address"
-                                                aria-invalid={isGrpcAddrInvalid}
-                                            />
-                                            <FieldError errors={[errors.grpc?.addr]} />
-                                        </Field>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={<LabelWithInfo label="Service" />}
-                                    >
-                                        <Input
-                                            id="app-health-check-grpc-service"
-                                            {...grpcService}
-                                            placeholder="grpc service"
-                                        />
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={
-                                            <LabelWithInfo
-                                                label="Return Status Must Be"
-                                                isRequired
-                                            />
-                                        }
-                                    >
-                                        <InputNumber
-                                            id="app-health-check-grpc-return-status"
-                                            value={grpcReturnStatus.value}
-                                            onValueChange={value => {
-                                                grpcReturnStatus.onChange(value ?? EAppHealthCheckGrpcStatus.Serving);
-                                            }}
-                                            min={1}
-                                            useGrouping={false}
+                                            id="app-health-check-interval"
+                                            {...interval}
+                                            placeholder="30s"
+                                            aria-invalid={isIntervalInvalid}
                                             className="max-w-[260px]"
                                         />
-                                    </InfoBlock>
-                                </>
-                            )}
-                        </div>
-                    </ContentBlock>
+                                        <FieldError errors={[errors.interval]} />
+                                    </Field>
+                                </InfoBlock>
 
-                    <ContentBlock label="Notification Configuration">
-                        <NotificationSettings<CreateOrEditAppHealthCheckFormInput>
-                            names={{
-                                successUseDefault: "notification.successUseDefault",
-                                success: "notification.success",
-                                failureUseDefault: "notification.failureUseDefault",
-                                failure: "notification.failure",
-                            }}
-                            sources={notificationSources}
-                            manageLink={notificationManageLink}
-                            readOnly={readOnly}
-                            titleWidth={220}
-                        >
-                            <div className={cn(dashedBorderBox, "text-center text-[12px]")}>
-                                <span className="text-orange-500">Note:</span> If you don&apos;t want to receive
-                                continuous notifications for identical results, use this configuration. For example, if
-                                you set <span className="text-orange-500"> Min Send Interval = 10m</span>, and the
-                                health check result remains success or failure within 10 minutes, you will only receive
-                                one notification.
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Timeout" />}
+                                >
+                                    <Field>
+                                        <Input
+                                            id="app-health-check-timeout"
+                                            {...timeout}
+                                            placeholder="15s"
+                                            aria-invalid={isTimeoutInvalid}
+                                            className="max-w-[260px]"
+                                        />
+                                        <FieldError errors={[errors.timeout]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Max Retry" />}
+                                >
+                                    <Field>
+                                        <InputNumber
+                                            id="app-health-check-max-retry"
+                                            value={maxRetry.value}
+                                            onValueChange={value => {
+                                                const nextValue =
+                                                    value !== undefined && Number.isFinite(value) ? value : undefined;
+
+                                                maxRetry.onChange(nextValue);
+                                            }}
+                                            min={0}
+                                            useGrouping={false}
+                                            placeholder="1"
+                                            aria-invalid={isMaxRetryInvalid}
+                                            className="max-w-[100px]"
+                                        />
+                                        <FieldError errors={[errors.maxRetry]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Retry Delay" />}
+                                >
+                                    <Field>
+                                        <Input
+                                            id="app-health-check-retry-delay"
+                                            {...retryDelay}
+                                            placeholder="5s"
+                                            aria-invalid={isRetryDelayInvalid}
+                                            className="max-w-[260px]"
+                                        />
+                                        <FieldError errors={[errors.retryDelay]} />
+                                    </Field>
+                                </InfoBlock>
                             </div>
+                        </ContentBlock>
 
-                            <InfoBlock
+                        <ContentBlock label="Health Check">
+                            <div className="flex flex-col gap-6">
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Type"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Tabs
+                                        value={healthcheckType}
+                                        onValueChange={nextValue => {
+                                            typeField.onChange(nextValue);
+                                        }}
+                                    >
+                                        <TabsList>
+                                            <TabsTrigger value={EAppHealthCheckType.REST}>REST</TabsTrigger>
+                                            <TabsTrigger value={EAppHealthCheckType.GRPC}>GRPC</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                </InfoBlock>
+
+                                {healthcheckType === EAppHealthCheckType.REST ? (
+                                    <>
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={
+                                                <LabelWithInfo
+                                                    label="URL"
+                                                    isRequired
+                                                />
+                                            }
+                                        >
+                                            <Field>
+                                                <Input
+                                                    id="app-health-check-rest-url"
+                                                    {...restUrl}
+                                                    placeholder="https://your-addr/path"
+                                                    aria-invalid={isRestUrlInvalid}
+                                                />
+                                                <FieldError errors={[errors.rest?.url]} />
+                                            </Field>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={
+                                                <LabelWithInfo
+                                                    label="Method"
+                                                    isRequired
+                                                />
+                                            }
+                                        >
+                                            <Tabs
+                                                value={restMethod}
+                                                onValueChange={nextValue => {
+                                                    restMethodField.onChange(nextValue);
+                                                }}
+                                            >
+                                                <TabsList>
+                                                    <TabsTrigger value={EAppHealthCheckRestMethod.GET}>GET</TabsTrigger>
+                                                    <TabsTrigger value={EAppHealthCheckRestMethod.POST}>
+                                                        POST
+                                                    </TabsTrigger>
+                                                    <TabsTrigger value={EAppHealthCheckRestMethod.PUT}>PUT</TabsTrigger>
+                                                </TabsList>
+                                            </Tabs>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Content Type" />}
+                                        >
+                                            <Input
+                                                id="app-health-check-rest-content-type"
+                                                {...restContentType}
+                                                placeholder="application/json"
+                                            />
+                                        </InfoBlock>
+
+                                        {showBody && (
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={<LabelWithInfo label="Body" />}
+                                            >
+                                                <Textarea
+                                                    id="app-health-check-rest-body"
+                                                    {...restBody}
+                                                    rows={5}
+                                                />
+                                            </InfoBlock>
+                                        )}
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Return Code Must Be" />}
+                                        >
+                                            <Field>
+                                                <Input
+                                                    id="app-health-check-rest-return-code"
+                                                    {...restReturnCode}
+                                                    placeholder="200,201,202"
+                                                    aria-invalid={isRestReturnCodeInvalid}
+                                                />
+                                                <FieldError errors={[errors.rest?.returnCode]} />
+                                            </Field>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Return Body Must Be" />}
+                                        >
+                                            <Tabs
+                                                value={returnBodyMode}
+                                                onValueChange={nextValue => {
+                                                    returnBodyModeField.onChange(nextValue);
+                                                }}
+                                            >
+                                                <TabsList>
+                                                    <TabsTrigger value={EAppHealthCheckReturnBodyMode.Skipped}>
+                                                        Skipped
+                                                    </TabsTrigger>
+                                                    <TabsTrigger value={EAppHealthCheckReturnBodyMode.Text}>
+                                                        Text
+                                                    </TabsTrigger>
+                                                    <TabsTrigger value={EAppHealthCheckReturnBodyMode.JSON}>
+                                                        JSON
+                                                    </TabsTrigger>
+                                                </TabsList>
+                                            </Tabs>
+                                        </InfoBlock>
+
+                                        {returnBodyMode === EAppHealthCheckReturnBodyMode.Text && (
+                                            <>
+                                                <InfoBlock
+                                                    titleWidth={220}
+                                                    title={<LabelWithInfo label="Text Exact" />}
+                                                >
+                                                    <Textarea
+                                                        id="app-health-check-rest-text-exact"
+                                                        {...textExact}
+                                                        placeholder="value"
+                                                        rows={4}
+                                                    />
+                                                </InfoBlock>
+
+                                                <InfoBlock
+                                                    titleWidth={220}
+                                                    title={<LabelWithInfo label="Text Regex" />}
+                                                >
+                                                    <Field>
+                                                        <Input
+                                                            id="app-health-check-rest-text-regex"
+                                                            {...textRegex}
+                                                            placeholder="regular expression"
+                                                            aria-invalid={isTextRegexInvalid}
+                                                        />
+                                                        <FieldError errors={[errors.rest?.textRegex]} />
+                                                    </Field>
+                                                </InfoBlock>
+                                            </>
+                                        )}
+
+                                        {returnBodyMode === EAppHealthCheckReturnBodyMode.JSON && (
+                                            <>
+                                                <InfoBlock
+                                                    titleWidth={220}
+                                                    title={<LabelWithInfo label="JSON Exact" />}
+                                                >
+                                                    <Field>
+                                                        <Textarea
+                                                            id="app-health-check-rest-json-exact"
+                                                            {...jsonExact}
+                                                            placeholder={JSON_PLACEHOLDER}
+                                                            rows={5}
+                                                            aria-invalid={isJsonExactInvalid}
+                                                        />
+                                                        <FieldError errors={[errors.rest?.jsonExact]} />
+                                                    </Field>
+                                                </InfoBlock>
+
+                                                <InfoBlock
+                                                    titleWidth={220}
+                                                    title={<LabelWithInfo label="JSON Contains" />}
+                                                >
+                                                    <Field>
+                                                        <Textarea
+                                                            id="app-health-check-rest-json-contain"
+                                                            {...jsonContain}
+                                                            placeholder={JSON_PLACEHOLDER}
+                                                            rows={4}
+                                                            aria-invalid={isJsonContainInvalid}
+                                                        />
+                                                        <FieldError errors={[errors.rest?.jsonContain]} />
+                                                    </Field>
+                                                </InfoBlock>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Healthcheck Version" />}
+                                        >
+                                            <Tabs
+                                                value={grpcVersion.value}
+                                                onValueChange={nextValue => {
+                                                    grpcVersion.onChange(nextValue);
+                                                }}
+                                            >
+                                                <TabsList>
+                                                    <TabsTrigger value={EAppHealthCheckGrpcVersion.V1}>v1</TabsTrigger>
+                                                </TabsList>
+                                            </Tabs>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={
+                                                <LabelWithInfo
+                                                    label="Address"
+                                                    isRequired
+                                                />
+                                            }
+                                        >
+                                            <Field>
+                                                <Input
+                                                    id="app-health-check-grpc-address"
+                                                    {...grpcAddr}
+                                                    placeholder="grpc address"
+                                                    aria-invalid={isGrpcAddrInvalid}
+                                                />
+                                                <FieldError errors={[errors.grpc?.addr]} />
+                                            </Field>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Service" />}
+                                        >
+                                            <Input
+                                                id="app-health-check-grpc-service"
+                                                {...grpcService}
+                                                placeholder="grpc service"
+                                            />
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={
+                                                <LabelWithInfo
+                                                    label="Return Status Must Be"
+                                                    isRequired
+                                                />
+                                            }
+                                        >
+                                            <InputNumber
+                                                id="app-health-check-grpc-return-status"
+                                                value={grpcReturnStatus.value}
+                                                onValueChange={value => {
+                                                    grpcReturnStatus.onChange(
+                                                        value ?? EAppHealthCheckGrpcStatus.Serving,
+                                                    );
+                                                }}
+                                                min={1}
+                                                useGrouping={false}
+                                                className="max-w-[260px]"
+                                            />
+                                        </InfoBlock>
+                                    </>
+                                )}
+                            </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Notification Configuration">
+                            <NotificationSettings<CreateOrEditAppHealthCheckFormInput>
+                                names={{
+                                    successUseDefault: "notification.successUseDefault",
+                                    success: "notification.success",
+                                    failureUseDefault: "notification.failureUseDefault",
+                                    failure: "notification.failure",
+                                }}
+                                sources={notificationSources}
+                                manageLink={notificationManageLink}
+                                readOnly={readOnly}
                                 titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Min Send Interval"
-                                        isRequired
-                                    />
-                                }
                             >
-                                <Field>
-                                    <Input
-                                        id="app-health-check-min-send-interval"
-                                        {...minSendInterval}
-                                        placeholder="10m"
-                                        aria-invalid={isMinSendIntervalInvalid}
-                                        className="max-w-[260px]"
-                                    />
-                                    <FieldError errors={[errors.notification?.minSendInterval]} />
-                                </Field>
-                            </InfoBlock>
-                        </NotificationSettings>
-                    </ContentBlock>
+                                <div className={cn(dashedBorderBox, "text-center text-[12px]")}>
+                                    <span className="text-orange-500">Note:</span> If you don&apos;t want to receive
+                                    continuous notifications for identical results, use this configuration. For example,
+                                    if you set <span className="text-orange-500"> Min Send Interval = 10m</span>, and
+                                    the health check result remains success or failure within 10 minutes, you will only
+                                    receive one notification.
+                                </div>
 
-                    <div className="flex justify-end">
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Min Send Interval" />}
+                                >
+                                    <Field>
+                                        <Input
+                                            id="app-health-check-min-send-interval"
+                                            {...minSendInterval}
+                                            placeholder="10m"
+                                            aria-invalid={isMinSendIntervalInvalid}
+                                            className="max-w-[260px]"
+                                        />
+                                        <FieldError errors={[errors.notification?.minSendInterval]} />
+                                    </Field>
+                                </InfoBlock>
+                            </NotificationSettings>
+                        </ContentBlock>
+                    </DialogBody>
+                    <DialogActionFooter>
                         <Button
                             type="submit"
                             isLoading={isPending}
@@ -667,7 +656,7 @@ export function CreateOrEditAppHealthCheckForm({
                         >
                             Save
                         </Button>
-                    </div>
+                    </DialogActionFooter>
                 </fieldset>
             </form>
         </FormProvider>

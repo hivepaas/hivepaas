@@ -6,6 +6,7 @@ import { useUpdateEffect } from "react-use";
 import { PasswordStrengthMeter } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 import {
@@ -77,14 +78,15 @@ export function ChangePasswordForm({ isPending, onSubmit, onHasChanges }: Props)
     }
 
     return (
-        <div className="flex flex-col gap-4">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
+        <form
+            onSubmit={event => {
+                event.preventDefault();
 
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-            >
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-4">
                 <FieldGroup>
                     <Field>
                         <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
@@ -124,17 +126,17 @@ export function ChangePasswordForm({ isPending, onSubmit, onHasChanges }: Props)
                             }}
                         />
                     </Field>
-                    <Field>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Change
-                        </Button>
-                    </Field>
                 </FieldGroup>
-            </form>
-        </div>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                >
+                    Change
+                </Button>
+            </DialogActionFooter>
+        </form>
     );
 }
 

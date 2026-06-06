@@ -8,6 +8,7 @@ import { ProjectEnvInput } from "~/projects/module-shared/components";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { TagInput } from "@/components/ui/tag-input";
@@ -129,14 +130,14 @@ export function CreateProjectForm({ isPending, readOnly = false, onSubmit, onHas
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-                className="flex flex-col gap-6"
-            >
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-6">
                 <fieldset
                     disabled={readOnly}
                     className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
@@ -219,20 +220,17 @@ export function CreateProjectForm({ isPending, readOnly = false, onSubmit, onHas
                         </FieldGroup>
                     </InfoBlock>
                 </fieldset>
-
-                <Field>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            disabled={readOnly}
-                        >
-                            Create Project
-                        </Button>
-                    </div>
-                </Field>
-            </form>
-        </div>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                    disabled={readOnly}
+                >
+                    Create Project
+                </Button>
+            </DialogActionFooter>
+        </form>
     );
 }
 

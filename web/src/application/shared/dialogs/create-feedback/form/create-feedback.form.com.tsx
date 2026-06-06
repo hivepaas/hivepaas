@@ -14,6 +14,7 @@ import {
 import { SupportFeedbackCategory } from "@application/shared/enums";
 
 import { Button, Field, FieldError, Input } from "@/components/ui";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -60,110 +61,112 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
 
     return (
         <form
-            className="flex flex-col gap-5"
+            className="min-h-0 flex flex-1 flex-col"
             onSubmit={event => {
                 event.preventDefault();
                 void handleSubmit(onSubmit, onInvalid)(event);
             }}
         >
-            <div className={cn(dashedBorderBox, "text-center text-sm leading-6 px-4 py-3")}>
-                <span className="text-orange-500">Note:</span> If you want to interact with the LocalPaaS development
-                team and user community, you can join our chat channel at{" "}
-                <a
-                    href="https://discord.gg/2TgD3zDb2e"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <span className="text-primary">this link</span>.
-                </a>
-            </div>
+            <DialogBody className="flex flex-col gap-5">
+                <div className={cn(dashedBorderBox, "text-center text-sm leading-6 px-4 py-3")}>
+                    <span className="text-orange-500">Note:</span> If you want to interact with the LocalPaaS
+                    development team and user community, you can join our chat channel at{" "}
+                    <a
+                        href="https://discord.gg/2TgD3zDb2e"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <span className="text-primary">this link</span>.
+                    </a>
+                </div>
 
-            <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
-                <label
-                    htmlFor="feedback-category"
-                    className="pt-2 font-medium"
-                >
-                    Category
-                </label>
-                <div>
-                    <Controller
-                        control={control}
-                        name="category"
-                        render={({ field }) => (
-                            <Select
-                                value={field.value}
-                                onValueChange={field.onChange}
-                            >
-                                <SelectTrigger
-                                    id="feedback-category"
-                                    aria-invalid={Boolean(errors.category)}
+                <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
+                    <label
+                        htmlFor="feedback-category"
+                        className="pt-2 font-medium"
+                    >
+                        Category
+                    </label>
+                    <div>
+                        <Controller
+                            control={control}
+                            name="category"
+                            render={({ field }) => (
+                                <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
                                 >
-                                    <SelectValue placeholder="select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CATEGORY_OPTIONS.map(option => (
-                                        <SelectItem
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    />
-                    <FieldError errors={[errors.category]} />
-                </div>
-            </Field>
+                                    <SelectTrigger
+                                        id="feedback-category"
+                                        aria-invalid={Boolean(errors.category)}
+                                    >
+                                        <SelectValue placeholder="select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CATEGORY_OPTIONS.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
+                        <FieldError errors={[errors.category]} />
+                    </div>
+                </Field>
 
-            <FeedbackInput
-                error={errors.name}
-                label="Your Name"
-                placeholder="your name"
-                registration={register("name")}
-            />
-            <FeedbackInput
-                error={errors.email}
-                label="Your Email"
-                placeholder="optional"
-                registration={register("email")}
-            />
-            <FeedbackInput
-                error={errors.company}
-                label="Your Company"
-                placeholder="optional"
-                registration={register("company")}
-            />
-            <FeedbackInput
-                required
-                error={errors.subject}
-                label="Subject"
-                placeholder="subject"
-                registration={register("subject")}
-            />
+                <FeedbackInput
+                    error={errors.name}
+                    label="Your Name"
+                    placeholder="your name"
+                    registration={register("name")}
+                />
+                <FeedbackInput
+                    error={errors.email}
+                    label="Your Email"
+                    placeholder="optional"
+                    registration={register("email")}
+                />
+                <FeedbackInput
+                    error={errors.company}
+                    label="Your Company"
+                    placeholder="optional"
+                    registration={register("company")}
+                />
+                <FeedbackInput
+                    required
+                    error={errors.subject}
+                    label="Subject"
+                    placeholder="subject"
+                    registration={register("subject")}
+                />
 
-            <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
-                <label
-                    htmlFor="feedback-description"
-                    className="pt-2 font-medium"
-                >
-                    Description <span className="text-destructive">*</span>
-                </label>
-                <div>
-                    <Textarea
-                        id="feedback-description"
-                        aria-invalid={Boolean(errors.description)}
-                        className="min-h-[220px]"
-                        minRows={3}
-                        maxRows={6}
-                        {...register("description")}
-                    />
-                    <FieldError errors={[errors.description]} />
-                </div>
-            </Field>
+                <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
+                    <label
+                        htmlFor="feedback-description"
+                        className="pt-2 font-medium"
+                    >
+                        Description <span className="text-destructive">*</span>
+                    </label>
+                    <div>
+                        <Textarea
+                            id="feedback-description"
+                            aria-invalid={Boolean(errors.description)}
+                            className="min-h-[220px]"
+                            minRows={3}
+                            maxRows={6}
+                            {...register("description")}
+                        />
+                        <FieldError errors={[errors.description]} />
+                    </div>
+                </Field>
+            </DialogBody>
 
-            <div className="flex justify-end pt-2">
+            <DialogActionFooter>
                 <Button
                     type="submit"
                     disabled={isPending}
@@ -171,7 +174,7 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                 >
                     Submit
                 </Button>
-            </div>
+            </DialogActionFooter>
         </form>
     );
 }

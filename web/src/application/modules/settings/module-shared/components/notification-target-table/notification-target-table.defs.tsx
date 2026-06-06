@@ -19,6 +19,9 @@ function getTargets(notification: SettingNotification): string {
     if (notification.viaDiscord?.enabled) {
         targets.push("discord");
     }
+    if (notification.viaTelegram?.enabled) {
+        targets.push("telegram");
+    }
 
     return targets.length > 0 ? targets.join(", ") : "-";
 }

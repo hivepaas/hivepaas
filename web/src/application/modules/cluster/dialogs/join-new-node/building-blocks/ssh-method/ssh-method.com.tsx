@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 
-import { Button } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
@@ -181,16 +180,6 @@ function View({ readOnly = false }: Props) {
                         server above is already part of another Swarm cluster, it will be removed from that cluster. Any
                         associated data will also be deleted.
                     </p>
-                </div>
-            </Field>
-            <Field>
-                <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        disabled={readOnly}
-                    >
-                        Join Node
-                    </Button>
                 </div>
             </Field>
         </>

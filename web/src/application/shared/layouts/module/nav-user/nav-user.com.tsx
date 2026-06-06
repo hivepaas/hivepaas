@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import {
-    BadgeCheck,
     ChevronsUpDown,
     LogOut,
     type LucideIcon,
+    MessageSquare,
     MessageSquarePlus,
     Monitor,
     Moon,
@@ -12,8 +12,6 @@ import {
 import invariant from "tiny-invariant";
 
 import { type ColorMode, useColorModeContext } from "@application/shared/color-mode";
-import { AppLink } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
 import { useCreateFeedbackDialog } from "@application/shared/dialogs";
@@ -140,12 +138,16 @@ export function NavUser({ user }: { user: Profile }) {
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <AppLink.Modules to={ROUTE.currentUser.profile.$route}>
-                                <DropdownMenuItem>
-                                    <BadgeCheck />
-                                    Account
-                                </DropdownMenuItem>
-                            </AppLink.Modules>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href="https://discord.gg/2TgD3zDb2e"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <MessageSquare />
+                                    Join chat
+                                </a>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={createFeedbackDialog.actions.open}>
                                 <MessageSquarePlus />
                                 Feedback

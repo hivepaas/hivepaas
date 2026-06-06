@@ -118,7 +118,7 @@ export function ProvisionGithubAppForm({
                     <FieldGroup>
                         <Field>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Name" />}
                             >
                                 <Input
@@ -132,7 +132,7 @@ export function ProvisionGithubAppForm({
 
                         <Field>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Type" />}
                             >
                                 <Tabs
@@ -152,7 +152,7 @@ export function ProvisionGithubAppForm({
                         {showOrganization && (
                             <Field>
                                 <InfoBlock
-                                    titleWidth={220}
+                                    titleWidth={160}
                                     title={
                                         <LabelWithInfo
                                             label="Organization"
@@ -172,7 +172,7 @@ export function ProvisionGithubAppForm({
 
                         <Field>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="SSO Enabled" />}
                             >
                                 <Checkbox
@@ -187,7 +187,7 @@ export function ProvisionGithubAppForm({
                         {showAvailableInProjects && (
                             <Field>
                                 <InfoBlock
-                                    titleWidth={220}
+                                    titleWidth={160}
                                     title={<LabelWithInfo label="Available in Projects" />}
                                 >
                                     <Checkbox
@@ -202,7 +202,7 @@ export function ProvisionGithubAppForm({
 
                         <Field>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Default" />}
                             >
                                 <Checkbox

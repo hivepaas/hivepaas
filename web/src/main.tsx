@@ -5,6 +5,8 @@ import { createRoot } from "react-dom/client";
 import { Toaster } from "@components/ui/sonner";
 import { DeviceInfo } from "@infrastructure/device";
 
+import "@application/shared/utils/time-ago";
+
 import App from "./App";
 import "./index.css";
 

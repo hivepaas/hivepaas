@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { DialogFooter } from "@components/ui/dialog";
+import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useForm } from "react-hook-form";
 
@@ -68,7 +68,7 @@ export function ConfirmProjectDangerActionForm({
 
     return (
         <form
-            className="flex flex-col gap-7"
+            className="min-h-0 flex flex-1 flex-col"
             onSubmit={event => {
                 event.preventDefault();
                 if (readOnly) {
@@ -78,21 +78,23 @@ export function ConfirmProjectDangerActionForm({
                 void handleSubmit(onSubmit, onInvalid)(event);
             }}
         >
-            <p className="text-sm font-medium leading-6 text-foreground">
-                To confirm {copy.bodyAction} the project, please type{" "}
-                <span className="text-primary">&quot;{projectName}&quot;</span> into the text box below.
-            </p>
+            <DialogBody className="flex flex-col gap-7">
+                <p className="text-sm font-medium leading-6 text-foreground">
+                    To confirm {copy.bodyAction} the project, please type{" "}
+                    <span className="text-primary">&quot;{projectName}&quot;</span> into the text box below.
+                </p>
 
-            <Field>
-                <Input
-                    aria-invalid={Boolean(errors.projectName)}
-                    disabled={readOnly || isPending}
-                    {...register("projectName")}
-                />
-                <FieldError errors={[errors.projectName]} />
-            </Field>
+                <Field>
+                    <Input
+                        aria-invalid={Boolean(errors.projectName)}
+                        disabled={readOnly || isPending}
+                        {...register("projectName")}
+                    />
+                    <FieldError errors={[errors.projectName]} />
+                </Field>
+            </DialogBody>
 
-            <DialogFooter>
+            <DialogActionFooter>
                 <Button
                     type="submit"
                     variant={copy.buttonVariant}
@@ -102,7 +104,7 @@ export function ConfirmProjectDangerActionForm({
                 >
                     {copy.buttonLabel}
                 </Button>
-            </DialogFooter>
+            </DialogActionFooter>
         </form>
     );
 }

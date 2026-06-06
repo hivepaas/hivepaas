@@ -4,6 +4,7 @@ import { type FieldErrors, useController, useForm } from "react-hook-form";
 import z from "zod";
 
 import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 const CODE_LENGTH = 6;
@@ -45,14 +46,15 @@ export function CurrentPasscodeForm({ isPending, onSubmit }: Props) {
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
+        <form
+            onSubmit={event => {
+                event.preventDefault();
 
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-            >
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-6">
                 <FieldGroup>
                     <Field>
                         <FieldLabel htmlFor="currentPasscode">Current Passcode</FieldLabel>
@@ -82,18 +84,17 @@ export function CurrentPasscodeForm({ isPending, onSubmit }: Props) {
                         </div>
                         <FieldError errors={[errors.currentPasscode]} />
                     </Field>
-
-                    <Field>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Continue
-                        </Button>
-                    </Field>
                 </FieldGroup>
-            </form>
-        </div>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                >
+                    Continue
+                </Button>
+            </DialogActionFooter>
+        </form>
     );
 }
 

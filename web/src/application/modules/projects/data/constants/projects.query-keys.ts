@@ -10,6 +10,7 @@ export const QK = {
      */
     "projects.apps.$.find-many-paginated": "projects.apps.$.find-many-paginated",
     "projects.apps.$.find-one-by-id": "projects.apps.$.find-one-by-id",
+    "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
     /*
      * Project Secrets
      */

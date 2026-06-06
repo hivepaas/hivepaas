@@ -15,7 +15,7 @@ import {
     type CreateProfileApiKeyFormSchemaOutput,
 } from "../schemas";
 
-export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
+export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Props) {
     const {
         handleSubmit,
         control,
@@ -68,6 +68,7 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
     return (
         <div className="flex flex-col gap-4">
             <form
+                id={formId}
                 onSubmit={event => {
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
@@ -195,6 +196,7 @@ export function CreateProfileApiKeyForm({ onSubmit, onHasChanges }: Props) {
 }
 
 interface Props {
+    formId?: string;
     onSubmit: (values: CreateProfileApiKeyFormSchemaOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
 }

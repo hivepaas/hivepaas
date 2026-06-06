@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 
 import { useProfileContext } from "@application/shared/context";
@@ -54,7 +54,7 @@ export function CreateFeedbackDialog() {
                 }
             }}
         >
-            <DialogContent className="sm:max-w-[780px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="sm:max-w-[780px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl">Create your feedback</DialogTitle>
                 </DialogHeader>
@@ -63,7 +63,7 @@ export function CreateFeedbackDialog() {
                     isPending={isPending}
                     onSubmit={handleSubmit}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

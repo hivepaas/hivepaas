@@ -163,7 +163,7 @@ export function CreateOrEditGithubAppForm({
                     className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                 >
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={<LabelWithInfo label="Name" />}
                     >
                         <FieldGroup>
@@ -178,7 +178,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={<LabelWithInfo label="Organization" />}
                     >
                         <FieldGroup>
@@ -193,7 +193,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={
                             <LabelWithInfo
                                 label="App ID"
@@ -217,7 +217,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={
                             <LabelWithInfo
                                 label="Installation ID"
@@ -241,7 +241,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={
                             <LabelWithInfo
                                 label="Client ID"
@@ -261,7 +261,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={
                             <LabelWithInfo
                                 label="Client Secret"
@@ -284,7 +284,7 @@ export function CreateOrEditGithubAppForm({
                     {hasReadonlyWebhookValues && (
                         <>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Callback URL" />}
                             >
                                 <Input
@@ -293,7 +293,7 @@ export function CreateOrEditGithubAppForm({
                                 />
                             </InfoBlock>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Webhook URL" />}
                             >
                                 <Input
@@ -302,7 +302,7 @@ export function CreateOrEditGithubAppForm({
                                 />
                             </InfoBlock>
                             <InfoBlock
-                                titleWidth={220}
+                                titleWidth={160}
                                 title={<LabelWithInfo label="Webhook Secret" />}
                             >
                                 <PasswordInput
@@ -314,7 +314,7 @@ export function CreateOrEditGithubAppForm({
                     )}
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={
                             <LabelWithInfo
                                 label="Private Key"
@@ -336,7 +336,7 @@ export function CreateOrEditGithubAppForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={<LabelWithInfo label="SSO Enabled" />}
                     >
                         <Checkbox
@@ -349,7 +349,7 @@ export function CreateOrEditGithubAppForm({
 
                     {showAvailableInProjects && (
                         <InfoBlock
-                            titleWidth={220}
+                            titleWidth={160}
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
@@ -362,7 +362,7 @@ export function CreateOrEditGithubAppForm({
                     )}
 
                     <InfoBlock
-                        titleWidth={220}
+                        titleWidth={160}
                         title={<LabelWithInfo label="Default" />}
                     >
                         <Checkbox

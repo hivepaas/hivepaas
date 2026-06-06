@@ -6,6 +6,8 @@ import { EJoinNodeMethod } from "~/cluster/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
 
+import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -66,14 +68,15 @@ export function JoinNewNodeForm({ readOnly = false, onSubmit, onMethodChange, on
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <FormProvider {...methods}>
-                <form
-                    onSubmit={event => {
-                        event.preventDefault();
-                        void handleSubmit(onValid, onInvalid)(event);
-                    }}
-                >
+        <FormProvider {...methods}>
+            <form
+                onSubmit={event => {
+                    event.preventDefault();
+                    void handleSubmit(onValid, onInvalid)(event);
+                }}
+                className="min-h-0 flex flex-1 flex-col"
+            >
+                <DialogBody>
                     <FieldGroup>
                         {/* Method Selection */}
                         <Field>
@@ -165,9 +168,19 @@ export function JoinNewNodeForm({ readOnly = false, onSubmit, onMethodChange, on
                         {method === EJoinNodeMethod.RunCommandViaSSH && <SshMethod readOnly={readOnly} />}
                     </FieldGroup>
                     {children}
-                </form>
-            </FormProvider>
-        </div>
+                </DialogBody>
+                {method === EJoinNodeMethod.RunCommandViaSSH ? (
+                    <DialogActionFooter>
+                        <Button
+                            type="submit"
+                            disabled={readOnly}
+                        >
+                            Join Node
+                        </Button>
+                    </DialogActionFooter>
+                ) : null}
+            </form>
+        </FormProvider>
     );
 }
 

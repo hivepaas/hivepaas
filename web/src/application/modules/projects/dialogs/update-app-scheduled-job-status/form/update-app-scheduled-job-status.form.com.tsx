@@ -11,6 +11,7 @@ import { ESettingStatus } from "@application/shared/enums";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 
 import type { UpdateAppScheduledJobStatusFormInput, UpdateAppScheduledJobStatusFormOutput } from "../schemas";
@@ -86,85 +87,85 @@ export function UpdateAppScheduledJobStatusForm({
 
                 void handleSubmit(onValid, onInvalid)(event);
             }}
+            className="min-h-0 flex flex-1 flex-col"
         >
             <fieldset
                 disabled={readOnly}
                 className="contents"
             >
-                <FieldGroup>
-                    <Field>
-                        <InfoBlock
-                            title="Status"
-                            titleWidth={170}
-                        >
-                            <Tabs
-                                value={status.value}
-                                onValueChange={value => {
-                                    status.onChange(value);
-                                }}
+                <DialogBody>
+                    <FieldGroup>
+                        <Field>
+                            <InfoBlock
+                                title="Status"
+                                titleWidth={170}
                             >
-                                <TabsList>
-                                    {Object.entries(statusMap).map(([value, label]) => (
-                                        <TabsTrigger
-                                            key={value}
-                                            value={value}
-                                            className="flex-1"
-                                        >
-                                            {label}
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
-                        </InfoBlock>
-                    </Field>
+                                <Tabs
+                                    value={status.value}
+                                    onValueChange={value => {
+                                        status.onChange(value);
+                                    }}
+                                >
+                                    <TabsList>
+                                        {Object.entries(statusMap).map(([value, label]) => (
+                                            <TabsTrigger
+                                                key={value}
+                                                value={value}
+                                                className="flex-1"
+                                            >
+                                                {label}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
+                            </InfoBlock>
+                        </Field>
 
-                    <Field>
-                        <InfoBlock
-                            title="Access Expiration"
-                            titleWidth={170}
-                        >
-                            <DateTimePicker
-                                value={expireAt.value ?? undefined}
-                                onChange={date => {
-                                    expireAt.onChange(date ?? null);
-                                }}
-                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                                granularity="second"
-                                showClearButton
-                                aria-invalid={isExpireAtInvalid}
-                                disabled={readOnly}
-                            />
-                            <FieldError errors={[errors.expireAt]} />
-                        </InfoBlock>
-                    </Field>
-
-                    <Field>
-                        <InfoBlock
-                            title="Default"
-                            titleWidth={170}
-                        >
-                            <Checkbox
-                                checked={defaultField.value}
-                                onCheckedChange={checked => {
-                                    defaultField.onChange(checked === true);
-                                }}
-                            />
-                        </InfoBlock>
-                    </Field>
-
-                    <Field>
-                        <div className="flex justify-end">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                disabled={readOnly}
-                                className="min-w-[100px]"
+                        <Field>
+                            <InfoBlock
+                                title="Access Expiration"
+                                titleWidth={170}
                             >
-                                Save
-                            </Button>
-                        </div>
-                    </Field>
-                </FieldGroup>
+                                <DateTimePicker
+                                    value={expireAt.value ?? undefined}
+                                    onChange={date => {
+                                        expireAt.onChange(date ?? null);
+                                    }}
+                                    displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                    granularity="second"
+                                    showClearButton
+                                    aria-invalid={isExpireAtInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.expireAt]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title="Default"
+                                titleWidth={170}
+                            >
+                                <Checkbox
+                                    checked={defaultField.value}
+                                    onCheckedChange={checked => {
+                                        defaultField.onChange(checked === true);
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+                    </FieldGroup>
+                </DialogBody>
+                <DialogActionFooter>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        disabled={readOnly}
+                        className="min-w-[100px]"
+                    >
+                        Save
+                    </Button>
+                </DialogActionFooter>
             </fieldset>
         </form>
     );

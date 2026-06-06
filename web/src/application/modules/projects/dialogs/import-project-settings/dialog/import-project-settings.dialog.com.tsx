@@ -50,7 +50,14 @@ import { TableActions } from "@application/shared/components";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, Checkbox, DataTable } from "@/components/ui";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 import { useImportProjectSettingsDialogState } from "../hooks";
 
@@ -493,41 +500,43 @@ export function ImportProjectSettingsDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[980px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[980px]">
                 <DialogHeader>
                     <DialogTitle>Import {title}</DialogTitle>
                 </DialogHeader>
 
-                {hasError ? (
-                    <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-                        <span>Unable to load settings.</span>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={refetch}
-                        >
-                            Retry
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-4">
-                        <TableActions search={{ value: search, onChange: setSearch }} />
-                        <DataTable
-                            columns={columns}
-                            data={importableSettings}
-                            pageSize={10}
-                            manualSorting
-                            enableSorting
-                            enablePagination
-                            isLoading={isFetching}
-                            onSortingChange={setSorting}
-                            showPageSizeSelector={false}
-                            totalCount={importableSettings.length}
-                        />
-                    </div>
-                )}
+                <DialogBody>
+                    {hasError ? (
+                        <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+                            <span>Unable to load settings.</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={refetch}
+                            >
+                                Retry
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <TableActions search={{ value: search, onChange: setSearch }} />
+                            <DataTable
+                                columns={columns}
+                                data={importableSettings}
+                                pageSize={10}
+                                manualSorting
+                                enableSorting
+                                enablePagination
+                                isLoading={isFetching}
+                                onSortingChange={setSorting}
+                                showPageSizeSelector={false}
+                                totalCount={importableSettings.length}
+                            />
+                        </div>
+                    )}
+                </DialogBody>
 
-                <DialogFooter>
+                <DialogActionFooter className="flex justify-end gap-2">
                     <Button
                         type="button"
                         variant="outline"
@@ -544,8 +553,8 @@ export function ImportProjectSettingsDialog() {
                     >
                         Import
                     </Button>
-                </DialogFooter>
-            </DialogContent>
+                </DialogActionFooter>
+            </DialogFixedContent>
         </Dialog>
     );
 }

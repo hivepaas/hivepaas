@@ -15,9 +15,12 @@ import {
     type Notifications_UpdateStatus_Res,
 } from "./notifications.api.contracts";
 
+const SettingsRefSchema = SettingsBaseEntitySchema.nullish().transform(value => value ?? undefined);
+
 const NotificationViaEmailSchema = z.object({
     enabled: z.boolean(),
-    sender: SettingsBaseEntitySchema.optional(),
+    useDefault: z.boolean(),
+    sender: SettingsRefSchema,
     toProjectMembers: z.boolean(),
     toProjectOwners: z.boolean(),
     toAllAdmins: z.boolean(),
@@ -29,12 +32,20 @@ const NotificationViaEmailSchema = z.object({
 
 const NotificationViaSlackSchema = z.object({
     enabled: z.boolean(),
-    webhook: SettingsBaseEntitySchema.optional(),
+    useDefault: z.boolean(),
+    webhook: SettingsRefSchema,
 });
 
 const NotificationViaDiscordSchema = z.object({
     enabled: z.boolean(),
-    webhook: SettingsBaseEntitySchema.optional(),
+    useDefault: z.boolean(),
+    webhook: SettingsRefSchema,
+});
+
+const NotificationViaTelegramSchema = z.object({
+    enabled: z.boolean(),
+    useDefault: z.boolean(),
+    setting: SettingsRefSchema,
 });
 
 const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
@@ -42,6 +53,7 @@ const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: tr
     viaEmail: NotificationViaEmailSchema.optional(),
     viaSlack: NotificationViaSlackSchema.optional(),
     viaDiscord: NotificationViaDiscordSchema.optional(),
+    viaTelegram: NotificationViaTelegramSchema.optional(),
     minSendInterval: z.string(),
     inherited: z.boolean().optional(),
 });

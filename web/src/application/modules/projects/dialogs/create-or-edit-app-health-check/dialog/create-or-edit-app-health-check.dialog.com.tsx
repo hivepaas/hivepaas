@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
-import type { AppHealthChecks_Upsert_Payload } from "~/projects/api/services";
+import type { AppHealthChecks_REST_Payload, AppHealthChecks_Upsert_Payload } from "~/projects/api/services";
 import { AppHealthChecksCommands } from "~/projects/data/commands";
-import type { AppHealthCheckREST } from "~/projects/domain";
 import {
     EAppHealthCheckRestMethod,
     EAppHealthCheckReturnBodyMode,
@@ -20,7 +19,11 @@ import type { CreateOrEditAppHealthCheckFormOutput } from "../schemas";
 
 const BODY_METHODS = [EAppHealthCheckRestMethod.POST, EAppHealthCheckRestMethod.PUT] as const;
 
-function getRestPayload(values: CreateOrEditAppHealthCheckFormOutput): AppHealthCheckREST | null {
+function hasText(value: string): boolean {
+    return value.trim().length > 0;
+}
+
+function getRestPayload(values: CreateOrEditAppHealthCheckFormOutput): AppHealthChecks_REST_Payload | null {
     if (values.healthcheckType !== EAppHealthCheckType.REST) {
         return null;
     }
@@ -45,7 +48,7 @@ function getRestPayload(values: CreateOrEditAppHealthCheckFormOutput): AppHealth
         method: values.rest.method,
         contentType: values.rest.contentType,
         body: BODY_METHODS.includes(values.rest.method as (typeof BODY_METHODS)[number]) ? values.rest.body : "",
-        returnCode: values.rest.returnCode,
+        ...(hasText(values.rest.returnCode) ? { returnCode: values.rest.returnCode } : {}),
         returnText,
         returnJSON,
     };
@@ -58,9 +61,9 @@ function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): A
         name: values.name,
         healthcheckType: values.healthcheckType,
         interval: values.interval,
-        maxRetry: values.maxRetry,
-        retryDelay: values.retryDelay,
-        timeout: values.timeout,
+        ...(values.maxRetry !== undefined && Number.isFinite(values.maxRetry) ? { maxRetry: values.maxRetry } : {}),
+        ...(hasText(values.retryDelay) ? { retryDelay: values.retryDelay } : {}),
+        ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
         saveResultTasks: true,
         rest: getRestPayload(values),
         grpc: values.healthcheckType === EAppHealthCheckType.GRPC ? values.grpc : null,
@@ -73,7 +76,9 @@ function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): A
             ...(!values.notification.failureUseDefault && values.notification.failure
                 ? { failure: values.notification.failure }
                 : {}),
-            minSendInterval: values.notification.minSendInterval,
+            ...(hasText(values.notification.minSendInterval)
+                ? { minSendInterval: values.notification.minSendInterval }
+                : {}),
         },
     };
 }
@@ -174,7 +179,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[800px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a health check</DialogTitle>
                 </DialogHeader>
@@ -186,7 +191,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                     initialValues={isEditMode ? state.healthCheck : undefined}
                     readOnly={!canWrite}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

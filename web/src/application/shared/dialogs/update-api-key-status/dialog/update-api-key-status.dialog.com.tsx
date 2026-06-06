@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
@@ -73,7 +73,7 @@ export function UpdateApiKeyStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogFixedContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Change Status</DialogTitle>
                     <DialogDescription />
@@ -86,7 +86,7 @@ export function UpdateApiKeyStatusDialog() {
                         initialValues={initialValues}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -15,12 +15,18 @@ export type AppHealthChecks_RefObject_Payload = {
     id: string;
 };
 
-export type AppHealthChecks_REST_Payload = AppHealthCheckREST;
+export type AppHealthChecks_REST_Payload = Omit<AppHealthCheckREST, "returnCode"> & {
+    returnCode?: string;
+};
 export type AppHealthChecks_GRPC_Payload = AppHealthCheckGRPC;
 
-export type AppHealthChecks_Notification_Payload = Omit<AppHealthCheckNotification, "success" | "failure"> & {
+export type AppHealthChecks_Notification_Payload = Omit<
+    AppHealthCheckNotification,
+    "success" | "failure" | "minSendInterval"
+> & {
     success?: AppHealthChecks_RefObject_Payload;
     failure?: AppHealthChecks_RefObject_Payload;
+    minSendInterval?: string;
 };
 
 export type AppHealthChecks_Upsert_Payload = {
@@ -29,9 +35,9 @@ export type AppHealthChecks_Upsert_Payload = {
     name: string;
     healthcheckType: EAppHealthCheckType;
     interval: string;
-    maxRetry: number;
-    retryDelay: string;
-    timeout: string;
+    maxRetry?: number;
+    retryDelay?: string;
+    timeout?: string;
     saveResultTasks: boolean;
     rest: AppHealthChecks_REST_Payload | null;
     grpc: AppHealthChecks_GRPC_Payload | null;

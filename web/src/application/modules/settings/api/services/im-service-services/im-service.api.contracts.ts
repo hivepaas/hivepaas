@@ -9,6 +9,11 @@ export type ImService_Webhook_Payload = {
     webhook: string;
 };
 
+export type ImService_Telegram_Payload = {
+    botToken: string;
+    chatId: string;
+};
+
 export type ImService_FindManyPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -30,6 +35,7 @@ export type ImService_CreateOne_Payload = {
     kind: EImServiceKind;
     slack: ImService_Webhook_Payload | null;
     discord: ImService_Webhook_Payload | null;
+    telegram: ImService_Telegram_Payload | null;
 };
 
 export type ImService_CreateOne_Req = ApiRequestBase<{

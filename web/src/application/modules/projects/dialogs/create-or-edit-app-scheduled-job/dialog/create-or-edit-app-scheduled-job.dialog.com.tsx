@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
@@ -190,12 +190,14 @@ export function CreateOrEditAppScheduledJobDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[860px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[860px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a scheduled job</DialogTitle>
                 </DialogHeader>
                 {isEditMode && isDetailLoading ? (
-                    <AppLoader />
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
                 ) : (
                     <CreateOrEditAppScheduledJobForm
                         projectId={projectId}
@@ -206,7 +208,7 @@ export function CreateOrEditAppScheduledJobDialog() {
                         readOnly={!canWrite}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

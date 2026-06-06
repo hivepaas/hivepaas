@@ -71,7 +71,6 @@ func (uc *UC) loadUserProfileData(
 	data *userProfileData,
 ) error {
 	user, err := uc.userRepo.GetByID(ctx, db, auth.User.ID,
-		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF \"user\""),
 		bunex.SelectRelationIf(req.Photo.IsChanged(), "PhotoData"),
 	)
@@ -193,10 +192,7 @@ func (uc *UC) persistUserProfileData(
 	db database.IDB,
 	persistingData *persistingUserProfileData,
 ) error {
-	err := uc.userRepo.Update(ctx, db, persistingData.UpdatingUser,
-		bunex.UpdateColumns("updated_at", "username", "email", "full_name", "position",
-			"photo", "photo_id", "notes"),
-	)
+	err := uc.userRepo.Update(ctx, db, persistingData.UpdatingUser)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

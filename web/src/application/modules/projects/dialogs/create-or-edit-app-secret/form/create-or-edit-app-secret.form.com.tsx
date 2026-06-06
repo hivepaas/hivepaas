@@ -7,6 +7,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditAppSecretFormInput, CreateOrEditAppSecretFormOutput } from "../schemas";
@@ -145,223 +146,223 @@ export function CreateOrEditAppSecretForm({
 
                 void handleSubmit(onValid, onInvalid)(event);
             }}
-            className="flex flex-col gap-6"
+            className="min-h-0 flex flex-1 flex-col"
         >
             <fieldset
                 disabled={readOnly}
                 className="contents"
             >
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Name"
-                            isRequired
-                        />
-                    }
-                >
-                    <FieldGroup>
-                        <Field>
-                            <Input
-                                id="app-secret-name"
-                                {...name}
-                                placeholder="SECRET_NAME"
-                                aria-invalid={isNameInvalid}
-                                disabled={isEditMode}
-                            />
-                            <FieldError errors={[errors.name]} />
-                        </Field>
-                    </FieldGroup>
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Value Type"
-                            isRequired
-                        />
-                    }
-                >
-                    <Tabs
-                        value={valueType}
-                        onValueChange={nextValue => {
-                            valueTypeField.onChange(nextValue);
-                        }}
-                    >
-                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                            <TabsTrigger value="text">Text</TabsTrigger>
-                            <TabsTrigger value="binary">Binary</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </InfoBlock>
-
-                {valueType === "text" ? (
+                <DialogBody className="flex flex-col gap-6">
                     <InfoBlock
                         titleWidth={220}
                         title={
                             <LabelWithInfo
-                                label="Value"
-                                isRequired={!isEditMode}
+                                label="Name"
+                                isRequired
                             />
                         }
                     >
                         <FieldGroup>
                             <Field>
-                                <Textarea
-                                    id="app-secret-text-value"
-                                    {...textValue}
-                                    placeholder={
-                                        isEditMode ? "Leave empty to keep current value" : "Enter secret value"
-                                    }
-                                    rows={8}
-                                    aria-invalid={isTextValueInvalid}
-                                />
-                                <p className="text-sm text-muted-foreground">Max size: 500kb</p>
-                                <FieldError errors={[errors.textValue]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-                ) : (
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Value"
-                                isRequired={!isEditMode}
-                            />
-                        }
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => {
-                                            fileInputRef.current?.click();
-                                        }}
-                                    >
-                                        <UploadIcon className="size-4" />
-                                        Choose File
-                                    </Button>
-                                    <span className="truncate text-sm text-muted-foreground">
-                                        {selectedFile?.name ?? (isEditMode ? "Leave empty to keep current value" : "")}
-                                    </span>
-                                </div>
                                 <Input
-                                    id="app-secret-binary-value"
-                                    ref={fileInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    onChange={event => {
-                                        binaryFileField.onChange(event.target.files?.[0] ?? null);
-                                    }}
+                                    id="app-secret-name"
+                                    {...name}
+                                    placeholder="SECRET_NAME"
+                                    aria-invalid={isNameInvalid}
+                                    disabled={isEditMode}
                                 />
-                                <p className="text-sm text-muted-foreground">Max size: 500kb</p>
-                                <FieldError errors={[errors.binaryFile]} />
+                                <FieldError errors={[errors.name]} />
                             </Field>
                         </FieldGroup>
                     </InfoBlock>
-                )}
 
-                <InfoBlock
-                    titleWidth={220}
-                    title={<LabelWithInfo label="Mount into Filesystem" />}
-                >
-                    <Checkbox
-                        checked={mountIntoFilesystem}
-                        onCheckedChange={checked => {
-                            mountIntoFilesystemField.onChange(checked === true);
-                        }}
-                    />
-                </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Value Type"
+                                isRequired
+                            />
+                        }
+                    >
+                        <Tabs
+                            value={valueType}
+                            onValueChange={nextValue => {
+                                valueTypeField.onChange(nextValue);
+                            }}
+                        >
+                            <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                                <TabsTrigger value="text">Text</TabsTrigger>
+                                <TabsTrigger value="binary">Binary</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </InfoBlock>
 
-                {mountIntoFilesystem && (
-                    <>
+                    {valueType === "text" ? (
                         <InfoBlock
                             titleWidth={220}
                             title={
                                 <LabelWithInfo
-                                    label="File Path"
-                                    isRequired
+                                    label="Value"
+                                    isRequired={!isEditMode}
                                 />
                             }
                         >
                             <FieldGroup>
                                 <Field>
-                                    <Input
-                                        id="app-secret-file-path"
-                                        {...filePath}
-                                        placeholder="/run/secrets/secret_name"
-                                        aria-invalid={isFilePathInvalid}
+                                    <Textarea
+                                        id="app-secret-text-value"
+                                        {...textValue}
+                                        placeholder={
+                                            isEditMode ? "Leave empty to keep current value" : "Enter secret value"
+                                        }
+                                        rows={8}
+                                        aria-invalid={isTextValueInvalid}
                                     />
-                                    <FieldError errors={[errors.filePath]} />
+                                    <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                                    <FieldError errors={[errors.textValue]} />
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>
-
+                    ) : (
                         <InfoBlock
                             titleWidth={220}
                             title={
                                 <LabelWithInfo
-                                    label="File Mode"
-                                    isRequired
+                                    label="Value"
+                                    isRequired={!isEditMode}
                                 />
                             }
                         >
                             <FieldGroup>
                                 <Field>
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                                fileInputRef.current?.click();
+                                            }}
+                                        >
+                                            <UploadIcon className="size-4" />
+                                            Choose File
+                                        </Button>
+                                        <span className="truncate text-sm text-muted-foreground">
+                                            {selectedFile?.name ??
+                                                (isEditMode ? "Leave empty to keep current value" : "")}
+                                        </span>
+                                    </div>
                                     <Input
-                                        id="app-secret-file-mode"
-                                        {...fileMode}
-                                        placeholder="default: 0444"
-                                        aria-invalid={isFileModeInvalid}
-                                        className="max-w-[180px]"
+                                        id="app-secret-binary-value"
+                                        ref={fileInputRef}
+                                        type="file"
+                                        className="hidden"
+                                        onChange={event => {
+                                            binaryFileField.onChange(event.target.files?.[0] ?? null);
+                                        }}
                                     />
-                                    <FieldError errors={[errors.fileMode]} />
+                                    <p className="text-sm text-muted-foreground">Max size: 500kb</p>
+                                    <FieldError errors={[errors.binaryFile]} />
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>
+                    )}
 
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="File UID" />}
-                        >
-                            <Input
-                                id="app-secret-file-uid"
-                                {...fileUid}
-                                placeholder="uid"
-                                className="max-w-[180px]"
-                            />
-                        </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Mount into Filesystem" />}
+                    >
+                        <Checkbox
+                            checked={mountIntoFilesystem}
+                            onCheckedChange={checked => {
+                                mountIntoFilesystemField.onChange(checked === true);
+                            }}
+                        />
+                    </InfoBlock>
 
-                        <InfoBlock
-                            titleWidth={220}
-                            title={<LabelWithInfo label="File GID" />}
-                        >
-                            <Input
-                                id="app-secret-file-gid"
-                                {...fileGid}
-                                placeholder="gid"
-                                className="max-w-[180px]"
-                            />
-                        </InfoBlock>
-                    </>
-                )}
+                    {mountIntoFilesystem && (
+                        <>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="File Path"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            id="app-secret-file-path"
+                                            {...filePath}
+                                            placeholder="/run/secrets/secret_name"
+                                            aria-invalid={isFilePathInvalid}
+                                        />
+                                        <FieldError errors={[errors.filePath]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
 
-                <Field>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
-                            disabled={readOnly}
-                        >
-                            Save
-                        </Button>
-                    </div>
-                </Field>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="File Mode"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            id="app-secret-file-mode"
+                                            {...fileMode}
+                                            placeholder="default: 0444"
+                                            aria-invalid={isFileModeInvalid}
+                                            className="max-w-[180px]"
+                                        />
+                                        <FieldError errors={[errors.fileMode]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="File UID" />}
+                            >
+                                <Input
+                                    id="app-secret-file-uid"
+                                    {...fileUid}
+                                    placeholder="uid"
+                                    className="max-w-[180px]"
+                                />
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="File GID" />}
+                            >
+                                <Input
+                                    id="app-secret-file-gid"
+                                    {...fileGid}
+                                    placeholder="gid"
+                                    className="max-w-[180px]"
+                                />
+                            </InfoBlock>
+                        </>
+                    )}
+                </DialogBody>
+                <DialogActionFooter>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        className="min-w-[100px]"
+                        disabled={readOnly}
+                    >
+                        Save
+                    </Button>
+                </DialogActionFooter>
             </fieldset>
         </form>
     );

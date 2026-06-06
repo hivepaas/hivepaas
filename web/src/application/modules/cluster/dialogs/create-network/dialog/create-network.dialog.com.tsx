@@ -1,5 +1,5 @@
 import { Button } from "@components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogActionFooter, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ClusterNetworksCommands } from "~/cluster/data/commands";
 import { EClusterNetworkDriver } from "~/cluster/module-shared/enums";
@@ -110,7 +110,7 @@ export function CreateNetworkDialog() {
                 }
             }}
         >
-            <DialogContent className="sm:max-w-[820px]">
+            <DialogFixedContent className="sm:max-w-[820px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl">Create a network</DialogTitle>
                 </DialogHeader>
@@ -120,7 +120,7 @@ export function CreateNetworkDialog() {
                     showAvailableInProjects={scope?.type !== "project"}
                     onSubmit={onSubmit}
                 >
-                    <div className="flex justify-end pt-4">
+                    <DialogActionFooter className="flex justify-end">
                         <Button
                             type="submit"
                             disabled={!canWrite || isPending}
@@ -128,9 +128,9 @@ export function CreateNetworkDialog() {
                         >
                             Save
                         </Button>
-                    </div>
+                    </DialogActionFooter>
                 </CreateNetworkForm>
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

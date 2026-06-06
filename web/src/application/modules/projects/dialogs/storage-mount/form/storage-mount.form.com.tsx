@@ -2,6 +2,7 @@ import React, { useImperativeHandle } from "react";
 
 import { Checkbox, Input } from "@components/ui";
 import { Button } from "@components/ui/button";
+import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,9 +35,10 @@ type Props = {
     projectKey?: string;
     appLocalKey?: string;
     readOnly?: boolean;
+    children?: React.ReactNode;
 };
 
-export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, readOnly = false }: Props) {
+export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, readOnly = false, children }: Props) {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -146,131 +148,134 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, read
 
                     void handleSubmit(onValid, onInvalid)(e);
                 }}
+                className="min-h-0 flex flex-1 flex-col"
             >
                 <fieldset
                     disabled={readOnly}
                     className="contents"
                 >
-                    <FieldGroup className="gap-6">
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Type"
-                                    isRequired
-                            />
-                        }
-                            titleWidth={180}
-                    >
-                            <Field>
-                                <Combobox
-                                    options={typeOptions}
-                                    value={typeField.value}
-                                    onChange={value => {
-                                    typeField.onChange(value ?? undefined);
-                                }}
-                                    placeholder="Type"
-                                    searchable={false}
-                                    closeOnSelect
-                                    emptyText="No storage types available"
-                                    className="w-[220px]"
-                                    valueKey="id"
-                                    aria-invalid={Boolean(errors.type)}
-                                    loading={isFetchingStorageSettings}
-                                    onRefresh={() => void refetchStorageSettings()}
-                                    isRefreshing={isRefetchingStorageSettings}
-                            />
-                                <FieldError errors={[errors.type]} />
-                                <div className="text-xs">
-                                    <p>
-                                        <Link
-                                            to={ROUTE.projects.single.configuration.general.$route(projectId)}
-                                            className="text-blue-500"
-                                    >
-                                            Configure storage settings in the project
-                                        </Link>
-                                    </p>
-                                </div>
-                            </Field>
-                        </InfoBlock>
-
-                        {storageType === EMountType.Bind && <BindFields storageSettings={storageSettings} />}
-
-                        {storageType === EMountType.Volume && <VolumeFields storageSettings={storageSettings} />}
-
-                        {storageType === EMountType.Cluster && <ClusterFields storageSettings={storageSettings} />}
-
-                        {storageType === EMountType.Tmpfs && <TmpfsFields storageSettings={storageSettings} />}
-
-                        {storageType !== EMountType.Tmpfs && (
-                        <Field>
-                            <InfoBlock
-                                title={<LabelWithInfo label="Read Only" />}
-                                titleWidth={180}
-                            >
-                                <Checkbox
-                                    id="read-only"
-                                    checked={readOnlyField.value ?? false}
-                                    onCheckedChange={checked => {
-                                        readOnlyField.onChange(checked === true);
-                                    }}
-                                />
-                            </InfoBlock>
-                        </Field>
-                    )}
-
-                        <Field>
+                    <DialogBody className="flex flex-col gap-6">
+                        {children}
+                        <FieldGroup className="gap-6">
                             <InfoBlock
                                 title={
                                     <LabelWithInfo
-                                        label="Target"
+                                        label="Type"
                                         isRequired
-                                />
-                            }
+                                    />
+                                }
                                 titleWidth={180}
-                        >
-                                <Input
-                                    {...targetField}
-                                    id="target"
-                                    placeholder="/path/in/container"
-                                    aria-invalid={targetInvalid}
-                            />
-                                <FieldError errors={[errors.target]} />
-                            </InfoBlock>
-                        </Field>
-
-                        <Field>
-                            <InfoBlock
-                                title={<LabelWithInfo label="Consistency" />}
-                                titleWidth={180}
-                        >
-                                <Select
-                                    {...consistencyField}
-                                    value={consistencyField.value ?? EMountConsistency.Default}
-                                    onValueChange={consistencyField.onChange}
                             >
-                                    <SelectTrigger className="w-[220px]">
-                                        <SelectValue placeholder="Consistency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={EMountConsistency.Default}>default</SelectItem>
-                                        <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
-                                        <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
-                                        <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Field>
+                                    <Combobox
+                                        options={typeOptions}
+                                        value={typeField.value}
+                                        onChange={value => {
+                                            typeField.onChange(value ?? undefined);
+                                        }}
+                                        placeholder="Type"
+                                        searchable={false}
+                                        closeOnSelect
+                                        emptyText="No storage types available"
+                                        className="w-[220px]"
+                                        valueKey="id"
+                                        aria-invalid={Boolean(errors.type)}
+                                        loading={isFetchingStorageSettings}
+                                        onRefresh={() => void refetchStorageSettings()}
+                                        isRefreshing={isRefetchingStorageSettings}
+                                    />
+                                    <FieldError errors={[errors.type]} />
+                                    <div className="text-xs">
+                                        <p>
+                                            <Link
+                                                to={ROUTE.projects.single.configuration.general.$route(projectId)}
+                                                className="text-blue-500"
+                                            >
+                                                Configure storage settings in the project
+                                            </Link>
+                                        </p>
+                                    </div>
+                                </Field>
                             </InfoBlock>
-                        </Field>
 
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                disabled={readOnly}
+                            {storageType === EMountType.Bind && <BindFields storageSettings={storageSettings} />}
+
+                            {storageType === EMountType.Volume && <VolumeFields storageSettings={storageSettings} />}
+
+                            {storageType === EMountType.Cluster && <ClusterFields storageSettings={storageSettings} />}
+
+                            {storageType === EMountType.Tmpfs && <TmpfsFields storageSettings={storageSettings} />}
+
+                            {storageType !== EMountType.Tmpfs && (
+                                <Field>
+                                    <InfoBlock
+                                        title={<LabelWithInfo label="Read Only" />}
+                                        titleWidth={180}
+                                    >
+                                        <Checkbox
+                                            id="read-only"
+                                            checked={readOnlyField.value ?? false}
+                                            onCheckedChange={checked => {
+                                                readOnlyField.onChange(checked === true);
+                                            }}
+                                        />
+                                    </InfoBlock>
+                                </Field>
+                            )}
+
+                            <Field>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Target"
+                                            isRequired
+                                        />
+                                    }
+                                    titleWidth={180}
+                                >
+                                    <Input
+                                        {...targetField}
+                                        id="target"
+                                        placeholder="/path/in/container"
+                                        aria-invalid={targetInvalid}
+                                    />
+                                    <FieldError errors={[errors.target]} />
+                                </InfoBlock>
+                            </Field>
+
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Consistency" />}
+                                    titleWidth={180}
+                                >
+                                    <Select
+                                        {...consistencyField}
+                                        value={consistencyField.value ?? EMountConsistency.Default}
+                                        onValueChange={consistencyField.onChange}
+                                    >
+                                        <SelectTrigger className="w-[220px]">
+                                            <SelectValue placeholder="Consistency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={EMountConsistency.Default}>default</SelectItem>
+                                            <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
+                                            <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
+                                            <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </InfoBlock>
+                            </Field>
+                        </FieldGroup>
+                    </DialogBody>
+                    <DialogActionFooter>
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            disabled={readOnly}
                         >
-                                {defaultValues ? "Update" : "Add"}
-                            </Button>
-                        </div>
-                    </FieldGroup>
+                            {defaultValues ? "Update" : "Add"}
+                        </Button>
+                    </DialogActionFooter>
                 </fieldset>
             </form>
         </FormProvider>

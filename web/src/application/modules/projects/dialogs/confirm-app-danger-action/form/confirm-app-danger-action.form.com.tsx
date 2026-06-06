@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { DialogFooter } from "@components/ui/dialog";
+import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useForm } from "react-hook-form";
 
@@ -62,7 +62,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
 
     return (
         <form
-            className="flex flex-col gap-7"
+            className="min-h-0 flex flex-1 flex-col"
             onSubmit={event => {
                 event.preventDefault();
                 if (readOnly) {
@@ -72,21 +72,23 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                 void handleSubmit(onSubmit, onInvalid)(event);
             }}
         >
-            <p className="text-sm font-medium leading-6 text-foreground">
-                To confirm {copy.bodyAction} the application, please type{" "}
-                <span className="text-primary">&quot;{appName}&quot;</span> into the text box below.
-            </p>
+            <DialogBody className="flex flex-col gap-7">
+                <p className="text-sm font-medium leading-6 text-foreground">
+                    To confirm {copy.bodyAction} the application, please type{" "}
+                    <span className="text-primary">&quot;{appName}&quot;</span> into the text box below.
+                </p>
 
-            <Field>
-                <Input
-                    aria-invalid={Boolean(errors.appName)}
-                    disabled={readOnly || isPending}
-                    {...register("appName")}
-                />
-                <FieldError errors={[errors.appName]} />
-            </Field>
+                <Field>
+                    <Input
+                        aria-invalid={Boolean(errors.appName)}
+                        disabled={readOnly || isPending}
+                        {...register("appName")}
+                    />
+                    <FieldError errors={[errors.appName]} />
+                </Field>
+            </DialogBody>
 
-            <DialogFooter>
+            <DialogActionFooter>
                 <Button
                     type="submit"
                     variant={copy.buttonVariant}
@@ -96,7 +98,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                 >
                     {copy.buttonLabel}
                 </Button>
-            </DialogFooter>
+            </DialogActionFooter>
         </form>
     );
 }

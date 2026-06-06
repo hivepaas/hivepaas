@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
@@ -122,7 +122,7 @@ export function QuickInstallSslCertDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[560px]">
+            <DialogFixedContent className="min-w-[390px] w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Quick install an SSL certificate</DialogTitle>
                 </DialogHeader>
@@ -134,7 +134,7 @@ export function QuickInstallSslCertDialog() {
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

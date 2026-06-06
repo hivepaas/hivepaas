@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogDescription, DialogFixedContent, DialogTitle } from "@components/ui/dialog";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
@@ -111,8 +111,7 @@ export function F2aSetupDialog() {
         );
     }
 
-    const showCurrentPasscodeForm =
-        (state.mode === "change" && !stateData) || state.mode === "deactivate";
+    const showCurrentPasscodeForm = (state.mode === "change" && !stateData) || state.mode === "deactivate";
     const showSetupForm = stateData !== null && state.mode !== "deactivate";
 
     return (
@@ -125,18 +124,14 @@ export function F2aSetupDialog() {
                 actions.close();
             }}
         >
-            <DialogHeader>
-                <DialogTitle />
-                <DialogDescription />
-            </DialogHeader>
-            <DialogContent className="min-w-[400px] w-fit">
+            <DialogFixedContent className="min-w-[400px] w-fit">
+                <DialogTitle className="sr-only">Two-factor authentication</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Set up, change, or deactivate two-factor authentication.
+                </DialogDescription>
                 {showCurrentPasscodeForm && (
                     <CurrentPasscodeForm
-                        isPending={
-                            state.mode === "deactivate"
-                                ? isRemoveMfaTotpPending
-                                : isGetProfile2FASetupPending
-                        }
+                        isPending={state.mode === "deactivate" ? isRemoveMfaTotpPending : isGetProfile2FASetupPending}
                         onSubmit={onCurrentPasscodeSubmit}
                     />
                 )}
@@ -149,7 +144,7 @@ export function F2aSetupDialog() {
                         totpToken={stateData.totpToken}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

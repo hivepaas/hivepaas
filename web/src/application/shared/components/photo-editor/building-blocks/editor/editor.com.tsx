@@ -3,7 +3,14 @@ import React, { useImperativeHandle, useLayoutEffect, useRef, useState } from "r
 import classnames from "classnames/bind";
 
 import { Button } from "@components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogBody,
+    DialogDescription,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { Slider } from "@components/ui/slider";
 import "cropperjs/dist/cropper.css";
 import { Eye, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
@@ -282,21 +289,23 @@ function View({ ref, src, onError, onEditingStart, onEditingEnd }: Props) {
                     }
                 }}
             >
-                <DialogContent className="sm:max-w-2xl">
+                <DialogFixedContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Preview</DialogTitle>
                         <DialogDescription>Preview of cropped image</DialogDescription>
                     </DialogHeader>
-                    {previewOpen.src && (
-                        <div className="flex items-center justify-center">
-                            <img
-                                src={previewOpen.src}
-                                alt="Preview"
-                                className="max-w-full rounded-lg"
-                            />
-                        </div>
-                    )}
-                </DialogContent>
+                    <DialogBody>
+                        {previewOpen.src && (
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src={previewOpen.src}
+                                    alt="Preview"
+                                    className="max-w-full rounded-lg"
+                                />
+                            </div>
+                        )}
+                    </DialogBody>
+                </DialogFixedContent>
             </Dialog>
         </>
     );

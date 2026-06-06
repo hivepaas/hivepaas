@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 
@@ -98,12 +98,14 @@ export function UpdateAppScheduledJobStatusDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[720px]">
+            <DialogFixedContent className="min-w-[390px] w-[720px]">
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
                 {isLoading ? (
-                    <AppLoader />
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
                 ) : (
                     <UpdateAppScheduledJobStatusForm
                         isPending={isPending}
@@ -113,7 +115,7 @@ export function UpdateAppScheduledJobStatusDialog() {
                         readOnly={!canWrite}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -1,6 +1,7 @@
 import { type PropsWithChildren } from "react";
 
 import { Checkbox, FieldError, Input } from "@components/ui";
+import { DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
 
@@ -64,91 +65,93 @@ export function CreateNetworkForm({
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
-                className="flex flex-col gap-6"
+                className="min-h-0 flex flex-1 flex-col"
             >
-                <fieldset
-                    disabled={readOnly || isPending}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
-                >
-                    <InfoBlock
-                        title="Name"
-                        titleWidth={190}
+                <DialogBody>
+                    <fieldset
+                        disabled={readOnly || isPending}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
-                        <Input
-                            {...name}
-                            value={name.value}
-                            placeholder="project_a_net_1"
-                            className="max-w-[520px]"
-                            aria-invalid={Boolean(errors.name)}
-                        />
-                        <FieldError errors={[errors.name]} />
-                    </InfoBlock>
-                    <CheckboxField
-                        title="Enable IPv4"
-                        checked={enableIPv4.value}
-                        onCheckedChange={value => {
-                            enableIPv4.onChange(value);
-                        }}
-                    />
-                    <CheckboxField
-                        title="Enable IPv6"
-                        checked={enableIPv6.value}
-                        onCheckedChange={value => {
-                            enableIPv6.onChange(value);
-                        }}
-                    />
-                    <CheckboxField
-                        title="Internal"
-                        checked={internal.value}
-                        onCheckedChange={value => {
-                            internal.onChange(value);
-                        }}
-                    />
-                    <CheckboxField
-                        title="Attachable"
-                        checked={attachable.value}
-                        onCheckedChange={value => {
-                            attachable.onChange(value);
-                        }}
-                    />
-                    <InfoBlock
-                        title="Labels"
-                        titleWidth={190}
-                    >
-                        <KeyValueList<CreateNetworkFormInput>
-                            name="labels"
-                            checkDuplicates
-                            keyPlaceholder="name"
-                            valuePlaceholder="value"
-                            className="max-w-[620px]"
-                            disabled={readOnly || isPending}
-                        />
-                        <FieldError errors={[errors.labels]} />
-                    </InfoBlock>
-                    <InfoBlock
-                        title="Options"
-                        titleWidth={190}
-                    >
-                        <KeyValueList<CreateNetworkFormInput>
-                            name="options"
-                            checkDuplicates
-                            keyPlaceholder="name"
-                            valuePlaceholder="value"
-                            className="max-w-[620px]"
-                            disabled={readOnly || isPending}
-                        />
-                        <FieldError errors={[errors.options]} />
-                    </InfoBlock>
-                    {showAvailableInProjects ? (
+                        <InfoBlock
+                            title="Name"
+                            titleWidth={190}
+                        >
+                            <Input
+                                {...name}
+                                value={name.value}
+                                placeholder="project_a_net_1"
+                                className="max-w-[520px]"
+                                aria-invalid={Boolean(errors.name)}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </InfoBlock>
                         <CheckboxField
-                            title="Available in Projects"
-                            checked={availableInProjects.value}
+                            title="Enable IPv4"
+                            checked={enableIPv4.value}
                             onCheckedChange={value => {
-                                availableInProjects.onChange(value);
+                                enableIPv4.onChange(value);
                             }}
                         />
-                    ) : null}
-                </fieldset>
+                        <CheckboxField
+                            title="Enable IPv6"
+                            checked={enableIPv6.value}
+                            onCheckedChange={value => {
+                                enableIPv6.onChange(value);
+                            }}
+                        />
+                        <CheckboxField
+                            title="Internal"
+                            checked={internal.value}
+                            onCheckedChange={value => {
+                                internal.onChange(value);
+                            }}
+                        />
+                        <CheckboxField
+                            title="Attachable"
+                            checked={attachable.value}
+                            onCheckedChange={value => {
+                                attachable.onChange(value);
+                            }}
+                        />
+                        <InfoBlock
+                            title="Labels"
+                            titleWidth={190}
+                        >
+                            <KeyValueList<CreateNetworkFormInput>
+                                name="labels"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className="max-w-[620px]"
+                                disabled={readOnly || isPending}
+                            />
+                            <FieldError errors={[errors.labels]} />
+                        </InfoBlock>
+                        <InfoBlock
+                            title="Options"
+                            titleWidth={190}
+                        >
+                            <KeyValueList<CreateNetworkFormInput>
+                                name="options"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className="max-w-[620px]"
+                                disabled={readOnly || isPending}
+                            />
+                            <FieldError errors={[errors.options]} />
+                        </InfoBlock>
+                        {showAvailableInProjects ? (
+                            <CheckboxField
+                                title="Available in Projects"
+                                checked={availableInProjects.value}
+                                onCheckedChange={value => {
+                                    availableInProjects.onChange(value);
+                                }}
+                            />
+                        ) : null}
+                    </fieldset>
+                </DialogBody>
                 {children}
             </form>
         </FormProvider>

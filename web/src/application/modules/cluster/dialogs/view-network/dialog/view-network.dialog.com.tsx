@@ -1,5 +1,12 @@
 import { Button } from "@components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { ClusterNetworksQueries } from "~/cluster/data/queries";
 import { ProjectNetworksQueries } from "~/projects/data/queries";
 
@@ -50,21 +57,23 @@ export function ViewNetworkDialog() {
                 }
             }}
         >
-            <DialogContent className="sm:max-w-[820px]">
+            <DialogFixedContent className="sm:max-w-[820px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl">Network info</DialogTitle>
                 </DialogHeader>
-                {network ? (
-                    <ViewNetworkForm
-                        key={network.id}
-                        network={network}
-                    />
-                ) : (
-                    <div className="py-10 text-center text-sm text-muted-foreground">
-                        {isFetching ? "Loading network..." : "Network not found"}
-                    </div>
-                )}
-                <div className="flex justify-end pt-4">
+                <DialogBody>
+                    {network ? (
+                        <ViewNetworkForm
+                            key={network.id}
+                            network={network}
+                        />
+                    ) : (
+                        <div className="py-10 text-center text-sm text-muted-foreground">
+                            {isFetching ? "Loading network..." : "Network not found"}
+                        </div>
+                    )}
+                </DialogBody>
+                <DialogActionFooter className="flex justify-end">
                     <Button
                         type="button"
                         className="min-w-[120px]"
@@ -72,8 +81,8 @@ export function ViewNetworkDialog() {
                     >
                         Close
                     </Button>
-                </div>
-            </DialogContent>
+                </DialogActionFooter>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -12,6 +12,7 @@ import { KeyValueList, NotificationSettings } from "@application/shared/form";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { InputNumber } from "@/components/ui/input-number";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
@@ -126,285 +127,289 @@ export function CreateOrEditAppScheduledJobForm({
 
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
+                className="min-h-0 flex flex-1 flex-col"
             >
                 <fieldset
                     disabled={readOnly}
                     className="contents"
                 >
-                    <input
-                        type="hidden"
-                        {...runInShell}
-                        value={runInShell.value}
-                    />
-                    <FieldGroup className="gap-6">
-                        <InfoBlock
-                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                            title={
-                                <LabelWithInfo
-                                    label="Name"
-                                    isRequired
-                                />
-                            }
-                        >
-                            <Field>
-                                <Input
-                                    {...name}
-                                    placeholder="scheduled job name"
-                                    aria-invalid={isNameInvalid}
-                                    className="max-w-[420px]"
-                                    disabled={readOnly}
-                                />
-                                <FieldError errors={[errors.name]} />
-                            </Field>
-                        </InfoBlock>
-
-                        <ContentBlock label="Scheduling">
-                            <div className="flex flex-col gap-6">
-                                <InfoBlock
-                                    title="Priority"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <PriorityTabsField
-                                        value={priority.value}
-                                        onChange={priority.onChange}
-                                        readOnly={readOnly}
+                    <DialogBody>
+                        <input
+                            type="hidden"
+                            {...runInShell}
+                            value={runInShell.value}
+                        />
+                        <FieldGroup className="gap-6">
+                            <InfoBlock
+                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                title={
+                                    <LabelWithInfo
+                                        label="Name"
+                                        isRequired
                                     />
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Scheduling Mode"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Tabs
-                                        value={scheduleMode.value}
-                                        onValueChange={scheduleMode.onChange}
-                                    >
-                                        <TabsList>
-                                            <TabsTrigger value={EAppScheduledJobScheduleMode.Interval}>
-                                                Interval-based
-                                            </TabsTrigger>
-                                            <TabsTrigger value={EAppScheduledJobScheduleMode.Cron}>
-                                                Time-based
-                                            </TabsTrigger>
-                                        </TabsList>
-                                    </Tabs>
-                                </InfoBlock>
-
-                                {scheduleMode.value === EAppScheduledJobScheduleMode.Interval && (
-                                    <InfoBlock
-                                        title="Scheduling Interval"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Field>
-                                            <Input
-                                                {...scheduleInterval}
-                                                placeholder="1d, 1h30m"
-                                                className="max-w-[400px]"
-                                                aria-invalid={isScheduleIntervalInvalid}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.scheduleInterval]} />
-                                        </Field>
-                                    </InfoBlock>
-                                )}
-
-                                {scheduleMode.value === EAppScheduledJobScheduleMode.Cron && (
-                                    <InfoBlock
-                                        title="Cron Expression"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Field>
-                                            <Input
-                                                {...scheduleCronExpr}
-                                                placeholder="accepted form: * * * * *"
-                                                className="max-w-[400px]"
-                                                aria-invalid={isScheduleCronExprInvalid}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.scheduleCronExpr]} />
-                                        </Field>
-                                    </InfoBlock>
-                                )}
-
-                                <InfoBlock
-                                    title="Schedule From"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <DateTimePicker
-                                            value={scheduleFrom.value ?? undefined}
-                                            onChange={date => {
-                                                scheduleFrom.onChange(date ?? null);
-                                            }}
-                                            placeholder="select date time"
-                                            granularity="minute"
-                                            showClearButton
-                                            aria-invalid={isScheduleFromInvalid}
-                                            containerClassName="max-w-[400px]"
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.scheduleFrom]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <NextRunsField nextRuns={initialValues?.nextRuns ?? []} />
-
-                                <InfoBlock
-                                    title="Timeout"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <Input
-                                            {...timeout}
-                                            placeholder="30m, 1h30m"
-                                            className="max-w-[400px]"
-                                            aria-invalid={isTimeoutInvalid}
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.timeout]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Max Retry"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <InputNumber
-                                            value={maxRetry.value}
-                                            onValueChange={value => {
-                                                const nextValue =
-                                                    value !== undefined && Number.isFinite(value) ? value : undefined;
-
-                                                maxRetry.onChange(nextValue);
-                                            }}
-                                            min={0}
-                                            useGrouping={false}
-                                            placeholder="3"
-                                            aria-invalid={isMaxRetryInvalid}
-                                            className="max-w-[100px]"
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.maxRetry]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Retry Delay"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <Input
-                                            {...retryDelay}
-                                            placeholder="10s"
-                                            className="max-w-[400px]"
-                                            aria-invalid={isRetryDelayInvalid}
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.retryDelay]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Control Enabled"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Checkbox
-                                        checked={controlEnabled.value}
-                                        onCheckedChange={checked => {
-                                            controlEnabled.onChange(checked === true);
-                                        }}
-                                        disabled={readOnly}
-                                    />
-                                </InfoBlock>
-                            </div>
-                        </ContentBlock>
-
-                        <ContentBlock label="Command">
-                            <div className="flex flex-col gap-6">
-                                <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Command"
-                                            isRequired
-                                        />
-                                    }
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <Input
-                                            {...command}
-                                            placeholder="echo “$CMD_ARG_GROUP_1”"
-                                            className="max-w-[400px]"
-                                            aria-invalid={isCommandInvalid}
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.command]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Working Directory"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <Field>
-                                        <Input
-                                            {...workingDir}
-                                            placeholder="/path/in/container"
-                                            className="max-w-[400px]"
-                                            aria-invalid={isWorkingDirInvalid}
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.workingDir]} />
-                                    </Field>
-                                </InfoBlock>
-
-                                <InfoBlock
-                                    title="Environment Variables"
-                                    titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                >
-                                    <KeyValueList<SchemaInput>
-                                        name="envVars"
-                                        keyLabel="Key"
-                                        valueLabel="Value"
-                                        className="max-w-[660px]"
-                                        checkDuplicates
-                                        disabled={readOnly}
-                                    />
-                                </InfoBlock>
-                            </div>
-                        </ContentBlock>
-
-                        <ContentBlock label="Arg Groups">
-                            <ArgGroupsSection readOnly={readOnly} />
-                        </ContentBlock>
-
-                        <ContentBlock label="Notification Configuration">
-                            <NotificationSettings<SchemaInput>
-                                names={{
-                                    successUseDefault: "notification.successUseDefault",
-                                    success: "notification.success",
-                                    failureUseDefault: "notification.failureUseDefault",
-                                    failure: "notification.failure",
-                                }}
-                                sources={notificationSources}
-                                manageLink={notificationManageLink}
-                                readOnly={readOnly}
-                                titleWidth={220}
-                            />
-                        </ContentBlock>
-
-                        <div className="flex justify-end">
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                disabled={readOnly}
-                                className="min-w-[100px]"
+                                }
                             >
-                                Save
-                            </Button>
-                        </div>
-                    </FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...name}
+                                        placeholder="scheduled job name"
+                                        aria-invalid={isNameInvalid}
+                                        className="max-w-[420px]"
+                                        disabled={readOnly}
+                                    />
+                                    <FieldError errors={[errors.name]} />
+                                </Field>
+                            </InfoBlock>
+
+                            <ContentBlock label="Scheduling">
+                                <div className="flex flex-col gap-6">
+                                    <InfoBlock
+                                        title="Priority"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <PriorityTabsField
+                                            value={priority.value}
+                                            onChange={priority.onChange}
+                                            readOnly={readOnly}
+                                        />
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Scheduling Mode"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Tabs
+                                            value={scheduleMode.value}
+                                            onValueChange={scheduleMode.onChange}
+                                        >
+                                            <TabsList>
+                                                <TabsTrigger value={EAppScheduledJobScheduleMode.Interval}>
+                                                    Interval-based
+                                                </TabsTrigger>
+                                                <TabsTrigger value={EAppScheduledJobScheduleMode.Cron}>
+                                                    Time-based
+                                                </TabsTrigger>
+                                            </TabsList>
+                                        </Tabs>
+                                    </InfoBlock>
+
+                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Interval && (
+                                        <InfoBlock
+                                            title="Scheduling Interval"
+                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                        >
+                                            <Field>
+                                                <Input
+                                                    {...scheduleInterval}
+                                                    placeholder="1d, 1h30m"
+                                                    className="max-w-[400px]"
+                                                    aria-invalid={isScheduleIntervalInvalid}
+                                                    disabled={readOnly}
+                                                />
+                                                <FieldError errors={[errors.scheduleInterval]} />
+                                            </Field>
+                                        </InfoBlock>
+                                    )}
+
+                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Cron && (
+                                        <InfoBlock
+                                            title="Cron Expression"
+                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                        >
+                                            <Field>
+                                                <Input
+                                                    {...scheduleCronExpr}
+                                                    placeholder="accepted form: * * * * *"
+                                                    className="max-w-[400px]"
+                                                    aria-invalid={isScheduleCronExprInvalid}
+                                                    disabled={readOnly}
+                                                />
+                                                <FieldError errors={[errors.scheduleCronExpr]} />
+                                            </Field>
+                                        </InfoBlock>
+                                    )}
+
+                                    <InfoBlock
+                                        title="Schedule From"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <DateTimePicker
+                                                value={scheduleFrom.value ?? undefined}
+                                                onChange={date => {
+                                                    scheduleFrom.onChange(date ?? null);
+                                                }}
+                                                placeholder="select date time"
+                                                granularity="minute"
+                                                showClearButton
+                                                aria-invalid={isScheduleFromInvalid}
+                                                containerClassName="max-w-[400px]"
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.scheduleFrom]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <NextRunsField nextRuns={initialValues?.nextRuns ?? []} />
+
+                                    <InfoBlock
+                                        title="Timeout"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...timeout}
+                                                placeholder="30m, 1h30m"
+                                                className="max-w-[400px]"
+                                                aria-invalid={isTimeoutInvalid}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.timeout]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Max Retry"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <InputNumber
+                                                value={maxRetry.value}
+                                                onValueChange={value => {
+                                                    const nextValue =
+                                                        value !== undefined && Number.isFinite(value)
+                                                            ? value
+                                                            : undefined;
+
+                                                    maxRetry.onChange(nextValue);
+                                                }}
+                                                min={0}
+                                                useGrouping={false}
+                                                placeholder="3"
+                                                aria-invalid={isMaxRetryInvalid}
+                                                className="max-w-[100px]"
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.maxRetry]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Retry Delay"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...retryDelay}
+                                                placeholder="10s"
+                                                className="max-w-[400px]"
+                                                aria-invalid={isRetryDelayInvalid}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.retryDelay]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Control Enabled"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Checkbox
+                                            checked={controlEnabled.value}
+                                            onCheckedChange={checked => {
+                                                controlEnabled.onChange(checked === true);
+                                            }}
+                                            disabled={readOnly}
+                                        />
+                                    </InfoBlock>
+                                </div>
+                            </ContentBlock>
+
+                            <ContentBlock label="Command">
+                                <div className="flex flex-col gap-6">
+                                    <InfoBlock
+                                        title={
+                                            <LabelWithInfo
+                                                label="Command"
+                                                isRequired
+                                            />
+                                        }
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...command}
+                                                placeholder="echo “$CMD_ARG_GROUP_1”"
+                                                className="max-w-[400px]"
+                                                aria-invalid={isCommandInvalid}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.command]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Working Directory"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Field>
+                                            <Input
+                                                {...workingDir}
+                                                placeholder="/path/in/container"
+                                                className="max-w-[400px]"
+                                                aria-invalid={isWorkingDirInvalid}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.workingDir]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Environment Variables"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <KeyValueList<SchemaInput>
+                                            name="envVars"
+                                            keyLabel="Key"
+                                            valueLabel="Value"
+                                            className="max-w-[660px]"
+                                            checkDuplicates
+                                            disabled={readOnly}
+                                        />
+                                    </InfoBlock>
+                                </div>
+                            </ContentBlock>
+
+                            <ContentBlock label="Arg Groups">
+                                <ArgGroupsSection readOnly={readOnly} />
+                            </ContentBlock>
+
+                            <ContentBlock label="Notification Configuration">
+                                <NotificationSettings<SchemaInput>
+                                    names={{
+                                        successUseDefault: "notification.successUseDefault",
+                                        success: "notification.success",
+                                        failureUseDefault: "notification.failureUseDefault",
+                                        failure: "notification.failure",
+                                    }}
+                                    sources={notificationSources}
+                                    manageLink={notificationManageLink}
+                                    readOnly={readOnly}
+                                    titleWidth={220}
+                                />
+                            </ContentBlock>
+                        </FieldGroup>
+                    </DialogBody>
+                    <DialogActionFooter>
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            disabled={readOnly}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </DialogActionFooter>
                 </fieldset>
             </form>
         </FormProvider>

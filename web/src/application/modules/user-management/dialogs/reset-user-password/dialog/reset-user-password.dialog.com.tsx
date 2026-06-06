@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { LinkGenerate } from "../building-blocks";
@@ -43,17 +50,16 @@ export function ResetUserPasswordDialog() {
             modal
             onOpenChange={handleClose}
         >
-            <DialogContent className="lg:min-w-[500px] lg:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="lg:min-w-[500px] lg:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Reset Password</DialogTitle>
                 </DialogHeader>
-                <div className="h-px bg-border" />
 
-                <div className="flex flex-col gap-6 py-4">
+                <DialogBody className="flex flex-col gap-6">
                     <LinkGenerate resetLink={resetLink} />
-                </div>
+                </DialogBody>
 
-                <div className="flex items-center justify-end gap-4 pt-4 border-t">
+                <DialogActionFooter className="flex items-center justify-end gap-4">
                     <Button
                         type="button"
                         variant="outline"
@@ -70,8 +76,8 @@ export function ResetUserPasswordDialog() {
                     >
                         Generate Reset Link
                     </Button>
-                </div>
-            </DialogContent>
+                </DialogActionFooter>
+            </DialogFixedContent>
         </Dialog>
     );
 }

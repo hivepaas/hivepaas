@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Avatar, Button, Checkbox } from "@components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { CheckCheck, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ProjectUserAccessBase } from "~/projects/api/services";
@@ -266,6 +273,7 @@ export function ProjectUserAccessesDialog() {
 
     const moduleAccesses = accessQuery.data?.data.moduleUserAccesses ?? [];
     const projectName = state.mode === "open" ? state.projectName : "";
+    const showAccessContent = !(accessQuery.isFetching && !accessQuery.data) && !accessQuery.error;
 
     return (
         <Dialog
@@ -276,230 +284,123 @@ export function ProjectUserAccessesDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[860px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[860px]">
                 <DialogHeader>
                     <DialogTitle>User accesses on project {projectName}</DialogTitle>
                 </DialogHeader>
 
-                {accessQuery.isFetching && !accessQuery.data ? (
-                    <AppLoader />
-                ) : accessQuery.error ? (
-                    <div className="flex min-h-32 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-                        <span>Unable to load project user accesses.</span>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                void accessQuery.refetch();
-                            }}
-                        >
-                            Retry
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-6">
-                        {ownerAccess && (
-                            <>
-                                <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Project Owner"
-                                            content="Project owner has full access to this project."
-                                        />
-                                    }
-                                    titleWidth={180}
-                                >
-                                    <div className="flex flex-wrap items-center gap-4 py-3">
-                                        <div className="min-w-[220px] flex-1">
-                                            <UserInfo user={ownerAccess} />
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <AccessCheckbox
-                                                id={`owner-${ownerAccess.id}-read`}
-                                                checked={ownerAccess.access.read}
-                                                disabled
-                                                label="Read"
+                <DialogBody>
+                    {accessQuery.isFetching && !accessQuery.data ? (
+                        <AppLoader />
+                    ) : accessQuery.error ? (
+                        <div className="flex min-h-32 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+                            <span>Unable to load project user accesses.</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    void accessQuery.refetch();
+                                }}
+                            >
+                                Retry
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-6">
+                            {ownerAccess && (
+                                <>
+                                    <InfoBlock
+                                        title={
+                                            <LabelWithInfo
+                                                label="Project Owner"
+                                                content="Project owner has full access to this project."
                                             />
-                                            <AccessCheckbox
-                                                id={`owner-${ownerAccess.id}-execute`}
-                                                checked={ownerAccess.access.execute}
-                                                disabled
-                                                label="Execute"
-                                            />
-                                            <AccessCheckbox
-                                                id={`owner-${ownerAccess.id}-write`}
-                                                checked={ownerAccess.access.write}
-                                                disabled
-                                                label="Write"
-                                            />
-                                            <AccessCheckbox
-                                                id={`owner-${ownerAccess.id}-delete`}
-                                                checked={ownerAccess.access.delete}
-                                                disabled
-                                                label="Delete"
-                                            />
-                                            <div className="w-[60px]" />
-                                        </div>
-                                    </div>
-                                </InfoBlock>
-                                <hr className="border-border" />
-                            </>
-                        )}
-                        <InfoBlock
-                            title={
-                                <LabelWithInfo
-                                    label="Project Access"
-                                    content="Project access description"
-                                />
-                            }
-                            titleWidth={180}
-                        >
-                            <div className="flex flex-col gap-4">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Combobox
-                                        options={userOptions}
-                                        value={selectedUser?.id ?? null}
-                                        onChange={(_value, option) => {
-                                            setSelectedUser(option);
-                                        }}
-                                        onSearch={setSearchQuery}
-                                        placeholder="Select User(s)"
-                                        searchable
-                                        emptyText="No users available"
-                                        className="flex-1 md:max-w-[420px]"
-                                        valueKey="id"
-                                        loading={isFetchingUsers}
-                                        disabled={!canUpdateProjectAccess}
-                                    />
-                                    <PermissionTooltipAction
-                                        id={MODULE_IDS.Project}
-                                        action="write"
+                                        }
+                                        titleWidth={180}
                                     >
-                                        {({ isDenied }) => (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                disabled={isDenied || !selectedUser || !canUpdateProjectAccess}
-                                                onClick={handleAddUser}
-                                            >
-                                                <Plus className="size-4" />
-                                                Add
-                                            </Button>
-                                        )}
-                                    </PermissionTooltipAction>
-                                </div>
-
-                                {projectAccesses.length > 0 && (
-                                    <div className="divide-y">
-                                        {projectAccesses.map(user => (
-                                            <div
-                                                key={user.id}
-                                                className="flex flex-wrap items-center gap-4 py-3"
-                                            >
-                                                <div className="min-w-[220px] flex-1">
-                                                    <UserInfo user={user} />
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <AccessCheckbox
-                                                        id={`project-${user.id}-read`}
-                                                        checked={user.access.read}
-                                                        disabled
-                                                        label="Read"
-                                                    />
-                                                    <AccessCheckbox
-                                                        id={`project-${user.id}-execute`}
-                                                        checked={user.access.execute}
-                                                        disabled={!canUpdateProjectAccess}
-                                                        label="Execute"
-                                                        onCheckedChange={checked => {
-                                                            handleChangeAccess(user.id, "execute", checked === true);
-                                                        }}
-                                                    />
-                                                    <AccessCheckbox
-                                                        id={`project-${user.id}-write`}
-                                                        checked={user.access.write}
-                                                        disabled={!canUpdateProjectAccess}
-                                                        label="Write"
-                                                        onCheckedChange={checked => {
-                                                            handleChangeAccess(user.id, "write", checked === true);
-                                                        }}
-                                                    />
-                                                    <AccessCheckbox
-                                                        id={`project-${user.id}-delete`}
-                                                        checked={user.access.delete}
-                                                        disabled={!canUpdateProjectAccess}
-                                                        label="Delete"
-                                                        onCheckedChange={checked => {
-                                                            handleChangeAccess(user.id, "delete", checked === true);
-                                                        }}
-                                                    />
-                                                    <div className="flex items-center gap-1">
-                                                        <PermissionTooltipAction
-                                                            id={MODULE_IDS.Project}
-                                                            action="write"
-                                                            triggerClassName="inline-flex"
-                                                        >
-                                                            {({ isDenied }) => (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="link"
-                                                                    className="size-7 p-0 text-foreground"
-                                                                    aria-label="Toggle execute, write and delete access"
-                                                                    title="Toggle execute, write and delete access"
-                                                                    disabled={isDenied || !canUpdateProjectAccess}
-                                                                    onClick={() => {
-                                                                        handleToggleAll(user.id);
-                                                                    }}
-                                                                >
-                                                                    <CheckCheck className="size-4" />
-                                                                </Button>
-                                                            )}
-                                                        </PermissionTooltipAction>
-                                                        <PermissionTooltipAction
-                                                            id={MODULE_IDS.Project}
-                                                            action="write"
-                                                            triggerClassName="inline-flex"
-                                                        >
-                                                            {({ isDenied }) => (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="link"
-                                                                    className="size-7 p-0 text-destructive"
-                                                                    aria-label="Remove user access"
-                                                                    title="Remove user access"
-                                                                    disabled={isDenied || !canUpdateProjectAccess}
-                                                                    onClick={() => {
-                                                                        handleRemoveUser(user.id);
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="size-4" />
-                                                                </Button>
-                                                            )}
-                                                        </PermissionTooltipAction>
-                                                    </div>
-                                                </div>
+                                        <div className="flex flex-wrap items-center gap-4 py-3">
+                                            <div className="min-w-[220px] flex-1">
+                                                <UserInfo user={ownerAccess} />
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </InfoBlock>
-
-                        {canViewModuleAccess && (
-                            <>
-                                <hr className="border-border" />
-                                <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="Module Access"
-                                            content="Module access description"
+                                            <div className="flex items-center gap-4">
+                                                <AccessCheckbox
+                                                    id={`owner-${ownerAccess.id}-read`}
+                                                    checked={ownerAccess.access.read}
+                                                    disabled
+                                                    label="Read"
+                                                />
+                                                <AccessCheckbox
+                                                    id={`owner-${ownerAccess.id}-execute`}
+                                                    checked={ownerAccess.access.execute}
+                                                    disabled
+                                                    label="Execute"
+                                                />
+                                                <AccessCheckbox
+                                                    id={`owner-${ownerAccess.id}-write`}
+                                                    checked={ownerAccess.access.write}
+                                                    disabled
+                                                    label="Write"
+                                                />
+                                                <AccessCheckbox
+                                                    id={`owner-${ownerAccess.id}-delete`}
+                                                    checked={ownerAccess.access.delete}
+                                                    disabled
+                                                    label="Delete"
+                                                />
+                                                <div className="w-[60px]" />
+                                            </div>
+                                        </div>
+                                    </InfoBlock>
+                                    <hr className="border-border" />
+                                </>
+                            )}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Project Access"
+                                        content="Project access description"
+                                    />
+                                }
+                                titleWidth={180}
+                            >
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Combobox
+                                            options={userOptions}
+                                            value={selectedUser?.id ?? null}
+                                            onChange={(_value, option) => {
+                                                setSelectedUser(option);
+                                            }}
+                                            onSearch={setSearchQuery}
+                                            placeholder="Select User(s)"
+                                            searchable
+                                            emptyText="No users available"
+                                            className="flex-1 md:max-w-[420px]"
+                                            valueKey="id"
+                                            loading={isFetchingUsers}
+                                            disabled={!canUpdateProjectAccess}
                                         />
-                                    }
-                                    titleWidth={180}
-                                >
-                                    {moduleAccesses.length > 0 && (
+                                        <PermissionTooltipAction
+                                            id={MODULE_IDS.Project}
+                                            action="write"
+                                        >
+                                            {({ isDenied }) => (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    disabled={isDenied || !selectedUser || !canUpdateProjectAccess}
+                                                    onClick={handleAddUser}
+                                                >
+                                                    <Plus className="size-4" />
+                                                    Add
+                                                </Button>
+                                            )}
+                                        </PermissionTooltipAction>
+                                    </div>
+
+                                    {projectAccesses.length > 0 && (
                                         <div className="divide-y">
-                                            {moduleAccesses.map(user => (
+                                            {projectAccesses.map(user => (
                                                 <div
                                                     key={user.id}
                                                     className="flex flex-wrap items-center gap-4 py-3"
@@ -509,67 +410,181 @@ export function ProjectUserAccessesDialog() {
                                                     </div>
                                                     <div className="flex items-center gap-4">
                                                         <AccessCheckbox
-                                                            id={`module-${user.id}-read`}
+                                                            id={`project-${user.id}-read`}
                                                             checked={user.access.read}
                                                             disabled
                                                             label="Read"
                                                         />
                                                         <AccessCheckbox
-                                                            id={`module-${user.id}-execute`}
+                                                            id={`project-${user.id}-execute`}
                                                             checked={user.access.execute}
-                                                            disabled
+                                                            disabled={!canUpdateProjectAccess}
                                                             label="Execute"
+                                                            onCheckedChange={checked => {
+                                                                handleChangeAccess(
+                                                                    user.id,
+                                                                    "execute",
+                                                                    checked === true,
+                                                                );
+                                                            }}
                                                         />
                                                         <AccessCheckbox
-                                                            id={`module-${user.id}-write`}
+                                                            id={`project-${user.id}-write`}
                                                             checked={user.access.write}
-                                                            disabled
+                                                            disabled={!canUpdateProjectAccess}
                                                             label="Write"
+                                                            onCheckedChange={checked => {
+                                                                handleChangeAccess(user.id, "write", checked === true);
+                                                            }}
                                                         />
                                                         <AccessCheckbox
-                                                            id={`module-${user.id}-delete`}
+                                                            id={`project-${user.id}-delete`}
                                                             checked={user.access.delete}
-                                                            disabled
+                                                            disabled={!canUpdateProjectAccess}
                                                             label="Delete"
+                                                            onCheckedChange={checked => {
+                                                                handleChangeAccess(user.id, "delete", checked === true);
+                                                            }}
                                                         />
-                                                        <a
-                                                            href={ROUTE.userManagement.users.single.$route(user.id)}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="text-sm font-medium text-primary hover:underline"
-                                                        >
-                                                            Settings
-                                                        </a>
+                                                        <div className="flex items-center gap-1">
+                                                            <PermissionTooltipAction
+                                                                id={MODULE_IDS.Project}
+                                                                action="write"
+                                                                triggerClassName="inline-flex"
+                                                            >
+                                                                {({ isDenied }) => (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="link"
+                                                                        className="size-7 p-0 text-foreground"
+                                                                        aria-label="Toggle execute, write and delete access"
+                                                                        title="Toggle execute, write and delete access"
+                                                                        disabled={isDenied || !canUpdateProjectAccess}
+                                                                        onClick={() => {
+                                                                            handleToggleAll(user.id);
+                                                                        }}
+                                                                    >
+                                                                        <CheckCheck className="size-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </PermissionTooltipAction>
+                                                            <PermissionTooltipAction
+                                                                id={MODULE_IDS.Project}
+                                                                action="write"
+                                                                triggerClassName="inline-flex"
+                                                            >
+                                                                {({ isDenied }) => (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="link"
+                                                                        className="size-7 p-0 text-destructive"
+                                                                        aria-label="Remove user access"
+                                                                        title="Remove user access"
+                                                                        disabled={isDenied || !canUpdateProjectAccess}
+                                                                        onClick={() => {
+                                                                            handleRemoveUser(user.id);
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="size-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </PermissionTooltipAction>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
-                                </InfoBlock>
-                            </>
-                        )}
+                                </div>
+                            </InfoBlock>
 
-                        <div className="flex justify-end border-t pt-4">
-                            <PermissionTooltipAction
-                                id={MODULE_IDS.Project}
-                                action="write"
-                            >
-                                {({ isDenied }) => (
-                                    <Button
-                                        type="button"
-                                        className="min-w-[100px]"
-                                        disabled={isDenied || !canUpdateProjectAccess}
-                                        isLoading={isUpdating}
-                                        onClick={handleSubmit}
+                            {canViewModuleAccess && (
+                                <>
+                                    <hr className="border-border" />
+                                    <InfoBlock
+                                        title={
+                                            <LabelWithInfo
+                                                label="Module Access"
+                                                content="Module access description"
+                                            />
+                                        }
+                                        titleWidth={180}
                                     >
-                                        Save
-                                    </Button>
-                                )}
-                            </PermissionTooltipAction>
+                                        {moduleAccesses.length > 0 && (
+                                            <div className="divide-y">
+                                                {moduleAccesses.map(user => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex flex-wrap items-center gap-4 py-3"
+                                                    >
+                                                        <div className="min-w-[220px] flex-1">
+                                                            <UserInfo user={user} />
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <AccessCheckbox
+                                                                id={`module-${user.id}-read`}
+                                                                checked={user.access.read}
+                                                                disabled
+                                                                label="Read"
+                                                            />
+                                                            <AccessCheckbox
+                                                                id={`module-${user.id}-execute`}
+                                                                checked={user.access.execute}
+                                                                disabled
+                                                                label="Execute"
+                                                            />
+                                                            <AccessCheckbox
+                                                                id={`module-${user.id}-write`}
+                                                                checked={user.access.write}
+                                                                disabled
+                                                                label="Write"
+                                                            />
+                                                            <AccessCheckbox
+                                                                id={`module-${user.id}-delete`}
+                                                                checked={user.access.delete}
+                                                                disabled
+                                                                label="Delete"
+                                                            />
+                                                            <a
+                                                                href={ROUTE.userManagement.users.single.$route(user.id)}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="text-sm font-medium text-primary hover:underline"
+                                                            >
+                                                                Settings
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </InfoBlock>
+                                </>
+                            )}
                         </div>
-                    </div>
-                )}
-            </DialogContent>
+                    )}
+                </DialogBody>
+                {showAccessContent ? (
+                    <DialogActionFooter className="flex justify-end">
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    type="button"
+                                    className="min-w-[100px]"
+                                    disabled={isDenied || !canUpdateProjectAccess}
+                                    isLoading={isUpdating}
+                                    onClick={handleSubmit}
+                                >
+                                    Save
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    </DialogActionFooter>
+                ) : null}
+            </DialogFixedContent>
         </Dialog>
     );
 }

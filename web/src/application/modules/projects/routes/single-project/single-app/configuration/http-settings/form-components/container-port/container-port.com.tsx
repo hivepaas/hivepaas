@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { Field, FieldError, FieldGroup } from "@components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { InputNumber } from "@components/ui/input-number";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
@@ -112,36 +112,38 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
             >
-                <DialogContent className="min-w-[390px] w-[410px]">
+                <DialogFixedContent className="min-w-[390px] w-[410px]">
                     <DialogHeader>
                         <DialogTitle>Port checking result</DialogTitle>
                     </DialogHeader>
 
-                    {result && (
-                        <div className="flex flex-col gap-4 pt-2 ">
-                            <div className="grid grid-cols-2 gap-y-3 text-sm">
-                                <span className="font-medium">Port</span>
-                                <span>{result.port}</span>
+                    <DialogBody>
+                        {result && (
+                            <div className="flex flex-col gap-4 pt-2 ">
+                                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                                    <span className="font-medium">Port</span>
+                                    <span>{result.port}</span>
 
-                                <span className="font-medium">Status</span>
-                                <span>
-                                    {result.open ? (
-                                        <span className="text-green-600">Open</span>
-                                    ) : (
-                                        <span className="text-red-500">Closed</span>
-                                    )}
-                                </span>
-                            </div>
-
-                            {!result.open && (
-                                <div className={cn(dashedBorderBox, "text-center")}>
-                                    <span className="text-orange-500">Important:</span> You might need to save your
-                                    settings before performing this action
+                                    <span className="font-medium">Status</span>
+                                    <span>
+                                        {result.open ? (
+                                            <span className="text-green-600">Open</span>
+                                        ) : (
+                                            <span className="text-red-500">Closed</span>
+                                        )}
+                                    </span>
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </DialogContent>
+
+                                {!result.open && (
+                                    <div className={cn(dashedBorderBox, "text-center")}>
+                                        <span className="text-orange-500">Important:</span> You might need to save your
+                                        settings before performing this action
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </DialogBody>
+                </DialogFixedContent>
             </Dialog>
         </>
     );

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ProjectsCommands } from "~/projects/data/commands";
@@ -107,7 +107,7 @@ export function ConfirmProjectDangerActionDialog() {
                 }
             }}
         >
-            <DialogContent className="sm:max-w-[560px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 {action && target ? (
                     <>
                         <DialogHeader>
@@ -122,7 +122,7 @@ export function ConfirmProjectDangerActionDialog() {
                         />
                     </>
                 ) : null}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

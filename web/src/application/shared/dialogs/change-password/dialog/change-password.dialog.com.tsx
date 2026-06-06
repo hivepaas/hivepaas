@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 
 import { ProfileCommands } from "@application/shared/data/commands";
@@ -47,7 +47,7 @@ export function ChangePasswordDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[400px] w-fit">
+            <DialogFixedContent className="min-w-[400px] w-fit">
                 <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
                     <DialogDescription />
@@ -57,7 +57,7 @@ export function ChangePasswordDialog() {
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

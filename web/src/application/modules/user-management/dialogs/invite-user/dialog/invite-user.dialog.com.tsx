@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogDescription,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { MODULE_IDS } from "@application/shared/constants";
@@ -72,62 +79,61 @@ export function InviteUserDialog() {
             modal
             onOpenChange={handleClose}
         >
-            <DialogContent className="lg:min-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="lg:min-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
                     <DialogDescription>Enter the required details to invite a user</DialogDescription>
                 </DialogHeader>
-                <div className="h-px bg-border" />
                 <InviteUserForm
                     ref={formRef}
                     readOnly={!canWrite}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    footer={
+                        <DialogActionFooter className="flex items-center justify-end gap-3">
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.User}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        type="submit"
+                                        variant="default"
+                                        isLoading={isGeneratingLink}
+                                        disabled={isDenied}
+                                        onClick={() => {
+                                            setSendInviteEmail(true);
+                                        }}
+                                    >
+                                        Send Email
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.User}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        type="submit"
+                                        variant="default"
+                                        isLoading={isGeneratingLink}
+                                        disabled={isDenied || inviteLink !== null}
+                                        onClick={() => {
+                                            setSendInviteEmail(false);
+                                        }}
+                                    >
+                                        Generate Invite Link
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                        </DialogActionFooter>
+                    }
                 >
                     {/* Invite Link Section */}
                     <LinkGenerate inviteLink={inviteLink} />
-
-                    {/* Footer Actions */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                        <PermissionTooltipAction
-                            id={MODULE_IDS.User}
-                            action="write"
-                        >
-                            {({ isDenied }) => (
-                                <Button
-                                    type="submit"
-                                    variant="default"
-                                    isLoading={isGeneratingLink}
-                                    disabled={isDenied}
-                                    onClick={() => {
-                                        setSendInviteEmail(true);
-                                    }}
-                                >
-                                    Send Email
-                                </Button>
-                            )}
-                        </PermissionTooltipAction>
-                        <PermissionTooltipAction
-                            id={MODULE_IDS.User}
-                            action="write"
-                        >
-                            {({ isDenied }) => (
-                                <Button
-                                    type="submit"
-                                    variant="default"
-                                    isLoading={isGeneratingLink}
-                                    disabled={isDenied || inviteLink !== null}
-                                    onClick={() => {
-                                        setSendInviteEmail(false);
-                                    }}
-                                >
-                                    Generate Invite Link
-                                </Button>
-                            )}
-                        </PermissionTooltipAction>
-                    </div>
                 </InviteUserForm>
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

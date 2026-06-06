@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
+
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { NodesCommands } from "@application/modules/cluster/data";
 import { EJoinNodeMethod } from "@application/modules/cluster/module-shared/enums";
-import { MODULE_IDS } from "@application/shared/constants";
-import { useConditionalModule } from "@application/shared/permissions";
 
 import { JoinNewNodeForm } from "../form";
 import { useJoinNewNodeDialogState } from "../hooks";
@@ -68,7 +69,7 @@ export function JoinNewNodeDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[650px]">
+            <DialogFixedContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Join new node to the swarm cluster</DialogTitle>
                 </DialogHeader>
@@ -77,7 +78,7 @@ export function JoinNewNodeDialog() {
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -10,6 +10,7 @@ import { EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 
 import {
@@ -68,13 +69,14 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-            >
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-6">
                 <FieldGroup>
                     <Field>
                         {/* <FieldLabel htmlFor="status">Status</FieldLabel>
@@ -143,19 +145,18 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
                             <FieldError errors={[errors.expireAt]} />
                         </InfoBlock>
                     </Field>
-
-                    <Field>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="w-full"
-                        >
-                            Save
-                        </Button>
-                    </Field>
                 </FieldGroup>
-            </form>
-        </div>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                    className="min-w-[100px]"
+                >
+                    Save
+                </Button>
+            </DialogActionFooter>
+        </form>
     );
 }
 

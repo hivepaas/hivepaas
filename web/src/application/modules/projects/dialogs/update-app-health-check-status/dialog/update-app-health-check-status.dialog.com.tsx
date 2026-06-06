@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { AppHealthChecksCommands, AppHealthChecksQueries } from "~/projects/data";
 
@@ -98,12 +98,14 @@ export function UpdateAppHealthCheckStatusDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[720px]">
+            <DialogFixedContent className="min-w-[390px] w-[720px]">
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
                 {isLoading ? (
-                    <AppLoader />
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
                 ) : (
                     <UpdateAppHealthCheckStatusForm
                         isPending={isPending}
@@ -113,7 +115,7 @@ export function UpdateAppHealthCheckStatusDialog() {
                         readOnly={!canWrite}
                     />
                 )}
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

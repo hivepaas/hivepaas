@@ -6,6 +6,7 @@ import z from "zod";
 import { MfaQrCode } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 const CODE_LENGTH = 6;
@@ -48,14 +49,15 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
+        <form
+            onSubmit={event => {
+                event.preventDefault();
 
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-            >
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-6">
                 <FieldGroup>
                     <Field>
                         <FieldLabel>Please scan the QR code</FieldLabel>
@@ -93,18 +95,17 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey
                         </div>
                         <FieldError errors={[errors.passcode]} />
                     </Field>
-
-                    <Field>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Activate
-                        </Button>
-                    </Field>
                 </FieldGroup>
-            </form>
-        </div>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                >
+                    Activate
+                </Button>
+            </DialogActionFooter>
+        </form>
     );
 }
 

@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogDescription,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
@@ -18,6 +26,8 @@ interface CreatedApiKey {
     keyId: string;
     secretKey?: string;
 }
+
+const CREATE_PROFILE_API_KEY_FORM_ID = "create-profile-api-key-form";
 
 export function CreateProfileApiKeyDialog() {
     const [hasChanges, setHasChanges] = useState(false);
@@ -110,14 +120,15 @@ export function CreateProfileApiKeyDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[600px] max-w-[660px] w-fit gap-6">
+            <DialogFixedContent className="min-w-[600px] max-w-[660px] w-fit">
                 <DialogHeader>
                     <DialogTitle>Create a new API key</DialogTitle>
                     <DialogDescription />
                 </DialogHeader>
 
-                <>
+                <DialogBody className="flex flex-col gap-6">
                     <CreateProfileApiKeyForm
+                        formId={CREATE_PROFILE_API_KEY_FORM_ID}
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                     />
@@ -142,8 +153,10 @@ export function CreateProfileApiKeyDialog() {
                             {createdKey.secretKey && (
                                 <>
                                     <p className="text-sm text-orange-500 dark:text-orange-400">
-                                        IMPORTANT:<br/>The secret key will not be stored on the server.
-                                        Once this dialog is closed, you will not be able to view it again.
+                                        IMPORTANT:
+                                        <br />
+                                        The secret key will not be stored on the server. Once this dialog is closed, you
+                                        will not be able to view it again.
                                     </p>
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex-1">
@@ -175,23 +188,18 @@ export function CreateProfileApiKeyDialog() {
                             Press the button below to generate an API key
                         </div>
                     )}
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={() => {
-                                const form = document.querySelector("form");
-                                if (form) {
-                                    form.requestSubmit();
-                                }
-                            }}
-                            isLoading={isPending}
-                            disabled={isPending || !showForm}
-                        >
-                            Create Key
-                        </Button>
-                    </div>
-                </>
-            </DialogContent>
+                </DialogBody>
+                <DialogActionFooter>
+                    <Button
+                        type="submit"
+                        form={CREATE_PROFILE_API_KEY_FORM_ID}
+                        isLoading={isPending}
+                        disabled={isPending || !showForm}
+                    >
+                        Create Key
+                    </Button>
+                </DialogActionFooter>
+            </DialogFixedContent>
         </Dialog>
     );
 }

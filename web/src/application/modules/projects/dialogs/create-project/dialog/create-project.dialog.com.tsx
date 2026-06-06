@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectsCommands } from "~/projects/data/commands";
 
@@ -62,7 +62,7 @@ export function CreateProjectDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogContent className="min-w-[390px] w-[650px]">
+            <DialogFixedContent className="min-w-[390px] w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Create Project</DialogTitle>
                 </DialogHeader>
@@ -72,7 +72,7 @@ export function CreateProjectDialog() {
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

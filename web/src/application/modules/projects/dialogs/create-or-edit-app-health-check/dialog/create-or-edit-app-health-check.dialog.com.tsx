@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import type { AppHealthChecks_REST_Payload, AppHealthChecks_Upsert_Payload } from "~/projects/api/services";
 import { AppHealthChecksCommands } from "~/projects/data/commands";
@@ -179,7 +179,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                 }
             }}
         >
-            <DialogContent className="min-w-[390px] w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogFixedContent className="min-w-[390px] w-[800px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a health check</DialogTitle>
                 </DialogHeader>
@@ -191,7 +191,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                     initialValues={isEditMode ? state.healthCheck : undefined}
                     readOnly={!canWrite}
                 />
-            </DialogContent>
+            </DialogFixedContent>
         </Dialog>
     );
 }

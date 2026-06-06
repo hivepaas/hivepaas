@@ -1,9 +1,9 @@
 import { Button } from "@components/ui/button";
 import {
     Dialog,
-    DialogContent,
+    DialogActionFooter,
     DialogDescription,
-    DialogFooter,
+    DialogFixedContent,
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
@@ -35,7 +35,7 @@ export function PhotoUploadDialog({
             onOpenChange={onOpenChange}
             modal
         >
-            <DialogContent className="sm:max-w-2xl">
+            <DialogFixedContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
@@ -48,25 +48,27 @@ export function PhotoUploadDialog({
                         onSubmit(result.photo);
                         onOpenChange(false);
                     }}
-                >
-                    <DialogFooter className="mt-5">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                onOpenChange(false);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            className="min-w-[100px]"
-                        >
-                            Save
-                        </Button>
-                    </DialogFooter>
-                </UploadPhotoForm>
-            </DialogContent>
+                    footer={
+                        <DialogActionFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    onOpenChange(false);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </DialogActionFooter>
+                    }
+                />
+            </DialogFixedContent>
         </Dialog>
     );
 }

@@ -6,7 +6,7 @@ import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/en
 
 import { AppLoader } from "@application/shared/components";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function InfoRow({ label, value }: InfoRowProps) {
     return (
@@ -69,13 +69,15 @@ export function BackupFileInfoDialog({ fileID, open, onOpenChange }: Props) {
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogContent className="w-[640px] max-w-[calc(100vw-2rem)]">
+            <DialogFixedContent className="w-[640px] max-w-[calc(100vw-2rem)]">
                 <DialogHeader>
                     <DialogTitle>Backup file info</DialogTitle>
                 </DialogHeader>
 
-                {isLoading ? <AppLoader /> : data?.data ? <BackupFileInfoContent file={data.data} /> : null}
-            </DialogContent>
+                <DialogBody>
+                    {isLoading ? <AppLoader /> : data?.data ? <BackupFileInfoContent file={data.data} /> : null}
+                </DialogBody>
+            </DialogFixedContent>
         </Dialog>
     );
 }

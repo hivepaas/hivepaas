@@ -17,6 +17,7 @@ func (s *HTTPServer) registerUserRoutes(apiGroup *gin.RouterGroup) {
 		userGroup.PUT("/current/password", userHandler.UpdateUserPassword)
 		userGroup.POST("/:userID/password/request-reset", userHandler.RequestResetPassword)
 		userGroup.POST("/:userID/password/reset", userHandler.ResetPassword)
+		userGroup.POST("/current/password/forgot", userHandler.UserForgotPassword)
 		// Profile
 		userGroup.PUT("/current/profile", userHandler.UpdateUserProfile)
 		// Update (admin API)

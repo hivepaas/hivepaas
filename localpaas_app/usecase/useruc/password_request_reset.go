@@ -13,6 +13,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/useruc/userdto"
 )
 
+// RequestResetPassword this api handles request of resetting password from admins by
+// returning a reset link to the admin or sending it to the target user's email address.
 func (uc *UC) RequestResetPassword(
 	ctx context.Context,
 	auth *basedto.Auth,

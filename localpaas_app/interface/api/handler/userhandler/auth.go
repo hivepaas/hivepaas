@@ -118,3 +118,30 @@ func (h *Handler) ResetPassword(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// UserForgotPassword User forgot their password
+// @Summary User forgot their password
+// @Description User forgot their password
+// @Tags    users
+// @Produce json
+// @Id      userForgotPassword
+// @Param   body body userdto.PasswordForgotReq true "request data"
+// @Success 200 {object} userdto.PasswordForgotResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /users/current/password/forgot [post]
+func (h *Handler) UserForgotPassword(ctx *gin.Context) {
+	req := userdto.NewPasswordForgotReq()
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.userUC.PasswordForgot(h.RequestCtx(ctx), req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

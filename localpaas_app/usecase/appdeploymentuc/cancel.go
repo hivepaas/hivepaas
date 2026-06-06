@@ -30,7 +30,7 @@ func (uc *UC) CancelDeployment(
 
 		if deployment != nil {
 			if !deployment.CanCancel() {
-				return apperrors.New(apperrors.ErrStatusNotAllowAction)
+				return apperrors.New(apperrors.ErrActionNotAllowedByStatus)
 			}
 			deployment.Status = base.DeploymentStatusCanceled
 			deployment.UpdatedAt = timeutil.NowUTC()

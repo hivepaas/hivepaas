@@ -15,27 +15,28 @@ var (
 	ErrConflict       = errors.New("ERR_CONFLICT")
 	ErrNotImplemented = errors.New("ERR_NOT_IMPLEMENTED")
 
-	ErrPanic                = errors.New("ERR_PANIC")
-	ErrAlreadyExist         = errors.New("ERR_ALREADY_EXIST")
-	ErrUnsupported          = errors.New("ERR_UNSUPPORTED")
-	ErrUnrecognized         = errors.New("ERR_UNRECOGNIZED")
-	ErrNonEditable          = errors.New("ERR_NON_EDITABLE")
-	ErrNonDeletable         = errors.New("ERR_NON_DELETABLE")
-	ErrResourceInUse        = errors.New("ERR_RESOURCE_IN_USE")
-	ErrResourceInactive     = errors.New("ERR_RESOURCE_INACTIVE")
-	ErrResourceMissing      = errors.New("ERR_RESOURCE_MISSING")
-	ErrTooMany              = errors.New("ERR_TOO_MANY")
-	ErrActionNotAllowed     = errors.New("ERR_ACTION_NOT_ALLOWED")
-	ErrActionFailed         = errors.New("ERR_ACTION_FAILED")
-	ErrUnavailable          = errors.New("ERR_UNAVAILABLE")
-	ErrParamInvalid         = errors.New("ERR_PARAM_INVALID")
-	ErrTypeInvalid          = errors.New("ERR_TYPE_INVALID")
-	ErrValueInvalid         = errors.New("ERR_VALUE_INVALID")
-	ErrTokenInvalid         = errors.New("ERR_TOKEN_INVALID")
-	ErrUpdateVerMismatched  = errors.New("ERR_UPDATE_VER_MISMATCHED")
-	ErrStatusNotAllowAction = errors.New("ERR_STATUS_NOT_ALLOW_ACTION")
-	ErrURLInvalid           = errors.New("ERR_URL_INVALID")
-	ErrValidation           = errors.New("ERR_VALIDATION")
+	ErrPanic                    = errors.New("ERR_PANIC")
+	ErrAlreadyExist             = errors.New("ERR_ALREADY_EXIST")
+	ErrUnsupported              = errors.New("ERR_UNSUPPORTED")
+	ErrUnrecognized             = errors.New("ERR_UNRECOGNIZED")
+	ErrNonEditable              = errors.New("ERR_NON_EDITABLE")
+	ErrNonDeletable             = errors.New("ERR_NON_DELETABLE")
+	ErrResourceInUse            = errors.New("ERR_RESOURCE_IN_USE")
+	ErrResourceInactive         = errors.New("ERR_RESOURCE_INACTIVE")
+	ErrResourceMissing          = errors.New("ERR_RESOURCE_MISSING")
+	ErrTooMany                  = errors.New("ERR_TOO_MANY")
+	ErrActionNotAllowed         = errors.New("ERR_ACTION_NOT_ALLOWED")
+	ErrActionNotAllowedByStatus = errors.New("ERR_ACTION_NOT_ALLOWED_BY_STATUS")
+	ErrActionNotAllowedByAdmin  = errors.New("ERR_ACTION_NOT_ALLOWED_BY_ADMIN")
+	ErrActionFailed             = errors.New("ERR_ACTION_FAILED")
+	ErrUnavailable              = errors.New("ERR_UNAVAILABLE")
+	ErrParamInvalid             = errors.New("ERR_PARAM_INVALID")
+	ErrTypeInvalid              = errors.New("ERR_TYPE_INVALID")
+	ErrValueInvalid             = errors.New("ERR_VALUE_INVALID")
+	ErrTokenInvalid             = errors.New("ERR_TOKEN_INVALID")
+	ErrUpdateVerMismatched      = errors.New("ERR_UPDATE_VER_MISMATCHED")
+	ErrURLInvalid               = errors.New("ERR_URL_INVALID")
+	ErrValidation               = errors.New("ERR_VALIDATION")
 
 	ErrHTTPRequestFailed = errors.New("ERR_HTTP_REQUEST_FAILED")
 )
@@ -138,27 +139,28 @@ var errorStatusMap = map[error]int{
 	ErrConflict:       http.StatusConflict,
 	ErrNotImplemented: http.StatusNotImplemented,
 
-	ErrPanic:                http.StatusInternalServerError,
-	ErrAlreadyExist:         http.StatusConflict,
-	ErrUnsupported:          http.StatusUnprocessableEntity,
-	ErrUnrecognized:         http.StatusUnprocessableEntity,
-	ErrNonEditable:          http.StatusUnprocessableEntity,
-	ErrNonDeletable:         http.StatusUnprocessableEntity,
-	ErrResourceInUse:        http.StatusUnprocessableEntity,
-	ErrResourceInactive:     http.StatusUnprocessableEntity,
-	ErrResourceMissing:      http.StatusUnprocessableEntity,
-	ErrTooMany:              http.StatusUnprocessableEntity,
-	ErrActionNotAllowed:     http.StatusUnprocessableEntity,
-	ErrActionFailed:         http.StatusUnprocessableEntity,
-	ErrUnavailable:          http.StatusUnprocessableEntity,
-	ErrParamInvalid:         http.StatusUnprocessableEntity,
-	ErrTypeInvalid:          http.StatusUnprocessableEntity,
-	ErrValueInvalid:         http.StatusUnprocessableEntity,
-	ErrTokenInvalid:         http.StatusUnprocessableEntity,
-	ErrUpdateVerMismatched:  http.StatusUnprocessableEntity,
-	ErrStatusNotAllowAction: http.StatusUnprocessableEntity,
-	ErrURLInvalid:           http.StatusUnprocessableEntity,
-	ErrValidation:           http.StatusBadRequest,
+	ErrPanic:                    http.StatusInternalServerError,
+	ErrAlreadyExist:             http.StatusConflict,
+	ErrUnsupported:              http.StatusUnprocessableEntity,
+	ErrUnrecognized:             http.StatusUnprocessableEntity,
+	ErrNonEditable:              http.StatusUnprocessableEntity,
+	ErrNonDeletable:             http.StatusUnprocessableEntity,
+	ErrResourceInUse:            http.StatusUnprocessableEntity,
+	ErrResourceInactive:         http.StatusUnprocessableEntity,
+	ErrResourceMissing:          http.StatusUnprocessableEntity,
+	ErrTooMany:                  http.StatusUnprocessableEntity,
+	ErrActionNotAllowed:         http.StatusUnprocessableEntity,
+	ErrActionNotAllowedByStatus: http.StatusUnprocessableEntity,
+	ErrActionNotAllowedByAdmin:  http.StatusUnprocessableEntity,
+	ErrActionFailed:             http.StatusUnprocessableEntity,
+	ErrUnavailable:              http.StatusUnprocessableEntity,
+	ErrParamInvalid:             http.StatusUnprocessableEntity,
+	ErrTypeInvalid:              http.StatusUnprocessableEntity,
+	ErrValueInvalid:             http.StatusUnprocessableEntity,
+	ErrTokenInvalid:             http.StatusUnprocessableEntity,
+	ErrUpdateVerMismatched:      http.StatusUnprocessableEntity,
+	ErrURLInvalid:               http.StatusUnprocessableEntity,
+	ErrValidation:               http.StatusBadRequest,
 
 	ErrHTTPRequestFailed: http.StatusUnprocessableEntity,
 

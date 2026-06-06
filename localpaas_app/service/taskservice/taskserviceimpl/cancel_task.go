@@ -26,7 +26,7 @@ func (s *service) CancelTask(
 
 	if task != nil {
 		if !task.CanCancel() {
-			return apperrors.New(apperrors.ErrStatusNotAllowAction)
+			return apperrors.New(apperrors.ErrActionNotAllowedByStatus)
 		}
 		task.Status = base.TaskStatusCanceled
 		task.UpdatedAt = timeutil.NowUTC()

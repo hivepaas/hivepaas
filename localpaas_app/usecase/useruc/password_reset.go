@@ -28,6 +28,9 @@ func (uc *UC) ResetPassword(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+		if user.IsDemoUser() {
+			return apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		}
 
 		err = uc.userService.ChangePassword(user, req.Password, userservice.SkipCheckingCurrentPassword)
 		if err != nil {

@@ -21,11 +21,17 @@ export interface NotificationViaDiscord {
     webhook?: SettingsBaseEntity;
 }
 
+export interface NotificationViaTelegram {
+    enabled: boolean;
+    setting?: SettingsBaseEntity;
+}
+
 export interface SettingNotification extends SettingsBaseEntity {
     type: typeof ESettingType.Notification;
     viaEmail?: NotificationViaEmail;
     viaSlack?: NotificationViaSlack;
     viaDiscord?: NotificationViaDiscord;
+    viaTelegram?: NotificationViaTelegram;
     minSendInterval: string; // duration in string format from BE
     inherited?: boolean;
 }

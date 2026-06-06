@@ -5,8 +5,6 @@ import { format } from "date-fns";
 import { BadgeCheck, Clock, User } from "lucide-react";
 import invariant from "tiny-invariant";
 
-import { TabNavigation } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 
 import { UserRoleBadge, UserStatusBadge } from "@application/modules/user-management/module-shared/components";
@@ -15,17 +13,6 @@ function View() {
     const { profile } = useProfileContext();
 
     invariant(profile, "profile must be defined");
-
-    const links = [
-        {
-            route: ROUTE.currentUser.profile.$route,
-            label: "General",
-        },
-        {
-            route: ROUTE.currentUser.profileApiKeys.$route,
-            label: "API Keys",
-        },
-    ];
 
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
@@ -77,7 +64,6 @@ function View() {
                     </div>
                 </div>
             </div>
-            <TabNavigation links={links} />
         </div>
     );
 }

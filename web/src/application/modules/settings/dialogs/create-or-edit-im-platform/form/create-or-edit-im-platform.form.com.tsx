@@ -50,6 +50,8 @@ export function CreateOrEditImPlatformForm({
             name: initialValues?.name ?? "",
             kind: initialValues?.kind ?? EImServiceKind.Slack,
             webhook: initialValues?.webhook ?? "",
+            botToken: initialValues?.botToken ?? "",
+            chatId: initialValues?.chatId ?? "",
             availableInProjects: initialValues?.availableInProjects ?? false,
             default: initialValues?.default ?? false,
         },
@@ -75,6 +77,14 @@ export function CreateOrEditImPlatformForm({
         field: webhook,
         fieldState: { invalid: isWebhookInvalid },
     } = useController({ name: "webhook", control });
+    const {
+        field: botToken,
+        fieldState: { invalid: isBotTokenInvalid },
+    } = useController({ name: "botToken", control });
+    const {
+        field: chatId,
+        fieldState: { invalid: isChatIdInvalid },
+    } = useController({ name: "chatId", control });
     const { field: availableInProjects } = useController({ name: "availableInProjects", control });
     const { field: defaultField } = useController({ name: "default", control });
 
@@ -140,32 +150,77 @@ export function CreateOrEditImPlatformForm({
                                     <SelectContent>
                                         <SelectItem value={EImServiceKind.Slack}>Slack Webhook</SelectItem>
                                         <SelectItem value={EImServiceKind.Discord}>Discord Webhook</SelectItem>
+                                        <SelectItem value={EImServiceKind.Telegram}>Telegram Bot</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FieldError errors={[errors.kind]} />
                             </Field>
                         </InfoBlock>
 
-                        <InfoBlock
-                            titleWidth={220}
-                            title={
-                                <LabelWithInfo
-                                    label="Webhook URL"
-                                    isRequired
-                                />
-                            }
-                        >
-                            <Field>
-                                <Input
-                                    {...webhook}
-                                    aria-invalid={isWebhookInvalid}
-                                    placeholder={
-                                        kindValue === EImServiceKind.Slack ? "Slack webhook URL" : "Discord webhook URL"
+                        {kindValue === EImServiceKind.Telegram ? (
+                            <>
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Bot Token"
+                                            isRequired
+                                        />
                                     }
-                                />
-                                <FieldError errors={[errors.webhook]} />
-                            </Field>
-                        </InfoBlock>
+                                >
+                                    <Field>
+                                        <Input
+                                            {...botToken}
+                                            aria-invalid={isBotTokenInvalid}
+                                            placeholder="Telegram bot token"
+                                        />
+                                        <FieldError errors={[errors.botToken]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Chat ID"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <Input
+                                            {...chatId}
+                                            aria-invalid={isChatIdInvalid}
+                                            placeholder="Telegram chat ID"
+                                        />
+                                        <FieldError errors={[errors.chatId]} />
+                                    </Field>
+                                </InfoBlock>
+                            </>
+                        ) : (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Webhook URL"
+                                        isRequired
+                                    />
+                                }
+                            >
+                                <Field>
+                                    <Input
+                                        {...webhook}
+                                        aria-invalid={isWebhookInvalid}
+                                        placeholder={
+                                            kindValue === EImServiceKind.Slack
+                                                ? "Slack webhook URL"
+                                                : "Discord webhook URL"
+                                        }
+                                    />
+                                    <FieldError errors={[errors.webhook]} />
+                                </Field>
+                            </InfoBlock>
+                        )}
 
                         {showAvailableInProjects && (
                             <InfoBlock

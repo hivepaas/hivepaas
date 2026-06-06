@@ -28,6 +28,11 @@ export type Notification_ViaDiscord_Payload = {
     webhook: Notification_RefObject_Payload;
 };
 
+export type Notification_ViaTelegram_Payload = {
+    enabled: boolean;
+    setting: Notification_RefObject_Payload;
+};
+
 export type Notification_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
@@ -35,6 +40,7 @@ export type Notification_CreateOne_Payload = {
     viaEmail: Notification_ViaEmail_Payload | null;
     viaSlack: Notification_ViaSlack_Payload | null;
     viaDiscord: Notification_ViaDiscord_Payload | null;
+    viaTelegram: Notification_ViaTelegram_Payload | null;
     minSendInterval: string;
 };
 

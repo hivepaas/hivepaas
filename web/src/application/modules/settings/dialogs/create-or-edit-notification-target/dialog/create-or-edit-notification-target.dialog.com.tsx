@@ -117,6 +117,13 @@ export function CreateOrEditNotificationTargetDialog() {
                       enabled: values.discordEnabled,
                       webhook: { id: values.discordWebhookId },
                   };
+        const viaTelegram =
+            !values.telegramEnabled && !values.telegramSettingId
+                ? null
+                : {
+                      enabled: values.telegramEnabled,
+                      setting: { id: values.telegramSettingId },
+                  };
 
         return {
             availableInProjects:
@@ -126,6 +133,7 @@ export function CreateOrEditNotificationTargetDialog() {
             viaEmail,
             viaSlack,
             viaDiscord,
+            viaTelegram,
             minSendInterval: values.minSendInterval,
         };
     }
@@ -190,6 +198,8 @@ export function CreateOrEditNotificationTargetDialog() {
               slackWebhookId: notificationTarget.viaSlack?.webhook?.id ?? "",
               discordEnabled: notificationTarget.viaDiscord?.enabled ?? false,
               discordWebhookId: notificationTarget.viaDiscord?.webhook?.id ?? "",
+              telegramEnabled: notificationTarget.viaTelegram?.enabled ?? false,
+              telegramSettingId: notificationTarget.viaTelegram?.setting?.id ?? "",
               minSendInterval: notificationTarget.minSendInterval || "3m",
               availableInProjects: notificationTarget.availableInProjects ?? false,
               default: notificationTarget.default ?? false,

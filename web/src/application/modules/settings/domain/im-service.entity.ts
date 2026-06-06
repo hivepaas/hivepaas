@@ -10,10 +10,16 @@ export interface ImServiceDiscord {
     webhook: string;
 }
 
+export interface ImServiceTelegram {
+    botToken: string;
+    chatId: string;
+}
+
 export interface SettingImService extends SettingsBaseEntity {
     kind: EImServiceKind;
     slack?: ImServiceSlack | null;
     discord?: ImServiceDiscord | null;
+    telegram?: ImServiceTelegram | null;
     secretMasked?: boolean;
     inherited?: boolean;
 }

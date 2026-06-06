@@ -8,6 +8,7 @@ import {
     Settings,
     Settings2,
     SlidersHorizontal,
+    User,
     Users,
 } from "lucide-react";
 
@@ -177,6 +178,24 @@ const navMain: SidebarItem[] = [
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
         moduleId: MODULE_IDS.User,
+    },
+    {
+        title: "Your Account",
+        route: "#",
+        pattern: "#",
+        icon: User,
+        items: [
+            {
+                title: "Account",
+                route: ROUTE.currentUser.profile.$route,
+                pattern: ROUTE.currentUser.profile.$pattern,
+            },
+            {
+                title: "API Keys",
+                route: ROUTE.currentUser.profileApiKeys.$route,
+                pattern: ROUTE.currentUser.profileApiKeys.$pattern,
+            },
+        ],
     },
 ];
 

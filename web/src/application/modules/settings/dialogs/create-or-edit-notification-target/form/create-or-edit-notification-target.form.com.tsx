@@ -105,6 +105,8 @@ export function CreateOrEditNotificationTargetForm({
             slackWebhookId: initialValues?.slackWebhookId ?? "",
             discordEnabled: initialValues?.discordEnabled ?? false,
             discordWebhookId: initialValues?.discordWebhookId ?? "",
+            telegramEnabled: initialValues?.telegramEnabled ?? false,
+            telegramSettingId: initialValues?.telegramSettingId ?? "",
             minSendInterval: initialValues?.minSendInterval ?? "3m",
             availableInProjects: initialValues?.availableInProjects ?? false,
             default: initialValues?.default ?? false,
@@ -143,6 +145,11 @@ export function CreateOrEditNotificationTargetForm({
         field: discordWebhookId,
         fieldState: { invalid: isDiscordWebhookInvalid },
     } = useController({ name: "discordWebhookId", control });
+    const { field: telegramEnabled } = useController({ name: "telegramEnabled", control });
+    const {
+        field: telegramSettingId,
+        fieldState: { invalid: isTelegramSettingInvalid },
+    } = useController({ name: "telegramSettingId", control });
     const {
         field: minSendInterval,
         fieldState: { invalid: isMinSendIntervalInvalid },
@@ -157,6 +164,10 @@ export function CreateOrEditNotificationTargetForm({
     );
     const discordOptions = useMemo(
         () => buildImOptions(imServiceQuery.data?.data ?? [], EImServiceKind.Discord),
+        [imServiceQuery.data?.data],
+    );
+    const telegramOptions = useMemo(
+        () => buildImOptions(imServiceQuery.data?.data ?? [], EImServiceKind.Telegram),
         [imServiceQuery.data?.data],
     );
 
@@ -180,6 +191,13 @@ export function CreateOrEditNotificationTargetForm({
             discordWebhookId.onChange(option.value.id);
         }
     }, [discordOptions, discordWebhookId]);
+
+    useEffect(() => {
+        const option = telegramOptions[0];
+        if (!telegramSettingId.value && telegramOptions.length === 1 && option) {
+            telegramSettingId.onChange(option.value.id);
+        }
+    }, [telegramOptions, telegramSettingId]);
 
     const emailAccountsRoute =
         scope.type === "project"
@@ -432,6 +450,58 @@ export function CreateOrEditNotificationTargetForm({
                                                 Configure IM platforms
                                             </AppLink.Basic>
                                             <FieldError errors={[errors.discordWebhookId]} />
+                                        </Field>
+                                    </FieldGroup>
+                                </InfoBlock>
+                            )}
+                        </div>
+                    </ContentBlock>
+
+                    <ContentBlock label="Telegram Notification">
+                        <div className="flex flex-col gap-6">
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Enabled" />}
+                            >
+                                <Checkbox
+                                    checked={telegramEnabled.value}
+                                    onCheckedChange={checked => {
+                                        telegramEnabled.onChange(Boolean(checked));
+                                    }}
+                                />
+                            </InfoBlock>
+                            {telegramEnabled.value && (
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="Telegram Bot" />}
+                                >
+                                    <FieldGroup>
+                                        <Field>
+                                            <Combobox
+                                                options={telegramOptions}
+                                                value={telegramSettingId.value}
+                                                onChange={value => {
+                                                    telegramSettingId.onChange(value ?? "");
+                                                }}
+                                                placeholder="None"
+                                                emptyText="No Telegram bots available"
+                                                searchable={false}
+                                                allowClear
+                                                loading={imServiceQuery.isLoading}
+                                                onRefresh={() => {
+                                                    void imServiceQuery.refetch();
+                                                }}
+                                                isRefreshing={imServiceQuery.isRefetching}
+                                                aria-invalid={isTelegramSettingInvalid}
+                                            />
+                                            <AppLink.Basic
+                                                className="text-sm text-link"
+                                                to={imPlatformsRoute}
+                                                ignorePrevPath
+                                            >
+                                                Configure IM platforms
+                                            </AppLink.Basic>
+                                            <FieldError errors={[errors.telegramSettingId]} />
                                         </Field>
                                     </FieldGroup>
                                 </InfoBlock>

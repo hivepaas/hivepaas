@@ -37,11 +37,17 @@ const NotificationViaDiscordSchema = z.object({
     webhook: SettingsBaseEntitySchema.optional(),
 });
 
+const NotificationViaTelegramSchema = z.object({
+    enabled: z.boolean(),
+    setting: SettingsBaseEntitySchema.optional(),
+});
+
 const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.literal(ESettingType.Notification),
     viaEmail: NotificationViaEmailSchema.optional(),
     viaSlack: NotificationViaSlackSchema.optional(),
     viaDiscord: NotificationViaDiscordSchema.optional(),
+    viaTelegram: NotificationViaTelegramSchema.optional(),
     minSendInterval: z.string(),
     inherited: z.boolean().optional(),
 });

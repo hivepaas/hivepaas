@@ -98,16 +98,40 @@ export function CreateOrEditImPlatformDialog() {
     const imPlatform = detailQuery.data?.data;
 
     function createPayload(values: CreateOrEditImPlatformFormOutput) {
-        const isSlack = values.kind === EImServiceKind.Slack;
-
-        return {
+        const basePayload = {
             availableInProjects:
                 state.mode !== "closed" && state.scope.type === "project" ? false : values.availableInProjects,
             default: values.default,
             name: values.name,
             kind: values.kind,
-            slack: isSlack ? { webhook: values.webhook } : null,
-            discord: isSlack ? null : { webhook: values.webhook },
+        };
+
+        if (values.kind === EImServiceKind.Slack) {
+            return {
+                ...basePayload,
+                slack: { webhook: values.webhook },
+                discord: null,
+                telegram: null,
+            };
+        }
+
+        if (values.kind === EImServiceKind.Discord) {
+            return {
+                ...basePayload,
+                slack: null,
+                discord: { webhook: values.webhook },
+                telegram: null,
+            };
+        }
+
+        return {
+            ...basePayload,
+            slack: null,
+            discord: null,
+            telegram: {
+                botToken: values.botToken,
+                chatId: values.chatId,
+            },
         };
     }
 
@@ -194,7 +218,11 @@ export function CreateOrEditImPlatformDialog() {
               webhook:
                   imPlatform.kind === EImServiceKind.Slack
                       ? (imPlatform.slack?.webhook ?? "")
-                      : (imPlatform.discord?.webhook ?? ""),
+                      : imPlatform.kind === EImServiceKind.Discord
+                        ? (imPlatform.discord?.webhook ?? "")
+                        : "",
+              botToken: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.botToken ?? "") : "",
+              chatId: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.chatId ?? "") : "",
               availableInProjects: imPlatform.availableInProjects ?? false,
               default: imPlatform.default ?? false,
           }

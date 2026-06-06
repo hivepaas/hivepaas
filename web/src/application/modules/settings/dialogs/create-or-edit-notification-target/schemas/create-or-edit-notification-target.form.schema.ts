@@ -13,6 +13,8 @@ export const CreateOrEditNotificationTargetFormSchema = z
         slackWebhookId: z.string().trim(),
         discordEnabled: z.boolean(),
         discordWebhookId: z.string().trim(),
+        telegramEnabled: z.boolean(),
+        telegramSettingId: z.string().trim(),
         minSendInterval: z.string().trim().min(1, "Override Min Send Interval is required"),
         availableInProjects: z.boolean(),
         default: z.boolean(),
@@ -37,6 +39,13 @@ export const CreateOrEditNotificationTargetFormSchema = z
                 code: z.ZodIssueCode.custom,
                 path: ["discordWebhookId"],
                 message: "Webhook is required",
+            });
+        }
+        if (values.telegramEnabled && !values.telegramSettingId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["telegramSettingId"],
+                message: "Telegram Bot is required",
             });
         }
     });

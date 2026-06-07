@@ -14,6 +14,7 @@ func New(
 	appRepo repository.AppRepo,
 	appTagRepo repository.AppTagRepo,
 	settingRepo repository.SettingRepo,
+	resLinkRepo repository.ResLinkRepo,
 	deploymentRepo repository.DeploymentRepo,
 	taskRepo repository.TaskRepo,
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
@@ -26,6 +27,7 @@ func New(
 		appRepo:            appRepo,
 		appTagRepo:         appTagRepo,
 		settingRepo:        settingRepo,
+		resLinkRepo:        resLinkRepo,
 		deploymentRepo:     deploymentRepo,
 		taskRepo:           taskRepo,
 		deploymentInfoRepo: deploymentInfoRepo,
@@ -40,6 +42,7 @@ type service struct {
 	appRepo            repository.AppRepo
 	appTagRepo         repository.AppTagRepo
 	settingRepo        repository.SettingRepo
+	resLinkRepo        repository.ResLinkRepo
 	deploymentRepo     repository.DeploymentRepo
 	taskRepo           repository.TaskRepo
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo

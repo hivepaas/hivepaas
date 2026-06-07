@@ -274,6 +274,7 @@ var Provides = []any{
 	repository.NewTaskLogRepo,
 	// Repo: Setting
 	repository.NewSettingRepo,
+	repository.NewResLinkRepo,
 	// Repo: File
 	repository.NewFileRepo,
 	// Repo: Task

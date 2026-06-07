@@ -24,6 +24,7 @@ const (
 	ResourceTypeImage              ResourceType = "image"
 	ResourceTypeProject            ResourceType = "project"
 	ResourceTypeApp                ResourceType = "app"
+	ResourceTypeDomain             ResourceType = "domain"
 	ResourceTypeCloudStorage       ResourceType = "cloud-storage"
 	ResourceTypeOAuth              ResourceType = "oauth"
 	ResourceTypeSSHKey             ResourceType = "ssh-key"

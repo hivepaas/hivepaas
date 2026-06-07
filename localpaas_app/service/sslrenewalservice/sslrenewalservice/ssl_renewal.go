@@ -70,6 +70,9 @@ func (s *service) SSLRenew(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
+		if len(taskItems) == 0 {
+			break
+		}
 		offset += limit
 
 		_ = gofn.ExecTaskFuncEx(ctx, sslHandlingConcurrentTasks, false,

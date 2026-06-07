@@ -172,11 +172,11 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 			if setting.ObjectID == scope.AppID { // app's direct setting has the highest priority
 				return setting, nil
 			}
-			if parentSetting == nil && setting.ObjectID == scope.ParentAppID {
+			if parentSetting == nil && setting.ObjectID != "" && setting.ObjectID == scope.ParentAppID {
 				parentSetting = setting
 				continue
 			}
-			if projectSetting == nil && setting.ObjectID == scope.ProjectID {
+			if projectSetting == nil && setting.ObjectID != "" && setting.ObjectID == scope.ProjectID {
 				projectSetting = setting
 				continue
 			}

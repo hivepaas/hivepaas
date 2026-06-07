@@ -33,6 +33,10 @@ var (
 			Model: (*entity.Setting)(nil),
 		},
 		{
+			Type:  "db/res_link",
+			Model: (*entity.ResLink)(nil),
+		},
+		{
 			Type:  "db/project",
 			Model: (*entity.Project)(nil),
 		},

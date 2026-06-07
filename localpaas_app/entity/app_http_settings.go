@@ -108,6 +108,19 @@ func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {
 	return nil
 }
 
+func (s *AppHttpSettings) GetActiveDomainNames() (res []string) {
+	if !s.ExposePublicly {
+		return
+	}
+	for _, domain := range s.Domains {
+		if !domain.Enabled {
+			continue
+		}
+		res = append(res, domain.Domain)
+	}
+	return res
+}
+
 func (s *AppHttpSettings) GetType() base.SettingType {
 	return base.SettingTypeAppHttp
 }

@@ -112,21 +112,12 @@ func TransformAppStats(app *entity.App, input *AppTransformationInput) *AppStats
 }
 
 func TransformAppAccessLinks(app *entity.App) []string {
-	resp := make([]string, 0, len(app.Settings))
-	for _, setting := range app.Settings {
-		if setting.Type != base.SettingTypeAppHttp || !setting.IsActive() {
+	resp := make([]string, 0, len(app.DstResLinks))
+	for _, domainLink := range app.DstResLinks {
+		if domainLink.DstType != base.ResourceTypeDomain {
 			continue
 		}
-		httpSettings := setting.MustAsAppHttpSettings()
-		if !httpSettings.ExposePublicly {
-			continue
-		}
-		for _, domain := range httpSettings.Domains {
-			if !domain.Enabled {
-				continue
-			}
-			resp = append(resp, "https://"+domain.Domain)
-		}
+		resp = append(resp, "https://"+domainLink.DstID)
 	}
 	return resp
 }

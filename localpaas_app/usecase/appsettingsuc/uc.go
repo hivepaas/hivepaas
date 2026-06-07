@@ -22,6 +22,7 @@ type UC struct {
 	projectRepo          repository.ProjectRepo
 	appRepo              repository.AppRepo
 	settingRepo          repository.SettingRepo
+	resLinkRepo          repository.ResLinkRepo
 	deploymentRepo       repository.DeploymentRepo
 	userService          userservice.Service
 	appService           appservice.Service
@@ -42,6 +43,7 @@ func New(
 	projectRepo repository.ProjectRepo,
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
+	resLinkRepo repository.ResLinkRepo,
 	deploymentRepo repository.DeploymentRepo,
 	userService userservice.Service,
 	appService appservice.Service,
@@ -61,6 +63,7 @@ func New(
 		projectRepo:          projectRepo,
 		appRepo:              appRepo,
 		settingRepo:          settingRepo,
+		resLinkRepo:          resLinkRepo,
 		deploymentRepo:       deploymentRepo,
 		userService:          userService,
 		appService:           appService,

@@ -25,6 +25,13 @@ func (s *service) PersistAppData(ctx context.Context, db database.IDB,
 		return apperrors.Wrap(err)
 	}
 
+	// ResLinks
+	err = s.resLinkRepo.UpsertMulti(ctx, db, persistingData.UpsertingResLinks,
+		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	// Apps
 	err = s.appRepo.UpsertMulti(ctx, db, persistingData.UpsertingApps,
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)

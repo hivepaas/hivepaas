@@ -27,3 +27,12 @@ func CalcMatchingDomains(subdomain string) (res []string) {
 	}
 	return res
 }
+
+func IsDomainAllowed(domain string, allowedList []string) bool {
+	for _, allowed := range allowedList {
+		if IsSubdomainOrEqual(allowed, domain) {
+			return true
+		}
+	}
+	return false
+}

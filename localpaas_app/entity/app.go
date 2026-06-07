@@ -33,10 +33,12 @@ type App struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	Project   *Project   `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
-	ParentApp *App       `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
-	Settings  []*Setting `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
-	Tags      []*AppTag  `bun:"rel:has-many,join:id=app_id" json:"tags,omitempty"`
+	Project     *Project   `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
+	ParentApp   *App       `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
+	Settings    []*Setting `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
+	Tags        []*AppTag  `bun:"rel:has-many,join:id=app_id" json:"tags,omitempty"`
+	SrcResLinks []*ResLink `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
+	DstResLinks []*ResLink `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
 }
 
 // GetID implements IDEntity interface

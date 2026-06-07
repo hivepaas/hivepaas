@@ -2,6 +2,7 @@ package appsettingsuc
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -12,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/domainhelper"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
@@ -57,6 +59,9 @@ type updateAppHttpSettingsData struct {
 	HttpSettings    *entity.Setting
 	NewHttpSettings *entity.AppHttpSettings
 	RefObjects      *entity.RefObjects
+
+	DomainsToDelete []*entity.ResLink
+	DomainsToAdd    []string
 }
 
 func (uc *UC) loadAppHttpSettingsForUpdate(
@@ -72,6 +77,7 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 		),
+		bunex.SelectRelation("DstResLinks"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -91,6 +97,66 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		true, true, newHttpSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
+	}
+
+	// Active domains of the app need to validate
+	activeDomains := newHttpSettings.GetActiveDomainNames()
+
+	// Load domain settings in project
+	domainSttg, err := uc.settingRepo.GetSingle(ctx, db, app.GetSettingScope(),
+		base.SettingTypeDomainSettings, true)
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+		return apperrors.Wrap(err)
+	}
+	for domainSttg != nil {
+		domainSettings := domainSttg.MustAsDomainSettings()
+		if len(domainSettings.AllowedDomains) == 0 {
+			break
+		}
+		for _, domain := range activeDomains {
+			if !domainhelper.IsDomainAllowed(domain, domainSettings.AllowedDomains) {
+				return apperrors.New(apperrors.ErrSettingViolated).
+					WithParam("Name", apperrors.Fmt("Use of domain '%v'", domain))
+			}
+		}
+		break //nolint:staticcheck
+	}
+
+	// Make sure all domains used by the app are not hold by any other app
+	if len(activeDomains) > 0 {
+		conflictDomains, _, err := uc.resLinkRepo.List(ctx, db, nil,
+			bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeApp),
+			bunex.SelectWhere("res_link.src_id != ?", app.ID),
+			bunex.SelectWhere("res_link.dst_type = ?", base.ResourceTypeDomain),
+			bunex.SelectWhereIn("res_link.dst_id IN (?)", activeDomains...),
+			bunex.SelectLimit(1),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		if len(conflictDomains) > 0 {
+			return apperrors.NewInUse(apperrors.Fmt("Domain '%v'", conflictDomains[0].DstID))
+		}
+	}
+
+	// Calculate domain links update
+	mapCurrentDomainLinks := make(map[string]*entity.ResLink, len(app.DstResLinks))
+	for _, domainLink := range app.DstResLinks {
+		if domainLink.DstType != base.ResourceTypeDomain {
+			continue
+		}
+		mapCurrentDomainLinks[domainLink.DstID] = domainLink
+	}
+	for _, domain := range newHttpSettings.GetActiveDomainNames() {
+		domainLink := mapCurrentDomainLinks[domain]
+		if domainLink == nil {
+			data.DomainsToAdd = append(data.DomainsToAdd, domain)
+		} else {
+			delete(mapCurrentDomainLinks, domain)
+		}
+	}
+	for _, domainLink := range mapCurrentDomainLinks {
+		data.DomainsToDelete = append(data.DomainsToDelete, domainLink)
 	}
 
 	return nil
@@ -122,6 +188,20 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 	setting.ExpireAt = time.Time{}
 	setting.MustSetData(data.NewHttpSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
+
+	// Domain links
+	for _, domainLink := range data.DomainsToDelete {
+		domainLink.DeletedAt = timeNow
+		persistingData.UpsertingResLinks = append(persistingData.UpsertingResLinks, domainLink)
+	}
+	for _, domain := range data.DomainsToAdd {
+		persistingData.UpsertingResLinks = append(persistingData.UpsertingResLinks, &entity.ResLink{
+			SrcType: base.ResourceTypeApp,
+			SrcID:   app.ID,
+			DstType: base.ResourceTypeDomain,
+			DstID:   domain,
+		})
+	}
 }
 
 func (uc *UC) applyAppHttpSettings(

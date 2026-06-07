@@ -24,6 +24,7 @@ type Service interface {
 		userMap map[string]*entity.User, err error)
 
 	PersistUserData(ctx context.Context, db database.IDB, persistingData *PersistingUserData) error
+	DeleteUser(ctx context.Context, db database.IDB, user *entity.User) error
 
 	ChangePassword(user *entity.User, newPassword, currPassword string) error
 	VerifyPassword(user *entity.User, password string) error

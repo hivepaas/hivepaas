@@ -30,14 +30,7 @@ func (uc *UC) DeleteUser(
 		persistingData := &userservice.PersistingUserData{}
 		uc.prepareDeletingUser(userData, persistingData)
 
-		// Remove all ACLs of the user
-		err = uc.permissionManager.RemoveACLPermissionsOfUsers(ctx, db, []string{userData.User.ID})
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		// Revoke target user's JWT, user can't access with the old token
-		err = uc.userTokenRepo.DelAll(ctx, req.ID)
+		err = uc.userService.DeleteUser(ctx, db, userData.User)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

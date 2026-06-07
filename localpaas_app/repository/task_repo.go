@@ -38,6 +38,8 @@ type TaskRepo interface {
 		opts ...bunex.DeleteQueryOption) error
 	DeleteAllByProjects(ctx context.Context, db database.IDB, projectIDs []string,
 		opts ...bunex.DeleteQueryOption) error
+	DeleteAllByUsers(ctx context.Context, db database.IDB, userIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB,
 		opts ...bunex.DeleteQueryOption) error
 }
@@ -205,6 +207,22 @@ func (repo *taskRepo) DeleteAllByProjects(ctx context.Context, db database.IDB, 
 	}
 	query := db.NewDelete().Model((*entity.Task)(nil)).
 		Where("task.target_id IN (?)", bun.List(projectIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (repo *taskRepo) DeleteAllByUsers(ctx context.Context, db database.IDB, userIDs []string,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.Task)(nil)).
+		Where("task.target_id IN (?)", bun.List(userIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

@@ -61,6 +61,14 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 		return apperrors.Wrap(err)
 	}
 
+	// Project photo
+	if project.PhotoID != "" {
+		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{project.PhotoID})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
 	// Remove all project local networks
 	err = s.networkService.RemoveAllProjectNetworks(ctx, project)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {

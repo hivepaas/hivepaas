@@ -19,6 +19,7 @@ func New(
 	fileRepo repository.FileRepo,
 	userRepo repository.UserRepo,
 	taskRepo repository.TaskRepo,
+	binObjectRepo repository.BinObjectRepo,
 	permissionManager permission.Manager,
 	userService userservice.Service,
 	appService appservice.Service,
@@ -34,6 +35,7 @@ func New(
 		fileRepo:          fileRepo,
 		userRepo:          userRepo,
 		taskRepo:          taskRepo,
+		binObjectRepo:     binObjectRepo,
 		permissionManager: permissionManager,
 		userService:       userService,
 		appService:        appService,
@@ -51,6 +53,7 @@ type service struct {
 	fileRepo          repository.FileRepo
 	userRepo          repository.UserRepo
 	taskRepo          repository.TaskRepo
+	binObjectRepo     repository.BinObjectRepo
 	permissionManager permission.Manager
 	userService       userservice.Service
 	appService        appservice.Service

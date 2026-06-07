@@ -29,6 +29,7 @@ type DeploymentRepo interface {
 	Update(ctx context.Context, db database.IDB, deployment *entity.Deployment,
 		opts ...bunex.UpdateQueryOption) error
 
+	DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string, opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -141,9 +142,28 @@ func (repo *deploymentRepo) Update(ctx context.Context, db database.IDB, deploym
 	return nil
 }
 
+func (repo *deploymentRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(appIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.Deployment)(nil)).
+		Where("app_id IN (?)", bun.List(appIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *deploymentRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.Deployment)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.Deployment)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

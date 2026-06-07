@@ -27,7 +27,7 @@ type ACLPermissionRepo interface {
 
 	DeleteByResources(ctx context.Context, db database.IDB, resources []*base.PermissionResource,
 		opts ...bunex.DeleteQueryOption) error
-	DeleteByUsers(ctx context.Context, db database.IDB, userIDs []string,
+	DeleteBySubjects(ctx context.Context, db database.IDB, subjectType base.SubjectType, subjectIDs []string,
 		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
@@ -180,13 +180,14 @@ func (repo *aclPermissionRepo) DeleteByResources(ctx context.Context, db databas
 	return nil
 }
 
-func (repo *aclPermissionRepo) DeleteByUsers(ctx context.Context, db database.IDB, userIDs []string,
-	opts ...bunex.DeleteQueryOption) error {
-	if len(userIDs) == 0 {
+func (repo *aclPermissionRepo) DeleteBySubjects(ctx context.Context, db database.IDB,
+	subjectType base.SubjectType, subjectIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(subjectIDs) == 0 {
 		return nil
 	}
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).
-		Where("subj_id IN (?)", bun.List(userIDs))
+		Where("subj_type = ?", subjectType).
+		Where("subj_id IN (?)", bun.List(subjectIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
@@ -198,7 +199,10 @@ func (repo *aclPermissionRepo) DeleteByUsers(ctx context.Context, db database.ID
 
 func (repo *aclPermissionRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

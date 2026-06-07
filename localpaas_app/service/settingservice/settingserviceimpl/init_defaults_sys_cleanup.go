@@ -18,16 +18,16 @@ const (
 	sysCleanupSettingName   = "System cleanup settings"
 	sysCleanupJobName       = "System cleanup job"
 	sysCleanupDefaultStatus = base.SettingStatusActive
-	sysCleanupInterval      = timeutil.Duration(time.Hour * 24) // daily
+	sysCleanupInterval      = timeutil.Duration(timeutil.Day) // daily
 	sysCleanupMaxRetry      = 1
 	sysCleanupRetryDelay    = timeutil.Duration(time.Second * 30)
 
-	sysCleanupBackupRetention = timeutil.Duration(time.Hour * 24 * 30) // 30 days
+	sysCleanupBackupRetention = timeutil.Duration(timeutil.Day * 30)
 
-	dbObjectRetentionOfTasks          = timeutil.Duration(time.Hour * 24 * 180) // 180 days
-	dbObjectRetentionOfSysErrors      = timeutil.Duration(time.Hour * 24 * 180)
-	dbObjectRetentionOfDeployments    = timeutil.Duration(time.Hour * 24 * 180)
-	dbObjectRetentionOfDeletedObjects = timeutil.Duration(time.Hour * 24 * 180)
+	dbObjectRetentionOfTasks          = timeutil.Duration(timeutil.Day * 90)
+	dbObjectRetentionOfSysErrors      = timeutil.Duration(timeutil.Day * 90)
+	dbObjectRetentionOfDeployments    = timeutil.Duration(timeutil.Day * 90)
+	dbObjectRetentionOfDeletedObjects = timeutil.Duration(timeutil.Day * 90)
 )
 
 func (s *service) initDefaultSystemCleanup(

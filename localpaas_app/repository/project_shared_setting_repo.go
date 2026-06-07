@@ -126,7 +126,10 @@ func (repo *projectSharedSettingRepo) DeleteAllBySetting(ctx context.Context, db
 
 func (repo *projectSharedSettingRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.ProjectSharedSetting)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.ProjectSharedSetting)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

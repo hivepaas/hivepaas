@@ -50,6 +50,8 @@ type SettingRepo interface {
 	UpdateClearDefaultFlag(ctx context.Context, db database.IDB, scope *base.ObjectScope, typ base.SettingType,
 		kind *string, exceptID string, opts ...bunex.UpdateQueryOption) error
 
+	DeleteAllByObjects(ctx context.Context, db database.IDB, scope base.ObjectScopeType, objectIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -498,9 +500,29 @@ func (repo *settingRepo) updateExpiredSettings(ctx context.Context, db database.
 	return hasChange, nil
 }
 
+func (repo *settingRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
+	scope base.ObjectScopeType, objectIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.Setting)(nil)).
+		Where("setting.scope = ?", scope).
+		Where("setting.object_id IN (?)", bun.List(objectIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *settingRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.Setting)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.Setting)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

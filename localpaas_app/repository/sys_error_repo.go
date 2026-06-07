@@ -123,7 +123,10 @@ func (repo *sysErrorRepo) DeleteMulti(ctx context.Context, db database.IDB, sysE
 
 func (repo *sysErrorRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.SysError)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.SysError)(nil)).ForceDelete() /* No soft delete */
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

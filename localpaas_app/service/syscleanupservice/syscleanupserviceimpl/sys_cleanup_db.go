@@ -185,8 +185,9 @@ func (s *service) sysCleanupDBOldTasks(
 	oldestTs := timeNow.Add(-retentionSetting.Tasks.ToDuration())
 
 	err = s.taskLogRepo.DeleteHard(ctx, db,
-		bunex.DeleteWhere("EXISTS(SELECT 1 FROM tasks WHERE tasks.id = task_log.task_id AND "+
-			"tasks.updated_at < ?)", oldestTs),
+		bunex.DeleteWhere("ts < ?", oldestTs),
+		// bunex.DeleteWhere("EXISTS(SELECT 1 FROM tasks WHERE tasks.id = task_log.task_id AND "+
+		//	"tasks.updated_at < ?)", oldestTs),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -194,7 +195,6 @@ func (s *service) sysCleanupDBOldTasks(
 
 	err = s.taskRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
-		bunex.DeleteWithDeleted(),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

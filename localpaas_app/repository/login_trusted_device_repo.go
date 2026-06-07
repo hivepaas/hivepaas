@@ -79,7 +79,10 @@ func (repo *loginTrustedDeviceRepo) UpsertMulti(ctx context.Context, db database
 
 func (repo *loginTrustedDeviceRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.LoginTrustedDevice)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.LoginTrustedDevice)(nil)).ForceDelete() /* No soft delete */
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

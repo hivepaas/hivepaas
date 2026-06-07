@@ -17,8 +17,8 @@ import (
 const (
 	sysBackupSettingName       = "System backup settings"
 	sysBackupJobName           = "System backup job"
-	sysBackupDefaultStatus     = base.SettingStatusDisabled        // Default to Disabled
-	sysBackupInterval          = timeutil.Duration(time.Hour * 24) // daily
+	sysBackupDefaultStatus     = base.SettingStatusDisabled      // Default to Disabled
+	sysBackupInterval          = timeutil.Duration(timeutil.Day) // daily
 	sysBackupMaxRetry          = 1
 	sysBackupRetryDelay        = timeutil.Duration(time.Second * 60)
 	sysBackupCompressionFormat = base.FileCompressionFormatGzip

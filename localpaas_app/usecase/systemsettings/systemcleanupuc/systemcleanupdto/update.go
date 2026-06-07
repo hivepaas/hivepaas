@@ -47,7 +47,7 @@ func (req *SystemCleanupBaseReq) validate(field string) (res []vld.Validator) {
 		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
 	))
 	res = append(res, basedto.ValidateTime(&req.Schedule.InitialTime, true,
-		time.Now().Add(-timeutil.Duration365Days), time.Time{}, field+"schedule.initialTime")...)
+		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
 	res = append(res, req.DBObjectRetention.validate(field+"dbObjectRetention")...)
 	res = append(res, req.ClusterCleanup.validate(field+"clusterCleanup")...)
 	res = append(res, req.BackupCleanup.validate(field+"backupCleanup")...)

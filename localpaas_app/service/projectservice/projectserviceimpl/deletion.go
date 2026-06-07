@@ -7,14 +7,15 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 )
 
-func (s *service) DeleteProject(ctx context.Context, project *entity.Project) error {
+func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *entity.Project) error {
 	// Remove all apps
 	var wg sync.WaitGroup
 	for _, app := range project.Apps {
 		wg.Go(func() {
-			_ = s.appService.DeleteApp(ctx, app)
+			_ = s.appService.DeleteApp(ctx, db, app)
 			// NOTE: it's hard to rollback, maybe we only show the errors if there is any
 		})
 	}

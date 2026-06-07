@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	DurationDay     = 24 * time.Hour
-	Duration7Days   = 7 * DurationDay
-	Duration10Days  = 10 * DurationDay
-	Duration15Days  = 15 * DurationDay
-	Duration30Days  = 30 * DurationDay
-	Duration60Days  = 60 * DurationDay
-	Duration90Days  = 90 * DurationDay
-	Duration365Days = 365 * DurationDay
+	Day        = 24 * time.Hour
+	Dur7Days   = 7 * Day
+	Dur10Days  = 10 * Day
+	Dur15Days  = 15 * Day
+	Dur30Days  = 30 * Day
+	Dur60Days  = 60 * Day
+	Dur90Days  = 90 * Day
+	Dur365Days = 365 * Day
 
-	DurationWeek   = Duration7Days
-	Duration2Weeks = 2 * DurationWeek
-	Duration4Weeks = 4 * DurationWeek
+	Week      = Dur7Days
+	Dur2Weeks = 2 * Week
+	Dur4Weeks = 4 * Week
 )
 
 type Duration time.Duration
@@ -44,13 +44,13 @@ func (dur Duration) String() string {
 	}
 
 	// Less than a day use the default format func
-	if u < uint64(DurationDay) {
+	if u < uint64(Day) {
 		return str2duration.String(time.Duration(dur))
 	}
 
 	// Bigger than a day, display at `day` fraction (not use `week`)
-	days := u / uint64(DurationDay)
-	u -= days * uint64(DurationDay)
+	days := u / uint64(Day)
+	u -= days * uint64(Day)
 	res := strconv.FormatInt(int64(days), 10) + "d"
 	if u > 0 {
 		res += str2duration.String(time.Duration(u))

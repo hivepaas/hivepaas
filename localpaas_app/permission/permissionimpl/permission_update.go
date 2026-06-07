@@ -34,12 +34,25 @@ func (p *manager) RemoveACLPermissions(
 	return nil
 }
 
+func (p *manager) RemoveACLPermissionsBySubjects(
+	ctx context.Context,
+	db database.IDB,
+	subjectType base.SubjectType,
+	subjectIDs []string,
+) error {
+	err := p.aclPermissionRepo.DeleteBySubjects(ctx, db, subjectType, subjectIDs)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (p *manager) RemoveACLPermissionsOfUsers(
 	ctx context.Context,
 	db database.IDB,
 	userIDs []string,
 ) error {
-	err := p.aclPermissionRepo.DeleteByUsers(ctx, db, userIDs)
+	err := p.aclPermissionRepo.DeleteBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

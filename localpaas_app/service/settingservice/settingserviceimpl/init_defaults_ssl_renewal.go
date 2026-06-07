@@ -18,7 +18,7 @@ const (
 	sslRenewalSettingName   = "SSL renewal settings"
 	sslRenewalJobName       = "SSL renewal job"
 	sslRenewalDefaultStatus = base.SettingStatusActive
-	sslRenewalInterval      = timeutil.Duration(time.Hour * 24) // daily
+	sslRenewalInterval      = timeutil.Duration(timeutil.Day) // daily
 	sslRenewalMaxRetry      = 1
 	sslRenewalRetryDelay    = timeutil.Duration(time.Second * 60)
 )

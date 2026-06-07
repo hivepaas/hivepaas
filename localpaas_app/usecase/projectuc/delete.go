@@ -34,7 +34,7 @@ func (uc *UC) DeleteProject(
 		}
 
 		// Remove project and its app in infra
-		err = uc.projectService.DeleteProject(ctx, projectData.Project)
+		err = uc.projectService.DeleteProject(ctx, db, projectData.Project)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

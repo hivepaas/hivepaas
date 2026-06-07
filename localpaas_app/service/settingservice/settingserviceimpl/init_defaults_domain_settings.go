@@ -19,7 +19,7 @@ const (
 	domainSettingName            = "Domain settings"
 	domainCertTypeDefault        = base.SSLCertTypeLetsEncrypt
 	domainCertKeyTypeDefault     = base.SSLKeyTypeECP256
-	domainCertValidPeriodDefault = time.Hour * 24 * 365 // For self-signed certs only
+	domainCertValidPeriodDefault = timeutil.Day * 365 // For self-signed certs only
 	domainCertAutoRenewDefault   = true
 )
 

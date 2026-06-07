@@ -94,7 +94,10 @@ func (repo *projectTagRepo) DeleteAllByProjects(ctx context.Context, db database
 
 func (repo *projectTagRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.ProjectTag)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.ProjectTag)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

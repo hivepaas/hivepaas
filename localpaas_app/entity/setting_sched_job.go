@@ -193,7 +193,7 @@ func (s *SchedJobSchedule) AdjustInitialTime(initialTimeAdj time.Time) bool {
 	if s.CronExpr == "" { // Only need to adjust initial time on `Cron` mode
 		return false
 	}
-	if !s.InitialTimeAdj.IsZero() && initialTimeAdj.Sub(s.InitialTimeAdj) < timeutil.Duration7Days {
+	if !s.InitialTimeAdj.IsZero() && initialTimeAdj.Sub(s.InitialTimeAdj) < timeutil.Dur7Days {
 		return false
 	}
 	s.InitialTimeAdj = initialTimeAdj

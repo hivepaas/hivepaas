@@ -25,7 +25,7 @@ type Service interface {
 		*entity.App, error)
 
 	PersistAppData(ctx context.Context, db database.IDB, data *PersistingAppData) error
-	DeleteApp(ctx context.Context, app *entity.App) error
+	DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error
 	OnAppStatusChanged(ctx context.Context, app *entity.App, oldStatus base.AppStatus) error
 
 	ServiceInspect(ctx context.Context, serviceID string, caching bool) (*swarm.Service, error)

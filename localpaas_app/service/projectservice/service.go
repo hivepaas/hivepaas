@@ -19,7 +19,7 @@ type Service interface {
 	InitRootProject(ctx context.Context, db database.IDB) (postInitFunc func() error, err error)
 
 	PersistProjectData(ctx context.Context, db database.IDB, data *PersistingProjectData) error
-	DeleteProject(ctx context.Context, project *entity.Project) error
+	DeleteProject(ctx context.Context, db database.IDB, project *entity.Project) error
 	SyncProject(ctx context.Context, db database.IDB, project *entity.Project) (
 		newApps, updateApps []*entity.App, _ []swarm.Service, _ error)
 }

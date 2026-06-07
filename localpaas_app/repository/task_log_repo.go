@@ -105,7 +105,10 @@ func (repo *taskLogRepo) InsertMulti(ctx context.Context, db database.IDB, logs 
 
 func (repo *taskLogRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.TaskLog)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.TaskLog)(nil)).ForceDelete() /* No soft delete */
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

@@ -34,7 +34,7 @@ func (uc *UC) DeleteApp(
 		}
 
 		// Remove app and its data from the infra
-		err = uc.appService.DeleteApp(ctx, appData.App)
+		err = uc.appService.DeleteApp(ctx, db, appData.App)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

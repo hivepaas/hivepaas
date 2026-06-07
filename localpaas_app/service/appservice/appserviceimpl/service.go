@@ -17,6 +17,7 @@ func New(
 	resLinkRepo repository.ResLinkRepo,
 	deploymentRepo repository.DeploymentRepo,
 	taskRepo repository.TaskRepo,
+	fileRepo repository.FileRepo,
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
 	permissionManager permission.Manager,
 	userService userservice.Service,
@@ -30,6 +31,7 @@ func New(
 		resLinkRepo:        resLinkRepo,
 		deploymentRepo:     deploymentRepo,
 		taskRepo:           taskRepo,
+		fileRepo:           fileRepo,
 		deploymentInfoRepo: deploymentInfoRepo,
 		permissionManager:  permissionManager,
 		userService:        userService,
@@ -45,6 +47,7 @@ type service struct {
 	resLinkRepo        repository.ResLinkRepo
 	deploymentRepo     repository.DeploymentRepo
 	taskRepo           repository.TaskRepo
+	fileRepo           repository.FileRepo
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo
 	permissionManager  permission.Manager
 	userService        userservice.Service

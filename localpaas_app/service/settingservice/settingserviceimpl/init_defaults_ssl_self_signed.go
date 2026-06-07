@@ -24,8 +24,8 @@ const (
 	sslSelfSignedBaseName       = "self-signed"
 	sslSelfSignedCN             = "*.swarm.localhost"
 	sslSelfSignedKeyType        = base.SSLKeyTypeECP256
-	sslSelfSignedValidPeriod    = time.Hour * 24 * 365
-	sslSelfSignedRenewBeforeExp = time.Hour * 24 * 30
+	sslSelfSignedValidPeriod    = timeutil.Day * 365
+	sslSelfSignedRenewBeforeExp = timeutil.Day * 30
 )
 
 func (s *service) initDefaultSSLSelfSigned(

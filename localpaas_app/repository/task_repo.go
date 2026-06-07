@@ -34,6 +34,7 @@ type TaskRepo interface {
 	Update(ctx context.Context, db database.IDB, task *entity.Task,
 		opts ...bunex.UpdateQueryOption) error
 
+	DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string, opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -176,9 +177,26 @@ func (repo *taskRepo) UpdateMulti(ctx context.Context, db database.IDB, tasks []
 	return nil
 }
 
+func (repo *taskRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
+	opts ...bunex.DeleteQueryOption) error {
+	query := db.NewDelete().Model((*entity.Task)(nil)).
+		Where("(task.target_id IN (?) OR EXISTS(SELECT 1 FROM deployments WHERE "+
+			"deployments.id = task.target_id AND deployments.app_id IN (?)))", bun.List(appIDs), bun.List(appIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *taskRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.Task)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.Task)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

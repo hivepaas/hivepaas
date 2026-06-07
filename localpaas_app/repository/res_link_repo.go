@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/uptrace/bun"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
@@ -28,6 +30,8 @@ type ResLinkRepo interface {
 	UpsertMulti(ctx context.Context, db database.IDB, resLinks []*entity.ResLink, conflictCols, updateCols []string,
 		opts ...bunex.InsertQueryOption) error
 
+	DeleteAllBySourceIDs(ctx context.Context, db database.IDB, sourceType base.SubjectType, sourceIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -131,9 +135,29 @@ func (repo *resLinkRepo) UpsertMulti(ctx context.Context, db database.IDB, resLi
 	return nil
 }
 
+func (repo *resLinkRepo) DeleteAllBySourceIDs(ctx context.Context, db database.IDB,
+	sourceType base.SubjectType, sourceIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(sourceIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.ResLink)(nil)).
+		Where("res_link.src_type = ?", sourceType).
+		Where("res_link.src_id IN (?)", bun.List(sourceIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *resLinkRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.ResLink)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.ResLink)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

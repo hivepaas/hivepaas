@@ -9,6 +9,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
@@ -39,6 +40,8 @@ type FileRepo interface {
 	Update(ctx context.Context, db database.IDB, file *entity.File,
 		opts ...bunex.UpdateQueryOption) error
 
+	DeleteAllByObjects(ctx context.Context, db database.IDB, scope base.ObjectScopeType, objectIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -195,9 +198,29 @@ func (repo *fileRepo) Update(ctx context.Context, db database.IDB, file *entity.
 	return nil
 }
 
+func (repo *fileRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
+	scope base.ObjectScopeType, objectIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.File)(nil)).
+		Where("file.scope = ?", scope).
+		Where("file.object_id IN (?)", bun.List(objectIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *fileRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
-	query := db.NewDelete().Model((*entity.File)(nil)).ForceDelete()
+	if len(opts) == 0 {
+		return apperrors.NewParamInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+	}
+	query := db.NewDelete().Model((*entity.File)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

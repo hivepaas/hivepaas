@@ -71,6 +71,7 @@ function View({ projectId, appId }: Props) {
         {
             route: ROUTE.projects.single.apps.single.deployments.$route(projectId, appId),
             label: "Deployments",
+            activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, appId)],
         },
         {
             route: ROUTE.projects.single.apps.single.logs.$route(projectId, appId),

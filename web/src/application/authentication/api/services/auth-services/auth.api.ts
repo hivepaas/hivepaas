@@ -135,7 +135,7 @@ export class AuthApi extends BaseApi {
     async forgotPassword(request: Auth_ForgotPassword_Req): Promise<Result<Auth_ForgotPassword_Res, Error>> {
         return lastValueFrom(
             from(
-                this.client.v1.post("/users/password-forgot", {
+                this.client.v1.post("/users/current/password/forgot", {
                     email: request.data.email,
                 }),
             ).pipe(

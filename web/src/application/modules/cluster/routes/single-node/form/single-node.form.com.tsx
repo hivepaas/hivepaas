@@ -10,6 +10,7 @@ import { ENodeAvailability, ENodeRole } from "~/cluster/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 import { NodeStatusBadge } from "@application/modules/cluster/module-shared/components";
 
@@ -94,7 +95,9 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         <InfoBlock title="Resources">
                             <span className="text-sm font-normal">
                                 {defaultValues.resources
-                                    ? `${defaultValues.resources.cpus} CPU, ${defaultValues.resources.memoryHR} RAM`
+                                    ? `${defaultValues.resources.cpus} CPU, ${
+                                          getFriendlyDataSize(defaultValues.resources.memoryBytes) || "-"
+                                      } RAM`
                                     : "-"}
                             </span>
                         </InfoBlock>

@@ -25,6 +25,7 @@ export {
     ProjectNetworksRoute,
     SingleAppRoute,
     // Single App Tabs
+    AppDeploymentDetailsRoute,
     AppDeploymentsRoute,
     AppLogsRoute,
     AppPreviewDeploymentsRoute,

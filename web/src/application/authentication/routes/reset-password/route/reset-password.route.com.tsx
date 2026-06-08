@@ -8,13 +8,11 @@ import { z } from "zod";
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
-import { Page404NotFound, PageError } from "@application/shared/pages";
+import { Page404NotFound } from "@application/shared/pages";
 
 import { AuthCommands } from "@application/authentication/data/commands";
 import type { ResetPassword } from "@application/authentication/domain";
 import { AuthenticationLayout } from "@application/authentication/layouts";
-
-import { isPasswordResetTokenInvalidException } from "@infrastructure/api";
 
 import { ResetPasswordForm } from "../form/reset-password.form.com";
 
@@ -69,10 +67,6 @@ type State =
           type: "success";
           userId: string;
           token: string;
-      }
-    | {
-          type: "error";
-          error: Error;
       };
 
 export function ResetPasswordRoute() {
@@ -82,11 +76,9 @@ export function ResetPasswordRoute() {
 
     function validate() {
         const parsed = Schema.safeParse({
-            userId: params.get("userId"),
+            userId: params.get("userID") ?? params.get("userId"),
             token: params.get("token"),
         });
-
-        console.log("parsed", parsed);
 
         if (!parsed.success) {
             setState({
@@ -113,20 +105,6 @@ export function ResetPasswordRoute() {
         return <Page404NotFound />;
     }
 
-    if (state.type === "error") {
-        if (isPasswordResetTokenInvalidException(state.error)) {
-            return <Page404NotFound />;
-        }
-
-        return (
-            <PageError
-                error={state.error}
-                onRetry={() => {
-                    validate();
-                }}
-            />
-        );
-    }
     return (
         <View
             userId={state.userId}

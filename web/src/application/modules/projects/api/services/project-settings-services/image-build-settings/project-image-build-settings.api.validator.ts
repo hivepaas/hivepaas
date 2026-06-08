@@ -52,7 +52,7 @@ const FindOneSchema = z.object({
 
 const RepoCacheInfoSchema = z.object({
     totalFiles: z.number(),
-    totalSizeHR: z.string(),
+    totalSizeBytes: z.number(),
 });
 
 const FindRepoCacheSchema = z.object({

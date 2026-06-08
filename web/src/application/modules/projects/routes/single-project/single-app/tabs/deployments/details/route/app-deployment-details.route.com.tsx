@@ -1,0 +1,99 @@
+import { useMemo } from "react";
+
+import { cn } from "@/lib/utils";
+import { listBox } from "@lib/styles";
+import { useParams } from "react-router";
+import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
+import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
+
+import {
+    DeploymentLogsViewer,
+    DeploymentSummaryCard,
+    DeploymentSummaryCardSkeleton,
+    useDeploymentCurrentTime,
+} from "../../building-blocks";
+
+const DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS = 5_000;
+
+function shouldPollDeploymentDetails(status?: EAppDeploymentStatus): boolean {
+    return status === EAppDeploymentStatus.NotStarted || status === EAppDeploymentStatus.InProgress;
+}
+
+export function AppDeploymentDetailsRoute() {
+    const {
+        id: projectId,
+        appId,
+        deploymentId,
+    } = useParams<{
+        id: string;
+        appId: string;
+        deploymentId: string;
+    }>();
+
+    invariant(projectId, "projectId must be defined");
+    invariant(appId, "appId must be defined");
+    invariant(deploymentId, "deploymentId must be defined");
+
+    const { data: deploymentResponse, isFetching } = AppDeploymentsQueries.useFindOneById(
+        {
+            projectID: projectId,
+            appID: appId,
+            deploymentID: deploymentId,
+        },
+        {
+            refetchInterval: query =>
+                shouldPollDeploymentDetails(query.state.data?.data.status)
+                    ? DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS
+                    : false,
+        },
+    );
+    const deployment = deploymentResponse?.data;
+
+    const hasActiveDeployment = useMemo(
+        () => deployment?.status === EAppDeploymentStatus.InProgress,
+        [deployment?.status],
+    );
+    const now = useDeploymentCurrentTime(hasActiveDeployment);
+
+    const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
+        onSuccess: () => {
+            toast.success("Deployment canceled");
+        },
+    });
+
+    return (
+        <section className={cn(listBox)}>
+            <div className="flex flex-col gap-5">
+                {isFetching && !deployment ? (
+                    <DeploymentSummaryCardSkeleton variant="details" />
+                ) : deployment ? (
+                    <DeploymentSummaryCard
+                        deployment={deployment}
+                        now={now}
+                        variant="details"
+                        isCancelling={isCancelling}
+                        onCancel={id => {
+                            cancelDeployment({
+                                projectID: projectId,
+                                appID: appId,
+                                deploymentID: id,
+                            });
+                        }}
+                    >
+                        <DeploymentLogsViewer
+                            projectID={projectId}
+                            appID={appId}
+                            deploymentID={deploymentId}
+                        />
+                    </DeploymentSummaryCard>
+                ) : (
+                    <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                        Deployment not found.
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+}

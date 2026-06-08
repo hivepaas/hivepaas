@@ -15,7 +15,7 @@ import {
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
 
-import { parseApiResponse } from "@infrastructure/api";
+import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Sign in API response schema
@@ -60,9 +60,7 @@ const SignIn2FASchema = z.object({
  * Forgot password API response schema
  */
 const ForgotPasswordSchema = z.object({
-    data: z.object({
-        linkExpirationMins: z.number(),
-    }),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 /**
@@ -190,13 +188,16 @@ export class AuthApiValidator {
      * Validate and transform the forgot password API response
      */
     forgotPassword = (response: AxiosResponse): Auth_ForgotPassword_Res => {
-        const { data } = parseApiResponse({
+        const { meta } = parseApiResponse({
             response,
             schema: ForgotPasswordSchema,
         });
 
         return {
-            data,
+            data: {
+                type: "success",
+            },
+            meta,
         };
     };
 

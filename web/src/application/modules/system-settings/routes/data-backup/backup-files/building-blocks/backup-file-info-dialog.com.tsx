@@ -5,6 +5,7 @@ import { getBackupFileStorageLabel } from "~/system-settings/module-shared/defin
 import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -32,7 +33,7 @@ function BackupFileInfoContent({ file }: { file: SystemBackupFile }) {
             />
             <InfoRow
                 label="Size"
-                value={file.sizeStr}
+                value={getFriendlyDataSize(file.sizeBytes) || "-"}
             />
             <InfoRow
                 label="Storage"

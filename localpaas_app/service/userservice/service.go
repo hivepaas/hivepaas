@@ -38,6 +38,8 @@ type Service interface {
 	ParseUserInviteToken(token string) (*appentity.UserInviteTokenClaims, error)
 	GeneratePasswordResetToken(userID string) (string, error)
 	ParsePasswordResetToken(token string) (*appentity.PasswordResetTokenClaims, error)
+	GenerateConsoleToken(userID, targetID string) (string, error)
+	ParseConsoleToken(token string) (*appentity.ConsoleTokenClaims, error)
 
 	// Project users
 	LoadNotificationUsers(ctx context.Context, db database.IDB, project *entity.Project,

@@ -13,6 +13,7 @@ import (
 )
 
 type GetDeploymentLogsReq struct {
+	Token        string            `json:"-" mapstructure:"token"`
 	ProjectID    string            `json:"-"`
 	AppID        string            `json:"-"`
 	DeploymentID string            `json:"-"`

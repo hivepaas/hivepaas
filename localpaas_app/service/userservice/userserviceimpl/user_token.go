@@ -7,13 +7,15 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity/appentity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/jwtsession"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
 const (
 	MFATokenExp           = 60 * time.Second
 	MFATotpSetupTokenExp  = 180 * time.Second
-	UserInviteTokenExp    = 7 * 24 * time.Hour // 1 week
-	PasswordResetTokenExp = 7 * 24 * time.Hour // 1 week
+	UserInviteTokenExp    = 7 * timeutil.Day
+	PasswordResetTokenExp = 7 * timeutil.Day
+	ConsoleTokenExp       = 30 * time.Second
 )
 
 // GenerateMFAToken builds MFA token for using in the next step
@@ -106,6 +108,30 @@ func (s *service) ParsePasswordResetToken(token string) (*appentity.PasswordRese
 		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "pwd-reset" {
+		return nil, apperrors.New(apperrors.ErrTokenInvalid)
+	}
+	return tokenClaims, nil
+}
+
+// GenerateConsoleToken builds token for accessing console or logs
+func (s *service) GenerateConsoleToken(userID, targetID string) (string, error) {
+	token, err := jwtsession.GenerateToken(&appentity.ConsoleTokenClaims{
+		Kind:     "console",
+		UserID:   userID,
+		TargetID: targetID,
+	}, ConsoleTokenExp)
+	if err != nil {
+		return "", apperrors.Wrap(err)
+	}
+	return token, nil
+}
+
+func (s *service) ParseConsoleToken(token string) (*appentity.ConsoleTokenClaims, error) {
+	tokenClaims := &appentity.ConsoleTokenClaims{}
+	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
+		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+	}
+	if tokenClaims.Kind != "console" {
 		return nil, apperrors.New(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil

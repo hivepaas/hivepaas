@@ -202,13 +202,12 @@ export function DeploymentSummaryCard({
     children,
     variant = "list",
     isCancelling = false,
-    defaultCommitMessageOpen,
     onCancel,
     onClick,
 }: DeploymentSummaryCardProps) {
     const { output } = deployment;
     const sourceUser = deployment.trigger?.sourceUser;
-    const [isCommitMessageOpen, setIsCommitMessageOpen] = useState(defaultCommitMessageOpen ?? variant === "details");
+    const [isCommitMessageOpen, setIsCommitMessageOpen] = useState(false);
     const isRepo = isRepoDeployment(deployment);
     const isClickable = Boolean(onClick);
 
@@ -225,10 +224,13 @@ export function DeploymentSummaryCard({
         <div
             className={cn(
                 "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? ["border-l-4", STATUS_BORDER_CLASS_NAMES[deployment.status]] : "border-border",
+                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status]] : "border-border",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             )}
+            style={{
+                borderLeftWidth: variant === "list" ? 4 : 0,
+            }}
             role={isClickable ? "button" : undefined}
             tabIndex={isClickable ? 0 : undefined}
             onClick={onClick}
@@ -365,7 +367,6 @@ interface DeploymentSummaryCardProps {
     children?: ReactNode;
     variant?: DeploymentSummaryCardVariant;
     isCancelling?: boolean;
-    defaultCommitMessageOpen?: boolean;
     onCancel?: (deploymentID: string) => void;
     onClick?: () => void;
 }

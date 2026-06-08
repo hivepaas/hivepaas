@@ -13,3 +13,4 @@ export * from "./mfa-qr-code";
 export * from "./input";
 export * from "./module-title";
 export * from "./content-block";
+export * from "./logs-viewer";

@@ -1,0 +1,91 @@
+import { useMemo, useState } from "react";
+
+import { cn } from "@/lib/utils";
+import "@patternfly/react-core/dist/styles/base-no-reset.css";
+import { LogViewer } from "@patternfly/react-log-viewer";
+
+import { LogsViewerToolbar } from "./building-blocks";
+import styles from "./logs-viewer.module.scss";
+import type { LogsViewerProps } from "./logs-viewer.types";
+import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./logs-viewer.utils";
+
+const DEFAULT_LOG_VIEWER_HEIGHT = 1_000;
+const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "calc(100vh - 9rem)";
+const DEFAULT_DOWNLOAD_FILE_NAME = "logs.txt";
+
+export function LogsViewer({
+    frames,
+    isStreaming = false,
+    height = DEFAULT_LOG_VIEWER_HEIGHT,
+    fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
+    downloadFileName = DEFAULT_DOWNLOAD_FILE_NAME,
+    defaultShowDebugLogs = false,
+    defaultShowTimestamps = false,
+    defaultTextWrapped = true,
+    className,
+}: LogsViewerProps) {
+    const [isTextWrapped, setIsTextWrapped] = useState(defaultTextWrapped);
+    const [showTimestamps, setShowTimestamps] = useState(defaultShowTimestamps);
+    const [showDebugLogs, setShowDebugLogs] = useState(defaultShowDebugLogs);
+    const [followLogs, setFollowLogs] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const displayedFrames = useMemo(() => buildDisplayedLogFrames(frames, showDebugLogs), [frames, showDebugLogs]);
+    const displayedPlainLines = useMemo(
+        () => displayedFrames.flatMap(frame => getPlainLogLines(frame, showTimestamps)),
+        [displayedFrames, showTimestamps],
+    );
+    const displayedAnsiLines = useMemo(
+        () => displayedFrames.flatMap(frame => getAnsiLogLines(frame, showTimestamps)),
+        [displayedFrames, showTimestamps],
+    );
+    const scrollToRow = followLogs && displayedAnsiLines.length > 0 ? displayedAnsiLines.length - 1 : undefined;
+
+    return (
+        <div
+            className={cn(
+                styles["root"],
+                "min-w-0",
+                className,
+                isFullscreen && "fixed inset-4 z-50 overflow-auto rounded-lg border bg-background p-4 shadow-2xl",
+            )}
+        >
+            <LogViewer
+                data={displayedAnsiLines}
+                hasLineNumbers
+                theme="dark"
+                height={isFullscreen ? fullscreenHeight : height}
+                scrollToRow={scrollToRow}
+                isTextWrapped={isTextWrapped}
+                fastRowHeightEstimationLimit={0}
+                toolbar={
+                    <LogsViewerToolbar
+                        isStreaming={isStreaming}
+                        displayedPlainLines={displayedPlainLines}
+                        downloadFileName={downloadFileName}
+                        isTextWrapped={isTextWrapped}
+                        showTimestamps={showTimestamps}
+                        showDebugLogs={showDebugLogs}
+                        followLogs={followLogs}
+                        isFullscreen={isFullscreen}
+                        onToggleTextWrap={() => {
+                            setIsTextWrapped(current => !current);
+                        }}
+                        onToggleTimestamps={() => {
+                            setShowTimestamps(current => !current);
+                        }}
+                        onToggleDebugLogs={() => {
+                            setShowDebugLogs(current => !current);
+                        }}
+                        onToggleFollowLogs={() => {
+                            setFollowLogs(current => !current);
+                        }}
+                        onToggleFullscreen={() => {
+                            setIsFullscreen(current => !current);
+                        }}
+                    />
+                }
+            />
+        </div>
+    );
+}

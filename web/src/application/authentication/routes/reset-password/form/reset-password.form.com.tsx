@@ -89,7 +89,7 @@ export function ResetPasswordForm({ isPending, onSubmit }: Props) {
         <div className="flex flex-col gap-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Reset password</CardTitle>
+                    <CardTitle>Set your new password</CardTitle>
                     <CardDescription>Enter your new password</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -102,7 +102,7 @@ export function ResetPasswordForm({ isPending, onSubmit }: Props) {
                     >
                         <FieldGroup>
                             <Field>
-                                <FieldLabel htmlFor="password">New password</FieldLabel>
+                                <FieldLabel htmlFor="newPassword">New password</FieldLabel>
                                 <PasswordInput
                                     id="newPassword"
                                     value={newPassword.value}

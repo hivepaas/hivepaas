@@ -4,6 +4,8 @@ import { EyeIcon } from "lucide-react";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 import type { SystemBackupFile } from "~/system-settings/domain";
 
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
+
 import { Button } from "@/components/ui";
 
 import { BackupFileMenuCell } from "./building-blocks";
@@ -42,9 +44,9 @@ function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<Syst
             header: "Name",
         },
         {
-            accessorKey: "size",
+            accessorKey: "sizeBytes",
             header: "Size",
-            cell: ({ row: { original } }) => original.sizeStr,
+            cell: ({ row: { original } }) => getFriendlyDataSize(original.sizeBytes) || "-",
         },
         {
             accessorKey: "storage",

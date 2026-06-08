@@ -33,5 +33,5 @@ export interface ProjectImageBuildSourceSettings {
 
 export interface ProjectImageBuildRepoCacheInfo {
     totalFiles: number;
-    totalSizeHR: string;
+    totalSizeBytes: number;
 }

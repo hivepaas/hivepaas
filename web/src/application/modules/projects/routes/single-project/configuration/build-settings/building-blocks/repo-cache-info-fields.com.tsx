@@ -2,6 +2,7 @@ import { Button } from "@components/ui";
 import type { ProjectImageBuildRepoCacheInfo } from "~/projects/domain";
 
 import { InfoBlock } from "@application/shared/components";
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 interface RepoCacheInfoFieldsProps {
     hasQueried: boolean;
@@ -31,7 +32,7 @@ export function RepoCacheInfoFields({
                 {hasQueried && (
                     <>
                         <span>Total Files: {totalFiles}</span>
-                        <span>Total Size: {cacheInfo?.totalSizeHR ?? "-"}</span>
+                        <span>Total Size: {getFriendlyDataSize(cacheInfo?.totalSizeBytes) || "-"}</span>
                     </>
                 )}
 

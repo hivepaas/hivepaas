@@ -89,7 +89,7 @@ export type Auth_SignIn2FA_Res = ApiResponseBase<{
 export type Auth_ForgotPassword_Req = ApiRequestBase<ForgotPassword>;
 
 export type Auth_ForgotPassword_Res = ApiResponseBase<{
-    linkExpirationMins: number;
+    type: "success";
 }>;
 
 /**

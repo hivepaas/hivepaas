@@ -3,8 +3,8 @@ import {
     ChevronsUpDown,
     LogOut,
     type LucideIcon,
-    MessageSquare,
     MessageSquarePlus,
+    MessagesSquare,
     Monitor,
     Moon,
     Sun,
@@ -144,8 +144,8 @@ export function NavUser({ user }: { user: Profile }) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <MessageSquare />
-                                    Join chat
+                                    <MessagesSquare />
+                                    Join our community chat
                                 </a>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={createFeedbackDialog.actions.open}>

@@ -19,6 +19,9 @@ function useCancel({ onSuccess, ...options }: CancelOptions = {}) {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.apps.deployments.$.find-many-paginated"]],
             });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.deployments.$.find-one-by-id"]],
+            });
             invalidateSingleAppSummaryQueries(queryClient, {
                 projectID: request.projectID,
                 appID: request.appID,

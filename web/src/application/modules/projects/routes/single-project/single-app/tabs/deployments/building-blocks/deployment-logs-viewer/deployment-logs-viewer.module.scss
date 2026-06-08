@@ -1,0 +1,28 @@
+.root {
+  :global(.pf-v6-c-log-viewer) {
+    min-width: 0;
+  }
+
+  :global(.pf-v6-c-log-viewer__main) {
+    overflow: hidden;
+    border-radius: 0.375rem;
+  }
+}
+
+.toolbar {
+  min-width: 0;
+}
+
+// .searchItem {
+//   min-width: 14rem;
+// }
+
+// .search {
+//   width: 14rem;
+// }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}

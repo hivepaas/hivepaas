@@ -17,8 +17,7 @@ export const SystemBackupFileEntitySchema = z.object({
         .nullish()
         .transform(value => value ?? undefined),
     mimetype: z.string(),
-    size: z.number(),
-    sizeStr: z.string(),
+    sizeBytes: z.number(),
     storageType: z.nativeEnum(ESystemBackupFileStorageType),
     storage: SettingsBaseEntitySchema.omit({ description: true }).nullish(),
     updateVer: z.number(),

@@ -30,9 +30,19 @@ export interface AppDeploymentOutput {
     imageTags: string[];
 }
 
-export interface AppDeploymentSettingsSnapshot {
-    activeMethod: EAppDeploymentMethod;
-}
+type AppDeploymentRepoSettingsSnapshot = {
+    activeMethod: typeof EAppDeploymentMethod.Repo;
+    repoSource: {
+        repoUrl: string;
+        repoRef: string;
+    };
+};
+
+type AppDeploymentImageSettingsSnapshot = {
+    activeMethod: typeof EAppDeploymentMethod.Image;
+};
+
+export type AppDeploymentSettingsSnapshot = AppDeploymentRepoSettingsSnapshot | AppDeploymentImageSettingsSnapshot;
 
 export interface AppDeployment {
     id: string;

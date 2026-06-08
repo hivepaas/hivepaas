@@ -17,8 +17,7 @@ export interface SystemBackupFile {
     path: string;
     bucket?: string;
     mimetype: string;
-    size: number;
-    sizeStr: string;
+    sizeBytes: number;
     storageType: ESystemBackupFileStorageType;
     storage?: SystemBackupFileStorage | null;
     updateVer: number;

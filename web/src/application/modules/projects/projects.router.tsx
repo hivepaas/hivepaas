@@ -469,6 +469,16 @@ export const projectsRouter: RouteObject = {
                         };
                     },
                 },
+                {
+                    path: ROUTE.projects.single.apps.single.deployments.details.$pattern,
+                    lazy: async () => {
+                        const { AppDeploymentDetailsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppDeploymentDetailsRoute,
+                        };
+                    },
+                },
                 /**
                  * Single App – Logs
                  */

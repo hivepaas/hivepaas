@@ -2,6 +2,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { NodeDetails } from "~/cluster/domain";
 import { NodeAvailabilityBadge, NodeRoleBadge } from "~/cluster/module-shared/components";
 
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
+
 import { ActionsCell, MenuCell } from "./building-blocks";
 
 const columns: ColumnDef<NodeDetails>[] = [
@@ -47,7 +49,7 @@ const columns: ColumnDef<NodeDetails>[] = [
         cell: ({ row: { original } }) => {
             const { resources } = original;
             if (!resources) return "-";
-            return resources.memoryHR || "-";
+            return getFriendlyDataSize(resources.memoryBytes) || "-";
         },
         meta: {
             align: "center",

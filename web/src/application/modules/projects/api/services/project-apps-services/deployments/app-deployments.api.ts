@@ -6,6 +6,10 @@ import type {
     AppDeployments_Cancel_Res,
     AppDeployments_FindManyPaginated_Req,
     AppDeployments_FindManyPaginated_Res,
+    AppDeployments_FindOneById_Req,
+    AppDeployments_FindOneById_Res,
+    AppDeployments_GetLogsToken_Req,
+    AppDeployments_GetLogsToken_Res,
 } from "~/projects/api/services/project-apps-services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -31,6 +35,44 @@ export class AppDeploymentsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findOneById(
+        request: AppDeployments_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeployments_FindOneById_Res, Error>> {
+        const { projectID, appID, deploymentID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/apps/${appID}/deployments/${deploymentID}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getLogsToken(
+        request: AppDeployments_GetLogsToken_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeployments_GetLogsToken_Res, Error>> {
+        const { projectID, appID, deploymentID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/apps/${appID}/deployments/${deploymentID}/logs/token`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getLogsToken),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

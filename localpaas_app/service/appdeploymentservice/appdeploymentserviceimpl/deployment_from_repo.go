@@ -311,7 +311,7 @@ func (s *service) repoDeployStepImageBuild(
 	logsChan, _ := docker.StartScanningJSONMsg(ctx, resp.Body, batchrecvchan.Options{})
 	for msgs := range logsChan {
 		for _, msg := range msgs {
-			frameCreator := tasklog.NewOutFrame
+			frameCreator := tasklog.NewDebugFrame
 			if msg.Error != nil {
 				err = errors.Join(err, msg.Error)
 				frameCreator = tasklog.NewErrFrame

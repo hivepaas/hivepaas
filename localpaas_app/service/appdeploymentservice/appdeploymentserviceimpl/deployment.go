@@ -170,6 +170,8 @@ func (s *service) saveLogs(
 	}
 
 	if addDurationInfo {
+		_ = logStore.Add(ctx, tasklog.NewOutFrame("---------------------------------",
+			tasklog.TsNow))
 		_ = logStore.Add(ctx, tasklog.NewOutFrame("Deployment finished in "+
 			deployment.GetDuration().String(), tasklog.TsNow))
 	}

@@ -17,6 +17,6 @@ func addLog(
 	if checkoutOpts.LogStore == nil || len(msg) == 0 {
 		return
 	}
-	fn := gofn.If(isErr, tasklog.NewErrFrame, tasklog.NewOutFrame)
+	fn := gofn.If(isErr, tasklog.NewErrFrame, tasklog.NewDebugFrame)
 	_ = checkoutOpts.LogStore.Add(ctx, fn(msg, tasklog.TsNow))
 }

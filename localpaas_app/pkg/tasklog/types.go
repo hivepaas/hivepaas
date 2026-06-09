@@ -12,10 +12,11 @@ import (
 type LogType string
 
 const (
-	LogTypeIn   LogType = "in"
-	LogTypeOut  LogType = "out"
-	LogTypeErr  LogType = "err"
-	LogTypeWarn LogType = "warn"
+	LogTypeIn    LogType = "in"
+	LogTypeOut   LogType = "out"
+	LogTypeErr   LogType = "err"
+	LogTypeWarn  LogType = "warn"
+	LogTypeDebug LogType = "debug"
 )
 
 var (
@@ -86,6 +87,15 @@ func NewErrFrame(data string, ts *time.Time) *LogFrame {
 func NewWarnFrame(data string, ts *time.Time) *LogFrame {
 	f := &LogFrame{
 		Type: LogTypeWarn,
+		Data: data,
+	}
+	f.calcTimestamp(ts)
+	return f
+}
+
+func NewDebugFrame(data string, ts *time.Time) *LogFrame {
+	f := &LogFrame{
+		Type: LogTypeDebug,
 		Data: data,
 	}
 	f.calcTimestamp(ts)

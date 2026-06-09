@@ -105,7 +105,7 @@ function isSsoSuccessPath(path: string | null) {
     return normalizePathname(url?.pathname ?? "") === normalizePathname(ROUTE.auth.sso.success.$route);
 }
 
-function getAuthHandoff(path: string | null) {
+function getAuthHandoff(path: string | null, pageParams: URLSearchParams) {
     const url = parseSameOriginUrl(path);
 
     if (url === null) {
@@ -126,9 +126,20 @@ function getAuthHandoff(path: string | null) {
         return null;
     }
 
+    // Merge sibling page-level params (e.g. `token`) that belong to the handoff
+    // route but ended up at the top level because the `next` value was not
+    // URL-encoded by the server (e.g. /?next=auth/reset-password?userID=X&token=Y).
+    const mergedSearch = new URLSearchParams(url.searchParams);
+
+    for (const [key, value] of pageParams.entries()) {
+        if (key !== "next" && !mergedSearch.has(key)) {
+            mergedSearch.set(key, value);
+        }
+    }
+
     return {
         pathname: redirectTo,
-        search: url.searchParams.toString(),
+        search: mergedSearch.toString(),
     };
 }
 
@@ -184,7 +195,7 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     }
 
     if (!profile && !isAuthGroup) {
-        const authHandoff = isMain ? getAuthHandoff(nextPath) : null;
+        const authHandoff = isMain ? getAuthHandoff(nextPath, params) : null;
 
         return (
             <AppNavigate.Basic

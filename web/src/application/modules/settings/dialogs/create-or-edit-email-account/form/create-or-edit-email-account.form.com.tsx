@@ -472,27 +472,25 @@ export function CreateOrEditEmailAccountForm({
                     </fieldset>
                 </DialogBody>
                 {!isReadOnly && (
-                    <DialogActionFooter>
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={() => {
-                                        void handleSubmit(onTestValid, onInvalid)();
-                                    }}
-                                >
-                                    Test Send Email
-                                </Button>
-                            </div>
+                    <DialogActionFooter className="flex justify-between">
+                        <div className="flex items-center gap-3">
                             <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
+                                type="button"
+                                variant="secondary"
+                                onClick={() => {
+                                    void handleSubmit(onTestValid, onInvalid)();
+                                }}
                             >
-                                Save
+                                Test Send Email
                             </Button>
                         </div>
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
                     </DialogActionFooter>
                 )}
                 {isReadOnly && (

@@ -225,30 +225,28 @@ export function CreateOrEditRegistryAuthForm({
                 </fieldset>
             </DialogBody>
             {!isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                isLoading={isTesting}
-                                onClick={() => {
-                                    void handleSubmit(onTestValid, onInvalid)();
-                                }}
-                            >
-                                Test Connection
-                            </Button>
-                            {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
-                            {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
-                        </div>
+                <DialogActionFooter className="flex justify-between">
+                    <div className="flex items-center gap-3">
                         <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
+                            type="button"
+                            variant="secondary"
+                            isLoading={isTesting}
+                            onClick={() => {
+                                void handleSubmit(onTestValid, onInvalid)();
+                            }}
                         >
-                            Save
+                            Test Connection
                         </Button>
+                        {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
+                        {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
                     </div>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        className="min-w-[100px]"
+                    >
+                        Save
+                    </Button>
                 </DialogActionFooter>
             )}
             {isReadOnly && (

@@ -19,8 +19,10 @@ export interface LogsViewerFrame {
 export interface LogsViewerProps {
     frames: LogsViewerFrame[];
     isStreaming?: boolean;
+    hasLineNumbers?: boolean;
     height?: number | string;
     fullscreenHeight?: number | string;
+    fontSize?: string;
     downloadFileName?: string;
     defaultShowDebugLogs?: boolean;
     defaultShowTimestamps?: boolean;

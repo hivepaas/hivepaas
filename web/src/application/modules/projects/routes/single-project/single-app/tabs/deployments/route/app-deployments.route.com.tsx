@@ -7,7 +7,7 @@ import invariant from "tiny-invariant";
 import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
 import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
 
-import { TableActions } from "@application/shared/components";
+import { AppLink, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
@@ -50,7 +50,20 @@ export function AppDeploymentsRoute() {
     return (
         <section className={cn(listBox)}>
             <div className="flex flex-col gap-5">
-                <TableActions search={{ value: search, onChange: setSearch }} />
+                <TableActions
+                    search={{ value: search, onChange: setSearch }}
+                    renderActions={
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
+                                projectId,
+                                appId,
+                            )}
+                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                            Go to Deployment Settings
+                        </AppLink.Basic>
+                    }
+                />
 
                 <div className="flex flex-col gap-4">
                     {isFetching && deployments.length === 0 ? (

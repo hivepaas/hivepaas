@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { dashedBorderBox } from "@lib/styles";
 import { format } from "date-fns";
-import { Info } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import ReactTimeAgo from "react-time-ago";
 import type { AppDeployment, AppDeploymentOutput, AppDeploymentSourceUser } from "~/projects/domain";
 import {
@@ -34,11 +34,11 @@ const STATUS_CLASS_NAMES: Record<EAppDeploymentStatus, string> = {
 };
 
 const STATUS_BORDER_CLASS_NAMES: Record<EAppDeploymentStatus, string> = {
-    [EAppDeploymentStatus.Done]: "border-green-500",
-    [EAppDeploymentStatus.Failed]: "border-red-500",
-    [EAppDeploymentStatus.InProgress]: "border-purple-400",
-    [EAppDeploymentStatus.NotStarted]: "border-blue-400",
-    [EAppDeploymentStatus.Canceled]: "border-zinc-500",
+    [EAppDeploymentStatus.Done]: "border-l-green-500",
+    [EAppDeploymentStatus.Failed]: "border-l-red-500",
+    [EAppDeploymentStatus.InProgress]: "border-l-purple-400",
+    [EAppDeploymentStatus.NotStarted]: "border-l-blue-400",
+    [EAppDeploymentStatus.Canceled]: "border-l-zinc-500",
 };
 
 function formatDuration(startedAt: Date, endedAt: Date): string {
@@ -208,8 +208,10 @@ export function DeploymentSummaryCard({
     const { output } = deployment;
     const sourceUser = deployment.trigger?.sourceUser;
     const [isCommitMessageOpen, setIsCommitMessageOpen] = useState(false);
+    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isRepo = isRepoDeployment(deployment);
     const isClickable = Boolean(onClick);
+    const shouldShowDetailsContent = variant === "list" || isDetailsContentOpen;
 
     function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
         if (!onClick || (event.key !== "Enter" && event.key !== " ")) {
@@ -224,7 +226,7 @@ export function DeploymentSummaryCard({
         <div
             className={cn(
                 "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status]] : "border-border",
+                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status]] : "border-0",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             )}
@@ -254,10 +256,34 @@ export function DeploymentSummaryCard({
                                 Cancel Deployment
                             </Button>
                         )}
+                        {variant === "details" && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="size-6 text-primary hover:text-primary"
+                                aria-label={
+                                    isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"
+                                }
+                                title={isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"}
+                                aria-expanded={isDetailsContentOpen}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    setIsDetailsContentOpen(current => !current);
+                                }}
+                            >
+                                <ChevronDown
+                                    className={cn(
+                                        "size-4 transition-transform duration-200",
+                                        isDetailsContentOpen && "rotate-180",
+                                    )}
+                                />
+                            </Button>
+                        )}
                     </div>
                 </InfoRow>
 
-                {variant === "details" && (
+                {variant === "details" && shouldShowDetailsContent && (
                     <>
                         <InfoRow label="Started At">
                             <span>{formatDateTime(deployment.startedAt)}</span>
@@ -268,7 +294,7 @@ export function DeploymentSummaryCard({
                     </>
                 )}
 
-                {shouldShowDuration(deployment) && (
+                {shouldShowDetailsContent && shouldShowDuration(deployment) && (
                     <InfoRow label="Duration">
                         <span>
                             {formatDuration(deployment.startedAt, deployment.endedAt ?? now)} from{" "}
@@ -280,13 +306,13 @@ export function DeploymentSummaryCard({
                     </InfoRow>
                 )}
 
-                {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
+                {shouldShowDetailsContent && deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
                     <InfoRow label="Trigger">
                         <Badge className="h-7 bg-emerald-500 px-4 text-white hover:bg-emerald-500/90">Webhook</Badge>
                     </InfoRow>
                 )}
 
-                {sourceUser && (
+                {shouldShowDetailsContent && sourceUser && (
                     <InfoRow label="Trigger">
                         <div className="flex min-w-0 items-center gap-2">
                             <Avatar
@@ -299,7 +325,7 @@ export function DeploymentSummaryCard({
                     </InfoRow>
                 )}
 
-                {isRepo && (
+                {shouldShowDetailsContent && isRepo && (
                     <InfoRow label="Repository">
                         <RepositoryValue
                             repoUrl={deployment.settings.repoSource.repoUrl}
@@ -308,7 +334,8 @@ export function DeploymentSummaryCard({
                     </InfoRow>
                 )}
 
-                {shouldShowCommit(deployment) &&
+                {shouldShowDetailsContent &&
+                    shouldShowCommit(deployment) &&
                     (deployment.output.commitAuthor ||
                         deployment.output.commitHashShort ||
                         deployment.output.commitTitle) && (
@@ -323,18 +350,18 @@ export function DeploymentSummaryCard({
                         </InfoRow>
                     )}
 
-                {output?.commitMessage && isCommitMessageOpen && (
-                    <div className={cn(dashedBorderBox, "sm:col-span-2")}>{output.commitMessage}</div>
+                {shouldShowDetailsContent && output?.commitMessage && isCommitMessageOpen && (
+                    <div className={cn(dashedBorderBox, "sm:col-span-2 whitespace-pre")}>{output.commitMessage}</div>
                 )}
 
-                {output && output.imageTags.length > 0 && (
+                {shouldShowDetailsContent && output && output.imageTags.length > 0 && (
                     <InfoRow label="Docker Image">
                         <span className="break-words">{output.imageTags.join(", ")}</span>
                     </InfoRow>
                 )}
             </dl>
 
-            {children && <div className="mt-5 min-w-0">{children}</div>}
+            {shouldShowDetailsContent && children && <div className="mt-5 min-w-0">{children}</div>}
         </div>
     );
 }

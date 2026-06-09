@@ -2,13 +2,13 @@ import { ELogsViewerFrameType, type LogsViewerFrame } from "./logs-viewer.types"
 
 const BACKSPACE_CHARACTER = String.fromCharCode(8);
 const ANSI_RESET = "\u001B[0m";
-const ANSI_TIMESTAMP_COLOR = "\u001B[90m";
+const ANSI_TIMESTAMP_COLOR = "\u001B[38;2;68;119;221m";
 const ANSI_LOG_COLORS: Record<ELogsViewerFrameType, string> = {
     [ELogsViewerFrameType.In]: "\u001B[36m",
     [ELogsViewerFrameType.Out]: "",
-    [ELogsViewerFrameType.Err]: "\u001B[31m",
-    [ELogsViewerFrameType.Warn]: "\u001B[33m",
-    [ELogsViewerFrameType.Debug]: "\u001B[90m",
+    [ELogsViewerFrameType.Err]: "\u001B[38;2;238;31;31m",
+    [ELogsViewerFrameType.Warn]: "\u001B[38;2;252;212;82m",
+    [ELogsViewerFrameType.Debug]: "\u001B[38;2;121;170;255m",
 };
 
 export function parseLogsViewerFrames(rawMessage: string): LogsViewerFrame[] {

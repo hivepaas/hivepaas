@@ -1,6 +1,7 @@
 .root {
   :global(.pf-v6-c-log-viewer) {
     min-width: 0;
+    --pf-v6-c-log-viewer__list--FontSize: var(--logs-viewer-font-size);
   }
 
   :global(.pf-v6-c-log-viewer__main) {

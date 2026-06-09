@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type CSSProperties, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import "@patternfly/react-core/dist/styles/base-no-reset.css";
@@ -12,12 +12,15 @@ import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./lo
 const DEFAULT_LOG_VIEWER_HEIGHT = 1_000;
 const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "calc(100vh - 9rem)";
 const DEFAULT_DOWNLOAD_FILE_NAME = "logs.txt";
+const DEFAULT_LOG_VIEWER_FONT_SIZE = "0.875rem";
 
 export function LogsViewer({
     frames,
     isStreaming = false,
+    hasLineNumbers = true,
     height = DEFAULT_LOG_VIEWER_HEIGHT,
     fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
+    fontSize = DEFAULT_LOG_VIEWER_FONT_SIZE,
     downloadFileName = DEFAULT_DOWNLOAD_FILE_NAME,
     defaultShowDebugLogs = false,
     defaultShowTimestamps = false,
@@ -40,6 +43,9 @@ export function LogsViewer({
         [displayedFrames, showTimestamps],
     );
     const scrollToRow = followLogs && displayedAnsiLines.length > 0 ? displayedAnsiLines.length - 1 : undefined;
+    const rootStyle = {
+        "--logs-viewer-font-size": fontSize,
+    } as CSSProperties;
 
     return (
         <div
@@ -49,10 +55,11 @@ export function LogsViewer({
                 className,
                 isFullscreen && "fixed inset-4 z-50 overflow-auto rounded-lg border bg-background p-4 shadow-2xl",
             )}
+            style={rootStyle}
         >
             <LogViewer
                 data={displayedAnsiLines}
-                hasLineNumbers
+                hasLineNumbers={hasLineNumbers}
                 theme="dark"
                 height={isFullscreen ? fullscreenHeight : height}
                 scrollToRow={scrollToRow}

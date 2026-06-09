@@ -53,9 +53,9 @@ func (uc *UC) GetSchedJobTaskLogs(
 
 	return &schedjobdto.GetSchedJobTaskLogsResp{
 		Data: &schedjobdto.SchedJobTaskLogsDataResp{
-			Logs:          resp.Logs,
-			LogChan:       resp.LogChan,
-			LogChanCloser: resp.LogChanCloser,
+			Logs:          resp.StaticLogs,
+			LogChan:       resp.RealtimeLogsStream,
+			LogChanCloser: resp.LogsStreamCloser,
 		},
 	}, nil
 }

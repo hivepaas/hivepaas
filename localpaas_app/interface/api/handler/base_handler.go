@@ -340,8 +340,8 @@ func (h *BaseHandler) ParseRequestLang(ctx *gin.Context) translation.Lang {
 func (h *BaseHandler) StreamAppLogs(
 	ctx *gin.Context,
 	staticLogs []*tasklog.LogFrame, // static logs are in DB
-	logChan <-chan []*tasklog.LogFrame, // realtime logs are in redis
-	logChanCloser func() error,
+	realtimeLogsStream <-chan []*tasklog.LogFrame, // realtime logs streaming channel
+	logsStreamCloser func() error,
 	mel *melody.Melody,
 ) {
 	go func() {
@@ -354,14 +354,17 @@ func (h *BaseHandler) StreamAppLogs(
 		}
 
 		// Send the logs retrieved from the channel
-		for log := range logChan {
-			dataBytes := gofn.Must(json.Marshal(log))
-			_ = mel.BroadcastBinaryFilter(dataBytes, func(session *melody.Session) bool {
-				return session.Request == ctx.Request
-			})
+		if realtimeLogsStream != nil {
+			for log := range realtimeLogsStream {
+				dataBytes := gofn.Must(json.Marshal(log))
+				_ = mel.BroadcastBinaryFilter(dataBytes, func(session *melody.Session) bool {
+					return session.Request == ctx.Request
+				})
+			}
 		}
 
 		// Close the session
+		time.Sleep(100 * time.Millisecond) //nolint:mnd
 		for _, session := range gofn.Head(mel.Sessions()) {
 			if session.Request == ctx.Request {
 				_ = session.Close()
@@ -370,8 +373,8 @@ func (h *BaseHandler) StreamAppLogs(
 	}()
 
 	_ = mel.HandleRequest(ctx.Writer, ctx.Request)
-	if logChanCloser != nil {
-		_ = logChanCloser()
+	if logsStreamCloser != nil {
+		_ = logsStreamCloser()
 	}
 }
 

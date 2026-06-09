@@ -21,17 +21,19 @@ const (
 
 func (uc *UC) GetDeploymentLogs(
 	ctx context.Context,
-	_ *basedto.Auth, // BE CAREFUL: If req.Token presents, auth is nil
+	auth *basedto.Auth, // BE CAREFUL: If req.Token presents, auth is nil
 	req *appdeploymentdto.GetDeploymentLogsReq,
 ) (*appdeploymentdto.GetDeploymentLogsResp, error) {
-	tokenClaims, err := uc.userService.ParseConsoleToken(req.Token)
-	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+	if auth == nil {
+		tokenClaims, err := uc.userService.ParseConsoleToken(req.Token)
+		if err != nil {
+			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		}
+		if req.DeploymentID != tokenClaims.TargetID {
+			return nil, apperrors.New(apperrors.ErrTokenInvalid)
+		}
+		req.DeploymentID = tokenClaims.TargetID
 	}
-	if req.DeploymentID != tokenClaims.TargetID {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
-	}
-	req.DeploymentID = tokenClaims.TargetID
 
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID,
 		bunex.SelectRelation("Tasks"),
@@ -61,9 +63,9 @@ func (uc *UC) GetDeploymentLogs(
 
 	return &appdeploymentdto.GetDeploymentLogsResp{
 		Data: &appdeploymentdto.DeploymentLogsDataResp{
-			Logs:          resp.Logs,
-			LogChan:       resp.LogChan,
-			LogChanCloser: resp.LogChanCloser,
+			StaticLogs:         resp.StaticLogs,
+			RealtimeLogsStream: resp.RealtimeLogsStream,
+			LogsStreamCloser:   resp.LogsStreamCloser,
 		},
 	}, nil
 }

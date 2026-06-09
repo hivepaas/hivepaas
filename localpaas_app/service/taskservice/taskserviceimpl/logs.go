@@ -72,7 +72,7 @@ func (s *service) queryRealtimeLogs(
 		// NOTE: we don't want to keep the log stream session forever
 		ctx, _ = context.WithTimeout(ctx, req.LogSessionTimeout) //nolint:govet
 
-		resp.LogChan, resp.LogChanCloser, err = consumer.StartConsuming(ctx, batchrecvchan.Options{
+		resp.RealtimeLogsStream, resp.LogsStreamCloser, err = consumer.StartConsuming(ctx, batchrecvchan.Options{
 			ThresholdPeriod: req.LogBatchThresholdPeriod,
 			MaxItem:         req.LogBatchMaxFrame,
 		})
@@ -84,7 +84,7 @@ func (s *service) queryRealtimeLogs(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		resp.Logs = append(resp.Logs, frames...)
+		resp.StaticLogs = append(resp.StaticLogs, frames...)
 	}
 	return nil
 }
@@ -126,6 +126,6 @@ func (s *service) queryLogsInDB(
 		gofn.Reverse(logs)
 	}
 
-	resp.Logs = append(resp.Logs, taskdto.TransformTaskLogs(logs)...)
+	resp.StaticLogs = append(resp.StaticLogs, taskdto.TransformTaskLogs(logs)...)
 	return nil
 }

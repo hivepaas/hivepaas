@@ -98,7 +98,7 @@ func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
 		// Not a websocket request, return data via body
 		ctx.JSON(http.StatusOK, resp)
 	} else {
-		h.StreamAppLogs(ctx, resp.Data.Logs, resp.Data.LogChan, resp.Data.LogChanCloser, mel)
+		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.RealtimeLogsStream, resp.Data.LogsStreamCloser, mel)
 	}
 }
 

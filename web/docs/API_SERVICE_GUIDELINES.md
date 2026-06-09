@@ -327,3 +327,172 @@ export const MyEntitiesCommands = Object.freeze({ useCreateOne });
 - Query keys added and used consistently.
 - Commands invalidate or update caches appropriately.
 - Public barrel exports are complete and organized.
+
+---
+
+## WebSocket Services
+
+Use this section when adding a real-time WebSocket stream alongside (or instead of) a regular REST surface.
+
+### Pattern overview
+
+```
+REST service (getToken) → WsApi.streamXxx → Result<WebSocketSubscription, Error>
+                                                  ↑
+                               BaseWebSocketApi (this.client.buildUrl / connect)
+```
+
+WebSocket connections cannot carry HTTP headers in the browser. The standard pattern is:
+
+1. Call a REST endpoint (via an existing `BaseApi` service) to obtain a short-lived `?token=` query parameter.
+2. Build the URL and open the socket using `this.client.buildUrl` + `this.client.connect`.
+3. Return `Result<WebSocketSubscription, Error>` — same `Result`/`match` discipline as regular services.
+4. Wrap `this.client.connect` in a `try/catch` and convert with `toWebSocketError` from `@infrastructure/websocket` (synchronous throw guard for malformed URLs).
+
+### Step-by-step
+
+**1) WS service** — extend `BaseWebSocketApi` in a `*.ws-api.ts` file next to the related REST service:
+
+```ts
+import {
+    BaseWebSocketApi,
+    type WebSocketHandlers,
+    type WebSocketSubscription,
+    toWebSocketError,
+} from "@infrastructure/websocket";
+import { Err, Ok, type Result, match } from "oxide.ts";
+
+export class MyEntityLogsWsApi extends BaseWebSocketApi {
+    public constructor(private readonly myEntityApi: MyEntityApi) {
+        super();
+    }
+
+    async streamLogs(
+        request: MyEntity_GetLogsToken_Req,
+        handlers: WebSocketHandlers,
+        signal?: AbortSignal,
+    ): Promise<Result<WebSocketSubscription, Error>> {
+        const tokenResult = await this.myEntityApi.getLogsToken(request, signal);
+
+        return match(tokenResult, {
+            Ok: tokenResponse => {
+                try {
+                    const url = this.client.buildUrl(`my-entity/${encodeURIComponent(request.data.id)}/logs`, {
+                        token: tokenResponse.data.token,
+                        follow: true,
+                    });
+                    return Ok(this.client.connect(url, handlers, { signal, closeOnError: true }));
+                } catch (error) {
+                    return Err(toWebSocketError(error, "Failed to stream logs."));
+                }
+            },
+            Err: error => Err(error),
+        });
+    }
+}
+```
+
+**2) Barrel export** — add the WS service to the area `index.ts` alongside existing REST services.
+
+**3) Context wiring** — register as a nested `logs.$` node under the relevant branch:
+
+```ts
+myEntity: {
+    $: myEntityApi,
+    logs: {
+        $: new MyEntityLogsWsApi(myEntityApi),
+    },
+},
+```
+
+**4) Hook** — expose `streams.subscribe` (analogous to REST `queries`/`mutations`):
+
+```ts
+function createHook() {
+    return function useMyEntityLogsWsApi() {
+        const { api } = use(MyApiContext);
+
+        const streams = useMemo(
+            () => ({
+                subscribe: async (
+                    data: MyEntity_GetLogsToken_Req["data"],
+                    handlers: WebSocketHandlers,
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.myEntity.logs.$.streamLogs({ data }, handlers, signal);
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api],
+        );
+
+        return { streams };
+    };
+}
+
+export const useMyEntityLogsWsApi = createHook();
+```
+
+**5) Consumer component** — use an `AbortController` + `useEffect` cleanup to ensure the socket is closed when the component unmounts or parameters change:
+
+```ts
+useEffect(() => {
+    let isDisposed = false;
+    let subscription: WebSocketSubscription | null = null;
+    const abortController = new AbortController();
+
+    void streams
+        .subscribe(
+            { id },
+            {
+                onMessage: message => {
+                    /* handle message */
+                },
+                onReadyStateChange: readyState => {
+                    if (!isDisposed) setReadyState(readyState);
+                },
+            },
+            abortController.signal,
+        )
+        .then(sub => {
+            if (isDisposed) {
+                sub.close();
+                return;
+            }
+            subscription = sub;
+            setReadyState(sub.getReadyState());
+        })
+        .catch((error: unknown) => {
+            if (!isDisposed) console.error("WS connect failed", error);
+        });
+
+    return () => {
+        isDisposed = true;
+        abortController.abort();
+        subscription?.close();
+    };
+}, [id, streams]);
+```
+
+### Naming conventions
+
+| Artefact                | Suffix / pattern                                                 |
+| ----------------------- | ---------------------------------------------------------------- |
+| WS service              | `<entity>.ws-api.ts`                                             |
+| WS hook                 | `use-<entity>.ws-api.ts`                                         |
+| Handler types re-export | `type MyEntityWsHandlers = WebSocketHandlers`                    |
+| Request type alias      | `MyEntity_StreamXxx_Req = <RestTokenReq>` (reuse REST contracts) |
+| Response type alias     | `MyEntity_StreamXxx_Res = WebSocketSubscription`                 |
+
+### Rules
+
+- WS services must return `Result<WebSocketSubscription, Error>` — never throw from a service method.
+- Always call `toWebSocketError` in the `catch` block around `this.client.connect`.
+- The hook exposes a `streams` object (not `queries`/`mutations`) to signal real-time semantics.
+- Token acquisition flows through an existing `BaseApi` REST service so the axios auth interceptor (token refresh) still runs.
+- No TanStack Query wrapping — WS streams are imperative connections, not cached queries.

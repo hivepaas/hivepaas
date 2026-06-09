@@ -15,7 +15,6 @@ const (
 	MFATotpSetupTokenExp  = 180 * time.Second
 	UserInviteTokenExp    = 7 * timeutil.Day
 	PasswordResetTokenExp = 7 * timeutil.Day
-	ConsoleTokenExp       = 30 * time.Second
 )
 
 // GenerateMFAToken builds MFA token for using in the next step
@@ -108,30 +107,6 @@ func (s *service) ParsePasswordResetToken(token string) (*appentity.PasswordRese
 		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "pwd-reset" {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
-	}
-	return tokenClaims, nil
-}
-
-// GenerateConsoleToken builds token for accessing console or logs
-func (s *service) GenerateConsoleToken(userID, targetID string) (string, error) {
-	token, err := jwtsession.GenerateToken(&appentity.ConsoleTokenClaims{
-		Kind:     "console",
-		UserID:   userID,
-		TargetID: targetID,
-	}, ConsoleTokenExp)
-	if err != nil {
-		return "", apperrors.Wrap(err)
-	}
-	return token, nil
-}
-
-func (s *service) ParseConsoleToken(token string) (*appentity.ConsoleTokenClaims, error) {
-	tokenClaims := &appentity.ConsoleTokenClaims{}
-	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-	}
-	if tokenClaims.Kind != "console" {
 		return nil, apperrors.New(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil

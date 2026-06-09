@@ -2,6 +2,7 @@ package appdeploymentuc
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -25,18 +26,22 @@ func (uc *UC) GetDeploymentLogs(
 	req *appdeploymentdto.GetDeploymentLogsReq,
 ) (*appdeploymentdto.GetDeploymentLogsResp, error) {
 	if auth == nil {
-		tokenClaims, err := uc.userService.ParseConsoleToken(req.Token)
+		key := strings.ReplaceAll(req.Token, "-", ":")
+		ticketInfo, err := uc.consoleTicketRepo.Get(ctx, key)
 		if err != nil {
 			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 		}
-		if req.DeploymentID != tokenClaims.TargetID {
+		if req.DeploymentID != ticketInfo.TargetID || req.AppID != ticketInfo.AppID {
 			return nil, apperrors.New(apperrors.ErrTokenInvalid)
 		}
-		req.DeploymentID = tokenClaims.TargetID
+		// Remove the ticket from redis as this ticket is one-time object
+		_ = uc.consoleTicketRepo.Del(ctx, key)
 	}
 
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID,
-		bunex.SelectRelation("Tasks"),
+		bunex.SelectRelation("Tasks",
+			bunex.SelectColumns("id"),
+		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

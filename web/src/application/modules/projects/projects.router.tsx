@@ -32,6 +32,23 @@ const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     sslCertificates: "projects/:id/configuration/ssl-certificates",
 } as const;
 
+const LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS = {
+    root: "projects/:id/provider-configuration",
+    accessTokens: "projects/:id/provider-configuration/access-tokens",
+    basicAuth: "projects/:id/provider-configuration/basic-auth",
+    cloudStorages: "projects/:id/provider-configuration/cloud-storages",
+    emailAccounts: "projects/:id/provider-configuration/email-accounts",
+    envVariables: "projects/:id/provider-configuration/env-variables",
+    githubApps: "projects/:id/provider-configuration/github-apps",
+    webhooks: "projects/:id/provider-configuration/webhooks",
+    imPlatforms: "projects/:id/provider-configuration/im-platforms",
+    notificationTargets: "projects/:id/provider-configuration/notification-targets",
+    registryAuth: "projects/:id/provider-configuration/registry-auth",
+    secrets: "projects/:id/provider-configuration/secrets",
+    sshKeys: "projects/:id/provider-configuration/ssh-keys",
+    sslCertificates: "projects/:id/provider-configuration/ssl-certificates",
+} as const;
+
 // eslint-disable-next-line react-refresh/only-export-components
 function SingleAppRouteRedirect() {
     const { id, appId } = useParams<{ id: string; appId: string }>();
@@ -144,6 +161,84 @@ export const projectsRouter: RouteObject = {
                     path: ROUTE.projects.single.providerConfiguration.$pattern,
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.root,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.accessTokens,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.basicAuth,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.basicAuth.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.cloudStorages,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.cloudStorages.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.emailAccounts,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.emailAccounts.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.envVariables,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.envVariables.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.githubApps,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.webhooks,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.webhooks.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.imPlatforms,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.imPlatforms.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.notificationTargets,
+                    element: (
+                        <ProjectRouteRedirect
+                            to={ROUTE.projects.single.providerConfiguration.notificationTargets.$route}
+                        />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.registryAuth,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.registryAuth.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.secrets,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.secrets.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.sshKeys,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sshKeys.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.sslCertificates,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sslCertificates.$route} />
                     ),
                 },
                 {

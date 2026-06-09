@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
 import { useParams } from "react-router";
-import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
 import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
@@ -16,6 +15,7 @@ import { useTableState } from "@application/shared/hooks/table";
 import { TablePagination } from "@/components/ui";
 
 import { DeploymentSummaryCard, DeploymentSummaryCardSkeleton, useDeploymentCurrentTime } from "../building-blocks";
+import { showDeploymentCancelToast } from "../utils";
 
 export function AppDeploymentsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
@@ -42,8 +42,8 @@ export function AppDeploymentsRoute() {
     const pageCount = Math.max(1, Math.ceil(meta.page.total / pagination.size));
 
     const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
-        onSuccess: () => {
-            toast.success("Deployment canceled");
+        onSuccess: response => {
+            showDeploymentCancelToast(response);
         },
     });
 

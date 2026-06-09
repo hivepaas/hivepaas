@@ -86,7 +86,8 @@ export class AppDeploymentsApi extends BaseApi {
             from(
                 this.client.v1.post(`/projects/${projectID}/apps/${appID}/deployments/${deploymentID}/cancel`, {}),
             ).pipe(
-                map(() => Ok({ data: { type: "success" } } as const)),
+                map(this.validator.cancel),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

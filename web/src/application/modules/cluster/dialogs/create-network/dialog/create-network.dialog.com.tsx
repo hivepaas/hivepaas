@@ -118,6 +118,7 @@ export function CreateNetworkDialog() {
                     readOnly={!canWrite}
                     isPending={isPending}
                     showAvailableInProjects={scope?.type !== "project"}
+                    showProjectNamePrefixNote={scope?.type === "project"}
                     onSubmit={onSubmit}
                 >
                     <DialogActionFooter className="flex justify-end">

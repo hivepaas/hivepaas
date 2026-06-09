@@ -38,5 +38,5 @@ export type AppDeployments_Cancel_Req = ApiRequestBase<{
 }>;
 
 export type AppDeployments_Cancel_Res = ApiResponseBase<{
-    type: "success";
+    canceled: boolean;
 }>;

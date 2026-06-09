@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { Avatar, Button } from "@components/ui";
-import { PlusCircle } from "lucide-react";
+import { Avatar } from "@components/ui";
 import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
 import { useProjectUserAccessesDialog } from "~/projects/dialogs/project-user-accesses";
@@ -62,7 +61,7 @@ function View({ projectId }: Props) {
         },
         {
             route: ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId),
-            label: "Provider Configuration",
+            label: "Provider Settings",
             activePathPrefixes: [ROUTE.projects.single.providerConfiguration.$route(projectId)],
         },
         {
@@ -71,6 +70,11 @@ function View({ projectId }: Props) {
             activePathPrefixes: [ROUTE.projects.single.clusterResources.$route(projectId)],
         },
     ];
+
+    function openProjectUserAccessesDialog() {
+        projectUserAccessesDialog.actions.open(project.id, project.name);
+    }
+
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
             <div className="flex items-center justify-between gap-3">
@@ -133,30 +137,34 @@ function View({ projectId }: Props) {
                             <span className="text-sm text-muted-foreground">Access</span>
                             <div className="flex -space-x-2">
                                 {visibleAccessUsers.map(user => (
-                                    <Avatar
+                                    <button
                                         key={user.id}
-                                        name={user.fullName || user.email || user.username}
-                                        src={user.photo}
-                                        className="size-8 border-2 border-background"
-                                    />
+                                        type="button"
+                                        aria-label="Manage project access"
+                                        title="Manage project access"
+                                        className="rounded-full cursor-pointer bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        onClick={openProjectUserAccessesDialog}
+                                    >
+                                        <Avatar
+                                            name={user.fullName || user.email || user.username}
+                                            src={user.photo}
+                                            className="size-8 border-2 border-background"
+                                        />
+                                    </button>
                                 ))}
                                 {extraAccessUsers > 0 && (
-                                    <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary/10 text-xs font-semibold text-primary">
+                                    <button
+                                        type="button"
+                                        aria-label="Manage project access"
+                                        title="Manage project access"
+                                        className="flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary/10 p-0 text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        onClick={openProjectUserAccessesDialog}
+                                    >
                                         +{extraAccessUsers}
-                                    </span>
+                                    </button>
                                 )}
                             </div>
                         </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                projectUserAccessesDialog.actions.open(project.id, project.name);
-                            }}
-                        >
-                            <PlusCircle className="size-4" />
-                            Add User
-                        </Button>
                     </div>
                 </div>
             </div>

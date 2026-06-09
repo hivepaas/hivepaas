@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
 import { useParams } from "react-router";
-import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
 import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
@@ -14,6 +13,7 @@ import {
     DeploymentSummaryCardSkeleton,
     useDeploymentCurrentTime,
 } from "../../building-blocks";
+import { showDeploymentCancelToast } from "../../utils";
 
 const DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
@@ -58,8 +58,8 @@ export function AppDeploymentDetailsRoute() {
     const now = useDeploymentCurrentTime(hasActiveDeployment);
 
     const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
-        onSuccess: () => {
-            toast.success("Deployment canceled");
+        onSuccess: response => {
+            showDeploymentCancelToast(response);
         },
     });
 

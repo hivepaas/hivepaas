@@ -57,7 +57,7 @@ function View({ projectId }: Props) {
         },
         {
             route: ROUTE.projects.single.configuration.general.$route(projectId),
-            label: "Configuration",
+            label: "Settings",
             activePathPrefixes: [ROUTE.projects.single.configuration.$route(projectId)],
         },
         {

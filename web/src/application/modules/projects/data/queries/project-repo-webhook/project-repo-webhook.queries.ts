@@ -6,7 +6,7 @@ import type {
     ProjectRepoWebhook_FindOneById_Req,
     ProjectRepoWebhook_FindOneById_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
 type FindManyPaginatedReq = ProjectRepoWebhook_FindManyPaginated_Req["data"];
 type FindManyPaginatedRes = ProjectRepoWebhook_FindManyPaginated_Res;
@@ -21,6 +21,7 @@ function useFindManyPaginated(
         queryKey: [QK["projects.repo-webhook.$.find-many-paginated"], request],
         queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }

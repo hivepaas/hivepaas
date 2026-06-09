@@ -8,7 +8,7 @@ import {
     type Projects_FindOneById_Req,
     type Projects_FindOneById_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
 import { useProfileContext } from "@application/shared/context";
 import { useProjectPermissionsStore } from "@application/shared/permissions/store";
@@ -29,6 +29,7 @@ function useFindManyPaginated(request: FindManyPaginatedReq = {}, options: FindM
         queryKey: [QK["projects.$.find-many-paginated"], request],
         queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }

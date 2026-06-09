@@ -6,7 +6,7 @@ import type {
     ProjectSecrets_FindOneById_Req,
     ProjectSecrets_FindOneById_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
 /**
  * Find many project secrets paginated query
@@ -23,6 +23,7 @@ function useFindManyPaginated(request: FindManyPaginatedReq, options: FindManyPa
         queryKey: [QK["projects.secrets.$.find-many-paginated"], request],
         queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }

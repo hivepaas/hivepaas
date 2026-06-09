@@ -170,7 +170,7 @@ export function JoinNewNodeForm({ readOnly = false, onSubmit, onMethodChange, on
                     {children}
                 </DialogBody>
                 {method === EJoinNodeMethod.RunCommandViaSSH ? (
-                    <DialogActionFooter>
+                    <DialogActionFooter className="flex justify-end">
                         <Button
                             type="submit"
                             disabled={readOnly}

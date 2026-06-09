@@ -6,7 +6,7 @@ import type {
     ProjectNotification_FindOneById_Req,
     ProjectNotification_FindOneById_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
 type FindManyPaginatedReq = ProjectNotification_FindManyPaginated_Req["data"];
 type FindManyPaginatedRes = ProjectNotification_FindManyPaginated_Res;
@@ -21,6 +21,7 @@ function useFindManyPaginated(
         queryKey: [QK["projects.notifications.$.find-many-paginated"], request],
         queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }

@@ -17,7 +17,12 @@ interface RateLimitConfigSectionProps {
     onRemove?: () => void;
 }
 
-export function RateLimitConfigSection({ prefix, autoExpandToken, readOnly = false, onRemove }: RateLimitConfigSectionProps) {
+export function RateLimitConfigSection({
+    prefix,
+    autoExpandToken,
+    readOnly = false,
+    onRemove,
+}: RateLimitConfigSectionProps) {
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (autoExpandToken !== undefined) {
@@ -59,7 +64,7 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, readOnly = fal
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />
@@ -67,23 +72,25 @@ export function RateLimitConfigSection({ prefix, autoExpandToken, readOnly = fal
                             <ChevronRight className="size-4 shrink-0" />
                         )}
                         Rate Limit Configuration (docs
-                        <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
-                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            [1]
-                        </a>{" "}
-                        ,
-                        <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
-                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            [2]
-                        </a>{" "}
+                        <span className="ml-1">
+                            <a
+                                className="text-xs text-blue-500 hover:text-blue-600"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                [1]
+                            </a>{" "}
+                            ,
+                            <a
+                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                [2]
+                            </a>
+                        </span>{" "}
                         )
                     </button>
                 </CollapsibleTrigger>

@@ -13,13 +13,14 @@
   min-width: 0;
 }
 
-// .searchItem {
-//   min-width: 14rem;
-// }
+.searchItem {
+  min-width: 14rem;
+}
 
-// .search {
-//   width: 14rem;
-// }
+.search {
+  width: 14rem;
+  max-width: 100%;
+}
 
 .actions {
   display: flex;

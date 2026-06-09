@@ -345,32 +345,32 @@ export const ROUTE = {
             },
 
             configuration: {
-                $pattern: "projects/:id/configuration",
-                $route: (id: string) => `/projects/${id}/configuration/`,
+                $pattern: "projects/:id/settings",
+                $route: (id: string) => `/projects/${id}/settings/`,
 
                 general: {
-                    $pattern: "projects/:id/configuration/general",
-                    $route: (id: string) => `/projects/${id}/configuration/general/`,
+                    $pattern: "projects/:id/settings/general",
+                    $route: (id: string) => `/projects/${id}/settings/general/`,
                 },
 
                 buildSettings: {
-                    $pattern: "projects/:id/configuration/build-settings",
-                    $route: (id: string) => `/projects/${id}/configuration/build-settings/`,
+                    $pattern: "projects/:id/settings/build-settings",
+                    $route: (id: string) => `/projects/${id}/settings/build-settings/`,
                 },
 
                 storageSettings: {
-                    $pattern: "projects/:id/configuration/storage-settings",
-                    $route: (id: string) => `/projects/${id}/configuration/storage-settings/`,
+                    $pattern: "projects/:id/settings/storage-settings",
+                    $route: (id: string) => `/projects/${id}/settings/storage-settings/`,
                 },
 
                 domainSettings: {
-                    $pattern: "projects/:id/configuration/domain-settings",
-                    $route: (id: string) => `/projects/${id}/configuration/domain-settings/`,
+                    $pattern: "projects/:id/settings/domain-settings",
+                    $route: (id: string) => `/projects/${id}/settings/domain-settings/`,
                 },
 
                 dangerZone: {
-                    $pattern: "projects/:id/configuration/danger-zone",
-                    $route: (id: string) => `/projects/${id}/configuration/danger-zone/`,
+                    $pattern: "projects/:id/settings/danger-zone",
+                    $route: (id: string) => `/projects/${id}/settings/danger-zone/`,
                 },
             },
 

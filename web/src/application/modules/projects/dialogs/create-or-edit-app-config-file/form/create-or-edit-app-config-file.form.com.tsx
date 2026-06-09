@@ -342,7 +342,7 @@ export function CreateOrEditAppConfigFileForm({
                         </>
                     )}
                 </DialogBody>
-                <DialogActionFooter>
+                <DialogActionFooter className="flex justify-end">
                     <Button
                         type="submit"
                         isLoading={isPending}

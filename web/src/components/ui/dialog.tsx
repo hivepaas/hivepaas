@@ -113,7 +113,7 @@ function DialogActionFooter({ className, ...props }: React.ComponentProps<"div">
     return (
         <div
             data-slot="dialog-action-footer"
-            className={cn("shrink-0 border-t bg-background px-6 pt-4 pb-6", className)}
+            className={cn("shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-end", className)}
             {...props}
         />
     );

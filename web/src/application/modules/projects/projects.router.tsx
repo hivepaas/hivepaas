@@ -7,6 +7,15 @@ async function getLazyComponents() {
     return await import("./projects.module");
 }
 
+const LEGACY_PROJECT_SETTINGS_PATTERNS = {
+    root: "projects/:id/configuration",
+    general: "projects/:id/configuration/general",
+    buildSettings: "projects/:id/configuration/build-settings",
+    storageSettings: "projects/:id/configuration/storage-settings",
+    domainSettings: "projects/:id/configuration/domain-settings",
+    dangerZone: "projects/:id/configuration/danger-zone",
+} as const;
+
 const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     accessTokens: "projects/:id/configuration/access-tokens",
     basicAuth: "projects/:id/configuration/basic-auth",
@@ -106,6 +115,30 @@ export const projectsRouter: RouteObject = {
                 {
                     path: ROUTE.projects.single.configuration.$pattern,
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.general.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.root,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.general.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.general,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.general.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.buildSettings,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.buildSettings.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.storageSettings,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.storageSettings.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.domainSettings,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.domainSettings.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.dangerZone,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.dangerZone.$route} />,
                 },
                 {
                     path: ROUTE.projects.single.providerConfiguration.$pattern,

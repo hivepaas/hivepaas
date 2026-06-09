@@ -6,7 +6,7 @@ import type {
     ProjectGitCredentials_FindManyRepos_Req,
     ProjectGitCredentials_FindManyRepos_Res,
 } from "~/projects/api/services";
-import { QK } from "~/projects/data/constants";
+import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
 type FindManyPaginatedReq = ProjectGitCredentials_FindManyPaginated_Req["data"];
 type FindManyPaginatedRes = ProjectGitCredentials_FindManyPaginated_Res;
@@ -21,6 +21,7 @@ function useFindManyPaginated(
         queryKey: [QK["projects.git-credentials.$.find-many-paginated"], request],
         queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }
@@ -38,6 +39,7 @@ function useFindManyRepos(
         queryKey: [QK["projects.git-credentials.$.find-many-repos"], request],
         queryFn: ({ signal }) => queries.findManyRepos(request, signal),
         placeholderData: keepPreviousData,
+        ...PROJECTS_LIST_QUERY_OPTIONS,
         ...options,
     });
 }

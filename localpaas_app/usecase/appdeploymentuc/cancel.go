@@ -20,6 +20,7 @@ func (uc *UC) CancelDeployment(
 	auth *basedto.Auth,
 	req *appdeploymentdto.CancelDeploymentReq,
 ) (*appdeploymentdto.CancelDeploymentResp, error) {
+	canceled := false
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		deployment, err := uc.deploymentRepo.GetByID(ctx, db, req.AppID, req.DeploymentID,
 			bunex.SelectFor("UPDATE OF deployment SKIP LOCKED"),
@@ -40,6 +41,7 @@ func (uc *UC) CancelDeployment(
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
+			canceled = true
 			return nil
 		}
 
@@ -67,5 +69,7 @@ func (uc *UC) CancelDeployment(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appdeploymentdto.CancelDeploymentResp{}, nil
+	return &appdeploymentdto.CancelDeploymentResp{
+		Data: &appdeploymentdto.CancelDeploymentDataResp{Canceled: canceled},
+	}, nil
 }

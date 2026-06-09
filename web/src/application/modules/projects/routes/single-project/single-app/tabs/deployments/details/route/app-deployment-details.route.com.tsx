@@ -64,7 +64,7 @@ export function AppDeploymentDetailsRoute() {
     });
 
     return (
-        <section className={cn(listBox)}>
+        <section className={cn(listBox, "p-0")}>
             <div className="flex flex-col gap-5">
                 {isFetching && !deployment ? (
                     <DeploymentSummaryCardSkeleton variant="details" />

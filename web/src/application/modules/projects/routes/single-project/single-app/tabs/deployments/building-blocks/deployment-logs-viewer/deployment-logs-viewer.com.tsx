@@ -80,6 +80,8 @@ export function DeploymentLogsViewer({ projectID, appID, deploymentID }: Deploym
         <LogsViewer
             frames={logs}
             isStreaming={isStreaming}
+            hasLineNumbers={false}
+            fontSize="0.875rem"
             downloadFileName="deployment-logs.txt"
         />
     );

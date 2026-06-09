@@ -1,11 +1,14 @@
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
-import { Outlet, type RouteObject } from "react-router";
+import { Navigate, Outlet, type RouteObject } from "react-router";
 
 import { ConditionalModule } from "@application/shared/permissions";
 
 async function getLazyComponents() {
     return await import("./user-management.module");
 }
+
+const LEGACY_PROFILE_API_KEYS_PATTERN = "current-user/profile/api-keys";
+
 export const userManagementRouter: RouteObject = {
     lazy: async () => {
         const { UserManagementDialogsContainer } = await getLazyComponents();
@@ -118,6 +121,15 @@ export const userManagementRouter: RouteObject = {
                             Component: ProfileApiKeysRoute,
                         };
                     },
+                },
+                {
+                    path: LEGACY_PROFILE_API_KEYS_PATTERN,
+                    element: (
+                        <Navigate
+                            to={ROUTE.currentUser.profileApiKeys.$route}
+                            replace
+                        />
+                    ),
                 },
             ],
         },

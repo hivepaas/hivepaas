@@ -1,6 +1,7 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    AppDeployments_Cancel_Res,
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Res,
     AppDeployments_GetLogsToken_Res,
@@ -147,6 +148,13 @@ const GetLogsTokenSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const CancelSchema = z.object({
+    data: z.object({
+        canceled: z.boolean(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppDeploymentsApiValidator {
     findManyPaginated = (response: AxiosResponse): AppDeployments_FindManyPaginated_Res => {
         return parseApiResponse({
@@ -166,6 +174,13 @@ export class AppDeploymentsApiValidator {
         return parseApiResponse({
             response,
             schema: GetLogsTokenSchema,
+        });
+    };
+
+    cancel = (response: AxiosResponse): AppDeployments_Cancel_Res => {
+        return parseApiResponse({
+            response,
+            schema: CancelSchema,
         });
     };
 }

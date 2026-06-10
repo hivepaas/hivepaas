@@ -137,6 +137,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     const showClear = allowClear && !disabled && !loading && value != null && value !== "";
 
     const handleClear = (e: React.MouseEvent) => {
+        e.preventDefault();
         e.stopPropagation();
         onChange?.(null, null);
         setSearch("");
@@ -152,6 +153,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                 >
                     <PopoverTrigger asChild>
                         <Button
+                            type="button"
                             variant="outline"
                             role="combobox"
                             aria-expanded={open}
@@ -185,6 +187,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                         className="ml-2 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
                                         onPointerDown={e => {
                                             e.preventDefault();
+                                            e.stopPropagation();
                                         }}
                                         onClick={handleClear}
                                     >

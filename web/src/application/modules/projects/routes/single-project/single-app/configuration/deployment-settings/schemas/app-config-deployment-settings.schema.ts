@@ -6,11 +6,13 @@ const SettingsRefSchema = z.object({
     name: z.string(),
 });
 
+const OptionalSettingsRefSchema = SettingsRefSchema.nullish();
+
 const NotificationSchema = z.object({
     successUseDefault: z.boolean(),
-    success: SettingsRefSchema.optional(),
+    success: OptionalSettingsRefSchema,
     failureUseDefault: z.boolean(),
-    failure: SettingsRefSchema.optional(),
+    failure: OptionalSettingsRefSchema,
 });
 
 const BaseDeploymentSettingsSchema = z.object({
@@ -33,11 +35,11 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
             gitSubmodulesEnabled: z.boolean(),
             gitLfsEnabled: z.boolean(),
         }),
-        credentials: SettingsRefSchema.optional(),
+        credentials: OptionalSettingsRefSchema,
         dockerfilePath: z.string().optional(),
         imageName: z.string().optional(),
         imageTags: z.string().optional(),
-        pushToRegistry: SettingsRefSchema.optional(),
+        pushToRegistry: OptionalSettingsRefSchema,
     }),
 });
 
@@ -45,7 +47,7 @@ const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
     activeMethod: z.literal(EAppDeploymentMethod.Image),
     imageSource: z.object({
         image: z.string().min(1, "Docker Image is required"),
-        registryAuth: SettingsRefSchema.optional(),
+        registryAuth: OptionalSettingsRefSchema,
     }),
 });
 

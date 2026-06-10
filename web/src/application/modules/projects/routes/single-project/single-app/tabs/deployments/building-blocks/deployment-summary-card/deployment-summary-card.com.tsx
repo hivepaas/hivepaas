@@ -158,38 +158,45 @@ function CommitValue({
             )}
             {output.commitTitle && (
                 <>
-                    {(output.commitAuthor || output.commitHashShort) && <span>-</span>}
-                    {commitURL ? (
-                        <a
-                            href={commitURL}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="min-w-0 max-w-full truncate underline underline-offset-4 hover:text-primary"
-                            title={output.commitTitle}
-                            onClick={stopCardClick}
-                        >
-                            {output.commitTitle}
-                        </a>
-                    ) : (
-                        <span className="min-w-0 max-w-full truncate">{output.commitTitle}</span>
-                    )}
-                    {hasCommitMessage && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            className="size-6 text-primary hover:text-primary"
-                            aria-label="Toggle commit message"
-                            title="Toggle commit message"
-                            aria-pressed={isCommitMessageOpen}
-                            onClick={event => {
-                                event.stopPropagation();
-                                onToggleCommitMessage();
-                            }}
-                        >
-                            <Info className="size-4" />
-                        </Button>
-                    )}
+                    {(output.commitAuthor || output.commitHashShort) && <span className="shrink-0">-</span>}
+                    <span className="flex min-w-0 flex-1 items-center gap-x-1">
+                        {commitURL ? (
+                            <a
+                                href={commitURL}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="min-w-0 flex-1 truncate underline underline-offset-4 hover:text-primary"
+                                title={output.commitTitle}
+                                onClick={stopCardClick}
+                            >
+                                {output.commitTitle}
+                            </a>
+                        ) : (
+                            <span
+                                className="min-w-0 flex-1 truncate"
+                                title={output.commitTitle}
+                            >
+                                {output.commitTitle}
+                            </span>
+                        )}
+                        {hasCommitMessage && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="size-6 shrink-0 text-primary hover:text-primary"
+                                aria-label="Toggle commit message"
+                                title="Toggle commit message"
+                                aria-pressed={isCommitMessageOpen}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    onToggleCommitMessage();
+                                }}
+                            >
+                                <Info className="size-4" />
+                            </Button>
+                        )}
+                    </span>
                 </>
             )}
         </div>
@@ -351,7 +358,9 @@ export function DeploymentSummaryCard({
                     )}
 
                 {shouldShowDetailsContent && output?.commitMessage && isCommitMessageOpen && (
-                    <div className={cn(dashedBorderBox, "sm:col-span-2 whitespace-pre")}>{output.commitMessage}</div>
+                    <div className={cn(dashedBorderBox, "sm:col-span-2 break-words whitespace-pre-wrap")}>
+                        {output.commitMessage}
+                    </div>
                 )}
 
                 {shouldShowDetailsContent && output && output.imageTags.length > 0 && (

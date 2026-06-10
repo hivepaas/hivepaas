@@ -62,7 +62,7 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                                 return;
                             }
 
-                            credentialsField.onChange(option ?? undefined);
+                            credentialsField.onChange(option ?? null);
                         }}
                         onSearch={setSearchQuery}
                         placeholder="Select git credentials"

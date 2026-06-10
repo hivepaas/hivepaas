@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
@@ -18,7 +18,7 @@ import { showDeploymentCancelToast } from "../../utils";
 const DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
 function shouldPollDeploymentDetails(status?: EAppDeploymentStatus): boolean {
-    return status === EAppDeploymentStatus.NotStarted || status === EAppDeploymentStatus.InProgress;
+    return status === EAppDeploymentStatus.NotStarted;
 }
 
 export function AppDeploymentDetailsRoute() {
@@ -36,7 +36,11 @@ export function AppDeploymentDetailsRoute() {
     invariant(appId, "appId must be defined");
     invariant(deploymentId, "deploymentId must be defined");
 
-    const { data: deploymentResponse, isFetching } = AppDeploymentsQueries.useFindOneById(
+    const {
+        data: deploymentResponse,
+        isFetching,
+        refetch: refetchDeployment,
+    } = AppDeploymentsQueries.useFindOneById(
         {
             projectID: projectId,
             appID: appId,
@@ -56,6 +60,9 @@ export function AppDeploymentDetailsRoute() {
         [deployment?.status],
     );
     const now = useDeploymentCurrentTime(hasActiveDeployment);
+    const handleStreamClosedWhileInProgress = useCallback(() => {
+        void refetchDeployment();
+    }, [refetchDeployment]);
 
     const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
         onSuccess: response => {
@@ -86,6 +93,8 @@ export function AppDeploymentDetailsRoute() {
                             projectID={projectId}
                             appID={appId}
                             deploymentID={deploymentId}
+                            status={deployment.status}
+                            onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </DeploymentSummaryCard>
                 ) : (

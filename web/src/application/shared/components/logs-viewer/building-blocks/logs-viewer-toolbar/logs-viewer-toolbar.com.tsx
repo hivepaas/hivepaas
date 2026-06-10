@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui";
+
 import styles from "../../logs-viewer.module.scss";
 import type { LogsViewerToolbarProps } from "../../logs-viewer.types";
 import { LogsViewerToolbarIconButton } from "../logs-viewer-toolbar-icon-button";
@@ -31,6 +33,7 @@ function downloadTextFile(fileName: string, content: string) {
 
 export function LogsViewerToolbar({
     isStreaming,
+    isRefreshPending,
     displayedPlainLines,
     downloadFileName,
     isTextWrapped,
@@ -43,6 +46,7 @@ export function LogsViewerToolbar({
     onToggleDebugLogs,
     onToggleFollowLogs,
     onToggleFullscreen,
+    onRefresh,
 }: LogsViewerToolbarProps) {
     const textContent = displayedPlainLines.join("\n");
 
@@ -60,6 +64,17 @@ export function LogsViewerToolbar({
                                 <LoaderCircle className="size-4 animate-spin" />
                                 streaming
                             </span>
+                        )}
+                        {!isStreaming && onRefresh && (
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto p-0 text-sm text-primary"
+                                isLoading={isRefreshPending}
+                                onClick={onRefresh}
+                            >
+                                Refresh
+                            </Button>
                         )}
                     </div>
                 </ToolbarItem>

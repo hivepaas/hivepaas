@@ -17,6 +17,7 @@ const DEFAULT_LOG_VIEWER_FONT_SIZE = "0.875rem";
 export function LogsViewer({
     frames,
     isStreaming = false,
+    isRefreshPending = false,
     hasLineNumbers = true,
     height = DEFAULT_LOG_VIEWER_HEIGHT,
     fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
@@ -26,6 +27,7 @@ export function LogsViewer({
     defaultShowTimestamps = false,
     defaultTextWrapped = true,
     className,
+    onRefresh,
 }: LogsViewerProps) {
     const [isTextWrapped, setIsTextWrapped] = useState(defaultTextWrapped);
     const [showTimestamps, setShowTimestamps] = useState(defaultShowTimestamps);
@@ -72,6 +74,7 @@ export function LogsViewer({
                 toolbar={
                     <LogsViewerToolbar
                         isStreaming={isStreaming}
+                        isRefreshPending={isRefreshPending}
                         displayedPlainLines={displayedPlainLines}
                         downloadFileName={downloadFileName}
                         isTextWrapped={isTextWrapped}
@@ -94,6 +97,7 @@ export function LogsViewer({
                         onToggleFullscreen={() => {
                             setIsFullscreen(current => !current);
                         }}
+                        onRefresh={onRefresh}
                     />
                 }
             />

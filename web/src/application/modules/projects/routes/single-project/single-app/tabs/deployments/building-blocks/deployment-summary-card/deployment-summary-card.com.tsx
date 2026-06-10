@@ -370,7 +370,7 @@ export function DeploymentSummaryCard({
                 )}
             </dl>
 
-            {shouldShowDetailsContent && children && <div className="mt-5 min-w-0">{children}</div>}
+            {children && <div className="mt-5 min-w-0">{children}</div>}
         </div>
     );
 }

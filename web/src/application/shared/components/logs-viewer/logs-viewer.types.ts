@@ -19,6 +19,7 @@ export interface LogsViewerFrame {
 export interface LogsViewerProps {
     frames: LogsViewerFrame[];
     isStreaming?: boolean;
+    isRefreshPending?: boolean;
     hasLineNumbers?: boolean;
     height?: number | string;
     fullscreenHeight?: number | string;
@@ -28,10 +29,12 @@ export interface LogsViewerProps {
     defaultShowTimestamps?: boolean;
     defaultTextWrapped?: boolean;
     className?: string;
+    onRefresh?: () => void;
 }
 
 export interface LogsViewerToolbarProps {
     isStreaming: boolean;
+    isRefreshPending: boolean;
     displayedPlainLines: string[];
     downloadFileName: string;
     isTextWrapped: boolean;
@@ -44,6 +47,7 @@ export interface LogsViewerToolbarProps {
     onToggleDebugLogs: () => void;
     onToggleFollowLogs: () => void;
     onToggleFullscreen: () => void;
+    onRefresh?: () => void;
 }
 
 export interface LogsViewerToolbarIconButtonProps {

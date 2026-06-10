@@ -28,6 +28,8 @@ export interface LogsViewerProps {
     defaultShowDebugLogs?: boolean;
     defaultShowTimestamps?: boolean;
     defaultTextWrapped?: boolean;
+    toolbarStart?: ReactNode;
+    toolbarFilters?: ReactNode;
     className?: string;
     onRefresh?: () => void;
 }
@@ -42,6 +44,8 @@ export interface LogsViewerToolbarProps {
     showDebugLogs: boolean;
     followLogs: boolean;
     isFullscreen: boolean;
+    toolbarStart?: ReactNode;
+    toolbarFilters?: ReactNode;
     onToggleTextWrap: () => void;
     onToggleTimestamps: () => void;
     onToggleDebugLogs: () => void;

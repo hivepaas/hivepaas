@@ -26,6 +26,8 @@ export function LogsViewer({
     defaultShowDebugLogs = false,
     defaultShowTimestamps = false,
     defaultTextWrapped = true,
+    toolbarStart,
+    toolbarFilters,
     className,
     onRefresh,
 }: LogsViewerProps) {
@@ -82,6 +84,8 @@ export function LogsViewer({
                         showDebugLogs={showDebugLogs}
                         followLogs={followLogs}
                         isFullscreen={isFullscreen}
+                        toolbarStart={toolbarStart}
+                        toolbarFilters={toolbarFilters}
                         onToggleTextWrap={() => {
                             setIsTextWrapped(current => !current);
                         }}

@@ -41,6 +41,8 @@ export function LogsViewerToolbar({
     showDebugLogs,
     followLogs,
     isFullscreen,
+    toolbarStart,
+    toolbarFilters,
     onToggleTextWrap,
     onToggleTimestamps,
     onToggleDebugLogs,
@@ -57,27 +59,31 @@ export function LogsViewerToolbar({
         >
             <ToolbarContent alignItems="center">
                 <ToolbarItem>
-                    <div className="flex min-w-0 items-center gap-3">
-                        <span className="text-sm font-semibold text-foreground">Logs</span>
-                        {isStreaming && (
-                            <span className="flex items-center gap-2 text-sm text-rose-500">
-                                <LoaderCircle className="size-4 animate-spin" />
-                                streaming
-                            </span>
-                        )}
-                        {!isStreaming && onRefresh && (
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-sm text-primary"
-                                isLoading={isRefreshPending}
-                                onClick={onRefresh}
-                            >
-                                Refresh
-                            </Button>
-                        )}
-                    </div>
+                    {toolbarStart ?? (
+                        <div className="flex min-w-0 items-center gap-3">
+                            <span className="text-sm font-semibold text-foreground">Logs</span>
+                            {isStreaming && (
+                                <span className="flex items-center gap-2 text-sm text-rose-500">
+                                    <LoaderCircle className="size-4 animate-spin" />
+                                    streaming
+                                </span>
+                            )}
+                            {!isStreaming && onRefresh && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm text-primary"
+                                    isLoading={isRefreshPending}
+                                    onClick={onRefresh}
+                                >
+                                    Refresh
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </ToolbarItem>
+
+                {toolbarFilters && <ToolbarItem className={styles["filters"]}>{toolbarFilters}</ToolbarItem>}
 
                 <ToolbarItem
                     align={{ default: "alignEnd" }}

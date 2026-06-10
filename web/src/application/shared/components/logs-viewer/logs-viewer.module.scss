@@ -34,12 +34,16 @@
 }
 
 .searchItem {
-  min-width: 14rem;
+  // min-width: 14rem;
 }
 
 .search {
-  width: 14rem;
+  // width: 14rem;
   max-width: 100%;
+}
+
+.filters {
+  min-width: 0;
 }
 
 .actions {

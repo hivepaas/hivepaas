@@ -10,6 +10,25 @@
   }
 }
 
+.fullscreen {
+  :global(.pf-v6-c-log-viewer) {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  :global(.pf-v6-c-log-viewer__header) {
+    flex: 0 0 auto;
+  }
+
+  :global(.pf-v6-c-log-viewer__main) {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+}
+
 .toolbar {
   min-width: 0;
 }

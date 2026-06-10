@@ -10,7 +10,7 @@ import type { LogsViewerProps } from "./logs-viewer.types";
 import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./logs-viewer.utils";
 
 const DEFAULT_LOG_VIEWER_HEIGHT = 1_000;
-const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "calc(100vh - 9rem)";
+const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "auto";
 const DEFAULT_DOWNLOAD_FILE_NAME = "logs.txt";
 const DEFAULT_LOG_VIEWER_FONT_SIZE = "0.875rem";
 
@@ -53,11 +53,15 @@ export function LogsViewer({
                 styles["root"],
                 "min-w-0",
                 className,
-                isFullscreen && "fixed inset-4 z-50 overflow-auto rounded-lg border bg-background p-4 shadow-2xl",
+                isFullscreen && [
+                    styles["fullscreen"],
+                    "fixed inset-4 z-50 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 shadow-2xl",
+                ],
             )}
             style={rootStyle}
         >
             <LogViewer
+                key={isFullscreen ? "fullscreen" : "inline"}
                 data={displayedAnsiLines}
                 hasLineNumbers={hasLineNumbers}
                 theme="dark"

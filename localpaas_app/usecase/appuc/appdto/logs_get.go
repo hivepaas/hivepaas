@@ -11,34 +11,36 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-type GetAppRuntimeLogsReq struct {
+type GetAppLogsReq struct {
+	Token      string            `json:"-" mapstructure:"token"`
 	ProjectID  string            `json:"-"`
 	AppID      string            `json:"-"`
+	TaskID     string            `json:"-" mapstructure:"taskId"`
 	Follow     bool              `json:"-" mapstructure:"follow"`
 	Since      time.Time         `json:"-" mapstructure:"since"`
 	Duration   timeutil.Duration `json:"-" mapstructure:"duration"`
 	Tail       int               `json:"-" mapstructure:"tail"`
-	Timestamps bool              `json:"-" mapstructure:"timestamps"`
+	Timestamps *bool             `json:"-" mapstructure:"timestamps"`
 }
 
-func NewGetAppRuntimeLogsReq() *GetAppRuntimeLogsReq {
-	return &GetAppRuntimeLogsReq{}
+func NewGetAppLogsReq() *GetAppLogsReq {
+	return &GetAppLogsReq{}
 }
 
-func (req *GetAppRuntimeLogsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppLogsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetAppRuntimeLogsResp struct {
-	Meta *basedto.Meta           `json:"meta"`
-	Data *AppRuntimeLogsDataResp `json:"data"`
+type GetAppLogsResp struct {
+	Meta *basedto.Meta    `json:"meta"`
+	Data *AppLogsDataResp `json:"data"`
 }
 
-type AppRuntimeLogsDataResp struct {
-	Logs          []*tasklog.LogFrame        `json:"logs"`
-	LogChan       <-chan []*tasklog.LogFrame `json:"-"`
-	LogChanCloser func() error               `json:"-"`
+type AppLogsDataResp struct {
+	StaticLogs       []*tasklog.LogFrame        `json:"logs"`
+	LogsStream       <-chan []*tasklog.LogFrame `json:"-"`
+	LogsStreamCloser func() error               `json:"-"`
 }

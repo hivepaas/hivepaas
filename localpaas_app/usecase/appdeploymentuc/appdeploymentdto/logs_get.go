@@ -42,9 +42,9 @@ type GetDeploymentLogsResp struct {
 }
 
 type DeploymentLogsDataResp struct {
-	StaticLogs         []*tasklog.LogFrame        `json:"logs"`
-	RealtimeLogsStream <-chan []*tasklog.LogFrame `json:"-"`
-	LogsStreamCloser   func() error               `json:"-"`
+	StaticLogs       []*tasklog.LogFrame        `json:"logs"`
+	LogsStream       <-chan []*tasklog.LogFrame `json:"-"`
+	LogsStreamCloser func() error               `json:"-"`
 }
 
 func TransformDeploymentLogs(logs []*entity.TaskLog) (resp []*tasklog.LogFrame) {

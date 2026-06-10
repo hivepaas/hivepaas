@@ -1,4 +1,4 @@
-package appdeploymenthandler
+package apphandler
 
 import (
 	"net/http"
@@ -9,39 +9,37 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
-// GetAppDeploymentLogsToken Gets a token for getting logs via websocket
-// @Summary Gets a token for getting logs via websocket
-// @Description Gets a token for getting logs via websocket
-// @Tags    app_deployments
+// GetAppLogsInfo Gets log info
+// @Summary Gets log info
+// @Description Gets log info
+// @Tags    apps
 // @Produce json
-// @Id      getAppDeploymentLogsToken
+// @Id      getAppLogsInfo
 // @Param   projectID path string true "project ID"
 // @Param   appID path string true "app ID"
-// @Param   deploymentID path string true "deployment ID"
-// @Success 200 {object} appdeploymentdto.GetDeploymentLogsResp
+// @Success 200 {object} appdto.GetAppLogsInfoResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs/token [get]
-func (h *Handler) GetAppDeploymentLogsToken(ctx *gin.Context) {
-	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
+// @Router  /projects/{projectID}/apps/{appID}/logs/info [get]
+func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
+	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := appdeploymentdto.NewGetDeploymentLogsTokenReq()
+	req := appdto.NewGetAppLogsInfoReq()
 	req.ProjectID = projectID
 	req.AppID = appID
-	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.appDeploymentUC.GetDeploymentLogsToken(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appUC.GetAppLogsInfo(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -50,33 +48,68 @@ func (h *Handler) GetAppDeploymentLogsToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetAppDeploymentLogs Stream app deployment logs via websocket
-// @Summary Stream app deployment logs via websocket
-// @Description Stream deployment app logs via websocket
-// @Tags    app_deployments
+// GetAppLogsToken Gets a token for getting logs via websocket
+// @Summary Gets a token for getting logs via websocket
+// @Description Gets a token for getting logs via websocket
+// @Tags    apps
 // @Produce json
-// @Id      getAppDeploymentLogs
+// @Id      getAppLogsToken
 // @Param   projectID path string true "project ID"
 // @Param   appID path string true "app ID"
-// @Param   deploymentID path string true "deployment ID"
-// @Param   token query string false "`token=console-token`"
-// @Param   follow query string false "`follow=true/false`"
-// @Param   since query string false "`since=YYYY-MM-DDTHH:mm:SSZ`"
-// @Param   duration query string false "`duration=24h` logs within the period"
-// @Param   tail query int false "`tail=1000` to get last 1000 lines of logs"
-// @Success 200 {object} appdeploymentdto.GetDeploymentLogsResp
+// @Success 200 {object} appdto.GetAppLogsTokenResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs [get]
-func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
+// @Router  /projects/{projectID}/apps/{appID}/logs/token [get]
+func (h *Handler) GetAppLogsToken(ctx *gin.Context) {
+	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppLogsTokenReq()
+	req.ProjectID = projectID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppLogsToken(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// GetAppLogs Stream app logs via websocket
+// @Summary Stream app logs via websocket
+// @Description Stream app logs via websocket
+// @Tags    apps
+// @Produce json
+// @Id      getAppLogs
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   taskId query string false "`taskId=<task-id>`"
+// @Param   follow query string false "`follow=true/false`"
+// @Param   since query string false "`since=YYYY-MM-DDTHH:mm:SSZ`"
+// @Param   duration query int false "`duration=` logs within the period"
+// @Param   tail query int false "`tail=1000` to get last 1000 lines of logs"
+// @Success 200 {object} appdto.GetAppLogsResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/logs [get]
+func (h *Handler) GetAppLogs(ctx *gin.Context, mel *melody.Melody) {
 	var auth *basedto.Auth
-	var req *appdeploymentdto.GetDeploymentLogsReq
+	var req *appdto.GetAppLogsReq
 	var err error
 
 	if ctx.Query("token") != "" {
-		auth, req, err = h.parseAppDeploymentLogsReqWithToken(ctx)
+		auth, req, err = h.parseAppLogsReqWithToken(ctx)
 	} else {
-		auth, req, err = h.parseAppDeploymentLogsReqWithAuthHeader(ctx)
+		auth, req, err = h.parseAppLogsReqWithAuthHeader(ctx)
 	}
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -88,7 +121,7 @@ func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
 		req.Follow = false // Not a websocket request, we don't support `follow` flag
 	}
 
-	resp, err := h.appDeploymentUC.GetDeploymentLogs(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appUC.GetAppLogs(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -102,18 +135,17 @@ func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
 	}
 }
 
-func (h *Handler) parseAppDeploymentLogsReqWithAuthHeader(
+func (h *Handler) parseAppLogsReqWithAuthHeader(
 	ctx *gin.Context,
-) (*basedto.Auth, *appdeploymentdto.GetDeploymentLogsReq, error) {
-	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
+) (*basedto.Auth, *appdto.GetAppLogsReq, error) {
+	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	req := appdeploymentdto.NewGetDeploymentLogsReq()
+	req := appdto.NewGetAppLogsReq()
 	req.ProjectID = projectID
 	req.AppID = appID
-	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
@@ -122,9 +154,9 @@ func (h *Handler) parseAppDeploymentLogsReqWithAuthHeader(
 }
 
 //nolint:unparam
-func (h *Handler) parseAppDeploymentLogsReqWithToken(
+func (h *Handler) parseAppLogsReqWithToken(
 	ctx *gin.Context,
-) (*basedto.Auth, *appdeploymentdto.GetDeploymentLogsReq, error) {
+) (*basedto.Auth, *appdto.GetAppLogsReq, error) {
 	projectID, err := h.ParseStringParam(ctx, "projectID")
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
@@ -133,15 +165,10 @@ func (h *Handler) parseAppDeploymentLogsReqWithToken(
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
-	deploymentID, err := h.ParseStringParam(ctx, "deploymentID")
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
 
-	req := appdeploymentdto.NewGetDeploymentLogsReq()
+	req := appdto.NewGetAppLogsReq()
 	req.ProjectID = projectID
 	req.AppID = appID
-	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}

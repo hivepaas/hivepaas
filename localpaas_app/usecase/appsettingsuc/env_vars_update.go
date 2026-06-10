@@ -145,7 +145,7 @@ func (uc *UC) applyAppEnvVars(
 
 	if len(errors) > 0 {
 		return apperrors.New(apperrors.ErrValueInvalid).WithDisplayLevelHigh().
-			WithExtraDetail(strings.Join(errors, "\n")) //nolint:govet
+			WithExtraDetail("%s", strings.Join(errors, "\n"))
 	}
 
 	service, err := uc.appService.ServiceInspect(ctx, app.ServiceID, false)

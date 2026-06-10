@@ -21,9 +21,13 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		appGroup.DELETE("/:appID", appHandler.DeleteApp)
 		// Status Update
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
-		// Logs
-		appGroup.GET("/:appID/runtime-logs", func(ctx *gin.Context) {
-			appHandler.GetAppRuntimeLogs(ctx, s.websocket)
+	}
+
+	{ // Logs
+		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
+		appGroup.GET("/:appID/logs/token", appHandler.GetAppLogsToken)
+		appGroup.GET("/:appID/logs", func(ctx *gin.Context) {
+			appHandler.GetAppLogs(ctx, s.websocket)
 		})
 	}
 

@@ -2,7 +2,7 @@ package appdeploymentuc
 
 import (
 	"context"
-	"strings"
+	"net/url"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -24,10 +24,13 @@ func (uc *UC) GetDeploymentLogs(
 	ctx context.Context,
 	auth *basedto.Auth, // BE CAREFUL: If req.Token presents, auth is nil
 	req *appdeploymentdto.GetDeploymentLogsReq,
-) (*appdeploymentdto.GetDeploymentLogsResp, error) {
+) (_ *appdeploymentdto.GetDeploymentLogsResp, err error) {
 	if auth == nil {
-		key := strings.ReplaceAll(req.Token, "-", ":")
-		ticketInfo, err := uc.consoleTicketRepo.Get(ctx, key)
+		req.Token, err = url.QueryUnescape(req.Token)
+		if err != nil {
+			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		}
+		ticketInfo, err := uc.consoleTicketRepo.Get(ctx, req.Token)
 		if err != nil {
 			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
 		}
@@ -35,12 +38,12 @@ func (uc *UC) GetDeploymentLogs(
 			return nil, apperrors.New(apperrors.ErrTokenInvalid)
 		}
 		// Remove the ticket from redis as this ticket is one-time object
-		_ = uc.consoleTicketRepo.Del(ctx, key)
+		_ = uc.consoleTicketRepo.Del(ctx, req.Token)
 	}
 
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID,
 		bunex.SelectRelation("Tasks",
-			bunex.SelectColumns("id"),
+			bunex.SelectColumns("id", "target_id"), // Must select target_id, otherwise bun will report error
 		),
 	)
 	if err != nil {
@@ -68,9 +71,9 @@ func (uc *UC) GetDeploymentLogs(
 
 	return &appdeploymentdto.GetDeploymentLogsResp{
 		Data: &appdeploymentdto.DeploymentLogsDataResp{
-			StaticLogs:         resp.StaticLogs,
-			RealtimeLogsStream: resp.RealtimeLogsStream,
-			LogsStreamCloser:   resp.LogsStreamCloser,
+			StaticLogs:       resp.StaticLogs,
+			LogsStream:       resp.LogsStream,
+			LogsStreamCloser: resp.LogsStreamCloser,
 		},
 	}, nil
 }

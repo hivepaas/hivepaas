@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	minAPIVersion = "1.51"
+	minAPIVersion = "1.52"
 )
 
 type Manager interface {
@@ -50,6 +50,8 @@ type Manager interface {
 		*client.ContainerInspectResult, error)
 	ContainerInspectMulti(ctx context.Context, containerIDs []string, options ...ContainerInspectOption) (
 		map[string]*client.ContainerInspectResult, map[string]error)
+	ContainerLogs(ctx context.Context, containerID string, options ...ContainerLogsOption) (
+		client.ContainerLogsResult, error)
 
 	ContainerRestart(ctx context.Context, containerID string, options ...ContainerRestartOption) (
 		*client.ContainerRestartResult, error)
@@ -153,8 +155,12 @@ type Manager interface {
 	// Tasks
 	TaskList(ctx context.Context, options ...TaskListOption) (
 		*client.TaskListResult, error)
-	ServiceTaskList(ctx context.Context, serviceID string, desiredState string, options ...TaskListOption) (
+	ServiceTaskList(ctx context.Context, serviceID string, desiredState TaskState, options ...TaskListOption) (
 		*client.TaskListResult, error)
+	TaskInspect(ctx context.Context, taskID string, options ...TaskInspectOption) (
+		*client.TaskInspectResult, error)
+	TaskLogs(ctx context.Context, taskID string, options ...TaskLogsOption) (
+		client.TaskLogsResult, error)
 
 	// Volumes
 	VolumeList(ctx context.Context, options ...VolumeListOption) (

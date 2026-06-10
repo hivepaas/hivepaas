@@ -3,7 +3,6 @@ package appdeploymentuc
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -29,10 +28,9 @@ func (uc *UC) GetDeploymentLogsToken(
 		return nil, apperrors.Wrap(err)
 	}
 
-	token := fmt.Sprintf("app-%s-log-%s", deployment.AppID, gofn.RandTokenAsHex(consoleUIDByteLen))
-	key := strings.ReplaceAll(token, "-", ":")
+	token := fmt.Sprintf("app:%s:log:%s", deployment.AppID, gofn.RandTokenAsHex(consoleUIDByteLen))
 
-	err = uc.consoleTicketRepo.Set(ctx, key, &cacheentity.ConsoleTicket{
+	err = uc.consoleTicketRepo.Set(ctx, token, &cacheentity.ConsoleTicket{
 		AppID:    req.AppID,
 		TargetID: req.DeploymentID,
 	}, consoleTokenExp)

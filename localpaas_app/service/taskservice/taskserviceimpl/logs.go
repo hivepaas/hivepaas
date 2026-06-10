@@ -72,7 +72,7 @@ func (s *service) queryRealtimeLogs(
 		// NOTE: we don't want to keep the log stream session forever
 		ctx, _ = context.WithTimeout(ctx, req.LogSessionTimeout) //nolint:govet
 
-		resp.RealtimeLogsStream, resp.LogsStreamCloser, err = consumer.StartConsuming(ctx, batchrecvchan.Options{
+		resp.LogsStream, resp.LogsStreamCloser, err = consumer.StartConsuming(ctx, batchrecvchan.Options{
 			ThresholdPeriod: req.LogBatchThresholdPeriod,
 			MaxItem:         req.LogBatchMaxFrame,
 		})

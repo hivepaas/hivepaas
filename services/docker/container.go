@@ -125,6 +125,28 @@ func (m *manager) ContainerInspectMulti(
 	return allResults, allErrors
 }
 
+type ContainerLogsOption func(*client.ContainerLogsOptions)
+
+func (m *manager) ContainerLogs(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerLogsOption,
+) (client.ContainerLogsResult, error) {
+	if containerID == "" {
+		return nil, nil
+	}
+
+	opts := client.ContainerLogsOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerLogs(ctx, containerID, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return resp, nil
+}
+
 type ContainerRestartOption func(options *client.ContainerRestartOptions)
 
 func (m *manager) ContainerRestart(

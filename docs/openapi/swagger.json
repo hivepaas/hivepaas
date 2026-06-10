@@ -5213,6 +5213,212 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/apps/{appID}/logs" : {
+      "get" : {
+        "description" : "Stream app logs via websocket",
+        "operationId" : "getAppLogs",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`taskId=<task-id>`",
+          "in" : "query",
+          "name" : "taskId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`follow=true/false`",
+          "in" : "query",
+          "name" : "follow",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`since=YYYY-MM-DDTHH:mm:SSZ`",
+          "in" : "query",
+          "name" : "since",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`duration=` logs within the period",
+          "in" : "query",
+          "name" : "duration",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`tail=1000` to get last 1000 lines of logs",
+          "in" : "query",
+          "name" : "tail",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Stream app logs via websocket",
+        "tags" : [ "apps" ]
+      }
+    },
+    "/projects/{projectID}/apps/{appID}/logs/info" : {
+      "get" : {
+        "description" : "Gets log info",
+        "operationId" : "getAppLogsInfo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsInfoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets log info",
+        "tags" : [ "apps" ]
+      }
+    },
+    "/projects/{projectID}/apps/{appID}/logs/token" : {
+      "get" : {
+        "description" : "Gets a token for getting logs via websocket",
+        "operationId" : "getAppLogsToken",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsTokenResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a token for getting logs via websocket",
+        "tags" : [ "apps" ]
+      }
+    },
     "/projects/{projectID}/apps/{appID}/network-settings" : {
       "get" : {
         "description" : "Gets app network settings",
@@ -5528,91 +5734,6 @@
         "summary" : "Restarts an app",
         "tags" : [ "app_actions" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/apps/{appID}/runtime-logs" : {
-      "get" : {
-        "description" : "Stream app logs via websocket",
-        "operationId" : "getAppRuntimeLogs",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`follow=true/false`",
-          "in" : "query",
-          "name" : "follow",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`since=YYYY-MM-DDTHH:mm:SSZ`",
-          "in" : "query",
-          "name" : "since",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`duration=` logs within the period",
-          "in" : "query",
-          "name" : "duration",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`tail=1000` to get last 1000 lines of logs",
-          "in" : "query",
-          "name" : "tail",
-          "schema" : {
-            "type" : "integer"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppRuntimeLogsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Stream app logs via websocket",
-        "tags" : [ "apps" ]
       }
     },
     "/projects/{projectID}/apps/{appID}/sched-jobs" : {
@@ -25813,23 +25934,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppEnvVarsDataResp" : {
-        "properties" : {
-          "errors" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "warnings" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          }
-        },
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppEnvVarsReq" : {
         "properties" : {
           "buildtimeEnvVars" : {
@@ -25853,14 +25957,11 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppEnvVarsResp" : {
         "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppEnvVarsDataResp"
-          },
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
           }
         },
-        "required" : [ "data", "meta" ],
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppHttpSettingsDataResp" : {
@@ -26120,6 +26221,39 @@
         "required" : [ "env", "id", "key", "localKey", "name", "status" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsDataResp" : {
+        "properties" : {
+          "logs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "logs" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsInfoDataResp" : {
+        "properties" : {
+          "tasks" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.TaskLogsInfoResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "tasks" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsTokenDataResp" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "token" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppResp" : {
         "properties" : {
           "accessLinks" : {
@@ -26186,18 +26320,6 @@
         "required" : [ "createdAt", "env", "id", "key", "localKey", "name", "note", "parentId", "project", "stats", "status", "tags", "token", "updateVer", "updatedAt" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppRuntimeLogsDataResp" : {
-        "properties" : {
-          "logs" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "logs" ],
-        "type" : "object"
-      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppStatsResp" : {
         "properties" : {
           "completedTasks" : {
@@ -26261,10 +26383,10 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsInfoResp" : {
         "properties" : {
           "data" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppResp"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsInfoDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -26273,10 +26395,34 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppRuntimeLogsResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsResp" : {
         "properties" : {
           "data" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppRuntimeLogsDataResp"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppLogsTokenResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppLogsTokenDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.GetAppResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.AppResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
@@ -26313,6 +26459,15 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.TaskLogsInfoResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appuc_appdto.UpdateAppReq" : {
@@ -36060,10 +36215,10 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       }
     },
     "securitySchemes" : {

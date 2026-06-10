@@ -51,7 +51,7 @@ type GetTaskLogsReq struct {
 }
 
 type GetTaskLogsResp struct {
-	StaticLogs         []*tasklog.LogFrame
-	RealtimeLogsStream <-chan []*tasklog.LogFrame
-	LogsStreamCloser   func() error
+	StaticLogs       []*tasklog.LogFrame
+	LogsStream       <-chan []*tasklog.LogFrame
+	LogsStreamCloser func() error
 }

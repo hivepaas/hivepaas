@@ -173,7 +173,7 @@ func (s *service) saveLogs(
 		_ = logStore.Add(ctx, tasklog.NewOutFrame("---------------------------------",
 			tasklog.TsNow))
 		_ = logStore.Add(ctx, tasklog.NewOutFrame("Deployment finished in "+
-			deployment.GetDuration().String(), tasklog.TsNow))
+			deployment.GetDuration().Truncate(time.Millisecond).String(), tasklog.TsNow))
 	}
 
 	logFrames, err := logStore.GetData(ctx, 0)
@@ -219,7 +219,7 @@ func (s *service) addStepEndLog(
 	start time.Time,
 	err error,
 ) {
-	duration := timeutil.NowUTC().Sub(start)
+	duration := timeutil.NowUTC().Sub(start).Truncate(time.Millisecond)
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Task finished in "+duration.String()+
 			" with error: "+err.Error(), tasklog.TsNow))

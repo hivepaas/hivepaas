@@ -3,6 +3,7 @@ package taskschedjobexec
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -192,8 +193,8 @@ func (e *Executor) saveLogs(
 
 	if addDurationInfo {
 		duration := timeutil.NowUTC().Sub(data.Task.StartedAt)
-		_ = logStore.Add(ctx, tasklog.NewOutFrame("Job execution finished in "+duration.String(),
-			tasklog.TsNow))
+		_ = logStore.Add(ctx, tasklog.NewOutFrame("Job execution finished in "+
+			duration.Truncate(time.Millisecond).String(), tasklog.TsNow))
 	}
 
 	logFrames, err := logStore.GetData(ctx, 0)

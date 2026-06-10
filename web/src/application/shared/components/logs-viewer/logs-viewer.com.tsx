@@ -10,13 +10,14 @@ import type { LogsViewerProps } from "./logs-viewer.types";
 import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./logs-viewer.utils";
 
 const DEFAULT_LOG_VIEWER_HEIGHT = 1_000;
-const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "calc(100vh - 9rem)";
+const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "auto";
 const DEFAULT_DOWNLOAD_FILE_NAME = "logs.txt";
 const DEFAULT_LOG_VIEWER_FONT_SIZE = "0.875rem";
 
 export function LogsViewer({
     frames,
     isStreaming = false,
+    isRefreshPending = false,
     hasLineNumbers = true,
     height = DEFAULT_LOG_VIEWER_HEIGHT,
     fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
@@ -25,7 +26,10 @@ export function LogsViewer({
     defaultShowDebugLogs = false,
     defaultShowTimestamps = false,
     defaultTextWrapped = true,
+    toolbarStart,
+    toolbarFilters,
     className,
+    onRefresh,
 }: LogsViewerProps) {
     const [isTextWrapped, setIsTextWrapped] = useState(defaultTextWrapped);
     const [showTimestamps, setShowTimestamps] = useState(defaultShowTimestamps);
@@ -53,11 +57,15 @@ export function LogsViewer({
                 styles["root"],
                 "min-w-0",
                 className,
-                isFullscreen && "fixed inset-4 z-50 overflow-auto rounded-lg border bg-background p-4 shadow-2xl",
+                isFullscreen && [
+                    styles["fullscreen"],
+                    "fixed inset-4 z-50 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 shadow-2xl",
+                ],
             )}
             style={rootStyle}
         >
             <LogViewer
+                key={isFullscreen ? "fullscreen" : "inline"}
                 data={displayedAnsiLines}
                 hasLineNumbers={hasLineNumbers}
                 theme="dark"
@@ -68,6 +76,7 @@ export function LogsViewer({
                 toolbar={
                     <LogsViewerToolbar
                         isStreaming={isStreaming}
+                        isRefreshPending={isRefreshPending}
                         displayedPlainLines={displayedPlainLines}
                         downloadFileName={downloadFileName}
                         isTextWrapped={isTextWrapped}
@@ -75,6 +84,8 @@ export function LogsViewer({
                         showDebugLogs={showDebugLogs}
                         followLogs={followLogs}
                         isFullscreen={isFullscreen}
+                        toolbarStart={toolbarStart}
+                        toolbarFilters={toolbarFilters}
                         onToggleTextWrap={() => {
                             setIsTextWrapped(current => !current);
                         }}
@@ -90,6 +101,7 @@ export function LogsViewer({
                         onToggleFullscreen={() => {
                             setIsFullscreen(current => !current);
                         }}
+                        onRefresh={onRefresh}
                     />
                 }
             />

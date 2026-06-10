@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui";
+
 import styles from "../../logs-viewer.module.scss";
 import type { LogsViewerToolbarProps } from "../../logs-viewer.types";
 import { LogsViewerToolbarIconButton } from "../logs-viewer-toolbar-icon-button";
@@ -31,6 +33,7 @@ function downloadTextFile(fileName: string, content: string) {
 
 export function LogsViewerToolbar({
     isStreaming,
+    isRefreshPending,
     displayedPlainLines,
     downloadFileName,
     isTextWrapped,
@@ -38,11 +41,14 @@ export function LogsViewerToolbar({
     showDebugLogs,
     followLogs,
     isFullscreen,
+    toolbarStart,
+    toolbarFilters,
     onToggleTextWrap,
     onToggleTimestamps,
     onToggleDebugLogs,
     onToggleFollowLogs,
     onToggleFullscreen,
+    onRefresh,
 }: LogsViewerToolbarProps) {
     const textContent = displayedPlainLines.join("\n");
 
@@ -53,16 +59,31 @@ export function LogsViewerToolbar({
         >
             <ToolbarContent alignItems="center">
                 <ToolbarItem>
-                    <div className="flex min-w-0 items-center gap-3">
-                        <span className="text-sm font-semibold text-foreground">Logs</span>
-                        {isStreaming && (
-                            <span className="flex items-center gap-2 text-sm text-rose-500">
-                                <LoaderCircle className="size-4 animate-spin" />
-                                streaming
-                            </span>
-                        )}
-                    </div>
+                    {toolbarStart ?? (
+                        <div className="flex min-w-0 items-center gap-3">
+                            <span className="text-sm font-semibold text-foreground">Logs</span>
+                            {isStreaming && (
+                                <span className="flex items-center gap-2 text-sm text-rose-500">
+                                    <LoaderCircle className="size-4 animate-spin" />
+                                    streaming
+                                </span>
+                            )}
+                            {!isStreaming && onRefresh && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-sm text-primary"
+                                    isLoading={isRefreshPending}
+                                    onClick={onRefresh}
+                                >
+                                    Refresh
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </ToolbarItem>
+
+                {toolbarFilters && <ToolbarItem className={styles["filters"]}>{toolbarFilters}</ToolbarItem>}
 
                 <ToolbarItem
                     align={{ default: "alignEnd" }}

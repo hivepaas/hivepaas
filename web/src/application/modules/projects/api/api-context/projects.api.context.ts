@@ -12,6 +12,9 @@ import {
     AppDeploymentsApiValidator,
     AppHealthChecksApi,
     AppHealthChecksApiValidator,
+    AppLogsApi,
+    AppLogsApiValidator,
+    AppLogsWsApi,
     AppScheduledJobsApi,
     AppScheduledJobsApiValidator,
     AppSecretsApi,
@@ -92,6 +95,8 @@ function createApi() {
      */
     const projectsApiValidator = new ProjectsApiValidator();
     const projectAppsApiValidator = new ProjectAppsApiValidator();
+    const appLogsApiValidator = new AppLogsApiValidator();
+    const appLogsApi = new AppLogsApi(appLogsApiValidator);
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
     const projectSettingsImportApiValidator = new ProjectSettingsImportApiValidator();
@@ -136,6 +141,12 @@ function createApi() {
             },
             apps: {
                 $: new ProjectAppsApi(projectAppsApiValidator),
+                logs: {
+                    $: appLogsApi,
+                    stream: {
+                        $: new AppLogsWsApi(appLogsApi),
+                    },
+                },
                 envVars: {
                     $: new ProjectAppEnvVarsApi(projectAppEnvVarsApiValidator),
                 },

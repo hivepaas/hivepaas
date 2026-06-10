@@ -19,6 +19,7 @@ export interface LogsViewerFrame {
 export interface LogsViewerProps {
     frames: LogsViewerFrame[];
     isStreaming?: boolean;
+    isRefreshPending?: boolean;
     hasLineNumbers?: boolean;
     height?: number | string;
     fullscreenHeight?: number | string;
@@ -27,11 +28,15 @@ export interface LogsViewerProps {
     defaultShowDebugLogs?: boolean;
     defaultShowTimestamps?: boolean;
     defaultTextWrapped?: boolean;
+    toolbarStart?: ReactNode;
+    toolbarFilters?: ReactNode;
     className?: string;
+    onRefresh?: () => void;
 }
 
 export interface LogsViewerToolbarProps {
     isStreaming: boolean;
+    isRefreshPending: boolean;
     displayedPlainLines: string[];
     downloadFileName: string;
     isTextWrapped: boolean;
@@ -39,11 +44,14 @@ export interface LogsViewerToolbarProps {
     showDebugLogs: boolean;
     followLogs: boolean;
     isFullscreen: boolean;
+    toolbarStart?: ReactNode;
+    toolbarFilters?: ReactNode;
     onToggleTextWrap: () => void;
     onToggleTimestamps: () => void;
     onToggleDebugLogs: () => void;
     onToggleFollowLogs: () => void;
     onToggleFullscreen: () => void;
+    onRefresh?: () => void;
 }
 
 export interface LogsViewerToolbarIconButtonProps {

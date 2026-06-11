@@ -1,4 +1,4 @@
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import "@patternfly/react-core/dist/styles/base-no-reset.css";
@@ -50,6 +50,24 @@ export function LogsViewer({
     const rootStyle = {
         "--logs-viewer-font-size": fontSize,
     } as CSSProperties;
+
+    useEffect(() => {
+        if (!isFullscreen) {
+            return;
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setIsFullscreen(false);
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isFullscreen]);
 
     return (
         <div

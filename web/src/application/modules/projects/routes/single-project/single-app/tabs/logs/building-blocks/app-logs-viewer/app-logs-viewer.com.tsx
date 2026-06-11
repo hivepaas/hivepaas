@@ -10,6 +10,7 @@ import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@applic
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
 const DEFAULT_LOG_LINES = 100;
+const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 300px), 2000px)";
 
 export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: AppLogsViewerProps) {
     const [logs, setLogs] = useState<LogsViewerFrame[]>([]);
@@ -160,6 +161,7 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
+            height={APP_LOG_VIEWER_HEIGHT}
             fontSize="0.875rem"
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
@@ -179,7 +181,7 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
                     lines={lines}
                     since={since}
                     duration={duration}
-                    isLinesDisabled={hasTimeFilter}
+                    isLinesHidden={hasTimeFilter}
                     onLinesChange={setLines}
                     onSinceChange={setSince}
                     onDurationChange={setDuration}

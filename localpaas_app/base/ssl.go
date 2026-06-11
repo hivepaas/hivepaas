@@ -2,16 +2,31 @@ package base
 
 import "time"
 
+type SSLProvider string
+
+const (
+	SSLProviderLetsEncrypt SSLProvider = "letsencrypt"
+	SSLProviderZeroSSL     SSLProvider = "zerossl"
+	SSLProviderGoogleTS    SSLProvider = "googlets"
+)
+
+var (
+	AllSSLProviders = []SSLProvider{SSLProviderLetsEncrypt, SSLProviderZeroSSL, SSLProviderGoogleTS}
+)
+
 type SSLCertType string
 
 const (
-	SSLCertTypeLetsEncrypt SSLCertType = "letsencrypt"
+	SSLCertTypeLetsEncrypt SSLCertType = SSLCertType(SSLProviderLetsEncrypt)
+	SSLCertTypeZeroSSL     SSLCertType = SSLCertType(SSLProviderZeroSSL)
+	SSLCertTypeGoogleTS    SSLCertType = SSLCertType(SSLProviderGoogleTS)
 	SSLCertTypeCustom      SSLCertType = "custom"
 	SSLCertTypeSelfSigned  SSLCertType = "self-signed"
 )
 
 var (
-	AllSSLCertTypes = []SSLCertType{SSLCertTypeLetsEncrypt, SSLCertTypeCustom, SSLCertTypeSelfSigned}
+	AllSSLCertTypes = []SSLCertType{SSLCertTypeLetsEncrypt, SSLCertTypeZeroSSL, SSLCertTypeGoogleTS,
+		SSLCertTypeCustom, SSLCertTypeSelfSigned}
 )
 
 type SSLKeyType string

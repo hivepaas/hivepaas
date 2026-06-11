@@ -63,6 +63,10 @@ func (req *SSLCertBaseReq) modifyRequest() error {
 	switch req.CertType {
 	case base.SSLCertTypeLetsEncrypt:
 		// Do nothing
+	case base.SSLCertTypeZeroSSL:
+		// Do nothing
+	case base.SSLCertTypeGoogleTS:
+		// Do nothing
 	case base.SSLCertTypeSelfSigned:
 		req.ValidPeriod = gofn.Coalesce(req.ValidPeriod, timeutil.Duration(base.SSLSelfSignedValidPeriodDefault))
 	case base.SSLCertTypeCustom:

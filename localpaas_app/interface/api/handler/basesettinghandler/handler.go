@@ -24,6 +24,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslprovideruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/systemsettings/systembackupuc"
@@ -41,6 +42,7 @@ type Handler struct {
 	IMServiceUC            *imserviceuc.UC
 	RegistryAuthUC         *registryauthuc.UC
 	BasicAuthUC            *basicauthuc.UC
+	SSLProviderUC          *sslprovideruc.UC
 	SSLCertUC              *sslcertuc.UC
 	DomainSettingsUC       *domainsettingsuc.UC
 	GithubAppUC            *githubappuc.UC
@@ -72,6 +74,7 @@ func New(
 	imServiceUC *imserviceuc.UC,
 	registryAuthUC *registryauthuc.UC,
 	basicAuthUC *basicauthuc.UC,
+	sslProviderUC *sslprovideruc.UC,
 	sslCertUC *sslcertuc.UC,
 	domainSettingsUC *domainsettingsuc.UC,
 	githubAppUC *githubappuc.UC,
@@ -102,6 +105,7 @@ func New(
 		IMServiceUC:            imServiceUC,
 		RegistryAuthUC:         registryAuthUC,
 		BasicAuthUC:            basicAuthUC,
+		SSLProviderUC:          sslProviderUC,
 		SSLCertUC:              sslCertUC,
 		DomainSettingsUC:       domainSettingsUC,
 		GithubAppUC:            githubAppUC,

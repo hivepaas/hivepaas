@@ -24,6 +24,10 @@ func (s *service) ObtainCert(
 	switch ssl.CertType {
 	case base.SSLCertTypeLetsEncrypt:
 		updated, err = s.obtainCertLetsEncrypt(ctx, ssl)
+	case base.SSLCertTypeZeroSSL:
+		// TODO: add implementation
+	case base.SSLCertTypeGoogleTS:
+		// TODO: add implementation
 	case base.SSLCertTypeSelfSigned:
 		updated, err = s.obtainCertSelfSigned(ctx, ssl)
 	case base.SSLCertTypeCustom:

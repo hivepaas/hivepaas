@@ -36,6 +36,7 @@ const (
 	ResourceTypeRegistryAuth       ResourceType = "registry-auth"
 	ResourceTypeBasicAuth          ResourceType = "basic-auth"
 	ResourceTypeSSLCert            ResourceType = "ssl-cert"
+	ResourceTypeSSLProvider        ResourceType = "ssl-provider"
 	ResourceTypeGithubApp          ResourceType = "github-app"
 	ResourceTypeAccessToken        ResourceType = "access-token"
 	ResourceTypeSchedJob           ResourceType = "sched-job"

@@ -24,6 +24,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslprovideruc/sslproviderdto"
 )
 
 type UpdateSettingOptions struct {
@@ -111,6 +112,11 @@ func (h *Handler) UpdateSetting(
 		r := sshkeydto.NewUpdateSSHKeyReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.SSHKeyUC.UpdateSSHKey(reqCtx, auth, r) }
+
+	case base.ResourceTypeSSLProvider:
+		r := sslproviderdto.NewUpdateSSLProviderReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.SSLProviderUC.UpdateSSLProvider(reqCtx, auth, r) }
 
 	case base.ResourceTypeSSLCert:
 		r := sslcertdto.NewUpdateSSLCertReq()

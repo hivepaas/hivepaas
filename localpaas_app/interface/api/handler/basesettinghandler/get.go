@@ -24,6 +24,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc/secretdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc/sslcertdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslprovideruc/sslproviderdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
 
@@ -112,6 +113,11 @@ func (h *Handler) GetSetting(
 		r := sshkeydto.NewGetSSHKeyReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.SSHKeyUC.GetSSHKey(reqCtx, auth, r) }
+
+	case base.ResourceTypeSSLProvider:
+		r := sslproviderdto.NewGetSSLProviderReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.SSLProviderUC.GetSSLProvider(reqCtx, auth, r) }
 
 	case base.ResourceTypeSSLCert:
 		r := sslcertdto.NewGetSSLCertReq()

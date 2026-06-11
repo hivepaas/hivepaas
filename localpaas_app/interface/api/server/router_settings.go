@@ -117,6 +117,16 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		basicAuthGroup.DELETE("/:itemID", settingHandler.DeleteBasicAuth)
 	}
 
+	{ // ssl provider group
+		sslProviderGroup := settingGroup.Group("/ssl-providers")
+		sslProviderGroup.GET("/:itemID", settingHandler.GetSSLProvider)
+		sslProviderGroup.GET("", settingHandler.ListSSLProvider)
+		sslProviderGroup.POST("", settingHandler.CreateSSLProvider)
+		sslProviderGroup.PUT("/:itemID", settingHandler.UpdateSSLProvider)
+		sslProviderGroup.PUT("/:itemID/status", settingHandler.UpdateSSLProviderStatus)
+		sslProviderGroup.DELETE("/:itemID", settingHandler.DeleteSSLProvider)
+	}
+
 	{ // ssl cert group
 		sslCertGroup := settingGroup.Group("/ssl-certs")
 		sslCertGroup.GET("/:itemID", settingHandler.GetSSLCert)

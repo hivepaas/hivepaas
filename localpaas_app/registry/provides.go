@@ -101,6 +101,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/secretuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sshkeyuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslcertuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/sslprovideruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/supportuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/lpappsettingsuc"
@@ -205,6 +206,7 @@ var Provides = []any{
 	imserviceuc.New,
 	registryauthuc.New,
 	basicauthuc.New,
+	sslprovideruc.New,
 	sslcertuc.New,
 	domainsettingsuc.New,
 	githubappuc.New,

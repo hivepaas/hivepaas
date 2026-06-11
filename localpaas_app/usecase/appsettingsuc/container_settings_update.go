@@ -14,8 +14,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/dockerhelper"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc/appsettingsdto"
 )
@@ -99,7 +99,7 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 	containerSpec.Labels = dockerhelper.ApplyUserLabels(containerSpec.Labels, req.ContainerLabels)
 	containerSpec.Image = req.Image
-	containerSpec.Command = gofn.If(req.Command == "", nil, gofn.Must(shellutil.CmdSplit(req.Command)))
+	containerSpec.Command = gofn.If(req.Command == "", nil, gofn.Must(executil.CmdSplit(req.Command)))
 	containerSpec.Dir = req.WorkingDir
 	containerSpec.Hostname = req.Hostname
 	containerSpec.User = req.User
@@ -132,7 +132,7 @@ func (uc *UC) prepareUpdatingAppContainerHealthcheck(
 	if containerSpec.Healthcheck == nil {
 		containerSpec.Healthcheck = &container.HealthConfig{}
 	}
-	cmd := gofn.Must(shellutil.CmdSplit(req.Healthcheck.Command))
+	cmd := gofn.Must(executil.CmdSplit(req.Healthcheck.Command))
 	containerSpec.Healthcheck.Test = gofn.Concat([]string{string(req.Healthcheck.Mode)}, cmd)
 	containerSpec.Healthcheck.Interval = time.Duration(req.Healthcheck.Interval)
 	containerSpec.Healthcheck.Timeout = time.Duration(req.Healthcheck.Timeout)

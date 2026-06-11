@@ -7,8 +7,8 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/devhelperuc/devhelperdto"
 )
 
@@ -19,7 +19,7 @@ func (uc *UC) ExecuteCmd(
 ) (_ *devhelperdto.ExecuteCmdResp, err error) {
 	cmdArray := req.CmdArray
 	if req.Cmd != "" {
-		cmdArray, err = shellutil.CmdSplit(req.Cmd)
+		cmdArray, err = executil.CmdSplit(req.Cmd)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

@@ -9,9 +9,9 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/redact"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
 	"github.com/localpaas/localpaas/services/docker"
@@ -70,9 +70,9 @@ func (s *service) ContainerExec(
 
 	var cmd []string
 	if command.RunInShell != "" {
-		cmd = []string{command.RunInShell, "-c", shellutil.ArgQuote(command.Command)}
+		cmd = []string{command.RunInShell, "-c", executil.ArgQuote(command.Command)}
 	} else {
-		cmd, err = shellutil.CmdSplit(command.Command)
+		cmd, err = executil.CmdSplit(command.Command)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

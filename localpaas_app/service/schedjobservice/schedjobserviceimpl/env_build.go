@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 )
 
@@ -65,7 +65,7 @@ func (s *service) buildEnvForArgs(
 		if arg.Value == "" {
 			buf.WriteString(arg.Name)
 		} else {
-			buf.WriteString(arg.Name + separator + shellutil.ArgQuote(arg.Value))
+			buf.WriteString(arg.Name + separator + executil.ArgQuote(arg.Value))
 		}
 	}
 	if buf.Len() == 0 {

@@ -9,7 +9,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/shellutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/services/docker"
@@ -78,7 +78,7 @@ func (s *service) deployStepExecCmd(
 	execInfo, logs, err := s.dockerManager.ContainerExecWait(ctx, contSum.ID, func(opts *client.ExecCreateOptions) {
 		opts.AttachStdout = true
 		opts.AttachStderr = true
-		opts.Cmd = gofn.Must(shellutil.CmdSplit(cmdStr))
+		opts.Cmd = gofn.Must(executil.CmdSplit(cmdStr))
 		opts.WorkingDir = deployment.Settings.WorkingDir
 		opts.TTY = true
 		opts.ConsoleSize = docker.DefaultConsoleSize

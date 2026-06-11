@@ -1,4 +1,4 @@
-package shellutil
+package executil
 
 import (
 	"strings"

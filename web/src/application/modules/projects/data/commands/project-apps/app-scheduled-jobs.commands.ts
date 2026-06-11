@@ -1,6 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppScheduledJobsApi } from "~/projects/api/hooks/project-apps";
 import type {
+    AppScheduledJobTasks_Cancel_Req,
+    AppScheduledJobTasks_Cancel_Res,
     AppScheduledJobs_CreateOne_Req,
     AppScheduledJobs_CreateOne_Res,
     AppScheduledJobs_DeleteOne_Req,
@@ -12,6 +14,7 @@ import type {
     AppScheduledJobs_UpdateStatus_Req,
     AppScheduledJobs_UpdateStatus_Res,
 } from "~/projects/api/services";
+import { QK } from "~/projects/data/constants";
 
 import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
@@ -114,6 +117,32 @@ function useRunNow({ onSuccess, ...options }: RunNowOptions = {}) {
                 projectID: request.projectID,
                 appID: request.appID,
             });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.scheduled-jobs.tasks.$.find-many-paginated"]],
+            });
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
+type CancelTaskReq = AppScheduledJobTasks_Cancel_Req["data"];
+type CancelTaskRes = AppScheduledJobTasks_Cancel_Res;
+type CancelTaskOptions = Omit<UseMutationOptions<CancelTaskRes, Error, CancelTaskReq>, "mutationFn">;
+
+function useCancelTask({ onSuccess, ...options }: CancelTaskOptions = {}) {
+    const { mutations } = useAppScheduledJobsApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.cancelTask,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.scheduled-jobs.tasks.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.scheduled-jobs.tasks.$.find-one-by-id"]],
+            });
             onSuccess?.(response, request, ...rest);
         },
         ...options,
@@ -126,4 +155,5 @@ export const AppScheduledJobsCommands = Object.freeze({
     useUpdateStatus,
     useDeleteOne,
     useRunNow,
+    useCancelTask,
 });

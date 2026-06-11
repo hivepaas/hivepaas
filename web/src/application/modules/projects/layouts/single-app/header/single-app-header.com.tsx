@@ -2,9 +2,10 @@ import { memo } from "react";
 
 import { Button } from "@components/ui";
 import { Power, RefreshCw } from "lucide-react";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
+import { AppScheduledJobsQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
 import { BackButton, TabNavigation } from "@application/shared/components";
@@ -16,12 +17,26 @@ import { AppAccessLinksDropdown } from "./building-blocks";
 import { SingleAppHeaderSkeleton } from "./single-app-header.skeleton.com";
 
 function View({ projectId, appId }: Props) {
+    const { scheduledJobId, taskId } = useParams<{
+        scheduledJobId?: string;
+        taskId?: string;
+    }>();
     const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const {
         data: app,
         isLoading: isLoadingApp,
         error: errorApp,
     } = ProjectAppsQueries.useFindOneById({ projectID: projectId, appID: appId });
+    const { data: scheduledJobResponse } = AppScheduledJobsQueries.useFindOneById(
+        {
+            projectID: projectId,
+            appID: appId,
+            scheduledJobID: scheduledJobId ?? "",
+        },
+        {
+            enabled: Boolean(scheduledJobId),
+        },
+    );
     const { mutate: deploy, isPending: isDeploying } = ProjectAppsCommands.useDeploy({
         onSuccess: () => {
             toast.success("Re-deploy started");
@@ -46,6 +61,36 @@ function View({ projectId, appId }: Props) {
     const { data: project } = data;
     const { data: appData } = app;
     const appEnv = project.envs.find(env => env.name === appData.env);
+    const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId);
+    const scheduledJobName = scheduledJobResponse?.data.name.trim();
+    const scheduledJobTasksLabel = scheduledJobName ? `${scheduledJobName} Tasks` : "Scheduled Job Tasks";
+    const taskBreadcrumbItems = scheduledJobId
+        ? [
+              {
+                  label: "Scheduled Jobs",
+                  to: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
+              },
+              {
+                  label: scheduledJobTasksLabel,
+                  ...(taskId
+                      ? {
+                            to: ROUTE.projects.single.apps.single.scheduledJobTasks.$route(
+                                projectId,
+                                appId,
+                                scheduledJobId,
+                            ),
+                        }
+                      : {}),
+              },
+              ...(taskId
+                  ? [
+                        {
+                            label: "Task Details",
+                        },
+                    ]
+                  : []),
+          ]
+        : [];
     const configurationActivePathPrefixes = [
         ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, appId),
         ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
@@ -87,6 +132,8 @@ function View({ projectId, appId }: Props) {
             <div className="flex items-center justify-between">
                 <SingleAppBreadcrumbs
                     app={appData}
+                    appRoute={appRoute}
+                    items={taskBreadcrumbItems}
                     project={project}
                 />
             </div>

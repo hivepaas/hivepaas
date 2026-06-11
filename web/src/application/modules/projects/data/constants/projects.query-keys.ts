@@ -87,6 +87,10 @@ export const QK = {
      */
     "projects.apps.scheduled-jobs.$.find-many-paginated": "projects.apps.scheduled-jobs.$.find-many-paginated",
     "projects.apps.scheduled-jobs.$.find-one-by-id": "projects.apps.scheduled-jobs.$.find-one-by-id",
+    "projects.apps.scheduled-jobs.tasks.$.find-many-paginated":
+        "projects.apps.scheduled-jobs.tasks.$.find-many-paginated",
+    "projects.apps.scheduled-jobs.tasks.$.find-one-by-id": "projects.apps.scheduled-jobs.tasks.$.find-one-by-id",
+    "projects.apps.scheduled-jobs.tasks.$.get-logs": "projects.apps.scheduled-jobs.tasks.$.get-logs",
     /*
      * Project Git Credentials
      */

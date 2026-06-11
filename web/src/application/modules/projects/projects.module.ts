@@ -29,6 +29,8 @@ export {
     AppDeploymentsRoute,
     AppLogsRoute,
     AppPreviewDeploymentsRoute,
+    AppScheduledJobTaskDetailsRoute,
+    AppScheduledJobTasksRoute,
     // Single App Configuration
     AppConfigGeneralRoute,
     AppConfigDeploymentSettingsRoute,

@@ -3,6 +3,10 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    AppScheduledJobTasks_Cancel_Req,
+    AppScheduledJobTasks_FindManyPaginated_Req,
+    AppScheduledJobTasks_FindOneById_Req,
+    AppScheduledJobTasks_GetLogs_Req,
     AppScheduledJobs_CreateOne_Req,
     AppScheduledJobs_DeleteOne_Req,
     AppScheduledJobs_FindManyPaginated_Req,
@@ -36,6 +40,39 @@ function createHook() {
                 },
                 findOneById: async (data: AppScheduledJobs_FindOneById_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.apps.scheduledJobs.$.findOneById({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findTasksManyPaginated: async (
+                    data: AppScheduledJobTasks_FindManyPaginated_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.projects.apps.scheduledJobs.$.findTasksManyPaginated({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findTaskById: async (data: AppScheduledJobTasks_FindOneById_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.scheduledJobs.$.findTaskById({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                getTaskLogs: async (data: AppScheduledJobTasks_GetLogs_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.scheduledJobs.$.getTaskLogs({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,
@@ -101,6 +138,17 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to run app scheduled job", error });
+                            throw error;
+                        },
+                    });
+                },
+                cancelTask: async (data: AppScheduledJobTasks_Cancel_Req["data"]) => {
+                    const result = await api.projects.apps.scheduledJobs.$.cancelTask({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to cancel scheduled job task", error });
                             throw error;
                         },
                     });

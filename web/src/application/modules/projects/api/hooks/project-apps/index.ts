@@ -13,5 +13,6 @@ export * from "./use-app-storage-settings.api";
 export * from "./use-app-http-settings.api";
 export * from "./use-app-health-checks.api";
 export * from "./use-app-scheduled-jobs.api";
+export * from "./use-app-scheduled-job-task-logs.ws-api";
 export * from "./use-app-logs.api";
 export * from "./use-app-logs.ws-api";

@@ -53,7 +53,13 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppScheduled
             enableHiding: false,
             minSize: 120,
             size: 120,
-            cell: () => <ViewTasksCell />,
+            cell: ({ row: { original } }) => (
+                <ViewTasksCell
+                    projectId={projectId}
+                    appId={appId}
+                    scheduledJob={original}
+                />
+            ),
             meta: {
                 align: "left",
                 titleAlign: "left",

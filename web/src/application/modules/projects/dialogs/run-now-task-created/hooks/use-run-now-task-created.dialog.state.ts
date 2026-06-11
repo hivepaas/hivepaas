@@ -5,7 +5,13 @@ import type { RunNowTaskCreatedDialogOptions, RunNowTaskCreatedDialogState } fro
 type State = RunNowTaskCreatedDialogState & RunNowTaskCreatedDialogOptions;
 
 interface Actions {
-    open: (taskId: string, options?: RunNowTaskCreatedDialogOptions) => void;
+    open: (
+        projectId: string,
+        appId: string,
+        scheduledJobId: string,
+        taskId: string,
+        options?: RunNowTaskCreatedDialogOptions,
+    ) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -14,24 +20,34 @@ interface Actions {
 export const useRunNowTaskCreatedDialogState = create<State & Actions>()(set => ({
     state: {
         mode: "closed",
+        projectId: null,
+        appId: null,
+        scheduledJobId: null,
         taskId: null,
     },
     props: {},
-    open: (taskId, options = {}) => {
+    open: (projectId, appId, scheduledJobId, taskId, options = {}) => {
         set({
             state: {
                 mode: "open",
+                projectId,
+                appId,
+                scheduledJobId,
                 taskId,
             },
-            ...options,
+            props: options.props ?? {},
         });
     },
     close: () => {
         set({
             state: {
                 mode: "closed",
+                projectId: null,
+                appId: null,
+                scheduledJobId: null,
                 taskId: null,
             },
+            props: {},
         });
     },
     clear: () => {
@@ -48,6 +64,9 @@ export const useRunNowTaskCreatedDialogState = create<State & Actions>()(set => 
             return {
                 state: {
                     mode: "closed",
+                    projectId: null,
+                    appId: null,
+                    scheduledJobId: null,
                     taskId: null,
                 },
                 props: {},

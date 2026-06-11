@@ -15,7 +15,9 @@ function createHook() {
                     handlers: AppDeploymentLogsWsHandlers,
                     signal?: AbortSignal,
                 ) => {
-                    const result = await api.projects.apps.deployments.logs.$.streamLogs({ data }, handlers, signal);
+                    const result = await Promise.resolve(
+                        api.projects.apps.deployments.logs.$.streamLogs({ data }, handlers, signal),
+                    );
 
                     return match(result, {
                         Ok: _ => _,

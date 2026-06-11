@@ -18,6 +18,7 @@ export interface WebSocketHandlers {
 export interface WebSocketConnectOptions {
     signal?: AbortSignal;
     closeOnError?: boolean;
+    protocols?: string | string[];
 }
 
 export interface WebSocketSubscription {
@@ -76,8 +77,8 @@ function connect(
     handlers: WebSocketHandlers = {},
     options: WebSocketConnectOptions = {},
 ): WebSocketSubscription {
-    const { signal, closeOnError = true } = options;
-    const socket = new WebSocket(url);
+    const { signal, closeOnError = true, protocols } = options;
+    const socket = new WebSocket(url, protocols);
     let isCleanedUp = false;
 
     function emitReadyState(): void {

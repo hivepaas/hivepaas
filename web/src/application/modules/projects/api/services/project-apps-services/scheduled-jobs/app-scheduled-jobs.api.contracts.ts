@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
-import type { AppScheduledJob } from "~/projects/domain";
+import type { AppScheduledJob, AppScheduledJobTask, AppScheduledJobTaskLogFrame } from "~/projects/domain";
 import type {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
@@ -147,4 +147,45 @@ export type AppScheduledJobs_RunNow_Res = ApiResponseBase<{
     task: {
         id: string;
     };
+}>;
+
+export type AppScheduledJobTasks_FindManyPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    scheduledJobID: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type AppScheduledJobTasks_FindManyPaginated_Res = ApiResponsePaginated<AppScheduledJobTask>;
+
+export type AppScheduledJobTasks_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    scheduledJobID: string;
+    taskID: string;
+}>;
+
+export type AppScheduledJobTasks_FindOneById_Res = ApiResponseBase<AppScheduledJobTask>;
+
+export type AppScheduledJobTasks_GetLogs_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    scheduledJobID: string;
+    taskID: string;
+    follow?: boolean;
+    tail?: number;
+    since?: Date;
+    duration?: string;
+}>;
+
+export type AppScheduledJobTasks_GetLogs_Res = ApiResponseBase<AppScheduledJobTaskLogFrame[]>;
+
+export type AppScheduledJobTasks_Cancel_Req = ApiRequestBase<{
+    taskID: string;
+}>;
+
+export type AppScheduledJobTasks_Cancel_Res = ApiResponseBase<{
+    type: "success";
 }>;

@@ -11,6 +11,7 @@ export * from "./e.app-health-check-type";
 export * from "./e.app-scheduled-job-arg-separator";
 export * from "./e.app-scheduled-job-schedule-mode";
 export * from "./e.app-scheduled-job-task-priority";
+export * from "./e.app-scheduled-job-task-status";
 export * from "./e.app-scheduled-job-type";
 export * from "./e.endpoint-resolution-mode";
 export * from "./e.healthcheck-mode";

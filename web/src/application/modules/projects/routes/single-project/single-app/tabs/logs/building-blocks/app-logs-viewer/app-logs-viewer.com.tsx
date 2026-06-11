@@ -10,8 +10,18 @@ import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@applic
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
 const DEFAULT_LOG_LINES = 100;
+const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 300px), 2000px)";
 
-export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: AppLogsViewerProps) {
+export function AppLogsViewer({
+    tabID,
+    projectID,
+    appID,
+    tabLabel,
+    taskId,
+    isActive,
+    shouldAutoStream,
+    onReadyStateChange,
+}: AppLogsViewerProps) {
     const [logs, setLogs] = useState<LogsViewerFrame[]>([]);
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [lines, setLines] = useState<number | undefined>(DEFAULT_LOG_LINES);
@@ -24,6 +34,14 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const isStreaming = webSocketReadyState === WebSocket.OPEN;
     const hasTimeFilter = since !== undefined || duration !== undefined;
+
+    const setReadyState = useCallback(
+        (readyState: WebSocketReadyState) => {
+            setWebSocketReadyState(readyState);
+            onReadyStateChange(tabID, readyState);
+        },
+        [onReadyStateChange, tabID],
+    );
 
     const request = useMemo<AppLogs_GetLogs_Req["data"]>(
         () => ({
@@ -52,8 +70,8 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
         abortControllerRef.current = null;
         subscriptionRef.current?.close();
         subscriptionRef.current = null;
-        setWebSocketReadyState(WebSocket.CLOSED);
-    }, []);
+        setReadyState(WebSocket.CLOSED);
+    }, [setReadyState]);
 
     const handleStream = useCallback(() => {
         if (isConnectionActive) {
@@ -62,7 +80,7 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
 
         closeStream();
         setLogs([]);
-        setWebSocketReadyState(WebSocket.CONNECTING);
+        setReadyState(WebSocket.CONNECTING);
 
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
@@ -91,15 +109,15 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
                         console.error("Failed to read app log frame", error);
                     },
                     onError: () => {
-                        setWebSocketReadyState(WebSocket.CLOSING);
+                        setReadyState(WebSocket.CLOSING);
                     },
                     onClose: () => {
                         subscriptionRef.current = null;
                         abortControllerRef.current = null;
-                        setWebSocketReadyState(WebSocket.CLOSED);
+                        setReadyState(WebSocket.CLOSED);
                     },
                     onReadyStateChange: readyState => {
-                        setWebSocketReadyState(readyState);
+                        setReadyState(readyState);
                     },
                 },
                 abortController.signal,
@@ -111,15 +129,15 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
                 }
 
                 subscriptionRef.current = subscription;
-                setWebSocketReadyState(subscription.getReadyState());
+                setReadyState(subscription.getReadyState());
             })
             .catch((error: unknown) => {
                 if (!abortController.signal.aborted) {
                     console.error("Failed to connect app logs", error);
-                    setWebSocketReadyState(WebSocket.CLOSED);
+                    setReadyState(WebSocket.CLOSED);
                 }
             });
-    }, [closeStream, isConnectionActive, request, streams]);
+    }, [closeStream, isConnectionActive, request, setReadyState, streams]);
 
     const handleRefresh = useCallback(async () => {
         if (isConnectionActive) {
@@ -134,22 +152,17 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
     }, [isConnectionActive, refreshLogs]);
 
     useEffect(() => {
-        if (!isActive || hasAutoStartedRef.current) {
+        if (!shouldAutoStream || !isActive || hasAutoStartedRef.current) {
             return;
         }
 
         hasAutoStartedRef.current = true;
         handleStream();
-    }, [handleStream, isActive]);
-
-    useEffect(() => {
-        if (!isActive && isConnectionActive) {
-            closeStream();
-        }
-    }, [closeStream, isActive, isConnectionActive]);
+    }, [handleStream, isActive, shouldAutoStream]);
 
     useEffect(() => {
         return () => {
+            hasAutoStartedRef.current = false;
             closeStream();
         };
     }, [closeStream]);
@@ -160,6 +173,7 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
+            height={APP_LOG_VIEWER_HEIGHT}
             fontSize="0.875rem"
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
@@ -179,7 +193,7 @@ export function AppLogsViewer({ projectID, appID, tabLabel, taskId, isActive }: 
                     lines={lines}
                     since={since}
                     duration={duration}
-                    isLinesDisabled={hasTimeFilter}
+                    isLinesHidden={hasTimeFilter}
                     onLinesChange={setLines}
                     onSinceChange={setSince}
                     onDurationChange={setDuration}
@@ -198,9 +212,12 @@ function toLogsViewerFrames(frames: AppLogFrame[]): LogsViewerFrame[] {
 }
 
 interface AppLogsViewerProps {
+    tabID: string;
     projectID: string;
     appID: string;
     tabLabel: string;
     taskId?: string;
     isActive: boolean;
+    shouldAutoStream: boolean;
+    onReadyStateChange: (tabID: string, readyState: WebSocketReadyState) => void;
 }

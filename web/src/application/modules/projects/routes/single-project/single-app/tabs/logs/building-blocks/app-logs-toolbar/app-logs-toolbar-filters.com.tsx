@@ -14,28 +14,29 @@ export function AppLogsToolbarFilters({
     lines,
     since,
     duration,
-    isLinesDisabled,
+    isLinesHidden,
     onLinesChange,
     onSinceChange,
     onDurationChange,
 }: AppLogsToolbarFiltersProps) {
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">Lines</span>
-                <InputNumber
-                    value={lines}
-                    min={1}
-                    showControls={false}
-                    useGrouping={false}
-                    disabled={isLinesDisabled}
-                    className="w-[76px]"
-                    classNameInput="h-9"
-                    onValueChange={value => {
-                        onLinesChange(value && value > 0 ? value : undefined);
-                    }}
-                />
-            </div>
+            {!isLinesHidden && (
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">Lines</span>
+                    <InputNumber
+                        value={lines}
+                        min={1}
+                        showControls={false}
+                        useGrouping={false}
+                        className="w-[76px]"
+                        classNameInput="h-9"
+                        onValueChange={value => {
+                            onLinesChange(value && value > 0 ? value : undefined);
+                        }}
+                    />
+                </div>
+            )}
             <DateTimePicker
                 value={since}
                 onChange={onSinceChange}
@@ -138,7 +139,7 @@ interface AppLogsToolbarFiltersProps {
     lines: number | undefined;
     since: Date | undefined;
     duration: string | undefined;
-    isLinesDisabled: boolean;
+    isLinesHidden: boolean;
     onLinesChange: (value: number | undefined) => void;
     onSinceChange: (value: Date | undefined) => void;
     onDurationChange: (value: string | undefined) => void;

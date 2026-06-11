@@ -27,7 +27,6 @@ export interface ProjectImageBuildResourceSettings {
 }
 
 export interface ProjectImageBuildSourceSettings {
-    checkoutMaxDepth?: number;
     repoCache: boolean;
 }
 

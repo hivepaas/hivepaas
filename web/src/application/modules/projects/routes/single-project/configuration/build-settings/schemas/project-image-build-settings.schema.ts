@@ -20,7 +20,6 @@ export const ProjectImageBuildSettingsFormSchema = z.object({
         shmSize: optionalTrimmedString,
     }),
     sources: z.object({
-        checkoutMaxDepth: z.number().optional(),
         repoCache: z.boolean(),
     }),
     noCache: z.boolean(),
@@ -38,7 +37,6 @@ export const emptyProjectImageBuildSettingsFormDefaults: ProjectImageBuildSettin
         shmSize: undefined,
     },
     sources: {
-        checkoutMaxDepth: undefined,
         repoCache: false,
     },
     noCache: false,

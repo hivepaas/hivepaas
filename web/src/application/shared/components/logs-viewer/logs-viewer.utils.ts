@@ -73,6 +73,10 @@ export function getAnsiLogLines(frame: LogsViewerFrame, showTimestamps: boolean)
 export function normalizeLogTextForDisplay(data: string): string[] {
     const lines = data.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replaceAll(BACKSPACE_CHARACTER, "").split("\n");
 
+    if (lines.length > 1 && lines[lines.length - 1] === "") {
+        lines.pop();
+    }
+
     return lines.length > 0 ? lines : [""];
 }
 

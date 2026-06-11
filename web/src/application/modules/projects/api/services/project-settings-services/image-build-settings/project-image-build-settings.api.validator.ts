@@ -21,7 +21,6 @@ const ImageBuildResourcesSchema = z
 
 const ImageBuildSourcesSchema = z
     .object({
-        checkoutMaxDepth: z.number().optional(),
         repoCache: z.boolean().optional(),
     })
     .nullish();
@@ -75,7 +74,6 @@ export class ProjectImageBuildSettingsApiValidator {
                     shmSize: data.resources?.shmSize,
                 },
                 sources: {
-                    checkoutMaxDepth: data.sources?.checkoutMaxDepth,
                     repoCache: data.sources?.repoCache ?? false,
                 },
                 noCache: data.noCache ?? false,

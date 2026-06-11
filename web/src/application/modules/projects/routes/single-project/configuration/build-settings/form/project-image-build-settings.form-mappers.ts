@@ -13,7 +13,6 @@ export function mapProjectImageBuildSettingsToFormInput(
             shmSize: data.resources.shmSize,
         },
         sources: {
-            checkoutMaxDepth: data.sources.checkoutMaxDepth,
             repoCache: data.sources.repoCache,
         },
         noCache: data.noCache,

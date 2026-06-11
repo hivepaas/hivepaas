@@ -15,6 +15,7 @@ import {
     AppLogsApi,
     AppLogsApiValidator,
     AppLogsWsApi,
+    AppScheduledJobTaskLogsWsApi,
     AppScheduledJobsApi,
     AppScheduledJobsApiValidator,
     AppSecretsApi,
@@ -115,6 +116,7 @@ function createApi() {
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
     const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
+    const appScheduledJobsApi = new AppScheduledJobsApi(appScheduledJobsApiValidator);
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
@@ -144,7 +146,7 @@ function createApi() {
                 logs: {
                     $: appLogsApi,
                     stream: {
-                        $: new AppLogsWsApi(appLogsApi),
+                        $: new AppLogsWsApi(),
                     },
                 },
                 envVars: {
@@ -159,7 +161,7 @@ function createApi() {
                 deployments: {
                     $: appDeploymentsApi,
                     logs: {
-                        $: new AppDeploymentLogsWsApi(appDeploymentsApi),
+                        $: new AppDeploymentLogsWsApi(),
                     },
                 },
                 containerSettings: {
@@ -172,7 +174,10 @@ function createApi() {
                     $: new AppHealthChecksApi(appHealthChecksApiValidator),
                 },
                 scheduledJobs: {
-                    $: new AppScheduledJobsApi(appScheduledJobsApiValidator),
+                    $: appScheduledJobsApi,
+                    taskLogs: {
+                        $: new AppScheduledJobTaskLogsWsApi(),
+                    },
                 },
                 networkSettings: {
                     $: new AppNetworkSettingsApi(appNetworkSettingsApiValidator),

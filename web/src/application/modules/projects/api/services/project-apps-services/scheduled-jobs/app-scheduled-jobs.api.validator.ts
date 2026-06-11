@@ -1,6 +1,9 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    AppScheduledJobTasks_FindManyPaginated_Res,
+    AppScheduledJobTasks_FindOneById_Res,
+    AppScheduledJobTasks_GetLogs_Res,
     AppScheduledJobs_CreateOne_Res,
     AppScheduledJobs_FindManyPaginated_Res,
     AppScheduledJobs_FindOneById_Res,
@@ -9,6 +12,7 @@ import type {
 import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
+    EAppScheduledJobTaskStatus,
     EAppScheduledJobType,
 } from "~/projects/module-shared/enums";
 
@@ -113,13 +117,84 @@ const AppScheduledJobSchema = z.object({
     nextRuns: z.array(z.coerce.date()).optional().default([]),
 });
 
+const NullableDateSchema = z.preprocess(value => {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}, z.date().nullable());
+
+const AppScheduledJobTaskPrioritySchema = z
+    .string()
+    .optional()
+    .default(EAppScheduledJobTaskPriority.Default)
+    .transform(value =>
+        Object.values(EAppScheduledJobTaskPriority).includes(value as EAppScheduledJobTaskPriority)
+            ? (value as EAppScheduledJobTaskPriority)
+            : EAppScheduledJobTaskPriority.Default,
+    );
+
+const AppScheduledJobTaskConfigSchema = z.preprocess(
+    value => value ?? {},
+    z.object({
+        priority: AppScheduledJobTaskPrioritySchema,
+        maxRetry: z.number().optional().default(0),
+        retry: z.number().optional().default(0),
+        retryDelay: z.string().optional().default(""),
+        timeout: z.string().optional().default(""),
+        controlDisabled: z.boolean().optional().default(false),
+    }),
+);
+
+const AppScheduledJobTaskSchema = z.object({
+    id: z.string(),
+    type: z.string().optional().default(""),
+    status: z.nativeEnum(EAppScheduledJobTaskStatus),
+    config: AppScheduledJobTaskConfigSchema,
+    lastError: z.string().optional().default(""),
+    updateVer: z.number(),
+    runAt: NullableDateSchema,
+    retryAt: NullableDateSchema,
+    startedAt: NullableDateSchema,
+    endedAt: NullableDateSchema,
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+});
+
+const AppScheduledJobTaskLogFrameSchema = z.object({
+    type: z.enum(["in", "out", "err", "warn", "debug"]),
+    data: z.string(),
+    ts: NullableDateSchema,
+});
+
 const FindManyPaginatedSchema = z.object({
     data: z.array(AppScheduledJobSchema),
     meta: PagingMetaApiSchema,
 });
 
+const FindTasksManyPaginatedSchema = z.object({
+    data: z.array(AppScheduledJobTaskSchema),
+    meta: PagingMetaApiSchema,
+});
+
 const FindOneByIdSchema = z.object({
     data: AppScheduledJobSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const FindTaskByIdSchema = z.object({
+    data: AppScheduledJobTaskSchema,
     meta: BaseMetaApiSchema.nullable(),
 });
 
@@ -139,6 +214,13 @@ const RunNowSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const GetTaskLogsSchema = z.object({
+    data: z.object({
+        logs: z.array(AppScheduledJobTaskLogFrameSchema),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppScheduledJobsApiValidator {
     findManyPaginated = (response: AxiosResponse): AppScheduledJobs_FindManyPaginated_Res => {
         return parseApiResponse({
@@ -154,6 +236,20 @@ export class AppScheduledJobsApiValidator {
         });
     };
 
+    findTasksManyPaginated = (response: AxiosResponse): AppScheduledJobTasks_FindManyPaginated_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindTasksManyPaginatedSchema,
+        });
+    };
+
+    findTaskById = (response: AxiosResponse): AppScheduledJobTasks_FindOneById_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindTaskByIdSchema,
+        });
+    };
+
     createOne = (response: AxiosResponse): AppScheduledJobs_CreateOne_Res => {
         return parseApiResponse({
             response,
@@ -166,5 +262,17 @@ export class AppScheduledJobsApiValidator {
             response,
             schema: RunNowSchema,
         });
+    };
+
+    getTaskLogs = (response: AxiosResponse): AppScheduledJobTasks_GetLogs_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: GetTaskLogsSchema,
+        });
+
+        return {
+            data: data.logs,
+            meta,
+        };
     };
 }

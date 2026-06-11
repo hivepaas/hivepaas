@@ -9,17 +9,37 @@ import {
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
 import { Button } from "@/components/ui/button";
 
 import { useRunNowTaskCreatedDialogState } from "../hooks";
 
 export function RunNowTaskCreatedDialog() {
     const { state, props: dialogOptions, ...actions } = useRunNowTaskCreatedDialogState();
+    const { navigate } = useAppNavigate();
     const open = state.mode === "open";
 
     function handleClose() {
         actions.close();
         dialogOptions?.onClose?.();
+    }
+
+    function handleViewTask() {
+        if (state.mode !== "open") {
+            return;
+        }
+
+        navigate.modules(
+            ROUTE.projects.single.apps.single.scheduledJobTasks.details.$route(
+                state.projectId,
+                state.appId,
+                state.scheduledJobId,
+                state.taskId,
+            ),
+        );
+        handleClose();
     }
 
     return (
@@ -49,9 +69,9 @@ export function RunNowTaskCreatedDialog() {
                 <DialogActionFooter className="flex justify-end gap-4">
                     <Button
                         type="button"
-                        disabled
+                        onClick={handleViewTask}
                     >
-                        View Tasks
+                        View Task
                     </Button>
                     <Button
                         type="button"

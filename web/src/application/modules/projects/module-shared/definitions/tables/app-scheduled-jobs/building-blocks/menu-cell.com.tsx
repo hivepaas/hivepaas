@@ -22,7 +22,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
     const { mutate: runNow, isPending: isRunning } = AppScheduledJobsCommands.useRunNow({
         onSuccess: response => {
             setOpen(false);
-            runNowTaskCreatedDialog.actions.open(response.data.task.id);
+            runNowTaskCreatedDialog.actions.open(projectId, appId, scheduledJob.id, response.data.task.id);
         },
     });
 

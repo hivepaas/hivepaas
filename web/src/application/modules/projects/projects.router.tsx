@@ -608,6 +608,29 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
+                 * Single App – Scheduled Job Tasks
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.scheduledJobTasks.$pattern,
+                    lazy: async () => {
+                        const { AppScheduledJobTasksRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppScheduledJobTasksRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.apps.single.scheduledJobTasks.details.$pattern,
+                    lazy: async () => {
+                        const { AppScheduledJobTaskDetailsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppScheduledJobTaskDetailsRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Logs
                  */
                 {

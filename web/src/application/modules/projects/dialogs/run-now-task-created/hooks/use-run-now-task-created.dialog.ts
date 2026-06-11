@@ -9,8 +9,8 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (taskId: string) => {
-                    actions.open(taskId, { props });
+                open: (projectId: string, appId: string, scheduledJobId: string, taskId: string) => {
+                    actions.open(projectId, appId, scheduledJobId, taskId, { props });
                 },
                 close: () => {
                     actions.close();

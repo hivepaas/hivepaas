@@ -19,21 +19,45 @@ type UpdateSSLRenewalReq struct {
 }
 
 type SSLRenewalBaseReq struct {
-	Status           base.SettingStatus `json:"status"`
-	ScheduleInterval timeutil.Duration  `json:"scheduleInterval"`
-	ScheduleFrom     time.Time          `json:"scheduleFrom"`
+	Status       base.SettingStatus                `json:"status"`
+	Schedule     ScheduleReq                       `json:"schedule"`
+	Notification *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SSLRenewalBaseReq) ToEntity() *entity.SSLRenewal {
 	return &entity.SSLRenewal{
-		ScheduleInterval: req.ScheduleInterval,
-		ScheduleFrom:     req.ScheduleFrom,
+		Schedule:     req.Schedule.ToEntity(),
+		Notification: req.Notification.ToEntity(),
 	}
 }
 
-func (req *SSLRenewalBaseReq) validate(_ string) []vld.Validator {
-	// TODO: add validation
-	return nil
+func (req *SSLRenewalBaseReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	sched := req.Schedule.ToEntity()
+	res = append(res, vld.Must((&sched).IsValid() == nil).OnError(
+		vld.SetField(field+"schedule.Interval|schedule.CronExpr", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
+	))
+	res = append(res, basedto.ValidateTime(&req.Schedule.InitialTime, true,
+		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
+	res = append(res, req.Notification.Validate(field+"notification")...)
+	return res
+}
+
+type ScheduleReq struct {
+	CronExpr    string            `json:"cronExpr"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval"`
+	InitialTime time.Time         `json:"initialTime"`
+}
+
+func (req *ScheduleReq) ToEntity() entity.SchedJobSchedule {
+	return entity.SchedJobSchedule{
+		CronExpr:    req.CronExpr,
+		Interval:    req.Interval,
+		InitialTime: req.InitialTime,
+	}
 }
 
 func NewUpdateSSLRenewalReq() *UpdateSSLRenewalReq {
@@ -41,9 +65,10 @@ func NewUpdateSSLRenewalReq() *UpdateSSLRenewalReq {
 }
 
 func (req *UpdateSSLRenewalReq) ModifyRequest() error {
-	if !req.ScheduleFrom.IsZero() {
-		req.ScheduleFrom = req.ScheduleFrom.Truncate(time.Minute)
+	if req.Schedule.InitialTime.IsZero() {
+		req.Schedule.InitialTime = timeutil.NowUTC()
 	}
+	req.Schedule.InitialTime = req.Schedule.InitialTime.Truncate(time.Minute)
 	return nil
 }
 

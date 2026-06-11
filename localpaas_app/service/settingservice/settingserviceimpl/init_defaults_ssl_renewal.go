@@ -40,8 +40,14 @@ func (s *service) initDefaultSSLRenewal(
 		UpdatedAt: timeNow,
 	}
 	renewal := &entity.SSLRenewal{
-		ScheduleInterval: sslRenewalInterval,
-		ScheduleFrom:     timeNow.Truncate(sslRenewalInterval.ToDuration()),
+		Schedule: entity.SchedJobSchedule{
+			Interval:    sslRenewalInterval,
+			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 1, 0, 0, 0, time.UTC),
+		},
+		Notification: &entity.BaseEventNotification{
+			SuccessUseDefault: true,
+			FailureUseDefault: true,
+		},
 	}
 	renewalSetting.MustSetData(renewal)
 
@@ -58,14 +64,12 @@ func (s *service) initDefaultSSLRenewal(
 		UpdatedAt: timeNow,
 	}
 	schedJob := &entity.SchedJob{
-		JobType: base.SchedJobTypeSSLRenewal,
-		Schedule: &entity.SchedJobSchedule{
-			Interval:    renewal.ScheduleInterval,
-			InitialTime: renewal.ScheduleFrom,
-		},
+		JobType:       base.SchedJobTypeSSLRenewal,
+		Schedule:      &renewal.Schedule,
 		TargetSetting: entity.ObjectID{ID: renewalSetting.ID},
 		MaxRetry:      sslRenewalMaxRetry,
 		RetryDelay:    sslRenewalRetryDelay,
+		Notification:  renewal.Notification,
 	}
 	jobSetting.MustSetData(schedJob)
 

@@ -30987,26 +30987,20 @@
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildSourceSettingsReq" : {
         "properties" : {
-          "checkoutMaxDepth" : {
-            "type" : "integer"
-          },
           "repoCache" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "checkoutMaxDepth", "repoCache" ],
+        "required" : [ "repoCache" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildSourceSettingsResp" : {
         "properties" : {
-          "checkoutMaxDepth" : {
-            "type" : "integer"
-          },
           "repoCache" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "checkoutMaxDepth", "repoCache" ],
+        "required" : [ "repoCache" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.RepoCacheInfoResp" : {
@@ -34606,11 +34600,18 @@
           "name" : {
             "type" : "string"
           },
-          "scheduleFrom" : {
-            "type" : "string"
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+          "notification" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationResp"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleResp"
           },
           "status" : {
             "type" : "string"
@@ -34625,7 +34626,39 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "id", "name", "scheduleFrom", "scheduleInterval", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "id", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleReq" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleResp" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "initialTime" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalReq" : {
@@ -34636,11 +34669,11 @@
           "default" : {
             "type" : "boolean"
           },
-          "scheduleFrom" : {
-            "type" : "string"
+          "notification" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.BaseEventNotificationReq"
           },
-          "scheduleInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+          "schedule" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleReq"
           },
           "status" : {
             "type" : "string"
@@ -34649,7 +34682,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "scheduleFrom", "scheduleInterval", "status", "updateVer" ],
+        "required" : [ "availableInProjects", "default", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.UpdateSSLRenewalResp" : {
@@ -36218,10 +36251,10 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       }
     },
     "securitySchemes" : {

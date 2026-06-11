@@ -44,7 +44,7 @@ func (s *service) initDefaultSystemBackup(
 	backup := &entity.SystemBackup{
 		Schedule: entity.SchedJobSchedule{
 			Interval:    sysBackupInterval,
-			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 1, 0, 0, 0, time.UTC),
+			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 30, 0, 0, time.UTC),
 		},
 		DBBackupConfig: entity.SystemBackupDBConfig{
 			BackupDeletedObjects: sysBackupDeletedObjects,

@@ -103,8 +103,7 @@ func (uc *UC) loadSettingData(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.JobScheduleChanges = renewal.ScheduleInterval != data.NewRenewal.ScheduleInterval ||
-		renewal.ScheduleFrom != data.NewRenewal.ScheduleFrom
+	data.JobScheduleChanges = !renewal.Schedule.Equal(&data.NewRenewal.Schedule)
 
 	// Load sched job of the cleanup
 	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,
@@ -162,8 +161,8 @@ func (uc *UC) preparePersistingData(
 	persistingData.JobSetting = jobSetting
 
 	renewalJob := jobSetting.MustAsSchedJob()
-	renewalJob.Schedule.Interval = updateData.NewRenewal.ScheduleInterval
-	renewalJob.Schedule.InitialTime = updateData.NewRenewal.ScheduleFrom
+	renewalJob.Schedule = &updateData.NewRenewal.Schedule
+	renewalJob.Notification = updateData.NewRenewal.Notification
 	jobSetting.MustSetData(renewalJob)
 
 	return nil

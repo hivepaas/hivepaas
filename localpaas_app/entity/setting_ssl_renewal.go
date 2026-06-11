@@ -1,13 +1,10 @@
 package entity
 
 import (
-	"time"
-
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
 const (
@@ -24,8 +21,8 @@ func (s *sslRenewalParser) New() SettingData {
 }
 
 type SSLRenewal struct {
-	ScheduleInterval timeutil.Duration `json:"scheduleInterval"`
-	ScheduleFrom     time.Time         `json:"scheduleFrom"`
+	Schedule     SchedJobSchedule       `json:"schedule"`
+	Notification *BaseEventNotification `json:"notification,omitempty"`
 }
 
 func (s *SSLRenewal) GetType() base.SettingType {
@@ -33,7 +30,11 @@ func (s *SSLRenewal) GetType() base.SettingType {
 }
 
 func (s *SSLRenewal) GetRefObjectIDs() *RefObjectIDs {
-	return &RefObjectIDs{}
+	refIDs := &RefObjectIDs{}
+	if s.Notification != nil {
+		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
+	}
+	return refIDs
 }
 
 func (s *SSLRenewal) Migrate(setting *Setting) (hasChange bool, err error) {

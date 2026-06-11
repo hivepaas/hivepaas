@@ -34,8 +34,17 @@ type GetSSLRenewalResp struct {
 
 type SSLRenewalResp struct {
 	*settings.BaseSettingResp
-	ScheduleInterval timeutil.Duration `json:"scheduleInterval"`
-	ScheduleFrom     time.Time         `json:"scheduleFrom"`
+	Schedule     *ScheduleResp                      `json:"schedule"`
+	Notification *basedto.BaseEventNotificationResp `json:"notification"`
+
+	// Calculated fields
+	NextRuns []time.Time `json:"nextRuns"`
+}
+
+type ScheduleResp struct {
+	CronExpr    string            `json:"cronExpr,omitempty"` // cronExpr and interval are mutually exclusive
+	Interval    timeutil.Duration `json:"interval,omitempty"`
+	InitialTime time.Time         `json:"initialTime"`
 }
 
 func TransformSSLRenewal(
@@ -51,6 +60,11 @@ func TransformSSLRenewal(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+
+	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+
+	// Add next runs
+	resp.NextRuns, _ = config.Schedule.CalcNextRuns(time.Now(), 5) //nolint
 
 	return resp, nil
 }

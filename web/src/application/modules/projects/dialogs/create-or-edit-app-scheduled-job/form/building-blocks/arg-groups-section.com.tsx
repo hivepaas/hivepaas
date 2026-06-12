@@ -27,12 +27,10 @@ import {
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../../schemas";
 import { createDefaultArg, createDefaultArgGroup } from "../create-or-edit-app-scheduled-job.form-mappers";
 
-import { INFO_BLOCK_TITLE_WIDTH } from "./app-scheduled-job-form.constants";
-
 type SchemaInput = CreateOrEditAppScheduledJobFormInput;
 type SchemaOutput = CreateOrEditAppScheduledJobFormOutput;
 
-const CONTENT_COLUMN_OFFSET = INFO_BLOCK_TITLE_WIDTH + 12;
+const CONTENT_COLUMN_OFFSET = 120 + 12;
 
 function isQuoted(value: unknown): boolean {
     if (typeof value !== "string" || value.length < 2) {
@@ -213,7 +211,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
                     <InfoBlock
                         title="Enabled"
-                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                        titleWidth={120}
                     >
                         <Checkbox
                             checked={enabled.value === true}
@@ -237,7 +235,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                                         isRequired
                                     />
                                 }
-                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                titleWidth={120}
                             >
                                 <Field>
                                     <Input
@@ -255,7 +253,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
 
                             <InfoBlock
                                 title="Arg Separator"
-                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                titleWidth={120}
                             >
                                 <Select
                                     value={separator.value}

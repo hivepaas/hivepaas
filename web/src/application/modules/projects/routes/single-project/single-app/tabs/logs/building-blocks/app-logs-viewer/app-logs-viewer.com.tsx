@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type SetStateAction, useCallback, useEffect, useMemo, useRef } from "react";
 
 import type { WebSocketReadyState, WebSocketSubscription } from "@infrastructure/websocket";
 import { useAppLogsWsApi } from "~/projects/api";
@@ -9,7 +9,6 @@ import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@applic
 
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
-const DEFAULT_LOG_LINES = 100;
 const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 300px), 2000px)";
 
 export function AppLogsViewer({
@@ -18,15 +17,19 @@ export function AppLogsViewer({
     appID,
     tabLabel,
     taskId,
+    logs,
+    lines,
+    since,
+    duration,
+    webSocketReadyState,
     isActive,
     shouldAutoStream,
+    onLogsChange,
+    onLinesChange,
+    onSinceChange,
+    onDurationChange,
     onReadyStateChange,
 }: AppLogsViewerProps) {
-    const [logs, setLogs] = useState<LogsViewerFrame[]>([]);
-    const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
-    const [lines, setLines] = useState<number | undefined>(DEFAULT_LOG_LINES);
-    const [since, setSince] = useState<Date | undefined>();
-    const [duration, setDuration] = useState<string | undefined>();
     const subscriptionRef = useRef<WebSocketSubscription | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const hasAutoStartedRef = useRef(false);
@@ -37,7 +40,6 @@ export function AppLogsViewer({
 
     const setReadyState = useCallback(
         (readyState: WebSocketReadyState) => {
-            setWebSocketReadyState(readyState);
             onReadyStateChange(tabID, readyState);
         },
         [onReadyStateChange, tabID],
@@ -79,7 +81,7 @@ export function AppLogsViewer({
         }
 
         closeStream();
-        setLogs([]);
+        onLogsChange(tabID, []);
         setReadyState(WebSocket.CONNECTING);
 
         const abortController = new AbortController();
@@ -100,7 +102,7 @@ export function AppLogsViewer({
                                 return;
                             }
 
-                            setLogs(current => [...current, ...frames]);
+                            onLogsChange(tabID, current => [...current, ...frames]);
                         } catch (error) {
                             console.error("Failed to parse app log frame", error);
                         }
@@ -137,7 +139,7 @@ export function AppLogsViewer({
                     setReadyState(WebSocket.CLOSED);
                 }
             });
-    }, [closeStream, isConnectionActive, request, setReadyState, streams]);
+    }, [closeStream, isConnectionActive, onLogsChange, request, setReadyState, streams, tabID]);
 
     const handleRefresh = useCallback(async () => {
         if (isConnectionActive) {
@@ -147,9 +149,9 @@ export function AppLogsViewer({
         const result = await refreshLogs();
 
         if (result.data) {
-            setLogs(toLogsViewerFrames(result.data.data));
+            onLogsChange(tabID, toLogsViewerFrames(result.data.data));
         }
-    }, [isConnectionActive, refreshLogs]);
+    }, [isConnectionActive, onLogsChange, refreshLogs, tabID]);
 
     useEffect(() => {
         if (!shouldAutoStream || !isActive || hasAutoStartedRef.current) {
@@ -170,6 +172,7 @@ export function AppLogsViewer({
     return (
         <LogsViewer
             frames={logs}
+            logViewerKey={`${tabID}:${isActive ? "active" : "inactive"}`}
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
@@ -194,9 +197,15 @@ export function AppLogsViewer({
                     since={since}
                     duration={duration}
                     isLinesHidden={hasTimeFilter}
-                    onLinesChange={setLines}
-                    onSinceChange={setSince}
-                    onDurationChange={setDuration}
+                    onLinesChange={value => {
+                        onLinesChange(tabID, value);
+                    }}
+                    onSinceChange={value => {
+                        onSinceChange(tabID, value);
+                    }}
+                    onDurationChange={value => {
+                        onDurationChange(tabID, value);
+                    }}
                 />
             }
         />
@@ -217,7 +226,16 @@ interface AppLogsViewerProps {
     appID: string;
     tabLabel: string;
     taskId?: string;
+    logs: LogsViewerFrame[];
+    lines: number | undefined;
+    since: Date | undefined;
+    duration: string | undefined;
+    webSocketReadyState: WebSocketReadyState;
     isActive: boolean;
     shouldAutoStream: boolean;
+    onLogsChange: (tabID: string, action: SetStateAction<LogsViewerFrame[]>) => void;
+    onLinesChange: (tabID: string, action: SetStateAction<number | undefined>) => void;
+    onSinceChange: (tabID: string, action: SetStateAction<Date | undefined>) => void;
+    onDurationChange: (tabID: string, action: SetStateAction<string | undefined>) => void;
     onReadyStateChange: (tabID: string, readyState: WebSocketReadyState) => void;
 }

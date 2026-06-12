@@ -16,6 +16,7 @@ const DEFAULT_LOG_VIEWER_FONT_SIZE = "0.875rem";
 
 export function LogsViewer({
     frames,
+    logViewerKey,
     isStreaming = false,
     isRefreshPending = false,
     hasLineNumbers = true,
@@ -47,6 +48,7 @@ export function LogsViewer({
         [displayedFrames, showTimestamps],
     );
     const scrollToRow = followLogs && displayedAnsiLines.length > 0 ? displayedAnsiLines.length - 1 : undefined;
+    const logViewerInstanceKey = `${String(logViewerKey ?? "default")}:${isFullscreen ? "fullscreen" : "inline"}`;
     const rootStyle = {
         "--logs-viewer-font-size": fontSize,
     } as CSSProperties;
@@ -83,7 +85,7 @@ export function LogsViewer({
             style={rootStyle}
         >
             <LogViewer
-                key={isFullscreen ? "fullscreen" : "inline"}
+                key={logViewerInstanceKey}
                 data={displayedAnsiLines}
                 hasLineNumbers={hasLineNumbers}
                 theme="dark"

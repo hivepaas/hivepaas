@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { Key, ReactNode } from "react";
 
 export const ELogsViewerFrameType = {
     In: "in",
@@ -18,6 +18,7 @@ export interface LogsViewerFrame {
 
 export interface LogsViewerProps {
     frames: LogsViewerFrame[];
+    logViewerKey?: Key;
     isStreaming?: boolean;
     isRefreshPending?: boolean;
     hasLineNumbers?: boolean;

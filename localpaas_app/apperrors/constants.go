@@ -25,6 +25,7 @@ var (
 	ErrResourceInactive         = errors.New("ERR_RESOURCE_INACTIVE")
 	ErrResourceMissing          = errors.New("ERR_RESOURCE_MISSING")
 	ErrTooMany                  = errors.New("ERR_TOO_MANY")
+	ErrTooBig                   = errors.New("ERR_TOO_BIG")
 	ErrActionNotAllowed         = errors.New("ERR_ACTION_NOT_ALLOWED")
 	ErrActionNotAllowedByStatus = errors.New("ERR_ACTION_NOT_ALLOWED_BY_STATUS")
 	ErrActionNotAllowedByAdmin  = errors.New("ERR_ACTION_NOT_ALLOWED_BY_ADMIN")
@@ -106,6 +107,15 @@ var (
 	ErrServiceNotRunning          = errors.New("ERR_SERVICE_NOT_RUNNING")
 )
 
+// Errors for files
+var (
+	ErrFileSizeTooBig              = errors.New("ERR_FILE_SIZE_TOO_BIG")
+	ErrFileTypeNotSupported        = errors.New("ERR_FILE_TYPE_NOT_SUPPORTED")
+	ErrFileExtNotSupported         = errors.New("ERR_FILE_EXT_NOT_SUPPORTED")
+	ErrFileNameTooLong             = errors.New("ERR_FILE_NAME_TOO_LONG")
+	ErrFileTargetObjectUnavailable = errors.New("ERR_FILE_TARGET_OBJECT_UNAVAILABLE")
+)
+
 // nolint Errors from infrastructure
 var (
 	ErrInfra                   = errors.New("ERR_INFRA")
@@ -149,6 +159,7 @@ var errorStatusMap = map[error]int{
 	ErrResourceInactive:         http.StatusUnprocessableEntity,
 	ErrResourceMissing:          http.StatusUnprocessableEntity,
 	ErrTooMany:                  http.StatusUnprocessableEntity,
+	ErrTooBig:                   http.StatusUnprocessableEntity,
 	ErrActionNotAllowed:         http.StatusUnprocessableEntity,
 	ErrActionNotAllowedByStatus: http.StatusUnprocessableEntity,
 	ErrActionNotAllowedByAdmin:  http.StatusUnprocessableEntity,
@@ -214,6 +225,13 @@ var errorStatusMap = map[error]int{
 	// Cluster errors
 	ErrNodeRequiredByLocalPaaSApp: http.StatusUnprocessableEntity,
 	ErrServiceNotRunning:          http.StatusUnprocessableEntity,
+
+	// File errors
+	ErrFileSizeTooBig:              http.StatusBadRequest,
+	ErrFileTypeNotSupported:        http.StatusBadRequest,
+	ErrFileExtNotSupported:         http.StatusBadRequest,
+	ErrFileNameTooLong:             http.StatusBadRequest,
+	ErrFileTargetObjectUnavailable: http.StatusBadRequest,
 
 	// Errors from infrastructure
 	ErrInfra:                   http.StatusInternalServerError,

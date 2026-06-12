@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
+	"mime/multipart"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,6 +19,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/httputil"
@@ -24,6 +28,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/translation"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/unit"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc/filedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc/syserrordto"
 )
@@ -380,4 +385,92 @@ func (h *BaseHandler) StreamAppLogs(
 
 func (h *BaseHandler) IsWebsocketRequest(ctx *gin.Context) bool {
 	return strings.ToLower(ctx.Request.Header.Get("Connection")) == "upgrade"
+}
+
+func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) error {
+	cfg := &config.Current.Files
+	err := ctx.Request.ParseMultipartForm(int64(cfg.RequestMaxSize))
+	if err != nil {
+		if errors.Is(err, multipart.ErrMessageTooLarge) {
+			return apperrors.New(apperrors.ErrTooBig).WithParam("MaxSize", cfg.RequestMaxSize)
+		}
+		return apperrors.Wrap(err)
+	}
+
+	fileType := ctx.PostForm("fileType")
+	var maxFile int
+	var maxFileSize unit.DataSize
+	var fileExts []string
+	var requiredScopes []base.ObjectScopeType
+	switch base.FileType(fileType) { //nolint:exhaustive
+	case base.FileTypeBuildSource:
+		maxFile = cfg.BuildSourceMaxFile
+		maxFileSize = cfg.BuildSourceMaxSize
+		fileExts = cfg.BuildSourceFileExts
+		requiredScopes = []base.ObjectScopeType{base.ObjectScopeApp}
+	default:
+		return apperrors.NewUnsupported(apperrors.Fmt("File type '%v'", fileType))
+	}
+	req.FileType = base.FileType(fileType)
+
+	scope := base.ObjectScopeType(ctx.PostForm("scope"))
+	if !gofn.Contain(requiredScopes, scope) {
+		return apperrors.NewUnsupported(apperrors.Fmt("File scope '%v'", scope))
+	}
+
+	switch scope {
+	case base.ObjectScopeApp:
+		projectID, appID := ctx.PostForm("projectId"), ctx.PostForm("appId")
+		if projectID == "" || appID == "" {
+			return apperrors.NewMissing(apperrors.Fmt("Param 'projectId' or 'appId'"))
+		}
+		req.Scope = base.NewObjectScopeApp(appID, projectID)
+	case base.ObjectScopeProject:
+		projectID := ctx.PostForm("projectId")
+		if projectID == "" {
+			return apperrors.NewMissing(apperrors.Fmt("Param 'projectId'"))
+		}
+		req.Scope = base.NewObjectScopeProject(projectID)
+	case base.ObjectScopeUser:
+		userID := ctx.PostForm("userId")
+		if userID == "" {
+			return apperrors.NewMissing(apperrors.Fmt("Param 'userId'"))
+		}
+		req.Scope = base.NewObjectScopeUser(userID)
+	case base.ObjectScopeGlobal, "global":
+		req.Scope = base.NewObjectScopeGlobal()
+	default:
+		return apperrors.NewUnsupported(apperrors.Fmt("Scope '%v'", scope))
+	}
+
+	req.StorageType = base.FileStorageType(ctx.PostForm("storageType"))
+	if !gofn.Contain(base.AllFileStorageTypes, req.StorageType) {
+		return apperrors.NewUnsupported(apperrors.Fmt("File storage '%v'", req.StorageType))
+	}
+	req.StorageID = ctx.PostForm("storageId")
+
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if maxFile > 0 && len(form.File["file"]) > maxFile {
+		return apperrors.New(apperrors.ErrTooMany).WithParam("Name", "Files").
+			WithNTParam("MaxItem", maxFile)
+	}
+	allowAnyExt := gofn.Contain(fileExts, "*")
+	for _, formFile := range form.File["file"] {
+		if maxFileSize > 0 && formFile.Size > maxFileSize.Bytes() {
+			return apperrors.New(apperrors.ErrFileSizeTooBig).
+				WithNTParam("MaxSize", maxFileSize)
+		}
+		if !(allowAnyExt || gofn.Contain(fileExts, strings.ToLower(filepath.Ext(formFile.Filename)))) { //nolint
+			return apperrors.New(apperrors.ErrFileExtNotSupported).WithNTParam("SupportedExts", fileExts)
+		}
+		if cfg.FileNameMaxLength > 0 && gofn.RuneLength(formFile.Filename) > cfg.FileNameMaxLength {
+			return apperrors.New(apperrors.ErrFileNameTooLong).WithNTParam("MaxNameLen", cfg.FileNameMaxLength)
+		}
+		req.Files = append(req.Files, formFile)
+	}
+
+	return nil
 }

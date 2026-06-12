@@ -7,16 +7,19 @@ import (
 )
 
 func New(
+	fileRepo repository.FileRepo,
 	settingRepo repository.SettingRepo,
 	settingService settingservice.Service,
 ) fileservice.Service {
 	return &service{
+		fileRepo:       fileRepo,
 		settingRepo:    settingRepo,
 		settingService: settingService,
 	}
 }
 
 type service struct {
+	fileRepo       repository.FileRepo
 	settingRepo    repository.SettingRepo
 	settingService settingservice.Service
 }

@@ -16,7 +16,8 @@ ERR_NON_DELETABLE = "{{.Name}} is non-deletable"
 ERR_RESOURCE_IN_USE = "{{.Name}} is in use"
 ERR_RESOURCE_INACTIVE = "{{.Name}} is not active"
 ERR_RESOURCE_MISSING = "{{.Name}} is missing"
-ERR_TOO_MANY = "{{.Name}} are too many"
+ERR_TOO_MANY = "{{.Name}} are too many (max {{.MaxItem}})"
+ERR_TOO_BIG = "{{.Name}} is too big (max {{.MaxSize}})"
 ERR_ACTION_NOT_ALLOWED = "Action is not allowed"
 ERR_ACTION_NOT_ALLOWED_BY_STATUS = "Status of the object does not allow the action"
 ERR_ACTION_NOT_ALLOWED_BY_ADMIN = "Action is not activated or is not allowed by your administrator"
@@ -82,6 +83,13 @@ ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquir
 # Cluster error
 ERR_NODE_REQUIRED_BY_LOCALPAAS_APP = "Node is required to be an active manager as LocalPaaS app is running in it"
 ERR_SERVICE_NOT_RUNNING = "Service {{.Name}} is not running"
+
+# File errors
+ERR_FILE_SIZE_TOO_BIG = "File size must be less than {{.MaxSize}}"
+ERR_FILE_TYPE_NOT_SUPPORTED = "File type must be one of {{.SupportedTypes}}"
+ERR_FILE_EXT_NOT_SUPPORTED = "File extension must be one of {{.SupportedExts}}"
+ERR_FILE_NAME_TOO_LONG = "File name must contain less than {{.MaxNameLen}} characters"
+ERR_FILE_TARGET_OBJECT_UNAVAILABLE = "Target object is unavailable"
 
 # Infra errors
 ERR_INFRA = "{{.Error}}"

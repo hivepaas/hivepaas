@@ -9,4 +9,5 @@ func (s *HTTPServer) registerFileRoutes(apiGroup *gin.RouterGroup) {
 	fileHandler := s.handlerRegistry.fileHandler
 
 	fileGroup.GET("/:fileID/download", fileHandler.DownloadFile)
+	fileGroup.POST("/upload", fileHandler.UploadFiles)
 }

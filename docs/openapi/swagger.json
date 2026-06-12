@@ -1748,6 +1748,56 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/files/upload" : {
+      "post" : {
+        "description" : "Uploads one or multiple files to server",
+        "operationId" : "uploadFiles",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/uploadFiles_request"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.UploadResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Uploads one or multiple files to server",
+        "tags" : [ "files" ]
+      }
+    },
     "/files/{fileID}/download" : {
       "get" : {
         "description" : "Downloads a file",
@@ -24658,7 +24708,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -24677,8 +24727,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -24699,12 +24749,6 @@
         "enum" : [ "in", "out", "err", "warn", "debug" ],
         "type" : "string",
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn", "LogTypeDebug" ]
-      },
-      "github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize" : {
-        "enum" : [ 1, 1024, 1048576, 1073741824, 1099511627776, 1125899906842624, 1152921504606846976 ],
-        "format" : "int64",
-        "type" : "integer",
-        "x-enum-varnames" : [ "B", "KB", "MB", "GB", "TB", "PB", "EB" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_service_lpappservice.ReleaseInfo" : {
         "properties" : {
@@ -25745,10 +25789,10 @@
             "type" : "boolean"
           },
           "maxRequestBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "memRequestBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "allowedIPs", "enabled", "maxRequestBody", "memRequestBody" ],
@@ -25766,10 +25810,10 @@
             "type" : "boolean"
           },
           "maxRequestBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "memRequestBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "allowedIPs", "enabled", "maxRequestBody", "memRequestBody" ],
@@ -25796,7 +25840,7 @@
             "type" : "array"
           },
           "minResponseBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "defaultEncoding", "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
@@ -25823,7 +25867,7 @@
             "type" : "array"
           },
           "minResponseBody" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "defaultEncoding", "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
@@ -26109,10 +26153,10 @@
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.Memory" : {
         "properties" : {
           "shmSize" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "swap" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "swappiness" : {
             "type" : "integer"
@@ -26282,7 +26326,7 @@
             "type" : "number"
           },
           "memory" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "pids" : {
             "type" : "integer"
@@ -26302,7 +26346,7 @@
             "type" : "array"
           },
           "memory" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "type" : "object"
@@ -26447,7 +26491,7 @@
             "type" : "array"
           },
           "size" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "mode", "options", "size" ],
@@ -27595,7 +27639,7 @@
             "type" : "integer"
           },
           "memory" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "memoryBytes" : {
             "type" : "integer"
@@ -27887,7 +27931,7 @@
             "type" : "string"
           },
           "size" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "uid" : {
             "type" : "integer"
@@ -28059,6 +28103,21 @@
           },
           "meta" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.UploadResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_fileuc_filedto.FileResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
           }
         },
         "required" : [ "data", "meta" ],
@@ -31555,13 +31614,13 @@
             "type" : "integer"
           },
           "mem" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "memSwap" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "shmSize" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "cpus", "mem", "memSwap", "shmSize" ],
@@ -31573,13 +31632,13 @@
             "type" : "integer"
           },
           "mem" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "memSwap" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           },
           "shmSize" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "cpus", "mem", "memSwap", "shmSize" ],
@@ -34888,7 +34947,7 @@
             "type" : "boolean"
           },
           "maxSize" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "enabled", "maxSize" ],
@@ -34900,7 +34959,7 @@
             "type" : "boolean"
           },
           "maxSize" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_unit.DataSize"
+            "type" : "integer"
           }
         },
         "required" : [ "maxSize" ],
@@ -37247,10 +37306,41 @@
         "x-enum-varnames" : [ "SeccompModeDefault", "SeccompModeUnconfined", "SeccompModeCustom" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "format" : "int64",
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+      },
+      "uploadFiles_request" : {
+        "properties" : {
+          "file" : {
+            "description" : "one or multiple files to upload",
+            "format" : "binary",
+            "type" : "string"
+          },
+          "type" : {
+            "description" : "file type: `build-source,...`",
+            "type" : "string"
+          },
+          "scope" : {
+            "description" : "object target scope: project/app/user/global",
+            "type" : "string"
+          },
+          "projectId" : {
+            "description" : "target project id if scope=project or app",
+            "type" : "string"
+          },
+          "appId" : {
+            "description" : "target app id if scope=app",
+            "type" : "string"
+          },
+          "userId" : {
+            "description" : "target app id if scope=user",
+            "type" : "string"
+          }
+        },
+        "required" : [ "file", "scope", "type" ],
+        "type" : "object"
       }
     },
     "securitySchemes" : {

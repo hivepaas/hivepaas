@@ -39,7 +39,8 @@ func (s *service) UpdateSystemVersion(
 		return apperrors.Wrap(err)
 	}
 	if len(tasks) > 0 {
-		return apperrors.New(apperrors.ErrTooMany).WithParam("Name", "Update requests")
+		return apperrors.New(apperrors.ErrTooMany).WithParam("Name", "Update requests").
+			WithNTParam("MaxItem", 1)
 	}
 
 	// Create a task for the system update

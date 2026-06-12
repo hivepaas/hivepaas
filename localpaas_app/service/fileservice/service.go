@@ -16,4 +16,6 @@ type Service interface {
 	GenerateDownloadToken(userID string, fileID string, requireLogin bool,
 		expiration time.Duration) (string, error)
 	ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error)
+
+	Upload(ctx context.Context, db database.IDB, req *UploadReq) (*UploadResp, error)
 }

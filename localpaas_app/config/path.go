@@ -177,6 +177,12 @@ func (cfg *Config) DataPathSystemCacheRepos() LocalPath {
 	return cfg.DataPathSystemCache().Join("repos")
 }
 
+/// UPLOAD FILES
+
+func (cfg *Config) DataPathFilesUpload() LocalPath {
+	return LocalPath(filepath.Join("files", "upload"))
+}
+
 /// DIRS TO CREATE AT STARTUP
 
 func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
@@ -188,5 +194,6 @@ func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
 
 		cfg.DataPathSystemBackupFiles().AbsPath(): base.DirModeDefault,
 		cfg.DataPathSystemCacheRepos().AbsPath():  base.DirModeDefault,
+		cfg.DataPathFilesUpload().AbsPath():       base.DirModeDefault,
 	}
 }

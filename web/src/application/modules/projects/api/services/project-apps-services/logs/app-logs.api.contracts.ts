@@ -21,15 +21,6 @@ export type AppLogs_GetInfo_Res = ApiResponseBase<{
     tasks: AppLogTask[];
 }>;
 
-export type AppLogs_GetToken_Req = ApiRequestBase<{
-    projectID: string;
-    appID: string;
-}>;
-
-export type AppLogs_GetToken_Res = ApiResponseBase<{
-    token: string;
-}>;
-
 export type AppLogs_GetLogs_Req = ApiRequestBase<{
     projectID: string;
     appID: string;

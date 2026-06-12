@@ -25,7 +25,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 
 	{ // Logs
 		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
-		appGroup.GET("/:appID/logs/token", appHandler.GetAppLogsToken)
 		appGroup.GET("/:appID/logs", func(ctx *gin.Context) {
 			appHandler.GetAppLogs(ctx, s.websocket)
 		})
@@ -134,7 +133,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		// Cancel
 		deploymentGroup.POST("/:deploymentID/cancel", appDeploymentHandler.CancelAppDeployment)
 		// Logs
-		deploymentGroup.GET("/:deploymentID/logs/token", appDeploymentHandler.GetAppDeploymentLogsToken)
 		deploymentGroup.GET("/:deploymentID/logs", func(ctx *gin.Context) {
 			appDeploymentHandler.GetAppDeploymentLogs(ctx, s.websocket)
 		})

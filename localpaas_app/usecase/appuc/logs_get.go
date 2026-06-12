@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -25,41 +24,23 @@ const (
 	runtimeLogSessionTimeout       = time.Hour
 )
 
-//nolint:gocognit,funlen
+//nolint:gocognit
 func (uc *UC) GetAppLogs(
 	ctx context.Context,
-	auth *basedto.Auth, // BE CAREFUL: If req.Token presents, auth is nil
+	auth *basedto.Auth,
 	req *appdto.GetAppLogsReq,
 ) (_ *appdto.GetAppLogsResp, err error) {
-	var serviceID string
-	if auth == nil { //nolint:nestif
-		req.Token, err = url.QueryUnescape(req.Token)
-		if err != nil {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-		}
-		ticketInfo, err := uc.consoleTicketRepo.Get(ctx, req.Token)
-		if err != nil {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-		}
-		if req.AppID != ticketInfo.AppID {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid)
-		}
-		serviceID = ticketInfo.TargetID
-		// Remove the ticket from redis as this ticket is one-time object
-		_ = uc.consoleTicketRepo.Del(ctx, req.Token)
-	} else {
-		app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
-		if app.ServiceID == "" {
-			return nil, apperrors.New(apperrors.ErrUnavailable).
-				WithMsgLog("service not exist for app")
-		}
-		serviceID = app.ServiceID
+	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+	)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
+	if app.ServiceID == "" {
+		return nil, apperrors.New(apperrors.ErrUnavailable).
+			WithMsgLog("service not exist for app")
+	}
+	serviceID := app.ServiceID
 
 	var since, until, tail string
 	if req.Duration > 0 && req.Since.IsZero() {

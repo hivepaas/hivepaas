@@ -22,7 +22,6 @@ type UC struct {
 	taskLogRepo          repository.TaskLogRepo
 	deploymentInfoRepo   cacherepository.DeploymentInfoRepo
 	taskControlRepo      cacherepository.TaskControlRepo
-	consoleTicketRepo    cacherepository.ConsoleTicketRepo
 	userService          userservice.Service
 	appService           appservice.Service
 	appDeploymentService appdeploymentservice.Service
@@ -40,7 +39,6 @@ func New(
 	taskLogRepo repository.TaskLogRepo,
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
 	taskControlRepo cacherepository.TaskControlRepo,
-	consoleTicketRepo cacherepository.ConsoleTicketRepo,
 	userService userservice.Service,
 	appService appservice.Service,
 	appDeploymentService appdeploymentservice.Service,
@@ -57,7 +55,6 @@ func New(
 		taskLogRepo:          taskLogRepo,
 		deploymentInfoRepo:   deploymentInfoRepo,
 		taskControlRepo:      taskControlRepo,
-		consoleTicketRepo:    consoleTicketRepo,
 		userService:          userService,
 		appService:           appService,
 		appDeploymentService: appDeploymentService,

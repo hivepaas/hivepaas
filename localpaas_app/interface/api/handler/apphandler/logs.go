@@ -6,9 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/olahol/melody"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
@@ -48,42 +46,6 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// GetAppLogsToken Gets a token for getting logs via websocket
-// @Summary Gets a token for getting logs via websocket
-// @Description Gets a token for getting logs via websocket
-// @Tags    apps
-// @Produce json
-// @Id      getAppLogsToken
-// @Param   projectID path string true "project ID"
-// @Param   appID path string true "app ID"
-// @Success 200 {object} appdto.GetAppLogsTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/logs/token [get]
-func (h *Handler) GetAppLogsToken(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := appdto.NewGetAppLogsTokenReq()
-	req.ProjectID = projectID
-	req.AppID = appID
-	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.appUC.GetAppLogsToken(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-
 // GetAppLogs Stream app logs via websocket
 // @Summary Stream app logs via websocket
 // @Description Stream app logs via websocket
@@ -102,16 +64,16 @@ func (h *Handler) GetAppLogsToken(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/logs [get]
 func (h *Handler) GetAppLogs(ctx *gin.Context, mel *melody.Melody) {
-	var auth *basedto.Auth
-	var req *appdto.GetAppLogsReq
-	var err error
-
-	if ctx.Query("token") != "" {
-		auth, req, err = h.parseAppLogsReqWithToken(ctx)
-	} else {
-		auth, req, err = h.parseAppLogsReqWithAuthHeader(ctx)
-	}
+	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
 	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppLogsReq()
+	req.ProjectID = projectID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
@@ -133,45 +95,4 @@ func (h *Handler) GetAppLogs(ctx *gin.Context, mel *melody.Melody) {
 	} else {
 		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser, mel)
 	}
-}
-
-func (h *Handler) parseAppLogsReqWithAuthHeader(
-	ctx *gin.Context,
-) (*basedto.Auth, *appdto.GetAppLogsReq, error) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	req := appdto.NewGetAppLogsReq()
-	req.ProjectID = projectID
-	req.AppID = appID
-	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	return auth, req, nil
-}
-
-//nolint:unparam
-func (h *Handler) parseAppLogsReqWithToken(
-	ctx *gin.Context,
-) (*basedto.Auth, *appdto.GetAppLogsReq, error) {
-	projectID, err := h.ParseStringParam(ctx, "projectID")
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-	appID, err := h.ParseStringParam(ctx, "appID")
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	req := appdto.NewGetAppLogsReq()
-	req.ProjectID = projectID
-	req.AppID = appID
-	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	return nil, req, nil
 }

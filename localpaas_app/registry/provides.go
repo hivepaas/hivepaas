@@ -301,5 +301,4 @@ var Provides = []any{
 	cacherepository.NewHealthcheckNotifEventRepo,
 	cacherepository.NewHealthcheckSettingsRepo,
 	cacherepository.NewGithubAppManifestRepo,
-	cacherepository.NewConsoleTicketRepo,
 }

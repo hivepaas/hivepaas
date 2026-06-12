@@ -2,7 +2,6 @@ package appdeploymentuc
 
 import (
 	"context"
-	"net/url"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -22,25 +21,9 @@ const (
 
 func (uc *UC) GetDeploymentLogs(
 	ctx context.Context,
-	auth *basedto.Auth, // BE CAREFUL: If req.Token presents, auth is nil
+	auth *basedto.Auth,
 	req *appdeploymentdto.GetDeploymentLogsReq,
 ) (_ *appdeploymentdto.GetDeploymentLogsResp, err error) {
-	if auth == nil {
-		req.Token, err = url.QueryUnescape(req.Token)
-		if err != nil {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-		}
-		ticketInfo, err := uc.consoleTicketRepo.Get(ctx, req.Token)
-		if err != nil {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
-		}
-		if req.DeploymentID != ticketInfo.TargetID || req.AppID != ticketInfo.AppID {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid)
-		}
-		// Remove the ticket from redis as this ticket is one-time object
-		_ = uc.consoleTicketRepo.Del(ctx, req.Token)
-	}
-
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID,
 		bunex.SelectRelation("Tasks",
 			bunex.SelectColumns("id", "target_id"), // Must select target_id, otherwise bun will report error

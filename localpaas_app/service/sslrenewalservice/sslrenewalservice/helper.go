@@ -41,7 +41,7 @@ func (s *service) sslGetAcmeClient(
 	acmeCfg := acme.ACMEConfig{
 		Email:         email,
 		KeyType:       keyType,
-		HTTP01WebRoot: config.Current.DataPathSslLetsEncrypt().AbsPath(),
+		HTTP01WebRoot: config.Current.DataPathSslAcme().AbsPath(),
 	}
 
 	if provider != nil {

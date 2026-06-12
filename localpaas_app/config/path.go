@@ -140,11 +140,11 @@ func (cfg *Config) DataPathSsl() LocalPath {
 func (cfg *Config) DataPathSslCerts() LocalPath {
 	return cfg.DataPathSsl().Join("certs")
 }
-func (cfg *Config) DataPathSslLetsEncrypt() LocalPath {
-	return cfg.DataPathSsl().Join("letsencrypt")
+func (cfg *Config) DataPathSslAcme() LocalPath {
+	return cfg.DataPathSsl().Join("acme")
 }
-func (cfg *Config) HttpPathSslLetsEncrypt() string {
-	return "/letsencrypt/"
+func (cfg *Config) HttpPathSslAcme() string {
+	return "/acme/"
 }
 
 /// TRAEFIK
@@ -187,8 +187,8 @@ func (cfg *Config) DataPathFilesUpload() LocalPath {
 
 func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
 	return map[string]os.FileMode{
-		cfg.DataPathSslCerts().AbsPath():       base.DirModeDefault,
-		cfg.DataPathSslLetsEncrypt().AbsPath(): base.DirModeDefault,
+		cfg.DataPathSslCerts().AbsPath(): base.DirModeDefault,
+		cfg.DataPathSslAcme().AbsPath():  base.DirModeDefault,
 
 		cfg.DataPathTraefikEtcDynamic().AbsPath(): base.DirModeDefault,
 

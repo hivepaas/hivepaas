@@ -66,7 +66,7 @@ func (s *service) obtainCertByACME(
 	acmeCfg := acme.ACMEConfig{
 		Email:         ssl.Email,
 		KeyType:       gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault),
-		HTTP01WebRoot: config.Current.DataPathSslLetsEncrypt().AbsPath(),
+		HTTP01WebRoot: config.Current.DataPathSslAcme().AbsPath(),
 	}
 	if provider != nil {
 		switch ssl.CertType {

@@ -167,11 +167,11 @@ services:
         - "traefik.http.middlewares.app-router-compress.compress.includedcontenttypes=text/plain,text/html,text/css,text/javascript,text/xml,application/javascript,application/json,application/xml,application/xml+rss,application/manifest+json,application/vnd.api+json,image/svg+xml,font/eot,font/otf,font/ttf"
         - "traefik.http.middlewares.app-router-compress.compress.minresponsebodybytes=1024"
         - "traefik.http.routers.app-router.middlewares=app-router-compress@swarm"
-        - "traefik.http.routers.x-custom-router-le-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
-        - "traefik.http.routers.x-custom-router-le-acme.entrypoints=web"
-        - "traefik.http.routers.x-custom-router-le-acme.tls=false"
-        - "traefik.http.middlewares.x-custom-addprefix-le.addprefix.prefix=/letsencrypt"
-        - "traefik.http.routers.x-custom-router-le-acme.middlewares=x-custom-addprefix-le@swarm"
+        - "traefik.http.routers.x-custom-router-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.x-custom-router-acme.entrypoints=web"
+        - "traefik.http.routers.x-custom-router-acme.tls=false"
+        - "traefik.http.middlewares.x-custom-addprefix-acme.addprefix.prefix=/acme"
+        - "traefik.http.routers.x-custom-router-acme.middlewares=x-custom-addprefix-acme@swarm"
         - "traefik.swarm.network=localpaas_net"
       mode: replicated
       replicas: 0

@@ -60,19 +60,7 @@ export function SystemSettingsDataBackupConfigurationRoute() {
     const { mutate: update, isPending } = SystemBackupCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("System backup settings updated");
-            // window.setTimeout(() => {
-            //     window.location.reload();
-            // }, 300);
         },
-        // onError: err => {
-        //     if (isValidationException(err)) {
-        //         formRef.current?.onError(ValidationException.fromHttp(err));
-        //     } else if (err instanceof Error) {
-        //         toast.error(err.message);
-        //     } else {
-        //         toast.error("Failed to update system backup settings");
-        //     }
-        // },
     });
 
     function handleSubmit(values: SystemBackupConfigurationFormOutput) {

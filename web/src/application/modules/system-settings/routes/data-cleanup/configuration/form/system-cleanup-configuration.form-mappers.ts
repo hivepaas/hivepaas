@@ -1,8 +1,9 @@
 import type { SystemCleanupSettings } from "~/system-settings/domain";
+import { getScheduleModeFromCronExpr } from "~/system-settings/module-shared";
 
 import { ESettingStatus } from "@application/shared/enums";
 
-import { SystemCleanupScheduleMode, type SystemCleanupConfigurationFormInput } from "../schemas";
+import { type SystemCleanupConfigurationFormInput, SystemCleanupScheduleMode } from "../schemas";
 
 export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigurationFormInput = {
     status: ESettingStatus.Active,
@@ -40,11 +41,9 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
 export function mapSystemCleanupSettingsToFormInput(
     settings: SystemCleanupSettings,
 ): SystemCleanupConfigurationFormInput {
-    const hasCronSchedule = settings.schedule.cronExpr.trim().length > 0;
-
     return {
         status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
-        scheduleMode: hasCronSchedule ? SystemCleanupScheduleMode.Cron : SystemCleanupScheduleMode.Interval,
+        scheduleMode: getScheduleModeFromCronExpr(settings.schedule.cronExpr, SystemCleanupScheduleMode),
         scheduleInterval: settings.schedule.interval,
         scheduleCronExpr: settings.schedule.cronExpr,
         scheduleFrom: settings.schedule.initialTime ?? null,

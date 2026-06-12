@@ -151,6 +151,11 @@ const navMain: SidebarItem[] = [
                 route: ROUTE.systemSettings.dataCleanup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataCleanup.$pattern,
             },
+            {
+                title: "SSL Renewal",
+                route: ROUTE.systemSettings.sslRenewal.configuration.$route,
+                pattern: ROUTE.systemSettings.sslRenewal.$pattern,
+            },
         ],
     },
     {

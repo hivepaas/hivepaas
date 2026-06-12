@@ -9,9 +9,11 @@ export {
     SystemSettingsDataBackupConfigurationRoute,
     SystemSettingsDataCleanupActionsRoute,
     SystemSettingsDataCleanupConfigurationRoute,
+    SystemSettingsSslRenewalActionsRoute,
+    SystemSettingsSslRenewalConfigurationRoute,
 } from "./routes";
 
 /**
  * Layouts
  */
-export { DataBackupLayout, DataCleanupLayout, LocalPaaSLayout, TraefikLayout } from "./layouts";
+export { DataBackupLayout, DataCleanupLayout, LocalPaaSLayout, SslRenewalLayout, TraefikLayout } from "./layouts";

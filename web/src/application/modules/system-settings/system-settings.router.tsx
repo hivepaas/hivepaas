@@ -187,5 +187,51 @@ export const systemSettingsRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { SslRenewalLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="SSL Renewal">
+                                <SslRenewalLayout>
+                                    <Outlet />
+                                </SslRenewalLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.sslRenewal.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.sslRenewal.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SystemSettingsSslRenewalConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsSslRenewalConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SystemSettingsSslRenewalActionsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsSslRenewalActionsRoute };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

@@ -28,6 +28,7 @@ export const ESettingType = {
     TraefikService: "traefik-service",
     SystemCleanup: "system-cleanup",
     SystemBackup: "system-backup",
+    SSLRenewal: "ssl-renewal",
     File: "file",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",

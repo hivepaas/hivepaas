@@ -27,19 +27,16 @@ const SystemCleanupBackupCleanupSchema = z.object({
 
 const SystemCleanupScheduleSchema = z
     .object({
-        cronExpr: z
-            .string()
-            .nullish()
-            .transform(value => value ?? ""),
-        interval: z
-            .string()
-            .nullish()
-            .transform(value => value ?? ""),
-        initialTime: z.coerce
-            .date()
-            .nullish()
-            .transform(value => value ?? null),
+        cronExpr: z.string().nullish(),
+        CronExpr: z.string().nullish(),
+        interval: z.string().nullish(),
+        initialTime: z.coerce.date().nullish(),
     })
+    .transform(({ cronExpr, CronExpr, interval, initialTime }) => ({
+        cronExpr: cronExpr ?? CronExpr ?? "",
+        interval: interval ?? "",
+        initialTime: initialTime ?? null,
+    }))
     .default({ cronExpr: "", interval: "", initialTime: null });
 
 const SystemCleanupNotificationRefSchema = z.object({

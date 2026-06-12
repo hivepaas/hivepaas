@@ -1,9 +1,10 @@
 import type { SystemBackupSettings } from "~/system-settings/domain";
+import { getScheduleModeFromCronExpr } from "~/system-settings/module-shared";
 
 import { ESettingStatus } from "@application/shared/enums";
 
 import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../../../../module-shared/enums";
-import { SystemBackupScheduleMode, type SystemBackupConfigurationFormInput } from "../schemas";
+import { type SystemBackupConfigurationFormInput, SystemBackupScheduleMode } from "../schemas";
 
 export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurationFormInput = {
     status: ESettingStatus.Disabled,
@@ -26,11 +27,9 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
 };
 
 export function mapSystemBackupSettingsToFormInput(settings: SystemBackupSettings): SystemBackupConfigurationFormInput {
-    const hasCronSchedule = settings.schedule.cronExpr.trim().length > 0;
-
     return {
         status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
-        scheduleMode: hasCronSchedule ? SystemBackupScheduleMode.Cron : SystemBackupScheduleMode.Interval,
+        scheduleMode: getScheduleModeFromCronExpr(settings.schedule.cronExpr, SystemBackupScheduleMode),
         scheduleInterval: settings.schedule.interval,
         scheduleCronExpr: settings.schedule.cronExpr,
         scheduleFrom: settings.schedule.initialTime ?? null,

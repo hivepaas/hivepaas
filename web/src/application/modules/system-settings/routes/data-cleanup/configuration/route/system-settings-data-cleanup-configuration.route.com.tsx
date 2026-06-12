@@ -9,10 +9,6 @@ import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-import { isValidationException } from "@infrastructure/api";
-
-import { ValidationException } from "@infrastructure/exceptions/validation";
-
 import { SystemCleanupConfigurationForm } from "../form";
 import { type SystemCleanupConfigurationFormOutput, SystemCleanupScheduleMode } from "../schemas";
 import type { SystemCleanupConfigurationFormRef } from "../types";
@@ -69,18 +65,6 @@ export function SystemSettingsDataCleanupConfigurationRoute() {
     const { mutate: update, isPending } = SystemCleanupCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("System cleanup settings updated");
-            window.setTimeout(() => {
-                window.location.reload();
-            }, 300);
-        },
-        onError: err => {
-            if (isValidationException(err)) {
-                formRef.current?.onError(ValidationException.fromHttp(err));
-            } else if (err instanceof Error) {
-                toast.error(err.message);
-            } else {
-                toast.error("Failed to update system cleanup settings");
-            }
         },
     });
 

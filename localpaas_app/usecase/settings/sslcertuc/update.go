@@ -31,8 +31,12 @@ func (uc *UC) UpdateSSLCert(
 			if currCert.CertType != newCert.CertType {
 				return apperrors.NewNonEditable("Certificate type")
 			}
+			// Not allow to change provider
+			if currCert.Provider.ID != newCert.Provider.ID {
+				return apperrors.NewNonEditable("Certificate provider")
+			}
 			switch newCert.CertType { //nolint:exhaustive
-			case base.SSLCertTypeLetsEncrypt:
+			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
 				reObtainCert = newCert.Domain != currCert.Domain || newCert.KeyType != currCert.KeyType ||
 					newCert.Email != currCert.Email
 			case base.SSLCertTypeSelfSigned:
@@ -53,7 +57,13 @@ func (uc *UC) UpdateSSLCert(
 			}
 
 			if reObtainCert {
-				_, err = uc.sslService.ObtainCert(ctx, pData.Setting, false)
+				refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+					true, true, pData.Setting)
+				if err != nil {
+					return apperrors.Wrap(err)
+				}
+
+				_, err = uc.sslService.ObtainCert(ctx, pData.Setting, refObjects, false)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

@@ -15,5 +15,6 @@ type Service interface {
 
 	GenerateCertAsPEM(subject *pkix.Name, keyType base.SSLKeyType, notBefore, notAfter time.Time,
 		isCA bool) (cert, key []byte, err error)
-	ObtainCert(ctx context.Context, sslSetting *entity.Setting, writeFiles bool) (updated bool, err error)
+	ObtainCert(ctx context.Context, sslSetting *entity.Setting, refObjects *entity.RefObjects,
+		writeFiles bool) (updated bool, err error)
 }

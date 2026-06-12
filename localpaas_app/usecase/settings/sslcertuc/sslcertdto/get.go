@@ -40,6 +40,7 @@ type GetSSLCertResp struct {
 type SSLCertResp struct {
 	*settings.BaseSettingResp
 	CertType      base.SSLCertType                   `json:"certType"`
+	Provider      *settings.BaseSettingResp          `json:"provider"`
 	Domain        string                             `json:"domain"`
 	Certificate   string                             `json:"certificate"`
 	PrivateKey    string                             `json:"privateKey"`
@@ -71,6 +72,14 @@ func TransformSSLCert(
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
+	}
+
+	if config.Provider.ID != "" {
+		providerSetting := refObjects.RefSettings[config.Provider.ID]
+		resp.Provider, err = settings.TransformSettingBase(providerSetting)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
 	}
 
 	resp.SecretMasked = config.PrivateKey.IsEncrypted() || resp.Inherited

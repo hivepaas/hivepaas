@@ -20,7 +20,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice"
-	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
+	"github.com/localpaas/localpaas/services/ssl/acme"
 )
 
 const (
@@ -30,9 +30,9 @@ const (
 
 type sslRenewalData struct {
 	*sslrenewalservice.SSLRenewalReq
-	TaskOutput *entity.TaskSSLRenewalOutput
-	LeClients  map[string]*letsencrypt.Client
-	Mu         *sync.Mutex
+	TaskOutput  *entity.TaskSSLRenewalOutput
+	AcmeClients map[string]*acme.Client
+	Mu          *sync.Mutex
 }
 
 type sslRenewalDataItem struct {
@@ -58,15 +58,21 @@ func (s *service) SSLRenew(
 	data := &sslRenewalData{
 		SSLRenewalReq: req,
 		TaskOutput:    &entity.TaskSSLRenewalOutput{},
-		LeClients:     make(map[string]*letsencrypt.Client),
+		AcmeClients:   make(map[string]*acme.Client),
 		Mu:            &sync.Mutex{},
+	}
+
+	// Load all SSL providers in the system
+	err = s.loadSSLProviders(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	renewalArgs := gofn.Coalesce(gofn.Must(data.Task.ArgsAsSSLRenewal()), &entity.TaskSSLRenewalArgs{})
 	timeNow := timeutil.NowUTC()
 	offset, limit := 0, sslHandlingBatchSize
 	for {
-		taskItems, err := s.loadSSLSettings(ctx, db, renewalArgs, offset, limit, timeNow)
+		taskItems, err := s.loadSSLCerts(ctx, db, renewalArgs, offset, limit, timeNow)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -114,7 +120,27 @@ func (s *service) SSLRenew(
 	return resp, nil
 }
 
-func (s *service) loadSSLSettings(
+func (s *service) loadSSLProviders(
+	ctx context.Context,
+	db database.IDB,
+	data *sslRenewalData,
+) (err error) {
+	providerSettings, _, err := s.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeSSLProvider),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	for _, setting := range providerSettings {
+		data.RefObjects.RefSettings[setting.ID] = setting
+	}
+
+	return nil
+}
+
+func (s *service) loadSSLCerts(
 	ctx context.Context,
 	db database.IDB,
 	renewalArgs *entity.TaskSSLRenewalArgs,
@@ -154,16 +180,16 @@ func (s *service) loadSSLSettings(
 		listOpts = append(listOpts, bunex.SelectOffset(offset), bunex.SelectLimit(limit))
 	}
 
-	sslSettings, _, err := s.settingRepo.List(ctx, db, nil, nil, listOpts...)
+	sslCertSettings, _, err := s.settingRepo.List(ctx, db, nil, nil, listOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	if len(sslSettings) == 0 {
+	if len(sslCertSettings) == 0 {
 		return nil, nil
 	}
 
-	taskItems := make([]*sslRenewalDataItem, 0, len(sslSettings))
-	for _, setting := range sslSettings {
+	taskItems := make([]*sslRenewalDataItem, 0, len(sslCertSettings))
+	for _, setting := range sslCertSettings {
 		if setting.BelongToApp != nil {
 			setting.BelongToProject = setting.BelongToApp.Project
 		}
@@ -213,8 +239,8 @@ func (s *service) sslRenew(
 	}()
 
 	switch ssl.CertType { //nolint:exhaustive
-	case base.SSLCertTypeLetsEncrypt:
-		err = s.sslRenewByLetsEncrypt(ctx, ssl, data)
+	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
+		err = s.sslRenewByACME(ctx, ssl, data)
 	case base.SSLCertTypeSelfSigned:
 		err = s.sslRenewSelfSignedCert(ctx, ssl, data)
 	default:
@@ -314,7 +340,7 @@ func (s *service) sslNotifyOfResult(
 				err := s.sslNotifyForExpiration(ctx, db, item, data)
 				if err != nil {
 					_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
-						"Notifying of expiring SSL %v failed with error: %v",
+						"Notification of expiring SSL %v failed with error: %v",
 						item.Setting.ID, err.Error()), tasklog.TsNow))
 					return apperrors.Wrap(err)
 				}
@@ -324,7 +350,7 @@ func (s *service) sslNotifyOfResult(
 				err := s.sslNotifyForRenewal(ctx, db, item, data)
 				if err != nil {
 					_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
-						"Notifying of renewed SSL %v failed with error: %v",
+						"Notification of renewed SSL %v failed with error: %v",
 						item.Setting.ID, err.Error()), tasklog.TsNow))
 					return apperrors.Wrap(err)
 				}

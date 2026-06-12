@@ -28,6 +28,7 @@ type CreateSSLCertReq struct {
 
 type SSLCertBaseReq struct {
 	CertType     base.SSLCertType                  `json:"certType"`
+	Provider     basedto.ObjectIDReq               `json:"provider"`
 	Domain       string                            `json:"domain"`
 	Certificate  string                            `json:"certificate"`
 	PrivateKey   string                            `json:"privateKey"`
@@ -43,6 +44,7 @@ type SSLCertBaseReq struct {
 func (req *SSLCertBaseReq) ToEntity() *entity.SSLCert {
 	return &entity.SSLCert{
 		CertType:     req.CertType,
+		Provider:     entity.ObjectID{ID: req.Provider.ID},
 		Domain:       req.Domain,
 		Certificate:  req.Certificate,
 		PrivateKey:   entity.NewEncryptedField(req.PrivateKey),

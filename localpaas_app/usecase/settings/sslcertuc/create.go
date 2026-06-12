@@ -33,7 +33,13 @@ func (uc *UC) CreateSSLCert(
 				return apperrors.Wrap(err)
 			}
 
-			_, err = uc.sslService.ObtainCert(ctx, pData.Setting, false)
+			refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+				true, true, pData.Setting)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+
+			_, err = uc.sslService.ObtainCert(ctx, pData.Setting, refObjects, false)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

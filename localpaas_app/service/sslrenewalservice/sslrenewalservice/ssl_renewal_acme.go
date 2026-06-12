@@ -9,7 +9,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-func (s *service) sslRenewByLetsEncrypt(
+func (s *service) sslRenewByACME(
 	ctx context.Context,
 	ssl *entity.SSLCert,
 	data *sslRenewalData,
@@ -18,12 +18,12 @@ func (s *service) sslRenewByLetsEncrypt(
 		return nil
 	}
 
-	leClient, err := s.sslGetLeClient(ssl, data)
+	acmeClient, err := s.sslGetAcmeClient(ssl, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	certificates, renewalInfo, err := leClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
+	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -33,8 +33,8 @@ func (s *service) sslRenewByLetsEncrypt(
 	if renewalInfo != nil {
 		ssl.RenewableFrom = renewalInfo.SuggestedWindow.Start.UTC()
 		if !ssl.RenewableFrom.IsZero() {
-			// TODO: need a better method to have expiration date of SSLs from Let's encrypt.
-			ssl.ExpireAt = ssl.RenewableFrom.Add(base.LetsEncryptExpirationFromFirstRenewableDate)
+			// TODO: need a better method to have expiration date of SSLs
+			ssl.ExpireAt = ssl.RenewableFrom.Add(base.SSLExpirationFromFirstRenewableDate)
 		}
 		if !ssl.ExpireAt.IsZero() {
 			ssl.ValidPeriod = timeutil.Duration(ssl.ExpireAt.Sub(timeutil.NowUTC()))

@@ -12,24 +12,21 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
-	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
+	"github.com/localpaas/localpaas/services/ssl/acme"
 )
 
 func (s *service) ObtainCert(
 	ctx context.Context,
 	sslSetting *entity.Setting,
+	refObjects *entity.RefObjects,
 	writeFiles bool,
 ) (updated bool, err error) {
 	ssl := sslSetting.MustAsSSLCert()
 	switch ssl.CertType {
-	case base.SSLCertTypeLetsEncrypt:
-		updated, err = s.obtainCertLetsEncrypt(ctx, ssl)
-	case base.SSLCertTypeZeroSSL:
-		// TODO: add implementation
-	case base.SSLCertTypeGoogleTS:
-		// TODO: add implementation
+	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
+		updated, err = s.obtainCertByACME(ctx, sslSetting, refObjects)
 	case base.SSLCertTypeSelfSigned:
-		updated, err = s.obtainCertSelfSigned(ctx, ssl)
+		updated, err = s.obtainCertSelfSigned(ctx, sslSetting)
 	case base.SSLCertTypeCustom:
 		// No need to init as it's custom by user
 		return false, nil
@@ -40,9 +37,6 @@ func (s *service) ObtainCert(
 		return false, apperrors.Wrap(err)
 	}
 
-	if updated {
-		sslSetting.MustSetData(ssl)
-	}
 	if updated && writeFiles {
 		err = s.WriteCertFiles(true, sslSetting)
 		if err != nil {
@@ -53,18 +47,48 @@ func (s *service) ObtainCert(
 	return updated, nil
 }
 
-func (s *service) obtainCertLetsEncrypt(
+func (s *service) obtainCertByACME(
 	ctx context.Context,
-	ssl *entity.SSLCert,
+	sslSetting *entity.Setting,
+	refObjects *entity.RefObjects,
 ) (updated bool, err error) {
-	email := ssl.Email
-	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
-	leClient, err := letsencrypt.NewClient(email, keyType, config.Current.DataPathSslLetsEncrypt().AbsPath())
+	ssl := sslSetting.MustAsSSLCert()
+
+	var provider *entity.SSLProvider
+	if ssl.Provider.ID != "" {
+		providerSetting := refObjects.RefSettings[ssl.Provider.ID]
+		if providerSetting == nil {
+			return false, apperrors.NewNotFound(apperrors.Fmt("SSL provider '%v'", ssl.Provider.ID))
+		}
+		provider = providerSetting.MustAsSSLProvider()
+	}
+
+	acmeCfg := acme.ACMEConfig{
+		Email:         ssl.Email,
+		KeyType:       gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault),
+		HTTP01WebRoot: config.Current.DataPathSslLetsEncrypt().AbsPath(),
+	}
+	if provider != nil {
+		switch ssl.CertType { //nolint:exhaustive
+		case base.SSLCertTypeLetsEncrypt:
+			// Do nothing for now
+		case base.SSLCertTypeZeroSSL:
+			acmeCfg.CADirURL = base.ZeroSSLACMEURL
+			acmeCfg.EABKid = provider.ZeroSSL.EABKid
+			acmeCfg.EABHmacKey = provider.ZeroSSL.EABHmacKey.MustGetPlain()
+		case base.SSLCertTypeGoogleTS:
+			acmeCfg.CADirURL = base.GoogleTSACMEURL
+			acmeCfg.EABKid = provider.GoogleTS.EABKid
+			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
+		}
+	}
+
+	acmeClient, err := acme.NewClient(acmeCfg)
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}
 
-	certificates, renewalInfo, err := leClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
+	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}
@@ -74,21 +98,25 @@ func (s *service) obtainCertLetsEncrypt(
 	if renewalInfo != nil {
 		ssl.RenewableFrom = renewalInfo.SuggestedWindow.Start.UTC()
 		if !ssl.RenewableFrom.IsZero() {
-			// TODO: need a better method to have expiration date of SSLs from Let's encrypt.
-			ssl.ExpireAt = ssl.RenewableFrom.Add(base.LetsEncryptExpirationFromFirstRenewableDate)
+			// TODO: need a better method to have expiration date of SSLs
+			ssl.ExpireAt = ssl.RenewableFrom.Add(base.SSLExpirationFromFirstRenewableDate)
 		}
 		if !ssl.ExpireAt.IsZero() {
 			ssl.ValidPeriod = timeutil.Duration(ssl.ExpireAt.Sub(timeutil.NowUTC()))
 		}
 	}
 
+	// Assign the update to the setting
+	sslSetting.MustSetData(ssl)
+
 	return true, nil
 }
 
 func (s *service) obtainCertSelfSigned(
 	_ context.Context,
-	ssl *entity.SSLCert,
+	sslSetting *entity.Setting,
 ) (updated bool, err error) {
+	ssl := sslSetting.MustAsSSLCert()
 	notBefore := timeutil.NowUTC()
 	notAfter := notBefore.Add(ssl.ValidPeriod.ToDuration())
 
@@ -103,6 +131,9 @@ func (s *service) obtainCertSelfSigned(
 	ssl.ExpireAt = notAfter
 	ssl.RenewableFrom = ssl.ExpireAt.Add(-base.SSLSelfSignedRenewalPeriodDefault)
 	ssl.NotifyFrom = ssl.RenewableFrom
+
+	// Assign the update to the setting
+	sslSetting.MustSetData(ssl)
 
 	return true, nil
 }

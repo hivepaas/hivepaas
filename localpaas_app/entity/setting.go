@@ -60,7 +60,8 @@ type Setting struct {
 
 	// NOTE: temporary fields
 	parsedData      SettingData
-	CurrentObjectID string `bun:"-" json:"-"`
+	CurrentObjectID string      `bun:"-" json:"-"`
+	RefObjects      *RefObjects `bun:"-" json:"-"`
 }
 
 type SettingData interface {

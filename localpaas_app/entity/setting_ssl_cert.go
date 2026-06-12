@@ -25,6 +25,7 @@ func (s *sslCertParser) New() SettingData {
 
 type SSLCert struct {
 	CertType      base.SSLCertType       `json:"certType"`
+	Provider      ObjectID               `json:"provider,omitzero"`
 	Domain        string                 `json:"domain"`
 	Certificate   string                 `json:"certificate"`
 	PrivateKey    EncryptedField         `json:"privateKey"`
@@ -45,6 +46,9 @@ func (s *SSLCert) GetType() base.SettingType {
 
 func (s *SSLCert) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
+	if s.Provider.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Provider.ID)
+	}
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
 	}

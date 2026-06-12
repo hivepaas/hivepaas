@@ -1,4 +1,4 @@
-package letsencrypt
+package acme
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/http/webroot"
 	"github.com/go-acme/lego/v4/registration"
@@ -19,8 +20,20 @@ import (
 )
 
 type Client struct {
-	client *lego.Client
-	user   *User
+	client  *lego.Client
+	acmeCfg *ACMEConfig
+	user    *User
+}
+
+type ACMEConfig struct {
+	Email          string
+	KeyType        base.SSLKeyType
+	UserPrivKey    crypto.PrivateKey
+	HTTP01Provider challenge.Provider
+	HTTP01WebRoot  string
+	CADirURL       string // E.g. "https://acme.zerossl.com/v2/DV90"
+	EABKid         string
+	EABHmacKey     string
 }
 
 type User struct {
@@ -41,63 +54,86 @@ func (u *User) GetPrivateKey() crypto.PrivateKey {
 	return u.PrivateKey
 }
 
-func NewClient(email string, keyType base.SSLKeyType, http01NginxRoot string) (client *Client, err error) {
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to generate private key for user")
+func NewClient(cfg ACMEConfig) (client *Client, err error) {
+	if cfg.UserPrivKey == nil {
+		cfg.UserPrivKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return nil, apperrors.New(err).WithMsgLog("failed to generate private key for user")
+		}
 	}
 
 	user := User{
-		Email:      email,
-		PrivateKey: privateKey,
+		Email:      cfg.Email,
+		PrivateKey: cfg.UserPrivKey,
 	}
-	cfg := lego.NewConfig(&user)
+	legoCfg := lego.NewConfig(&user)
+	if legoCfg.CADirURL != "" {
+		legoCfg.CADirURL = cfg.CADirURL // Custom ACME endpoint
+	}
 
-	switch keyType { //nolint:exhaustive
+	switch cfg.KeyType { //nolint:exhaustive
 	case base.SSLKeyTypeECP256:
-		cfg.Certificate.KeyType = certcrypto.EC256
+		legoCfg.Certificate.KeyType = certcrypto.EC256
 	case base.SSLKeyTypeECP384:
-		cfg.Certificate.KeyType = certcrypto.EC384
+		legoCfg.Certificate.KeyType = certcrypto.EC384
 	case base.SSLKeyTypeRSA2048:
-		cfg.Certificate.KeyType = certcrypto.RSA2048
+		legoCfg.Certificate.KeyType = certcrypto.RSA2048
 	case base.SSLKeyTypeRSA3072:
-		cfg.Certificate.KeyType = certcrypto.RSA3072
+		legoCfg.Certificate.KeyType = certcrypto.RSA3072
 	case base.SSLKeyTypeRSA4096:
-		cfg.Certificate.KeyType = certcrypto.RSA4096
+		legoCfg.Certificate.KeyType = certcrypto.RSA4096
+	case base.SSLKeyTypeRSA8192:
+		legoCfg.Certificate.KeyType = certcrypto.RSA8192
 	default:
-		return nil, apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", keyType))
+		return nil, apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", cfg.KeyType))
 	}
 
-	c, err := lego.NewClient(cfg)
+	c, err := lego.NewClient(legoCfg)
 	if err != nil {
 		return nil, apperrors.New(err).WithMsgLog("failed to create lego client")
 	}
 
-	webrootProvider, err := webroot.NewHTTPProvider(http01NginxRoot)
-	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to create http provider for webroot")
+	if cfg.HTTP01Provider == nil {
+		cfg.HTTP01Provider, err = webroot.NewHTTPProvider(cfg.HTTP01WebRoot)
+		if err != nil {
+			return nil, apperrors.New(err).WithMsgLog("failed to create http provider for webroot")
+		}
 	}
 
-	err = c.Challenge.SetHTTP01Provider(webrootProvider)
+	err = c.Challenge.SetHTTP01Provider(cfg.HTTP01Provider)
 	if err != nil {
 		return nil, apperrors.New(err).WithMsgLog("failed to set http-01 challenge")
 	}
 
 	return &Client{
-		client: c,
-		user:   &user,
+		client:  c,
+		acmeCfg: &cfg,
+		user:    &user,
 	}, nil
 }
 
-func (client *Client) registerUser(_ context.Context) error {
+func (client *Client) registerUser(_ context.Context) (err error) {
 	if client.user.Registration != nil {
 		return nil
 	}
-	reg, err := client.client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+
+	var reg *registration.Resource
+
+	// If EAB info is used
+	if client.acmeCfg != nil && client.acmeCfg.EABKid != "" && client.acmeCfg.EABHmacKey != "" {
+		reg, err = client.client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
+			TermsOfServiceAgreed: true,
+			Kid:                  client.acmeCfg.EABKid,
+			HmacEncoded:          client.acmeCfg.EABHmacKey,
+		})
+	} else {
+		reg, err = client.client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	}
 	if err != nil {
 		return apperrors.New(err).WithMsgLog("failed to register user")
 	}
 	client.user.Registration = reg
+
 	return nil
 }
 

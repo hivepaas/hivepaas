@@ -11,29 +11,61 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/config"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
-	"github.com/localpaas/localpaas/services/ssl/letsencrypt"
+	"github.com/localpaas/localpaas/services/ssl/acme"
 )
 
-func (s *service) sslGetLeClient(
+func (s *service) sslGetAcmeClient(
 	ssl *entity.SSLCert,
 	data *sslRenewalData,
-) (*letsencrypt.Client, error) {
+) (*acme.Client, error) {
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
 
 	email := ssl.Email
 	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
-	mapKey := fmt.Sprintf("email:%v:keysize:%v", email, keyType)
+	clientKey := fmt.Sprintf("email:%v:keyType:%v:provider:%v", email, keyType, ssl.Provider.ID)
 
-	if client := data.LeClients[mapKey]; client != nil {
+	if client := data.AcmeClients[clientKey]; client != nil {
 		return client, nil
 	}
 
-	client, err := letsencrypt.NewClient(email, keyType, config.Current.DataPathSslLetsEncrypt().AbsPath())
+	var provider *entity.SSLProvider
+	if ssl.Provider.ID != "" {
+		providerSetting := data.RefObjects.RefSettings[ssl.Provider.ID]
+		if providerSetting == nil {
+			return nil, apperrors.NewNotFound(apperrors.Fmt("SSL provider '%v'", ssl.Provider.ID))
+		}
+		provider = providerSetting.MustAsSSLProvider()
+	}
+
+	acmeCfg := acme.ACMEConfig{
+		Email:         email,
+		KeyType:       keyType,
+		HTTP01WebRoot: config.Current.DataPathSslLetsEncrypt().AbsPath(),
+	}
+
+	if provider != nil {
+		switch ssl.CertType { //nolint:exhaustive
+		case base.SSLCertTypeLetsEncrypt:
+			// Do nothing for now
+		case base.SSLCertTypeZeroSSL:
+			acmeCfg.CADirURL = base.ZeroSSLACMEURL
+			acmeCfg.EABKid = provider.ZeroSSL.EABKid
+			acmeCfg.EABHmacKey = provider.ZeroSSL.EABHmacKey.MustGetPlain()
+		case base.SSLCertTypeGoogleTS:
+			acmeCfg.CADirURL = base.GoogleTSACMEURL
+			acmeCfg.EABKid = provider.GoogleTS.EABKid
+			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
+		}
+	}
+
+	client, err := acme.NewClient(acmeCfg)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	data.LeClients[mapKey] = client
+
+	// Cache the client
+	data.AcmeClients[clientKey] = client
 
 	return client, nil
 }

@@ -37,6 +37,8 @@ func (s *service) GenerateCertAsPEM(
 		priv, err = rsa.GenerateKey(rand.Reader, 3072) //nolint:mnd
 	case base.SSLKeyTypeRSA4096:
 		priv, err = rsa.GenerateKey(rand.Reader, 4096) //nolint:mnd
+	case base.SSLKeyTypeRSA8192:
+		priv, err = rsa.GenerateKey(rand.Reader, 8192) //nolint:mnd
 	default:
 		return nil, nil, fmt.Errorf("%w: unrecognized key type '%v'",
 			apperrors.ErrUnsupported, keyType)

@@ -21,7 +21,6 @@ func (s *sslProviderParser) New() SettingData {
 }
 
 type SSLProvider struct {
-	Provider          base.SSLProvider        `json:"certType"`
 	LetsEncrypt       *SSLProviderLetsEncrypt `json:"letsEncrypt,omitempty"`
 	ZeroSSL           *SSLProviderZeroSSL     `json:"zeroSSL,omitempty"`
 	GoogleTS          *SSLProviderGoogleTS    `json:"googleTS,omitempty"`

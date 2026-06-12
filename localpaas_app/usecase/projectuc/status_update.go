@@ -34,11 +34,13 @@ func (uc *UC) UpdateProjectStatus(
 
 		project := projectData.Project
 		var targetAppStatus base.AppStatus
-		switch project.Status { //nolint:exhaustive
+		switch project.Status {
 		case base.ProjectStatusActive:
 			targetAppStatus = base.AppStatusActive
 		case base.ProjectStatusDisabled:
 			targetAppStatus = base.AppStatusDisabled
+		case base.ProjectStatusDeleting:
+			// Do nothing
 		}
 
 		// TODO: lock apps

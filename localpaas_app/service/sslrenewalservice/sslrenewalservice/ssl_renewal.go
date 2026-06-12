@@ -223,7 +223,6 @@ func (s *service) sslRenew(
 	data *sslRenewalData,
 ) (err error) {
 	ssl := setting.MustAsSSLCert()
-
 	startTime := timeutil.NowUTC()
 	defer func() {
 		if err != nil {
@@ -238,11 +237,13 @@ func (s *service) sslRenew(
 		}
 	}()
 
-	switch ssl.CertType { //nolint:exhaustive
+	switch ssl.CertType {
 	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
 		err = s.sslRenewByACME(ctx, ssl, data)
 	case base.SSLCertTypeSelfSigned:
 		err = s.sslRenewSelfSignedCert(ctx, ssl, data)
+	case base.SSLCertTypeCustom:
+		return nil // treat as no error
 	default:
 		return apperrors.NewUnsupported(apperrors.Fmt("SSL type '%v'", ssl.CertType))
 	}

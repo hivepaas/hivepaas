@@ -18,13 +18,15 @@ func (uc *UC) TestAccessTokenConn(
 	req *accesstokendto.TestAccessTokenConnReq,
 ) (*accesstokendto.TestAccessTokenConnResp, error) {
 	var err error
-	switch req.Kind { //nolint:exhaustive
+	switch req.Kind {
 	case base.AccessTokenKindGithub:
 		err = uc.testGithubTokenConn(ctx, req)
 	case base.AccessTokenKindGitlab:
 		err = uc.testGitlabTokenConn(ctx, req)
 	case base.AccessTokenKindGitea:
 		err = uc.testGiteaTokenConn(ctx, req)
+	case base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
+		fallthrough
 	default:
 		err = apperrors.New(apperrors.ErrUnsupported).
 			WithMsgLog("Git source '%s' unsupported", req.Kind)

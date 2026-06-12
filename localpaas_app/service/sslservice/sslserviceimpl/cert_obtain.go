@@ -69,7 +69,7 @@ func (s *service) obtainCertByACME(
 		HTTP01WebRoot: config.Current.DataPathSslLetsEncrypt().AbsPath(),
 	}
 	if provider != nil {
-		switch ssl.CertType { //nolint:exhaustive
+		switch ssl.CertType {
 		case base.SSLCertTypeLetsEncrypt:
 			// Do nothing for now
 		case base.SSLCertTypeZeroSSL:
@@ -80,6 +80,8 @@ func (s *service) obtainCertByACME(
 			acmeCfg.CADirURL = base.GoogleTSACMEURL
 			acmeCfg.EABKid = provider.GoogleTS.EABKid
 			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
+		case base.SSLCertTypeSelfSigned, base.SSLCertTypeCustom:
+			// Do nothing
 		}
 	}
 

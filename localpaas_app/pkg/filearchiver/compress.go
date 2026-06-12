@@ -43,7 +43,7 @@ func Compress(
 		return err.Error(), err
 	}
 
-	switch format { //nolint:exhaustive
+	switch format {
 	case ArchiveFormatTarZstd:
 		return CompressTarZstd(srcFilename, destFilename, level)
 	case ArchiveFormatTarLz4:
@@ -57,6 +57,9 @@ func Compress(
 		return CompressLz4(srcFilename, destFilename, level)
 	case ArchiveFormatGz:
 		return CompressGz(srcFilename, destFilename, level)
+
+	case ArchiveFormatAuto:
+		fallthrough
 
 	default:
 		err = apperrors.NewUnsupported(apperrors.Fmt("Archive format '%v'", format))

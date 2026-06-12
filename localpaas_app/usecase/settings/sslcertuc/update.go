@@ -35,13 +35,15 @@ func (uc *UC) UpdateSSLCert(
 			if currCert.Provider.ID != newCert.Provider.ID {
 				return apperrors.NewNonEditable("Certificate provider")
 			}
-			switch newCert.CertType { //nolint:exhaustive
+			switch newCert.CertType {
 			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
 				reObtainCert = newCert.Domain != currCert.Domain || newCert.KeyType != currCert.KeyType ||
 					newCert.Email != currCert.Email
 			case base.SSLCertTypeSelfSigned:
 				reObtainCert = newCert.Domain != currCert.Domain || newCert.KeyType != currCert.KeyType ||
 					newCert.Email != currCert.Email || newCert.ValidPeriod != currCert.ValidPeriod
+			case base.SSLCertTypeCustom:
+				// Do nothing
 			}
 			return nil
 		},

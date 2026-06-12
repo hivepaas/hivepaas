@@ -28,7 +28,7 @@ func Decompress(filename, dirPath string, format ArchiveFormat) (errStr string, 
 		return err.Error(), err
 	}
 
-	switch format { //nolint:exhaustive
+	switch format {
 	case ArchiveFormatTarZstd:
 		return DecompressTarZstd(filename, dirPath)
 	case ArchiveFormatTarLz4:
@@ -42,6 +42,9 @@ func Decompress(filename, dirPath string, format ArchiveFormat) (errStr string, 
 		return DecompressLz4(filename, dirPath)
 	case ArchiveFormatGz:
 		return DecompressGz(filename, dirPath)
+
+	case ArchiveFormatAuto:
+		fallthrough
 
 	default:
 		err = apperrors.NewUnsupported(apperrors.Fmt("Archive format '%v'", format))

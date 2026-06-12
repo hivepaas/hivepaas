@@ -402,12 +402,14 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	var maxFileSize unit.DataSize
 	var fileExts []string
 	var requiredScopes []base.ObjectScopeType
-	switch base.FileType(fileType) { //nolint:exhaustive
+	switch base.FileType(fileType) {
 	case base.FileTypeBuildSource:
 		maxFile = cfg.BuildSourceMaxFile
 		maxFileSize = cfg.BuildSourceMaxSize
 		fileExts = cfg.BuildSourceFileExts
 		requiredScopes = []base.ObjectScopeType{base.ObjectScopeApp}
+	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
+		fallthrough
 	default:
 		return apperrors.NewUnsupported(apperrors.Fmt("File type '%v'", fileType))
 	}

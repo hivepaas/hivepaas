@@ -54,7 +54,7 @@ func TestCompressAndDecompress(t *testing.T) {
 
 			t.Run(testName, func(t *testing.T) {
 				archiveName := "archive_" + testName
-				switch format { //nolint:exhaustive
+				switch format { //nolint
 				case ArchiveFormatTarGz:
 					archiveName += ".tar.gz"
 				case ArchiveFormatTarLz4:

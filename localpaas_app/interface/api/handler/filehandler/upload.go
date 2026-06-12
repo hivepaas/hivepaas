@@ -54,7 +54,7 @@ func (h *Handler) UploadFiles(ctx *gin.Context) {
 
 func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq) (auth *basedto.Auth, err error) {
 	var accessCheck *permission.AccessCheck
-	switch req.FileType { //nolint:exhaustive
+	switch req.FileType {
 	case base.FileTypeBuildSource:
 		accessCheck = &permission.AccessCheck{
 			ResourceModule:     base.ResourceModuleProject,
@@ -64,6 +64,8 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 			ParentResourceID:   req.Scope.ProjectID,
 			AnyOf:              []base.ActionType{base.ActionTypeExecute, base.ActionTypeWrite},
 		}
+	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
+		fallthrough
 	default:
 		return nil, apperrors.NewUnsupported(apperrors.Fmt("File type '%v'", req.FileType))
 	}

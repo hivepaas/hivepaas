@@ -71,7 +71,7 @@ func NewClient(cfg ACMEConfig) (client *Client, err error) {
 		legoCfg.CADirURL = cfg.CADirURL // Custom ACME endpoint
 	}
 
-	switch cfg.KeyType { //nolint:exhaustive
+	switch cfg.KeyType {
 	case base.SSLKeyTypeECP256:
 		legoCfg.Certificate.KeyType = certcrypto.EC256
 	case base.SSLKeyTypeECP384:
@@ -84,6 +84,8 @@ func NewClient(cfg ACMEConfig) (client *Client, err error) {
 		legoCfg.Certificate.KeyType = certcrypto.RSA4096
 	case base.SSLKeyTypeRSA8192:
 		legoCfg.Certificate.KeyType = certcrypto.RSA8192
+	case base.SSLKeyTypeECP521:
+		fallthrough
 	default:
 		return nil, apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", cfg.KeyType))
 	}

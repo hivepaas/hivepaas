@@ -152,7 +152,7 @@ func TransformStorageMount(
 		return nil, apperrors.Wrap(err)
 	}
 
-	switch mnt.Type { //nolint:exhaustive
+	switch mnt.Type {
 	case mount.TypeBind:
 		if resp.BindOptions == nil {
 			resp.BindOptions = &BindOptions{}
@@ -189,6 +189,9 @@ func TransformStorageMount(
 		if mnt.VolumeOptions != nil {
 			mntResp.Subpath = mnt.VolumeOptions.Subpath
 		}
+
+	case mount.TypeTmpfs, mount.TypeNamedPipe, mount.TypeImage:
+		// Do nothing
 	}
 
 	return resp, nil

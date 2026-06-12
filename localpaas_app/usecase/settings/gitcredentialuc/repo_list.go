@@ -32,13 +32,15 @@ func (uc *UC) ListRepo(
 	case base.SettingTypeGithubApp:
 		return uc.listGithubRepo(ctx, req, setting)
 	case base.SettingTypeAccessToken:
-		switch base.GitSource(setting.Kind) { //nolint:exhaustive
+		switch base.GitSource(setting.Kind) {
 		case base.GitSourceGithub:
 			return uc.listGithubRepo(ctx, req, setting)
 		case base.GitSourceGitlab:
 			return uc.listGitlabRepo(ctx, req, setting)
 		case base.GitSourceGitea:
 			return uc.listGiteaRepo(ctx, req, setting)
+		case base.GitSourceBitbucket, base.GitSourceGogs:
+			fallthrough
 		default:
 			return nil, apperrors.NewUnsupported(apperrors.Fmt("Git source '%v'", setting.Kind))
 		}

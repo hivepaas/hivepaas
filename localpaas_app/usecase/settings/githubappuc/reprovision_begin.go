@@ -61,7 +61,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 	}
 
 	var beginFlowURL string
-	switch req.Scope.ScopeType() { //nolint:exhaustive
+	switch req.Scope.ScopeType() {
 	case base.ObjectScopeGlobal:
 		beginFlowURL = cfg.GlobalGithubAppManifestFlowBeginURL(appSetting.ID, state)
 		manifest.RedirectURL = cfg.GlobalGithubAppManifestFlowProgressURL(appSetting.ID)
@@ -70,6 +70,8 @@ func (uc *UC) BeginReprovisionGithubApp(
 		beginFlowURL = cfg.ProjectGithubAppManifestFlowBeginURL(req.Scope.ProjectID, appSetting.ID, state)
 		manifest.RedirectURL = cfg.ProjectGithubAppManifestFlowProgressURL(req.Scope.ProjectID, appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
+	case base.ObjectScopeApp, base.ObjectScopeUser:
+		fallthrough
 	default:
 		return nil, apperrors.New(apperrors.ErrUnsupported)
 	}

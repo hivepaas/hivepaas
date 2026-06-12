@@ -121,7 +121,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		if !gofn.Contain(supportedMountTypes, reqMnt.Type) {
 			return apperrors.NewUnsupported(apperrors.Fmt("Mount type '%v'", reqMnt.Type))
 		}
-		switch reqMnt.Type { //nolint:exhaustive
+		switch reqMnt.Type {
 		case mount.TypeBind:
 			err = uc.validateStorageSettingsBindMount(reqMnt, data)
 		case mount.TypeVolume:
@@ -130,6 +130,8 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 			err = uc.validateStorageSettingsClusterVolumeMount(reqMnt, data)
 		case mount.TypeTmpfs:
 			err = uc.validateStorageSettingsTmpfsMount(reqMnt, data)
+		case mount.TypeNamedPipe, mount.TypeImage:
+			return apperrors.NewUnsupported(apperrors.Fmt("Mount type '%v'", reqMnt.Type))
 		}
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -141,7 +143,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 
 func (uc *UC) calcExistingMountKey(currMnt *mount.Mount) string {
 	var key string
-	switch currMnt.Type { //nolint:exhaustive
+	switch currMnt.Type {
 	case mount.TypeBind:
 		propagation := ""
 		if currMnt.BindOptions != nil {
@@ -170,13 +172,15 @@ func (uc *UC) calcExistingMountKey(currMnt *mount.Mount) string {
 		}
 		key = fmt.Sprintf(mountKeyTypeTmpfs, currMnt.Type, size,
 			currMnt.Target, currMnt.Consistency)
+	case mount.TypeNamedPipe, mount.TypeImage:
+		return ""
 	}
 	return key
 }
 
 func (uc *UC) calcRequestingMountKey(mnt *appsettingsdto.Mount) string {
 	var key string
-	switch mnt.Type { //nolint:exhaustive
+	switch mnt.Type {
 	case mount.TypeBind:
 		source := filepath.Join(mnt.BindOptions.BaseDir, mnt.BindOptions.Subpath)
 		propagation := ""
@@ -210,6 +214,8 @@ func (uc *UC) calcRequestingMountKey(mnt *appsettingsdto.Mount) string {
 		}
 		key = fmt.Sprintf(mountKeyTypeTmpfs, mnt.Type, size,
 			mnt.Target, mnt.Consistency)
+	case mount.TypeNamedPipe, mount.TypeImage:
+		return ""
 	}
 	return key
 }
@@ -379,7 +385,7 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 
 	for _, reqMnt := range req.Mounts {
 		var source, subpath string
-		switch reqMnt.Type { //nolint:exhaustive
+		switch reqMnt.Type {
 		case mount.TypeBind:
 			source = filepath.Join(reqMnt.BindOptions.BaseDir, reqMnt.BindOptions.Subpath)
 		case mount.TypeVolume:
@@ -388,6 +394,8 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 		case mount.TypeCluster:
 			source = reqMnt.ClusterOptions.Volume
 			subpath = reqMnt.ClusterOptions.Subpath
+		case mount.TypeTmpfs, mount.TypeNamedPipe, mount.TypeImage:
+			// Do nothing
 		}
 		key := fmt.Sprintf("type:%v:src:%v:subpath:%v", reqMnt.Type, source, subpath)
 
@@ -401,7 +409,7 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 
 		mnt.Target = reqMnt.Target
 		mnt.Consistency = reqMnt.Consistency
-		switch reqMnt.Type { //nolint:exhaustive
+		switch reqMnt.Type {
 		case mount.TypeBind:
 			if mnt.BindOptions == nil {
 				mnt.BindOptions = &mount.BindOptions{}
@@ -457,6 +465,9 @@ func (uc *UC) prepareUpdatingAppStorageMounts(
 			mnt.TmpfsOptions.SizeBytes = reqMnt.TmpfsOptions.Size.Bytes()
 			mnt.TmpfsOptions.Mode = reqMnt.TmpfsOptions.Mode.ToFileMode()
 			mnt.TmpfsOptions.Options = reqMnt.TmpfsOptions.Options
+
+		case mount.TypeNamedPipe, mount.TypeImage:
+			// Do nothing
 		}
 
 		containerSpec.Mounts = append(containerSpec.Mounts, *mnt)

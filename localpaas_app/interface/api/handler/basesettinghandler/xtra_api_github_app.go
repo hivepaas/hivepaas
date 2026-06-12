@@ -21,11 +21,13 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	var err error
 
 	scope := &base.ObjectScope{}
-	switch scopeType { //nolint:exhaustive
+	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
+	case base.ObjectScopeApp, base.ObjectScopeUser:
+		fallthrough
 	default:
 		h.RenderError(ctx, apperrors.NewUnsupported(apperrors.Fmt("Scope '%v'", scopeType)))
 		return
@@ -124,11 +126,13 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	var itemID string
 
 	scope := &base.ObjectScope{}
-	switch scopeType { //nolint:exhaustive
+	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
+	case base.ObjectScopeApp, base.ObjectScopeUser:
+		fallthrough
 	default:
 		h.RenderError(ctx, apperrors.NewUnsupported(apperrors.Fmt("Scope '%v'", scopeType)))
 		return

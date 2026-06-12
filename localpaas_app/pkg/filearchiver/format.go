@@ -17,7 +17,7 @@ const (
 )
 
 func (format ArchiveFormat) FileExtDefault() string {
-	switch format { //nolint:exhaustive
+	switch format {
 	case ArchiveFormatTarGz:
 		return ".tar.gz"
 	case ArchiveFormatTarLz4:
@@ -31,6 +31,9 @@ func (format ArchiveFormat) FileExtDefault() string {
 		return ".lz4"
 	case ArchiveFormatZstd:
 		return ".zst"
+
+	case ArchiveFormatAuto:
+		fallthrough
 
 	default:
 		return ""

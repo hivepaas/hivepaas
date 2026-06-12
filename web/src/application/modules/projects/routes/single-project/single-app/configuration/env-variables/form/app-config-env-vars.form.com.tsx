@@ -1,6 +1,8 @@
 import React, { type PropsWithChildren, useImperativeHandle, useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EnvVarsFormHeader } from "~/projects/module-shared/components";
@@ -106,6 +108,19 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                         disabled={readOnly}
                         className="contents"
                     >
+                        <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                            <p>
+                                <span className="text-orange-500">Note:</span> From an env var, you can reference
+                                another env var or secret, for example:{" "}
+                                <span className="text-orange-500">MY_ENV = {"${ENV2}"}</span> or{" "}
+                                <span className="text-orange-500">MY_ENV = {"${secrets.MY_SECRET}"}</span>.
+                            </p>
+                            <p className="mt-3">
+                                Use Secrets if you do not want anyone to see their values. Secrets will be filtered out
+                                from log data, while Env vars will not.
+                            </p>
+                        </div>
+
                         <EnvVarsFormHeader
                             search={{ value: search, onChange: setSearch }}
                             isRevealed={isRevealed}

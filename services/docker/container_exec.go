@@ -29,6 +29,10 @@ func (m *manager) ContainerExec(
 		opt(&opts)
 	}
 
+	if opts.ConsoleSize.Width > 0 || opts.ConsoleSize.Height > 0 {
+		opts.TTY = true
+	}
+
 	_, err := m.ContainerInspect(ctx, containerID)
 	if err != nil {
 		return nil, nil, nil, apperrors.Wrap(err)

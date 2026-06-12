@@ -9,6 +9,8 @@ import {
     SystemBackupFileApiValidator,
     SystemCleanupApi,
     SystemCleanupApiValidator,
+    SystemSslRenewalApi,
+    SystemSslRenewalApiValidator,
     TraefikServiceSettingsApi,
     TraefikServiceSettingsApiValidator,
 } from "../services";
@@ -17,6 +19,7 @@ function createApi() {
     const systemBackupValidator = new SystemBackupApiValidator();
     const systemBackupFileValidator = new SystemBackupFileApiValidator();
     const systemCleanupValidator = new SystemCleanupApiValidator();
+    const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
     const localPaaSServiceSettingsValidator = new LocalPaaSServiceSettingsApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
 
@@ -27,6 +30,7 @@ function createApi() {
             backup: new SystemBackupApi(systemBackupValidator),
             backupFiles: new SystemBackupFileApi(systemBackupFileValidator),
             cleanup: new SystemCleanupApi(systemCleanupValidator),
+            sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
         },
     };
 }

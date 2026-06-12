@@ -6,7 +6,6 @@ import type {
     AppDeployments_Cancel_Req,
     AppDeployments_FindManyPaginated_Req,
     AppDeployments_FindOneById_Req,
-    AppDeployments_GetLogsToken_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -30,16 +29,6 @@ function createHook() {
                 },
                 findOneById: async (data: AppDeployments_FindOneById_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.apps.deployments.$.findOneById({ data }, signal);
-
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            throw error;
-                        },
-                    });
-                },
-                getLogsToken: async (data: AppDeployments_GetLogsToken_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.projects.apps.deployments.$.getLogsToken({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,

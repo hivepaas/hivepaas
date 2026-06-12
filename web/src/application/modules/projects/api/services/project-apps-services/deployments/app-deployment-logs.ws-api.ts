@@ -8,11 +8,15 @@ import { Err, Ok, type Result } from "oxide.ts";
 
 import { session } from "@infrastructure/api";
 
-import type { AppDeployments_GetLogsToken_Req } from "./app-deployments.api.contracts";
-
 const DEFAULT_LOG_TAIL = 100;
 
-export type AppDeploymentLogsWs_StreamLogs_Req = AppDeployments_GetLogsToken_Req;
+export type AppDeploymentLogsWs_StreamLogs_Req = {
+    data: {
+        projectID: string;
+        appID: string;
+        deploymentID: string;
+    };
+};
 
 export type AppDeploymentLogsWs_StreamLogs_Res = WebSocketSubscription;
 

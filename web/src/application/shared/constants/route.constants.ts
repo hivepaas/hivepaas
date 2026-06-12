@@ -224,6 +224,21 @@ export const ROUTE = {
                 $route: "/system-settings/data-cleanup/actions/",
             },
         },
+
+        sslRenewal: {
+            $pattern: "system-settings/ssl-renewal",
+            $route: "/system-settings/ssl-renewal/configuration/",
+
+            configuration: {
+                $pattern: "system-settings/ssl-renewal/configuration",
+                $route: "/system-settings/ssl-renewal/configuration/",
+            },
+
+            actions: {
+                $pattern: "system-settings/ssl-renewal/actions",
+                $route: "/system-settings/ssl-renewal/actions/",
+            },
+        },
     },
 
     /**

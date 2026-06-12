@@ -6,8 +6,6 @@ import type {
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
     AppLogs_GetLogs_Res,
-    AppLogs_GetToken_Req,
-    AppLogs_GetToken_Res,
 } from "~/projects/api/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -42,22 +40,6 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getInfo),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    async getToken(request: AppLogs_GetToken_Req, signal?: AbortSignal): Promise<Result<AppLogs_GetToken_Res, Error>> {
-        const { projectID, appID } = request.data;
-
-        return lastValueFrom(
-            from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/logs/token`, {
-                    signal,
-                }),
-            ).pipe(
-                map(this.validator.getToken),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

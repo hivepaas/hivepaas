@@ -337,17 +337,19 @@ Use this section when adding a real-time WebSocket stream alongside (or instead 
 ### Pattern overview
 
 ```
-REST service (getToken) → WsApi.streamXxx → Result<WebSocketSubscription, Error>
-                                                  ↑
-                               BaseWebSocketApi (this.client.buildUrl / connect)
+WsApi.streamXxx → Result<WebSocketSubscription, Error>
+                       ↑
+        BaseWebSocketApi (this.client.buildUrl / connect)
 ```
 
-WebSocket connections cannot carry HTTP headers in the browser. The standard pattern is:
+WebSocket connections cannot carry arbitrary HTTP headers in the browser. When a backend stream authenticates with
+websocket subprotocols, the standard pattern is:
 
-1. Call a REST endpoint (via an existing `BaseApi` service) to obtain a short-lived `?token=` query parameter.
+1. Read the current access token from the shared session storage.
 2. Build the URL and open the socket using `this.client.buildUrl` + `this.client.connect`.
 3. Return `Result<WebSocketSubscription, Error>` — same `Result`/`match` discipline as regular services.
 4. Wrap `this.client.connect` in a `try/catch` and convert with `toWebSocketError` from `@infrastructure/websocket` (synchronous throw guard for malformed URLs).
+5. Pass the token through `protocols: ["access_token", accessToken]` instead of a REST token preflight or `?token=`.
 
 ### Step-by-step
 
@@ -360,34 +362,43 @@ import {
     type WebSocketSubscription,
     toWebSocketError,
 } from "@infrastructure/websocket";
-import { Err, Ok, type Result, match } from "oxide.ts";
+import { Err, Ok, type Result } from "oxide.ts";
+
+import { session } from "@infrastructure/api";
+
+type MyEntity_StreamLogs_Req = {
+    data: {
+        id: string;
+    };
+};
 
 export class MyEntityLogsWsApi extends BaseWebSocketApi {
-    public constructor(private readonly myEntityApi: MyEntityApi) {
-        super();
-    }
-
-    async streamLogs(
-        request: MyEntity_GetLogsToken_Req,
+    streamLogs(
+        request: MyEntity_StreamLogs_Req,
         handlers: WebSocketHandlers,
         signal?: AbortSignal,
-    ): Promise<Result<WebSocketSubscription, Error>> {
-        const tokenResult = await this.myEntityApi.getLogsToken(request, signal);
+    ): Result<WebSocketSubscription, Error> {
+        const accessToken = session.getToken();
 
-        return match(tokenResult, {
-            Ok: tokenResponse => {
-                try {
-                    const url = this.client.buildUrl(`my-entity/${encodeURIComponent(request.data.id)}/logs`, {
-                        token: tokenResponse.data.token,
-                        follow: true,
-                    });
-                    return Ok(this.client.connect(url, handlers, { signal, closeOnError: true }));
-                } catch (error) {
-                    return Err(toWebSocketError(error, "Failed to stream logs."));
-                }
-            },
-            Err: error => Err(error),
-        });
+        if (!accessToken) {
+            return Err(new Error("Access token not found."));
+        }
+
+        try {
+            const url = this.client.buildUrl(`my-entity/${encodeURIComponent(request.data.id)}/logs`, {
+                follow: true,
+            });
+
+            return Ok(
+                this.client.connect(url, handlers, {
+                    signal,
+                    closeOnError: true,
+                    protocols: ["access_token", accessToken],
+                }),
+            );
+        } catch (error) {
+            return Err(toWebSocketError(error, "Failed to stream logs."));
+        }
     }
 }
 ```
@@ -415,7 +426,7 @@ function createHook() {
         const streams = useMemo(
             () => ({
                 subscribe: async (
-                    data: MyEntity_GetLogsToken_Req["data"],
+                    data: MyEntity_StreamLogs_Req["data"],
                     handlers: WebSocketHandlers,
                     signal?: AbortSignal,
                 ) => {
@@ -481,18 +492,18 @@ useEffect(() => {
 
 ### Naming conventions
 
-| Artefact                | Suffix / pattern                                                 |
-| ----------------------- | ---------------------------------------------------------------- |
-| WS service              | `<entity>.ws-api.ts`                                             |
-| WS hook                 | `use-<entity>.ws-api.ts`                                         |
-| Handler types re-export | `type MyEntityWsHandlers = WebSocketHandlers`                    |
-| Request type alias      | `MyEntity_StreamXxx_Req = <RestTokenReq>` (reuse REST contracts) |
-| Response type alias     | `MyEntity_StreamXxx_Res = WebSocketSubscription`                 |
+| Artefact                | Suffix / pattern                                 |
+| ----------------------- | ------------------------------------------------ |
+| WS service              | `<entity>.ws-api.ts`                             |
+| WS hook                 | `use-<entity>.ws-api.ts`                         |
+| Handler types re-export | `type MyEntityWsHandlers = WebSocketHandlers`    |
+| Request type alias      | `MyEntity_StreamXxx_Req = { data: ... }`         |
+| Response type alias     | `MyEntity_StreamXxx_Res = WebSocketSubscription` |
 
 ### Rules
 
 - WS services must return `Result<WebSocketSubscription, Error>` — never throw from a service method.
 - Always call `toWebSocketError` in the `catch` block around `this.client.connect`.
 - The hook exposes a `streams` object (not `queries`/`mutations`) to signal real-time semantics.
-- Token acquisition flows through an existing `BaseApi` REST service so the axios auth interceptor (token refresh) still runs.
+- Do not add REST token preflight calls for websocket streams that authenticate through subprotocols.
 - No TanStack Query wrapping — WS streams are imperative connections, not cached queries.

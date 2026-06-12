@@ -21,16 +21,6 @@ export type AppDeployments_FindOneById_Req = ApiRequestBase<{
 
 export type AppDeployments_FindOneById_Res = ApiResponseBase<AppDeployment>;
 
-export type AppDeployments_GetLogsToken_Req = ApiRequestBase<{
-    projectID: string;
-    appID: string;
-    deploymentID: string;
-}>;
-
-export type AppDeployments_GetLogsToken_Res = ApiResponseBase<{
-    token: string;
-}>;
-
 export type AppDeployments_Cancel_Req = ApiRequestBase<{
     projectID: string;
     appID: string;

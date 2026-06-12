@@ -4,7 +4,6 @@ import type {
     AppDeployments_Cancel_Res,
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Res,
-    AppDeployments_GetLogsToken_Res,
 } from "~/projects/api/services/project-apps-services";
 import {
     EAppDeploymentMethod,
@@ -141,13 +140,6 @@ const FindOneByIdSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
-const GetLogsTokenSchema = z.object({
-    data: z.object({
-        token: z.string(),
-    }),
-    meta: BaseMetaApiSchema.nullable(),
-});
-
 const CancelSchema = z.object({
     data: z.object({
         canceled: z.boolean(),
@@ -167,13 +159,6 @@ export class AppDeploymentsApiValidator {
         return parseApiResponse({
             response,
             schema: FindOneByIdSchema,
-        });
-    };
-
-    getLogsToken = (response: AxiosResponse): AppDeployments_GetLogsToken_Res => {
-        return parseApiResponse({
-            response,
-            schema: GetLogsTokenSchema,
         });
     };
 

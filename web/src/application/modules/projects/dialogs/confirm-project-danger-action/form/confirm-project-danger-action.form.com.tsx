@@ -81,7 +81,10 @@ export function ConfirmProjectDangerActionForm({
             <DialogBody className="flex flex-col gap-7">
                 <p className="text-sm font-medium leading-6 text-foreground">
                     To confirm {copy.bodyAction} the project, please type{" "}
-                    <span className="text-primary">&quot;{projectName}&quot;</span> into the text box below.
+                    <span className="inline-flex max-w-full items-center rounded-[4px] border border-input bg-muted/50 px-2 py-0 align-middle font-semibold text-primary break-all">
+                        {projectName}
+                    </span>{" "}
+                    into the text box below.
                 </p>
 
                 <Field>

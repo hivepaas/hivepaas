@@ -67,7 +67,7 @@ export function AppConfigSecretsRoute() {
 
             <Accordion
                 type="multiple"
-                defaultValue={["secrets", "inherited-secrets"]}
+                defaultValue={["secrets"]}
                 className="w-full"
             >
                 <AccordionItem

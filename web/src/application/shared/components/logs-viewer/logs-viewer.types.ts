@@ -22,6 +22,7 @@ export interface LogsViewerProps {
     isStreaming?: boolean;
     isRefreshPending?: boolean;
     hasLineNumbers?: boolean;
+    useAnsiClasses?: boolean;
     height?: number | string;
     fullscreenHeight?: number | string;
     fontSize?: string;

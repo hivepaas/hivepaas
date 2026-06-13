@@ -171,9 +171,11 @@ export function ScheduledJobTaskSummaryCard({
                     </div>
                 </InfoRow>
 
-                <InfoRow label="Schedule At">
-                    <span>{formatDateTime(task.runAt)}</span>
-                </InfoRow>
+                {shouldShowDetailsContent && (
+                    <InfoRow label="Schedule At">
+                        <span>{formatDateTime(task.runAt)}</span>
+                    </InfoRow>
+                )}
 
                 {variant === "details" && shouldShowDetailsContent && (
                     <>

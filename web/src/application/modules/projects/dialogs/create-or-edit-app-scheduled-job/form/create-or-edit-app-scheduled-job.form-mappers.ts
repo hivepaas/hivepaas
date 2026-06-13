@@ -1,4 +1,4 @@
-import type { AppScheduledJob } from "~/projects/domain";
+import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE, type AppScheduledJob } from "~/projects/domain";
 import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobScheduleMode,
@@ -42,6 +42,8 @@ export function createEmptyAppScheduledJobFormDefaults(): CreateOrEditAppSchedul
         runInShell: "",
         command: "",
         workingDir: "",
+        tty: false,
+        consoleSize: { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE },
         envVars: [],
         argGroups: [],
         notification: {
@@ -71,6 +73,8 @@ export function mapAppScheduledJobToFormInput(job: AppScheduledJob): CreateOrEdi
         runInShell: command?.runInShell ?? "",
         command: command?.command ?? "",
         workingDir: command?.workingDir ?? "",
+        tty: command?.tty ?? false,
+        consoleSize: { ...(command?.consoleSize ?? APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE) },
         envVars: command?.envVars ?? [],
         argGroups: command?.argGroups ?? [],
         notification: {

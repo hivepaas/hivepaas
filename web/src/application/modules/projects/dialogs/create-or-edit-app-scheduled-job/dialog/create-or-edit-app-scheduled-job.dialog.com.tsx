@@ -51,6 +51,8 @@ function mapFormValuesToPayload(
         controlDisabled: !values.controlEnabled,
         command: {
             command: values.command,
+            consoleSize: values.consoleSize,
+            tty: values.tty,
             ...(hasText(values.runInShell) ? { runInShell: values.runInShell } : {}),
             ...(hasText(values.workingDir) ? { workingDir: values.workingDir } : {}),
             ...(values.envVars.length > 0

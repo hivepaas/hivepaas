@@ -9,6 +9,7 @@ import type {
     AppScheduledJobs_FindOneById_Res,
     AppScheduledJobs_RunNow_Res,
 } from "~/projects/api/services/project-apps-services";
+import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
@@ -64,11 +65,21 @@ const ArgGroupSchema = z.object({
         .transform(value => value ?? []),
 });
 
+const ConsoleSizeSchema = z
+    .object({
+        width: z.number(),
+        height: z.number(),
+    })
+    .nullish()
+    .transform(value => value ?? { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE });
+
 const CommandSchema = z
     .object({
         runInShell: z.string().optional().default(""),
         command: z.string().optional().default(""),
         workingDir: z.string().optional().default(""),
+        consoleSize: ConsoleSizeSchema,
+        tty: z.boolean().optional().default(false),
         envVars: z
             .array(EnvVarSchema)
             .nullish()

@@ -64,6 +64,8 @@ import {
     ProjectSettingsImportApiValidator,
     ProjectSslCertApi,
     ProjectSslCertApiValidator,
+    ProjectSslProviderApi,
+    ProjectSslProviderApiValidator,
     ProjectUserAccessesApi,
     ProjectUserAccessesApiValidator,
     ProjectsApi,
@@ -126,6 +128,7 @@ function createApi() {
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
     const projectSslCertApiValidator = new ProjectSslCertApiValidator();
+    const projectSslProviderApiValidator = new ProjectSslProviderApiValidator();
     const projectImServiceApiValidator = new ProjectImServiceApiValidator();
     const projectEmailApiValidator = new ProjectEmailApiValidator();
     const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
@@ -239,6 +242,9 @@ function createApi() {
             },
             sslCert: {
                 $: new ProjectSslCertApi(projectSslCertApiValidator),
+            },
+            sslProvider: {
+                $: new ProjectSslProviderApi(projectSslProviderApiValidator),
             },
             storageSettings: {
                 $: new ProjectStorageSettingsApi(projectStorageSettingsApiValidator),

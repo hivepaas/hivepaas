@@ -123,6 +123,11 @@ export const ROUTE = {
             $route: "/settings/registry-auth/",
         },
 
+        sslProviders: {
+            $pattern: "settings/ssl-providers",
+            $route: "/settings/ssl-providers/",
+        },
+
         sslCertificates: {
             $pattern: "settings/ssl-certificates",
             $route: "/settings/ssl-certificates/",
@@ -462,6 +467,11 @@ export const ROUTE = {
                 sshKeys: {
                     $pattern: "projects/:id/provider-settings/ssh-keys",
                     $route: (id: string) => `/projects/${id}/provider-settings/ssh-keys/`,
+                },
+
+                sslProviders: {
+                    $pattern: "projects/:id/provider-settings/ssl-providers",
+                    $route: (id: string) => `/projects/${id}/provider-settings/ssl-providers/`,
                 },
 
                 sslCertificates: {

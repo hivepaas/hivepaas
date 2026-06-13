@@ -13,6 +13,7 @@ export * from "./project-im-service";
 export * from "./project-email";
 export * from "./project-settings";
 export * from "./project-ssl-cert";
+export * from "./project-ssl-provider";
 export * from "./project-secrets";
 export * from "./projects";
 export * from "./project-user-accesses";

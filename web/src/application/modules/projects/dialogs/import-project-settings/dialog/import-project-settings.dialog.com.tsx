@@ -19,6 +19,7 @@ import {
     ProjectRepoWebhookQueries,
     ProjectSSHKeyQueries,
     ProjectSslCertQueries,
+    ProjectSslProviderQueries,
 } from "~/projects/data/queries";
 import {
     AccessTokenQueries,
@@ -32,6 +33,7 @@ import {
     RepoWebhookQueries,
     SSHKeyQueries,
     SslCertQueries,
+    SslProviderQueries,
 } from "~/settings/data/queries";
 import type { SettingsBaseEntity } from "~/settings/domain";
 import { AccessTokenTableDefs } from "~/settings/module-shared/components/access-token-table/access-token-table.defs";
@@ -45,6 +47,7 @@ import { RegistryAuthTableDefs } from "~/settings/module-shared/components/regis
 import { RepoWebhookTableDefs } from "~/settings/module-shared/components/repo-webhook-table/repo-webhook-table.defs";
 import { SSHKeyTableDefs } from "~/settings/module-shared/components/ssh-key-table/ssh-key-table.defs";
 import { SslCertTableDefs } from "~/settings/module-shared/components/ssl-cert-table/ssl-cert-table.defs";
+import { SslProviderTableDefs } from "~/settings/module-shared/components/ssl-provider-table/ssl-provider-table.defs";
 
 import { TableActions } from "@application/shared/components";
 import { useTableState } from "@application/shared/hooks/table";
@@ -73,6 +76,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.BasicAuth]: "Basic Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth]: "Registry Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.SslCert]: "SSL Certificates",
+    [PROJECT_SETTINGS_IMPORT_KIND.SslProvider]: "SSL Providers",
     [PROJECT_SETTINGS_IMPORT_KIND.Email]: "Email Accounts",
     [PROJECT_SETTINGS_IMPORT_KIND.ImService]: "IM Platforms",
     [PROJECT_SETTINGS_IMPORT_KIND.SSHKey]: "SSH Keys",
@@ -107,6 +111,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(RegistryAuthTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.SslCert:
             return castColumns(SslCertTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.SslProvider:
+            return castColumns(SslProviderTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.Email:
             return castColumns(EmailAccountTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.ImService:
@@ -179,6 +185,13 @@ export function ImportProjectSettingsDialog() {
     });
     const sslCertProjectQuery = ProjectSslCertQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslCert,
+    });
+
+    const sslProviderSettingsQuery = SslProviderQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslProvider,
+    });
+    const sslProviderProjectQuery = ProjectSslProviderQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslProvider,
     });
 
     const emailSettingsQuery = EmailQueries.useFindManyPaginated(queryRequest, {
@@ -272,6 +285,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void sslCertSettingsQuery.refetch();
                 void sslCertProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.SslProvider:
+            settings = sslProviderSettingsQuery.data?.data ?? [];
+            projectSettings = sslProviderProjectQuery.data?.data ?? [];
+            isFetching = sslProviderSettingsQuery.isFetching || sslProviderProjectQuery.isFetching;
+            hasError = Boolean(sslProviderSettingsQuery.error ?? sslProviderProjectQuery.error);
+            refetch = () => {
+                void sslProviderSettingsQuery.refetch();
+                void sslProviderProjectQuery.refetch();
             };
             break;
         case PROJECT_SETTINGS_IMPORT_KIND.Email:

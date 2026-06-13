@@ -81,7 +81,12 @@ export function AppScheduledJobTaskDetailsRoute() {
                         variant="details"
                         isCancelling={isCancelling}
                         onCancel={id => {
-                            cancelTask({ taskID: id });
+                            cancelTask({
+                                projectID: projectId,
+                                appID: appId,
+                                scheduledJobID: scheduledJobId,
+                                taskID: id,
+                            });
                         }}
                     >
                         <ScheduledJobTaskLogsViewer

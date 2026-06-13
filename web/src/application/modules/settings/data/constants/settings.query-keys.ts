@@ -8,6 +8,8 @@ export const QK = {
     "settings.registry-auth.find-one-by-id": "settings.registry-auth.find-one-by-id",
     "settings.ssl-cert.find-many-paginated": "settings.ssl-cert.find-many-paginated",
     "settings.ssl-cert.find-one-by-id": "settings.ssl-cert.find-one-by-id",
+    "settings.ssl-provider.find-many-paginated": "settings.ssl-provider.find-many-paginated",
+    "settings.ssl-provider.find-one-by-id": "settings.ssl-provider.find-one-by-id",
     "settings.im-service.find-many-paginated": "settings.im-service.find-many-paginated",
     "settings.im-service.find-one-by-id": "settings.im-service.find-one-by-id",
     "settings.email.find-many-paginated": "settings.email.find-many-paginated",

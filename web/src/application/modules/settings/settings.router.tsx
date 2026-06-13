@@ -70,6 +70,11 @@ export const settingsRouter: RouteObject = {
 
             return SettingsRegistryAuthRoute;
         }),
+        createSettingsRoute(ROUTE.settings.sslProviders.$pattern, "SSL Providers", async () => {
+            const { SettingsSslProvidersRoute } = await getLazyComponents();
+
+            return SettingsSslProvidersRoute;
+        }),
         createSettingsRoute(ROUTE.settings.sslCertificates.$pattern, "SSL Certificates", async () => {
             const { SettingsSslCertificatesRoute } = await getLazyComponents();
 

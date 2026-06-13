@@ -38,10 +38,17 @@ export type AppScheduledJobs_CommandArgGroup_Payload = {
     args: AppScheduledJobs_CommandArg_Payload[];
 };
 
+export type AppScheduledJobs_CommandConsoleSize_Payload = {
+    width: number;
+    height: number;
+};
+
 export type AppScheduledJobs_Command_Payload = {
     runInShell?: string;
     command: string;
     workingDir?: string;
+    consoleSize: AppScheduledJobs_CommandConsoleSize_Payload;
+    tty: boolean;
     envVars?: AppScheduledJobs_EnvVar_Payload[];
     argGroups?: AppScheduledJobs_CommandArgGroup_Payload[];
 };
@@ -183,6 +190,9 @@ export type AppScheduledJobTasks_GetLogs_Req = ApiRequestBase<{
 export type AppScheduledJobTasks_GetLogs_Res = ApiResponseBase<AppScheduledJobTaskLogFrame[]>;
 
 export type AppScheduledJobTasks_Cancel_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    scheduledJobID: string;
     taskID: string;
 }>;
 

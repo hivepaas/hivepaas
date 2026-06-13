@@ -32,6 +32,7 @@ export const ESettingType = {
     File: "file",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",
+    SSLProvider: "ssl-provider",
     DomainSettings: "domain-settings",
     StorageSettings: "storage-settings",
 } as const;

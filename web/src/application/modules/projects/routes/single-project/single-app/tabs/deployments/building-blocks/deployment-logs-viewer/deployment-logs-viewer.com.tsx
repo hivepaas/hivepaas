@@ -7,6 +7,8 @@ import { EAppDeploymentStatus as AppDeploymentStatus } from "~/projects/module-s
 
 import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@application/shared/components";
 
+const DEPLOYMENT_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
+
 export function DeploymentLogsViewer({
     projectID,
     appID,
@@ -147,6 +149,7 @@ export function DeploymentLogsViewer({
     return (
         <LogsViewer
             frames={logs}
+            height={DEPLOYMENT_LOG_VIEWER_HEIGHT}
             isStreaming={isStreaming}
             onRefresh={!isConnectionActive && showRefresh ? handleRefresh : undefined}
             isRefreshPending={isRefreshPending}

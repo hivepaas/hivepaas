@@ -20,6 +20,7 @@ export function LogsViewer({
     isStreaming = false,
     isRefreshPending = false,
     hasLineNumbers = true,
+    useAnsiClasses = true,
     height = DEFAULT_LOG_VIEWER_HEIGHT,
     fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
     fontSize = DEFAULT_LOG_VIEWER_FONT_SIZE,
@@ -88,6 +89,7 @@ export function LogsViewer({
                 key={logViewerInstanceKey}
                 data={displayedAnsiLines}
                 hasLineNumbers={hasLineNumbers}
+                useAnsiClasses={useAnsiClasses}
                 theme="dark"
                 height={isFullscreen ? fullscreenHeight : height}
                 scrollToRow={scrollToRow}

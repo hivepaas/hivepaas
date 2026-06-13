@@ -29,6 +29,8 @@ import {
     SSHKeyApiValidator,
     SslCertApi,
     SslCertApiValidator,
+    SslProviderApi,
+    SslProviderApiValidator,
     StorageSettingsApi,
     StorageSettingsApiValidator,
 } from "../services";
@@ -44,6 +46,7 @@ function createApi() {
     const gitCredentialsValidator = new GitCredentialsApiValidator();
     const registryAuthValidator = new RegistryAuthApiValidator();
     const sslCertValidator = new SslCertApiValidator();
+    const sslProviderValidator = new SslProviderApiValidator();
     const imServiceValidator = new ImServiceApiValidator();
     const emailValidator = new EmailApiValidator();
     const sshKeyValidator = new SSHKeyApiValidator();
@@ -62,6 +65,7 @@ function createApi() {
             gitCredentials: new GitCredentialsApi(gitCredentialsValidator),
             registryAuth: new RegistryAuthApi(registryAuthValidator),
             sslCert: new SslCertApi(sslCertValidator),
+            sslProvider: new SslProviderApi(sslProviderValidator),
             imService: new ImServiceApi(imServiceValidator),
             email: new EmailApi(emailValidator),
             sshKey: new SSHKeyApi(sshKeyValidator),

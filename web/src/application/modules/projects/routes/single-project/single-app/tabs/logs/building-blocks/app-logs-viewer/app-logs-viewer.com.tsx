@@ -9,7 +9,7 @@ import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@applic
 
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
-const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 300px), 2000px)";
+const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
 
 export function AppLogsViewer({
     tabID,

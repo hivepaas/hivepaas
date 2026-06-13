@@ -1,6 +1,7 @@
 export * from "./registry-auth.entity.schema";
 export * from "./settings-base.schema";
 export * from "./ssl-cert.entity.schema";
+export * from "./ssl-provider.entity.schema";
 export * from "./im-service.entity.schema";
 export * from "./email.entity.schema";
 export * from "./domain-settings.entity.schema";

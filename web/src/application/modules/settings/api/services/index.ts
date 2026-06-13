@@ -5,6 +5,7 @@ export * from "./git-credentials-services";
 export * from "./notifications-services";
 export * from "./registry-auth-services";
 export * from "./ssl-cert-services";
+export * from "./ssl-provider-services";
 export * from "./im-service-services";
 export * from "./email-services";
 export * from "./ssh-key-services";

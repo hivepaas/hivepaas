@@ -29,6 +29,11 @@ const CommandArgGroupSchema = z.object({
     args: z.array(CommandArgSchema),
 });
 
+const ConsoleSizeSchema = z.object({
+    width: z.number().int("Width must be an integer").min(1, "Width must be greater than 0"),
+    height: z.number().int("Height must be an integer").min(1, "Height must be greater than 0"),
+});
+
 export const CreateOrEditAppScheduledJobFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
@@ -44,6 +49,8 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         runInShell: z.string().trim(),
         command: z.string().trim().min(1, "Command is required"),
         workingDir: z.string().trim(),
+        tty: z.boolean(),
+        consoleSize: ConsoleSizeSchema,
         envVars: z.array(EnvVarSchema),
         argGroups: z.array(CommandArgGroupSchema),
         notification: z.object({

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useId, useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
@@ -62,6 +62,8 @@ export function CreateOrEditAppScheduledJobForm({
 
     const { sources: notificationSources, manageLink: notificationManageLink } =
         useProjectNotificationSettingsSources(projectId);
+    const consoleWidthInputId = useId();
+    const consoleHeightInputId = useId();
 
     const {
         field: name,
@@ -103,6 +105,15 @@ export function CreateOrEditAppScheduledJobForm({
         field: workingDir,
         fieldState: { invalid: isWorkingDirInvalid },
     } = useController({ control, name: "workingDir" });
+    const { field: tty } = useController({ control, name: "tty" });
+    const {
+        field: consoleWidth,
+        fieldState: { invalid: isConsoleWidthInvalid },
+    } = useController({ control, name: "consoleSize.width" });
+    const {
+        field: consoleHeight,
+        fieldState: { invalid: isConsoleHeightInvalid },
+    } = useController({ control, name: "consoleSize.height" });
 
     function onValid(values: SchemaOutput) {
         if (readOnly) {
@@ -362,6 +373,91 @@ export function CreateOrEditAppScheduledJobForm({
                                             />
                                             <FieldError errors={[errors.workingDir]} />
                                         </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        title="Terminal"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <div className="flex min-w-0 flex-wrap items-start gap-x-6 gap-y-3">
+                                            <div className="flex h-9 items-center gap-3 text-sm font-medium">
+                                                <span>TTY</span>
+                                                <Checkbox
+                                                    checked={tty.value}
+                                                    onCheckedChange={checked => {
+                                                        tty.onChange(checked === true);
+                                                    }}
+                                                    aria-label="TTY"
+                                                    disabled={readOnly}
+                                                />
+                                            </div>
+
+                                            <div className="flex min-w-[180px] flex-col gap-1.5">
+                                                <div className="flex items-center gap-3">
+                                                    <label
+                                                        htmlFor={consoleWidthInputId}
+                                                        className="text-sm font-medium"
+                                                    >
+                                                        Width
+                                                    </label>
+                                                    <InputNumber
+                                                        id={consoleWidthInputId}
+                                                        ref={consoleWidth.ref}
+                                                        name={consoleWidth.name}
+                                                        value={consoleWidth.value}
+                                                        onBlur={consoleWidth.onBlur}
+                                                        onValueChange={value => {
+                                                            const nextValue =
+                                                                value !== undefined && Number.isFinite(value)
+                                                                    ? value
+                                                                    : undefined;
+
+                                                            consoleWidth.onChange(nextValue);
+                                                        }}
+                                                        useGrouping={false}
+                                                        showControls={false}
+                                                        placeholder="120"
+                                                        aria-invalid={isConsoleWidthInvalid}
+                                                        className="w-32"
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.consoleSize?.width]} />
+                                            </div>
+
+                                            <div className="flex min-w-[180px] flex-col gap-1.5">
+                                                <div className="flex items-center gap-3">
+                                                    <label
+                                                        htmlFor={consoleHeightInputId}
+                                                        className="text-sm font-medium"
+                                                    >
+                                                        Height
+                                                    </label>
+                                                    <InputNumber
+                                                        id={consoleHeightInputId}
+                                                        ref={consoleHeight.ref}
+                                                        name={consoleHeight.name}
+                                                        value={consoleHeight.value}
+                                                        onBlur={consoleHeight.onBlur}
+                                                        onValueChange={value => {
+                                                            const nextValue =
+                                                                value !== undefined && Number.isFinite(value)
+                                                                    ? value
+                                                                    : undefined;
+
+                                                            consoleHeight.onChange(nextValue);
+                                                        }}
+                                                        useGrouping={false}
+                                                        showControls={false}
+                                                        placeholder="40"
+                                                        aria-invalid={isConsoleHeightInvalid}
+                                                        className="w-32"
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.consoleSize?.height]} />
+                                            </div>
+                                        </div>
                                     </InfoBlock>
 
                                     <InfoBlock

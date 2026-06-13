@@ -121,6 +121,8 @@ export const QK = {
      */
     "projects.ssl-cert.$.find-many-paginated": "projects.ssl-cert.$.find-many-paginated",
     "projects.ssl-cert.$.find-one-by-id": "projects.ssl-cert.$.find-one-by-id",
+    "projects.ssl-provider.$.find-many-paginated": "projects.ssl-provider.$.find-many-paginated",
+    "projects.ssl-provider.$.find-one-by-id": "projects.ssl-provider.$.find-one-by-id",
     /*
      * Project Docker Volumes
      */

@@ -36,10 +36,22 @@ export interface AppScheduledJobCommandArgGroup {
     args: AppScheduledJobCommandArg[];
 }
 
+export interface AppScheduledJobCommandConsoleSize {
+    width: number;
+    height: number;
+}
+
+export const APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE = {
+    width: 120,
+    height: 40,
+} as const satisfies AppScheduledJobCommandConsoleSize;
+
 export interface AppScheduledJobCommand {
     runInShell: string;
     command: string;
     workingDir: string;
+    consoleSize: AppScheduledJobCommandConsoleSize;
+    tty: boolean;
     envVars: AppScheduledJobCommandEnvVar[];
     argGroups: AppScheduledJobCommandArgGroup[];
 }

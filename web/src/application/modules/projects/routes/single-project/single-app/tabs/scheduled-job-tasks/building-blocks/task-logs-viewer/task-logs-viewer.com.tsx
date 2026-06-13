@@ -7,7 +7,7 @@ import { EAppScheduledJobTaskStatus as TaskStatus } from "~/projects/module-shar
 
 import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@application/shared/components";
 
-const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 300px), 2000px)";
+const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
 export function ScheduledJobTaskLogsViewer({
     projectID,

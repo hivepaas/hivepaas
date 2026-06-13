@@ -97,7 +97,7 @@ export function ScheduledJobTaskSummaryCard({
     onCancel,
     onClick,
 }: ScheduledJobTaskSummaryCardProps) {
-    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(variant === "details");
+    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isClickable = Boolean(onClick);
     const shouldShowDetailsContent = variant === "list" || isDetailsContentOpen;
     const { priority } = task.config;

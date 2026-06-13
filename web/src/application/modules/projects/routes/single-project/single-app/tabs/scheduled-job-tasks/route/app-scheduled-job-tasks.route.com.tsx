@@ -105,7 +105,12 @@ export function AppScheduledJobTasksRoute() {
                                     );
                                 }}
                                 onCancel={taskID => {
-                                    cancelTask({ taskID });
+                                    cancelTask({
+                                        projectID: projectId,
+                                        appID: appId,
+                                        scheduledJobID: scheduledJobId,
+                                        taskID,
+                                    });
                                 }}
                             />
                         ))

@@ -190,6 +190,9 @@ export type AppScheduledJobTasks_GetLogs_Req = ApiRequestBase<{
 export type AppScheduledJobTasks_GetLogs_Res = ApiResponseBase<AppScheduledJobTaskLogFrame[]>;
 
 export type AppScheduledJobTasks_Cancel_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    scheduledJobID: string;
     taskID: string;
 }>;
 

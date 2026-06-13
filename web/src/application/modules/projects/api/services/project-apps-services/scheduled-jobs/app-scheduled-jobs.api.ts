@@ -285,10 +285,15 @@ export class AppScheduledJobsApi extends BaseApi {
     async cancelTask(
         request: AppScheduledJobTasks_Cancel_Req,
     ): Promise<Result<AppScheduledJobTasks_Cancel_Res, Error>> {
-        const { taskID } = request.data;
+        const { projectID, appID, scheduledJobID, taskID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/system/tasks/${taskID}/cancel`, {})).pipe(
+            from(
+                this.client.v1.post(
+                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}/cancel`,
+                    {},
+                ),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

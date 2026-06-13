@@ -68,13 +68,13 @@ export function AppConfigSecretsRoute() {
             <Accordion
                 type="multiple"
                 defaultValue={["secrets", "inherited-secrets"]}
-                className="w-full"
+                className="w-fulls"
             >
                 <AccordionItem
                     value="inherited-secrets"
                     className="border-none"
                 >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
+                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 data-[state=closed]:mb-6 bg-accent">
                         Inherited Secrets
                     </AccordionTrigger>
                     <AccordionContent className="p-0 pt-4 mb-4">

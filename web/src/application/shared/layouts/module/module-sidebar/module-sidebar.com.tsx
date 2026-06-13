@@ -118,6 +118,11 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.settings.sshKeys.$pattern,
             },
             {
+                title: "SSL Providers",
+                route: ROUTE.settings.sslProviders.$route,
+                pattern: ROUTE.settings.sslProviders.$pattern,
+            },
+            {
                 title: "SSL Certificates",
                 route: ROUTE.settings.sslCertificates.$route,
                 pattern: ROUTE.settings.sslCertificates.$pattern,

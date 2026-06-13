@@ -5,6 +5,7 @@ export const ESslKeyType = {
     RSA2048: "rsa-2048",
     RSA3072: "rsa-3072",
     RSA4096: "rsa-4096",
+    RSA8192: "rsa-8192",
 } as const;
 
 export type ESslKeyType = (typeof ESslKeyType)[keyof typeof ESslKeyType];

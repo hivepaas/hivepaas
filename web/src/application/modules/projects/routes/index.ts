@@ -18,6 +18,7 @@ export {
     ProjectNotificationTargetsRoute,
     ProjectSecretsRoute,
     ProjectRegistryAuthRoute,
+    ProjectSslProvidersRoute,
     ProjectSslCertificatesRoute,
     ProjectNetworksRoute,
     SingleAppRoute,

@@ -13,6 +13,7 @@ import {
     CreateOrEditRegistryAuthDialog,
     CreateOrEditSSHKeyDialog,
     CreateOrEditSslCertDialog,
+    CreateOrEditSslProviderDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateBasicAuthStatusDialog,
@@ -25,6 +26,7 @@ import {
     UpdateRegistryAuthStatusDialog,
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
+    UpdateSslProviderStatusDialog,
     useCreateOrEditAccessTokenDialogState,
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
@@ -36,6 +38,7 @@ import {
     useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditSSHKeyDialogState,
     useCreateOrEditSslCertDialogState,
+    useCreateOrEditSslProviderDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
@@ -48,6 +51,7 @@ import {
     useUpdateRegistryAuthStatusDialogState,
     useUpdateSSHKeyStatusDialogState,
     useUpdateSslCertStatusDialogState,
+    useUpdateSslProviderStatusDialogState,
 } from "~/settings/dialogs";
 
 function View() {
@@ -58,6 +62,8 @@ function View() {
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
     const createOrEditSslCertDialog = useCreateOrEditSslCertDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
+    const createOrEditSslProviderDialog = useCreateOrEditSslProviderDialogState();
+    const updateSslProviderStatusDialog = useUpdateSslProviderStatusDialogState();
     const createOrEditImPlatformDialog = useCreateOrEditImPlatformDialogState();
     const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
     const createOrEditEmailAccountDialog = useCreateOrEditEmailAccountDialogState();
@@ -83,6 +89,8 @@ function View() {
         updateRegistryAuthStatusDialog.destroy();
         createOrEditSslCertDialog.destroy();
         updateSslCertStatusDialog.destroy();
+        createOrEditSslProviderDialog.destroy();
+        updateSslProviderStatusDialog.destroy();
         createOrEditImPlatformDialog.destroy();
         updateImPlatformStatusDialog.destroy();
         createOrEditEmailAccountDialog.destroy();
@@ -110,6 +118,8 @@ function View() {
             <UpdateRegistryAuthStatusDialog />
             <CreateOrEditSslCertDialog />
             <UpdateSslCertStatusDialog />
+            <CreateOrEditSslProviderDialog />
+            <UpdateSslProviderStatusDialog />
             <CreateOrEditImPlatformDialog />
             <UpdateImPlatformStatusDialog />
             <CreateOrEditEmailAccountDialog />

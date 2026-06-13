@@ -8,6 +8,7 @@ export {
     SettingsRegistryAuthRoute,
     SettingsSSHKeysRoute,
     SettingsSslCertificatesRoute,
+    SettingsSslProvidersRoute,
     SettingsAccessTokensRoute,
     SettingsCloudStoragesRoute,
     SettingsOAuthRoute,

@@ -29,6 +29,7 @@ const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     registryAuth: "projects/:id/configuration/registry-auth",
     secrets: "projects/:id/configuration/secrets",
     sshKeys: "projects/:id/configuration/ssh-keys",
+    sslProviders: "projects/:id/configuration/ssl-providers",
     sslCertificates: "projects/:id/configuration/ssl-certificates",
 } as const;
 
@@ -46,6 +47,7 @@ const LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS = {
     registryAuth: "projects/:id/provider-configuration/registry-auth",
     secrets: "projects/:id/provider-configuration/secrets",
     sshKeys: "projects/:id/provider-configuration/ssh-keys",
+    sslProviders: "projects/:id/provider-configuration/ssl-providers",
     sslCertificates: "projects/:id/provider-configuration/ssl-certificates",
 } as const;
 
@@ -236,6 +238,12 @@ export const projectsRouter: RouteObject = {
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sshKeys.$route} />,
                 },
                 {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.sslProviders,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sslProviders.$route} />
+                    ),
+                },
+                {
                     path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.sslCertificates,
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sslCertificates.$route} />
@@ -310,6 +318,12 @@ export const projectsRouter: RouteObject = {
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.sshKeys,
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sshKeys.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.sslProviders,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.sslProviders.$route} />
+                    ),
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.sslCertificates,
@@ -512,6 +526,16 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectSSHKeysRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.sslProviders.$pattern,
+                            lazy: async () => {
+                                const { ProjectSslProvidersRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSslProvidersRoute,
                                 };
                             },
                         },

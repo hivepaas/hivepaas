@@ -99,6 +99,10 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId),
         },
         {
+            label: "SSL Providers",
+            route: ROUTE.projects.single.providerConfiguration.sslProviders.$route(projectId),
+        },
+        {
             label: "SSL Certificates",
             route: ROUTE.projects.single.providerConfiguration.sslCertificates.$route(projectId),
         },

@@ -4,6 +4,7 @@ export * from "./basic-auth.commands";
 export * from "./notification.commands";
 export * from "./registry-auth.commands";
 export * from "./ssl-cert.commands";
+export * from "./ssl-provider.commands";
 export * from "./im-service.commands";
 export * from "./email.commands";
 export * from "./ssh-key.commands";

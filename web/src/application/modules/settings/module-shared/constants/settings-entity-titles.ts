@@ -2,6 +2,7 @@ export const SETTINGS_ENTITY_TITLES = {
     basicAuth: "Basic Auth",
     registryAuth: "Registry Auth",
     sslCert: "SSL Certificate",
+    sslProvider: "SSL Provider",
     emailAccount: "Email Account",
     imPlatform: "IM Platform",
     sshKey: "SSH Key",

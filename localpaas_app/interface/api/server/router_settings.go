@@ -14,14 +14,73 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		settingGroup.PUT("/:itemID/accessible-by-projects", settingHandler.UpdateAccessibleByProjects)
 	}
 
-	{ // oauth group
-		oauthGroup := settingGroup.Group("/oauth")
-		oauthGroup.GET("/:itemID", settingHandler.GetOAuth)
-		oauthGroup.GET("", settingHandler.ListOAuth)
-		oauthGroup.POST("", settingHandler.CreateOAuth)
-		oauthGroup.PUT("/:itemID", settingHandler.UpdateOAuth)
-		oauthGroup.PUT("/:itemID/status", settingHandler.UpdateOAuthStatus)
-		oauthGroup.DELETE("/:itemID", settingHandler.DeleteOAuth)
+	{ // access-token group
+		accessTokenGroup := settingGroup.Group("/access-tokens")
+		accessTokenGroup.GET("/:itemID", settingHandler.GetAccessToken)
+		accessTokenGroup.GET("", settingHandler.ListAccessToken)
+		accessTokenGroup.POST("", settingHandler.CreateAccessToken)
+		accessTokenGroup.PUT("/:itemID", settingHandler.UpdateAccessToken)
+		accessTokenGroup.PUT("/:itemID/status", settingHandler.UpdateAccessTokenStatus)
+		accessTokenGroup.DELETE("/:itemID", settingHandler.DeleteAccessToken)
+		// Test connection
+		accessTokenGroup.POST("/test-conn", settingHandler.TestAccessTokenConn)
+	}
+
+	{ // acme dns provider group
+		acmeDnsProviderGroup := settingGroup.Group("/acme-dns-providers")
+		acmeDnsProviderGroup.GET("/:itemID", settingHandler.GetAcmeDnsProvider)
+		acmeDnsProviderGroup.GET("", settingHandler.ListAcmeDnsProvider)
+		acmeDnsProviderGroup.POST("", settingHandler.CreateAcmeDnsProvider)
+		acmeDnsProviderGroup.PUT("/:itemID", settingHandler.UpdateAcmeDnsProvider)
+		acmeDnsProviderGroup.PUT("/:itemID/status", settingHandler.UpdateAcmeDnsProviderStatus)
+		acmeDnsProviderGroup.DELETE("/:itemID", settingHandler.DeleteAcmeDnsProvider)
+	}
+
+	{ // basic auth group
+		basicAuthGroup := settingGroup.Group("/basic-auth")
+		basicAuthGroup.GET("/:itemID", settingHandler.GetBasicAuth)
+		basicAuthGroup.GET("", settingHandler.ListBasicAuth)
+		basicAuthGroup.POST("", settingHandler.CreateBasicAuth)
+		basicAuthGroup.PUT("/:itemID", settingHandler.UpdateBasicAuth)
+		basicAuthGroup.PUT("/:itemID/status", settingHandler.UpdateBasicAuthStatus)
+		basicAuthGroup.DELETE("/:itemID", settingHandler.DeleteBasicAuth)
+	}
+
+	{ // Cloud storage group
+		cloudStorageGroup := settingGroup.Group("/cloud-storages")
+		cloudStorageGroup.GET("/:itemID", settingHandler.GetCloudStorage)
+		cloudStorageGroup.GET("", settingHandler.ListCloudStorage)
+		cloudStorageGroup.POST("", settingHandler.CreateCloudStorage)
+		cloudStorageGroup.PUT("/:itemID", settingHandler.UpdateCloudStorage)
+		cloudStorageGroup.PUT("/:itemID/status", settingHandler.UpdateCloudStorageStatus)
+		cloudStorageGroup.DELETE("/:itemID", settingHandler.DeleteCloudStorage)
+		// Test connection
+		cloudStorageGroup.POST("/test-conn", settingHandler.TestCloudStorageConn)
+	}
+
+	{ // domain settings group
+		domainSettingsGroup := settingGroup.Group("/domain-settings")
+		domainSettingsGroup.GET("", settingHandler.GetDomainSettings)
+		domainSettingsGroup.PUT("", settingHandler.UpdateDomainSettings)
+		domainSettingsGroup.PUT("/status", settingHandler.UpdateDomainSettingsStatus)
+		domainSettingsGroup.DELETE("", settingHandler.DeleteDomainSettings)
+	}
+
+	{ // email group
+		emailGroup := settingGroup.Group("/emails")
+		emailGroup.GET("/:itemID", settingHandler.GetEmail)
+		emailGroup.GET("", settingHandler.ListEmail)
+		emailGroup.POST("", settingHandler.CreateEmail)
+		emailGroup.PUT("/:itemID", settingHandler.UpdateEmail)
+		emailGroup.PUT("/:itemID/status", settingHandler.UpdateEmailStatus)
+		emailGroup.DELETE("/:itemID", settingHandler.DeleteEmail)
+		// Test connection
+		emailGroup.POST("/test-send-mail", settingHandler.TestSendMail)
+	}
+
+	{ // Git credentials group
+		gitCredentialGroup := settingGroup.Group("/git-credentials")
+		gitCredentialGroup.GET("", settingHandler.ListGitCredential)
 	}
 
 	{ // github-app group
@@ -43,46 +102,6 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		githubAppGroup.POST("/:itemID/begin-reprovision", settingHandler.BeginReprovisionGithubApp)
 	}
 
-	{ // access-token group
-		accessTokenGroup := settingGroup.Group("/access-tokens")
-		accessTokenGroup.GET("/:itemID", settingHandler.GetAccessToken)
-		accessTokenGroup.GET("", settingHandler.ListAccessToken)
-		accessTokenGroup.POST("", settingHandler.CreateAccessToken)
-		accessTokenGroup.PUT("/:itemID", settingHandler.UpdateAccessToken)
-		accessTokenGroup.PUT("/:itemID/status", settingHandler.UpdateAccessTokenStatus)
-		accessTokenGroup.DELETE("/:itemID", settingHandler.DeleteAccessToken)
-		// Test connection
-		accessTokenGroup.POST("/test-conn", settingHandler.TestAccessTokenConn)
-	}
-
-	{ // Git credentials group
-		gitCredentialGroup := settingGroup.Group("/git-credentials")
-		gitCredentialGroup.GET("", settingHandler.ListGitCredential)
-	}
-
-	{ // Cloud storage group
-		cloudStorageGroup := settingGroup.Group("/cloud-storages")
-		cloudStorageGroup.GET("/:itemID", settingHandler.GetCloudStorage)
-		cloudStorageGroup.GET("", settingHandler.ListCloudStorage)
-		cloudStorageGroup.POST("", settingHandler.CreateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID", settingHandler.UpdateCloudStorage)
-		cloudStorageGroup.PUT("/:itemID/status", settingHandler.UpdateCloudStorageStatus)
-		cloudStorageGroup.DELETE("/:itemID", settingHandler.DeleteCloudStorage)
-		// Test connection
-		cloudStorageGroup.POST("/test-conn", settingHandler.TestCloudStorageConn)
-	}
-
-	{ // SSH key group
-		sshKeyGroup := settingGroup.Group("/ssh-keys")
-		sshKeyGroup.GET("/:itemID", settingHandler.GetSSHKey)
-		sshKeyGroup.GET("", settingHandler.ListSSHKey)
-		sshKeyGroup.POST("", settingHandler.CreateSSHKey)
-		sshKeyGroup.PUT("/:itemID", settingHandler.UpdateSSHKey)
-		sshKeyGroup.PUT("/:itemID/status", settingHandler.UpdateSSHKeyStatus)
-		sshKeyGroup.DELETE("/:itemID", settingHandler.DeleteSSHKey)
-		sshKeyGroup.POST("/generate", settingHandler.GenerateSSHKey)
-	}
-
 	{ // IM service group
 		imServiceGroup := settingGroup.Group("/im-services")
 		imServiceGroup.GET("/:itemID", settingHandler.GetIMService)
@@ -93,6 +112,37 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		imServiceGroup.DELETE("/:itemID", settingHandler.DeleteIMService)
 		// Test connection
 		imServiceGroup.POST("/test-send-msg", settingHandler.TestSendInstantMsg)
+	}
+
+	{ // image-build settings group
+		imageBuildSettingsGroup := settingGroup.Group("/image-build-settings")
+		imageBuildSettingsGroup.GET("", settingHandler.GetImageBuildSettings)
+		imageBuildSettingsGroup.PUT("", settingHandler.UpdateImageBuildSettings)
+		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
+		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
+		// Repo cache
+		imageBuildSettingsGroup.GET("/repo-cache", settingHandler.GetRepoCacheInfo)
+		imageBuildSettingsGroup.POST("/repo-cache/clear", settingHandler.ClearRepoCache)
+	}
+
+	{ // oauth group
+		oauthGroup := settingGroup.Group("/oauth")
+		oauthGroup.GET("/:itemID", settingHandler.GetOAuth)
+		oauthGroup.GET("", settingHandler.ListOAuth)
+		oauthGroup.POST("", settingHandler.CreateOAuth)
+		oauthGroup.PUT("/:itemID", settingHandler.UpdateOAuth)
+		oauthGroup.PUT("/:itemID/status", settingHandler.UpdateOAuthStatus)
+		oauthGroup.DELETE("/:itemID", settingHandler.DeleteOAuth)
+	}
+
+	{ // notification group
+		notificationGroup := settingGroup.Group("/notifications")
+		notificationGroup.GET("/:itemID", settingHandler.GetNotification)
+		notificationGroup.GET("", settingHandler.ListNotification)
+		notificationGroup.POST("", settingHandler.CreateNotification)
+		notificationGroup.PUT("/:itemID", settingHandler.UpdateNotification)
+		notificationGroup.PUT("/:itemID/status", settingHandler.UpdateNotificationStatus)
+		notificationGroup.DELETE("/:itemID", settingHandler.DeleteNotification)
 	}
 
 	{ // registry auth group
@@ -107,74 +157,6 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		registryAuthGroup.POST("/test-conn", settingHandler.TestRegistryAuthConn)
 	}
 
-	{ // basic auth group
-		basicAuthGroup := settingGroup.Group("/basic-auth")
-		basicAuthGroup.GET("/:itemID", settingHandler.GetBasicAuth)
-		basicAuthGroup.GET("", settingHandler.ListBasicAuth)
-		basicAuthGroup.POST("", settingHandler.CreateBasicAuth)
-		basicAuthGroup.PUT("/:itemID", settingHandler.UpdateBasicAuth)
-		basicAuthGroup.PUT("/:itemID/status", settingHandler.UpdateBasicAuthStatus)
-		basicAuthGroup.DELETE("/:itemID", settingHandler.DeleteBasicAuth)
-	}
-
-	{ // ssl provider group
-		sslProviderGroup := settingGroup.Group("/ssl-providers")
-		sslProviderGroup.GET("/:itemID", settingHandler.GetSSLProvider)
-		sslProviderGroup.GET("", settingHandler.ListSSLProvider)
-		sslProviderGroup.POST("", settingHandler.CreateSSLProvider)
-		sslProviderGroup.PUT("/:itemID", settingHandler.UpdateSSLProvider)
-		sslProviderGroup.PUT("/:itemID/status", settingHandler.UpdateSSLProviderStatus)
-		sslProviderGroup.DELETE("/:itemID", settingHandler.DeleteSSLProvider)
-	}
-
-	{ // acme dns provider group
-		acmeDnsProviderGroup := settingGroup.Group("/acme-dns-providers")
-		acmeDnsProviderGroup.GET("/:itemID", settingHandler.GetAcmeDnsProvider)
-		acmeDnsProviderGroup.GET("", settingHandler.ListAcmeDnsProvider)
-		acmeDnsProviderGroup.POST("", settingHandler.CreateAcmeDnsProvider)
-		acmeDnsProviderGroup.PUT("/:itemID", settingHandler.UpdateAcmeDnsProvider)
-		acmeDnsProviderGroup.PUT("/:itemID/status", settingHandler.UpdateAcmeDnsProviderStatus)
-		acmeDnsProviderGroup.DELETE("/:itemID", settingHandler.DeleteAcmeDnsProvider)
-	}
-
-	{ // ssl cert group
-		sslCertGroup := settingGroup.Group("/ssl-certs")
-		sslCertGroup.GET("/:itemID", settingHandler.GetSSLCert)
-		sslCertGroup.GET("", settingHandler.ListSSLCert)
-		sslCertGroup.POST("", settingHandler.CreateSSLCert)
-		sslCertGroup.PUT("/:itemID", settingHandler.UpdateSSLCert)
-		sslCertGroup.PUT("/:itemID/status", settingHandler.UpdateSSLCertStatus)
-		sslCertGroup.DELETE("/:itemID", settingHandler.DeleteSSLCert)
-	}
-
-	{ // domain settings group
-		domainSettingsGroup := settingGroup.Group("/domain-settings")
-		domainSettingsGroup.GET("", settingHandler.GetDomainSettings)
-		domainSettingsGroup.PUT("", settingHandler.UpdateDomainSettings)
-		domainSettingsGroup.PUT("/status", settingHandler.UpdateDomainSettingsStatus)
-		domainSettingsGroup.DELETE("", settingHandler.DeleteDomainSettings)
-	}
-
-	{ // storage settings group
-		storageSettingsGroup := settingGroup.Group("/storage-settings")
-		storageSettingsGroup.GET("", settingHandler.GetStorageSettings)
-		storageSettingsGroup.PUT("", settingHandler.UpdateStorageSettings)
-		storageSettingsGroup.PUT("/status", settingHandler.UpdateStorageSettingsStatus)
-		storageSettingsGroup.DELETE("", settingHandler.DeleteStorageSettings)
-	}
-
-	{ // email group
-		emailGroup := settingGroup.Group("/emails")
-		emailGroup.GET("/:itemID", settingHandler.GetEmail)
-		emailGroup.GET("", settingHandler.ListEmail)
-		emailGroup.POST("", settingHandler.CreateEmail)
-		emailGroup.PUT("/:itemID", settingHandler.UpdateEmail)
-		emailGroup.PUT("/:itemID/status", settingHandler.UpdateEmailStatus)
-		emailGroup.DELETE("/:itemID", settingHandler.DeleteEmail)
-		// Test connection
-		emailGroup.POST("/test-send-mail", settingHandler.TestSendMail)
-	}
-
 	{ // repo webhook group
 		repoWebhookGroup := settingGroup.Group("/repo-webhooks")
 		repoWebhookGroup.GET("/:itemID", settingHandler.GetRepoWebhook)
@@ -183,15 +165,6 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		repoWebhookGroup.PUT("/:itemID", settingHandler.UpdateRepoWebhook)
 		repoWebhookGroup.PUT("/:itemID/status", settingHandler.UpdateRepoWebhookStatus)
 		repoWebhookGroup.DELETE("/:itemID", settingHandler.DeleteRepoWebhook)
-	}
-
-	{ // secrets group
-		secretGroup := settingGroup.Group("/secrets")
-		secretGroup.GET("", settingHandler.ListSecret)
-		secretGroup.POST("", settingHandler.CreateSecret)
-		secretGroup.PUT("/:itemID", settingHandler.UpdateSecret)
-		secretGroup.PUT("/:itemID/status", settingHandler.UpdateSecretStatus)
-		secretGroup.DELETE("/:itemID", settingHandler.DeleteSecret)
 	}
 
 	{ // sched-job group
@@ -205,24 +178,51 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		schedJobGroup.POST("calc-next-runs", settingHandler.SchedJobCalcNextRuns)
 	}
 
-	{ // notification group
-		notificationGroup := settingGroup.Group("/notifications")
-		notificationGroup.GET("/:itemID", settingHandler.GetNotification)
-		notificationGroup.GET("", settingHandler.ListNotification)
-		notificationGroup.POST("", settingHandler.CreateNotification)
-		notificationGroup.PUT("/:itemID", settingHandler.UpdateNotification)
-		notificationGroup.PUT("/:itemID/status", settingHandler.UpdateNotificationStatus)
-		notificationGroup.DELETE("/:itemID", settingHandler.DeleteNotification)
+	{ // secrets group
+		secretGroup := settingGroup.Group("/secrets")
+		secretGroup.GET("", settingHandler.ListSecret)
+		secretGroup.POST("", settingHandler.CreateSecret)
+		secretGroup.PUT("/:itemID", settingHandler.UpdateSecret)
+		secretGroup.PUT("/:itemID/status", settingHandler.UpdateSecretStatus)
+		secretGroup.DELETE("/:itemID", settingHandler.DeleteSecret)
 	}
 
-	{ // image-build settings group
-		imageBuildSettingsGroup := settingGroup.Group("/image-build-settings")
-		imageBuildSettingsGroup.GET("", settingHandler.GetImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", settingHandler.UpdateImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
-		// Repo cache
-		imageBuildSettingsGroup.GET("/repo-cache", settingHandler.GetRepoCacheInfo)
-		imageBuildSettingsGroup.POST("/repo-cache/clear", settingHandler.ClearRepoCache)
+	{ // SSH key group
+		sshKeyGroup := settingGroup.Group("/ssh-keys")
+		sshKeyGroup.GET("/:itemID", settingHandler.GetSSHKey)
+		sshKeyGroup.GET("", settingHandler.ListSSHKey)
+		sshKeyGroup.POST("", settingHandler.CreateSSHKey)
+		sshKeyGroup.PUT("/:itemID", settingHandler.UpdateSSHKey)
+		sshKeyGroup.PUT("/:itemID/status", settingHandler.UpdateSSHKeyStatus)
+		sshKeyGroup.DELETE("/:itemID", settingHandler.DeleteSSHKey)
+		sshKeyGroup.POST("/generate", settingHandler.GenerateSSHKey)
+	}
+
+	{ // ssl cert group
+		sslCertGroup := settingGroup.Group("/ssl-certs")
+		sslCertGroup.GET("/:itemID", settingHandler.GetSSLCert)
+		sslCertGroup.GET("", settingHandler.ListSSLCert)
+		sslCertGroup.POST("", settingHandler.CreateSSLCert)
+		sslCertGroup.PUT("/:itemID", settingHandler.UpdateSSLCert)
+		sslCertGroup.PUT("/:itemID/status", settingHandler.UpdateSSLCertStatus)
+		sslCertGroup.DELETE("/:itemID", settingHandler.DeleteSSLCert)
+	}
+
+	{ // ssl provider group
+		sslProviderGroup := settingGroup.Group("/ssl-providers")
+		sslProviderGroup.GET("/:itemID", settingHandler.GetSSLProvider)
+		sslProviderGroup.GET("", settingHandler.ListSSLProvider)
+		sslProviderGroup.POST("", settingHandler.CreateSSLProvider)
+		sslProviderGroup.PUT("/:itemID", settingHandler.UpdateSSLProvider)
+		sslProviderGroup.PUT("/:itemID/status", settingHandler.UpdateSSLProviderStatus)
+		sslProviderGroup.DELETE("/:itemID", settingHandler.DeleteSSLProvider)
+	}
+
+	{ // storage settings group
+		storageSettingsGroup := settingGroup.Group("/storage-settings")
+		storageSettingsGroup.GET("", settingHandler.GetStorageSettings)
+		storageSettingsGroup.PUT("", settingHandler.UpdateStorageSettings)
+		storageSettingsGroup.PUT("/status", settingHandler.UpdateStorageSettingsStatus)
+		storageSettingsGroup.DELETE("", settingHandler.DeleteStorageSettings)
 	}
 }

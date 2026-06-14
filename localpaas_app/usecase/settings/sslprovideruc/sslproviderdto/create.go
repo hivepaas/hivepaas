@@ -28,7 +28,7 @@ type SSLProviderBaseReq struct {
 
 	LetsEncrypt *SSLProviderLetsEncryptReq `json:"letsEncrypt"`
 	ZeroSSL     *SSLProviderZeroSSLReq     `json:"zeroSSL"`
-	GoogleTS    *SSLProviderGoogleTSReq    `json:"googleTS"`
+	GoogleTrust *SSLProviderGoogleTrustReq `json:"googleTrust"`
 }
 
 func (req *SSLProviderBaseReq) ToEntity() *entity.SSLProvider {
@@ -42,7 +42,7 @@ func (req *SSLProviderBaseReq) ToEntity() *entity.SSLProvider {
 	case base.SSLProviderZeroSSL:
 		sslProvider.ZeroSSL = req.ZeroSSL.ToEntity()
 	case base.SSLProviderGoogleTrust:
-		sslProvider.GoogleTS = req.GoogleTS.ToEntity()
+		sslProvider.GoogleTrust = req.GoogleTrust.ToEntity()
 	}
 	return sslProvider
 }
@@ -82,19 +82,19 @@ func (req *SSLProviderZeroSSLReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
-type SSLProviderGoogleTSReq struct {
+type SSLProviderGoogleTrustReq struct {
 	EABKid     string `json:"eabKid"`
 	EABHmacKey string `json:"eabHmacKey"`
 }
 
-func (req *SSLProviderGoogleTSReq) ToEntity() *entity.SSLProviderGoogleTS {
-	return &entity.SSLProviderGoogleTS{
+func (req *SSLProviderGoogleTrustReq) ToEntity() *entity.SSLProviderGoogleTrust {
+	return &entity.SSLProviderGoogleTrust{
 		EABKid:     req.EABKid,
 		EABHmacKey: entity.NewEncryptedField(req.EABHmacKey),
 	}
 }
 
-func (req *SSLProviderGoogleTSReq) validate(field string) (res []vld.Validator) {
+func (req *SSLProviderGoogleTrustReq) validate(field string) (res []vld.Validator) {
 	if req == nil {
 		return nil
 	}
@@ -118,8 +118,8 @@ func (req *SSLProviderBaseReq) validate(field string) (res []vld.Validator) {
 		res = append(res, basedto.ValidateCond(req.ZeroSSL != nil, field+"zeroSSL")...)
 		res = append(res, req.ZeroSSL.validate(field+"zeroSSL")...)
 	case base.SSLProviderGoogleTrust:
-		res = append(res, basedto.ValidateCond(req.GoogleTS != nil, field+"googleTS")...)
-		res = append(res, req.GoogleTS.validate(field+"googleTS")...)
+		res = append(res, basedto.ValidateCond(req.GoogleTrust != nil, field+"googleTrust")...)
+		res = append(res, req.GoogleTrust.validate(field+"googleTrust")...)
 	}
 	return res
 }

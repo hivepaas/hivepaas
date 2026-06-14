@@ -42,7 +42,7 @@ type SSLProviderResp struct {
 
 	LetsEncrypt  *SSLProviderLetsEncryptResp `json:"letsEncrypt,omitempty"`
 	ZeroSSL      *SSLProviderZeroSSLResp     `json:"zeroSSL,omitempty"`
-	GoogleTS     *SSLProviderGoogleTSResp    `json:"googleTS,omitempty"`
+	GoogleTrust  *SSLProviderGoogleTrustResp `json:"googleTrust,omitempty"`
 	SecretMasked bool                        `json:"secretMasked,omitempty"`
 }
 
@@ -59,12 +59,12 @@ func (resp *SSLProviderZeroSSLResp) CopyEABHmacKey(field entity.EncryptedField) 
 	return nil
 }
 
-type SSLProviderGoogleTSResp struct {
+type SSLProviderGoogleTrustResp struct {
 	EABKid     string `json:"eabKid"`
 	EABHmacKey string `json:"eabHmacKey"`
 }
 
-func (resp *SSLProviderGoogleTSResp) CopyEABHmacKey(field entity.EncryptedField) error {
+func (resp *SSLProviderGoogleTrustResp) CopyEABHmacKey(field entity.EncryptedField) error {
 	resp.EABHmacKey = field.String()
 	return nil
 }
@@ -92,10 +92,10 @@ func TransformSSLProvider(
 		if resp.SecretMasked {
 			resp.ZeroSSL.EABHmacKey = maskedSecret
 		}
-	case config.GoogleTS != nil:
-		resp.SecretMasked = config.GoogleTS.EABHmacKey.IsEncrypted() || resp.Inherited
+	case config.GoogleTrust != nil:
+		resp.SecretMasked = config.GoogleTrust.EABHmacKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.GoogleTS.EABHmacKey = maskedSecret
+			resp.GoogleTrust.EABHmacKey = maskedSecret
 		}
 	}
 

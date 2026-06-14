@@ -24767,7 +24767,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "format" : "int32",
         "type" : "integer",
         "x-enum-comments" : {
@@ -24778,7 +24778,7 @@
           "ModeExclusive" : "l: exclusive use",
           "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
           "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits",
+          "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
           "ModeSocket" : "S: Unix domain socket",
@@ -24786,8 +24786,8 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits", "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits" ],
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-descriptions" : [ "d: is a directory", "a: append-only", "l: exclusive use", "T: temporary file; Plan 9 only", "L: symbolic link", "D: device file", "p: named pipe (FIFO)", "S: Unix domain socket", "u: setuid", "g: setgid", "c: Unix character device, when ModeDevice is set", "t: sticky", "?: non-regular file; nothing else is known about this file", "", "Unix permission bits, 0o777" ],
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -34640,8 +34640,8 @@
           "email" : {
             "type" : "string"
           },
-          "googleTS" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTSReq"
+          "googleTrust" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTrustReq"
           },
           "kind" : {
             "type" : "string"
@@ -34656,7 +34656,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderZeroSSLReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "email", "googleTS", "kind", "letsEncrypt", "name", "zeroSSL" ],
+        "required" : [ "availableInProjects", "default", "email", "googleTrust", "kind", "letsEncrypt", "name", "zeroSSL" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.CreateSSLProviderResp" : {
@@ -34707,7 +34707,7 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTSReq" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTrustReq" : {
         "properties" : {
           "eabHmacKey" : {
             "type" : "string"
@@ -34719,7 +34719,7 @@
         "required" : [ "eabHmacKey", "eabKid" ],
         "type" : "object"
       },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTSResp" : {
+      "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTrustResp" : {
         "properties" : {
           "eabHmacKey" : {
             "type" : "string"
@@ -34757,8 +34757,8 @@
           "expireAt" : {
             "type" : "string"
           },
-          "googleTS" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTSResp"
+          "googleTrust" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTrustResp"
           },
           "id" : {
             "type" : "string"
@@ -34835,8 +34835,8 @@
           "email" : {
             "type" : "string"
           },
-          "googleTS" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTSReq"
+          "googleTrust" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderGoogleTrustReq"
           },
           "kind" : {
             "type" : "string"
@@ -34854,7 +34854,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderZeroSSLReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "email", "googleTS", "kind", "letsEncrypt", "name", "updateVer", "zeroSSL" ],
+        "required" : [ "availableInProjects", "default", "email", "googleTrust", "kind", "letsEncrypt", "name", "updateVer", "zeroSSL" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.UpdateSSLProviderResp" : {

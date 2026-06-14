@@ -54,8 +54,8 @@ func (s *service) sslGetAcmeClient(
 			acmeCfg.EABHmacKey = provider.ZeroSSL.EABHmacKey.MustGetPlain()
 		case base.SSLCertTypeGoogleTrust:
 			acmeCfg.CACode = lego.CodeGoogleTrust
-			acmeCfg.EABKid = provider.GoogleTS.EABKid
-			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
+			acmeCfg.EABKid = provider.GoogleTrust.EABKid
+			acmeCfg.EABHmacKey = provider.GoogleTrust.EABHmacKey.MustGetPlain()
 		case base.SSLCertTypeSelfSigned, base.SSLCertTypeCustom:
 			// Do nothing
 		}

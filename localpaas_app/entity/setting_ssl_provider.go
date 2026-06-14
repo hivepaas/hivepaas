@@ -23,7 +23,7 @@ func (s *sslProviderParser) New() SettingData {
 type SSLProvider struct {
 	LetsEncrypt       *SSLProviderLetsEncrypt `json:"letsEncrypt,omitempty"`
 	ZeroSSL           *SSLProviderZeroSSL     `json:"zeroSSL,omitempty"`
-	GoogleTS          *SSLProviderGoogleTS    `json:"googleTS,omitempty"`
+	GoogleTrust       *SSLProviderGoogleTrust `json:"googleTrust,omitempty"`
 	Email             string                  `json:"email"`
 	DefaultKeyType    base.SSLKeyType         `json:"defaultKeyType,omitempty"`
 	SupportedKeyTypes []base.SSLKeyType       `json:"supportedKeyTypes,omitempty"`
@@ -37,7 +37,7 @@ type SSLProviderZeroSSL struct {
 	EABHmacKey EncryptedField `json:"eabHmacKey"`
 }
 
-type SSLProviderGoogleTS struct {
+type SSLProviderGoogleTrust struct {
 	EABKid     string         `json:"eabKid"`
 	EABHmacKey EncryptedField `json:"eabHmacKey"`
 }
@@ -55,8 +55,8 @@ func (s *SSLProvider) MustDecrypt() *SSLProvider {
 	if s.ZeroSSL != nil {
 		s.ZeroSSL.EABHmacKey.MustGetPlain()
 	}
-	if s.GoogleTS != nil {
-		s.GoogleTS.EABHmacKey.MustGetPlain()
+	if s.GoogleTrust != nil {
+		s.GoogleTrust.EABHmacKey.MustGetPlain()
 	}
 	return s
 }

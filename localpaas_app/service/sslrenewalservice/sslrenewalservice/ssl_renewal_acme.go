@@ -3,13 +3,15 @@ package sslrenewalserviceimpl
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 )
 
-func (s *service) sslRenewByACME(
+func (s *service) sslRenewByAcme(
 	ctx context.Context,
 	ssl *entity.SSLCert,
 	data *sslRenewalData,
@@ -23,7 +25,8 @@ func (s *service) sslRenewByACME(
 		return apperrors.Wrap(err)
 	}
 
-	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
+	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
+	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain}, keyType)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

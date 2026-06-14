@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tiendc/gofn"
+	"github.com/go-acme/lego/v5/lego"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -21,10 +21,7 @@ func (s *service) sslGetAcmeClient(
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
 
-	email := ssl.Email
-	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
-	clientKey := fmt.Sprintf("email:%v:keyType:%v:provider:%v", email, keyType, ssl.Provider.ID)
-
+	clientKey := fmt.Sprintf("email:%v:provider:%v", ssl.Email, ssl.Provider.ID)
 	if client := data.AcmeClients[clientKey]; client != nil {
 		return client, nil
 	}
@@ -38,22 +35,25 @@ func (s *service) sslGetAcmeClient(
 		provider = providerSetting.MustAsSSLProvider()
 	}
 
-	acmeCfg := acme.ACMEConfig{
-		Email:         email,
-		KeyType:       keyType,
-		HTTP01WebRoot: config.Current.DataPathSslAcme().AbsPath(),
+	http01Provider, err := acme.NewHTTP01Provider(config.Current.DataPathSslAcme().AbsPath())
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
+	acmeCfg := acme.ACMEConfig{
+		Email:          ssl.Email,
+		HTTP01Provider: http01Provider,
+	}
 	if provider != nil {
 		switch ssl.CertType {
 		case base.SSLCertTypeLetsEncrypt:
 			// Do nothing for now
 		case base.SSLCertTypeZeroSSL:
-			acmeCfg.CADirURL = base.SSLAcmeCADirURLZeroSSL
+			acmeCfg.CACode = lego.CodeZeroSSL
 			acmeCfg.EABKid = provider.ZeroSSL.EABKid
 			acmeCfg.EABHmacKey = provider.ZeroSSL.EABHmacKey.MustGetPlain()
-		case base.SSLCertTypeGoogleTS:
-			acmeCfg.CADirURL = base.SSLAcmeCADirURLGoogleTS
+		case base.SSLCertTypeGoogleTrust:
+			acmeCfg.CACode = lego.CodeGoogleTrust
 			acmeCfg.EABKid = provider.GoogleTS.EABKid
 			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
 		case base.SSLCertTypeSelfSigned, base.SSLCertTypeCustom:

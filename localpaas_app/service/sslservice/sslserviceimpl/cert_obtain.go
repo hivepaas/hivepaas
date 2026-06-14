@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509/pkix"
 
+	"github.com/go-acme/lego/v5/lego"
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -23,7 +24,7 @@ func (s *service) ObtainCert(
 ) (updated bool, err error) {
 	ssl := sslSetting.MustAsSSLCert()
 	switch ssl.CertType {
-	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
+	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTrust:
 		updated, err = s.obtainCertByAcme(ctx, sslSetting, refObjects)
 	case base.SSLCertTypeSelfSigned:
 		updated, err = s.obtainCertSelfSigned(ctx, sslSetting)
@@ -53,6 +54,7 @@ func (s *service) obtainCertByAcme(
 	refObjects *entity.RefObjects,
 ) (updated bool, err error) {
 	ssl := sslSetting.MustAsSSLCert()
+	keyType := gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault)
 
 	var provider *entity.SSLProvider
 	if ssl.Provider.ID != "" {
@@ -63,21 +65,25 @@ func (s *service) obtainCertByAcme(
 		provider = providerSetting.MustAsSSLProvider()
 	}
 
+	http01Provider, err := acme.NewHTTP01Provider(config.Current.DataPathSslAcme().AbsPath())
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+
 	acmeCfg := acme.ACMEConfig{
-		Email:         ssl.Email,
-		KeyType:       gofn.Coalesce(ssl.KeyType, base.SSLKeyTypeDefault),
-		HTTP01WebRoot: config.Current.DataPathSslAcme().AbsPath(),
+		Email:          ssl.Email,
+		HTTP01Provider: http01Provider,
 	}
 	if provider != nil {
 		switch ssl.CertType {
 		case base.SSLCertTypeLetsEncrypt:
 			// Do nothing for now
 		case base.SSLCertTypeZeroSSL:
-			acmeCfg.CADirURL = base.SSLAcmeCADirURLZeroSSL
+			acmeCfg.CACode = lego.CodeZeroSSL
 			acmeCfg.EABKid = provider.ZeroSSL.EABKid
 			acmeCfg.EABHmacKey = provider.ZeroSSL.EABHmacKey.MustGetPlain()
-		case base.SSLCertTypeGoogleTS:
-			acmeCfg.CADirURL = base.SSLAcmeCADirURLGoogleTS
+		case base.SSLCertTypeGoogleTrust:
+			acmeCfg.CACode = lego.CodeGoogleTrust
 			acmeCfg.EABKid = provider.GoogleTS.EABKid
 			acmeCfg.EABHmacKey = provider.GoogleTS.EABHmacKey.MustGetPlain()
 		case base.SSLCertTypeSelfSigned, base.SSLCertTypeCustom:
@@ -90,7 +96,7 @@ func (s *service) obtainCertByAcme(
 		return false, apperrors.Wrap(err)
 	}
 
-	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain})
+	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{ssl.Domain}, keyType)
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}

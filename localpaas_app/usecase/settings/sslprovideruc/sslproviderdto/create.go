@@ -41,7 +41,7 @@ func (req *SSLProviderBaseReq) ToEntity() *entity.SSLProvider {
 		sslProvider.LetsEncrypt = req.LetsEncrypt.ToEntity()
 	case base.SSLProviderZeroSSL:
 		sslProvider.ZeroSSL = req.ZeroSSL.ToEntity()
-	case base.SSLProviderGoogleTS:
+	case base.SSLProviderGoogleTrust:
 		sslProvider.GoogleTS = req.GoogleTS.ToEntity()
 	}
 	return sslProvider
@@ -117,7 +117,7 @@ func (req *SSLProviderBaseReq) validate(field string) (res []vld.Validator) {
 	case base.SSLProviderZeroSSL:
 		res = append(res, basedto.ValidateCond(req.ZeroSSL != nil, field+"zeroSSL")...)
 		res = append(res, req.ZeroSSL.validate(field+"zeroSSL")...)
-	case base.SSLProviderGoogleTS:
+	case base.SSLProviderGoogleTrust:
 		res = append(res, basedto.ValidateCond(req.GoogleTS != nil, field+"googleTS")...)
 		res = append(res, req.GoogleTS.validate(field+"googleTS")...)
 	}

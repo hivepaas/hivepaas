@@ -7,27 +7,27 @@ import (
 type SSLProvider string
 
 const (
+	SSLProviderGoogleTrust SSLProvider = "googletrust"
 	SSLProviderLetsEncrypt SSLProvider = "letsencrypt"
 	SSLProviderZeroSSL     SSLProvider = "zerossl"
-	SSLProviderGoogleTS    SSLProvider = "googlets"
 )
 
 var (
-	AllSSLProviders = []SSLProvider{SSLProviderLetsEncrypt, SSLProviderZeroSSL, SSLProviderGoogleTS}
+	AllSSLProviders = []SSLProvider{SSLProviderGoogleTrust, SSLProviderLetsEncrypt, SSLProviderZeroSSL}
 )
 
 type SSLCertType string
 
 const (
+	SSLCertTypeGoogleTrust SSLCertType = SSLCertType(SSLProviderGoogleTrust)
 	SSLCertTypeLetsEncrypt SSLCertType = SSLCertType(SSLProviderLetsEncrypt)
 	SSLCertTypeZeroSSL     SSLCertType = SSLCertType(SSLProviderZeroSSL)
-	SSLCertTypeGoogleTS    SSLCertType = SSLCertType(SSLProviderGoogleTS)
 	SSLCertTypeCustom      SSLCertType = "custom"
 	SSLCertTypeSelfSigned  SSLCertType = "self-signed"
 )
 
 var (
-	AllSSLCertTypes = []SSLCertType{SSLCertTypeLetsEncrypt, SSLCertTypeZeroSSL, SSLCertTypeGoogleTS,
+	AllSSLCertTypes = []SSLCertType{SSLCertTypeGoogleTrust, SSLCertTypeLetsEncrypt, SSLCertTypeZeroSSL,
 		SSLCertTypeCustom, SSLCertTypeSelfSigned}
 )
 
@@ -55,7 +55,4 @@ const (
 	SSLSelfSignedRenewalPeriodDefault = timeutil.Day * 30
 
 	SSLExpirationFromFirstRenewableDate = timeutil.Day * 30
-
-	SSLAcmeCADirURLZeroSSL  = "https://acme.zerossl.com/v2/DV90"
-	SSLAcmeCADirURLGoogleTS = "https://dv.acme-v02.api.pki.goog/directory"
 )

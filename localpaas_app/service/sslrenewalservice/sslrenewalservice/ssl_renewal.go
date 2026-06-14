@@ -238,8 +238,8 @@ func (s *service) sslRenew(
 	}()
 
 	switch ssl.CertType {
-	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
-		err = s.sslRenewByACME(ctx, ssl, data)
+	case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTrust:
+		err = s.sslRenewByAcme(ctx, ssl, data)
 	case base.SSLCertTypeSelfSigned:
 		err = s.sslRenewSelfSignedCert(ctx, ssl, data)
 	case base.SSLCertTypeCustom:

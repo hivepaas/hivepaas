@@ -39,9 +39,9 @@ type GetSchedJobTaskLogsResp struct {
 }
 
 type SchedJobTaskLogsDataResp struct {
-	Logs          []*tasklog.LogFrame        `json:"logs"`
-	LogChan       <-chan []*tasklog.LogFrame `json:"-"`
-	LogChanCloser func() error               `json:"-"`
+	StaticLogs       []*tasklog.LogFrame        `json:"logs"`
+	LogsStream       <-chan []*tasklog.LogFrame `json:"-"`
+	LogsStreamCloser func() error               `json:"-"`
 }
 
 func TransformSchedJobTaskLogs(logs []*entity.TaskLog) (resp []*tasklog.LogFrame) {

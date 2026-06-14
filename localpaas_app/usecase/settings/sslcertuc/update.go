@@ -32,7 +32,7 @@ func (uc *UC) UpdateSSLCert(
 				return apperrors.Wrap(err)
 			}
 			switch newCert.CertType {
-			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTS:
+			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTrust:
 				reObtainCert = newCert.Domain != currCert.Domain || newCert.KeyType != currCert.KeyType ||
 					newCert.Email != currCert.Email
 			case base.SSLCertTypeSelfSigned:

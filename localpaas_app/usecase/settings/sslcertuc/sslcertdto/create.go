@@ -67,7 +67,7 @@ func (req *SSLCertBaseReq) modifyRequest() error {
 		// Do nothing
 	case base.SSLCertTypeZeroSSL:
 		// Do nothing
-	case base.SSLCertTypeGoogleTS:
+	case base.SSLCertTypeGoogleTrust:
 		// Do nothing
 	case base.SSLCertTypeSelfSigned:
 		req.ValidPeriod = gofn.Coalesce(req.ValidPeriod, timeutil.Duration(base.SSLSelfSignedValidPeriodDefault))
@@ -85,7 +85,7 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	cfg := config.Current
 	requireCert := req.CertType == base.SSLCertTypeCustom
 	wildcardAllowed := req.CertType == base.SSLCertTypeCustom || req.CertType == base.SSLCertTypeSelfSigned
-	requireProvider := req.CertType == base.SSLCertTypeZeroSSL || req.CertType == base.SSLCertTypeGoogleTS
+	requireProvider := req.CertType == base.SSLCertTypeZeroSSL || req.CertType == base.SSLCertTypeGoogleTrust
 
 	res = append(res, basedto.ValidateStrIn(&req.CertType, true, base.AllSSLCertTypes, field+"certType")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.Provider, requireProvider, field+"provider")...)

@@ -194,6 +194,6 @@ func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context, mel *melody.Melody) {
 		// Not a websocket request, return data via body
 		ctx.JSON(http.StatusOK, resp)
 	} else {
-		h.StreamAppLogs(ctx, resp.Data.Logs, resp.Data.LogChan, resp.Data.LogChanCloser, mel)
+		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser, mel)
 	}
 }

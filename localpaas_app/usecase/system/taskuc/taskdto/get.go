@@ -33,12 +33,13 @@ type GetTaskResp struct {
 }
 
 type TaskResp struct {
-	ID        string            `json:"id"`
-	Type      base.TaskType     `json:"type"`
-	Status    base.TaskStatus   `json:"status"`
-	Config    entity.TaskConfig `json:"config"` // NOTE: use entity's type directly here, may need refactor
-	LastError string            `json:"lastError"`
-	UpdateVer int               `json:"updateVer"`
+	ID        string             `json:"id"`
+	Type      base.TaskType      `json:"type"`
+	Status    base.TaskStatus    `json:"status"`
+	Config    entity.TaskConfig  `json:"config"` // NOTE: use entity's type directly here, may need refactor
+	TargetJob *TaskTargetJobResp `json:"targetJob"`
+	LastError string             `json:"lastError"`
+	UpdateVer int                `json:"updateVer"`
 
 	RunAt     *time.Time `json:"runAt" copy:",nilonzero"`
 	RetryAt   *time.Time `json:"retryAt" copy:",nilonzero"`
@@ -47,6 +48,14 @@ type TaskResp struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type TaskTargetJobResp struct {
+	ID     string `json:"id"`
+	Type   string `json:"type"`
+	Kind   string `json:"kind"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
 }
 
 func TransformTask(task *entity.Task, taskInfo *cacheentity.TaskInfo) (resp *TaskResp, err error) {

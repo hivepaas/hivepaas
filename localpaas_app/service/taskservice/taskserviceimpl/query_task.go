@@ -18,13 +18,12 @@ func (s *service) GetTask(
 	ctx context.Context,
 	db database.IDB,
 	req *taskservice.GetTaskReq,
-	extraOpts ...bunex.SelectQueryOption,
 ) (*taskservice.GetTaskResp, error) {
 	var getOpts []bunex.SelectQueryOption
 	if req.TargetID != "" {
 		getOpts = append(getOpts, bunex.SelectWhere("task.target_id = ?", req.TargetID))
 	}
-	getOpts = append(getOpts, extraOpts...)
+	getOpts = append(getOpts, req.ExtraSelectOpts...)
 
 	task, err := s.taskRepo.GetByID(ctx, db, req.Type, req.ID, getOpts...)
 	if err != nil {
@@ -49,7 +48,6 @@ func (s *service) ListTask(
 	ctx context.Context,
 	db database.IDB,
 	req *taskservice.ListTaskReq,
-	extraOpts ...bunex.SelectQueryOption,
 ) (_ *taskservice.ListTaskResp, err error) {
 	var taskInfoMap map[string]*cacheentity.TaskInfo
 	var inprogressTaskIDs []string
@@ -103,7 +101,7 @@ func (s *service) ListTask(
 			),
 		)
 	}
-	listOpts = append(listOpts, extraOpts...)
+	listOpts = append(listOpts, req.ExtraSelectOpts...)
 
 	tasks, paging, err := s.taskRepo.List(ctx, db, "", &req.Paging, listOpts...)
 	if err != nil {

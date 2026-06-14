@@ -44,6 +44,11 @@ func (uc *UC) ListTask(
 		Statuses:  req.Status,
 		Search:    req.Search,
 		Paging:    req.Paging,
+		ExtraSelectOpts: []bunex.SelectQueryOption{
+			bunex.SelectRelation("TargetJob",
+				bunex.SelectColumns("id", "type", "kind", "name", "status"),
+			),
+		},
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

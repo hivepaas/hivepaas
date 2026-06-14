@@ -7,6 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/entity/cacheentity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 )
 
@@ -15,7 +16,8 @@ type GetTaskReq struct {
 	Type     base.TaskType
 	TargetID string
 
-	SkipQueryCache bool
+	ExtraSelectOpts []bunex.SelectQueryOption
+	SkipQueryCache  bool
 }
 
 type GetTaskResp struct {
@@ -29,7 +31,8 @@ type ListTaskReq struct {
 	Search    string
 	Paging    basedto.Paging
 
-	SkipQueryCache bool
+	ExtraSelectOpts []bunex.SelectQueryOption
+	SkipQueryCache  bool
 }
 
 type ListTaskResp struct {

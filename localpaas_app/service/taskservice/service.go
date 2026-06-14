@@ -10,10 +10,8 @@ import (
 )
 
 type Service interface {
-	GetTask(ctx context.Context, db database.IDB, req *GetTaskReq, extraOpts ...bunex.SelectQueryOption) (
-		*GetTaskResp, error)
-	ListTask(ctx context.Context, db database.IDB, req *ListTaskReq, extraOpts ...bunex.SelectQueryOption) (
-		*ListTaskResp, error)
+	GetTask(ctx context.Context, db database.IDB, req *GetTaskReq) (*GetTaskResp, error)
+	ListTask(ctx context.Context, db database.IDB, req *ListTaskReq) (*ListTaskResp, error)
 
 	// Logs
 	GetTaskLogs(ctx context.Context, db database.IDB, req *GetTaskLogsReq) (*GetTaskLogsResp, error)

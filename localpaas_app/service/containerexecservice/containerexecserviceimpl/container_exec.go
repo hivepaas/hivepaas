@@ -3,6 +3,7 @@ package containerexecserviceimpl
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -79,7 +80,7 @@ func (s *service) ContainerExec(
 		}
 	}
 
-	execInfo, logs, err := s.dockerManager.ContainerExecWait(ctx, contSum.ID, func(opts *client.ExecCreateOptions) {
+	createResp, attachResp, _, err := s.dockerManager.ContainerExec(ctx, contSum.ID, func(opts *client.ExecCreateOptions) {
 		opts.AttachStdout = true
 		opts.AttachStderr = true
 		opts.Cmd = cmd
@@ -92,7 +93,18 @@ func (s *service) ContainerExec(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	_ = data.LogStore.AddRedacted(ctx, logs...)
+	defer attachResp.Close()
+
+	logChan, _ := docker.StartScanningLog(ctx, io.NopCloser(attachResp.Reader), docker.WithParseLogHeader(false))
+
+	for msgs := range logChan {
+		_ = data.LogStore.AddRedacted(ctx, msgs...)
+	}
+
+	execInfo, err := s.dockerManager.ContainerExecInspect(ctx, createResp.ID)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 
 	if execInfo.ExitCode != 0 {
 		_ = data.LogStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(

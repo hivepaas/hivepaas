@@ -12,6 +12,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
+	"github.com/localpaas/localpaas/localpaas_app/infra/rediscache"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
@@ -28,6 +29,7 @@ import (
 type Executor struct {
 	logger               logging.Logger
 	db                   *database.DB
+	redisClient          rediscache.Client
 	taskLogRepo          repository.TaskLogRepo
 	settingService       settingservice.Service
 	notificationService  notificationservice.Service
@@ -40,6 +42,7 @@ type Executor struct {
 func NewExecutor(
 	logger logging.Logger,
 	db *database.DB,
+	redisClient rediscache.Client,
 	taskQueue queue.TaskQueue,
 	taskLogRepo repository.TaskLogRepo,
 	settingService settingservice.Service,
@@ -52,6 +55,7 @@ func NewExecutor(
 	e := &Executor{
 		logger:               logger,
 		db:                   db,
+		redisClient:          redisClient,
 		taskLogRepo:          taskLogRepo,
 		settingService:       settingService,
 		notificationService:  notificationService,
@@ -83,7 +87,7 @@ func (e *Executor) execute(
 		TaskExecData: task,
 		SchedJob:     task.Task.TargetJob,
 	}
-	data.LogStore = tasklog.NewLocalStore(fmt.Sprintf("job:%s:exec", data.SchedJob.ID))
+	data.LogStore = tasklog.NewRemoteStore(fmt.Sprintf("task:%s:log", data.Task.ID), true, e.redisClient)
 	data.OnPostTransaction(func() { e.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
 
 	err = e.loadSchedJobData(ctx, db, data)

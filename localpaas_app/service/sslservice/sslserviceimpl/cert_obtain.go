@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509/pkix"
 
+	"github.com/go-acme/lego/v5/certcrypto"
 	"github.com/go-acme/lego/v5/lego"
 	"github.com/tiendc/gofn"
 
@@ -105,14 +106,13 @@ func (s *service) obtainCertByAcme(
 	ssl.PrivateKey = entity.NewEncryptedField(string(certificates.PrivateKey))
 	if renewalInfo != nil {
 		ssl.RenewableFrom = renewalInfo.SuggestedWindow.Start.UTC()
-		if !ssl.RenewableFrom.IsZero() {
-			// TODO: need a better method to have expiration date of SSLs
-			ssl.ExpireAt = ssl.RenewableFrom.Add(base.SSLExpirationFromFirstRenewableDate)
-		}
-		if !ssl.ExpireAt.IsZero() {
-			ssl.ValidPeriod = timeutil.Duration(ssl.ExpireAt.Sub(timeutil.NowUTC()))
-		}
 	}
+	x509Cert, err := certcrypto.ParsePEMCertificate(certificates.Certificate)
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+	ssl.ExpireAt = x509Cert.NotAfter.UTC()
+	ssl.ValidPeriod = timeutil.Duration(ssl.ExpireAt.Sub(timeutil.NowUTC()))
 
 	// Assign the update to the setting
 	sslSetting.MustSetData(ssl)

@@ -119,10 +119,12 @@ func (e *Executor) execute(
 		if setting == nil {
 			return apperrors.NewNotFound("System cleanup settings")
 		}
-		resp, err := e.sysCleanupService.Cleanup(ctx, db, &syscleanupservice.SysCleanupReq{
+		cleanupReq := &syscleanupservice.SysCleanupReq{
 			TaskExecData:       data.TaskExecData,
 			SysCleanupSettings: setting.MustAsSystemCleanup(),
-		})
+		}
+		cleanupReq.SetCleanupAll()
+		resp, err := e.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

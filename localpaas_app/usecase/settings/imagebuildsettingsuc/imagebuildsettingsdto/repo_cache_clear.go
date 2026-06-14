@@ -20,5 +20,11 @@ func (req *ClearRepoCacheReq) Validate() apperrors.ValidationErrors {
 }
 
 type ClearRepoCacheResp struct {
-	Meta *basedto.Meta `json:"meta"`
+	Meta *basedto.Meta           `json:"meta"`
+	Data *ClearRepoCacheDataResp `json:"data"`
+}
+
+type ClearRepoCacheDataResp struct {
+	FilesDeleted   int    `json:"filesDeleted"`
+	SpaceReclaimed uint64 `json:"spaceReclaimed"`
 }

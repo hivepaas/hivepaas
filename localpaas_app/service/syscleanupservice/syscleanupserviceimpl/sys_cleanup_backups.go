@@ -14,6 +14,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 	"github.com/localpaas/localpaas/services/aws/s3"
 )
 
@@ -32,13 +33,19 @@ func (s *service) sysCleanupBackups(
 		}
 	}()
 
+	var errs []error
+
 	// Remove old backup files in local
-	err1 := s.sysCleanupLocalBackupFiles(ctx, db, data)
+	if data.CleanupBackupInLocal != syscleanupservice.CleanupFlagFalse {
+		errs = append(errs, s.sysCleanupLocalBackupFiles(ctx, db, data))
+	}
 
 	// Remove old backup files in cloud
-	err2 := s.sysCleanupCloudBackupFiles(ctx, db, data)
+	if data.CleanupBackupInLocal != syscleanupservice.CleanupFlagFalse {
+		errs = append(errs, s.sysCleanupCloudBackupFiles(ctx, db, data))
+	}
 
-	return errors.Join(err1, err2)
+	return errors.Join(errs...)
 }
 
 func (s *service) sysCleanupLocalBackupFiles(

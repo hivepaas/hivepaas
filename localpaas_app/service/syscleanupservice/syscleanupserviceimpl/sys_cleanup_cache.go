@@ -15,6 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 )
 
 const (
@@ -32,12 +33,16 @@ func (s *service) sysCleanupCache(
 		}
 	}()
 
+	var errs []error
+
 	// Remove old repo cache files in local
-	err1 := s.sysCleanupRepoCacheFiles(ctx, db, data)
+	if data.CleanupCacheRepo != syscleanupservice.CleanupFlagFalse {
+		errs = append(errs, s.sysCleanupRepoCacheFiles(ctx, db, data))
+	}
 
 	// TODO: add more cleanup
 
-	return errors.Join(err1)
+	return errors.Join(errs...)
 }
 
 func (s *service) sysCleanupRepoCacheFiles(
@@ -47,6 +52,9 @@ func (s *service) sysCleanupRepoCacheFiles(
 ) (err error) {
 	timeNow := timeutil.NowUTC()
 	retention := repoCacheOutdatedPeriod
+	if data.CleanupCacheRepo == syscleanupservice.CleanupFlagForce {
+		retention = 0
+	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
 		bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
@@ -59,7 +67,8 @@ func (s *service) sysCleanupRepoCacheFiles(
 
 	for _, file := range deletingFiles {
 		file.DeletedAt = timeNow
-		data.TaskOutput.FileCleanup.RepoCacheFilesDeleted++
+		data.TaskOutput.CacheCleanup.RepoCacheFilesDeleted++
+		data.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed += uint64(file.Size) //nolint:gosec
 	}
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
 		[]string{"deleted_at"})

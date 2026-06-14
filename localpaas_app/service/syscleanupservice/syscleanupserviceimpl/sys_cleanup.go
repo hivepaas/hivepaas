@@ -3,10 +3,12 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 )
 
@@ -22,34 +24,52 @@ func (s *service) Cleanup(
 ) (resp *syscleanupservice.SysCleanupResp, err error) {
 	defer funcutil.EnsureNoPanic(&err)
 
-	resp = &syscleanupservice.SysCleanupResp{}
 	data := &sysCleanupData{
 		SysCleanupReq: req,
 		TaskOutput: &entity.TaskSystemCleanupOutput{
 			DBCleanup:      &entity.DBCleanupOutput{},
 			ClusterCleanup: &entity.ClusterCleanupOutput{},
 			BackupCleanup:  &entity.BackupCleanupOutput{},
+			CacheCleanup:   &entity.CacheCleanupOutput{},
 			FileCleanup:    &entity.FileCleanupOutput{},
 		},
 	}
+	if data.LogStore == nil {
+		data.LogStore = tasklog.NewLocalStore(fmt.Sprintf("task:%v:log", req.Task.ID))
+	}
+	resp = &syscleanupservice.SysCleanupResp{
+		TaskOutput: data.TaskOutput,
+	}
+
+	var errs []error
 
 	// Cleanup DB objects
-	err1 := s.sysCleanupDB(ctx, db, data)
+	if req.CleanupDB {
+		errs = append(errs, s.sysCleanupDB(ctx, db, data))
+	}
 
 	// Cleanup unused cluster data (docker)
-	err2 := s.sysCleanupCluster(ctx, data)
+	if req.CleanupCluster {
+		errs = append(errs, s.sysCleanupCluster(ctx, data))
+	}
 
 	// Cleanup old backup files
-	err3 := s.sysCleanupBackups(ctx, db, data)
+	if req.CleanupBackup {
+		errs = append(errs, s.sysCleanupBackups(ctx, db, data))
+	}
 
 	// Cleanup outdated cache files
-	err4 := s.sysCleanupCache(ctx, db, data)
+	if req.CleanupCache {
+		errs = append(errs, s.sysCleanupCache(ctx, db, data))
+	}
 
 	// Cleanup orphaned files
-	err5 := s.sysCleanupFiles(ctx, data)
+	if req.CleanupFiles {
+		errs = append(errs, s.sysCleanupFiles(ctx, data))
+	}
 
 	// Assign back the result output
 	data.Task.MustSetOutput(data.TaskOutput)
 
-	return resp, errors.Join(err1, err2, err3, err4, err5)
+	return resp, errors.Join(errs...)
 }

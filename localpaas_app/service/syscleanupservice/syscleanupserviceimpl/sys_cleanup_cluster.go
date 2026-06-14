@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 )
 
 func (s *service) sysCleanupCluster(
@@ -18,7 +19,7 @@ func (s *service) sysCleanupCluster(
 
 	objectsOlderThan := clusterCleanup.OnlyObjectsOlderThan.ToDuration()
 
-	if clusterCleanup.PruneContainers {
+	if data.CleanupClusterContainers != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneContainers {
 		resp, e := s.dockerManager.ContainerPrune(ctx, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ContainersPruneError = e.Error()
@@ -30,7 +31,7 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
-	if clusterCleanup.PruneImages {
+	if data.CleanupClusterImages != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneImages {
 		resp, e := s.dockerManager.ImagePrune(ctx, false, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ImagesPruneError = e.Error()
@@ -42,7 +43,7 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
-	if clusterCleanup.PruneVolumes {
+	if data.CleanupClusterVolumes != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneVolumes {
 		resp, e := s.dockerManager.VolumePrune(ctx, true)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.VolumesPruneError = e.Error()
@@ -54,7 +55,7 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
-	if clusterCleanup.PruneNetworks {
+	if data.CleanupClusterNetworks != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneNetworks {
 		resp, e := s.dockerManager.NetworkPrune(ctx, objectsOlderThan)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.NetworksPruneError = e.Error()

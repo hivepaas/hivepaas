@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/config"
+	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 )
 
 func (s *service) sysCleanupFiles(
@@ -22,17 +23,24 @@ func (s *service) sysCleanupFiles(
 		}
 	}()
 
+	var errs []error
+
 	// Remove outdated temp files
-	err1 := s.sysCleanupTempFiles()
+	if data.CleanupFilesTemp != syscleanupservice.CleanupFlagFalse {
+		errs = append(errs, s.sysCleanupTempFiles(data))
+	}
 
-	// TODO: add more cleanup
-
-	return errors.Join(err1)
+	return errors.Join(errs...)
 }
 
-func (s *service) sysCleanupTempFiles() (err error) {
+func (s *service) sysCleanupTempFiles(
+	data *sysCleanupData,
+) (err error) {
 	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current.AppPath, "tmp")}
 	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
+	if data.CleanupFilesTemp == syscleanupservice.CleanupFlagForce {
+		threshold = time.Now()
+	}
 
 	for _, baseDir := range baseDirs {
 		entries, err := os.ReadDir(baseDir)

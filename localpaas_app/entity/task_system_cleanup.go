@@ -4,6 +4,7 @@ type TaskSystemCleanupOutput struct {
 	DBCleanup      *DBCleanupOutput      `json:"dbCleanup"`
 	ClusterCleanup *ClusterCleanupOutput `json:"clusterCleanup"`
 	BackupCleanup  *BackupCleanupOutput  `json:"backupCleanup"`
+	CacheCleanup   *CacheCleanupOutput   `json:"cacheCleanup"`
 	FileCleanup    *FileCleanupOutput    `json:"fileCleanup"`
 }
 
@@ -29,9 +30,14 @@ type BackupCleanupOutput struct {
 	CloudBackupsDeleted int    `json:"cloudBackupsDeleted"`
 }
 
+type CacheCleanupOutput struct {
+	Error                   string `json:"error,omitempty"`
+	RepoCacheFilesDeleted   int    `json:"repoCacheFilesDeleted"`
+	RepoCacheSpaceReclaimed uint64 `json:"repoCacheSpaceReclaimed"`
+}
+
 type FileCleanupOutput struct {
-	Error                 string `json:"error,omitempty"`
-	RepoCacheFilesDeleted int    `json:"repoCacheFilesDeleted"`
+	Error string `json:"error,omitempty"`
 }
 
 func (t *Task) OutputAsSystemCleanup() (*TaskSystemCleanupOutput, error) {

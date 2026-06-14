@@ -7,7 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc/taskdto"
 )
 
 type ListSchedJobTaskReq struct {

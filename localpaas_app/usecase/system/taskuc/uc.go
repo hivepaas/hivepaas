@@ -16,6 +16,7 @@ type UC struct {
 	taskInfoRepo    cacherepository.TaskInfoRepo
 	taskControlRepo cacherepository.TaskControlRepo
 	taskService     taskservice.Service
+	settingRepo     repository.SettingRepo
 }
 
 func New(
@@ -26,6 +27,7 @@ func New(
 	taskInfoRepo cacherepository.TaskInfoRepo,
 	taskControlRepo cacherepository.TaskControlRepo,
 	taskService taskservice.Service,
+	settingRepo repository.SettingRepo,
 ) *UC {
 	return &UC{
 		db:              db,
@@ -35,5 +37,6 @@ func New(
 		taskInfoRepo:    taskInfoRepo,
 		taskControlRepo: taskControlRepo,
 		taskService:     taskService,
+		settingRepo:     settingRepo,
 	}
 }

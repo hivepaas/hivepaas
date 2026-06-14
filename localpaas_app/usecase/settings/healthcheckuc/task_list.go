@@ -7,7 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/healthcheckuc/healthcheckdto"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc/taskdto"
 )
 
 func (uc *UC) ListHealthcheckTask(
@@ -22,10 +22,10 @@ func (uc *UC) ListHealthcheckTask(
 	}
 
 	listResp, err := uc.taskService.ListTask(ctx, uc.DB, &taskservice.ListTaskReq{
-		TargetID: []string{jobSetting.ID},
-		Status:   req.Status,
-		Search:   req.Search,
-		Paging:   req.Paging,
+		TargetIDs: []string{jobSetting.ID},
+		Statuses:  req.Status,
+		Search:    req.Search,
+		Paging:    req.Paging,
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

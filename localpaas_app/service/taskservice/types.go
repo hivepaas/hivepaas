@@ -24,10 +24,10 @@ type GetTaskResp struct {
 }
 
 type ListTaskReq struct {
-	TargetID []string
-	Status   []base.TaskStatus
-	Search   string
-	Paging   basedto.Paging
+	TargetIDs []string
+	Statuses  []base.TaskStatus
+	Search    string
+	Paging    basedto.Paging
 
 	SkipQueryCache bool
 }

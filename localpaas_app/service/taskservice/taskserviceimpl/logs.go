@@ -15,7 +15,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc/taskdto"
 )
 
 func (s *service) GetTaskLogs(

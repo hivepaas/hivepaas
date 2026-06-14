@@ -11,9 +11,10 @@ import (
 )
 
 type ListTaskReq struct {
-	TargetID []string          `json:"-" mapstructure:"targetId"`
-	Status   []base.TaskStatus `json:"-" mapstructure:"status"`
-	Search   string            `json:"-" mapstructure:"search"`
+	JobName  base.SystemJobName `json:"-" mapstructure:"jobName"`
+	TargetID []string           `json:"-" mapstructure:"targetId"`
+	Status   []base.TaskStatus  `json:"-" mapstructure:"status"`
+	Search   string             `json:"-" mapstructure:"search"`
 
 	Paging basedto.Paging `json:"-"`
 }
@@ -29,6 +30,7 @@ func NewListTaskReq() *ListTaskReq {
 
 func (req *ListTaskReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateStrIn(&req.JobName, false, base.AllSystemJobNames, "jobName")...)
 	validators = append(validators, basedto.ValidateIDSlice(req.TargetID, true, 0, "targetId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0, base.AllTaskStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

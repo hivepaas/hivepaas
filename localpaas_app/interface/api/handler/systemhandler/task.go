@@ -8,7 +8,7 @@ import (
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc/taskdto"
 )
 
 // ListTask Lists task
@@ -17,7 +17,8 @@ import (
 // @Tags    system_tasks
 // @Produce json
 // @Id      listTask
-// @Param   jobID query string false "`jobID=<target>`"
+// @Param   jobName query string false "`jobName=<system job name>`"
+// @Param   targetId query string false "`taregtId=<target id>`"
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"

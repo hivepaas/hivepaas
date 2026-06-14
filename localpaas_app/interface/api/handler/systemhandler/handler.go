@@ -4,7 +4,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/system/syserroruc"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc"
 )
 
 type Handler struct {

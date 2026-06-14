@@ -6,7 +6,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/taskuc/taskdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/system/taskuc/taskdto"
 )
 
 func (uc *UC) GetTask(

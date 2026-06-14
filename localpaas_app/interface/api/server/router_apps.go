@@ -25,9 +25,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 
 	{ // Logs
 		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
-		appGroup.GET("/:appID/logs", func(ctx *gin.Context) {
-			appHandler.GetAppLogs(ctx, s.websocket)
-		})
+		appGroup.GET("/:appID/logs", appHandler.GetAppLogs)
 	}
 
 	{ // Tags
@@ -100,9 +98,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		schedJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppSchedJobTask)
 		schedJobGroup.GET("/:itemID/tasks/:taskID", appSettingsHandler.GetAppSchedJobTask)
 		schedJobGroup.POST("/:itemID/tasks/:taskID/cancel", appSettingsHandler.CancelAppSchedJobTask)
-		schedJobGroup.GET("/:itemID/tasks/:taskID/logs", func(ctx *gin.Context) {
-			appSettingsHandler.GetAppSchedJobTaskLogs(ctx, s.websocket)
-		})
+		schedJobGroup.GET("/:itemID/tasks/:taskID/logs", appSettingsHandler.GetAppSchedJobTaskLogs)
 	}
 
 	{ // Health checks
@@ -133,9 +129,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		// Cancel
 		deploymentGroup.POST("/:deploymentID/cancel", appDeploymentHandler.CancelAppDeployment)
 		// Logs
-		deploymentGroup.GET("/:deploymentID/logs", func(ctx *gin.Context) {
-			appDeploymentHandler.GetAppDeploymentLogs(ctx, s.websocket)
-		})
+		deploymentGroup.GET("/:deploymentID/logs", appDeploymentHandler.GetAppDeploymentLogs)
 	}
 
 	{ // Actions

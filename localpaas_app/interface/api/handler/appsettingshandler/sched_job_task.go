@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
 
 	_ "github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -157,7 +156,7 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/logs [get]
-func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context, mel *melody.Melody) {
+func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
 	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -194,6 +193,6 @@ func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context, mel *melody.Melody) {
 		// Not a websocket request, return data via body
 		ctx.JSON(http.StatusOK, resp)
 	} else {
-		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser, mel)
+		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser)
 	}
 }

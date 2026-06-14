@@ -7,7 +7,6 @@ import (
 
 	ginlogger "github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/config"
@@ -28,7 +27,6 @@ type HTTPServer struct {
 	*http.Server
 	config          *config.Config
 	engine          *gin.Engine
-	websocket       *melody.Melody
 	handlerRegistry *HandlerRegistry
 	logger          logging.Logger
 }
@@ -61,9 +59,6 @@ func NewHTTPServer(
 func (s *HTTPServer) init() {
 	engine := gin.New()
 	s.engine = engine
-
-	s.websocket = melody.New()
-	s.websocket.Upgrader.Subprotocols = []string{"access_token"}
 
 	s.Server = &http.Server{
 		Addr:           s.config.HTTPServer.BindingAddress(),

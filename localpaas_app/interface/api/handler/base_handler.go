@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -14,8 +15,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
-	"github.com/olahol/melody"
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -342,44 +343,73 @@ func (h *BaseHandler) ParseRequestLang(ctx *gin.Context) translation.Lang {
 	return httputil.ParseRequestLang(ctx.GetHeader("Accept-Language"))
 }
 
+var wsUpgrader = websocket.Upgrader{
+	Subprotocols: []string{"access_token"},
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 func (h *BaseHandler) StreamAppLogs(
 	ctx *gin.Context,
 	staticLogs []*tasklog.LogFrame, // static logs are in DB
 	realtimeLogsStream <-chan []*tasklog.LogFrame, // realtime logs streaming channel
 	logsStreamCloser func() error,
-	mel *melody.Melody,
 ) {
+	conn, err := wsUpgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	defer conn.Close()
+
+	if logsStreamCloser != nil {
+		defer func() {
+			_ = logsStreamCloser()
+		}()
+	}
+
+	writeFrames := func(frames []*tasklog.LogFrame) error {
+		dataBytes, err := json.Marshal(frames)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		return conn.WriteMessage(websocket.BinaryMessage, dataBytes)
+	}
+
+	// Send static logs first
+	for _, chunk := range gofn.Chunk(staticLogs, 100) { //nolint:mnd
+		if err := writeFrames(chunk); err != nil {
+			return
+		}
+	}
+
+	// Read loop to detect client connection close/abort
+	done := make(chan struct{})
 	go func() {
-		// Send the static logs first
-		for _, chunk := range gofn.Chunk(staticLogs, 100) { //nolint:mnd
-			dataBytes := gofn.Must(json.Marshal(chunk))
-			_ = mel.BroadcastBinaryFilter(dataBytes, func(session *melody.Session) bool {
-				return session.Request == ctx.Request
-			})
-		}
-
-		// Send the logs retrieved from the channel
-		if realtimeLogsStream != nil {
-			for log := range realtimeLogsStream {
-				dataBytes := gofn.Must(json.Marshal(log))
-				_ = mel.BroadcastBinaryFilter(dataBytes, func(session *melody.Session) bool {
-					return session.Request == ctx.Request
-				})
-			}
-		}
-
-		// Close the session
-		time.Sleep(100 * time.Millisecond) //nolint:mnd
-		for _, session := range gofn.Head(mel.Sessions()) {
-			if session.Request == ctx.Request {
-				_ = session.Close()
+		defer close(done)
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
 			}
 		}
 	}()
 
-	_ = mel.HandleRequest(ctx.Writer, ctx.Request)
-	if logsStreamCloser != nil {
-		_ = logsStreamCloser()
+	// Stream real-time logs
+	if realtimeLogsStream != nil {
+		for {
+			select {
+			case <-done:
+				return
+			case log, ok := <-realtimeLogsStream:
+				if !ok {
+					return
+				}
+				if err := writeFrames(log); err != nil {
+					return
+				}
+			}
+		}
 	}
 }
 

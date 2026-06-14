@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
 
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appdeploymentuc/appdeploymentdto"
@@ -27,7 +26,7 @@ import (
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs [get]
-func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
+func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context) {
 	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -58,6 +57,6 @@ func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context, mel *melody.Melody) {
 		// Not a websocket request, return data via body
 		ctx.JSON(http.StatusOK, resp)
 	} else {
-		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser, mel)
+		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser)
 	}
 }

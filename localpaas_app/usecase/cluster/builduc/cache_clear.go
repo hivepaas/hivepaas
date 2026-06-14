@@ -1,4 +1,4 @@
-package imagebuildsettingsuc
+package builduc
 
 import (
 	"context"
@@ -10,44 +10,44 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
-	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/builduc/builddto"
 )
 
-func (uc *UC) ClearRepoCache(
+func (uc *UC) ClearBuildCache(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *imagebuildsettingsdto.ClearRepoCacheReq,
-) (*imagebuildsettingsdto.ClearRepoCacheResp, error) {
+	req *builddto.ClearBuildCacheReq,
+) (*builddto.ClearBuildCacheResp, error) {
 	cleanupReq := &syscleanupservice.SysCleanupReq{
 		TaskExecData: &queue.TaskExecData{
 			Task: &entity.Task{},
 		},
 		SysCleanupSettings: &entity.SystemCleanup{
-			CacheCleanup: entity.SystemCacheCleanup{
+			ClusterCleanup: entity.SystemClusterCleanup{
 				Enabled: true,
 			},
 		},
-		CleanupCacheRepo: syscleanupservice.CleanupFlagForce,
+		CleanupClusterBuildCache: syscleanupservice.CleanupFlagForce,
 	}
 
-	filesDeleted := 0
+	cachesDeleted := 0
 	spaceReclaimed := uint64(0)
-	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
+	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		filesDeleted = resp.TaskOutput.CacheCleanup.RepoCacheFilesDeleted
-		spaceReclaimed = resp.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed
+		cachesDeleted = resp.TaskOutput.ClusterCleanup.BuildCachesDeleted
+		spaceReclaimed = resp.TaskOutput.ClusterCleanup.SpaceReclaimed
 		return nil
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &imagebuildsettingsdto.ClearRepoCacheResp{
-		Data: &imagebuildsettingsdto.ClearRepoCacheDataResp{
-			FilesDeleted:   filesDeleted,
+	return &builddto.ClearBuildCacheResp{
+		Data: &builddto.ClearBuildCacheDataResp{
+			CachesDeleted:  cachesDeleted,
 			SpaceReclaimed: spaceReclaimed,
 		},
 	}, nil

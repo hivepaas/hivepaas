@@ -38,6 +38,8 @@ type SystemCleanupResp struct {
 	DBObjectRetention *DBObjectRetentionResp             `json:"dbObjectRetention"`
 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`
 	BackupCleanup     *SystemBackupCleanupResp           `json:"backupCleanup"`
+	CacheCleanup      *SystemCacheCleanupResp            `json:"cacheCleanup"`
+	FileCleanup       *SystemFileCleanupResp             `json:"fileCleanup"`
 	Notification      *basedto.BaseEventNotificationResp `json:"notification"`
 
 	// Calculated fields
@@ -70,6 +72,15 @@ type SystemBackupCleanupResp struct {
 	Enabled              bool              `json:"enabled"`
 	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
 	LocalBackupRetention timeutil.Duration `json:"localBackupRetention"`
+}
+
+type SystemCacheCleanupResp struct {
+	Enabled            bool              `json:"enabled"`
+	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention"`
+}
+
+type SystemFileCleanupResp struct {
+	Enabled bool `json:"enabled"`
 }
 
 func TransformSystemCleanup(

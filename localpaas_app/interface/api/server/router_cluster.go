@@ -50,4 +50,9 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		networkGroup.POST("", clusterHandler.CreateNetwork)
 		networkGroup.DELETE("/:networkID", clusterHandler.DeleteNetwork)
 	}
+
+	{ // build group
+		buildGroup := clusterGroup.Group("/build")
+		buildGroup.POST("/cache-clear", clusterHandler.ClearBuildCache)
+	}
 }

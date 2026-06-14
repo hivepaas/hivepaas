@@ -70,6 +70,12 @@ func (s *service) initDefaultSystemCleanup(
 			LocalBackupRetention: sysCleanupBackupRetention,
 			CloudBackupRetention: sysCleanupBackupRetention,
 		},
+		CacheCleanup: entity.SystemCacheCleanup{
+			Enabled: true,
+		},
+		FileCleanup: entity.SystemFileCleanup{
+			Enabled: true,
+		},
 		Notification: &entity.BaseEventNotification{
 			SuccessUseDefault: true,
 			FailureUseDefault: true,

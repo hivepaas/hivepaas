@@ -89,6 +89,8 @@ type Manager interface {
 		*client.ImageBuildResult, error)
 	ImageBuildCancel(ctx context.Context, buildID string, options ...ImageBuildCancelOption) (
 		*client.BuildCancelResult, error)
+	BuildCachePrune(ctx context.Context, options ...BuildCachePruneOption) (
+		*client.BuildCachePruneResult, error)
 
 	// Networks
 	NetworkList(ctx context.Context, options ...NetworkListOption) (

@@ -100,12 +100,14 @@ func (s *service) sysCleanupDB(
 	if !retentionSetting.Enabled {
 		return nil
 	}
-	timeNow := timeutil.NowUTC()
+
 	defer func() {
 		if err != nil {
 			data.TaskOutput.DBCleanup.Error = err.Error()
 		}
 	}()
+
+	timeNow := timeutil.NowUTC()
 
 	// Hard delete all old deleted objects from the DB
 	err = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)

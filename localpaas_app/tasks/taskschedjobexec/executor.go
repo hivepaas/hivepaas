@@ -123,7 +123,7 @@ func (e *Executor) execute(
 			TaskExecData:       data.TaskExecData,
 			SysCleanupSettings: setting.MustAsSystemCleanup(),
 		}
-		cleanupReq.SetCleanupAll()
+		cleanupReq.SetCleanupFlagsDefault()
 		resp, err := e.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
 			return apperrors.Wrap(err)

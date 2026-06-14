@@ -73,6 +73,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appsettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/binobjectuc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/builduc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
@@ -235,6 +236,7 @@ var Provides = []any{
 	binobjectuc.New,
 	accessiblebyprojectsuc.New,
 	supportuc.New,
+	builduc.New,
 
 	// Service
 	clusterserviceimpl.New,

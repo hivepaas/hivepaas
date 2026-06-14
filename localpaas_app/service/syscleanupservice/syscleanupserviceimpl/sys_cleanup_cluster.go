@@ -66,5 +66,18 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
+	// TODO: clean build cache in all nodes
+	if data.CleanupClusterBuildCache == syscleanupservice.CleanupFlagForce {
+		resp, e := s.dockerManager.BuildCachePrune(ctx)
+		if e != nil {
+			data.TaskOutput.ClusterCleanup.BuildCachesPruneError = e.Error()
+			err = errors.Join(err, e)
+		} else {
+			report := &resp.Report
+			data.TaskOutput.ClusterCleanup.BuildCachesDeleted = len(report.CachesDeleted)
+			data.TaskOutput.ClusterCleanup.SpaceReclaimed += report.SpaceReclaimed
+		}
+	}
+
 	return apperrors.Wrap(err)
 }

@@ -44,29 +44,19 @@ func (s *service) Cleanup(
 	var errs []error
 
 	// Cleanup DB objects
-	if req.CleanupDB {
-		errs = append(errs, s.sysCleanupDB(ctx, db, data))
-	}
+	errs = append(errs, s.sysCleanupDB(ctx, db, data))
 
 	// Cleanup unused cluster data (docker)
-	if req.CleanupCluster {
-		errs = append(errs, s.sysCleanupCluster(ctx, data))
-	}
+	errs = append(errs, s.sysCleanupCluster(ctx, data))
 
 	// Cleanup old backup files
-	if req.CleanupBackup {
-		errs = append(errs, s.sysCleanupBackups(ctx, db, data))
-	}
+	errs = append(errs, s.sysCleanupBackups(ctx, db, data))
 
 	// Cleanup outdated cache files
-	if req.CleanupCache {
-		errs = append(errs, s.sysCleanupCache(ctx, db, data))
-	}
+	errs = append(errs, s.sysCleanupCache(ctx, db, data))
 
 	// Cleanup orphaned files
-	if req.CleanupFiles {
-		errs = append(errs, s.sysCleanupFiles(ctx, data))
-	}
+	errs = append(errs, s.sysCleanupFiles(ctx, data))
 
 	// Assign back the result output
 	data.Task.MustSetOutput(data.TaskOutput)

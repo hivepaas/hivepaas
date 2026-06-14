@@ -44,3 +44,20 @@ func (m *manager) ImageBuildCancel(
 	}
 	return &resp, nil
 }
+
+type BuildCachePruneOption func(options *client.BuildCachePruneOptions)
+
+func (m *manager) BuildCachePrune(
+	ctx context.Context,
+	options ...BuildCachePruneOption,
+) (*client.BuildCachePruneResult, error) {
+	opts := client.BuildCachePruneOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.BuildCachePrune(ctx, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}

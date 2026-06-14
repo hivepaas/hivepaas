@@ -26,6 +26,8 @@ type SystemCleanup struct {
 	DBObjectRetention DBObjectRetention      `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanup   `json:"clusterCleanup"`
 	BackupCleanup     SystemBackupCleanup    `json:"backupCleanup"`
+	CacheCleanup      SystemCacheCleanup     `json:"cacheCleanup"`
+	FileCleanup       SystemFileCleanup      `json:"fileCleanup"`
 	Notification      *BaseEventNotification `json:"notification,omitempty"`
 }
 
@@ -50,6 +52,15 @@ type SystemBackupCleanup struct {
 	Enabled              bool              `json:"enabled"`
 	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention,omitempty"`
 	LocalBackupRetention timeutil.Duration `json:"localBackupRetention,omitempty"`
+}
+
+type SystemCacheCleanup struct {
+	Enabled            bool              `json:"enabled"`
+	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention,omitempty"`
+}
+
+type SystemFileCleanup struct {
+	Enabled bool `json:"enabled"`
 }
 
 func (s *SystemCleanup) GetType() base.SettingType {

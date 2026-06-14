@@ -3,6 +3,7 @@ package clusterhandler
 import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/builduc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/imageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/nodeuc"
@@ -16,6 +17,7 @@ type Handler struct {
 	volumeUC    *volumeuc.UC
 	imageUC     *imageuc.UC
 	networkUC   *networkuc.UC
+	buildUC     *builduc.UC
 }
 
 func New(
@@ -25,6 +27,7 @@ func New(
 	volumeUC *volumeuc.UC,
 	imageUC *imageuc.UC,
 	networkUC *networkuc.UC,
+	buildUC *builduc.UC,
 ) *Handler {
 	return &Handler{
 		BaseHandler: baseHandler,
@@ -33,5 +36,6 @@ func New(
 		volumeUC:    volumeUC,
 		imageUC:     imageUC,
 		networkUC:   networkUC,
+		buildUC:     buildUC,
 	}
 }

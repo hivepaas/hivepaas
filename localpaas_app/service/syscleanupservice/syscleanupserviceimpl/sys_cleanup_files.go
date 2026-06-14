@@ -17,6 +17,10 @@ func (s *service) sysCleanupFiles(
 	_ context.Context,
 	data *sysCleanupData,
 ) (err error) {
+	if !data.SysCleanupSettings.FileCleanup.Enabled {
+		return nil
+	}
+
 	defer func() {
 		if err != nil {
 			data.TaskOutput.FileCleanup.Error = err.Error()

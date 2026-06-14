@@ -24,6 +24,8 @@ type SystemCleanupBaseReq struct {
 	DBObjectRetention DBObjectRetentionReq              `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanupReq           `json:"clusterCleanup"`
 	BackupCleanup     SystemBackupCleanupReq            `json:"backupCleanup"`
+	CacheCleanup      SystemCacheCleanupReq             `json:"cacheCleanup"`
+	FileCleanup       SystemFileCleanupReq              `json:"fileCleanup"`
 	Notification      *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
@@ -33,6 +35,8 @@ func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
 		DBObjectRetention: req.DBObjectRetention.ToEntity(),
 		ClusterCleanup:    req.ClusterCleanup.ToEntity(),
 		BackupCleanup:     req.BackupCleanup.ToEntity(),
+		CacheCleanup:      req.CacheCleanup.ToEntity(),
+		FileCleanup:       req.FileCleanup.ToEntity(),
 		Notification:      req.Notification.ToEntity(),
 	}
 }
@@ -51,6 +55,8 @@ func (req *SystemCleanupBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.DBObjectRetention.validate(field+"dbObjectRetention")...)
 	res = append(res, req.ClusterCleanup.validate(field+"clusterCleanup")...)
 	res = append(res, req.BackupCleanup.validate(field+"backupCleanup")...)
+	res = append(res, req.CacheCleanup.validate(field+"cacheCleanup")...)
+	res = append(res, req.FileCleanup.validate(field+"fileCleanup")...)
 	res = append(res, req.Notification.Validate(field+"notification")...)
 	return res
 }
@@ -88,10 +94,13 @@ func (req *DBObjectRetentionReq) ToEntity() entity.DBObjectRetention {
 }
 
 func (req *DBObjectRetentionReq) validate(field string) (res []vld.Validator) {
+	if !req.Enabled {
+		return nil
+	}
 	if field != "" {
 		field += "."
 	}
-	oneDay := timeutil.Duration(time.Hour * 24) //nolint:mnd
+	oneDay := timeutil.Duration(timeutil.Day)
 	durValid := req.Tasks >= oneDay && req.SysErrors >= oneDay &&
 		req.Deployments >= oneDay && req.DeletedObjects >= oneDay
 	res = append(res, vld.Must(durValid).OnError(
@@ -139,6 +148,9 @@ func (req *SystemBackupCleanupReq) ToEntity() entity.SystemBackupCleanup {
 }
 
 func (req *SystemBackupCleanupReq) validate(field string) (res []vld.Validator) {
+	if !req.Enabled {
+		return nil
+	}
 	if field != "" {
 		field += "."
 	}
@@ -149,6 +161,52 @@ func (req *SystemBackupCleanupReq) validate(field string) (res []vld.Validator) 
 		vld.SetParam("Min", 0),
 	))
 	return res
+}
+
+type SystemCacheCleanupReq struct {
+	Enabled            bool              `json:"enabled"`
+	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention"`
+}
+
+func (req *SystemCacheCleanupReq) ToEntity() entity.SystemCacheCleanup {
+	return entity.SystemCacheCleanup{
+		Enabled:            req.Enabled,
+		RepoCacheRetention: req.RepoCacheRetention,
+	}
+}
+
+func (req *SystemCacheCleanupReq) validate(field string) (res []vld.Validator) {
+	if !req.Enabled {
+		return nil
+	}
+	if field != "" {
+		field += "."
+	}
+	oneDay := timeutil.Duration(timeutil.Day)
+	res = append(res, vld.Must(req.RepoCacheRetention >= oneDay).OnError(
+		vld.SetField(field+"repoCacheRetention", nil),
+		vld.SetCustomKey("ERR_VLD_VALUE_MUST_GREATER_THAN"),
+		vld.SetParam("Min", oneDay.String()),
+	))
+	return res
+}
+
+type SystemFileCleanupReq struct {
+	Enabled bool `json:"enabled"`
+}
+
+func (req *SystemFileCleanupReq) ToEntity() entity.SystemFileCleanup {
+	return entity.SystemFileCleanup{
+		Enabled: req.Enabled,
+	}
+}
+
+//nolint:unparam
+func (req *SystemFileCleanupReq) validate(_ string) []vld.Validator {
+	if !req.Enabled {
+		return nil
+	}
+	return nil
 }
 
 func NewUpdateSystemCleanupReq() *UpdateSystemCleanupReq {

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/config"
@@ -15,6 +17,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/syscleanupservice"
+)
+
+const (
+	repoCacheRetentionDefault = timeutil.Week
 )
 
 func (s *service) sysCleanupCache(
@@ -35,11 +41,7 @@ func (s *service) sysCleanupCache(
 	var errs []error
 
 	// Remove old repo cache files in local
-	if data.CleanupCacheRepo != syscleanupservice.CleanupFlagFalse {
-		errs = append(errs, s.sysCleanupCacheRepoSource(ctx, db, data))
-	}
-
-	// TODO: add more cleanup
+	errs = append(errs, s.sysCleanupCacheRepoSource(ctx, db, data))
 
 	return errors.Join(errs...)
 }
@@ -49,8 +51,12 @@ func (s *service) sysCleanupCacheRepoSource(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
+	if data.CleanupCacheRepo == syscleanupservice.CleanupFlagFalse {
+		return nil
+	}
 	timeNow := timeutil.NowUTC()
-	retention := data.SysCleanupSettings.CacheCleanup.RepoCacheRetention.ToDuration()
+	retention := gofn.Coalesce(data.SysCleanupSettings.CacheCleanup.RepoCacheRetention.ToDuration(),
+		repoCacheRetentionDefault)
 	if data.CleanupCacheRepo == syscleanupservice.CleanupFlagForce {
 		retention = 0
 	}

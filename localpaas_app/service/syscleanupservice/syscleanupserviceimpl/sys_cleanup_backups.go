@@ -36,14 +36,10 @@ func (s *service) sysCleanupBackups(
 	var errs []error
 
 	// Remove old backup files in local
-	if data.CleanupBackupInLocal != syscleanupservice.CleanupFlagFalse {
-		errs = append(errs, s.sysCleanupLocalBackupFiles(ctx, db, data))
-	}
+	errs = append(errs, s.sysCleanupLocalBackupFiles(ctx, db, data))
 
 	// Remove old backup files in cloud
-	if data.CleanupBackupInLocal != syscleanupservice.CleanupFlagFalse {
-		errs = append(errs, s.sysCleanupCloudBackupFiles(ctx, db, data))
-	}
+	errs = append(errs, s.sysCleanupCloudBackupFiles(ctx, db, data))
 
 	return errors.Join(errs...)
 }
@@ -53,12 +49,18 @@ func (s *service) sysCleanupLocalBackupFiles(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
-	if data.SysCleanupSettings.BackupCleanup.LocalBackupRetention < 0 { // No cleanup
+	if data.CleanupBackupInLocal == syscleanupservice.CleanupFlagFalse {
 		return nil
 	}
 
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.LocalBackupRetention.ToDuration()
+	if data.CleanupBackupInLocal == syscleanupservice.CleanupFlagForce {
+		retention = 0
+	}
+	if retention < 0 { // No cleanup
+		return nil
+	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
 		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),
@@ -102,12 +104,18 @@ func (s *service) sysCleanupCloudBackupFiles(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
-	if data.SysCleanupSettings.BackupCleanup.CloudBackupRetention < 0 { // No cleanup
+	if data.CleanupBackupInCloud == syscleanupservice.CleanupFlagFalse {
 		return nil
 	}
 
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.CloudBackupRetention.ToDuration()
+	if data.CleanupBackupInCloud == syscleanupservice.CleanupFlagForce {
+		retention = 0
+	}
+	if retention < 0 { // No cleanup
+		return nil
+	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
 		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),

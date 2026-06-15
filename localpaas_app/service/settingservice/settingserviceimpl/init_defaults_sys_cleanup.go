@@ -28,6 +28,8 @@ const (
 	dbObjectRetentionOfSysErrors      = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfDeployments    = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfDeletedObjects = timeutil.Duration(timeutil.Day * 90)
+
+	sysCleanupRepoCacheRetention = timeutil.Duration(timeutil.Day * 10)
 )
 
 func (s *service) initDefaultSystemCleanup(
@@ -71,7 +73,8 @@ func (s *service) initDefaultSystemCleanup(
 			CloudBackupRetention: sysCleanupBackupRetention,
 		},
 		CacheCleanup: entity.SystemCacheCleanup{
-			Enabled: true,
+			Enabled:            true,
+			RepoCacheRetention: sysCleanupRepoCacheRetention,
 		},
 		FileCleanup: entity.SystemFileCleanup{
 			Enabled: true,

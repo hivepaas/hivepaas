@@ -30,9 +30,7 @@ func (s *service) sysCleanupFiles(
 	var errs []error
 
 	// Remove outdated temp files
-	if data.CleanupFilesTemp != syscleanupservice.CleanupFlagFalse {
-		errs = append(errs, s.sysCleanupTempFiles(data))
-	}
+	errs = append(errs, s.sysCleanupTempFiles(data))
 
 	return errors.Join(errs...)
 }
@@ -40,6 +38,10 @@ func (s *service) sysCleanupFiles(
 func (s *service) sysCleanupTempFiles(
 	data *sysCleanupData,
 ) (err error) {
+	if data.CleanupFilesTemp == syscleanupservice.CleanupFlagFalse {
+		return nil
+	}
+
 	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current.AppPath, "tmp")}
 	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
 	if data.CleanupFilesTemp == syscleanupservice.CleanupFlagForce {

@@ -31,6 +31,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
         AppConfigHttpSettingsFormSchemaOutput
     >();
     const domainValue = useWatch({ control, name: `domains.${domainIndex}.domain` });
+    const normalizedDomain = typeof domainValue === "string" ? domainValue.trim() : "";
 
     const {
         field: sslCert,
@@ -53,7 +54,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     } = ProjectSslCertQueries.useFindManyPaginated({
         projectID: projectId,
         search: searchQuery,
-        domain: domainValue.trim() || undefined,
+        domain: normalizedDomain || undefined,
     });
 
     const { data: sslCertDetail, isFetching: isSslInfoLoading } = ProjectSslCertQueries.useFindOneById(
@@ -147,7 +148,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                                                     return;
                                                 }
 
-                                                quickInstallActions.open(projectId, domainValue);
+                                                quickInstallActions.open(projectId, normalizedDomain);
                                             }}
                                         >
                                             Quick Install

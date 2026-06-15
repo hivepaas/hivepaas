@@ -20,11 +20,13 @@ export function DeploymentLogsViewer({
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [refreshVersion, setRefreshVersion] = useState(0);
     const [isRefreshPending, setIsRefreshPending] = useState(false);
+    const [suppressAutoReconnect, setSuppressAutoReconnect] = useState(false);
     const { streams } = useAppDeploymentLogsWsApi();
-    const shouldConnect = status !== AppDeploymentStatus.NotStarted;
+    const canLoadLogs = status !== AppDeploymentStatus.NotStarted;
+    const shouldConnect = canLoadLogs && !suppressAutoReconnect;
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const isStreaming = webSocketReadyState === WebSocket.OPEN;
-    const showRefresh = shouldConnect && webSocketReadyState === WebSocket.CLOSED;
+    const showRefresh = canLoadLogs && webSocketReadyState === WebSocket.CLOSED;
 
     const streamRequest = useMemo(
         () => ({
@@ -37,6 +39,8 @@ export function DeploymentLogsViewer({
 
     useEffect(() => {
         setLogs([]);
+        setSuppressAutoReconnect(false);
+        setIsRefreshPending(false);
     }, [deploymentID]);
 
     const handleRefresh = useCallback(() => {
@@ -45,6 +49,7 @@ export function DeploymentLogsViewer({
         }
 
         setIsRefreshPending(true);
+        setSuppressAutoReconnect(false);
         setRefreshVersion(current => current + 1);
     }, [isRefreshPending, showRefresh]);
 
@@ -103,12 +108,14 @@ export function DeploymentLogsViewer({
                         }
 
                         setIsRefreshPending(false);
+                        setWebSocketReadyState(WebSocket.CLOSED);
 
                         if (status !== AppDeploymentStatus.InProgress || didRefetchAfterClose) {
                             return;
                         }
 
                         didRefetchAfterClose = true;
+                        setSuppressAutoReconnect(true);
                         onStreamClosedWhileInProgress();
                     },
                     onReadyStateChange: readyState => {

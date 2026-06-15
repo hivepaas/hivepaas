@@ -1,4 +1,8 @@
-import type { ProjectImageBuildRepoCacheInfo, ProjectImageBuildSettings } from "~/projects/domain";
+import type {
+    ProjectImageBuildRepoCacheClearResult,
+    ProjectImageBuildRepoCacheInfo,
+    ProjectImageBuildSettings,
+} from "~/projects/domain";
 
 import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 
@@ -26,4 +30,4 @@ export type ProjectImageBuildSettings_FindRepoCache_Res = ApiResponseBase<Projec
 export type ProjectImageBuildSettings_ClearRepoCache_Req = ApiRequestBase<{
     projectID: string;
 }>;
-export type ProjectImageBuildSettings_ClearRepoCache_Res = ApiResponseBase<{ type: "success" }>;
+export type ProjectImageBuildSettings_ClearRepoCache_Res = ApiResponseBase<ProjectImageBuildRepoCacheClearResult>;

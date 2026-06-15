@@ -93,7 +93,7 @@ export function LogsViewerToolbar({
                 )}
 
                 <ToolbarItem
-                    // align={{ default: "alignEnd" }}
+                    align={toolbarFilters ? undefined : { default: "alignEnd" }}
                     className={styles["searchItem"]}
                 >
                     <LogViewerSearch

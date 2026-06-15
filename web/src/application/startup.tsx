@@ -12,9 +12,11 @@ import { modulesRouter } from "@application/modules";
 const router = createBrowserRouter([
     {
         element: (
-            <AuthRouteProtection>
-                <Outlet />
-            </AuthRouteProtection>
+            <ApplicationProfileInit>
+                <AuthRouteProtection>
+                    <Outlet />
+                </AuthRouteProtection>
+            </ApplicationProfileInit>
         ),
         HydrateFallback: AppLoader,
         children: [
@@ -36,9 +38,5 @@ const router = createBrowserRouter([
 ]);
 
 export function Startup() {
-    return (
-        <ApplicationProfileInit>
-            <RouterProvider router={router} />
-        </ApplicationProfileInit>
-    );
+    return <RouterProvider router={router} />;
 }

@@ -375,30 +375,28 @@ export function CreateOrEditGithubAppForm({
                 </fieldset>
             </DialogBody>
             {!isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            {showTestConnection && (
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={() => void handleSubmit(onTestValid, onInvalid)()}
-                                    isLoading={isTesting}
-                                >
-                                    Test Access
-                                </Button>
-                            )}
-                            {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
-                            {testStatus === "failed" && <span className="text-sm text-red-600">Failed</span>}
-                        </div>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
-                        >
-                            Save
-                        </Button>
+                <DialogActionFooter className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        {showTestConnection && (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => void handleSubmit(onTestValid, onInvalid)()}
+                                isLoading={isTesting}
+                            >
+                                Test Access
+                            </Button>
+                        )}
+                        {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
+                        {testStatus === "failed" && <span className="text-sm text-red-600">Failed</span>}
                     </div>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        className="min-w-[100px]"
+                    >
+                        Save
+                    </Button>
                 </DialogActionFooter>
             )}
             {isReadOnly && (

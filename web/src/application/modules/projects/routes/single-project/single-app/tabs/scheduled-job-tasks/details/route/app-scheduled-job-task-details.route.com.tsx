@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
@@ -17,8 +17,23 @@ import {
 
 const TASK_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
-function shouldPollTaskDetails(status?: EAppScheduledJobTaskStatus): boolean {
-    return status === EAppScheduledJobTaskStatus.NotStarted;
+function shouldPollTaskDetails(
+    status: EAppScheduledJobTaskStatus | undefined,
+    shouldPollAfterStreamClose: boolean,
+): boolean {
+    return status === EAppScheduledJobTaskStatus.NotStarted || (shouldPollAfterStreamClose && isTaskInProgress(status));
+}
+
+function isTaskInProgress(status?: EAppScheduledJobTaskStatus): boolean {
+    return status === EAppScheduledJobTaskStatus.InProgress;
+}
+
+function isTaskTerminal(status?: EAppScheduledJobTaskStatus): boolean {
+    return (
+        status === EAppScheduledJobTaskStatus.Canceled ||
+        status === EAppScheduledJobTaskStatus.Done ||
+        status === EAppScheduledJobTaskStatus.Failed
+    );
 }
 
 export function AppScheduledJobTaskDetailsRoute() {
@@ -39,6 +54,8 @@ export function AppScheduledJobTaskDetailsRoute() {
     invariant(scheduledJobId, "scheduledJobId must be defined");
     invariant(taskId, "taskId must be defined");
 
+    const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
+
     const {
         data: taskResponse,
         isFetching,
@@ -52,16 +69,29 @@ export function AppScheduledJobTaskDetailsRoute() {
         },
         {
             refetchInterval: query =>
-                shouldPollTaskDetails(query.state.data?.data.status) ? TASK_DETAILS_REFETCH_INTERVAL_MS : false,
+                shouldPollTaskDetails(query.state.data?.data.status, shouldPollAfterStreamClose)
+                    ? TASK_DETAILS_REFETCH_INTERVAL_MS
+                    : false,
         },
     );
     const task = taskResponse?.data;
 
-    const hasActiveTask = useMemo(() => task?.status === EAppScheduledJobTaskStatus.InProgress, [task?.status]);
+    const hasActiveTask = useMemo(() => isTaskInProgress(task?.status), [task?.status]);
     const now = useScheduledJobTaskCurrentTime(hasActiveTask);
     const handleStreamClosedWhileInProgress = useCallback(() => {
+        setShouldPollAfterStreamClose(true);
         void refetchTask();
     }, [refetchTask]);
+
+    useEffect(() => {
+        setShouldPollAfterStreamClose(false);
+    }, [taskId]);
+
+    useEffect(() => {
+        if (shouldPollAfterStreamClose && isTaskTerminal(task?.status)) {
+            setShouldPollAfterStreamClose(false);
+        }
+    }, [shouldPollAfterStreamClose, task?.status]);
 
     const { mutate: cancelTask, isPending: isCancelling } = AppScheduledJobsCommands.useCancelTask({
         onSuccess: () => {

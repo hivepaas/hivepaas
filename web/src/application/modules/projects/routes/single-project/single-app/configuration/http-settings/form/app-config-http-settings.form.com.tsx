@@ -2,7 +2,7 @@ import React, { type PropsWithChildren, useEffect, useImperativeHandle, useRef, 
 
 import { Button } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
@@ -45,24 +45,33 @@ function ConditionalDomainDetailSections({
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
-    const activeDomain = domains[activeDomainIndex];
-    const hasRedirect = Boolean(activeDomain ? activeDomain.domainRedirect.trim() : "");
+    const activeDomain = activeDomainIndex >= 0 ? domains[activeDomainIndex] : undefined;
+    const hasActiveDomain = Boolean(activeDomain);
+    const activeDomainRedirect = typeof activeDomain?.domainRedirect === "string" ? activeDomain.domainRedirect : "";
+    const hasRedirect = Boolean(activeDomainRedirect.trim());
 
     useEffect(() => {
         const len = domains.length;
         if (len === 0) {
-            setActiveDomainIndex(-1);
+            if (activeDomainIndex !== -1) {
+                setActiveDomainIndex(-1);
+            }
+            return;
         }
-    }, [domains.length, setActiveDomainIndex]);
 
-    if (!hasDomains || activeDomainIndex < 0) {
+        if (activeDomainIndex < 0 || activeDomainIndex >= len) {
+            setActiveDomainIndex(len - 1);
+        }
+    }, [activeDomainIndex, domains.length, setActiveDomainIndex]);
+
+    if (!hasDomains || !hasActiveDomain) {
         return null;
     }
 
     return (
         <>
             <h3 className="font-medium bg-accent py-2 px-3 rounded-lg text-red-500 flex items-center justify-between">
-                Selected Domain: {domains[activeDomainIndex]?.domain ?? ""}
+                Selected Domain: {activeDomain?.domain ?? ""}
                 <PopConfirm
                     title="Remove domain"
                     description="Confirm deletion of this domain?"
@@ -81,11 +90,11 @@ function ConditionalDomainDetailSections({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive h-0"
+                        className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:bg-red-50 hover:text-destructive"
                         title="Remove domain"
                         disabled={readOnly}
                     >
-                        <X className="size-4" />
+                        <Trash2 className="size-3.5" />
                     </Button>
                 </PopConfirm>
             </h3>

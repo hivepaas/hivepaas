@@ -86,7 +86,8 @@ export class ProjectImageBuildSettingsApi extends BaseApi {
             from(
                 this.client.v1.post(`/projects/${projectID}/image-build-settings/repo-cache/clear`, {}, { signal }),
             ).pipe(
-                map(() => Ok({ data: { type: "success" } } as const)),
+                map(this.validator.clearRepoCache),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

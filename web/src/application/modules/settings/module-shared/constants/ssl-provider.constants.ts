@@ -10,8 +10,8 @@ export const SSL_PROVIDER_OPTIONS = [
         label: "Zero SSL",
     },
     {
-        value: ESslProviderKind.GoogleTrustServices,
-        label: "Google Trust Services",
+        value: ESslProviderKind.GoogleTrust,
+        label: "Google Trust",
     },
 ] as const;
 

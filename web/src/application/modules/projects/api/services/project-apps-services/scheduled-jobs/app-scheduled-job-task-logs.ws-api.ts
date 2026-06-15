@@ -11,8 +11,6 @@ import { session } from "@infrastructure/api";
 import { buildAppScheduledJobTaskLogsQueryParams } from "./app-scheduled-jobs.api";
 import type { AppScheduledJobTasks_GetLogs_Req } from "./app-scheduled-jobs.api.contracts";
 
-const DEFAULT_LOG_TAIL = 100;
-
 export type AppScheduledJobTaskLogsWs_StreamLogs_Req = AppScheduledJobTasks_GetLogs_Req;
 
 export type AppScheduledJobTaskLogsWs_StreamLogs_Res = WebSocketSubscription;
@@ -40,7 +38,6 @@ export class AppScheduledJobTaskLogsWsApi extends BaseWebSocketApi {
                 buildAppScheduledJobTaskLogsQueryParams({
                     ...request.data,
                     follow: true,
-                    tail: request.data.tail ?? DEFAULT_LOG_TAIL,
                 }),
             );
 

@@ -6,6 +6,7 @@ import { ESettingStatus } from "@application/shared/enums";
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
+    ProjectImageBuildSettings_ClearRepoCache_Res,
     ProjectImageBuildSettings_FindOne_Res,
     ProjectImageBuildSettings_FindRepoCache_Res,
 } from "./project-image-build-settings.api.contracts";
@@ -59,6 +60,16 @@ const FindRepoCacheSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const ClearRepoCacheResultSchema = z.object({
+    filesDeleted: z.number(),
+    spaceReclaimed: z.number(),
+});
+
+const ClearRepoCacheSchema = z.object({
+    data: ClearRepoCacheResultSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class ProjectImageBuildSettingsApiValidator {
     findOne = (response: AxiosResponse): ProjectImageBuildSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
@@ -85,5 +96,9 @@ export class ProjectImageBuildSettingsApiValidator {
 
     findRepoCache = (response: AxiosResponse): ProjectImageBuildSettings_FindRepoCache_Res => {
         return parseApiResponse({ response, schema: FindRepoCacheSchema });
+    };
+
+    clearRepoCache = (response: AxiosResponse): ProjectImageBuildSettings_ClearRepoCache_Res => {
+        return parseApiResponse({ response, schema: ClearRepoCacheSchema });
     };
 }

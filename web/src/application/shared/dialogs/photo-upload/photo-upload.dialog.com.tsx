@@ -49,7 +49,7 @@ export function PhotoUploadDialog({
                         onOpenChange(false);
                     }}
                     footer={
-                        <DialogActionFooter>
+                        <DialogActionFooter className="gap-2">
                             <Button
                                 type="button"
                                 variant="outline"

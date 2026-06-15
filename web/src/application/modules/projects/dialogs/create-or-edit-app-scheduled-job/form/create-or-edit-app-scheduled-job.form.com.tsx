@@ -379,7 +379,7 @@ export function CreateOrEditAppScheduledJobForm({
                                         title="Terminal"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
-                                        <div className="flex min-w-0 flex-wrap items-start gap-x-6 gap-y-3">
+                                        <div className="flex w-full max-w-[400px] flex-wrap items-start gap-x-4 gap-y-3">
                                             <div className="flex h-9 items-center gap-3 text-sm font-medium">
                                                 <span>TTY</span>
                                                 <Checkbox
@@ -392,11 +392,11 @@ export function CreateOrEditAppScheduledJobForm({
                                                 />
                                             </div>
 
-                                            <div className="flex min-w-[180px] flex-col gap-1.5">
-                                                <div className="flex items-center gap-3">
+                                            <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
                                                     <label
                                                         htmlFor={consoleWidthInputId}
-                                                        className="text-sm font-medium"
+                                                        className="shrink-0 text-sm font-medium"
                                                     >
                                                         Width
                                                     </label>
@@ -418,18 +418,18 @@ export function CreateOrEditAppScheduledJobForm({
                                                         showControls={false}
                                                         placeholder="120"
                                                         aria-invalid={isConsoleWidthInvalid}
-                                                        className="w-32"
+                                                        className="min-w-0 flex-1"
                                                         disabled={readOnly}
                                                     />
                                                 </div>
                                                 <FieldError errors={[errors.consoleSize?.width]} />
                                             </div>
 
-                                            <div className="flex min-w-[180px] flex-col gap-1.5">
-                                                <div className="flex items-center gap-3">
+                                            <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
                                                     <label
                                                         htmlFor={consoleHeightInputId}
-                                                        className="text-sm font-medium"
+                                                        className="shrink-0 text-sm font-medium"
                                                     >
                                                         Height
                                                     </label>
@@ -451,7 +451,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                         showControls={false}
                                                         placeholder="40"
                                                         aria-invalid={isConsoleHeightInvalid}
-                                                        className="w-32"
+                                                        className="min-w-0 flex-1"
                                                         disabled={readOnly}
                                                     />
                                                 </div>

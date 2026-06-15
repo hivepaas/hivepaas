@@ -74,7 +74,7 @@ export function CreateOrEditSslProviderForm({
     }, [isDirty, onHasChanges, isReadOnly]);
 
     const kind = useWatch({ control, name: "kind" });
-    const showEabFields = kind === ESslProviderKind.ZeroSSL || kind === ESslProviderKind.GoogleTrustServices;
+    const showEabFields = kind === ESslProviderKind.ZeroSSL || kind === ESslProviderKind.GoogleTrust;
 
     const {
         field: name,

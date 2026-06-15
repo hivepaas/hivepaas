@@ -1,7 +1,7 @@
 export const ESslProviderKind = {
     LetsEncrypt: "letsencrypt",
     ZeroSSL: "zerossl",
-    GoogleTrustServices: "googlets",
+    GoogleTrust: "googletrust",
 } as const;
 
 export type ESslProviderKind = (typeof ESslProviderKind)[keyof typeof ESslProviderKind];

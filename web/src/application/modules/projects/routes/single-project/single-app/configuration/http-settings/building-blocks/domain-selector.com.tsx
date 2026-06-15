@@ -33,7 +33,7 @@ export function DomainSelector({
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const { fields, append } = useFieldArray({ control, name: "domains" });
+    const { append } = useFieldArray({ control, name: "domains" });
 
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
 
@@ -103,14 +103,14 @@ export function DomainSelector({
                 return;
             }
             append({ ...emptyDomain, domain: trimmedDraft, containerPort });
-            setActiveDomainIndex(fields.length);
+            setActiveDomainIndex(domainValues.length);
             setDraft(trimmedDraft);
             setDuplicateDomainError(null);
             return;
         }
 
         append({ ...emptyDomain, containerPort });
-        setActiveDomainIndex(fields.length);
+        setActiveDomainIndex(domainValues.length);
         setDraft("");
         setDuplicateDomainError(null);
     }

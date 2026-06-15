@@ -67,14 +67,14 @@ export function AppConfigFilesRoute() {
 
             <Accordion
                 type="multiple"
-                defaultValue={["config-files", "inherited-config-files"]}
+                defaultValue={["config-files"]}
                 className="w-full"
             >
                 <AccordionItem
                     value="inherited-config-files"
                     className="border-none"
                 >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
+                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 data-[state=closed]:mb-6 bg-accent">
                         Inherited Config Files
                     </AccordionTrigger>
                     <AccordionContent className="p-0 pt-4 mb-4">

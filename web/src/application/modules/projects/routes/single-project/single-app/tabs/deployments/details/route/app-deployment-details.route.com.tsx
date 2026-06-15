@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
@@ -17,8 +17,23 @@ import { showDeploymentCancelToast } from "../../utils";
 
 const DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
-function shouldPollDeploymentDetails(status?: EAppDeploymentStatus): boolean {
-    return status === EAppDeploymentStatus.NotStarted;
+function shouldPollDeploymentDetails(
+    status: EAppDeploymentStatus | undefined,
+    shouldPollAfterStreamClose: boolean,
+): boolean {
+    return status === EAppDeploymentStatus.NotStarted || (shouldPollAfterStreamClose && isDeploymentInProgress(status));
+}
+
+function isDeploymentInProgress(status?: EAppDeploymentStatus): boolean {
+    return status === EAppDeploymentStatus.InProgress;
+}
+
+function isDeploymentTerminal(status?: EAppDeploymentStatus): boolean {
+    return (
+        status === EAppDeploymentStatus.Canceled ||
+        status === EAppDeploymentStatus.Done ||
+        status === EAppDeploymentStatus.Failed
+    );
 }
 
 export function AppDeploymentDetailsRoute() {
@@ -36,6 +51,8 @@ export function AppDeploymentDetailsRoute() {
     invariant(appId, "appId must be defined");
     invariant(deploymentId, "deploymentId must be defined");
 
+    const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
+
     const {
         data: deploymentResponse,
         isFetching,
@@ -48,21 +65,29 @@ export function AppDeploymentDetailsRoute() {
         },
         {
             refetchInterval: query =>
-                shouldPollDeploymentDetails(query.state.data?.data.status)
+                shouldPollDeploymentDetails(query.state.data?.data.status, shouldPollAfterStreamClose)
                     ? DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS
                     : false,
         },
     );
     const deployment = deploymentResponse?.data;
 
-    const hasActiveDeployment = useMemo(
-        () => deployment?.status === EAppDeploymentStatus.InProgress,
-        [deployment?.status],
-    );
+    const hasActiveDeployment = useMemo(() => isDeploymentInProgress(deployment?.status), [deployment?.status]);
     const now = useDeploymentCurrentTime(hasActiveDeployment);
     const handleStreamClosedWhileInProgress = useCallback(() => {
+        setShouldPollAfterStreamClose(true);
         void refetchDeployment();
     }, [refetchDeployment]);
+
+    useEffect(() => {
+        setShouldPollAfterStreamClose(false);
+    }, [deploymentId]);
+
+    useEffect(() => {
+        if (shouldPollAfterStreamClose && isDeploymentTerminal(deployment?.status)) {
+            setShouldPollAfterStreamClose(false);
+        }
+    }, [deployment?.status, shouldPollAfterStreamClose]);
 
     const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
         onSuccess: response => {

@@ -6,6 +6,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectImageBuildSettingsCommands, ProjectImageBuildSettingsQueries } from "~/projects/data";
+import type { ProjectImageBuildRepoCacheClearResult } from "~/projects/domain";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
 import { AppLoader } from "@application/shared/components";
@@ -17,6 +18,7 @@ import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
+import { ClearRepoCacheResultDialog } from "../building-blocks";
 import { ProjectImageBuildSettingsForm } from "../form";
 import type { ProjectImageBuildSettingsFormSchemaOutput } from "../schemas";
 import type { ProjectImageBuildSettingsFormRef } from "../types";
@@ -34,6 +36,9 @@ export function ProjectImageBuildSettingsRoute() {
     const { id: projectId } = useParams<{ id: string }>();
     const formRef = useRef<ProjectImageBuildSettingsFormRef>(null);
     const [hasQueriedCache, setHasQueriedCache] = useState(false);
+    const [clearRepoCacheResult, setClearRepoCacheResult] = useState<ProjectImageBuildRepoCacheClearResult | null>(
+        null,
+    );
     const { canWrite, canExecute } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
@@ -60,8 +65,8 @@ export function ProjectImageBuildSettingsRoute() {
 
     const { mutate: clearRepoCache, isPending: isClearingRepoCache } =
         ProjectImageBuildSettingsCommands.useClearRepoCache({
-            onSuccess: () => {
-                toast.success("Repo cache cleared");
+            onSuccess: response => {
+                setClearRepoCacheResult(response.data);
                 setHasQueriedCache(true);
                 void repoCacheQuery.refetch();
             },
@@ -103,6 +108,12 @@ export function ProjectImageBuildSettingsRoute() {
         clearRepoCache({ projectID: resolvedProjectId });
     }
 
+    function handleClearRepoCacheResultOpenChange(open: boolean) {
+        if (!open) {
+            setClearRepoCacheResult(null);
+        }
+    }
+
     if (settingsQuery.isLoading) {
         return <AppLoader />;
     }
@@ -119,37 +130,45 @@ export function ProjectImageBuildSettingsRoute() {
     invariant(settingsQuery.data, "image build settings data must be defined");
 
     return (
-        <ProjectImageBuildSettingsForm
-            ref={formRef}
-            defaultValues={settingsQuery.data.data}
-            onSubmit={handleSubmit}
-            readOnly={!canWrite}
-            cacheInfo={repoCacheQuery.data?.data}
-            cacheInfoControls={{
-                hasQueried: hasQueriedCache,
-                isQuerying: repoCacheQuery.isFetching,
-                isClearing: isClearingRepoCache,
-                readOnly: !canExecute,
-                note: (
-                    <NoteBox>
-                        Enabling the cache feature can significantly reduce the application deployment time if your
-                        repository is large. However, this will consume space on your hard drive.
-                    </NoteBox>
-                ),
-                footer: (
-                    <div className="flex justify-end mt-4">
-                        <ProjectPermissionSubmitButton isPending={isUpdating} />
-                    </div>
-                ),
-                onQuery: handleQueryRepoCache,
-                onClear: handleClearRepoCache,
-            }}
-        >
-            <NoteBox>
-                The image build process can consume a large amount of your system&apos;s resources and may affect
-                running applications. It is recommended that you set resource limits for this process. The system uses a
-                default configuration, but you can reconfigure it here.
-            </NoteBox>
-        </ProjectImageBuildSettingsForm>
+        <>
+            <ProjectImageBuildSettingsForm
+                ref={formRef}
+                defaultValues={settingsQuery.data.data}
+                onSubmit={handleSubmit}
+                readOnly={!canWrite}
+                cacheInfo={repoCacheQuery.data?.data}
+                cacheInfoControls={{
+                    hasQueried: hasQueriedCache,
+                    isQuerying: repoCacheQuery.isFetching,
+                    isClearing: isClearingRepoCache,
+                    readOnly: !canExecute,
+                    note: (
+                        <NoteBox>
+                            Enabling the cache feature can significantly reduce the application deployment time if your
+                            repository is large. However, this will consume space on your hard drive.
+                        </NoteBox>
+                    ),
+                    footer: (
+                        <div className="flex justify-end mt-4">
+                            <ProjectPermissionSubmitButton isPending={isUpdating} />
+                        </div>
+                    ),
+                    onQuery: handleQueryRepoCache,
+                    onClear: handleClearRepoCache,
+                }}
+            >
+                <NoteBox>
+                    The image build process can consume a large amount of your system&apos;s resources and may affect
+                    running applications. It is recommended that you set resource limits for this process. The system
+                    uses a default configuration, but you can reconfigure it here.
+                </NoteBox>
+            </ProjectImageBuildSettingsForm>
+
+            <ClearRepoCacheResultDialog
+                open={Boolean(clearRepoCacheResult)}
+                result={clearRepoCacheResult}
+                onOpenChange={handleClearRepoCacheResultOpenChange}
+            />
+        </>
     );
 }

@@ -8,8 +8,6 @@ import { Err, Ok, type Result } from "oxide.ts";
 
 import { session } from "@infrastructure/api";
 
-const DEFAULT_LOG_TAIL = 100;
-
 export type AppDeploymentLogsWs_StreamLogs_Req = {
     data: {
         projectID: string;
@@ -42,7 +40,6 @@ export class AppDeploymentLogsWsApi extends BaseWebSocketApi {
                 )}/deployments/${encodeURIComponent(deploymentID)}/logs`,
                 {
                     follow: true,
-                    tail: DEFAULT_LOG_TAIL,
                 },
             );
 

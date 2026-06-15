@@ -119,13 +119,13 @@ export function AllowedVolumesFields({ name, type, readOnly = false }: Props) {
                 </div>
 
                 {fields.length > 0 && (
-                    <div className="flex flex-col divide-y">
+                    <div className="flex w-full max-w-[545px] flex-col divide-y">
                         {fields.map((field, index) => (
                             <div
                                 key={field.fieldId}
-                                className="flex items-center justify-between gap-2 py-1.5"
+                                className="grid grid-cols-[minmax(0,1fr)_76px] items-center gap-2 py-1.5"
                             >
-                                <div className="flex-1 grid grid-cols-1 items-center">
+                                <div className="grid min-w-0 grid-cols-1 items-center">
                                     <span className="break-words text-sm">{field.name}</span>
                                 </div>
                                 <div className="w-[76px]">

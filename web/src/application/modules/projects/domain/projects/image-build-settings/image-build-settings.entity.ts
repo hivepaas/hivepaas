@@ -34,3 +34,8 @@ export interface ProjectImageBuildRepoCacheInfo {
     totalFiles: number;
     totalSizeBytes: number;
 }
+
+export interface ProjectImageBuildRepoCacheClearResult {
+    filesDeleted: number;
+    spaceReclaimed: number;
+}

@@ -418,6 +418,64 @@ function BackupCleanupOptionsFields() {
     );
 }
 
+function CacheCleanupOptionsFields() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field: enabled } = useController({ control, name: "cacheCleanup.enabled" });
+    const {
+        field: repoCacheRetention,
+        fieldState: { error: repoCacheRetentionError, invalid: isRepoCacheRetentionInvalid },
+    } = useController({ control, name: "cacheCleanup.repoCacheRetention" });
+
+    return (
+        <>
+            <SectionHeader>Cache Cleanup Options</SectionHeader>
+            <div className="flex flex-col gap-6 px-3">
+                <InfoBlock title="Enabled">
+                    <Checkbox
+                        checked={enabled.value}
+                        onCheckedChange={enabled.onChange}
+                    />
+                </InfoBlock>
+
+                {enabled.value && (
+                    <InfoBlock title="Repo Cache Retention">
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...repoCacheRetention}
+                                    placeholder="30d"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isRepoCacheRetentionInvalid}
+                                />
+                                <FieldError errors={[repoCacheRetentionError]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
+            </div>
+        </>
+    );
+}
+
+function FileCleanupOptionsFields() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field: enabled } = useController({ control, name: "fileCleanup.enabled" });
+
+    return (
+        <>
+            <SectionHeader>File Cleanup Options</SectionHeader>
+            <div className="flex flex-col gap-6 px-3">
+                <InfoBlock title="Enabled">
+                    <Checkbox
+                        checked={enabled.value}
+                        onCheckedChange={enabled.onChange}
+                    />
+                </InfoBlock>
+            </div>
+        </>
+    );
+}
+
 function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
     const { sources, manageLink } = useNotificationSettingsSources({ type: "settings" });
 
@@ -455,6 +513,8 @@ function EnabledCleanupConfigurationFields({ nextRuns, readOnly }: { nextRuns: D
             <DBCleanupOptionsFields />
             <DockerSwarmCleanupOptionsFields />
             <BackupCleanupOptionsFields />
+            <CacheCleanupOptionsFields />
+            <FileCleanupOptionsFields />
             <NotificationFields readOnly={readOnly} />
         </>
     );

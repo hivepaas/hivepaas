@@ -1,4 +1,10 @@
-import type { SystemCleanupSettings } from "~/system-settings/domain";
+import type {
+    SystemCleanupBuildCacheClearResult,
+    SystemCleanupExecuteResult,
+    SystemCleanupRepoCacheClearResult,
+    SystemCleanupRepoCacheInfo,
+    SystemCleanupSettings,
+} from "~/system-settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
@@ -34,6 +40,13 @@ export type SystemCleanup_UpdateOne_Payload = {
         cloudBackupRetention: string;
         localBackupRetention: string;
     };
+    cacheCleanup: {
+        enabled: boolean;
+        repoCacheRetention: string;
+    };
+    fileCleanup: {
+        enabled: boolean;
+    };
     notification: {
         success: {
             id: string;
@@ -52,4 +65,13 @@ export type SystemCleanup_UpdateOne_Req = ApiRequestBase<{
 export type SystemCleanup_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type SystemCleanup_Execute_Req = ApiRequestBase<Record<string, never>>;
-export type SystemCleanup_Execute_Res = ApiResponseBase<{ type: "success" }>;
+export type SystemCleanup_Execute_Res = ApiResponseBase<SystemCleanupExecuteResult>;
+
+export type SystemCleanup_FindRepoCache_Req = ApiRequestBase<Record<string, never>>;
+export type SystemCleanup_FindRepoCache_Res = ApiResponseBase<SystemCleanupRepoCacheInfo>;
+
+export type SystemCleanup_ClearRepoCache_Req = ApiRequestBase<Record<string, never>>;
+export type SystemCleanup_ClearRepoCache_Res = ApiResponseBase<SystemCleanupRepoCacheClearResult>;
+
+export type SystemCleanup_ClearBuildCache_Req = ApiRequestBase<Record<string, never>>;
+export type SystemCleanup_ClearBuildCache_Res = ApiResponseBase<SystemCleanupBuildCacheClearResult>;

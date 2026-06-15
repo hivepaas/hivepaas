@@ -43,6 +43,13 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
             localBackupRetention: values.backupCleanup.localBackupRetention,
             cloudBackupRetention: values.backupCleanup.cloudBackupRetention,
         },
+        cacheCleanup: {
+            enabled: values.cacheCleanup.enabled,
+            repoCacheRetention: values.cacheCleanup.repoCacheRetention,
+        },
+        fileCleanup: {
+            enabled: values.fileCleanup.enabled,
+        },
         notification: {
             successUseDefault: values.notification.successUseDefault,
             success: {

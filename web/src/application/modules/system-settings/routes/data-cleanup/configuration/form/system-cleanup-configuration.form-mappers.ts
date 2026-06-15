@@ -30,6 +30,13 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
         localBackupRetention: "30d",
         cloudBackupRetention: "30d",
     },
+    cacheCleanup: {
+        enabled: true,
+        repoCacheRetention: "30d",
+    },
+    fileCleanup: {
+        enabled: true,
+    },
     notification: {
         successUseDefault: true,
         success: undefined,
@@ -65,6 +72,13 @@ export function mapSystemCleanupSettingsToFormInput(
             enabled: settings.backupCleanup.enabled,
             localBackupRetention: settings.backupCleanup.localBackupRetention,
             cloudBackupRetention: settings.backupCleanup.cloudBackupRetention,
+        },
+        cacheCleanup: {
+            enabled: settings.cacheCleanup.enabled,
+            repoCacheRetention: settings.cacheCleanup.repoCacheRetention || "30d",
+        },
+        fileCleanup: {
+            enabled: settings.fileCleanup.enabled,
         },
         notification: {
             successUseDefault: settings.notification?.successUseDefault ?? true,

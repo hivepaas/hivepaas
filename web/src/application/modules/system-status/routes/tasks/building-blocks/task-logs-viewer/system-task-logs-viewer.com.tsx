@@ -152,7 +152,6 @@ export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProg
             onRefresh={!isConnectionActive && showRefresh ? handleRefresh : undefined}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
-            useAnsiClasses
             height={TASK_LOG_VIEWER_HEIGHT}
             fontSize="0.875rem"
             downloadFileName={`system-task-${taskID}-logs.txt`}

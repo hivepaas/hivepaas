@@ -163,7 +163,6 @@ export function ScheduledJobTaskLogsViewer({
             onRefresh={!isConnectionActive && showRefresh ? handleRefresh : undefined}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
-            useAnsiClasses
             height={TASK_LOG_VIEWER_HEIGHT}
             fontSize="0.875rem"
             downloadFileName={`scheduled-job-task-${taskID}-logs.txt`}

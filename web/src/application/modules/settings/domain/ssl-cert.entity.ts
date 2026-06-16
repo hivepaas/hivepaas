@@ -9,8 +9,14 @@ export interface SslCertEventNotification {
     failureUseDefault: boolean;
 }
 
+export interface SslCertProvider {
+    id: string;
+    name: string;
+}
+
 export interface SettingSslCert extends SettingsBaseEntity {
     certType: ESslCertType;
+    provider?: SslCertProvider | null;
     domain: string;
     certificate: string;
     privateKey: string;

@@ -3,33 +3,20 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingSslCert } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
+import { formatSslCertType } from "~/settings/module-shared/constants/ssl-provider.constants";
 
 import { ESslCertType } from "@application/shared/enums";
 
 import { SslCertEditCell, SslCertMenuCell } from "./building-blocks";
 import type { SslCertTableScope } from "./ssl-cert-table.types";
 
-function formatCertType(certType: SettingSslCert["certType"]): string {
-    switch (certType) {
-        case ESslCertType.LetsEncrypt:
-            return "Let’s Encrypt";
-        case ESslCertType.Custom:
-            return "Custom";
-        case ESslCertType.SelfSigned:
-            return "Self-signed";
-        default:
-            return certType;
-    }
-}
-
 function getCertTypeClassName(certType: SettingSslCert["certType"]): string {
     switch (certType) {
-        case ESslCertType.LetsEncrypt:
-            return "bg-emerald-300 text-white";
         case ESslCertType.Custom:
+        case ESslCertType.SelfSigned:
             return "bg-slate-300 text-white";
         default:
-            return "bg-muted text-muted-foreground";
+            return "bg-emerald-300 text-white";
     }
 }
 
@@ -75,7 +62,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
                     <Badge className={getCertTypeClassName(original.certType)}>
-                        {formatCertType(original.certType)}
+                        {formatSslCertType(original.certType)}
                     </Badge>
                 </div>
             ),

@@ -40,6 +40,7 @@ export type SslProvider_FindManyPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
+    kind?: ESslProviderKind;
 }>;
 export type SslProvider_FindManyPaginated_Res = ApiResponsePaginated<SettingSslProvider>;
 

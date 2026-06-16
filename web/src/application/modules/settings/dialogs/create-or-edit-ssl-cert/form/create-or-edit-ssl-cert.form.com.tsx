@@ -3,12 +3,15 @@ import { useEffect, useMemo } from "react";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { ProjectSslProviderQueries } from "~/projects/data/queries";
+import { SslProviderQueries } from "~/settings/data/queries";
 import type { SslCertTableScope } from "~/settings/module-shared/components";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
+import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 
 import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { ESslCertType, ESslKeyType } from "@application/shared/enums";
+import { ESslCertType, ESslKeyType, ESslProviderKind } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
 
 import {
@@ -25,9 +28,6 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    Tabs,
-    TabsList,
-    TabsTrigger,
 } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
@@ -50,6 +50,21 @@ const CUSTOM_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.RSA3072,
     ESslKeyType.RSA4096,
 ];
+
+const SSL_CERT_PROVIDER_UNSPECIFIED = "__unspecified_provider";
+
+function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
+    switch (certType) {
+        case ESslCertType.LetsEncrypt:
+            return ESslProviderKind.LetsEncrypt;
+        case ESslCertType.ZeroSSL:
+            return ESslProviderKind.ZeroSSL;
+        case ESslCertType.GoogleTrust:
+            return ESslProviderKind.GoogleTrust;
+        default:
+            return undefined;
+    }
+}
 
 function formatKeyTypeLabel(value: ESslKeyType): string {
     switch (value) {
@@ -88,11 +103,18 @@ export function CreateOrEditSslCertForm({
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const initialProviderId = initialValues?.provider?.id;
+    const initialProviderName = initialValues?.provider?.name;
+    const initialProvider = useMemo(
+        () => (initialProviderId ? { id: initialProviderId, name: initialProviderName ?? "" } : undefined),
+        [initialProviderId, initialProviderName],
+    );
 
     const methods = useForm<CreateOrEditSslCertFormInput, unknown, CreateOrEditSslCertFormOutput>({
         defaultValues: {
             domain: initialValues?.domain ?? "",
             certType: initialValues?.certType ?? ESslCertType.LetsEncrypt,
+            provider: initialProvider,
             email: initialValues?.email ?? "",
             keyType: initialValues?.keyType ?? ESslKeyType.ECP256,
             autoRenew: initialValues?.autoRenew ?? true,
@@ -125,6 +147,7 @@ export function CreateOrEditSslCertForm({
         reset({
             domain: initialValues?.domain ?? "",
             certType: initialValues?.certType ?? ESslCertType.LetsEncrypt,
+            provider: initialProvider,
             email: initialValues?.email ?? "",
             keyType: initialValues?.keyType ?? ESslKeyType.ECP256,
             autoRenew: initialValues?.autoRenew ?? true,
@@ -157,6 +180,7 @@ export function CreateOrEditSslCertForm({
         initialValues?.notification?.successUseDefault,
         initialValues?.notifyFrom,
         initialValues?.privateKey,
+        initialProvider,
         reset,
     ]);
 
@@ -165,16 +189,57 @@ export function CreateOrEditSslCertForm({
     }, [isDirty, onHasChanges, isReadOnly]);
 
     const certType = useWatch({ control, name: "certType" });
+    const providerValue = useWatch({ control, name: "provider" });
     const expireAt = useWatch({ control, name: "expireAt" });
     const notifyFrom = useWatch({ control, name: "notifyFrom" });
-    const isLetsEncrypt = certType === ESslCertType.LetsEncrypt;
+    const providerKind = getProviderKind(certType);
+    const isCustom = certType === ESslCertType.Custom;
+    const isAcme = providerKind !== undefined;
     const { sources: notificationSources, manageLink: notificationManageLink } = useNotificationSettingsSources(scope);
 
+    const settingsProviderQuery = SslProviderQueries.useFindManyPaginated(
+        { kind: providerKind },
+        {
+            enabled: providerKind !== undefined && scope.type === "settings",
+        },
+    );
+
+    const projectProviderQuery = ProjectSslProviderQueries.useFindManyPaginated(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            kind: providerKind,
+        },
+        {
+            enabled: providerKind !== undefined && scope.type === "project",
+        },
+    );
+
+    const providerQuery = scope.type === "project" ? projectProviderQuery : settingsProviderQuery;
+    const providerOptions = useMemo(() => providerQuery.data?.data ?? [], [providerQuery.data?.data]);
+
     useEffect(() => {
-        if (isLetsEncrypt) {
+        if (isAcme) {
             setValue("keyType", ESslKeyType.ECP256);
         }
-    }, [isLetsEncrypt, setValue]);
+    }, [isAcme, setValue]);
+
+    useEffect(() => {
+        if (providerKind !== undefined || !providerValue) {
+            return;
+        }
+
+        setValue("provider", undefined, { shouldDirty: true });
+    }, [providerKind, providerValue, setValue]);
+
+    useEffect(() => {
+        if (providerKind === undefined || !providerValue || providerQuery.isFetching || providerOptions.length === 0) {
+            return;
+        }
+
+        if (!providerOptions.some(option => option.id === providerValue.id)) {
+            setValue("provider", undefined, { shouldDirty: true });
+        }
+    }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
 
     useEffect(() => {
         if (!expireAt || notifyFrom) {
@@ -185,17 +250,21 @@ export function CreateOrEditSslCertForm({
     }, [expireAt, notifyFrom, setValue]);
 
     const keyTypeOptions = useMemo(() => {
-        return (isLetsEncrypt ? LETS_ENCRYPT_KEY_TYPES : CUSTOM_KEY_TYPES).map(value => ({
+        return (isAcme ? LETS_ENCRYPT_KEY_TYPES : CUSTOM_KEY_TYPES).map(value => ({
             value,
             label: formatKeyTypeLabel(value),
         }));
-    }, [isLetsEncrypt]);
+    }, [isAcme]);
 
     const {
         field: domain,
         fieldState: { invalid: isDomainInvalid },
     } = useController({ name: "domain", control });
     const { field: certTypeField } = useController({ name: "certType", control });
+    const {
+        field: provider,
+        fieldState: { invalid: isProviderInvalid },
+    } = useController({ name: "provider", control });
     const {
         field: email,
         fieldState: { invalid: isEmailInvalid },
@@ -275,24 +344,89 @@ export function CreateOrEditSslCertForm({
                                     />
                                 }
                             >
-                                <Tabs
-                                    value={certType}
-                                    onValueChange={value => {
-                                        certTypeField.onChange(value);
-                                    }}
-                                >
-                                    <TabsList>
-                                        <TabsTrigger value={ESslCertType.LetsEncrypt}>Let&apos;s Encrypt</TabsTrigger>
-                                        <TabsTrigger value={ESslCertType.Custom}>Custom</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
+                                <Field>
+                                    <Select
+                                        value={certTypeField.value}
+                                        onValueChange={value => {
+                                            certTypeField.onChange(value);
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="select certificate type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {SSL_CERT_TYPE_OPTIONS.map(option => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError errors={[errors.certType]} />
+                                </Field>
                             </InfoBlock>
+
+                            {providerKind !== undefined && (
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={<LabelWithInfo label="SSL Provider" />}
+                                >
+                                    <Field>
+                                        <Select
+                                            value={provider.value?.id ?? SSL_CERT_PROVIDER_UNSPECIFIED}
+                                            onValueChange={value => {
+                                                if (value === SSL_CERT_PROVIDER_UNSPECIFIED) {
+                                                    provider.onChange(undefined);
+                                                    return;
+                                                }
+
+                                                const selectedProvider = providerOptions.find(
+                                                    option => option.id === value,
+                                                );
+                                                provider.onChange(
+                                                    selectedProvider
+                                                        ? {
+                                                              id: selectedProvider.id,
+                                                              name: selectedProvider.name,
+                                                          }
+                                                        : undefined,
+                                                );
+                                            }}
+                                        >
+                                            <SelectTrigger aria-invalid={isProviderInvalid}>
+                                                <SelectValue
+                                                    placeholder={
+                                                        providerQuery.isFetching
+                                                            ? "Loading providers..."
+                                                            : "select provider"
+                                                    }
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value={SSL_CERT_PROVIDER_UNSPECIFIED}>None</SelectItem>
+                                                {providerOptions.map(option => (
+                                                    <SelectItem
+                                                        key={option.id}
+                                                        value={option.id}
+                                                    >
+                                                        {option.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError errors={[errors.provider]} />
+                                    </Field>
+                                </InfoBlock>
+                            )}
 
                             <InfoBlock
                                 titleWidth={220}
                                 title={
                                     <LabelWithInfo
-                                        label={isLetsEncrypt ? "Registration E-mail" : "E-mail"}
+                                        label={isCustom ? "E-mail" : "Registration E-mail"}
                                         isRequired
                                     />
                                 }
@@ -341,7 +475,7 @@ export function CreateOrEditSslCertForm({
                                 </Field>
                             </InfoBlock>
 
-                            {isLetsEncrypt ? (
+                            {!isCustom ? (
                                 <InfoBlock
                                     titleWidth={220}
                                     title={<LabelWithInfo label="Auto-renew" />}

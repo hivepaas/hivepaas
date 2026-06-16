@@ -1,4 +1,25 @@
-import { ESslKeyType, ESslProviderKind } from "@application/shared/enums";
+import { ESslCertType, ESslKeyType, ESslProviderKind } from "@application/shared/enums";
+
+const LEGACY_GOOGLE_TRUST_CERT_TYPE = "googlets";
+
+export const SSL_CERT_TYPE_OPTIONS = [
+    {
+        value: ESslCertType.LetsEncrypt,
+        label: "Let’s Encrypt",
+    },
+    {
+        value: ESslCertType.ZeroSSL,
+        label: "Zero SSL",
+    },
+    {
+        value: ESslCertType.GoogleTrust,
+        label: "Google Trust Services",
+    },
+    {
+        value: ESslCertType.Custom,
+        label: ESslCertType.Custom,
+    },
+] as const;
 
 export const SSL_PROVIDER_OPTIONS = [
     {
@@ -11,7 +32,7 @@ export const SSL_PROVIDER_OPTIONS = [
     },
     {
         value: ESslProviderKind.GoogleTrust,
-        label: "Google Trust",
+        label: "Google Trust Services",
     },
 ] as const;
 
@@ -48,4 +69,16 @@ export const SSL_KEY_TYPE_OPTIONS = [
 
 export function formatSslProviderKind(kind: string): string {
     return SSL_PROVIDER_OPTIONS.find(option => option.value === kind)?.label ?? kind;
+}
+
+export function formatSslCertType(certType: string): string {
+    if (certType === LEGACY_GOOGLE_TRUST_CERT_TYPE) {
+        return "Google Trust Services";
+    }
+
+    if (certType === ESslCertType.SelfSigned) {
+        return ESslCertType.SelfSigned;
+    }
+
+    return SSL_CERT_TYPE_OPTIONS.find(option => option.value === certType)?.label ?? certType;
 }

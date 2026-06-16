@@ -21,8 +21,30 @@ function addDays(date: Date, days: number): Date {
     return result;
 }
 
-function normalizeCertType(certType?: string): typeof ESslCertType.LetsEncrypt | typeof ESslCertType.Custom {
-    return certType === ESslCertType.LetsEncrypt ? ESslCertType.LetsEncrypt : ESslCertType.Custom;
+function normalizeCertType(certType?: string): ESslCertType {
+    switch (certType) {
+        case ESslCertType.LetsEncrypt:
+        case ESslCertType.ZeroSSL:
+        case ESslCertType.GoogleTrust:
+        case ESslCertType.SelfSigned:
+        case ESslCertType.Custom:
+            return certType;
+        case "googlets":
+            return ESslCertType.GoogleTrust;
+        default:
+            return ESslCertType.Custom;
+    }
+}
+
+function getGeneratedCertValidityDays(certType: ESslCertType): number {
+    switch (certType) {
+        case ESslCertType.LetsEncrypt:
+        case ESslCertType.ZeroSSL:
+        case ESslCertType.GoogleTrust:
+            return 90;
+        default:
+            return 365;
+    }
 }
 
 function buildNotificationPayload(
@@ -129,8 +151,9 @@ export function CreateOrEditSslCertDialog() {
 
     function createPayload(values: CreateOrEditSslCertFormOutput) {
         const now = new Date();
-        const isLetsEncrypt = values.certType === ESslCertType.LetsEncrypt;
-        const fallbackExpireAt = addDays(now, isLetsEncrypt ? 90 : 365);
+        const isCustom = values.certType === ESslCertType.Custom;
+        const generatedCertValidityDays = getGeneratedCertValidityDays(values.certType);
+        const fallbackExpireAt = addDays(now, generatedCertValidityDays);
         const expireAt = values.expireAt ?? fallbackExpireAt;
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
 
@@ -139,13 +162,14 @@ export function CreateOrEditSslCertDialog() {
                 state.mode !== "closed" && state.scope.type === "project" ? false : values.availableInProjects,
             default: values.default,
             certType: values.certType,
+            provider: values.provider?.id ? { id: values.provider.id } : undefined,
             domain: values.domain,
-            certificate: isLetsEncrypt ? "" : values.certificate,
-            privateKey: isLetsEncrypt ? "" : values.privateKey,
+            certificate: isCustom ? values.certificate : "",
+            privateKey: isCustom ? values.privateKey : "",
             keyType: values.keyType,
-            validPeriod: isLetsEncrypt ? "90d" : "365d",
+            validPeriod: `${generatedCertValidityDays}d`,
             email: values.email,
-            autoRenew: isLetsEncrypt ? values.autoRenew : false,
+            autoRenew: isCustom ? false : values.autoRenew,
             expireAt,
             notifyFrom,
             notification: buildNotificationPayload(values.notification),
@@ -221,6 +245,7 @@ export function CreateOrEditSslCertDialog() {
             ? {
                   domain: sslCert.domain,
                   certType: normalizeCertType(sslCert.certType),
+                  provider: sslCert.provider ?? undefined,
                   email: sslCert.email,
                   keyType: sslCert.keyType,
                   autoRenew: sslCert.autoRenew,

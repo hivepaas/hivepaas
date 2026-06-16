@@ -16,6 +16,10 @@ const SslCertEventNotificationSchema = z.object({
     failureUseDefault: z.boolean(),
 });
 
+const SslCertTypeSchema = z
+    .union([z.nativeEnum(ESslCertType), z.literal("googlets")])
+    .transform(value => (value === "googlets" ? ESslCertType.GoogleTrust : value));
+
 /**
  * SSL cert setting from API (aligned with BE `SSLCertResp` + `BaseSettingResp`).
  */
@@ -23,7 +27,8 @@ export const SslCertSettingEntitySchema = SettingsBaseEntitySchema.omit({ descri
     type: z.literal(ESettingType.SSLCert),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
-    certType: z.nativeEnum(ESslCertType),
+    certType: SslCertTypeSchema,
+    provider: NamedObjectSchema.nullish(),
     domain: z.string(),
     certificate: z.string(),
     privateKey: z.string(),

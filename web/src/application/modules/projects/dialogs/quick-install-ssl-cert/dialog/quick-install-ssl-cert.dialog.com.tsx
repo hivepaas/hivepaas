@@ -81,6 +81,7 @@ export function QuickInstallSslCertDialog() {
                 availableInProjects: false,
                 default: false,
                 certType: values.certType,
+                provider: undefined,
                 domain: values.domain,
                 certificate: values.certType === ESslCertType.Custom ? values.certificate : "",
                 privateKey: values.certType === ESslCertType.Custom ? values.privateKey : "",

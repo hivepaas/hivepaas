@@ -20,7 +20,7 @@ export function LogsViewer({
     isStreaming = false,
     isRefreshPending = false,
     hasLineNumbers = true,
-    useAnsiClasses = true,
+    useAnsiClasses = false,
     height = DEFAULT_LOG_VIEWER_HEIGHT,
     fullscreenHeight = DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT,
     fontSize = DEFAULT_LOG_VIEWER_FONT_SIZE,

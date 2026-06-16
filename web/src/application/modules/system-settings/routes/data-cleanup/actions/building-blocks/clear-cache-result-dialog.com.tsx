@@ -26,20 +26,20 @@ export function ClearCacheResultDialog({ open, title, rows, onOpenChange }: Clea
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="w-[640px] max-w-[calc(100vw-2rem)]">
+            <DialogFixedContent className="w-[400px] max-w-[calc(100vw-2rem)]">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl">{title}</DialogTitle>
+                    <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
 
-                <DialogBody className="py-8">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-8 gap-y-7 text-base sm:text-lg">
+                <DialogBody className="">
+                    <div className="flex flex-col gap-2">
                         {rows.map(row => (
                             <div
                                 key={row.label}
-                                className="contents"
+                                className="flex items-center gap-3"
                             >
-                                <span className="font-semibold">{row.label}</span>
-                                <span>{row.value}</span>
+                                <div className="text-sm font-medium w-[145px]">{row.label}</div>
+                                <div className="flex-1">{row.value}</div>
                             </div>
                         ))}
                     </div>

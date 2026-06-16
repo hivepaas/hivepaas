@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import {
+    CircleDashed,
     Container,
     LayoutGrid,
     type LucideIcon,
@@ -188,6 +189,20 @@ const navMain: SidebarItem[] = [
         pattern: ROUTE.userManagement.users.$pattern,
         icon: Users,
         moduleId: MODULE_IDS.User,
+    },
+    {
+        title: "System Status",
+        route: "#",
+        pattern: ROUTE.systemStatus.$pattern,
+        icon: CircleDashed,
+        moduleId: MODULE_IDS.System,
+        items: [
+            {
+                title: "Tasks",
+                route: ROUTE.systemStatus.tasks.$route,
+                pattern: ROUTE.systemStatus.tasks.$pattern,
+            },
+        ],
     },
     {
         title: "Your Account",

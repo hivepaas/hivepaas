@@ -38,8 +38,8 @@ function getEabValues(sslProvider?: SettingSslProvider) {
 
     if (sslProvider.kind === ESslProviderKind.GoogleTrust) {
         return {
-            eabKid: sslProvider.googleTS?.eabKid ?? "",
-            eabHmacKey: sslProvider.googleTS?.eabHmacKey ?? "",
+            eabKid: sslProvider.googleTrust?.eabKid ?? "",
+            eabHmacKey: sslProvider.googleTrust?.eabHmacKey ?? "",
         };
     }
 
@@ -57,7 +57,7 @@ function createPayload(
         values.defaultKeyType === SSL_PROVIDER_UNSPECIFIED_KEY_TYPE ? undefined : values.defaultKeyType;
     const isLetsEncrypt = values.kind === ESslProviderKind.LetsEncrypt;
     const isZeroSSL = values.kind === ESslProviderKind.ZeroSSL;
-    const isGoogleTS = values.kind === ESslProviderKind.GoogleTrust;
+    const isGoogleTrust = values.kind === ESslProviderKind.GoogleTrust;
     const eabPayload = {
         eabKid: values.eabKid,
         eabHmacKey: values.eabHmacKey,
@@ -72,7 +72,7 @@ function createPayload(
         ...(defaultKeyType ? { defaultKeyType } : {}),
         letsEncrypt: isLetsEncrypt ? {} : null,
         zeroSSL: isZeroSSL ? eabPayload : null,
-        googleTS: isGoogleTS ? eabPayload : null,
+        googleTrust: isGoogleTrust ? eabPayload : null,
     };
 }
 

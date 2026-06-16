@@ -6,6 +6,8 @@ import type {
 } from "~/settings/api/services/ssl-provider-services";
 import type { SettingSslProvider } from "~/settings/domain";
 
+import type { ESslProviderKind } from "@application/shared/enums";
+
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
 export type ProjectSslProvider_FindManyPaginated_Req = ApiRequestBase<{
@@ -13,6 +15,7 @@ export type ProjectSslProvider_FindManyPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
+    kind?: ESslProviderKind;
 }>;
 export type ProjectSslProvider_FindManyPaginated_Res = ApiResponsePaginated<SettingSslProvider>;
 

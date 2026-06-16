@@ -19,6 +19,6 @@ export const SslProviderSettingEntitySchema = SettingsBaseEntitySchema.omit({ de
     defaultKeyType: z.nativeEnum(ESslKeyType).or(z.literal("")).optional().default(""),
     letsEncrypt: SslProviderLetsEncryptSchema.nullish(),
     zeroSSL: SslProviderEabSchema.nullish(),
-    googleTS: SslProviderEabSchema.nullish(),
+    googleTrust: SslProviderEabSchema.nullish(),
     secretMasked: z.boolean().optional(),
 });

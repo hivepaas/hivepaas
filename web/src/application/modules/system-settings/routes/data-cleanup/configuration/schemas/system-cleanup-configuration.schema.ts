@@ -46,6 +46,13 @@ export const SystemCleanupConfigurationFormSchema = z.object({
         localBackupRetention: z.string(),
         cloudBackupRetention: z.string(),
     }),
+    cacheCleanup: z.object({
+        enabled: z.boolean(),
+        repoCacheRetention: z.string(),
+    }),
+    fileCleanup: z.object({
+        enabled: z.boolean(),
+    }),
     notification: NotificationSchema,
 });
 

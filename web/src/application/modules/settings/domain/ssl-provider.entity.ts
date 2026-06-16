@@ -15,6 +15,6 @@ export interface SettingSslProvider extends SettingsBaseEntity {
     defaultKeyType: ESslKeyType | "";
     letsEncrypt?: SettingSslProviderLetsEncrypt | null;
     zeroSSL?: SettingSslProviderEab | null;
-    googleTS?: SettingSslProviderEab | null;
+    googleTrust?: SettingSslProviderEab | null;
     secretMasked?: boolean;
 }

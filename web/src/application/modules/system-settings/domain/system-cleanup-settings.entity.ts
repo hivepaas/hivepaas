@@ -30,6 +30,15 @@ export interface SystemCleanupBackupCleanup {
     localBackupRetention: string;
 }
 
+export interface SystemCleanupCacheCleanup {
+    enabled: boolean;
+    repoCacheRetention: string;
+}
+
+export interface SystemCleanupFileCleanup {
+    enabled: boolean;
+}
+
 export interface SystemCleanupNotification {
     success?: {
         id: string;
@@ -50,6 +59,29 @@ export interface SystemCleanupSettings extends SettingsBaseEntity {
     dbObjectRetention: SystemCleanupDBObjectRetention;
     clusterCleanup: SystemCleanupClusterCleanup;
     backupCleanup: SystemCleanupBackupCleanup;
+    cacheCleanup: SystemCleanupCacheCleanup;
+    fileCleanup: SystemCleanupFileCleanup;
     notification?: SystemCleanupNotification | null;
     nextRuns: Date[];
+}
+
+export interface SystemCleanupExecuteResult {
+    task: {
+        id: string;
+    };
+}
+
+export interface SystemCleanupRepoCacheInfo {
+    totalFiles: number;
+    totalSizeBytes: number;
+}
+
+export interface SystemCleanupRepoCacheClearResult {
+    filesDeleted: number;
+    spaceReclaimed: number;
+}
+
+export interface SystemCleanupBuildCacheClearResult {
+    cachesDeleted: number;
+    spaceReclaimed: number;
 }

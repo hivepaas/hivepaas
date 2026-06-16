@@ -28,14 +28,19 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, search, pagination, sorting, kind } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
+
+        const params = {
+            ...query.build(),
+            ...(kind ? { kind } : {}),
+        };
 
         return lastValueFrom(
             from(
                 this.client.v1.get(`/projects/${projectID}/ssl-providers`, {
-                    params: query.build(),
+                    params,
                     signal,
                 }),
             ).pipe(

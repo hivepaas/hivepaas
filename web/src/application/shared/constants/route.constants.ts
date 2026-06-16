@@ -247,6 +247,24 @@ export const ROUTE = {
     },
 
     /**
+     * System Status
+     */
+    systemStatus: {
+        $pattern: "system-status",
+        $route: "/system-status/tasks/",
+
+        tasks: {
+            $pattern: "system-status/tasks",
+            $route: "/system-status/tasks/",
+
+            details: {
+                $pattern: "system-status/tasks/:taskId",
+                $route: (taskId: string) => `/system-status/tasks/${taskId}/`,
+            },
+        },
+    },
+
+    /**
      * Projects
      */
     projects: {

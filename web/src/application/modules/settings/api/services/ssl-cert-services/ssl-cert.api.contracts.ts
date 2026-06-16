@@ -13,10 +13,15 @@ export type SslCert_Notification_Payload = {
     failureUseDefault: boolean;
 };
 
+export type SslCert_Provider_Payload = {
+    id: string;
+};
+
 export type SslCert_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     certType: ESslCertType;
+    provider?: SslCert_Provider_Payload;
     domain: string;
     certificate: string;
     privateKey: string;
@@ -34,6 +39,7 @@ export type SslCert_UpdateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     certType: ESslCertType;
+    provider?: SslCert_Provider_Payload;
     domain: string;
     certificate: string;
     privateKey: string;

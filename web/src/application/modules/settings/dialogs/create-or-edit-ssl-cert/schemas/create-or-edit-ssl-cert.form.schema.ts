@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
-const NotificationTargetSchema = z
+const NamedObjectSchema = z
     .object({
         id: z.string(),
         name: z.string(),
@@ -12,7 +12,8 @@ const NotificationTargetSchema = z
 export const CreateOrEditSslCertFormSchema = z
     .object({
         domain: z.string().trim().min(1, "Domain is required"),
-        certType: z.enum([ESslCertType.LetsEncrypt, ESslCertType.Custom]),
+        certType: z.nativeEnum(ESslCertType),
+        provider: NamedObjectSchema.nullish(),
         email: z.string().trim().email("Invalid email"),
         keyType: z.nativeEnum(ESslKeyType),
         autoRenew: z.boolean(),
@@ -24,9 +25,9 @@ export const CreateOrEditSslCertFormSchema = z
         default: z.boolean(),
         notification: z.object({
             successUseDefault: z.boolean(),
-            success: NotificationTargetSchema,
+            success: NamedObjectSchema,
             failureUseDefault: z.boolean(),
-            failure: NotificationTargetSchema,
+            failure: NamedObjectSchema,
         }),
     })
     .superRefine((value, ctx) => {

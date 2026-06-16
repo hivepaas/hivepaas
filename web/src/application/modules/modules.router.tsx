@@ -9,6 +9,7 @@ import { projectsRouter } from "./projects/projects.router";
 import { settingsRouter } from "./settings/settings.router";
 import { sourcesRouter } from "./sources/sources.router";
 import { systemSettingsRouter } from "./system-settings";
+import { systemStatusRouter } from "./system-status";
 import { userManagementRouter } from "./user-management/user-management.router";
 
 export const modulesRouter: RouteObject = {
@@ -30,5 +31,6 @@ export const modulesRouter: RouteObject = {
         sourcesRouter,
         settingsRouter,
         systemSettingsRouter,
+        systemStatusRouter,
     ],
 } as const;

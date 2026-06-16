@@ -13,7 +13,7 @@ export const SSL_CERT_TYPE_OPTIONS = [
     },
     {
         value: ESslCertType.GoogleTrust,
-        label: "Google Trust ",
+        label: "Google Trust",
     },
     {
         value: ESslCertType.Custom,

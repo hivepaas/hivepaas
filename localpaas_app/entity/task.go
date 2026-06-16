@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -183,7 +184,7 @@ func parseTaskArgsAs[T any](t *Task, newFn func() T) (res T, error error) {
 	if t.parsedArgs != nil {
 		res, ok := t.parsedArgs.(T)
 		if !ok {
-			return res, apperrors.NewTypeInvalid()
+			return res, apperrors.NewMismatch("Task args type", reflect.TypeFor[T]())
 		}
 		return res, nil
 	}
@@ -226,7 +227,7 @@ func parseTaskOutputAs[T any](t *Task, newFn func() T) (res T, error error) {
 	if t.parsedOutput != nil {
 		res, ok := t.parsedOutput.(T)
 		if !ok {
-			return res, apperrors.NewTypeInvalid()
+			return res, apperrors.NewMismatch("Task output type", reflect.TypeFor[T]())
 		}
 		return res, nil
 	}

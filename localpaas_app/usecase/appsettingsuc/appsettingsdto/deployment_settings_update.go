@@ -104,7 +104,8 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 		return nil, nil
 	}
 	// Normalize repo ref (currently supports git type only)
-	if req.RepoType == base.RepoTypeGit {
+	switch req.RepoType { //nolint:gocritic
+	case base.RepoTypeGit:
 		req.RepoRef = string(githelper.NormalizeRepoRef(req.RepoRef))
 	}
 	parsedRepoURL, err := vcsurl.Parse(req.RepoURL)
@@ -114,16 +115,14 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 	repoID := parsedRepoURL.ID
 
 	return &entity.DeploymentRepoSource{
-		BuildTool:   req.BuildTool,
-		RepoType:    req.RepoType,
-		RepoID:      repoID,
-		RepoURL:     req.RepoURL,
-		RepoRef:     req.RepoRef,
-		CommitHash:  req.CommitHash,
-		RepoOptions: req.RepoOptions.ToEntity(),
-		Credentials: entity.RepoCredentials{
-			ID: req.Credentials.ID,
-		},
+		BuildTool:      req.BuildTool,
+		RepoType:       req.RepoType,
+		RepoID:         repoID,
+		RepoURL:        req.RepoURL,
+		RepoRef:        req.RepoRef,
+		CommitHash:     req.CommitHash,
+		RepoOptions:    req.RepoOptions.ToEntity(),
+		Credentials:    entity.RepoCredentials{ID: req.Credentials.ID},
 		DockerfilePath: req.DockerfilePath,
 		ImageName:      req.ImageName,
 		ImageTags:      req.ImageTags,

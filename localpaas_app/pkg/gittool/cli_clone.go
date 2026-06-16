@@ -20,7 +20,7 @@ func (cli *checkoutCli) clone(
 
 	//nolint:gosec
 	cmd := exec.CommandContext(ctx, "git", "clone", "--single-branch", "--depth=1",
-		"--branch="+cli.opts.branch, "--", cli.opts.URL, cli.opts.CheckoutDir)
+		"--branch="+cli.opts.refShort, "--", cli.opts.URL, cli.opts.CheckoutDir)
 	cmd.Env = cli.sharedEnv
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)

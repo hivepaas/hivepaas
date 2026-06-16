@@ -31,7 +31,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 
 		// Make sure the commit belongs to the branch
 		cmd = exec.CommandContext(ctx, "git", "merge-base", "--is-ancestor", commitHash,
-			fmt.Sprintf("%s/%s", cli.opts.RemoteName, cli.opts.branch))
+			fmt.Sprintf("%s/%s", cli.opts.RemoteName, cli.opts.refShort))
 		cmd.Dir = cli.opts.CheckoutDir
 		cmd.Env = []string{}
 		out, err = cmd.CombinedOutput()
@@ -42,7 +42,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 	} else {
 		//nolint:gosec
 		cmd := exec.CommandContext(ctx, "git", "fetch", "--depth=1",
-			cli.opts.RemoteName, cli.opts.branch)
+			cli.opts.RemoteName, cli.opts.refShort)
 		cmd.Dir = cli.opts.CheckoutDir
 		cmd.Env = cli.sharedEnv
 
@@ -54,7 +54,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 	}
 
 	// Hard reset the branch to make it point to the last fetched commit
-	cmd := exec.CommandContext(ctx, "git", "checkout", "-B", cli.opts.branch, "FETCH_HEAD") //nolint:gosec
+	cmd := exec.CommandContext(ctx, "git", "checkout", "-B", cli.opts.refShort, "FETCH_HEAD") //nolint:gosec
 	cmd.Dir = cli.opts.CheckoutDir
 	cmd.Env = cli.sharedEnv
 

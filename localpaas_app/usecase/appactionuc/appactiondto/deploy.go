@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
 )
 
 const (
@@ -87,6 +88,11 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 	}
 	if req != nil {
 		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
+		// Normalize repo ref (currently supports git type only)
+		switch setting.RepoType { //nolint:gocritic
+		case base.RepoTypeGit:
+			setting.RepoRef = string(githelper.NormalizeRepoRef(setting.RepoRef))
+		}
 		if req.CommitHash != nil {
 			setting.CommitHash = *req.CommitHash
 		}

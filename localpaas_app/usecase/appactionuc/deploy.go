@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -12,7 +13,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/githelper"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/gittool"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
@@ -62,8 +64,9 @@ func (uc *UC) DeployApp(
 
 type deployAppData struct {
 	App                    *entity.App
-	DeploymentSettings     *entity.Setting
+	DeploymentSettingEnt   *entity.Setting
 	CurrDeploymentSettings *entity.AppDeploymentSettings
+	NewDeploymentSettings  *entity.AppDeploymentSettings
 }
 
 type persistingAppData struct {
@@ -89,31 +92,74 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.DeploymentSettings, _ = gofn.First(app.Settings)
+	data.DeploymentSettingEnt, _ = gofn.First(app.Settings)
 
-	if data.DeploymentSettings == nil || !data.DeploymentSettings.IsActive() {
-		return apperrors.NewNotFound("AppDeploymentSettings").
+	if data.DeploymentSettingEnt == nil || !data.DeploymentSettingEnt.IsActive() {
+		return apperrors.NewNotFound("App deployment settings").
 			WithMsgLog("app deployment settings not found")
 	}
 
 	// Parse the current deployment settings
-	currSetting, err := data.DeploymentSettings.AsAppDeploymentSettings()
+	currSettings, err := data.DeploymentSettingEnt.AsAppDeploymentSettings()
 	if err != nil {
 		return apperrors.New(err).WithMsgLog("failed to parse app deployment settings")
 	}
-	data.CurrDeploymentSettings = currSetting
+	data.CurrDeploymentSettings = currSettings
+
+	newSettings, err := copier.CopyAs(currSettings)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.NewDeploymentSettings = newSettings
+	if err = req.ApplyTo(newSettings); err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	// Make sure all reference settings used in this settings exist actively
+	refObjects, err := uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetSettingScope(),
+		true, true, newSettings.GetRefObjectIDs())
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 
 	// Validate active deployment method
-	req.ActiveMethod = gofn.Coalesce(req.ActiveMethod, currSetting.ActiveMethod)
-	if req.ActiveMethod == "" {
+	if newSettings.ActiveMethod == "" {
 		return apperrors.NewMissing("Deployment method")
 	}
 
-	// Normalize repo ref
-	if req.RepoSource != nil && req.RepoSource.RepoRef != "" && currSetting.RepoSource != nil {
-		if currSetting.RepoSource.RepoType == base.RepoTypeGit {
-			req.RepoSource.RepoRef = string(githelper.NormalizeRepoRef(req.RepoSource.RepoRef))
+	switch newSettings.ActiveMethod {
+	case base.DeploymentMethodImage:
+		// Do nothing
+
+	case base.DeploymentMethodRepo:
+		repoSource := newSettings.RepoSource
+
+		// When the cluster has multiple nodes, the result image must be pushed to a registry
+		// that can be accessed by all the nodes in the cluster.
+		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
+		if err != nil {
+			return apperrors.Wrap(err)
 		}
+		if isMultiNode && repoSource.PushToRegistry.ID == "" {
+			return apperrors.Wrap(apperrors.ErrMultiNodeClusterRequireRegistryForImages)
+		}
+
+		// Validate existence of repo and ref
+		switch repoSource.RepoType { //nolint:gocritic
+		case base.RepoTypeGit:
+			// TODO: do not check commit hash for now, that's so slow
+			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
+				URL:           repoSource.RepoURL,
+				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
+				ReferenceName: plumbing.ReferenceName(repoSource.RepoRef),
+			})
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+		}
+
+	default:
+		return apperrors.NewValueInvalid("deployment method")
 	}
 
 	return nil
@@ -126,23 +172,17 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	persistingData *persistingAppData,
 ) error {
 	app := data.App
-	setting := data.DeploymentSettings
+	setting := data.DeploymentSettingEnt
 	setting.UpdateVer++
 	setting.UpdatedAt = timeutil.NowUTC()
 	setting.ExpireAt = time.Time{}
 	setting.Status = base.SettingStatusActive
 
-	currDeploymentSettings := data.CurrDeploymentSettings
-	err := req.ApplyTo(currDeploymentSettings)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	setting.MustSetData(currDeploymentSettings)
+	setting.MustSetData(data.NewDeploymentSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 
 	// Create a deployment and a task for it
-	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(app, currDeploymentSettings)
+	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(app, data.NewDeploymentSettings)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

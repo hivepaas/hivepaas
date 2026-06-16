@@ -35,7 +35,7 @@ type CheckoutOptions struct {
 	LogStore    *tasklog.Store
 
 	// Internal fields
-	branch string
+	refShort string
 }
 
 func CheckoutWithGitCli(
@@ -105,9 +105,14 @@ func (cli *checkoutCli) processCheckoutOpts(
 		cli.sharedEnv = append(cli.sharedEnv, "GIT_LFS_SKIP_SMUDGE=1")
 	}
 
-	cli.opts.branch = cli.opts.ReferenceName.Short()
 	if cli.opts.RemoteName == "" {
 		cli.opts.RemoteName = "origin"
+	}
+
+	if cli.opts.ReferenceName.IsBranch() || cli.opts.ReferenceName.IsTag() { // Only support branch and tag
+		cli.opts.refShort = cli.opts.ReferenceName.Short()
+	} else {
+		return apperrors.NewUnsupported("Repository ref type")
 	}
 
 	authMethod, err := calcGitAuthMethod(ctx, cli.opts.Credentials)

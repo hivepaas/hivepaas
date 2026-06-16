@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
@@ -12,6 +13,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/gittool"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
@@ -104,21 +106,37 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	data.NewDeploymentSettings = newDeploymentSettings
 
 	// Make sure all reference settings used in this settings exist actively
-	_, err = uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetSettingScope(),
+	refObjects, err := uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetSettingScope(),
 		true, true, newDeploymentSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	if newDeploymentSettings.RepoSource != nil {
+	if newDeploymentSettings.ActiveMethod == base.DeploymentMethodRepo {
+		repoSource := newDeploymentSettings.RepoSource
+
 		// When the cluster has multiple nodes, the result image must be pushed to a registry
 		// that can be accessed by all the nodes in the cluster.
 		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		if isMultiNode && newDeploymentSettings.RepoSource.PushToRegistry.ID == "" {
+		if isMultiNode && repoSource.PushToRegistry.ID == "" {
 			return apperrors.Wrap(apperrors.ErrMultiNodeClusterRequireRegistryForImages)
+		}
+
+		// Validate existence of repo and ref
+		switch repoSource.RepoType { //nolint:gocritic
+		case base.RepoTypeGit:
+			// TODO: do not check commit hash for now, that's so slow
+			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
+				URL:           repoSource.RepoURL,
+				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
+				ReferenceName: plumbing.ReferenceName(repoSource.RepoRef),
+			})
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
 		}
 	}
 

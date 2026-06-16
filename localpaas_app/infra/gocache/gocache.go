@@ -47,7 +47,7 @@ func (c *Cache) GetStr(key string) (string, error) {
 	}
 	v, ok := val.(string)
 	if !ok {
-		return "", apperrors.NewTypeInvalid()
+		return "", apperrors.NewTypeInvalid("string expected")
 	}
 	return v, nil
 }
@@ -59,7 +59,7 @@ func (c *Cache) GetInt(key string) (int, error) {
 	}
 	v, ok := val.(int)
 	if !ok {
-		return 0, apperrors.NewTypeInvalid()
+		return 0, apperrors.NewTypeInvalid("int expected")
 	}
 	return v, nil
 }
@@ -71,7 +71,7 @@ func (c *Cache) GetBool(key string) (bool, error) {
 	}
 	v, ok := val.(bool)
 	if !ok {
-		return false, apperrors.NewTypeInvalid()
+		return false, apperrors.NewTypeInvalid("bool expected")
 	}
 	return v, nil
 }

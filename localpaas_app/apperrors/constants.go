@@ -35,6 +35,7 @@ var (
 	ErrTypeInvalid              = errors.New("ERR_TYPE_INVALID")
 	ErrValueInvalid             = errors.New("ERR_VALUE_INVALID")
 	ErrTokenInvalid             = errors.New("ERR_TOKEN_INVALID")
+	ErrMismatch                 = errors.New("ERR_MISMATCH")
 	ErrUpdateVerMismatched      = errors.New("ERR_UPDATE_VER_MISMATCHED")
 	ErrURLInvalid               = errors.New("ERR_URL_INVALID")
 	ErrValidation               = errors.New("ERR_VALIDATION")
@@ -169,6 +170,7 @@ var errorStatusMap = map[error]int{
 	ErrTypeInvalid:              http.StatusUnprocessableEntity,
 	ErrValueInvalid:             http.StatusUnprocessableEntity,
 	ErrTokenInvalid:             http.StatusUnprocessableEntity,
+	ErrMismatch:                 http.StatusUnprocessableEntity,
 	ErrUpdateVerMismatched:      http.StatusUnprocessableEntity,
 	ErrURLInvalid:               http.StatusUnprocessableEntity,
 	ErrValidation:               http.StatusBadRequest,

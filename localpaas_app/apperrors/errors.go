@@ -144,19 +144,27 @@ func NewMissingNT(name any) AppError { // NT: non translation param
 }
 
 // NewTypeInvalid return AppError for error TypeInvalid
-func NewTypeInvalid() AppError {
-	return New(ErrTypeInvalid)
+func NewTypeInvalid(name any) AppError {
+	return New(ErrTypeInvalid).WithParam("Name", name)
 }
-func NewTypeInvalidNT() AppError { // NT: non translation param
-	return New(ErrTypeInvalid)
+func NewTypeInvalidNT(name any) AppError { // NT: non translation param
+	return New(ErrTypeInvalid).WithNTParam("Name", name)
 }
 
 // NewValueInvalid return AppError for error ValueInvalid
-func NewValueInvalid() AppError {
-	return New(ErrValueInvalid)
+func NewValueInvalid(name any) AppError {
+	return New(ErrValueInvalid).WithParam("Name", name)
 }
-func NewValueInvalidNT() AppError { // NT: non translation param
-	return New(ErrValueInvalid)
+func NewValueInvalidNT(name any) AppError { // NT: non translation param
+	return New(ErrValueInvalid).WithNTParam("Name", name)
+}
+
+// NewMismatch return AppError for error Mismatch
+func NewMismatch(left, right any) AppError {
+	return New(ErrMismatch).WithParam("Left", left).WithParam("Right", right)
+}
+func NewMismatchNT(left, right any) AppError { // NT: non translation param
+	return New(ErrMismatch).WithNTParam("Left", left).WithNTParam("Right", right)
 }
 
 // NewUnsupported return AppError for error Unsupported

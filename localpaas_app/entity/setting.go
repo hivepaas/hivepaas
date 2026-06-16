@@ -2,6 +2,7 @@ package entity
 
 import (
 	"encoding/json"
+	"reflect"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -23,7 +24,7 @@ type SettingParser interface {
 }
 
 var (
-	settingParserMap = make(map[base.SettingType]SettingParser, 20) //nolint:mnd
+	settingParserMap = make(map[base.SettingType]SettingParser, 30) //nolint:mnd
 )
 
 //nolint:unparam
@@ -60,8 +61,7 @@ type Setting struct {
 
 	// NOTE: temporary fields
 	parsedData      SettingData
-	CurrentObjectID string      `bun:"-" json:"-"`
-	RefObjects      *RefObjects `bun:"-" json:"-"`
+	CurrentObjectID string `bun:"-" json:"-"`
 }
 
 type SettingData interface {
@@ -115,7 +115,7 @@ func (s *Setting) parseData(structPtr SettingData) error {
 
 func (s *Setting) SetData(data SettingData) error {
 	if data.GetType() != s.Type {
-		return apperrors.NewTypeInvalid()
+		return apperrors.NewMismatch("Setting type", s.Type)
 	}
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -153,14 +153,14 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 	if s.parsedData != nil {
 		res, ok := s.parsedData.(T)
 		if !ok {
-			return res, apperrors.NewTypeInvalid()
+			return res, apperrors.NewMismatch("Setting type", reflect.TypeFor[T]())
 		}
 		return res, nil
 	}
 	if s.Data != "" {
 		res = settingParserMap[s.Type].New().(T) //nolint:forcetypeassert
 		if res.GetType() != s.Type {
-			return res, apperrors.NewTypeInvalid()
+			return res, apperrors.NewMismatch("Setting type", s.Type)
 		}
 		if err := s.parseData(res); err != nil {
 			return res, apperrors.Wrap(err)

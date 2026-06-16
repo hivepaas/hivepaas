@@ -7,6 +7,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/taskservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
 	"github.com/localpaas/localpaas/services/docker"
@@ -21,9 +23,11 @@ type UC struct {
 	taskLogRepo          repository.TaskLogRepo
 	deploymentInfoRepo   cacherepository.DeploymentInfoRepo
 	taskControlRepo      cacherepository.TaskControlRepo
+	settingService       settingservice.Service
 	appService           appservice.Service
 	appDeploymentService appdeploymentservice.Service
 	taskService          taskservice.Service
+	clusterService       clusterservice.Service
 	taskQueue            queue.TaskQueue
 	dockerManager        docker.Manager
 }
@@ -37,9 +41,11 @@ func New(
 	taskLogRepo repository.TaskLogRepo,
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
 	taskControlRepo cacherepository.TaskControlRepo,
+	settingService settingservice.Service,
 	appService appservice.Service,
 	appDeploymentService appdeploymentservice.Service,
 	taskService taskservice.Service,
+	clusterService clusterservice.Service,
 	taskQueue queue.TaskQueue,
 	dockerManager docker.Manager,
 ) *UC {
@@ -52,9 +58,11 @@ func New(
 		taskLogRepo:          taskLogRepo,
 		deploymentInfoRepo:   deploymentInfoRepo,
 		taskControlRepo:      taskControlRepo,
+		settingService:       settingService,
 		appService:           appService,
 		appDeploymentService: appDeploymentService,
 		taskService:          taskService,
+		clusterService:       clusterService,
 		taskQueue:            taskQueue,
 		dockerManager:        dockerManager,
 	}

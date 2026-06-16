@@ -110,12 +110,12 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 
 	// Load project storage settings to make sure these app settings comply with
-	storageSttg, err := uc.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(app.ProjectID),
+	storageSetting, err := uc.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.StorageSettings = storageSttg.MustAsStorageSettings()
+	data.StorageSettings = storageSetting.MustAsStorageSettings()
 
 	for _, reqMnt := range req.Mounts {
 		if !gofn.Contain(supportedMountTypes, reqMnt.Type) {

@@ -28,8 +28,8 @@ func (s *service) sysBackupSaveResultInStorage(
 	if data.SysBackupSettings.CloudStorage.ID == "" {
 		return nil
 	}
-	storageSttg := data.RefObjects.RefSettings[data.SysBackupSettings.CloudStorage.ID]
-	if storageSttg == nil {
+	storageSetting := data.RefObjects.RefSettings[data.SysBackupSettings.CloudStorage.ID]
+	if storageSetting == nil {
 		return nil
 	}
 
@@ -37,9 +37,9 @@ func (s *service) sysBackupSaveResultInStorage(
 	var storageBucket string
 	var uploadFunc func(targetFilePath string, data io.Reader) error
 
-	switch base.CloudStorageKind(storageSttg.Kind) {
+	switch base.CloudStorageKind(storageSetting.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSttg)
+		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -50,7 +50,7 @@ func (s *service) sysBackupSaveResultInStorage(
 				0, 0, input)
 		}
 	default:
-		return apperrors.NewUnsupported(apperrors.Fmt("Storage type '%v'", storageSttg.Kind))
+		return apperrors.NewUnsupported(apperrors.Fmt("Storage type '%v'", storageSetting.Kind))
 	}
 
 	targetFilePath := filepath.Join(data.SysBackupSettings.CloudStorage.DestinationDir, data.OutFileName)

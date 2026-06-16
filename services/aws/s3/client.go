@@ -55,11 +55,11 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	}, nil
 }
 
-func NewClientFromSetting(ctx context.Context, storageSttg *entity.Setting) (*Client, error) {
-	if storageSttg.Type != base.SettingTypeCloudStorage || storageSttg.Kind != string(base.CloudStorageKindS3) {
+func NewClientFromSetting(ctx context.Context, storageSetting *entity.Setting) (*Client, error) {
+	if storageSetting.Type != base.SettingTypeCloudStorage || storageSetting.Kind != string(base.CloudStorageKindS3) {
 		return nil, apperrors.New(apperrors.ErrSettingTypeInvalid)
 	}
-	storage, err := storageSttg.AsCloudStorage()
+	storage, err := storageSetting.AsCloudStorage()
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

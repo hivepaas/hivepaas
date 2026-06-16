@@ -55,10 +55,8 @@ func (uc *UC) UpdateProjectEnvVars(
 }
 
 type updateProjectEnvVarsData struct {
-	Project  *entity.Project
-	EnvVars  *entity.Setting
-	Errors   []string // stores errors
-	Warnings []string // stores warnings
+	Project        *entity.Project
+	EnvVarsSetting *entity.Setting
 }
 
 func (uc *UC) loadProjectEnvVarsForUpdate(
@@ -78,9 +76,9 @@ func (uc *UC) loadProjectEnvVarsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.Project = project
-	data.EnvVars = project.GetSettingByType(base.SettingTypeEnvVar)
+	data.EnvVarsSetting = project.GetSettingByType(base.SettingTypeEnvVar)
 
-	if data.EnvVars != nil && data.EnvVars.UpdateVer != req.UpdateVer {
+	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
@@ -93,7 +91,7 @@ func (uc *UC) prepareUpdatingProjectEnvVars(
 	persistingData *persistingProjectData,
 ) {
 	project := data.Project
-	setting := data.EnvVars
+	setting := data.EnvVarsSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {

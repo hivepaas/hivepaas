@@ -38,11 +38,11 @@ func (s *service) GetDownloadURL(
 	}
 
 	// File is stored in an external cloud and presign allowed
-	storageSttg := file.Storage
+	storageSetting := file.Storage
 
-	switch base.CloudStorageKind(storageSttg.Kind) {
+	switch base.CloudStorageKind(storageSetting.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSttg)
+		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

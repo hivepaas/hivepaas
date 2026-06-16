@@ -228,7 +228,7 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 
 	// Init empty http settings
 	httpSettings := &entity.AppHttpSettings{}
-	dbHttpSettings := &entity.Setting{
+	dbHttpSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.ObjectScopeApp,
 		Type:      base.SettingTypeAppHttp,
@@ -237,8 +237,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	dbHttpSettings.MustSetData(httpSettings)
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSettings)
+	dbHttpSetting.MustSetData(httpSettings)
+	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSetting)
 }
 
 func (uc *UC) persistData(

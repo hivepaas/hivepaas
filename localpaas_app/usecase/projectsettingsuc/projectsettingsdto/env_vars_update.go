@@ -42,11 +42,5 @@ func (req *UpdateProjectEnvVarsReq) Validate() apperrors.ValidationErrors {
 }
 
 type UpdateProjectEnvVarsResp struct {
-	Meta *basedto.Meta                 `json:"meta"`
-	Data *UpdateProjectEnvVarsDataResp `json:"data"`
-}
-
-type UpdateProjectEnvVarsDataResp struct {
-	Errors   []string `json:"errors,omitempty"`
-	Warnings []string `json:"warnings,omitempty"`
+	Meta *basedto.Meta `json:"meta"`
 }

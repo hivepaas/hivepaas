@@ -59,7 +59,7 @@ func (uc *UC) UpdateAppHttpSettings(
 
 type updateAppHttpSettingsData struct {
 	App             *entity.App
-	HttpSettings    *entity.Setting
+	HttpSetting     *entity.Setting
 	NewHttpSettings *entity.AppHttpSettings
 	RefObjects      *entity.RefObjects
 }
@@ -82,9 +82,9 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.HttpSettings = app.GetSettingByType(base.SettingTypeAppHttp)
+	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppHttp)
 
-	if data.HttpSettings != nil && data.HttpSettings.UpdateVer != req.UpdateVer {
+	if data.HttpSetting != nil && data.HttpSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
@@ -122,7 +122,7 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 	persistingData *persistingAppData,
 ) {
 	app := data.App
-	setting := data.HttpSettings
+	setting := data.HttpSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {
@@ -134,7 +134,7 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 			CreatedAt: timeNow,
 			Version:   entity.CurrentAppHttpSettingsVersion,
 		}
-		data.HttpSettings = setting
+		data.HttpSetting = setting
 	}
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
@@ -162,18 +162,18 @@ func (uc *UC) applyAppHttpSettings(
 	ctx context.Context,
 	data *updateAppHttpSettingsData,
 ) error {
-	appHttpSettings, err := data.HttpSettings.AsAppHttpSettings()
+	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	sslSettings := map[string]*entity.Setting{}
+	mapSslSettings := map[string]*entity.Setting{}
 	for _, sslID := range appHttpSettings.GetSSLCertIDs() {
 		if s := data.RefObjects.RefSettings[sslID]; s != nil {
-			sslSettings[s.ID] = s
+			mapSslSettings[s.ID] = s
 		}
 	}
-	err = uc.sslService.WriteCertFiles(false, gofn.MapValues(sslSettings)...)
+	err = uc.sslService.WriteCertFiles(false, gofn.MapValues(mapSslSettings)...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -192,7 +192,7 @@ func (uc *UC) applyAppHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, data.App, service, data.HttpSettings)
+	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, data.App, service, data.HttpSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

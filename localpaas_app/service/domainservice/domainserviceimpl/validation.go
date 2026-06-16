@@ -18,15 +18,15 @@ func (s *service) VerifyProjectDomains(
 	domains []string,
 ) error {
 	// Load domain settings in project
-	domainSttg, err := s.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(projectID),
+	domainSetting, err := s.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(projectID),
 		base.SettingTypeDomainSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
-	if domainSttg == nil {
+	if domainSetting == nil {
 		return nil
 	}
-	domainSettings := domainSttg.MustAsDomainSettings()
+	domainSettings := domainSetting.MustAsDomainSettings()
 	if len(domainSettings.AllowedDomains) == 0 {
 		return nil
 	}

@@ -65,11 +65,9 @@ func (uc *UC) UpdateAppDeploymentSettings(
 
 type updateAppDeploymentSettingsData struct {
 	App                   *entity.App
-	DeploymentSettings    *entity.Setting
+	DeploymentSetting     *entity.Setting
 	NewDeploymentSettings *entity.AppDeploymentSettings
-	RegistryAuth          *entity.Setting
-	Errors                []string // stores errors
-	Warnings              []string // stores warnings
+	RegistryAuthSetting   *entity.Setting
 }
 
 func (uc *UC) loadAppDeploymentSettingsForUpdate(
@@ -92,9 +90,9 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.DeploymentSettings = app.GetSettingByType(base.SettingTypeAppDeployment)
+	data.DeploymentSetting = app.GetSettingByType(base.SettingTypeAppDeployment)
 
-	deploymentSettings := data.DeploymentSettings
+	deploymentSettings := data.DeploymentSetting
 	if deploymentSettings != nil && deploymentSettings.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
@@ -150,7 +148,7 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	persistingData *persistingAppData,
 ) error {
 	app := data.App
-	setting := data.DeploymentSettings
+	setting := data.DeploymentSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {
@@ -162,7 +160,7 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 			CreatedAt: timeNow,
 			Version:   entity.CurrentAppDeploymentSettingsVersion,
 		}
-		data.DeploymentSettings = setting
+		data.DeploymentSetting = setting
 	}
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow

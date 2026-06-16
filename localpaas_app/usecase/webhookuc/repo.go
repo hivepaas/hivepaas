@@ -189,11 +189,11 @@ func (uc *UC) shouldRedeployAppByPushEvent(
 	app *entity.App,
 	pushEvent *repoPushEventData,
 ) (bool, error) {
-	deploymentStg := app.GetSettingByType(base.SettingTypeAppDeployment)
-	if deploymentStg == nil {
+	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
+	if deploymentSetting == nil {
 		return false, nil
 	}
-	deploymentSettings := deploymentStg.MustAsAppDeploymentSettings()
+	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo {
 		return false, nil
 	}
@@ -221,17 +221,17 @@ func (uc *UC) createAppDeploymentByPushEvent(
 	data *handleRepoWebhookData,
 	persistingData *appservice.PersistingAppData,
 ) error {
-	deploymentStg := app.GetSettingByType(base.SettingTypeAppDeployment)
-	deploymentSettings, err := deploymentStg.AsAppDeploymentSettings()
+	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
+	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	if deploymentSettings.RepoSource != nil && deploymentSettings.RepoSource.CommitHash != "" {
 		deploymentSettings.RepoSource.CommitHash = ""
-		deploymentStg.MustSetData(deploymentSettings)
-		deploymentStg.UpdateVer++
-		deploymentStg.UpdatedAt = timeutil.NowUTC()
-		persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, deploymentStg)
+		deploymentSetting.MustSetData(deploymentSettings)
+		deploymentSetting.UpdateVer++
+		deploymentSetting.UpdatedAt = timeutil.NowUTC()
+		persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, deploymentSetting)
 	}
 
 	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)

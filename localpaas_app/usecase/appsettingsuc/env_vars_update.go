@@ -56,8 +56,8 @@ func (uc *UC) UpdateAppEnvVars(
 }
 
 type updateAppEnvVarsData struct {
-	App     *entity.App
-	EnvVars *entity.Setting
+	App            *entity.App
+	EnvVarsSetting *entity.Setting
 }
 
 func (uc *UC) loadAppEnvVarsForUpdate(
@@ -78,9 +78,9 @@ func (uc *UC) loadAppEnvVarsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.EnvVars = app.GetSettingByType(base.SettingTypeEnvVar)
+	data.EnvVarsSetting = app.GetSettingByType(base.SettingTypeEnvVar)
 
-	if data.EnvVars != nil && data.EnvVars.UpdateVer != req.UpdateVer {
+	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
@@ -93,7 +93,7 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 	persistingData *persistingAppData,
 ) {
 	app := data.App
-	setting := data.EnvVars
+	setting := data.EnvVarsSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {

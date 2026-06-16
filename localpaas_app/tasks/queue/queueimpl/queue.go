@@ -74,11 +74,11 @@ func New(
 
 func (q *taskQueue) Start() (err error) {
 	ctx := context.Background()
-	lpSttg, err := q.startupService.LoadLocalPaaSServiceSetting(ctx)
+	lpSetting, err := q.startupService.LoadLocalPaaSServiceSetting(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	lpSettings := lpSttg.MustAsLocalPaaSService()
+	lpSettings := lpSetting.MustAsLocalPaaSService()
 
 	runWorker := q.isWorkerMode()
 	if q.isAppMode() {

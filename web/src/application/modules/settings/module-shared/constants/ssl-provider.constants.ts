@@ -13,7 +13,7 @@ export const SSL_CERT_TYPE_OPTIONS = [
     },
     {
         value: ESslCertType.GoogleTrust,
-        label: "Google Trust Services",
+        label: "Google Trust ",
     },
     {
         value: ESslCertType.Custom,
@@ -73,7 +73,7 @@ export function formatSslProviderKind(kind: string): string {
 
 export function formatSslCertType(certType: string): string {
     if (certType === LEGACY_GOOGLE_TRUST_CERT_TYPE) {
-        return "Google Trust Services";
+        return "Google Trust";
     }
 
     if (certType === ESslCertType.SelfSigned) {

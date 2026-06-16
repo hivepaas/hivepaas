@@ -21,7 +21,7 @@ export type SslProvider_CreateOne_Payload = {
     defaultKeyType?: ESslKeyType;
     letsEncrypt: SslProviderLetsEncrypt_Payload | null;
     zeroSSL: SslProviderEab_Payload | null;
-    googleTS: SslProviderEab_Payload | null;
+    googleTrust: SslProviderEab_Payload | null;
 };
 
 export type SslProvider_UpdateOne_Payload = SslProvider_CreateOne_Payload & {

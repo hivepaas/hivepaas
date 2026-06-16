@@ -188,7 +188,9 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, read
                                     <div className="text-xs">
                                         <p>
                                             <Link
-                                                to={ROUTE.projects.single.configuration.general.$route(projectId)}
+                                                to={ROUTE.projects.single.configuration.storageSettings.$route(
+                                                    projectId,
+                                                )}
                                                 className="text-blue-500"
                                             >
                                                 Configure storage settings in the project

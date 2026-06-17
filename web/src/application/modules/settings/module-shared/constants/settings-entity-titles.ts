@@ -1,4 +1,5 @@
 export const SETTINGS_ENTITY_TITLES = {
+    acmeDnsProvider: "ACME DNS Provider",
     basicAuth: "Basic Auth",
     registryAuth: "Registry Auth",
     sslCert: "SSL Certificate",

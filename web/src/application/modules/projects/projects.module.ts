@@ -17,6 +17,7 @@ export {
     ProjectImPlatformsRoute,
     ProjectSSHKeysRoute,
     ProjectAccessTokensRoute,
+    ProjectAcmeDnsProvidersRoute,
     ProjectCloudStoragesRoute,
     ProjectNotificationTargetsRoute,
     ProjectSecretsRoute,

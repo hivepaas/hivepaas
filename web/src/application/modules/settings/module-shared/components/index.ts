@@ -1,4 +1,5 @@
 export * from "./basic-auth-table";
+export * from "./acme-dns-provider-table";
 export * from "./registry-auth-table";
 export * from "./setting-status-badge";
 export * from "./ssl-cert-table";

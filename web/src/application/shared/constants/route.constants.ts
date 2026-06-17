@@ -153,6 +153,11 @@ export const ROUTE = {
             $route: "/settings/access-tokens/",
         },
 
+        acmeDnsProviders: {
+            $pattern: "settings/acme-dns-providers",
+            $route: "/settings/acme-dns-providers/",
+        },
+
         cloudStorages: {
             $pattern: "settings/cloud-storages",
             $route: "/settings/cloud-storages/",
@@ -430,6 +435,11 @@ export const ROUTE = {
                 accessTokens: {
                     $pattern: "projects/:id/provider-settings/access-tokens",
                     $route: (id: string) => `/projects/${id}/provider-settings/access-tokens/`,
+                },
+
+                acmeDnsProviders: {
+                    $pattern: "projects/:id/provider-settings/acme-dns-providers",
+                    $route: (id: string) => `/projects/${id}/provider-settings/acme-dns-providers/`,
                 },
 
                 basicAuth: {

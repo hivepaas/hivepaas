@@ -28,6 +28,8 @@ import {
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
+    ProjectAcmeDnsProviderApi,
+    ProjectAcmeDnsProviderApiValidator,
     ProjectBasicAuthApi,
     ProjectBasicAuthApiValidator,
     ProjectCloudStorageApi,
@@ -101,6 +103,7 @@ function createApi() {
     const appLogsApiValidator = new AppLogsApiValidator();
     const appLogsApi = new AppLogsApi(appLogsApiValidator);
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
+    const projectAcmeDnsProviderApiValidator = new ProjectAcmeDnsProviderApiValidator();
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
     const projectSettingsImportApiValidator = new ProjectSettingsImportApiValidator();
     const projectGithubAppApiValidator = new ProjectGithubAppApiValidator();
@@ -200,6 +203,9 @@ function createApi() {
             },
             secrets: {
                 $: new ProjectSecretsApi(projectSecretsApiValidator),
+            },
+            acmeDnsProvider: {
+                $: new ProjectAcmeDnsProviderApi(projectAcmeDnsProviderApiValidator),
             },
             basicAuth: {
                 $: new ProjectBasicAuthApi(projectBasicAuthApiValidator),

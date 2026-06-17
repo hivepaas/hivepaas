@@ -59,6 +59,10 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId),
         },
         {
+            label: "ACME DNS Providers",
+            route: ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$route(projectId),
+        },
+        {
             label: "Basic Auth",
             route: ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId),
         },

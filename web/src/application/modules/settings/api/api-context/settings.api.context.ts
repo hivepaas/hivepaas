@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    AcmeDnsProviderApi,
+    AcmeDnsProviderApiValidator,
     AccessTokenApi,
     AccessTokenApiValidator,
     BasicAuthApi,
@@ -40,6 +42,7 @@ function createApi() {
      * Settings
      */
     const notificationsValidator = new NotificationsApiValidator();
+    const acmeDnsProviderValidator = new AcmeDnsProviderApiValidator();
     const basicAuthValidator = new BasicAuthApiValidator();
     const domainSettingsValidator = new DomainSettingsApiValidator();
     const storageSettingsValidator = new StorageSettingsApiValidator();
@@ -59,6 +62,7 @@ function createApi() {
     return {
         settings: {
             notifications: new NotificationsApi(notificationsValidator),
+            acmeDnsProvider: new AcmeDnsProviderApi(acmeDnsProviderValidator),
             basicAuth: new BasicAuthApi(basicAuthValidator),
             domainSettings: new DomainSettingsApi(domainSettingsValidator),
             storageSettings: new StorageSettingsApi(storageSettingsValidator),

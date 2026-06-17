@@ -18,6 +18,7 @@ const LEGACY_PROJECT_SETTINGS_PATTERNS = {
 
 const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
     accessTokens: "projects/:id/configuration/access-tokens",
+    acmeDnsProviders: "projects/:id/configuration/acme-dns-providers",
     basicAuth: "projects/:id/configuration/basic-auth",
     cloudStorages: "projects/:id/configuration/cloud-storages",
     emailAccounts: "projects/:id/configuration/email-accounts",
@@ -36,6 +37,7 @@ const LEGACY_PROJECT_CONFIGURATION_PATTERNS = {
 const LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS = {
     root: "projects/:id/provider-configuration",
     accessTokens: "projects/:id/provider-configuration/access-tokens",
+    acmeDnsProviders: "projects/:id/provider-configuration/acme-dns-providers",
     basicAuth: "projects/:id/provider-configuration/basic-auth",
     cloudStorages: "projects/:id/provider-configuration/cloud-storages",
     emailAccounts: "projects/:id/provider-configuration/email-accounts",
@@ -178,6 +180,14 @@ export const projectsRouter: RouteObject = {
                     ),
                 },
                 {
+                    path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.acmeDnsProviders,
+                    element: (
+                        <ProjectRouteRedirect
+                            to={ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$route}
+                        />
+                    ),
+                },
+                {
                     path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.basicAuth,
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.basicAuth.$route} />,
                 },
@@ -257,6 +267,14 @@ export const projectsRouter: RouteObject = {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.acmeDnsProviders,
+                    element: (
+                        <ProjectRouteRedirect
+                            to={ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$route}
+                        />
                     ),
                 },
                 {
@@ -416,6 +434,16 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectAccessTokensRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$pattern,
+                            lazy: async () => {
+                                const { ProjectAcmeDnsProvidersRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectAcmeDnsProvidersRoute,
                                 };
                             },
                         },

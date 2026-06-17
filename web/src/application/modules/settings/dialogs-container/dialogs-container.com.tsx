@@ -3,6 +3,7 @@ import { memo } from "react";
 import { useLocation, useUpdateEffect } from "react-use";
 import {
     CreateOrEditAccessTokenDialog,
+    CreateOrEditAcmeDnsProviderDialog,
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
@@ -16,6 +17,7 @@ import {
     CreateOrEditSslProviderDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
+    UpdateAcmeDnsProviderStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
@@ -28,6 +30,7 @@ import {
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
     useCreateOrEditAccessTokenDialogState,
+    useCreateOrEditAcmeDnsProviderDialogState,
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
@@ -41,6 +44,7 @@ import {
     useCreateOrEditSslProviderDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
+    useUpdateAcmeDnsProviderStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
@@ -58,6 +62,8 @@ function View() {
     const location = useLocation();
     const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
+    const createOrEditAcmeDnsProviderDialog = useCreateOrEditAcmeDnsProviderDialogState();
+    const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
     const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
     const createOrEditSslCertDialog = useCreateOrEditSslCertDialogState();
@@ -85,6 +91,8 @@ function View() {
     useUpdateEffect(() => {
         createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
+        createOrEditAcmeDnsProviderDialog.destroy();
+        updateAcmeDnsProviderStatusDialog.destroy();
         createOrEditRegistryAuthDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
         createOrEditSslCertDialog.destroy();
@@ -114,6 +122,8 @@ function View() {
         <>
             <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
+            <CreateOrEditAcmeDnsProviderDialog />
+            <UpdateAcmeDnsProviderStatusDialog />
             <CreateOrEditRegistryAuthDialog />
             <UpdateRegistryAuthStatusDialog />
             <CreateOrEditSslCertDialog />

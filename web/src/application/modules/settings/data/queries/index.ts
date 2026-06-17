@@ -1,5 +1,6 @@
 export * from "./domain-settings.queries";
 export * from "./storage-settings.queries";
+export * from "./acme-dns-provider.queries";
 export * from "./basic-auth.queries";
 export * from "./git-credentials.queries";
 export * from "./notification.queries";

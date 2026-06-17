@@ -58,6 +58,7 @@ import {
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
     CreateOrEditAccessTokenDialog,
+    CreateOrEditAcmeDnsProviderDialog,
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
     CreateOrEditEmailAccountDialog,
@@ -71,6 +72,7 @@ import {
     CreateOrEditSslProviderDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
+    UpdateAcmeDnsProviderStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
     UpdateEmailAccountStatusDialog,
@@ -83,6 +85,7 @@ import {
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
     useCreateOrEditAccessTokenDialogState,
+    useCreateOrEditAcmeDnsProviderDialogState,
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
     useCreateOrEditEmailAccountDialogState,
@@ -96,6 +99,7 @@ import {
     useCreateOrEditSslProviderDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
+    useUpdateAcmeDnsProviderStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
     useUpdateEmailAccountStatusDialogState,
@@ -143,6 +147,8 @@ function View() {
     const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
     const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
+    const createOrEditAcmeDnsProviderDialog = useCreateOrEditAcmeDnsProviderDialogState();
+    const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
     const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
@@ -188,6 +194,8 @@ function View() {
         updateSSHKeyStatusDialog.destroy();
         createOrEditAccessTokenDialog.destroy();
         updateAccessTokenStatusDialog.destroy();
+        createOrEditAcmeDnsProviderDialog.destroy();
+        updateAcmeDnsProviderStatusDialog.destroy();
         createOrEditCloudStorageDialog.destroy();
         updateCloudStorageStatusDialog.destroy();
         createOrEditNotificationTargetDialog.destroy();
@@ -235,6 +243,8 @@ function View() {
             <UpdateSSHKeyStatusDialog />
             <CreateOrEditAccessTokenDialog />
             <UpdateAccessTokenStatusDialog />
+            <CreateOrEditAcmeDnsProviderDialog />
+            <UpdateAcmeDnsProviderStatusDialog />
             <CreateOrEditCloudStorageDialog />
             <UpdateCloudStorageStatusDialog />
             <CreateOrEditNotificationTargetDialog />

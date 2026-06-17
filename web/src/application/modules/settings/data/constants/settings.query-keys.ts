@@ -1,6 +1,8 @@
 export const QK = {
     "settings.notifications.find-many-paginated": "settings.notifications.find-many-paginated",
     "settings.notifications.find-one-by-id": "settings.notifications.find-one-by-id",
+    "settings.acme-dns-provider.find-many-paginated": "settings.acme-dns-provider.find-many-paginated",
+    "settings.acme-dns-provider.find-one-by-id": "settings.acme-dns-provider.find-one-by-id",
     "settings.basic-auth.find-many-paginated": "settings.basic-auth.find-many-paginated",
     "settings.basic-auth.find-one-by-id": "settings.basic-auth.find-one-by-id",
     "settings.git-credentials.find-many-paginated": "settings.git-credentials.find-many-paginated",

@@ -8,6 +8,7 @@ import {
     type ProjectSettingsImportKind,
 } from "~/projects/data/commands";
 import {
+    ProjectAcmeDnsProviderQueries,
     ProjectAccessTokenQueries,
     ProjectBasicAuthQueries,
     ProjectCloudStorageQueries,
@@ -22,6 +23,7 @@ import {
     ProjectSslProviderQueries,
 } from "~/projects/data/queries";
 import {
+    AcmeDnsProviderQueries,
     AccessTokenQueries,
     BasicAuthQueries,
     CloudStorageQueries,
@@ -37,6 +39,7 @@ import {
 } from "~/settings/data/queries";
 import type { SettingsBaseEntity } from "~/settings/domain";
 import { AccessTokenTableDefs } from "~/settings/module-shared/components/access-token-table/access-token-table.defs";
+import { AcmeDnsProviderTableDefs } from "~/settings/module-shared/components/acme-dns-provider-table/acme-dns-provider-table.defs";
 import { BasicAuthTableDefs } from "~/settings/module-shared/components/basic-auth-table/basic-auth-table.defs";
 import { CloudStorageTableDefs } from "~/settings/module-shared/components/cloud-storage-table/cloud-storage-table.defs";
 import { EmailAccountTableDefs } from "~/settings/module-shared/components/email-account-table/email-account-table.defs";
@@ -73,6 +76,8 @@ type ImportableSetting = SettingsBaseEntity & {
 const EMPTY_IMPORT_SETTINGS: ImportableSetting[] = [];
 
 const IMPORT_DIALOG_LABELS = {
+    [PROJECT_SETTINGS_IMPORT_KIND.AccessToken]: "Access Tokens",
+    [PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider]: "ACME DNS Providers",
     [PROJECT_SETTINGS_IMPORT_KIND.BasicAuth]: "Basic Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth]: "Registry Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.SslCert]: "SSL Certificates",
@@ -80,7 +85,6 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.Email]: "Email Accounts",
     [PROJECT_SETTINGS_IMPORT_KIND.ImService]: "IM Platforms",
     [PROJECT_SETTINGS_IMPORT_KIND.SSHKey]: "SSH Keys",
-    [PROJECT_SETTINGS_IMPORT_KIND.AccessToken]: "Access Tokens",
     [PROJECT_SETTINGS_IMPORT_KIND.CloudStorage]: "Cloud Storages",
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: "Notification Targets",
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: "Github Apps",
@@ -105,6 +109,10 @@ function getColumnId(column: ColumnDef<ImportableSetting>) {
 
 function getImportColumns(settingKind: ProjectSettingsImportKind | null): ColumnDef<ImportableSetting>[] {
     switch (settingKind) {
+        case PROJECT_SETTINGS_IMPORT_KIND.AccessToken:
+            return castColumns(AccessTokenTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider:
+            return castColumns(AcmeDnsProviderTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.BasicAuth:
             return castColumns(BasicAuthTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth:
@@ -119,8 +127,6 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(ImPlatformTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.SSHKey:
             return castColumns(SSHKeyTableDefs.columns({ type: "settings" }));
-        case PROJECT_SETTINGS_IMPORT_KIND.AccessToken:
-            return castColumns(AccessTokenTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.CloudStorage:
             return castColumns(CloudStorageTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.Notification:
@@ -220,6 +226,13 @@ export function ImportProjectSettingsDialog() {
     });
     const accessTokenProjectQuery = ProjectAccessTokenQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AccessToken,
+    });
+
+    const acmeDnsProviderSettingsQuery = AcmeDnsProviderQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider,
+    });
+    const acmeDnsProviderProjectQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider,
     });
 
     const cloudStorageSettingsQuery = CloudStorageQueries.useFindManyPaginated(queryRequest, {
@@ -335,6 +348,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void accessTokenSettingsQuery.refetch();
                 void accessTokenProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider:
+            settings = acmeDnsProviderSettingsQuery.data?.data ?? [];
+            projectSettings = acmeDnsProviderProjectQuery.data?.data ?? [];
+            isFetching = acmeDnsProviderSettingsQuery.isFetching || acmeDnsProviderProjectQuery.isFetching;
+            hasError = Boolean(acmeDnsProviderSettingsQuery.error ?? acmeDnsProviderProjectQuery.error);
+            refetch = () => {
+                void acmeDnsProviderSettingsQuery.refetch();
+                void acmeDnsProviderProjectQuery.refetch();
             };
             break;
         case PROJECT_SETTINGS_IMPORT_KIND.CloudStorage:

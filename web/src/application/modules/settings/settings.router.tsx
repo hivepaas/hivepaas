@@ -100,6 +100,11 @@ export const settingsRouter: RouteObject = {
 
             return SettingsAccessTokensRoute;
         }),
+        createSettingsRoute(ROUTE.settings.acmeDnsProviders.$pattern, "ACME DNS Providers", async () => {
+            const { SettingsAcmeDnsProvidersRoute } = await getLazyComponents();
+
+            return SettingsAcmeDnsProvidersRoute;
+        }),
         createSettingsRoute(ROUTE.settings.cloudStorages.$pattern, "Cloud Storages", async () => {
             const { SettingsCloudStoragesRoute } = await getLazyComponents();
 

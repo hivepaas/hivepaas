@@ -1,4 +1,5 @@
 export * from "./project-apps";
+export * from "./project-acme-dns-provider";
 export * from "./project-basic-auth";
 export * from "./project-settings-import";
 export * from "./project-github-app";

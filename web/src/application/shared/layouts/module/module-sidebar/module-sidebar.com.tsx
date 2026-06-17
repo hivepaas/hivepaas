@@ -79,6 +79,11 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.settings.accessTokens.$pattern,
             },
             {
+                title: "ACME DNS Providers",
+                route: ROUTE.settings.acmeDnsProviders.$route,
+                pattern: ROUTE.settings.acmeDnsProviders.$pattern,
+            },
+            {
                 title: "Basic Auth",
                 route: ROUTE.settings.basicAuth.$route,
                 pattern: ROUTE.settings.basicAuth.$pattern,

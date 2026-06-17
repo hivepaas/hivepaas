@@ -1,4 +1,5 @@
 export * from "./registry-auth.entity.schema";
+export * from "./acme-dns-provider.entity.schema";
 export * from "./settings-base.schema";
 export * from "./ssl-cert.entity.schema";
 export * from "./ssl-provider.entity.schema";

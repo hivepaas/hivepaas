@@ -14,6 +14,7 @@ const (
 	SettingTypeAPIKey             SettingType = "api-key"
 	SettingTypeApp                SettingType = "app"
 	SettingTypeAppDeployment      SettingType = "app-deployment"
+	SettingTypeAppFeatures        SettingType = "app-features"
 	SettingTypeAppHttp            SettingType = "app-http"
 	SettingTypeBasicAuth          SettingType = "basic-auth"
 	SettingTypeCloudStorage       SettingType = "cloud-storage"

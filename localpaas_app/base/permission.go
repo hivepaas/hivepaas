@@ -19,6 +19,7 @@ const (
 	ResourceTypeAcmeDnsProvider    ResourceType = "acme-dns-provider"
 	ResourceTypeAPIKey             ResourceType = "api-key"
 	ResourceTypeApp                ResourceType = "app"
+	ResourceTypeAppFeatures        ResourceType = "app-features"
 	ResourceTypeBasicAuth          ResourceType = "basic-auth"
 	ResourceTypeCloudStorage       ResourceType = "cloud-storage"
 	ResourceTypeCluster            ResourceType = "cluster"

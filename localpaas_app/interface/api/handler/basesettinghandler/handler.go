@@ -7,6 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accessiblebyprojectsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/acmednsprovideruc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc"
@@ -64,6 +65,7 @@ type Handler struct {
 	SSLRenewalUC           *sslrenewaluc.UC
 	FileUC                 *fileuc.UC
 	StorageSettingsUC      *storagesettingsuc.UC
+	AppFeatureSettingsUC   *appfeaturesettingsuc.UC
 }
 
 func New(
@@ -97,6 +99,7 @@ func New(
 	sslRenewalUC *sslrenewaluc.UC,
 	fileUC *fileuc.UC,
 	storageSettingsUC *storagesettingsuc.UC,
+	appFeatureSettingsUC *appfeaturesettingsuc.UC,
 ) *Handler {
 	return &Handler{
 		BaseHandler:            baseHandler,
@@ -129,5 +132,6 @@ func New(
 		SSLRenewalUC:           sslRenewalUC,
 		FileUC:                 fileUC,
 		StorageSettingsUC:      storageSettingsUC,
+		AppFeatureSettingsUC:   appFeatureSettingsUC,
 	}
 }

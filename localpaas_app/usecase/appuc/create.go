@@ -239,6 +239,24 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	}
 	dbHttpSetting.MustSetData(httpSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSetting)
+
+	// Init feature settings
+	featureSettings := &entity.AppFeatureSettings{
+		LoggingSettings:  &entity.AppFeatureLoggingSettings{Enabled: true},
+		SchedJobSettings: &entity.AppFeatureSchedJobSettings{Enabled: true},
+		TerminalSettings: &entity.AppFeatureTerminalSettings{Enabled: false},
+	}
+	dbFeatureSetting := &entity.Setting{
+		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.ObjectScopeApp,
+		Type:      base.SettingTypeAppFeatures,
+		Status:    base.SettingStatusActive,
+		ObjectID:  app.ID,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	}
+	dbFeatureSetting.MustSetData(featureSettings)
+	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbFeatureSetting)
 }
 
 func (uc *UC) persistData(

@@ -87,6 +87,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accessiblebyprojectsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/acmednsprovideruc"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/cloudstorageuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/configfileuc"
@@ -232,6 +233,7 @@ var Provides = []any{
 	systembackupuc.New,
 	fileuc.New,
 	storagesettingsuc.New,
+	appfeaturesettingsuc.New,
 	devhelperuc.New,
 	lpappsettingsuc.New,
 	traefiksettingsuc.New,

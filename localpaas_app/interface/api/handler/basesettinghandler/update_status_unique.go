@@ -8,6 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
@@ -50,6 +51,11 @@ func (h *Handler) UpdateUniqueSettingStatus(
 	reqCtx := h.RequestCtx(ctx)
 
 	switch resType { //nolint:exhaustive
+	case base.ResourceTypeAppFeatures:
+		r := appfeaturesettingsdto.NewUpdateAppFeatureSettingsStatusReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.UpdateAppFeatureSettingsStatus(reqCtx, auth, r) }
+
 	case base.ResourceTypeDomainSettings:
 		r := domainsettingsdto.NewUpdateDomainSettingsStatusReq()
 		r.Scope = scope

@@ -47,6 +47,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		appGroup.PUT("/:appID/resource-settings", appSettingsHandler.UpdateAppResourceSettings)
 		appGroup.GET("/:appID/storage-settings", appSettingsHandler.GetAppStorageSettings)
 		appGroup.PUT("/:appID/storage-settings", appSettingsHandler.UpdateAppStorageSettings)
+		appGroup.GET("/:appID/feature-settings", appSettingsHandler.GetAppFeatureSettings)
+		appGroup.PUT("/:appID/feature-settings", appSettingsHandler.UpdateAppFeatureSettings)
 		appGroup.GET("/:appID/container-settings", appSettingsHandler.GetAppContainerSettings)
 		appGroup.PUT("/:appID/container-settings", appSettingsHandler.UpdateAppContainerSettings)
 	}

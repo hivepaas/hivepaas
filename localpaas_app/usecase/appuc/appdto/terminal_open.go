@@ -1,6 +1,8 @@
 package appdto
 
 import (
+	"context"
+
 	"github.com/moby/moby/client"
 	vld "github.com/tiendc/go-validator"
 
@@ -33,6 +35,8 @@ func (req *OpenTerminalReq) Validate() apperrors.ValidationErrors {
 }
 
 type OpenTerminalResp struct {
-	Meta             *basedto.Meta            `json:"meta"`
-	ExecAttachResult *client.ExecAttachResult `json:"-"`
+	Meta             *basedto.Meta                              `json:"meta"`
+	ExecAttachResult *client.ExecAttachResult                   `json:"-"`
+	ExecResizeFunc   func(ctx context.Context, w, h uint) error `json:"-"`
+	CloseFunc        func()                                     `json:"-"`
 }

@@ -72,5 +72,7 @@ func (uc *UC) OpenTerminal(
 
 	return &appdto.OpenTerminalResp{
 		ExecAttachResult: execResp.ExecAttachResult,
+		ExecResizeFunc:   execResp.ExecResizeFunc,
+		CloseFunc:        execResp.Close,
 	}, nil
 }

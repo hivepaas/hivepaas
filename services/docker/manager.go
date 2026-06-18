@@ -67,6 +67,8 @@ type Manager interface {
 		*client.ExecCreateResult, *client.ExecAttachResult, *client.ExecStartResult, error)
 	ContainerExecWait(ctx context.Context, containerID string, options ...ExecCreateOption) (
 		*client.ExecInspectResult, []*tasklog.LogFrame, error)
+	ContainerExecResize(ctx context.Context, execID string, width, height uint) (
+		*client.ExecResizeResult, error)
 	ContainerExecInspect(ctx context.Context, execID string, options ...ExecInspectOption) (
 		*client.ExecInspectResult, error)
 

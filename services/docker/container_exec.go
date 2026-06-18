@@ -93,6 +93,21 @@ func (m *manager) ContainerExecWait(
 	return inspectResp, logs, nil
 }
 
+func (m *manager) ContainerExecResize(
+	ctx context.Context,
+	execID string,
+	width, height uint,
+) (*client.ExecResizeResult, error) {
+	resp, err := m.client.ExecResize(ctx, execID, client.ExecResizeOptions{
+		Width:  width,
+		Height: height,
+	})
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
 type ExecInspectOption func(*client.ExecInspectOptions)
 
 func (m *manager) ContainerExecInspect(

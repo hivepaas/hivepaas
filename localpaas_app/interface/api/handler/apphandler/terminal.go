@@ -1,6 +1,7 @@
 package apphandler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -91,6 +92,12 @@ func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 		return
 	}
 
+	type ResizeMessage struct {
+		Type   string `json:"type"`
+		Width  uint   `json:"width"`
+		Height uint   `json:"height"`
+	}
+
 	// Pipe container stdout/stderr (resp.ExecAttachResult.Reader) to websocket
 	go func() {
 		defer wsConn.Close()
@@ -114,10 +121,15 @@ func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 		if err != nil {
 			break
 		}
-		if mt == websocket.BinaryMessage || mt == websocket.TextMessage {
-			if _, err := resp.ExecAttachResult.Conn.Write(message); err != nil {
-				break
+		if mt == websocket.TextMessage { // control message
+			var resizeMsg ResizeMessage
+			if err := json.Unmarshal(message, &resizeMsg); err == nil && resizeMsg.Type == "resize" {
+				_ = resp.ExecResizeFunc(h.RequestCtx(ctx), resizeMsg.Width, resizeMsg.Height)
+				continue
 			}
+		}
+		if _, err := resp.ExecAttachResult.Conn.Write(message); err != nil {
+			break
 		}
 	}
 }

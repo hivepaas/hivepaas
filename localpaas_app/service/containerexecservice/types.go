@@ -1,6 +1,7 @@
 package containerexecservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -23,9 +24,24 @@ type ContainerExecReq struct {
 }
 
 type ContainerExecResp struct {
+	DockerManager     docker.Manager // docker client through socket proxy if remote execution
+	IsRemoteExecution bool
+
 	ExecCreateResult *client.ExecCreateResult
 	ExecAttachResult *client.ExecAttachResult // NOTE: user needs to close this when done
 	ExecStartResult  *client.ExecStartResult
+
+	ExecResizeFunc func(ctx context.Context, w, h uint) error
+}
+
+func (resp *ContainerExecResp) Close() {
+	if resp.ExecAttachResult != nil {
+		resp.ExecAttachResult.Close()
+	}
+	if resp.IsRemoteExecution && resp.DockerManager != nil {
+		_ = resp.DockerManager.Close()
+		resp.DockerManager = nil
+	}
 }
 
 type SchedJobExecReq struct {

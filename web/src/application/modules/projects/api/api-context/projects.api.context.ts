@@ -22,14 +22,16 @@ import {
     AppSecretsApiValidator,
     AppServiceSettingsApi,
     AppServiceSettingsApiValidator,
+    AppServiceTasksApi,
+    AppServiceTasksApiValidator,
     ProjectAccessTokenApi,
     ProjectAccessTokenApiValidator,
+    ProjectAcmeDnsProviderApi,
+    ProjectAcmeDnsProviderApiValidator,
     ProjectAppEnvVarsApi,
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
-    ProjectAcmeDnsProviderApi,
-    ProjectAcmeDnsProviderApiValidator,
     ProjectBasicAuthApi,
     ProjectBasicAuthApiValidator,
     ProjectCloudStorageApi,
@@ -127,6 +129,7 @@ function createApi() {
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
     const appHttpSettingsApiValidator = new AppHttpSettingsApiValidator();
     const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
+    const appServiceTasksApiValidator = new AppServiceTasksApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
     const projectGitCredentialsApiValidator = new ProjectGitCredentialsApiValidator();
     const projectRegistryAuthApiValidator = new ProjectRegistryAuthApiValidator();
@@ -199,6 +202,9 @@ function createApi() {
                 },
                 serviceSettings: {
                     $: new AppServiceSettingsApi(appServiceSettingsApiValidator),
+                },
+                serviceTasks: {
+                    $: new AppServiceTasksApi(appServiceTasksApiValidator),
                 },
             },
             secrets: {

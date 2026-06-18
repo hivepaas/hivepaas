@@ -59,6 +59,7 @@ export const QK = {
      * Project App Service Settings
      */
     "projects.apps.service-settings.$.find-one": "projects.apps.service-settings.$.find-one",
+    "projects.apps.service-tasks.$.find-many": "projects.apps.service-tasks.$.find-many",
     /*
      * Project App Network Settings
      */

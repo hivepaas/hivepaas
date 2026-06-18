@@ -114,6 +114,11 @@ function View({ projectId, appId }: Props) {
             activePathPrefixes: configurationActivePathPrefixes,
         },
         {
+            route: ROUTE.projects.single.apps.single.instances.$route(projectId, appId),
+            label: "Instances",
+            activePathPrefixes: [ROUTE.projects.single.apps.single.instances.$route(projectId, appId)],
+        },
+        {
             route: ROUTE.projects.single.apps.single.deployments.$route(projectId, appId),
             label: "Deployments",
             activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, appId)],

@@ -29,6 +29,7 @@ export {
     // Single App Tabs
     AppDeploymentDetailsRoute,
     AppDeploymentsRoute,
+    AppInstancesRoute,
     AppLogsRoute,
     AppPreviewDeploymentsRoute,
     AppScheduledJobTaskDetailsRoute,

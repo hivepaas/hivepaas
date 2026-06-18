@@ -6,10 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/moby/go-archive"
 	"github.com/moby/moby/api/types/build"
 	"github.com/moby/moby/client"
@@ -21,10 +18,9 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/fileutil"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/gittool"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/strutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
+	"github.com/localpaas/localpaas/localpaas_app/service/repocheckoutservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -41,10 +37,6 @@ type repoDeploymentData struct {
 	RegAuthHeader      string
 	ImageBuildSettings *entity.ImageBuildSettings
 	SecretsToRedact    []*entity.Secret
-
-	RepoCache        *entity.File
-	RepoCacheLoaded  bool
-	CheckoutDuration time.Duration
 
 	TempDir     string
 	CheckoutDir string
@@ -143,77 +135,28 @@ func (s *service) repoDeployStepSourceCheckout(
 	deployment := data.Deployment
 	repoSource := deployment.Settings.RepoSource
 
-	// NOTE: currently supports repo of git type only
-	if repoSource.RepoType != base.RepoTypeGit {
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout source: "+
-			"unsupported repository type: "+string(repoSource.RepoType), tasklog.TsNow))
-		return apperrors.NewUnsupported(apperrors.Fmt("Repository type '%v'", repoSource.RepoType))
+	checkoutReq := &repocheckoutservice.RepoCheckoutReq{
+		TaskExecData: data.TaskExecData,
+		Project:      data.Project,
+		App:          data.App,
+		RepoSource:   repoSource,
+		CredSetting:  data.CredSetting,
+		TempDir:      data.TempDir,
+		CheckoutDir:  data.CheckoutDir,
+	}
+	if deployment.Settings.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
+		checkoutReq.NoCache = true
 	}
 
-	s.addStepStartLog(ctx, data.appDeploymentData, "Start cloning Git repository...")
-	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
-
-	err = s.repoCheckoutLoadCache(ctx, data)
+	checkoutResp, err := s.repoCheckoutService.Checkout(ctx, checkoutReq)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	checkoutOptions := &gittool.CheckoutOptions{
-		URL:         repoSource.RepoURL,
-		Credentials: data.CredSetting,
-
-		ReferenceName:     plumbing.ReferenceName(repoSource.RepoRef),
-		CommitHash:        repoSource.CommitHash,
-		SubmodulesEnabled: repoSource.RepoOptions.GitSubmodulesEnabled,
-		LFSEnabled:        repoSource.RepoOptions.GitLFSEnabled,
-
-		TempDir:     data.TempDir,
-		CheckoutDir: data.CheckoutDir,
-		CacheLoaded: data.RepoCacheLoaded,
-		LogStore:    data.LogStore,
-	}
-
-	var commit *object.Commit
-	checkoutStart := time.Now()
-	for {
-		_, commit, err = gittool.CheckoutWithGitCli(ctx, checkoutOptions)
-		if err == nil {
-			break
-		}
-		if checkoutOptions.CacheLoaded {
-			if err := s.resetRepoCheckoutDir(data); err != nil {
-				return apperrors.Wrap(err)
-			}
-			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Failed to checkout repository with error: "+
-				err.Error()+". Try to do a fresh clone (not using cache)...", tasklog.TsNow))
-			checkoutOptions.CacheLoaded = false
-			data.RepoCacheLoaded = false
-			continue
-		}
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout repository with error: "+
-			err.Error(), tasklog.TsNow))
-		return apperrors.Wrap(err)
-	}
-
-	data.CheckoutDuration = time.Since(checkoutStart)
-	data.DeploymentOutput.CommitHash = commit.Hash.String()
-	data.DeploymentOutput.CommitMessage = commit.Message
-	data.DeploymentOutput.CommitTitle = strutil.GetFirstLine(commit.Message)
-	data.DeploymentOutput.CommitAuthor = commit.Author.Name
-
-	// Cache the latest repo source if satisfied our condition
-	ee := s.repoCheckoutSaveCache(ctx, data)
-	if ee != nil { // Just log
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to cache repository source: "+
-			ee.Error(), tasklog.TsNow))
-	}
-
-	// Remove .git dir within the source dir before building image
-	ee = os.RemoveAll(filepath.Join(data.CheckoutDir, ".git"))
-	if ee != nil { // Just log
-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to remove .git directory from source: "+
-			ee.Error(), tasklog.TsNow))
-	}
+	data.DeploymentOutput.CommitHash = checkoutResp.CommitHash
+	data.DeploymentOutput.CommitMessage = checkoutResp.CommitMessage
+	data.DeploymentOutput.CommitTitle = checkoutResp.CommitTitle
+	data.DeploymentOutput.CommitAuthor = checkoutResp.CommitAuthor
 
 	return nil
 }

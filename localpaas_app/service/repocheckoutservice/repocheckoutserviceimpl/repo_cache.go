@@ -1,4 +1,4 @@
-package appdeploymentserviceimpl
+package repocheckoutserviceimpl
 
 import (
 	"context"
@@ -30,23 +30,18 @@ const (
 	repoCheckoutDurConsideredLong    = 3 * time.Minute
 )
 
-func (s *service) repoCheckoutLoadCache(
+func (s *service) loadRepoCache(
 	ctx context.Context,
-	data *repoDeploymentData,
+	data *repoCheckoutData,
 ) (err error) {
-	// Cache is not enabled in the settings, skip loading cache
-	if data.ImageBuildSettings != nil && !data.ImageBuildSettings.Sources.RepoCache {
-		return nil
-	}
-	// Cache is not enabled in the current deployment, skip loading cache
-	if data.Deployment.Settings.NoCache {
+	if data.NoCache {
 		return nil
 	}
 
 	defer func() {
 		if err != nil || recover() != nil {
 			data.RepoCacheLoaded = false
-			if err = s.resetRepoCheckoutDir(data); err != nil {
+			if err = s.resetCheckoutDir(data); err != nil {
 				err = apperrors.Wrap(err)
 			} else {
 				err = nil
@@ -60,7 +55,7 @@ func (s *service) repoCheckoutLoadCache(
 
 	// NOTE: must use a separate `db` to establish another transaction
 	err = transaction.Execute(ctx, s.db, func(db database.Tx) error {
-		repoID := data.Deployment.Settings.RepoSource.RepoID
+		repoID := data.RepoSource.RepoID
 		file, err := s.fileRepo.GetByKey(ctx, db, repoID,
 			bunex.SelectFor("SHARE OF file"),
 			bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
@@ -97,16 +92,12 @@ func (s *service) repoCheckoutLoadCache(
 	return nil
 }
 
-func (s *service) repoCheckoutSaveCache(
+func (s *service) saveRepoCache(
 	ctx context.Context,
-	data *repoDeploymentData,
+	data *repoCheckoutData,
 ) (err error) {
-	// Cache is not enabled in the settings, skip saving cache
-	if data.ImageBuildSettings != nil && !data.ImageBuildSettings.Sources.RepoCache {
-		return nil
-	}
-	// Cache is not enabled in the current deployment, skip loading cache
-	if data.Deployment.Settings.NoCache {
+	// Cache is not enabled
+	if data.NoCache {
 		return nil
 	}
 
@@ -135,7 +126,7 @@ func (s *service) repoCheckoutSaveCache(
 			ObjectID:    data.Project.ID,
 			Type:        base.FileTypeRepoCache,
 			Status:      base.FileStatusActive,
-			Key:         data.Deployment.Settings.RepoSource.RepoID,
+			Key:         data.RepoSource.RepoID,
 			Path:        config.Current.DataPathSystemCacheRepos().RelPath(),
 			Mimetype:    "application/octet-stream",
 			StorageType: base.FileStorageLocal,
@@ -182,7 +173,7 @@ func (s *service) repoCheckoutSaveCache(
 	newCacheFile.Size = newCacheFileInfo.Size()
 
 	err = transaction.Execute(ctx, s.db, func(db database.Tx) error {
-		repoID := data.Deployment.Settings.RepoSource.RepoID
+		repoID := data.RepoSource.RepoID
 		file, err := s.fileRepo.GetByKey(ctx, db, repoID,
 			bunex.SelectFor("UPDATE OF file"),
 			bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),

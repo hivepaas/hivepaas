@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/repocheckoutservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/services/docker"
@@ -30,6 +31,7 @@ type service struct {
 	deploymentInfoRepo   cacherepository.DeploymentInfoRepo
 	dockerManager        docker.Manager
 	containerExecService containerexecservice.Service
+	repoCheckoutService  repocheckoutservice.Service
 	envVarService        envvarservice.Service
 	settingService       settingservice.Service
 	userService          userservice.Service
@@ -51,12 +53,13 @@ func New(
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
 	dockerManager docker.Manager,
 	containerExecService containerexecservice.Service,
+	repoCheckoutService repocheckoutservice.Service,
 	envVarService envvarservice.Service,
 	settingService settingservice.Service,
 	userService userservice.Service,
 	notificationService notificationservice.Service,
 ) appdeploymentservice.Service {
-	s := &service{
+	return &service{
 		logger:               logger,
 		db:                   db,
 		redisClient:          redisClient,
@@ -71,10 +74,10 @@ func New(
 		deploymentInfoRepo:   deploymentInfoRepo,
 		dockerManager:        dockerManager,
 		containerExecService: containerExecService,
+		repoCheckoutService:  repoCheckoutService,
 		envVarService:        envVarService,
 		settingService:       settingService,
 		userService:          userService,
 		notificationService:  notificationService,
 	}
-	return s
 }

@@ -637,6 +637,19 @@ export const projectsRouter: RouteObject = {
                     element: <SingleAppRouteRedirect />,
                 },
                 /**
+                 * Single App – Instances
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.instances.$pattern,
+                    lazy: async () => {
+                        const { AppInstancesRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppInstancesRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Deployments
                  */
                 {

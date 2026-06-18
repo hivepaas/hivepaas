@@ -5,6 +5,7 @@ export * from "./deployment";
 export * from "./deployment-settings";
 export * from "./health-check";
 export * from "./secret";
+export * from "./service-task";
 export * from "./service-settings";
 export * from "./scheduled-job";
 export * from "./network-settings";

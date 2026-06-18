@@ -6,6 +6,7 @@ export * from "./env-vars";
 export * from "./secrets";
 export * from "./project-apps";
 export * from "./service-settings";
+export * from "./service-tasks";
 export * from "./network-settings";
 export * from "./resource-settings";
 export * from "./storage-settings";

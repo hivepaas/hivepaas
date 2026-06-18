@@ -365,6 +365,11 @@ export const ROUTE = {
                         },
                     },
 
+                    instances: {
+                        $pattern: "projects/:id/apps/:appId/instances",
+                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/instances/`,
+                    },
+
                     deployments: {
                         $pattern: "projects/:id/apps/:appId/deployments",
                         $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/deployments/`,

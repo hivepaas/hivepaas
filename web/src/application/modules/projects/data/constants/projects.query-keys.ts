@@ -56,6 +56,10 @@ export const QK = {
      */
     "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",
     /*
+     * Project App Feature Settings
+     */
+    "projects.apps.feature-settings.$.find-one": "projects.apps.feature-settings.$.find-one",
+    /*
      * Project App Service Settings
      */
     "projects.apps.service-settings.$.find-one": "projects.apps.service-settings.$.find-one",

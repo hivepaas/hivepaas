@@ -7,7 +7,8 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { AppLogsQueries } from "~/projects/data";
 
-import type { LogsViewerFrame } from "@application/shared/components";
+import { AppLink, AppLoader, type LogsViewerFrame } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 
@@ -26,10 +27,11 @@ export function AppLogsRoute() {
     invariant(projectID, "projectID must be defined");
     invariant(appID, "appID must be defined");
 
-    const { data: infoResponse } = AppLogsQueries.useGetInfo({
+    const { data: infoResponse, isLoading: isInfoLoading } = AppLogsQueries.useGetInfo({
         projectID,
         appID,
     });
+    const isLogsEnabled = infoResponse?.data.enabled ?? true;
 
     const tabs = useMemo<AppLogTab[]>(
         () => [
@@ -139,65 +141,79 @@ export function AppLogsRoute() {
 
     return (
         <section className={cn(listBox)}>
-            <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="gap-4"
-            >
-                <TabsList className="h-auto gap-2 p-0">
+            {isInfoLoading ? (
+                <AppLoader />
+            ) : isLogsEnabled ? (
+                <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="gap-4"
+                >
+                    <TabsList className="h-auto gap-2 p-0">
+                        {tabs.map(tab => {
+                            const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
+
+                            return (
+                                <TabsTrigger
+                                    key={tab.id}
+                                    value={tab.id}
+                                >
+                                    <span>{tab.label}</span>
+                                    {isStreaming && (
+                                        <span
+                                            aria-label={`${tab.label} streaming`}
+                                            className="size-2.5 rounded-full bg-rose-500"
+                                        />
+                                    )}
+                                </TabsTrigger>
+                            );
+                        })}
+                    </TabsList>
+
                     {tabs.map(tab => {
-                        const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
+                        const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState();
 
                         return (
-                            <TabsTrigger
+                            <TabsContent
                                 key={tab.id}
                                 value={tab.id}
+                                forceMount
+                                className="m-0 data-[state=inactive]:hidden"
                             >
-                                <span>{tab.label}</span>
-                                {isStreaming && (
-                                    <span
-                                        aria-label={`${tab.label} streaming`}
-                                        className="size-2.5 rounded-full bg-rose-500"
-                                    />
-                                )}
-                            </TabsTrigger>
+                                <AppLogsViewer
+                                    tabID={tab.id}
+                                    projectID={projectID}
+                                    appID={appID}
+                                    tabLabel={tab.label}
+                                    taskId={tab.taskId}
+                                    logs={tabState.logs}
+                                    lines={tabState.lines}
+                                    since={tabState.since}
+                                    duration={tabState.duration}
+                                    webSocketReadyState={tabState.readyState}
+                                    isActive={activeTab === tab.id}
+                                    shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
+                                    onLogsChange={handleTabLogsChange}
+                                    onLinesChange={handleTabLinesChange}
+                                    onSinceChange={handleTabSinceChange}
+                                    onDurationChange={handleTabDurationChange}
+                                    onReadyStateChange={handleTabReadyStateChange}
+                                />
+                            </TabsContent>
                         );
                     })}
-                </TabsList>
-
-                {tabs.map(tab => {
-                    const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState();
-
-                    return (
-                        <TabsContent
-                            key={tab.id}
-                            value={tab.id}
-                            forceMount
-                            className="m-0 data-[state=inactive]:hidden"
-                        >
-                            <AppLogsViewer
-                                tabID={tab.id}
-                                projectID={projectID}
-                                appID={appID}
-                                tabLabel={tab.label}
-                                taskId={tab.taskId}
-                                logs={tabState.logs}
-                                lines={tabState.lines}
-                                since={tabState.since}
-                                duration={tabState.duration}
-                                webSocketReadyState={tabState.readyState}
-                                isActive={activeTab === tab.id}
-                                shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
-                                onLogsChange={handleTabLogsChange}
-                                onLinesChange={handleTabLinesChange}
-                                onSinceChange={handleTabSinceChange}
-                                onDurationChange={handleTabDurationChange}
-                                onReadyStateChange={handleTabReadyStateChange}
-                            />
-                        </TabsContent>
-                    );
-                })}
-            </Tabs>
+                </Tabs>
+            ) : (
+                <p className="text-3xl leading-tight">
+                    Logs feature is disabled, enable it in{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectID, appID)}
+                        className="text-primary underline-offset-4 hover:underline"
+                    >
+                        Feature Settings
+                    </AppLink.Basic>
+                </p>
+            )}
         </section>
     );
 }

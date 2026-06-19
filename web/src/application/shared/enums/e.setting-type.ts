@@ -3,6 +3,7 @@ export const ESettingType = {
     Project: "project",
     App: "app",
     AppDeployment: "app-deployment",
+    AppFeatures: "app-features",
     AppHttp: "app-http",
     AcmeDnsProvider: "acme-dns-provider",
     EnvVar: "env-var",

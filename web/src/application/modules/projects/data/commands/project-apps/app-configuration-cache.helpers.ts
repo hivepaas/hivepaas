@@ -32,6 +32,9 @@ export function invalidateSingleAppConfigurationQueries(queryClient: QueryClient
         queryKey: [QK["projects.apps.deployment-settings.$.find-one"], scope],
     });
     void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.feature-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.service-settings.$.find-one"], scope],
     });
     void queryClient.invalidateQueries({

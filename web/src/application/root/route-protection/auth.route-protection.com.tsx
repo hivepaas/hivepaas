@@ -1,7 +1,6 @@
 import { type PropsWithChildren } from "react";
 
 import { useLocation, useMatch, useSearchParams } from "react-router";
-import { useCookie } from "react-use";
 
 import { AppNavigate } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -13,9 +12,6 @@ import {
     useConditionalModuleCollections,
     useConditionalProjectCollections,
 } from "@application/shared/permissions";
-
-import { AuthCommands } from "@application/authentication/data/commands";
-import { SsoRoute } from "@application/authentication/routes";
 
 const DEFAULT_MODULE_ROUTES = [
     {
@@ -151,17 +147,6 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
     const { map: modulePermissionMap } = useConditionalModuleCollections();
     const { list: projectPermissions } = useConditionalProjectCollections();
-    const [token, , deleteToken] = useCookie("access_token");
-
-    const { setProfile } = useProfileContext();
-
-    const { mutate: signInSSO } = AuthCommands.useSignInSSO({
-        onSuccess: profileData => {
-            deleteToken();
-
-            setProfile(profileData);
-        },
-    });
 
     const location = useLocation();
 
@@ -173,18 +158,6 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     const nextPath = params.get("next");
     const safeNextPath = getSafeNextPath(nextPath);
 
-    /**
-     * If the next path is "auth/sso/success", redirect to the sso success page
-     */
-    if (isSsoSuccessPath(nextPath)) {
-        if (token) {
-            signInSSO({
-                token,
-            });
-        }
-        return <SsoRoute />;
-    }
-
     if (profile && (isMain || isAuthGroup)) {
         return (
             <AppNavigate.Basic
@@ -195,6 +168,15 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     }
 
     if (!profile && !isAuthGroup) {
+        if (isMain && isSsoSuccessPath(nextPath)) {
+            return (
+                <AppNavigate.Basic
+                    to={ROUTE.auth.sso.success.$route}
+                    replace
+                />
+            );
+        }
+
         const authHandoff = isMain ? getAuthHandoff(nextPath, params) : null;
 
         return (

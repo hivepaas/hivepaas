@@ -5,6 +5,7 @@ export * from "./project-app-secrets.commands";
 export * from "./app-config-files.commands";
 export * from "./app-container-settings.commands";
 export * from "./app-deployment-settings.commands";
+export * from "./app-feature-settings.commands";
 export * from "./app-network-settings.commands";
 export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";

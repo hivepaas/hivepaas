@@ -10,6 +10,8 @@ import {
     AppDeploymentSettingsApiValidator,
     AppDeploymentsApi,
     AppDeploymentsApiValidator,
+    AppFeatureSettingsApi,
+    AppFeatureSettingsApiValidator,
     AppHealthChecksApi,
     AppHealthChecksApiValidator,
     AppLogsApi,
@@ -121,6 +123,7 @@ function createApi() {
     const appDeploymentsApiValidator = new AppDeploymentsApiValidator();
     const appDeploymentsApi = new AppDeploymentsApi(appDeploymentsApiValidator);
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
+    const appFeatureSettingsApiValidator = new AppFeatureSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
     const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
     const appScheduledJobsApi = new AppScheduledJobsApi(appScheduledJobsApiValidator);
@@ -178,6 +181,9 @@ function createApi() {
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),
+                },
+                featureSettings: {
+                    $: new AppFeatureSettingsApi(appFeatureSettingsApiValidator),
                 },
                 healthChecks: {
                     $: new AppHealthChecksApi(appHealthChecksApiValidator),

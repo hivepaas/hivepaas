@@ -104,6 +104,7 @@ function View({ projectId, appId }: Props) {
         ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, appId),
         ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
         ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId),
         ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, appId),
     ];
 

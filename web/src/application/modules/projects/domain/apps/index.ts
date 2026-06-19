@@ -3,6 +3,7 @@ export * from "./config-file";
 export * from "./container-settings";
 export * from "./deployment";
 export * from "./deployment-settings";
+export * from "./feature-settings";
 export * from "./health-check";
 export * from "./secret";
 export * from "./service-task";

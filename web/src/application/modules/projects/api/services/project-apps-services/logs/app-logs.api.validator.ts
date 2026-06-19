@@ -16,6 +16,7 @@ const AppLogTaskSchema = z.object({
 
 const GetInfoSchema = z.object({
     data: z.object({
+        enabled: z.boolean().optional().default(true),
         tasks: z.array(AppLogTaskSchema),
     }),
     meta: BaseMetaApiSchema.nullable(),

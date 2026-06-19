@@ -1,5 +1,7 @@
 import { useRef } from "react";
 
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -7,8 +9,8 @@ import { AppServiceSettingsCommands, AppServiceSettingsQueries } from "~/project
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLoader } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { AppLink, AppLoader } from "@application/shared/components";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 
 import { EServiceMode } from "@application/modules/projects/module-shared/enums";
@@ -85,7 +87,7 @@ export function AppConfigAvailabilityRoute() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-dashed border-primary bg-accent p-2 text-sm text-muted-foreground">
+            <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
                 For configuration details, see{" "}
                 <a
                     href="https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Service/operation/ServiceUpdate"
@@ -95,6 +97,18 @@ export function AppConfigAvailabilityRoute() {
                 >
                     docs
                 </a>
+            </div>
+
+            <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                <span className="text-orange-500">Note:</span> If you change the configuration here, please check the
+                application&rsquo;s scheduling results in{" "}
+                <AppLink.Basic
+                    to={ROUTE.projects.single.apps.single.instances.$route(projectId, appId)}
+                    className="text-primary underline-offset-4 hover:underline"
+                >
+                    Instances
+                </AppLink.Basic>
+                .
             </div>
 
             <AppConfigAvailabilityForm

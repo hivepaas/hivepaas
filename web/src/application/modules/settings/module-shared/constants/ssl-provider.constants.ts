@@ -32,7 +32,7 @@ export const SSL_PROVIDER_OPTIONS = [
     },
     {
         value: ESslProviderKind.GoogleTrust,
-        label: "Google Trust Services",
+        label: "Google Trust",
     },
 ] as const;
 

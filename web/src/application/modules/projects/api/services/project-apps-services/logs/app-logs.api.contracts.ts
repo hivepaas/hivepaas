@@ -18,6 +18,7 @@ export type AppLogs_GetInfo_Req = ApiRequestBase<{
 }>;
 
 export type AppLogs_GetInfo_Res = ApiResponseBase<{
+    enabled: boolean;
     tasks: AppLogTask[];
 }>;
 

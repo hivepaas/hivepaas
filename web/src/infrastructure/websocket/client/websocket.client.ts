@@ -79,7 +79,10 @@ function connect(
 ): WebSocketSubscription {
     const { signal, closeOnError = true, protocols } = options;
     const socket = new WebSocket(url, protocols);
+    socket.binaryType = "arraybuffer";
+
     let isCleanedUp = false;
+    let pendingMessageDispatch: Promise<void> = Promise.resolve();
 
     function emitReadyState(): void {
         handlers.onReadyStateChange?.(socket.readyState, socket);
@@ -119,19 +122,14 @@ function connect(
     }
 
     function handleMessage(event: MessageEvent<unknown>): void {
-        void readWebSocketMessageData(event.data)
-            .then(message => {
-                handlers.onMessage?.(message, event, socket);
-            })
-            .catch((error: unknown) => {
-                handlers.onMessageError?.(error, socket);
-            });
+        pendingMessageDispatch = pendingMessageDispatch.then(
+            () => dispatchMessage(event),
+            () => dispatchMessage(event),
+        );
     }
 
     function handleClose(event: CloseEvent): void {
-        emitReadyState();
-        handlers.onClose?.(event, socket);
-        cleanup();
+        void handleCloseAfterMessages(event);
     }
 
     function handleError(event: Event): void {
@@ -142,6 +140,30 @@ function connect(
         }
 
         emitReadyState();
+    }
+
+    async function dispatchMessage(event: MessageEvent<unknown>): Promise<void> {
+        try {
+            const message = await readWebSocketMessageData(event.data);
+            handlers.onMessage?.(message, event, socket);
+        } catch (error: unknown) {
+            reportMessageError(error);
+        }
+    }
+
+    async function handleCloseAfterMessages(event: CloseEvent): Promise<void> {
+        await pendingMessageDispatch.catch(reportMessageError);
+        emitReadyState();
+        handlers.onClose?.(event, socket);
+        cleanup();
+    }
+
+    function reportMessageError(error: unknown): void {
+        try {
+            handlers.onMessageError?.(error, socket);
+        } catch {
+            // Keep the transport queue draining even if a consumer error handler fails.
+        }
     }
 
     socket.addEventListener("open", handleOpen);

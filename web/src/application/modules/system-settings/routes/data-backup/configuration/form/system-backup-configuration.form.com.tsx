@@ -316,6 +316,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                             <FieldError errors={[cloudStorageError]} />
                             <AppLink.Basic
                                 to={ROUTE.settings.cloudStorages.$route}
+                                target="_blank"
                                 className="text-sm text-blue-500"
                                 ignorePrevPath
                             >

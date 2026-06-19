@@ -786,6 +786,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.featureSettings.$pattern,
+                            lazy: async () => {
+                                const { AppFeatureSettingsRoute } = await getLazyComponents();
+
+                                return { Component: AppFeatureSettingsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.envVariables.$pattern,
                             lazy: async () => {
                                 const { AppConfigEnvVariablesRoute } = await getLazyComponents();

@@ -709,6 +709,19 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
+                 * Single App – Terminal
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.terminal.$pattern,
+                    lazy: async () => {
+                        const { AppTerminalRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppTerminalRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Preview Deployments
                  */
                 {

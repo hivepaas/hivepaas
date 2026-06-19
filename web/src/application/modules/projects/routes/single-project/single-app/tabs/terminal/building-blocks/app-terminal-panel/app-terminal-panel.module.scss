@@ -1,0 +1,18 @@
+.terminalFrame {
+  background: #0f172a;
+}
+
+.terminalHost {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  :global(.xterm) {
+    height: 100%;
+    padding: 12px;
+  }
+
+  :global(.xterm-viewport) {
+    background-color: transparent !important;
+  }
+}

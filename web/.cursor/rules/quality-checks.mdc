@@ -1,0 +1,22 @@
+---
+description: LocalPaaS Dashboard validation and quality checks
+globs: src/**/*.{ts,tsx,css,scss},package.json,*.config.*,docs/**/*.md
+alwaysApply: false
+---
+
+# Quality Checks
+
+- Prefer focused changes that preserve existing module boundaries and user work.
+- Run `npm run agents:check` after changing Codex skills, Cursor rules, or agent-facing docs.
+- Run `npm run lint:ci` from `localpaas-dashboard/` for frontend code changes when feasible.
+- Run `npm run build` when route exports, module aggregators, API context wiring, or build configuration changed.
+- Run `npm run format:src` only when formatting source files intentionally; avoid broad formatting churn.
+- For visible UI changes, run `npm run dev` and verify the affected screen in a browser when feasible.
+- Report any skipped validation with the exact blocker.
+
+# Dependency And Generated Files
+
+- Do not add dependencies unless the existing stack cannot reasonably solve the task.
+- Do not touch `package-lock.json` or `yarn.lock` unless dependencies are intentionally changed.
+- Do not manually edit generated OpenAPI output under `src/infrastructure/api/be-api/**`.
+- Do not run codegen, format-all, or dependency install commands as part of agent setup changes unless explicitly requested.

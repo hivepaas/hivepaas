@@ -129,6 +129,10 @@ function View({ projectId, appId }: Props) {
             label: "Logs",
         },
         {
+            route: ROUTE.projects.single.apps.single.terminal.$route(projectId, appId),
+            label: "Terminal",
+        },
+        {
             route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, appId),
             label: "Preview Deployments",
         },

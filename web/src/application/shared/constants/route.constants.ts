@@ -401,6 +401,11 @@ export const ROUTE = {
                         $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/logs/`,
                     },
 
+                    terminal: {
+                        $pattern: "projects/:id/apps/:appId/terminal",
+                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/terminal/`,
+                    },
+
                     previewDeployments: {
                         $pattern: "projects/:id/apps/:appId/preview-deployments",
                         $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/preview-deployments/`,

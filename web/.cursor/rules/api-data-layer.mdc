@@ -1,0 +1,41 @@
+---
+description: LocalPaaS Dashboard API services, validators, hooks, queries, and commands
+globs: src/application/**/{api,data}/**/*.{ts,tsx},src/infrastructure/api/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# API Layer
+
+- Components, routes, forms, and tables must not call Axios or `client.v1` directly.
+- Service classes extend `BaseApi`, use `this.client.v1`, and return `Promise<Result<T, Error>>`.
+- Build list params with `this.queryBuilder.getInstance()` and chain `pagination`, `sorting`, `search`, `filterBy`, or `context` as needed.
+- Convert service errors with `parseApiError` inside `catchError`.
+- Use `JsonTransformer` for partial update payloads where `undefined`, `null`, and empty values must be distinct.
+- Keep HTTP endpoint strings, wire payload shaping, and response normalization inside services or colocated mappers.
+
+# Contracts And Validators
+
+- Put request/response contracts in `*.api.contracts.ts`.
+- Use `ApiRequestBase`, `ApiResponseBase`, and `ApiResponsePaginated` from `@infrastructure/api`.
+- Put Zod response parsing in `*.api.validator.ts`; validators parse full API responses with `parseApiResponse`.
+- Use `BaseMetaApiSchema` and `PagingMetaApiSchema` for meta.
+- Use `z.coerce.date()` for API date fields.
+- Normalize backend nulls and wire/domain mismatches at the API boundary, not in table cells or routes.
+- Keep generated contract imports out of UI files; expose domain-aligned contracts through the module API layer.
+
+# Context, Hooks, Queries, Commands
+
+- Register every new service and validator in the module API context.
+- Export every new service, validator, contract, hook, query, and command through local barrels and module aggregators.
+- API hooks unwrap `Result` with `match`, notify errors through `useApiErrorNotifications`, and throw errors for TanStack Query.
+- Query key constants live in `data/constants/*query-keys.ts`; do not inline string keys in query/command files.
+- Queries live in `data/queries`; commands live in `data/commands`.
+- Use `keepPreviousData` for paginated lists unless a nearby example does otherwise.
+- Commands must invalidate affected list and detail keys, then call the caller-provided `onSuccess`.
+- When a mutation can affect both settings and project-scoped data, inspect both query-key namespaces before choosing invalidations.
+
+# Generated API
+
+- Treat `src/infrastructure/api/be-api/**` as generated output.
+- Regenerate through the existing codegen scripts instead of manually editing generated files.
+- Do not add generated files to hand-written barrels unless nearby generated examples already do so.

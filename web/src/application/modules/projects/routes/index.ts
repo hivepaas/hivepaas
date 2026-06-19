@@ -28,6 +28,7 @@ export {
     AppDeploymentsRoute,
     AppInstancesRoute,
     AppLogsRoute,
+    AppTerminalRoute,
     AppPreviewDeploymentsRoute,
     AppScheduledJobTaskDetailsRoute,
     AppScheduledJobTasksRoute,

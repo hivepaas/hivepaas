@@ -1,0 +1,46 @@
+---
+description: LocalPaaS Dashboard routing, navigation, dialogs, forms, tables, and UI composition
+globs: src/application/**/*.{ts,tsx},src/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Routing And Navigation
+
+- Add route patterns and route builders in `src/application/shared/constants/route.constants.ts`.
+- Wire module routes through the owning `<module>.router.tsx`.
+- Prefer lazy module imports that follow existing `<module>.module.ts` aggregators.
+- Use `AppLink`, `AppNavLink`, `AppNavigate`, or `useAppNavigate` wrappers so previous-path state is preserved.
+- Keep module-level dialog containers rendered in the module router/layout pattern.
+- When adding a route, update route constants, router lazy wiring, module exports, and navigation/sidebar entries together when applicable.
+
+# Dialogs
+
+- Follow `docs/DIALOGS.md` and nearby dialog examples.
+- Dialog state lives in a colocated Zustand store named `use-<dialog>.dialog.state.ts`.
+- Dialog-opening APIs live in `use-<dialog>.dialog.ts`.
+- Dialog UI lives under `dialog/`; form schemas and forms are colocated when needed.
+- Wire dialogs into the owning `dialogs-container` and clear/destroy state when routes change.
+- Dialog hooks should expose a small `actions` API; dialog components can read the raw state store directly.
+
+# Forms
+
+- Use React Hook Form with Zod schemas for non-trivial forms.
+- Keep schemas in a nearby `schemas/` folder or next to simple auth forms.
+- Use existing UI fields, `FieldError`, and shared form layout components before creating new inputs.
+- Submit through data commands or dialog callbacks; keep HTTP calls out of form components.
+- Keep domain-to-form mapping explicit near the form when backend/domain shape differs from field shape.
+
+# Tables
+
+- Use `useTableState` for pagination, sorting, and search.
+- Use `DataTable` for tabular data.
+- Keep columns in `*.defs.tsx` when the table is more than trivial.
+- Keep menu/edit/action cells in `building-blocks/` when the table has reusable row actions.
+- Table action cells should receive the minimum row data needed for the action and open dialogs/commands rather than owning data fetching.
+
+# UI Composition
+
+- Prefer existing shared/module components before adding a new primitive.
+- Use `Button` variants and shadcn/Radix primitives consistently.
+- Use icons inside action buttons where an established icon exists.
+- Keep dashboard screens dense, scannable, and operational rather than marketing-like.

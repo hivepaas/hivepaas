@@ -21,6 +21,7 @@ export default tseslint.config(
             "eslint.config.js",
             "node_modules",
             "coverage",
+            ".understand-anything/**",
             "src/infrastructure/api/be-api/**",
             "src/components/ui/**",
             "openapi-ts.config.ts",

@@ -26,6 +26,9 @@ import {
     AppServiceSettingsApiValidator,
     AppServiceTasksApi,
     AppServiceTasksApiValidator,
+    AppTerminalApi,
+    AppTerminalApiValidator,
+    AppTerminalWsApi,
     ProjectAccessTokenApi,
     ProjectAccessTokenApiValidator,
     ProjectAcmeDnsProviderApi,
@@ -106,6 +109,8 @@ function createApi() {
     const projectAppsApiValidator = new ProjectAppsApiValidator();
     const appLogsApiValidator = new AppLogsApiValidator();
     const appLogsApi = new AppLogsApi(appLogsApiValidator);
+    const appTerminalApiValidator = new AppTerminalApiValidator();
+    const appTerminalApi = new AppTerminalApi(appTerminalApiValidator);
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectAcmeDnsProviderApiValidator = new ProjectAcmeDnsProviderApiValidator();
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
@@ -159,6 +164,12 @@ function createApi() {
                     $: appLogsApi,
                     stream: {
                         $: new AppLogsWsApi(),
+                    },
+                },
+                terminal: {
+                    $: appTerminalApi,
+                    stream: {
+                        $: new AppTerminalWsApi(),
                     },
                 },
                 envVars: {

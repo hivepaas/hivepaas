@@ -88,12 +88,12 @@ function View({ links }: Props) {
     const activeRoute = findActiveRoute(links, location.pathname);
 
     return (
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-full overflow-x-auto">
             <nav
                 aria-label="Tabs"
                 className="gap-4"
             >
-                <div className="bg-background inline-flex h-12 w-fit items-center justify-center rounded-none border-b p-0">
+                <div className="bg-background inline-flex h-12 w-fit min-w-max items-center justify-center rounded-none border-b p-0">
                     {links.map(link => (
                         <TabLink
                             key={link.route}

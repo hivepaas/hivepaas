@@ -1,0 +1,48 @@
+---
+description: LocalPaaS Dashboard frontend architecture and module conventions
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Architecture
+
+- Treat `localpaas-dashboard/` as the frontend project root.
+- Keep feature code inside the owning module under `src/application/modules/<module>`.
+- Use `src/application/shared` only for cross-module UI, hooks, pages, layouts, dialogs, constants, and data utilities.
+- Use `src/infrastructure` for framework/client primitives, API plumbing, exceptions, device services, and generic data types.
+- Avoid editing `src/components/ui` for one-off screen needs; wrap or compose primitives nearby instead.
+- Keep module-owned constants, schemas, entities, and components in the module until at least two modules need the same abstraction.
+
+# File And Folder Shape
+
+- Components use `*.com.tsx`; colocate complex scoped styles as `*.module.scss`.
+- Table columns and static table helpers belong in `*.defs.tsx`.
+- Shared or exported props/types belong in `*.types.ts`.
+- Routes usually have `route/`, optional `form/`, `schemas/`, `types/`, and `building-blocks/` folders.
+- Modules expose public surfaces through `index.ts` barrels and module aggregators such as `<module>.module.ts`.
+- New public module files must be exported through the nearest `index.ts`; routes and layouts must also be exported by the module aggregator used for lazy loading.
+
+# Imports
+
+- Use aliases from `tsconfig.app.json`: `@application/*`, `~/*` for `src/application/modules/*`, `@assets/*`, and `@/*`.
+- Prefer module-local imports through `~/<module>/...` for module-owned code.
+- Prefer `@application/shared/...` for shared application code and `@infrastructure/...` for infrastructure code.
+- Let Prettier sort imports; do not hand-fight import grouping.
+- Use type-only imports for types.
+- Do not import across sibling modules unless using a deliberate shared/public surface.
+
+# TypeScript And React
+
+- Do not declare new TypeScript enums; prefer existing enums or `as const` objects/unions.
+- Keep explicit module boundary types where lint requires them.
+- Use function declarations for named React components.
+- Keep hooks dependency arrays correct; do not silence `react-hooks/exhaustive-deps`.
+- Keep server-state in TanStack Query and local dialog/UI state in existing local state patterns.
+- Keep component props narrow and domain-named; avoid leaking API request/response types into UI props.
+
+# Styling
+
+- Prefer Tailwind utilities for normal layout and component composition.
+- Use SCSS modules for complex scoped styling only.
+- Keep global CSS changes limited to app-wide tokens/resets.
+- Use `lucide-react` icons when an icon button or action needs a standard icon.

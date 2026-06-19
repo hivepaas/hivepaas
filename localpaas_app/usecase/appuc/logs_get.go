@@ -121,12 +121,12 @@ func (uc *UC) GetAppLogs(
 	resp := &appdto.AppLogsDataResp{}
 	if req.Follow {
 		// NOTE: we don't want to keep the log stream session forever
-		ctx, _ = context.WithTimeout(ctx, runtimeLogSessionTimeout) //nolint:govet
+		ctx, cancel := context.WithTimeout(ctx, runtimeLogSessionTimeout)
 
 		// NOTE: We may want to send log frames to client by batch to reduce network overhead.
 		// I'm not an expert about this, appreciate if anyone can verify this solution.
 		// This solution: only send data to client after a period of time or when we have some frames.
-		resp.LogsStream, resp.LogsStreamCloser = docker.StartScanningLog(ctx, logsReader,
+		logStream, logStreamCloser := docker.StartScanningLog(ctx, logsReader,
 			docker.WithParseLogHeader(true),
 			docker.WithParseLogTimestamp(*req.Timestamps),
 			docker.WithBatchRecvOptions(batchrecvchan.Options{
@@ -134,6 +134,11 @@ func (uc *UC) GetAppLogs(
 				MaxItem:         runtimeLogBatchMaxFrame,
 			}),
 		)
+		resp.LogsStream = logStream
+		resp.LogsStreamCloser = func() error {
+			cancel()
+			return logStreamCloser()
+		}
 	} else {
 		// Scan all data at once
 		logStream, _ := docker.StartScanningLog(ctx, logsReader,

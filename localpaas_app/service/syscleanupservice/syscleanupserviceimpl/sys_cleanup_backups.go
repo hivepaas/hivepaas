@@ -76,7 +76,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 		data.TaskOutput.BackupCleanup.LocalBackupsDeleted++
 	}
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
-		[]string{"deleted_at"})
+		[]string{"deleted_at"}) //nolint:goconst
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

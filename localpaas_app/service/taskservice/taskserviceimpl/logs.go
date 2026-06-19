@@ -70,14 +70,20 @@ func (s *service) queryRealtimeLogs(
 
 	if req.Follow {
 		// NOTE: we don't want to keep the log stream session forever
-		ctx, _ = context.WithTimeout(ctx, req.LogSessionTimeout) //nolint:govet
+		ctx, cancel := context.WithTimeout(ctx, req.LogSessionTimeout)
 
-		resp.LogsStream, resp.LogsStreamCloser, err = consumer.StartConsuming(ctx, batchrecvchan.Options{
+		logsStream, logsStreamCloser, err := consumer.StartConsuming(ctx, batchrecvchan.Options{
 			ThresholdPeriod: req.LogBatchThresholdPeriod,
 			MaxItem:         req.LogBatchMaxFrame,
 		})
 		if err != nil {
+			cancel()
 			return apperrors.Wrap(err)
+		}
+		resp.LogsStream = logsStream
+		resp.LogsStreamCloser = func() error {
+			cancel()
+			return logsStreamCloser()
 		}
 	} else {
 		frames, err := consumer.GetAllData(ctx)

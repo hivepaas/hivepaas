@@ -13,6 +13,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tracerr"
 )
 
+const (
+	pgErrCodeDeadlock = "40P01"
+)
+
 type options struct {
 	isolation      sql.IsolationLevel
 	retryTimes     uint
@@ -90,5 +94,5 @@ func Execute(ctx context.Context, db database.IDB, exec func(tx database.Tx) err
 // IsErrorDeadLock Postgres deadlock check
 func IsErrorDeadLock(err error) bool {
 	pgErr, ok := errors.AsType[*pgconn.PgError](err)
-	return ok && pgErr.Code == "40P01"
+	return ok && pgErr.Code == pgErrCodeDeadlock
 }

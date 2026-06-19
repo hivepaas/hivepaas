@@ -46,7 +46,7 @@ func TestExecute(t *testing.T) {
 
 	t.Run("retry on deadlock and succeed", func(t *testing.T) {
 		calls := 0
-		deadlockErr := &pgconn.PgError{Code: "40P01"}
+		deadlockErr := &pgconn.PgError{Code: pgErrCodeDeadlock}
 
 		db := &mockIDB{
 			runInTx: func(ctx context.Context, opts *sql.TxOptions, fn func(context.Context, bun.Tx) error) error {
@@ -68,7 +68,7 @@ func TestExecute(t *testing.T) {
 
 	t.Run("fail after max retries", func(t *testing.T) {
 		calls := 0
-		deadlockErr := &pgconn.PgError{Code: "40P01"}
+		deadlockErr := &pgconn.PgError{Code: pgErrCodeDeadlock}
 
 		db := &mockIDB{
 			runInTx: func(ctx context.Context, opts *sql.TxOptions, fn func(context.Context, bun.Tx) error) error {
@@ -104,7 +104,7 @@ func TestExecute(t *testing.T) {
 
 	t.Run("retry delay", func(t *testing.T) {
 		calls := 0
-		deadlockErr := &pgconn.PgError{Code: "40P01"}
+		deadlockErr := &pgconn.PgError{Code: pgErrCodeDeadlock}
 		delay := 10 * time.Millisecond
 
 		db := &mockIDB{
@@ -128,7 +128,7 @@ func TestExecute(t *testing.T) {
 }
 
 func TestIsErrorDeadLock(t *testing.T) {
-	assert.True(t, IsErrorDeadLock(&pgconn.PgError{Code: "40P01"}))
+	assert.True(t, IsErrorDeadLock(&pgconn.PgError{Code: pgErrCodeDeadlock}))
 	assert.False(t, IsErrorDeadLock(&pgconn.PgError{Code: "XXXXX"}))
 	assert.False(t, IsErrorDeadLock(errors.New("generic error")))
 }

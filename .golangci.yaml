@@ -55,12 +55,16 @@ linters:
           - forcetypeassert
           - funlen
           - gocognit
+          - goconst
           - gocyclo
           - gosec
           - mnd
           - staticcheck
           - wrapcheck
         path: _test\.go
+      - linters:
+          - goconst
+        path: localpaas_app/entity/
     paths:
       - third_party$
       - builtin$

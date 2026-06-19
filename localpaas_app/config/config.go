@@ -96,6 +96,7 @@ func loadConfig(configFile string) (*Config, error) {
 		}
 		configFile = filepath.Join(appPath, configFileName)
 
+		// #nosec G703
 		if _, err := os.Stat(configFile); errors.Is(err, os.ErrNotExist) {
 			configFile = os.Getenv("LP_CONFIG_FILE")
 			if configFile == "" {
@@ -104,7 +105,7 @@ func loadConfig(configFile string) (*Config, error) {
 		}
 	}
 
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+	if _, err := os.Stat(configFile); os.IsNotExist(err) { // #nosec G703
 		return nil, fmt.Errorf("%w: %s", ErrConfigFileNotFound, configFile)
 	}
 

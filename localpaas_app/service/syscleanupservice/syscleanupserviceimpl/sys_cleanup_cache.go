@@ -76,7 +76,7 @@ func (s *service) sysCleanupCacheRepoSource(
 		data.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed += uint64(file.Size) //nolint:gosec
 	}
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
-		[]string{"deleted_at"})
+		[]string{"deleted_at"}) //nolint:goconst
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

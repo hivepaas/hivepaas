@@ -27,18 +27,28 @@ export function ClearRepoCacheResultDialog({ open, result, onOpenChange }: Clear
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="w-[640px] max-w-[calc(100vw-2rem)]">
+            <DialogFixedContent className="w-[400px] max-w-[calc(100vw-2rem)]">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl">Repo cache cleared</DialogTitle>
+                    <DialogTitle>Repo cache cleared</DialogTitle>
                 </DialogHeader>
 
-                <DialogBody className="py-8">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-8 gap-y-7 text-base sm:text-lg">
+                <DialogBody className="">
+                    {/* <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-8 gap-y-7 text-base sm:text-lg">
                         <span className="font-semibold">Files deleted</span>
                         <span>{result?.filesDeleted ?? 0}</span>
 
                         <span className="font-semibold">Space Reclaimed</span>
                         <span>{formatSpaceReclaimed(result?.spaceReclaimed)}</span>
+                    </div> */}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                            <div className="text-sm font-medium w-[145px]">Files deleted</div>
+                            <div className="flex-1">{result?.filesDeleted ?? 0}</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="text-sm font-medium w-[145px]">Space Reclaimed</div>
+                            <div className="flex-1">{formatSpaceReclaimed(result?.spaceReclaimed)}</div>
+                        </div>
                     </div>
                 </DialogBody>
 

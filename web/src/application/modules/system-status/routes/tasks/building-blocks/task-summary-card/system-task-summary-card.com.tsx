@@ -126,7 +126,7 @@ export function SystemTaskSummaryCard({
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             )}
             style={{
-                borderLeftWidth: variant === "list" ? 4 : 0,
+                borderLeftWidth: variant === "list" ? 8 : 0,
             }}
             role={isClickable ? "button" : undefined}
             tabIndex={isClickable ? 0 : undefined}

@@ -78,6 +78,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
         },
         {
+            label: "Feature Settings",
+            route: ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId),
+        },
+        {
             label: "Danger Zone",
             route: ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, appId),
         },

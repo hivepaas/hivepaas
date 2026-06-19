@@ -359,6 +359,11 @@ export const ROUTE = {
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/resources/`,
                         },
 
+                        featureSettings: {
+                            $pattern: "projects/:id/apps/:appId/feature-settings",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/feature-settings/`,
+                        },
+
                         dangerZone: {
                             $pattern: "projects/:id/apps/:appId/danger-zone",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/danger-zone/`,

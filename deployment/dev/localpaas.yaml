@@ -248,7 +248,7 @@ services:
     image: localpaas/localpaas-agent-dev:latest
     environment:
       LP_CONFIG_FILE: config/config.development.toml
-      AGENT_PORT: "9090"
+      AGENT_PORT: "10001"
       AGENT_NODE_ID: "{{.Node.ID}}"
       AGENT_NODE_NAME: "{{.Node.Hostname}}"
     volumes:

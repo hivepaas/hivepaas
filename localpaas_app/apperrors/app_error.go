@@ -9,6 +9,8 @@ import (
 
 	goerrors "github.com/go-errors/errors"
 	"github.com/hashicorp/go-multierror"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/localpaas/localpaas/localpaas_app/infra/logging"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/translation"
@@ -55,6 +57,8 @@ type AppError interface {
 	FallbackToErrorMsg() bool
 	WithFallbackToErrorMsg(flag bool) AppError
 
+	// StatusCode gets status code of error
+	StatusCode() int
 	// Message builds representation message
 	Message(lang translation.Lang) (msg string, transErr error)
 	// Build builds error info for JSON API recommendation
@@ -190,6 +194,10 @@ func (e *appError) Build(lang translation.Lang) *ErrorInfo {
 	return errInfo
 }
 
+func (e *appError) StatusCode() int {
+	return e.getMappingStatus()
+}
+
 func (e *appError) Message(lang translation.Lang) (msg string, transErr error) {
 	params := make(map[string]any, len(e.params)+len(e.ntParams))
 	maps.Copy(params, e.ntParams)
@@ -275,8 +283,7 @@ func errorUnwrap(err error) error {
 }
 
 func (e *appError) StackTrace() string {
-	var errWithStack *goerrors.Error
-	if errors.As(e.err, &errWithStack) {
+	if errWithStack, ok := errors.AsType[*goerrors.Error](e.err); ok {
 		return errWithStack.ErrorStack()
 	}
 
@@ -315,8 +322,7 @@ func New(err error) AppError {
 	if err == nil {
 		return nil
 	}
-	var e *appError
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[*appError](err); ok {
 		return e // already is a AppError, no need to wrap
 	}
 	return &appError{
@@ -325,4 +331,31 @@ func New(err error) AppError {
 		fallbackToErrorMsg: true,
 		err:                goerrors.Wrap(err, 1),
 	}
+}
+
+// ToGRPCError converts any error (including AppError) to a gRPC status error.
+func ToGRPCError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// If it is already a gRPC status error, return as is
+	if _, ok := status.FromError(err); ok {
+		return err
+	}
+
+	if appErr, ok := errors.AsType[AppError](err); ok {
+		grpcCode := HTTPStatusToGRPCCode(appErr.StatusCode())
+
+		// Translate the error message using Default English Language
+		detail, _ := appErr.Message(translation.LangEn)
+		if detail == "" {
+			detail = appErr.Error()
+		}
+
+		return status.Error(grpcCode, detail) //nolint:wrapcheck
+	}
+
+	// Fallback to internal error code
+	return status.Error(codes.Internal, err.Error()) //nolint:wrapcheck
 }

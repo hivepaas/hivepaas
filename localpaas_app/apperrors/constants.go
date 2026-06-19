@@ -3,6 +3,8 @@ package apperrors
 import (
 	"errors"
 	"net/http"
+
+	"google.golang.org/grpc/codes"
 )
 
 // Base errors with equivalent http status code
@@ -262,4 +264,28 @@ var errorWarnLevelMap = map[error]bool{}
 
 func RegisterStatusMapping(err error, statusCode int) {
 	errorStatusMap[err] = statusCode
+}
+
+// grpcErrorStatusMap - mapping from HTTP status code to gRPC code
+var grpcErrorStatusMap = map[int]codes.Code{
+	http.StatusOK:                    codes.OK,
+	http.StatusBadRequest:            codes.InvalidArgument,
+	http.StatusUnauthorized:          codes.Unauthenticated,
+	http.StatusForbidden:             codes.PermissionDenied,
+	http.StatusNotFound:              codes.NotFound,
+	http.StatusConflict:              codes.AlreadyExists,
+	http.StatusPreconditionFailed:    codes.FailedPrecondition,
+	http.StatusRequestEntityTooLarge: codes.ResourceExhausted,
+	http.StatusTooManyRequests:       codes.ResourceExhausted,
+	http.StatusNotImplemented:        codes.Unimplemented,
+	http.StatusServiceUnavailable:    codes.Unavailable,
+	http.StatusGatewayTimeout:        codes.DeadlineExceeded,
+}
+
+// HTTPStatusToGRPCCode maps an HTTP status code to an equivalent gRPC code.
+func HTTPStatusToGRPCCode(httpStatus int) codes.Code {
+	if code, ok := grpcErrorStatusMap[httpStatus]; ok {
+		return code
+	}
+	return codes.Internal
 }

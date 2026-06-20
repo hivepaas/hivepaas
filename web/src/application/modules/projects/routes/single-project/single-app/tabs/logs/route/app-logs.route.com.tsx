@@ -204,7 +204,7 @@ export function AppLogsRoute() {
                     })}
                 </Tabs>
             ) : (
-                <p className="text-3xl leading-tight">
+                <p className="text-base">
                     Logs feature is disabled, enable it in{" "}
                     <AppLink.Basic
                         to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectID, appID)}

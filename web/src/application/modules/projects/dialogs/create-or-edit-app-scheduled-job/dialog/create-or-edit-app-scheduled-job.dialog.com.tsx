@@ -12,7 +12,7 @@ import { useConditionalModule } from "@application/shared/permissions";
 
 import { CreateOrEditAppScheduledJobForm } from "../form";
 import { useCreateOrEditAppScheduledJobDialogState } from "../hooks";
-import type { CreateOrEditAppScheduledJobFormOutput } from "../schemas";
+import { APP_SCHEDULED_JOB_COMMAND_MODE, type CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 
 function hasText(value: string): boolean {
     return value.trim().length > 0;
@@ -50,7 +50,8 @@ function mapFormValuesToPayload(
         ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
         controlDisabled: !values.controlEnabled,
         command: {
-            command: values.command,
+            command: values.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Command ? values.command : "",
+            script: values.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Script ? values.script : "",
             consoleSize: values.consoleSize,
             tty: values.tty,
             ...(hasText(values.runInShell) ? { runInShell: values.runInShell } : {}),

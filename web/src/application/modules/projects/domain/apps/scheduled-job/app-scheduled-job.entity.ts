@@ -49,6 +49,7 @@ export const APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE = {
 export interface AppScheduledJobCommand {
     runInShell: string;
     command: string;
+    script: string;
     workingDir: string;
     consoleSize: AppScheduledJobCommandConsoleSize;
     tty: boolean;

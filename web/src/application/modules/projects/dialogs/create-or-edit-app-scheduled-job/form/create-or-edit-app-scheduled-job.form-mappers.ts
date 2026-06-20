@@ -6,6 +6,7 @@ import {
 } from "~/projects/module-shared/enums";
 
 import type { CreateOrEditAppScheduledJobFormInput } from "../schemas";
+import { APP_SCHEDULED_JOB_COMMAND_MODE } from "../schemas";
 
 type ArgGroupFormInput = CreateOrEditAppScheduledJobFormInput["argGroups"][number];
 type ArgFormInput = ArgGroupFormInput["args"][number];
@@ -40,7 +41,9 @@ export function createEmptyAppScheduledJobFormDefaults(): CreateOrEditAppSchedul
         priority: EAppScheduledJobTaskPriority.Default,
         controlEnabled: false,
         runInShell: "",
+        commandMode: APP_SCHEDULED_JOB_COMMAND_MODE.Command,
         command: "",
+        script: "",
         workingDir: "",
         tty: false,
         consoleSize: { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE },
@@ -58,6 +61,7 @@ export function createEmptyAppScheduledJobFormDefaults(): CreateOrEditAppSchedul
 export function mapAppScheduledJobToFormInput(job: AppScheduledJob): CreateOrEditAppScheduledJobFormInput {
     const hasInterval = job.schedule.interval.trim().length > 0;
     const { command } = job;
+    const script = command?.script ?? "";
 
     return {
         name: job.name,
@@ -71,7 +75,10 @@ export function mapAppScheduledJobToFormInput(job: AppScheduledJob): CreateOrEdi
         priority: job.priority,
         controlEnabled: !job.controlDisabled,
         runInShell: command?.runInShell ?? "",
+        commandMode:
+            script.trim().length > 0 ? APP_SCHEDULED_JOB_COMMAND_MODE.Script : APP_SCHEDULED_JOB_COMMAND_MODE.Command,
         command: command?.command ?? "",
+        script,
         workingDir: command?.workingDir ?? "",
         tty: command?.tty ?? false,
         consoleSize: { ...(command?.consoleSize ?? APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE) },

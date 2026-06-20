@@ -77,6 +77,7 @@ const CommandSchema = z
     .object({
         runInShell: z.string().optional().default(""),
         command: z.string().optional().default(""),
+        script: z.string().optional().default(""),
         workingDir: z.string().optional().default(""),
         consoleSize: ConsoleSizeSchema,
         tty: z.boolean().optional().default(false),

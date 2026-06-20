@@ -27,6 +27,8 @@ func (s *service) CreateDeploymentAndTask(
 
 	deploymentTask := &entity.Task{
 		ID:       gofn.Must(ulid.NewStringULID()),
+		Scope:    base.ObjectScopeApp,
+		ObjectID: app.ID,
 		TargetID: deployment.ID,
 		Type:     base.TaskTypeAppDeploy,
 		Status:   base.TaskStatusNotStarted,

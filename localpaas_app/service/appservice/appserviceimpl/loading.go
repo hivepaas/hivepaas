@@ -104,7 +104,7 @@ func (s *service) LoadAppWithFeatureSettings(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	featureSetting, err := s.settingRepo.GetSingle(ctx, db, app.GetSettingScope(),
+	featureSetting, err := s.settingRepo.GetSingle(ctx, db, app.GetObjectScope(),
 		base.SettingTypeAppFeatures, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return nil, nil, apperrors.Wrap(err)

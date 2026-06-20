@@ -20,22 +20,24 @@ const (
 
 var (
 	TaskUpsertingConflictCols = []string{"id"}
-	TaskUpsertingUpdateCols   = []string{"target_id", "type", "status", "config",
+	TaskUpsertingUpdateCols   = []string{"scope", "object_id", "target_id", "type", "status", "config",
 		"args", "runs", "output", "version", "update_ver", "run_at", "retry_at",
 		"started_at", "ended_at", "updated_at", "deleted_at"}
 )
 
 type Task struct {
-	ID        string          `bun:",pk" json:"id"`
-	TargetID  string          `bun:",nullzero" json:"targetId"`
-	Type      base.TaskType   `json:"type"`
-	Status    base.TaskStatus `json:"status"`
-	Config    TaskConfig      `bun:",nullzero" json:"config"`
-	Args      string          `bun:",nullzero" json:"args"`
-	Runs      string          `bun:",nullzero" json:"runs,omitempty"`
-	Output    string          `bun:",nullzero" json:"output,omitempty"`
-	Version   int             `json:"version"`
-	UpdateVer int             `json:"updateVer"`
+	ID        string               `bun:",pk" json:"id"`
+	Scope     base.ObjectScopeType `json:"scope"`
+	ObjectID  string               `bun:",nullzero" json:"objectId,omitempty"`
+	TargetID  string               `bun:",nullzero" json:"targetId"`
+	Type      base.TaskType        `json:"type"`
+	Status    base.TaskStatus      `json:"status"`
+	Config    TaskConfig           `bun:",nullzero" json:"config"`
+	Args      string               `bun:",nullzero" json:"args"`
+	Runs      string               `bun:",nullzero" json:"runs,omitempty"`
+	Output    string               `bun:",nullzero" json:"output,omitempty"`
+	Version   int                  `json:"version"`
+	UpdateVer int                  `json:"updateVer"`
 
 	RunAt     time.Time `bun:",nullzero" json:"runAt"`
 	RetryAt   time.Time `bun:",nullzero" json:"retryAt"`

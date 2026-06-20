@@ -27,9 +27,9 @@ func (s *service) sslGetNotification(
 	var scope *base.ObjectScope
 	switch {
 	case sslSetting.BelongToApp != nil:
-		scope = sslSetting.BelongToApp.GetSettingScope()
+		scope = sslSetting.BelongToApp.GetObjectScope()
 	case sslSetting.BelongToProject != nil:
-		scope = sslSetting.BelongToProject.GetSettingScope()
+		scope = sslSetting.BelongToProject.GetObjectScope()
 	default:
 		scope = base.NewObjectScopeGlobal()
 	}

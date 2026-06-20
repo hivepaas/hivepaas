@@ -40,6 +40,7 @@ func (uc *UC) ListTask(
 	}
 
 	listResp, err := uc.taskService.ListTask(ctx, uc.db, &taskservice.ListTaskReq{
+		Scope:     base.NewObjectScopeGlobal(),
 		TargetIDs: targetIDs,
 		Statuses:  req.Status,
 		Search:    req.Search,

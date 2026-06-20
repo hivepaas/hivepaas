@@ -153,7 +153,7 @@ func (s *service) LoadAppEnvVarsAndSecrets(
 		}
 	}
 
-	settings, _, err := s.settingRepo.List(ctx, db, app.GetSettingScope(), nil,
+	settings, _, err := s.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
 		bunex.SelectWhereGroup(
 			bunex.SelectWhereIf(loadEnvVars, "setting.type = ?", base.SettingTypeEnvVar),
 			bunex.SelectWhereIf(!loadEnvVars, "1=1"),

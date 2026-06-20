@@ -65,6 +65,12 @@ func (s *service) ListTask(
 	}
 
 	var listOpts []bunex.SelectQueryOption
+	if req.Scope != nil {
+		listOpts = append(listOpts, bunex.SelectWhere("task.scope = ?", req.Scope.ScopeType()))
+		if req.Scope.MainObjectID() != "" {
+			listOpts = append(listOpts, bunex.SelectWhere("task.object_id = ?", req.Scope.MainObjectID()))
+		}
+	}
 	if len(req.TargetIDs) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("task.target_id IN (?)", req.TargetIDs...))
 	}

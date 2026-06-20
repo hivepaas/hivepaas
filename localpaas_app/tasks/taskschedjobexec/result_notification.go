@@ -28,9 +28,9 @@ func (e *Executor) sendNotification(
 	var scope *base.ObjectScope
 	switch {
 	case data.App != nil:
-		scope = data.App.GetSettingScope()
+		scope = data.App.GetObjectScope()
 	case data.Project != nil:
-		scope = data.Project.GetSettingScope()
+		scope = data.Project.GetObjectScope()
 	default:
 		scope = base.NewObjectScopeGlobal()
 	}

@@ -24,7 +24,7 @@ func (s *service) notifyForDeployment(
 	}
 
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
-		data.App.GetSettingScope(), notifConfig, data.Deployment.IsDone(), data.RefObjects)
+		data.App.GetObjectScope(), notifConfig, data.Deployment.IsDone(), data.RefObjects)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

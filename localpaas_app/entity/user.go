@@ -55,7 +55,7 @@ func (u *User) IsAdmin() bool {
 	return u.Role == base.UserRoleAdmin
 }
 
-func (u *User) GetSettingScope() *base.ObjectScope {
+func (u *User) GetObjectScope() *base.ObjectScope {
 	return &base.ObjectScope{
 		UserID: u.ID,
 	}

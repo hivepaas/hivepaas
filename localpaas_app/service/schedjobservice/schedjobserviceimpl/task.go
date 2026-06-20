@@ -23,6 +23,8 @@ func (s *service) CreateSchedJobTask(
 
 	return &entity.Task{
 		ID:       gofn.Must(ulid.NewStringULID()),
+		Scope:    jobSetting.Scope,
+		ObjectID: jobSetting.ObjectID,
 		TargetID: jobSetting.ID,
 		Type:     base.TaskTypeSchedJobExec,
 		Status:   base.TaskStatusNotStarted,

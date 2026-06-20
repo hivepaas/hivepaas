@@ -23,7 +23,7 @@ func (uc *UC) GetAppEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	settings, _, err := uc.settingRepo.List(ctx, uc.db, app.GetSettingScope(), nil,
+	settings, _, err := uc.settingRepo.List(ctx, uc.db, app.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeEnvVar),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)

@@ -77,7 +77,7 @@ func (s *service) calcBuildRegistryAuths(
 	db database.IDB,
 	data *imageBuildData,
 ) (map[string]registry.AuthConfig, error) {
-	settings, _, err := s.settingRepo.List(ctx, db, data.Project.GetSettingScope(), nil,
+	settings, _, err := s.settingRepo.List(ctx, db, data.Project.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)

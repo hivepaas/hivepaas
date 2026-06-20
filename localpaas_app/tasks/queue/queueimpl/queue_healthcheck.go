@@ -60,6 +60,8 @@ func (q *taskQueue) doHealthcheck(
 			App:                jobSetting.BelongToApp,
 			Task: &entity.Task{
 				ID:       gofn.Must(ulid.NewStringULID()),
+				Scope:    jobSetting.Scope,
+				ObjectID: jobSetting.ObjectID,
 				TargetID: jobSetting.ID,
 				Type:     base.TaskTypeHealthcheck,
 				Status:   base.TaskStatusNotStarted,

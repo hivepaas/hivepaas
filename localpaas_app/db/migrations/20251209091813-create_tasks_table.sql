@@ -2,6 +2,8 @@
 CREATE TABLE IF NOT EXISTS tasks
 (
     id               VARCHAR(100) PRIMARY KEY,
+    scope            VARCHAR(50) NOT NULL,
+    object_id        VARCHAR(100) NULL,
     target_id        VARCHAR(100) NULL,
     type             VARCHAR(100) NOT NULL,
     status           VARCHAR NOT NULL CONSTRAINT chk_status CHECK
@@ -23,6 +25,8 @@ CREATE TABLE IF NOT EXISTS tasks
     deleted_at       TIMESTAMPTZ NULL
 );
 
+CREATE INDEX idx_tasks_scope ON tasks(scope);
+CREATE INDEX idx_tasks_object_id ON tasks(object_id);
 CREATE INDEX idx_tasks_target_id ON tasks(target_id);
 CREATE INDEX idx_tasks_type ON tasks(type);
 CREATE INDEX idx_tasks_status ON tasks(status);

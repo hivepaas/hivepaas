@@ -75,6 +75,9 @@ func (d *Deployment) IsDeleted() bool {
 }
 
 func (d *Deployment) GetDuration() time.Duration {
+	if d.EndedAt.IsZero() || d.EndedAt.Before(d.StartedAt) {
+		return time.Since(d.StartedAt)
+	}
 	return d.EndedAt.Sub(d.StartedAt)
 }
 

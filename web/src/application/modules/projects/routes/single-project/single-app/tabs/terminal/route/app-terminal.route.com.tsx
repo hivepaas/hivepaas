@@ -51,7 +51,7 @@ export function AppTerminalRoute() {
                     onSelectedShellChange={setSelectedShell}
                 />
             ) : (
-                <p className="text-3xl leading-tight">
+                <p className="text-base">
                     Terminal feature is disabled, enable it in{" "}
                     <AppLink.Basic
                         to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectID, appID)}

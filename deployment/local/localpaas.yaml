@@ -232,6 +232,27 @@ services:
         max-size: 50m
         compress: "true"
 
+  agent:
+    image: localpaas/localpaas-agent-dev:latest
+    environment:
+      LP_CONFIG_FILE: config/config.development.toml
+      LP_AGENT_PORT: "10001"
+      LP_AGENT_NODE_ID: "{{.Node.ID}}"
+      LP_AGENT_NODE_NAME: "{{.Node.Hostname}}"
+      LP_AGENT_SECRET_TOKEN: abc123
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - local_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        compress: "true"
+
 # Define the overlay network for Swarm
 networks:
   localpaas_net:

@@ -240,12 +240,13 @@ services:
     deploy:
       mode: global
       endpoint_mode: dnsrr
+      labels:
+        - "traefik.enable=false"
     logging:
       driver: local
       options:
         max-size: 20m
         compress: "true"
-
 
 networks:
   localpaas_net:

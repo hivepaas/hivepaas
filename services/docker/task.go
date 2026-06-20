@@ -113,15 +113,20 @@ func (m *manager) serviceTaskGetRunning(
 	}
 
 	timeNow := time.Now()
+	waitDuration := retryDelay
 	for i := range listResp.Items {
 		t := &listResp.Items[i]
-		if t.Status.State == swarm.TaskStateRunning && timeNow.Sub(t.Status.Timestamp) > minRunningDuration &&
-			(len(ignoreNodeIDs) == 0 || !gofn.Contain(ignoreNodeIDs, t.NodeID)) {
+		if t.Status.State != swarm.TaskStateRunning || gofn.Contain(ignoreNodeIDs, t.NodeID) {
+			continue
+		}
+		duration := timeNow.Sub(t.Status.Timestamp)
+		if duration > minRunningDuration {
 			return t, listResp, nil
 		}
+		waitDuration = min(waitDuration, minRunningDuration-duration)
 	}
 
-	time.Sleep(retryDelay)
+	time.Sleep(max(waitDuration, time.Second))
 	return m.serviceTaskGetRunning(ctx, serviceID, minRunningDuration, retry+1,
 		maxRetry, retryDelay, ignoreNodeIDs)
 }

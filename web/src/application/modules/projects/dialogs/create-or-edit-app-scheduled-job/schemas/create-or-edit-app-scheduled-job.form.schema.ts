@@ -5,6 +5,11 @@ import {
     EAppScheduledJobTaskPriority,
 } from "~/projects/module-shared/enums";
 
+export const APP_SCHEDULED_JOB_COMMAND_MODE = {
+    Command: "command",
+    Script: "script",
+} as const;
+
 const NotificationRefSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -47,7 +52,9 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         priority: z.nativeEnum(EAppScheduledJobTaskPriority),
         controlEnabled: z.boolean(),
         runInShell: z.string().trim(),
-        command: z.string().trim().min(1, "Command is required"),
+        commandMode: z.enum([APP_SCHEDULED_JOB_COMMAND_MODE.Command, APP_SCHEDULED_JOB_COMMAND_MODE.Script]),
+        command: z.string().trim(),
+        script: z.string(),
         workingDir: z.string().trim(),
         tty: z.boolean(),
         consoleSize: ConsoleSizeSchema,
@@ -61,6 +68,22 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         }),
     })
     .superRefine((value, ctx) => {
+        if (value.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Command && !value.command.trim()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Command is required",
+                path: ["command"],
+            });
+        }
+
+        if (value.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Script && !value.script.trim()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Script is required",
+                path: ["script"],
+            });
+        }
+
         value.argGroups.forEach((group, groupIndex) => {
             if (!group.enabled) {
                 return;

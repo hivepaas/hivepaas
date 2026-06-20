@@ -16,9 +16,15 @@ import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { InputNumber } from "@/components/ui/input-number";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
-import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
+import { APP_SCHEDULED_JOB_COMMAND_MODE, CreateOrEditAppScheduledJobFormSchema } from "../schemas";
 
-import { ArgGroupsSection, INFO_BLOCK_TITLE_WIDTH, NextRunsField, PriorityTabsField } from "./building-blocks";
+import {
+    ArgGroupsSection,
+    INFO_BLOCK_TITLE_WIDTH,
+    NextRunsField,
+    PriorityTabsField,
+    ScriptEditorField,
+} from "./building-blocks";
 import {
     createEmptyAppScheduledJobFormDefaults,
     mapAppScheduledJobToFormInput,
@@ -97,10 +103,15 @@ export function CreateOrEditAppScheduledJobForm({
     const { field: priority } = useController({ control, name: "priority" });
     const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
     const { field: runInShell } = useController({ control, name: "runInShell" });
+    const { field: commandMode } = useController({ control, name: "commandMode" });
     const {
         field: command,
         fieldState: { invalid: isCommandInvalid },
     } = useController({ control, name: "command" });
+    const {
+        field: script,
+        fieldState: { invalid: isScriptInvalid },
+    } = useController({ control, name: "script" });
     const {
         field: workingDir,
         fieldState: { invalid: isWorkingDirInvalid },
@@ -140,10 +151,7 @@ export function CreateOrEditAppScheduledJobForm({
                 }}
                 className="min-h-0 flex flex-1 flex-col"
             >
-                <fieldset
-                    disabled={readOnly}
-                    className="contents"
-                >
+                <fieldset className="contents">
                     <DialogBody>
                         <input
                             type="hidden"
@@ -194,10 +202,16 @@ export function CreateOrEditAppScheduledJobForm({
                                             onValueChange={scheduleMode.onChange}
                                         >
                                             <TabsList>
-                                                <TabsTrigger value={EAppScheduledJobScheduleMode.Interval}>
+                                                <TabsTrigger
+                                                    value={EAppScheduledJobScheduleMode.Interval}
+                                                    disabled={readOnly}
+                                                >
                                                     Interval-based
                                                 </TabsTrigger>
-                                                <TabsTrigger value={EAppScheduledJobScheduleMode.Cron}>
+                                                <TabsTrigger
+                                                    value={EAppScheduledJobScheduleMode.Cron}
+                                                    disabled={readOnly}
+                                                >
                                                     Time-based
                                                 </TabsTrigger>
                                             </TabsList>
@@ -339,24 +353,65 @@ export function CreateOrEditAppScheduledJobForm({
                             <ContentBlock label="Command">
                                 <div className="flex flex-col gap-6">
                                     <InfoBlock
+                                        title="Mode"
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    >
+                                        <Tabs
+                                            value={commandMode.value}
+                                            onValueChange={commandMode.onChange}
+                                        >
+                                            <TabsList>
+                                                <TabsTrigger
+                                                    value={APP_SCHEDULED_JOB_COMMAND_MODE.Command}
+                                                    disabled={readOnly}
+                                                >
+                                                    Command
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value={APP_SCHEDULED_JOB_COMMAND_MODE.Script}
+                                                    disabled={readOnly}
+                                                >
+                                                    Script
+                                                </TabsTrigger>
+                                            </TabsList>
+                                        </Tabs>
+                                    </InfoBlock>
+
+                                    <InfoBlock
                                         title={
                                             <LabelWithInfo
-                                                label="Command"
+                                                label={
+                                                    commandMode.value === APP_SCHEDULED_JOB_COMMAND_MODE.Script
+                                                        ? "Script"
+                                                        : "Command"
+                                                }
                                                 isRequired
                                             />
                                         }
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
-                                        <Field>
-                                            <Input
-                                                {...command}
-                                                placeholder="echo “$CMD_ARG_GROUP_1”"
-                                                className="max-w-[400px]"
-                                                aria-invalid={isCommandInvalid}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.command]} />
-                                        </Field>
+                                        {commandMode.value === APP_SCHEDULED_JOB_COMMAND_MODE.Script ? (
+                                            <Field>
+                                                <ScriptEditorField
+                                                    value={script.value}
+                                                    onChange={script.onChange}
+                                                    invalid={isScriptInvalid}
+                                                    error={errors.script}
+                                                    readOnly={readOnly}
+                                                />
+                                            </Field>
+                                        ) : (
+                                            <Field>
+                                                <Input
+                                                    {...command}
+                                                    placeholder="echo “$CMD_ARG_GROUP_1”"
+                                                    className="max-w-[400px]"
+                                                    aria-invalid={isCommandInvalid}
+                                                    disabled={readOnly}
+                                                />
+                                                <FieldError errors={[errors.command]} />
+                                            </Field>
+                                        )}
                                     </InfoBlock>
 
                                     <InfoBlock

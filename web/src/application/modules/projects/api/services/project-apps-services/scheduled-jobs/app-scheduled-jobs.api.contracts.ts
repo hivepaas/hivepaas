@@ -46,6 +46,7 @@ export type AppScheduledJobs_CommandConsoleSize_Payload = {
 export type AppScheduledJobs_Command_Payload = {
     runInShell?: string;
     command: string;
+    script: string;
     workingDir?: string;
     consoleSize: AppScheduledJobs_CommandConsoleSize_Payload;
     tty: boolean;

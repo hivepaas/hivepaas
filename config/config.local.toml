@@ -60,4 +60,4 @@ app_path = ".appdata/localpaas"
     secret_token = "abc123"
 
 [dev_mode]
-    force_agent_local = true
+    force_agent_local = false

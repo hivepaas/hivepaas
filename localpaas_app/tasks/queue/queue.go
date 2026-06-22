@@ -22,6 +22,8 @@ type TaskQueue interface {
 
 	ScheduleTask(ctx context.Context, tasks ...*entity.Task) error
 	UnscheduleTask(ctx context.Context, tasks ...*entity.Task) error
+	ScheduleTasksForSchedJobs(ctx context.Context, db database.Tx, schedJobs []*entity.Setting,
+		unscheduleCurrentTasks bool) error
 	ScheduleTasksForSchedJob(ctx context.Context, db database.Tx, schedJob *entity.Setting,
 		unscheduleCurrentTasks bool) error
 }

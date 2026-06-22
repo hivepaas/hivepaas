@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 )
 
 var (
@@ -199,4 +200,17 @@ func (s *Setting) Migrate() (hasChange bool, err error) {
 		return false, apperrors.Wrap(err)
 	}
 	return hasChange, nil
+}
+
+func (s *Setting) Copy(genID bool) (*Setting, error) {
+	cp := new(*s)
+	cp.parsedData = nil
+	if genID {
+		cp.ID = gofn.Must(ulid.NewStringULID())
+	}
+	_, err := cp.Parse()
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	return cp, nil
 }

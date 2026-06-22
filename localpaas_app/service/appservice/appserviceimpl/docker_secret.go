@@ -23,15 +23,43 @@ const (
 	secretDefaultFileMode = 444
 )
 
+func (s *service) CreateSwarmSecrets(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	secrets []*entity.Secret,
+) (refs []*entity.SwarmSecretRef, err error) {
+	refs = make([]*entity.SwarmSecretRef, 0, len(secrets))
+	for _, secret := range secrets {
+		ref, err := s.createSwarmSecret(ctx, db, app, secret)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		refs = append(refs, ref)
+	}
+	return refs, s.addSwarmSecretsToService(ctx, db, app, refs)
+}
+
 func (s *service) CreateSwarmSecret(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	secret *entity.Secret,
-) (err error) {
+) (*entity.SwarmSecretRef, error) {
+	refs, err := s.CreateSwarmSecrets(ctx, db, app, []*entity.Secret{secret})
+	ref, _ := gofn.First(refs)
+	return ref, apperrors.Wrap(err)
+}
+
+func (s *service) createSwarmSecret(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	secret *entity.Secret,
+) (ref *entity.SwarmSecretRef, err error) {
 	swarmRef := secret.SwarmRef
 	if swarmRef == nil || swarmRef.File == nil {
-		return nil
+		return nil, nil
 	}
 
 	swarmRef.File.Name = gofn.Coalesce(swarmRef.File.Name, strings.ToLower(secret.Key))
@@ -51,16 +79,57 @@ func (s *service) CreateSwarmSecret(
 		if errors.Is(err, apperrors.ErrInfraConflict) || errors.Is(err, apperrors.ErrInfraAlreadyExists) {
 			// Delete the orphan secret, then retry this action
 			if err := s.deleteOrphanSwarmSecret(ctx, db, app, secretName); err == nil {
-				return s.CreateSwarmSecret(ctx, db, app, secret)
+				return s.createSwarmSecret(ctx, db, app, secret)
 			}
 		}
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 	swarmRef.SecretID = secretResp.ID
 	swarmRef.SecretName = secretName
+	return swarmRef, nil
+}
 
-	// Add the secret to the swarm service of the app
-	err = s.addSwarmSecretToService(ctx, app.ServiceID, swarmRef)
+func (s *service) addSwarmSecretsToService(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	refs []*entity.SwarmSecretRef,
+) (err error) {
+	if app.ServiceID == "" || len(refs) == 0 {
+		return nil
+	}
+
+	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	swarmSvc := &inspect.Service
+	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
+
+	for _, swarmRef := range refs {
+		if swarmRef == nil || swarmRef.SecretID == "" {
+			continue
+		}
+		// Only add the secret to the swarm service when the target file name is not used by another secret
+		_, inUse := gofn.Find(containerSpec.Secrets, func(sec *swarm.SecretReference) bool {
+			return sec.File != nil && sec.File.Name == swarmRef.File.Name
+		})
+		if inUse {
+			continue
+		}
+		containerSpec.Secrets = append(containerSpec.Secrets, &swarm.SecretReference{
+			File: &swarm.SecretReferenceFileTarget{
+				Name: swarmRef.File.Name,
+				UID:  swarmRef.File.UID,
+				GID:  swarmRef.File.GID,
+				Mode: swarmRef.File.Mode.ToFileMode(),
+			},
+			SecretID:   swarmRef.SecretID,
+			SecretName: swarmRef.SecretName,
+		})
+	}
+
+	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &swarmSvc.Version, &swarmSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -74,7 +143,7 @@ func (s *service) CreateSwarmSecret(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.addSwarmSecretToService(ctx, childApp.ServiceID, swarmRef)
+			err = s.addSwarmSecretsToService(ctx, db, childApp, refs)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -122,7 +191,8 @@ func (s *service) DeleteSwarmSecret(
 			return apperrors.Wrap(err)
 		}
 		if inheritedSecretSetting != nil {
-			err = s.addSwarmSecretToService(ctx, app.ServiceID, inheritedSecretSetting.MustAsSecret().SwarmRef)
+			err = s.addSwarmSecretsToService(ctx, db, app,
+				[]*entity.SwarmSecretRef{inheritedSecretSetting.MustAsSecret().SwarmRef})
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -153,53 +223,11 @@ func (s *service) UpdateSwarmSecret(
 	}
 
 	// Create a secret in the swarm then add it to the services
-	err = s.CreateSwarmSecret(ctx, db, app, newSecret)
+	_, err = s.CreateSwarmSecret(ctx, db, app, newSecret)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	return nil
-}
-
-func (s *service) addSwarmSecretToService(
-	ctx context.Context,
-	serviceID string,
-	swarmRef *entity.SwarmSecretRef,
-) (err error) {
-	if serviceID == "" || swarmRef == nil || swarmRef.SecretID == "" {
-		return nil
-	}
-
-	inspect, err := s.dockerManager.ServiceInspect(ctx, serviceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
-
-	// Only add the secret to the swarm service when the target file name is not used
-	// by another secret.
-	for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets {
-		if sec.File != nil && sec.File.Name == swarmRef.File.Name {
-			return nil
-		}
-	}
-
-	swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets = append(swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets,
-		&swarm.SecretReference{
-			File: &swarm.SecretReferenceFileTarget{
-				Name: swarmRef.File.Name,
-				UID:  swarmRef.File.UID,
-				GID:  swarmRef.File.GID,
-				Mode: swarmRef.File.Mode.ToFileMode(),
-			},
-			SecretID:   swarmRef.SecretID,
-			SecretName: swarmRef.SecretName,
-		})
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
 	return nil
 }
 

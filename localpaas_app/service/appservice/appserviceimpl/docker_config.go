@@ -23,15 +23,43 @@ const (
 	configDefaultFileMode = 444
 )
 
+func (s *service) CreateSwarmConfigs(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	configs []*entity.ConfigFile,
+) (refs []*entity.SwarmConfigRef, err error) {
+	refs = make([]*entity.SwarmConfigRef, 0, len(configs))
+	for _, cfg := range configs {
+		ref, err := s.createSwarmConfig(ctx, db, app, cfg)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		refs = append(refs, ref)
+	}
+	return refs, s.addSwarmConfigsToService(ctx, db, app, refs)
+}
+
 func (s *service) CreateSwarmConfig(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	config *entity.ConfigFile,
-) (err error) {
+) (*entity.SwarmConfigRef, error) {
+	refs, err := s.CreateSwarmConfigs(ctx, db, app, []*entity.ConfigFile{config})
+	ref, _ := gofn.First(refs)
+	return ref, apperrors.Wrap(err)
+}
+
+func (s *service) createSwarmConfig(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	config *entity.ConfigFile,
+) (ref *entity.SwarmConfigRef, err error) {
 	swarmRef := config.SwarmRef
 	if swarmRef == nil || swarmRef.File == nil {
-		return nil
+		return nil, nil
 	}
 
 	swarmRef.File.Name = gofn.Coalesce(swarmRef.File.Name, strings.ToLower(config.Name))
@@ -51,16 +79,57 @@ func (s *service) CreateSwarmConfig(
 		if errors.Is(err, apperrors.ErrInfraConflict) || errors.Is(err, apperrors.ErrInfraAlreadyExists) {
 			// Delete the orphan config, then retry this action
 			if err := s.deleteOrphanSwarmConfig(ctx, db, app, configName); err == nil {
-				return s.CreateSwarmConfig(ctx, db, app, config)
+				return s.createSwarmConfig(ctx, db, app, config)
 			}
 		}
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 	swarmRef.ConfigID = configResp.ID
 	swarmRef.ConfigName = configName
+	return swarmRef, nil
+}
 
-	// Add the config to the swarm service of the app
-	err = s.addSwarmConfigToService(ctx, app.ServiceID, swarmRef)
+func (s *service) addSwarmConfigsToService(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	refs []*entity.SwarmConfigRef,
+) (err error) {
+	if app.ServiceID == "" || len(refs) == 0 {
+		return nil
+	}
+
+	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	swarmSvc := &inspect.Service
+	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
+
+	for _, swarmRef := range refs {
+		if swarmRef == nil || swarmRef.ConfigID == "" {
+			continue
+		}
+		// Only add the config to the swarm service when the target file name is not used by another config
+		_, inUse := gofn.Find(containerSpec.Configs, func(cfg *swarm.ConfigReference) bool {
+			return cfg.File != nil && cfg.File.Name == swarmRef.File.Name
+		})
+		if inUse {
+			continue
+		}
+		containerSpec.Configs = append(containerSpec.Configs, &swarm.ConfigReference{
+			File: &swarm.ConfigReferenceFileTarget{
+				Name: swarmRef.File.Name,
+				UID:  swarmRef.File.UID,
+				GID:  swarmRef.File.GID,
+				Mode: swarmRef.File.Mode.ToFileMode(),
+			},
+			ConfigID:   swarmRef.ConfigID,
+			ConfigName: swarmRef.ConfigName,
+		})
+	}
+
+	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &swarmSvc.Version, &swarmSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -74,7 +143,7 @@ func (s *service) CreateSwarmConfig(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.addSwarmConfigToService(ctx, childApp.ServiceID, swarmRef)
+			err = s.addSwarmConfigsToService(ctx, db, childApp, refs)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -122,7 +191,8 @@ func (s *service) DeleteSwarmConfig(
 			return apperrors.Wrap(err)
 		}
 		if inheritedConfigSetting != nil {
-			err = s.addSwarmConfigToService(ctx, app.ServiceID, inheritedConfigSetting.MustAsConfigFile().SwarmRef)
+			err = s.addSwarmConfigsToService(ctx, db, app,
+				[]*entity.SwarmConfigRef{inheritedConfigSetting.MustAsConfigFile().SwarmRef})
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -153,53 +223,11 @@ func (s *service) UpdateSwarmConfig(
 	}
 
 	// Create a config in the swarm then add it to the services
-	err = s.CreateSwarmConfig(ctx, db, app, newConfig)
+	_, err = s.CreateSwarmConfig(ctx, db, app, newConfig)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	return nil
-}
-
-func (s *service) addSwarmConfigToService(
-	ctx context.Context,
-	serviceID string,
-	swarmRef *entity.SwarmConfigRef,
-) (err error) {
-	if serviceID == "" || swarmRef == nil || swarmRef.ConfigID == "" {
-		return nil
-	}
-
-	inspect, err := s.dockerManager.ServiceInspect(ctx, serviceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
-
-	// Only add the config to the swarm service when the target file name is not used
-	// by another config.
-	for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
-		if sec.File != nil && sec.File.Name == swarmRef.File.Name {
-			return nil
-		}
-	}
-
-	swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs = append(swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs,
-		&swarm.ConfigReference{
-			File: &swarm.ConfigReferenceFileTarget{
-				Name: swarmRef.File.Name,
-				UID:  swarmRef.File.UID,
-				GID:  swarmRef.File.GID,
-				Mode: swarmRef.File.Mode.ToFileMode(),
-			},
-			ConfigID:   swarmRef.ConfigID,
-			ConfigName: swarmRef.ConfigName,
-		})
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
 	return nil
 }
 
@@ -220,12 +248,12 @@ func (s *service) removeSwarmConfigFromService(
 
 	hasChanges := false
 	updateConfigs := make([]*swarm.ConfigReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs))
-	for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
-		if swarmRef.ConfigID == sec.ConfigID {
+	for _, cfg := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
+		if swarmRef.ConfigID == cfg.ConfigID {
 			hasChanges = true
 			continue
 		}
-		updateConfigs = append(updateConfigs, sec)
+		updateConfigs = append(updateConfigs, cfg)
 	}
 	if !hasChanges {
 		return nil

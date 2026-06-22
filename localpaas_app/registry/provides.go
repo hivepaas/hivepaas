@@ -36,6 +36,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
 	"github.com/localpaas/localpaas/localpaas_app/service/agentservice/agentserviceimpl"
+	"github.com/localpaas/localpaas/localpaas_app/service/appcopyservice/appcopyserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice/appserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice/clusterserviceimpl"
@@ -277,6 +278,7 @@ var Provides = []any{
 	repocheckoutserviceimpl.New,
 	imagebuildserviceimpl.New,
 	agentserviceimpl.New,
+	appcopyserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

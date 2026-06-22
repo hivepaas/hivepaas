@@ -24,6 +24,11 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
+const (
+	dockerImageInit    = "busybox:latest"
+	dockerImageInitDev = "crccheck/hello-world:latest"
+)
+
 func (uc *UC) CreateApp(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -202,9 +207,9 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 		},
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: &swarm.ContainerSpec{
-				Image:    gofn.If(isDevEnv, "crccheck/hello-world:latest", "busybox:latest"),
+				Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
 				Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
-				Hostname: app.Key,
+				Hostname: app.LocalKey,
 				Init:     new(true), // default to use `tini`
 			},
 			Networks: []swarm.NetworkAttachmentConfig{
@@ -242,11 +247,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSetting)
 
 	// Init feature settings
-	featureSettings := &entity.AppFeatureSettings{
-		LoggingSettings:  &entity.AppFeatureLoggingSettings{Enabled: true},
-		SchedJobSettings: &entity.AppFeatureSchedJobSettings{Enabled: true},
-		TerminalSettings: &entity.AppFeatureTerminalSettings{Enabled: false},
-	}
+	featureSettings := &entity.AppFeatureSettings{}
+	entity.InitAppFeatureSettingsDefault(featureSettings)
 	dbFeatureSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.ObjectScopeApp,

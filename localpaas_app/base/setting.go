@@ -47,7 +47,8 @@ const (
 
 var (
 	AllAppSettingTypes = []SettingType{SettingTypeApp, SettingTypeAppDeployment,
-		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeSchedJob, SettingTypeHealthcheck}
+		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeConfigFile,
+		SettingTypeSchedJob, SettingTypeHealthcheck}
 
 	AllProjectSettingTypes = []SettingType{SettingTypeProject, SettingTypeEnvVar, SettingTypeSecret}
 )

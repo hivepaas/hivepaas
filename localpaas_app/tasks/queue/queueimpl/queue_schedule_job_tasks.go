@@ -36,7 +36,7 @@ func (q *taskQueue) doCreateTasksForJobs(
 func (q *taskQueue) createTasksForJobs(
 	ctx context.Context,
 	db database.Tx,
-	jobIDs []string,
+	jobIDs []string, // NOTE: no ID sent will create tasks for all current jobs in DB
 	withinDuration time.Duration,
 ) ([]*entity.Task, error) {
 	opts := []bunex.SelectQueryOption{

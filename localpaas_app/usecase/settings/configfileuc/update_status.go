@@ -27,7 +27,7 @@ func (uc *UC) UpdateConfigFileStatus(
 				configFile := pData.Setting.MustAsConfigFile()
 				if pData.Setting.IsActive() {
 					// Create a config in docker swarm for the app
-					err = uc.AppService.CreateSwarmConfig(ctx, db, data.ScopeApp, configFile)
+					_, err = uc.AppService.CreateSwarmConfig(ctx, db, data.ScopeApp, configFile)
 				} else {
 					// Delete the related config in docker swarm
 					err = uc.AppService.DeleteSwarmConfig(ctx, db, data.ScopeApp, configFile)

@@ -29,7 +29,7 @@ func (uc *UC) CreateConfigFile(
 		) error {
 			if data.ScopeApp != nil {
 				// Create a config in docker swarm
-				err := uc.AppService.CreateSwarmConfig(ctx, db, data.ScopeApp, configFile)
+				_, err := uc.AppService.CreateSwarmConfig(ctx, db, data.ScopeApp, configFile)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

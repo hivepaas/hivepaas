@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//nolint:funlen
 func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.RouterGroup {
 	appGroup := projectGroup.Group("/:projectID/apps")
 	appHandler := s.handlerRegistry.appHandler
@@ -21,6 +22,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		appGroup.DELETE("/:appID", appHandler.DeleteApp)
 		// Status Update
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
+	}
+
+	{ // Copy
+		appGroup.GET("/:appID/copy/prepare", appHandler.PrepareAppCopy)
+		appGroup.POST("/:appID/copy", appHandler.CopyApp)
 	}
 
 	{ // Tags

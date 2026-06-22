@@ -28,6 +28,9 @@ func (q *taskQueue) ScheduleTask(
 		}
 		schedTasks = append(schedTasks, task)
 	}
+	if len(schedTasks) == 0 {
+		return nil
+	}
 
 	if q.client != nil { // Notify all workers to schedule the tasks
 		if err := q.client.ScheduleTask(ctx, schedTasks...); err != nil {
@@ -46,6 +49,9 @@ func (q *taskQueue) UnscheduleTask(
 	ctx context.Context,
 	tasks ...*entity.Task,
 ) error {
+	if len(tasks) == 0 {
+		return nil
+	}
 	if q.client == nil && q.server == nil {
 		return apperrors.New(apperrors.ErrInternalServer).WithMsgLog("task queue is not initialized")
 	}
@@ -70,8 +76,17 @@ func (q *taskQueue) ScheduleTasksForSchedJob(
 	jobSetting *entity.Setting,
 	unscheduleCurrentTasks bool,
 ) error {
+	return q.ScheduleTasksForSchedJobs(ctx, db, []*entity.Setting{jobSetting}, unscheduleCurrentTasks)
+}
+
+func (q *taskQueue) ScheduleTasksForSchedJobs(
+	ctx context.Context,
+	db database.Tx,
+	jobSettings []*entity.Setting,
+	unscheduleCurrentTasks bool,
+) error {
 	if unscheduleCurrentTasks {
-		unschedulingTasks, err := q.loadCurrentTasksForUnscheduling(ctx, db, jobSetting)
+		unschedulingTasks, err := q.loadCurrentTasksForUnscheduling(ctx, db, jobSettings)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -84,15 +99,23 @@ func (q *taskQueue) ScheduleTasksForSchedJob(
 		_ = q.UnscheduleTask(ctx, unschedulingTasks...)
 	}
 
-	if jobSetting.DeletedAt.IsZero() && jobSetting.IsActive() {
-		tasks, err := q.createTasksForJobs(ctx, db, []string{jobSetting.ID}, q.config.Tasks.Queue.TaskCreateInterval)
-		if err != nil {
-			return apperrors.Wrap(err)
+	activeJobIDs := make([]string, 0, len(jobSettings))
+	for _, jobSetting := range jobSettings {
+		if jobSetting.DeletedAt.IsZero() && jobSetting.IsActive() {
+			activeJobIDs = append(activeJobIDs, jobSetting.ID)
 		}
-		err = q.ScheduleTask(ctx, tasks...)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+	}
+	if len(activeJobIDs) == 0 {
+		return nil
+	}
+
+	tasks, err := q.createTasksForJobs(ctx, db, activeJobIDs, q.config.Tasks.Queue.TaskCreateInterval)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	err = q.ScheduleTask(ctx, tasks...)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -101,11 +124,12 @@ func (q *taskQueue) ScheduleTasksForSchedJob(
 func (q *taskQueue) loadCurrentTasksForUnscheduling(
 	ctx context.Context,
 	db database.IDB,
-	job *entity.Setting,
+	jobs []*entity.Setting,
 ) ([]*entity.Task, error) {
 	timeNow := timeutil.NowUTC()
-	tasks, _, err := q.taskRepo.List(ctx, db, job.ID, nil,
+	tasks, _, err := q.taskRepo.List(ctx, db, "", nil,
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
+		bunex.SelectWhereIn("task.target_id IN (?)", entityutil.ExtractIDs(jobs)...),
 		bunex.SelectWhere("task.status != ?", base.TaskStatusDone),
 		bunex.SelectWhere("task.run_at > ?", timeNow.Add(-10*24*time.Hour)), //nolint scan from 10 days ago
 	)

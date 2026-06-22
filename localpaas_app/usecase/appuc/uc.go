@@ -3,12 +3,14 @@ package appuc
 import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
+	"github.com/localpaas/localpaas/localpaas_app/service/appcopyservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/reslinkservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
@@ -25,7 +27,9 @@ type UC struct {
 	deploymentRepo       repository.DeploymentRepo
 	userService          userservice.Service
 	appService           appservice.Service
+	appCopyService       appcopyservice.Service
 	settingService       settingservice.Service
+	resLinkService       reslinkservice.Service
 	sslService           sslservice.Service
 	projectService       projectservice.Service
 	networkService       networkservice.Service
@@ -45,7 +49,9 @@ func New(
 	deploymentRepo repository.DeploymentRepo,
 	userService userservice.Service,
 	appService appservice.Service,
+	appCopyService appcopyservice.Service,
 	settingService settingservice.Service,
+	resLinkService reslinkservice.Service,
 	sslService sslservice.Service,
 	projectService projectservice.Service,
 	networkService networkservice.Service,
@@ -64,7 +70,9 @@ func New(
 		deploymentRepo:       deploymentRepo,
 		userService:          userService,
 		appService:           appService,
+		appCopyService:       appCopyService,
 		settingService:       settingService,
+		resLinkService:       resLinkService,
 		sslService:           sslService,
 		projectService:       projectService,
 		networkService:       networkService,

@@ -52,6 +52,9 @@ func (c *Client) StopScheduler(ctx context.Context) error {
 }
 
 func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error {
+	if len(tasks) == 0 {
+		return nil
+	}
 	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
 		SchedTasks: tasks,
 	})
@@ -62,6 +65,9 @@ func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 }
 
 func (c *Client) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
+	if len(taskIDs) == 0 {
+		return nil
+	}
 	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
 		UnschedTaskIDs: taskIDs,
 	})

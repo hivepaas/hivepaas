@@ -88,7 +88,7 @@ function View({ links }: Props) {
     const activeRoute = findActiveRoute(links, location.pathname);
 
     return (
-        <div className="w-full max-w-full overflow-x-auto">
+        <div className="w-fit">
             <nav
                 aria-label="Tabs"
                 className="gap-4"

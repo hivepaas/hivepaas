@@ -13,7 +13,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/redact"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
@@ -50,7 +49,7 @@ func (s *service) SchedJobExec(
 		for _, secret := range refSecrets {
 			secrets = append(secrets, secret.Value.MustGetPlain())
 		}
-		req.LogStore.SetRedactor(redact.New(secrets))
+		req.LogStore.UpdateRedactorAddSecrets(secrets)
 	}
 
 	var cmd []string

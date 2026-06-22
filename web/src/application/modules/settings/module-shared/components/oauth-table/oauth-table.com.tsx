@@ -2,22 +2,21 @@ import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
 import { OAuthQueries } from "~/settings/data/queries";
-import { useCreateOrEditOAuthDialog } from "~/settings/dialogs/create-or-edit-oauth";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
 
-import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { OAuthTableDefs } from "./oauth-table.defs";
 
 export function SettingsOAuthTable() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditOAuthDialog();
+    const { navigate } = useAppNavigate();
 
     const { data: { data: oauthItems, meta } = DEFAULT_PAGINATED_DATA, isFetching } = OAuthQueries.useFindManyPaginated(
         { pagination, sorting, search },
@@ -36,7 +35,7 @@ export function SettingsOAuthTable() {
                         {({ isDenied }) => (
                             <Button
                                 onClick={() => {
-                                    createOrEditDialog.actions.open();
+                                    navigate.modules(ROUTE.settings.oauth.create.$route);
                                 }}
                                 disabled={isDenied}
                             >

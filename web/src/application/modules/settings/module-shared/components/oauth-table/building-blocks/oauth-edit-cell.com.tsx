@@ -2,10 +2,12 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditOAuthDialog } from "~/settings/dialogs/create-or-edit-oauth";
+
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 function View({ id }: Props) {
-    const createOrEditDialog = useCreateOrEditOAuthDialog();
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -13,7 +15,7 @@ function View({ id }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                createOrEditDialog.actions.openEdit(id);
+                navigate.modules(ROUTE.settings.oauth.edit.$route(id));
             }}
         >
             <EyeIcon className="size-5" />

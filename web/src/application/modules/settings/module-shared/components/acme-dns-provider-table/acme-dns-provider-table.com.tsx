@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectAcmeDnsProviderQueries } from "~/projects/data/queries";
 import { AcmeDnsProviderQueries } from "~/settings/data/queries";
-import { useCreateOrEditAcmeDnsProviderDialog } from "~/settings/dialogs/create-or-edit-acme-dns-provider";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -23,7 +23,7 @@ const ACME_DNS_PROVIDER_NOTE =
 
 function AcmeDnsProviderTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditAcmeDnsProviderDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = AcmeDnsProviderQueries.useFindManyPaginated(
         {
@@ -70,7 +70,7 @@ function AcmeDnsProviderTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getAcmeDnsProviderCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -95,6 +95,14 @@ function AcmeDnsProviderTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getAcmeDnsProviderCreateRoute(scope: AcmeDnsProviderTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.acmeDnsProviders.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.acmeDnsProviders.create.$route;
 }
 
 interface Props {

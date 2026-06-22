@@ -2,19 +2,7 @@ import { memo } from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
-    CreateOrEditAccessTokenDialog,
-    CreateOrEditAcmeDnsProviderDialog,
-    CreateOrEditBasicAuthDialog,
-    CreateOrEditCloudStorageDialog,
-    CreateOrEditEmailAccountDialog,
     CreateOrEditGithubAppDialog,
-    CreateOrEditImPlatformDialog,
-    CreateOrEditNotificationTargetDialog,
-    CreateOrEditOAuthDialog,
-    CreateOrEditRegistryAuthDialog,
-    CreateOrEditSSHKeyDialog,
-    CreateOrEditSslCertDialog,
-    CreateOrEditSslProviderDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
@@ -29,19 +17,7 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditAccessTokenDialogState,
-    useCreateOrEditAcmeDnsProviderDialogState,
-    useCreateOrEditBasicAuthDialogState,
-    useCreateOrEditCloudStorageDialogState,
-    useCreateOrEditEmailAccountDialogState,
     useCreateOrEditGithubAppDialogState,
-    useCreateOrEditImPlatformDialogState,
-    useCreateOrEditNotificationTargetDialogState,
-    useCreateOrEditOAuthDialogState,
-    useCreateOrEditRegistryAuthDialogState,
-    useCreateOrEditSSHKeyDialogState,
-    useCreateOrEditSslCertDialogState,
-    useCreateOrEditSslProviderDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
@@ -60,58 +36,34 @@ import {
 
 function View() {
     const location = useLocation();
-    const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
-    const createOrEditAcmeDnsProviderDialog = useCreateOrEditAcmeDnsProviderDialogState();
     const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
-    const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
-    const createOrEditSslCertDialog = useCreateOrEditSslCertDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
-    const createOrEditSslProviderDialog = useCreateOrEditSslProviderDialogState();
     const updateSslProviderStatusDialog = useUpdateSslProviderStatusDialogState();
-    const createOrEditImPlatformDialog = useCreateOrEditImPlatformDialogState();
     const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
-    const createOrEditEmailAccountDialog = useCreateOrEditEmailAccountDialogState();
     const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
-    const createOrEditSSHKeyDialog = useCreateOrEditSSHKeyDialogState();
     const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
-    const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
-    const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
-    const createOrEditOAuthDialog = useCreateOrEditOAuthDialogState();
     const updateOAuthStatusDialog = useUpdateOAuthStatusDialogState();
-    const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
 
     useUpdateEffect(() => {
-        createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
-        createOrEditAcmeDnsProviderDialog.destroy();
         updateAcmeDnsProviderStatusDialog.destroy();
-        createOrEditRegistryAuthDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
-        createOrEditSslCertDialog.destroy();
         updateSslCertStatusDialog.destroy();
-        createOrEditSslProviderDialog.destroy();
         updateSslProviderStatusDialog.destroy();
-        createOrEditImPlatformDialog.destroy();
         updateImPlatformStatusDialog.destroy();
-        createOrEditEmailAccountDialog.destroy();
         updateEmailAccountStatusDialog.destroy();
-        createOrEditSSHKeyDialog.destroy();
         updateSSHKeyStatusDialog.destroy();
-        createOrEditAccessTokenDialog.destroy();
         updateAccessTokenStatusDialog.destroy();
-        createOrEditCloudStorageDialog.destroy();
         updateCloudStorageStatusDialog.destroy();
-        createOrEditOAuthDialog.destroy();
         updateOAuthStatusDialog.destroy();
-        createOrEditNotificationTargetDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
         createOrEditGithubAppDialog.destroy();
         provisionGithubAppDialog.destroy();
@@ -120,29 +72,17 @@ function View() {
 
     return (
         <>
-            <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
-            <CreateOrEditAcmeDnsProviderDialog />
             <UpdateAcmeDnsProviderStatusDialog />
-            <CreateOrEditRegistryAuthDialog />
             <UpdateRegistryAuthStatusDialog />
-            <CreateOrEditSslCertDialog />
             <UpdateSslCertStatusDialog />
-            <CreateOrEditSslProviderDialog />
             <UpdateSslProviderStatusDialog />
-            <CreateOrEditImPlatformDialog />
             <UpdateImPlatformStatusDialog />
-            <CreateOrEditEmailAccountDialog />
             <UpdateEmailAccountStatusDialog />
-            <CreateOrEditSSHKeyDialog />
             <UpdateSSHKeyStatusDialog />
-            <CreateOrEditAccessTokenDialog />
             <UpdateAccessTokenStatusDialog />
-            <CreateOrEditCloudStorageDialog />
             <UpdateCloudStorageStatusDialog />
-            <CreateOrEditOAuthDialog />
             <UpdateOAuthStatusDialog />
-            <CreateOrEditNotificationTargetDialog />
             <UpdateNotificationTargetStatusDialog />
             <CreateOrEditGithubAppDialog />
             <ProvisionGithubAppDialog />

@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceQueries } from "~/settings/data/queries";
-import { useCreateOrEditImPlatformDialog } from "~/settings/dialogs/create-or-edit-im-platform";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { ImPlatformTableScope } from "./im-platform-table.types";
 
 function ImPlatformTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditImPlatformDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = ImServiceQueries.useFindManyPaginated(
         {
@@ -64,7 +64,7 @@ function ImPlatformTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getImPlatformCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -89,6 +89,14 @@ function ImPlatformTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getImPlatformCreateRoute(scope: ImPlatformTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.imPlatforms.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.imPlatforms.create.$route;
 }
 
 interface Props {

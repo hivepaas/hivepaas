@@ -39,7 +39,6 @@ function createColumns(scope: NotificationTargetTableScope): ColumnDef<SettingNo
                 <NotificationTargetEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: { align: "center", titleAlign: "center" },

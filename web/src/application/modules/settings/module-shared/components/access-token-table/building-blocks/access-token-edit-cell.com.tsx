@@ -2,14 +2,14 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditAccessTokenDialog } from "~/settings/dialogs/create-or-edit-access-token";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
+
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 import type { AccessTokenTableScope } from "../access-token-table.types";
 
-function View({ scope, id, inherited }: Props) {
-    const createOrEditDialog = useCreateOrEditAccessTokenDialog();
+function View({ scope, id }: Props) {
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -17,17 +17,7 @@ function View({ scope, id, inherited }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                if (isInheritedProjectSetting(scope, inherited)) {
-                    createOrEditDialog.actions.openEdit(scope, id, {
-                        props: {
-                            readOnlyInherited: true,
-                            entityTitle: SETTINGS_ENTITY_TITLES.accessToken,
-                        },
-                    });
-                    return;
-                }
-
-                createOrEditDialog.actions.openEdit(scope, id);
+                navigate.modules(getAccessTokenEditRoute(scope, id));
             }}
         >
             <EyeIcon className="size-5" />
@@ -36,10 +26,17 @@ function View({ scope, id, inherited }: Props) {
     );
 }
 
+function getAccessTokenEditRoute(scope: AccessTokenTableScope, id: string) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.accessTokens.edit.$route(scope.projectId, id);
+    }
+
+    return ROUTE.settings.accessTokens.edit.$route(id);
+}
+
 interface Props {
     scope: AccessTokenTableScope;
     id: string;
-    inherited?: boolean;
 }
 
 export const AccessTokenEditCell = memo(View);

@@ -57,19 +57,8 @@ import {
     useUpdateAppScheduledJobStatusDialogState,
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
-    CreateOrEditAccessTokenDialog,
-    CreateOrEditAcmeDnsProviderDialog,
-    CreateOrEditBasicAuthDialog,
-    CreateOrEditCloudStorageDialog,
-    CreateOrEditEmailAccountDialog,
     CreateOrEditGithubAppDialog,
-    CreateOrEditImPlatformDialog,
-    CreateOrEditNotificationTargetDialog,
-    CreateOrEditRegistryAuthDialog,
     CreateOrEditRepoWebhookDialog,
-    CreateOrEditSSHKeyDialog,
-    CreateOrEditSslCertDialog,
-    CreateOrEditSslProviderDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
@@ -84,19 +73,8 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditAccessTokenDialogState,
-    useCreateOrEditAcmeDnsProviderDialogState,
-    useCreateOrEditBasicAuthDialogState,
-    useCreateOrEditCloudStorageDialogState,
-    useCreateOrEditEmailAccountDialogState,
     useCreateOrEditGithubAppDialogState,
-    useCreateOrEditImPlatformDialogState,
-    useCreateOrEditNotificationTargetDialogState,
-    useCreateOrEditRegistryAuthDialogState,
     useCreateOrEditRepoWebhookDialogState,
-    useCreateOrEditSSHKeyDialogState,
-    useCreateOrEditSslCertDialogState,
-    useCreateOrEditSslProviderDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
@@ -131,27 +109,16 @@ function View() {
     const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
     const createNetworkDialog = useCreateNetworkDialogState();
     const viewNetworkDialog = useViewNetworkDialogState();
-    const createOrEditBasicAuthDialog = useCreateOrEditBasicAuthDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
-    const createOrEditRegistryAuthDialog = useCreateOrEditRegistryAuthDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
-    const createOrEditSslCertDialog = useCreateOrEditSslCertDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
-    const createOrEditSslProviderDialog = useCreateOrEditSslProviderDialogState();
     const updateSslProviderStatusDialog = useUpdateSslProviderStatusDialogState();
-    const createOrEditImPlatformDialog = useCreateOrEditImPlatformDialogState();
     const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
-    const createOrEditEmailAccountDialog = useCreateOrEditEmailAccountDialogState();
     const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
-    const createOrEditSSHKeyDialog = useCreateOrEditSSHKeyDialogState();
     const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
-    const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
-    const createOrEditAcmeDnsProviderDialog = useCreateOrEditAcmeDnsProviderDialogState();
     const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
-    const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
-    const createOrEditNotificationTargetDialog = useCreateOrEditNotificationTargetDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const projectUserAccessesDialog = useProjectUserAccessesDialogState();
     const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
@@ -178,27 +145,16 @@ function View() {
         confirmProjectDangerActionDialog.destroy();
         createNetworkDialog.destroy();
         viewNetworkDialog.destroy();
-        createOrEditBasicAuthDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
-        createOrEditRegistryAuthDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
-        createOrEditSslCertDialog.destroy();
         updateSslCertStatusDialog.destroy();
-        createOrEditSslProviderDialog.destroy();
         updateSslProviderStatusDialog.destroy();
-        createOrEditImPlatformDialog.destroy();
         updateImPlatformStatusDialog.destroy();
-        createOrEditEmailAccountDialog.destroy();
         updateEmailAccountStatusDialog.destroy();
-        createOrEditSSHKeyDialog.destroy();
         updateSSHKeyStatusDialog.destroy();
-        createOrEditAccessTokenDialog.destroy();
         updateAccessTokenStatusDialog.destroy();
-        createOrEditAcmeDnsProviderDialog.destroy();
         updateAcmeDnsProviderStatusDialog.destroy();
-        createOrEditCloudStorageDialog.destroy();
         updateCloudStorageStatusDialog.destroy();
-        createOrEditNotificationTargetDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
         projectUserAccessesDialog.destroy();
         createOrEditGithubAppDialog.destroy();
@@ -227,27 +183,16 @@ function View() {
             <ConfirmProjectDangerActionDialog />
             <CreateNetworkDialog />
             <ViewNetworkDialog />
-            <CreateOrEditBasicAuthDialog />
             <UpdateBasicAuthStatusDialog />
-            <CreateOrEditRegistryAuthDialog />
             <UpdateRegistryAuthStatusDialog />
-            <CreateOrEditSslCertDialog />
             <UpdateSslCertStatusDialog />
-            <CreateOrEditSslProviderDialog />
             <UpdateSslProviderStatusDialog />
-            <CreateOrEditImPlatformDialog />
             <UpdateImPlatformStatusDialog />
-            <CreateOrEditEmailAccountDialog />
             <UpdateEmailAccountStatusDialog />
-            <CreateOrEditSSHKeyDialog />
             <UpdateSSHKeyStatusDialog />
-            <CreateOrEditAccessTokenDialog />
             <UpdateAccessTokenStatusDialog />
-            <CreateOrEditAcmeDnsProviderDialog />
             <UpdateAcmeDnsProviderStatusDialog />
-            <CreateOrEditCloudStorageDialog />
             <UpdateCloudStorageStatusDialog />
-            <CreateOrEditNotificationTargetDialog />
             <UpdateNotificationTargetStatusDialog />
             <ProjectUserAccessesDialog />
             <CreateOrEditGithubAppDialog />

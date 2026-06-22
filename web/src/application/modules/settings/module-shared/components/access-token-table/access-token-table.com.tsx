@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectAccessTokenQueries } from "~/projects/data/queries";
 import { AccessTokenQueries } from "~/settings/data/queries";
-import { useCreateOrEditAccessTokenDialog } from "~/settings/dialogs/create-or-edit-access-token";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { AccessTokenTableScope } from "./access-token-table.types";
 
 function AccessTokenTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditAccessTokenDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = AccessTokenQueries.useFindManyPaginated(
         { pagination, sorting, search },
@@ -56,7 +56,7 @@ function AccessTokenTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getAccessTokenCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -81,6 +81,14 @@ function AccessTokenTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getAccessTokenCreateRoute(scope: AccessTokenTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.accessTokens.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.accessTokens.create.$route;
 }
 
 interface Props {

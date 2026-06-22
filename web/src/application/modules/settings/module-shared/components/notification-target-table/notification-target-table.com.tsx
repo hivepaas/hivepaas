@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectNotificationQueries } from "~/projects/data/queries";
 import { NotificationQueries } from "~/settings/data/queries";
-import { useCreateOrEditNotificationTargetDialog } from "~/settings/dialogs/create-or-edit-notification-target";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { NotificationTargetTableScope } from "./notification-target-table.t
 
 function NotificationTargetTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditNotificationTargetDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = NotificationQueries.useFindManyPaginated(
         { pagination, sorting, search },
@@ -56,7 +56,7 @@ function NotificationTargetTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getNotificationTargetCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -81,6 +81,14 @@ function NotificationTargetTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getNotificationTargetCreateRoute(scope: NotificationTargetTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.notificationTargets.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.notificationTargets.create.$route;
 }
 
 interface Props {

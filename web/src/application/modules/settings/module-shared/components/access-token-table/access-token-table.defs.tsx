@@ -37,7 +37,6 @@ function createColumns(scope: AccessTokenTableScope): ColumnDef<SettingAccessTok
                 <AccessTokenEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: { align: "center", titleAlign: "center" },

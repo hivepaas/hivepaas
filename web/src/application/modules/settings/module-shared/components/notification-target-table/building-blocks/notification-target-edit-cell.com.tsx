@@ -2,14 +2,14 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditNotificationTargetDialog } from "~/settings/dialogs/create-or-edit-notification-target";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
+
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 import type { NotificationTargetTableScope } from "../notification-target-table.types";
 
-function View({ scope, id, inherited }: Props) {
-    const createOrEditDialog = useCreateOrEditNotificationTargetDialog();
+function View({ scope, id }: Props) {
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -17,17 +17,7 @@ function View({ scope, id, inherited }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                if (isInheritedProjectSetting(scope, inherited)) {
-                    createOrEditDialog.actions.openEdit(scope, id, {
-                        props: {
-                            readOnlyInherited: true,
-                            entityTitle: SETTINGS_ENTITY_TITLES.notificationTarget,
-                        },
-                    });
-                    return;
-                }
-
-                createOrEditDialog.actions.openEdit(scope, id);
+                navigate.modules(getNotificationTargetEditRoute(scope, id));
             }}
         >
             <EyeIcon className="size-5" />
@@ -36,10 +26,17 @@ function View({ scope, id, inherited }: Props) {
     );
 }
 
+function getNotificationTargetEditRoute(scope: NotificationTargetTableScope, id: string) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.notificationTargets.edit.$route(scope.projectId, id);
+    }
+
+    return ROUTE.settings.notificationTargets.edit.$route(id);
+}
+
 interface Props {
     scope: NotificationTargetTableScope;
     id: string;
-    inherited?: boolean;
 }
 
 export const NotificationTargetEditCell = memo(View);

@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthQueries } from "~/settings/data/queries";
-import { useCreateOrEditRegistryAuthDialog } from "~/settings/dialogs/create-or-edit-registry-auth";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { RegistryAuthTableScope } from "./registry-auth-table.types";
 
 function RegistryAuthTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditRegistryAuthDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = RegistryAuthQueries.useFindManyPaginated(
         {
@@ -64,7 +64,7 @@ function RegistryAuthTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getRegistryAuthCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -89,6 +89,14 @@ function RegistryAuthTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getRegistryAuthCreateRoute(scope: RegistryAuthTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.registryAuth.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.registryAuth.create.$route;
 }
 
 interface Props {

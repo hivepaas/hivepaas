@@ -63,7 +63,7 @@ export function LogsViewerToolbar({
                         <div className="flex min-w-0 items-center gap-3">
                             <span className="text-sm font-semibold text-foreground">Logs</span>
                             {isStreaming && (
-                                <span className="flex items-center gap-2 text-sm text-rose-500">
+                                <span className="flex items-center gap-2 text-sm text-emerald-500">
                                     <LoaderCircle className="size-4 animate-spin" />
                                     streaming
                                 </span>

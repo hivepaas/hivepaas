@@ -14,7 +14,7 @@ export function AppLogsToolbarStart({
     if (isConnectionActive) {
         return (
             <div className="flex min-w-0 items-center gap-3">
-                <span className="flex items-center gap-2 text-sm text-rose-500">
+                <span className="flex items-center gap-2 text-sm text-emerald-500">
                     <LoaderCircle className={cn("size-4", isStreaming && "animate-spin")} />
                     streaming
                 </span>

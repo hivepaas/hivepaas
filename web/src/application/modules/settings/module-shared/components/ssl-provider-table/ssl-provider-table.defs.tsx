@@ -22,7 +22,6 @@ function createColumns(scope: SslProviderTableScope): ColumnDef<SettingSslProvid
                 <SslProviderEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

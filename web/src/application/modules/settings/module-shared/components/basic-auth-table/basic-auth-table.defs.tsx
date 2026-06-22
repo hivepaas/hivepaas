@@ -21,7 +21,6 @@ function createColumns(scope: BasicAuthTableScope): ColumnDef<SettingBasicAuth>[
                 <BasicAuthEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

@@ -35,6 +35,29 @@ function createSettingsRoute(path: string, title: string, loadComponent: () => P
     };
 }
 
+function createSettingsModuleRoute(path: string, loadComponent: () => Promise<ComponentType>): RouteObject {
+    return {
+        path,
+        element: (
+            <ConditionalModule id={MODULE_IDS.Settings}>
+                <Outlet />
+            </ConditionalModule>
+        ),
+        children: [
+            {
+                index: true,
+                lazy: async () => {
+                    const Component = await loadComponent();
+
+                    return {
+                        Component,
+                    };
+                },
+            },
+        ],
+    };
+}
+
 export const settingsRouter: RouteObject = {
     lazy: async () => {
         const { SettingsDialogsContainer } = await getLazyComponents();
@@ -99,6 +122,16 @@ export const settingsRouter: RouteObject = {
             const { SettingsAccessTokensRoute } = await getLazyComponents();
 
             return SettingsAccessTokensRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.accessTokens.create.$pattern, async () => {
+            const { SettingsAccessTokenCreateRoute } = await getLazyComponents();
+
+            return SettingsAccessTokenCreateRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.accessTokens.edit.$pattern, async () => {
+            const { SettingsAccessTokenEditRoute } = await getLazyComponents();
+
+            return SettingsAccessTokenEditRoute;
         }),
         createSettingsRoute(ROUTE.settings.acmeDnsProviders.$pattern, "ACME DNS Providers", async () => {
             const { SettingsAcmeDnsProvidersRoute } = await getLazyComponents();

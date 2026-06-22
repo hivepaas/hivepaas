@@ -57,7 +57,6 @@ import {
     useUpdateAppScheduledJobStatusDialogState,
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
-    CreateOrEditAccessTokenDialog,
     CreateOrEditAcmeDnsProviderDialog,
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
@@ -84,7 +83,6 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditAccessTokenDialogState,
     useCreateOrEditAcmeDnsProviderDialogState,
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
@@ -145,7 +143,6 @@ function View() {
     const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
     const createOrEditSSHKeyDialog = useCreateOrEditSSHKeyDialogState();
     const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
-    const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
     const createOrEditAcmeDnsProviderDialog = useCreateOrEditAcmeDnsProviderDialogState();
     const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
@@ -192,7 +189,6 @@ function View() {
         updateEmailAccountStatusDialog.destroy();
         createOrEditSSHKeyDialog.destroy();
         updateSSHKeyStatusDialog.destroy();
-        createOrEditAccessTokenDialog.destroy();
         updateAccessTokenStatusDialog.destroy();
         createOrEditAcmeDnsProviderDialog.destroy();
         updateAcmeDnsProviderStatusDialog.destroy();
@@ -241,7 +237,6 @@ function View() {
             <UpdateEmailAccountStatusDialog />
             <CreateOrEditSSHKeyDialog />
             <UpdateSSHKeyStatusDialog />
-            <CreateOrEditAccessTokenDialog />
             <UpdateAccessTokenStatusDialog />
             <CreateOrEditAcmeDnsProviderDialog />
             <UpdateAcmeDnsProviderStatusDialog />

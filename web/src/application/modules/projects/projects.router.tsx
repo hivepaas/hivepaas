@@ -438,6 +438,26 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.accessTokens.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectAccessTokenCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectAccessTokenCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.accessTokens.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectAccessTokenEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectAccessTokenEditRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$pattern,
                             lazy: async () => {
                                 const { ProjectAcmeDnsProvidersRoute } = await getLazyComponents();

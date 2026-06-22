@@ -151,6 +151,16 @@ export const ROUTE = {
         accessTokens: {
             $pattern: "settings/access-tokens",
             $route: "/settings/access-tokens/",
+
+            create: {
+                $pattern: "settings/access-tokens/create",
+                $route: "/settings/access-tokens/create/",
+            },
+
+            edit: {
+                $pattern: "settings/access-tokens/:accessTokenId/edit",
+                $route: (accessTokenId: string) => `/settings/access-tokens/${accessTokenId}/edit/`,
+            },
         },
 
         acmeDnsProviders: {
@@ -450,6 +460,17 @@ export const ROUTE = {
                 accessTokens: {
                     $pattern: "projects/:id/provider-settings/access-tokens",
                     $route: (id: string) => `/projects/${id}/provider-settings/access-tokens/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/access-tokens/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/access-tokens/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/access-tokens/:accessTokenId/edit",
+                        $route: (id: string, accessTokenId: string) =>
+                            `/projects/${id}/provider-settings/access-tokens/${accessTokenId}/edit/`,
+                    },
                 },
 
                 acmeDnsProviders: {

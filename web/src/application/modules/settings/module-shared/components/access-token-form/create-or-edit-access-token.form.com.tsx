@@ -4,25 +4,21 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAccessTokenKind } from "@application/shared/enums";
 
-import {
-    Button,
-    Checkbox,
-    DialogActionFooter,
-    DialogBody,
-    Field,
-    FieldError,
-    FieldGroup,
-    Input,
-} from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
-import type { CreateOrEditAccessTokenFormInput, CreateOrEditAccessTokenFormOutput } from "../schemas";
-import { CreateOrEditAccessTokenFormSchema } from "../schemas";
+import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
+import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+
+import type {
+    CreateOrEditAccessTokenFormInput,
+    CreateOrEditAccessTokenFormOutput,
+} from "./create-or-edit-access-token.form.schema";
+import { CreateOrEditAccessTokenFormSchema } from "./create-or-edit-access-token.form.schema";
 
 const kindOptions = Object.values(EAccessTokenKind);
 
@@ -115,7 +111,7 @@ export function CreateOrEditAccessTokenForm({
             }}
             className="min-h-0 flex flex-1 flex-col"
         >
-            <DialogBody className="flex flex-col gap-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
@@ -270,9 +266,9 @@ export function CreateOrEditAccessTokenForm({
                         />
                     </InfoBlock>
                 </fieldset>
-            </DialogBody>
+            </div>
             {!isReadOnly && (
-                <DialogActionFooter className="flex justify-between">
+                <div className="shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-between">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -294,19 +290,17 @@ export function CreateOrEditAccessTokenForm({
                     >
                         Save
                     </Button>
-                </DialogActionFooter>
+                </div>
             )}
             {isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </DialogActionFooter>
+                <div className="shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-end">
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
+                </div>
             )}
         </form>
     );

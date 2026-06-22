@@ -10,6 +10,8 @@ export {
     SettingsSslCertificatesRoute,
     SettingsSslProvidersRoute,
     SettingsAccessTokensRoute,
+    SettingsAccessTokenCreateRoute,
+    SettingsAccessTokenEditRoute,
     SettingsAcmeDnsProvidersRoute,
     SettingsCloudStoragesRoute,
     SettingsOAuthRoute,

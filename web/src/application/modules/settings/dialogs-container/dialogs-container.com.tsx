@@ -2,7 +2,6 @@ import { memo } from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
-    CreateOrEditAccessTokenDialog,
     CreateOrEditAcmeDnsProviderDialog,
     CreateOrEditBasicAuthDialog,
     CreateOrEditCloudStorageDialog,
@@ -29,7 +28,6 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditAccessTokenDialogState,
     useCreateOrEditAcmeDnsProviderDialogState,
     useCreateOrEditBasicAuthDialogState,
     useCreateOrEditCloudStorageDialogState,
@@ -76,7 +74,6 @@ function View() {
     const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
     const createOrEditSSHKeyDialog = useCreateOrEditSSHKeyDialogState();
     const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
-    const createOrEditAccessTokenDialog = useCreateOrEditAccessTokenDialogState();
     const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
     const createOrEditCloudStorageDialog = useCreateOrEditCloudStorageDialogState();
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
@@ -105,7 +102,6 @@ function View() {
         updateEmailAccountStatusDialog.destroy();
         createOrEditSSHKeyDialog.destroy();
         updateSSHKeyStatusDialog.destroy();
-        createOrEditAccessTokenDialog.destroy();
         updateAccessTokenStatusDialog.destroy();
         createOrEditCloudStorageDialog.destroy();
         updateCloudStorageStatusDialog.destroy();
@@ -136,7 +132,6 @@ function View() {
             <UpdateEmailAccountStatusDialog />
             <CreateOrEditSSHKeyDialog />
             <UpdateSSHKeyStatusDialog />
-            <CreateOrEditAccessTokenDialog />
             <UpdateAccessTokenStatusDialog />
             <CreateOrEditCloudStorageDialog />
             <UpdateCloudStorageStatusDialog />

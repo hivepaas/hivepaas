@@ -14,7 +14,6 @@ export * from "./update-im-platform-status";
 export * from "./update-email-account-status";
 export * from "./create-or-edit-ssh-key";
 export * from "./update-ssh-key-status";
-export * from "./create-or-edit-access-token";
 export * from "./update-access-token-status";
 export * from "./create-or-edit-cloud-storage";
 export * from "./update-cloud-storage-status";

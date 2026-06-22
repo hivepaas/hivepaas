@@ -8,6 +8,7 @@ export * from "./im-platform-table";
 export * from "./email-account-table";
 export * from "./ssh-key-table";
 export * from "./access-token-table";
+export * from "./access-token-form";
 export * from "./cloud-storage-table";
 export * from "./notification-target-table";
 export * from "./oauth-table";

@@ -2,6 +2,7 @@ package appserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
@@ -57,7 +58,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 
 	// Remove service for the app in docker swarm
 	_, err = s.dockerManager.ServiceRemove(ctx, app.ServiceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
 

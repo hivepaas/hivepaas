@@ -21,7 +21,6 @@ function createColumns(scope: RegistryAuthTableScope): ColumnDef<SettingRegistry
                 <RegistryAuthEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

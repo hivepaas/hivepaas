@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectSslCertQueries } from "~/projects/data/queries";
 import { SslCertQueries } from "~/settings/data/queries";
-import { useCreateOrEditSslCertDialog } from "~/settings/dialogs/create-or-edit-ssl-cert";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { SslCertTableScope } from "./ssl-cert-table.types";
 
 function SslCertTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditSslCertDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = SslCertQueries.useFindManyPaginated(
         {
@@ -64,7 +64,7 @@ function SslCertTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getSslCertCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -89,6 +89,14 @@ function SslCertTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getSslCertCreateRoute(scope: SslCertTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.sslCertificates.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.sslCertificates.create.$route;
 }
 
 interface Props {

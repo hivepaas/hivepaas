@@ -49,7 +49,6 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
                 <ImPlatformEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

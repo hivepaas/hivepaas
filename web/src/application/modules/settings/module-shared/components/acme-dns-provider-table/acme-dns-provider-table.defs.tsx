@@ -22,7 +22,6 @@ function createColumns(scope: AcmeDnsProviderTableScope): ColumnDef<SettingAcmeD
                 <AcmeDnsProviderEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

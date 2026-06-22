@@ -5,6 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
+import {
+    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+    SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+} from "~/settings/module-shared/constants/settings-form-layout.constants";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAccessTokenKind } from "@application/shared/enums";
 
@@ -111,12 +115,12 @@ export function CreateOrEditAccessTokenForm({
             }}
             className="min-h-0 flex flex-1 flex-col"
         >
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
+            <div className="">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
                     disabled={isReadOnly}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    className={`flex flex-col gap-6 border-0 p-0 m-0 min-w-0 ${SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS}`}
                 >
                     <InfoBlock
                         titleWidth={220}
@@ -227,17 +231,19 @@ export function CreateOrEditAccessTokenForm({
                         titleWidth={220}
                         title={<LabelWithInfo label="Access expiration" />}
                     >
-                        <DateTimePicker
-                            value={expireAt.value ?? undefined}
-                            onChange={date => {
-                                expireAt.onChange(date ?? null);
-                            }}
-                            displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                            granularity="second"
-                            showClearButton
-                            aria-invalid={isExpireAtInvalid}
-                        />
-                        <FieldError errors={[errors.expireAt]} />
+                        <div className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}>
+                            <DateTimePicker
+                                value={expireAt.value ?? undefined}
+                                onChange={date => {
+                                    expireAt.onChange(date ?? null);
+                                }}
+                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                granularity="second"
+                                showClearButton
+                                aria-invalid={isExpireAtInvalid}
+                            />
+                            <FieldError errors={[errors.expireAt]} />
+                        </div>
                     </InfoBlock>
 
                     {showAvailableInProjects && (
@@ -268,7 +274,7 @@ export function CreateOrEditAccessTokenForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-between">
+                <div className="pb-6 flex justify-between mt-6">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -293,7 +299,7 @@ export function CreateOrEditAccessTokenForm({
                 </div>
             )}
             {isReadOnly && (
-                <div className="shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-end">
+                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
                     <Button
                         type="button"
                         onClick={onClose}

@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectCloudStorageQueries } from "~/projects/data/queries";
 import { CloudStorageQueries } from "~/settings/data/queries";
-import { useCreateOrEditCloudStorageDialog } from "~/settings/dialogs/create-or-edit-cloud-storage";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { CloudStorageTableScope } from "./cloud-storage-table.types";
 
 function CloudStorageTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditCloudStorageDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = CloudStorageQueries.useFindManyPaginated(
         { pagination, sorting, search },
@@ -56,7 +56,7 @@ function CloudStorageTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getCloudStorageCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -81,6 +81,14 @@ function CloudStorageTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getCloudStorageCreateRoute(scope: CloudStorageTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.cloudStorages.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.cloudStorages.create.$route;
 }
 
 interface Props {

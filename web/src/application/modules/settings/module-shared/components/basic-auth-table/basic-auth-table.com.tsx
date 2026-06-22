@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthQueries } from "~/settings/data/queries";
-import { useCreateOrEditBasicAuthDialog } from "~/settings/dialogs/create-or-edit-basic-auth";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { BasicAuthTableScope } from "./basic-auth-table.types";
 
 function BasicAuthTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditBasicAuthDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = BasicAuthQueries.useFindManyPaginated(
         {
@@ -64,7 +64,7 @@ function BasicAuthTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getBasicAuthCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -89,6 +89,14 @@ function BasicAuthTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getBasicAuthCreateRoute(scope: BasicAuthTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.basicAuth.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.basicAuth.create.$route;
 }
 
 interface Props {

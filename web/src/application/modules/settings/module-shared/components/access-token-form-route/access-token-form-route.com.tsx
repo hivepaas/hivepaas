@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectAccessTokenCommands } from "~/projects/data/commands";
 import { ProjectAccessTokenQueries } from "~/projects/data/queries";
@@ -12,13 +11,12 @@ import type {
     CreateOrEditAccessTokenFormOutput,
 } from "~/settings/module-shared/components/access-token-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EAccessTokenKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
-
-import { Button } from "@/components/ui";
 
 import type { AccessTokenTableScope } from "../access-token-table";
 
@@ -172,20 +170,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
 
     return (
         <div className="flex w-full flex-col overflow-hidden">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b px-6 py-4">
-                <div className="flex min-w-0 flex-col gap-3">
-                    <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-                </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClose}
-                    disabled={isPending}
-                >
-                    <ArrowLeft className="size-4" />
-                    Back
-                </Button>
-            </div>
+            <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">

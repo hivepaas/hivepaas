@@ -116,36 +116,106 @@ export const ROUTE = {
         basicAuth: {
             $pattern: "settings/basic-auth",
             $route: "/settings/basic-auth/",
+
+            create: {
+                $pattern: "settings/basic-auth/create",
+                $route: "/settings/basic-auth/create/",
+            },
+
+            edit: {
+                $pattern: "settings/basic-auth/:basicAuthId/edit",
+                $route: (basicAuthId: string) => `/settings/basic-auth/${basicAuthId}/edit/`,
+            },
         },
 
         registryAuth: {
             $pattern: "settings/registry-auth",
             $route: "/settings/registry-auth/",
+
+            create: {
+                $pattern: "settings/registry-auth/create",
+                $route: "/settings/registry-auth/create/",
+            },
+
+            edit: {
+                $pattern: "settings/registry-auth/:registryAuthId/edit",
+                $route: (registryAuthId: string) => `/settings/registry-auth/${registryAuthId}/edit/`,
+            },
         },
 
         sslProviders: {
             $pattern: "settings/ssl-providers",
             $route: "/settings/ssl-providers/",
+
+            create: {
+                $pattern: "settings/ssl-providers/create",
+                $route: "/settings/ssl-providers/create/",
+            },
+
+            edit: {
+                $pattern: "settings/ssl-providers/:sslProviderId/edit",
+                $route: (sslProviderId: string) => `/settings/ssl-providers/${sslProviderId}/edit/`,
+            },
         },
 
         sslCertificates: {
             $pattern: "settings/ssl-certificates",
             $route: "/settings/ssl-certificates/",
+
+            create: {
+                $pattern: "settings/ssl-certificates/create",
+                $route: "/settings/ssl-certificates/create/",
+            },
+
+            edit: {
+                $pattern: "settings/ssl-certificates/:sslCertId/edit",
+                $route: (sslCertId: string) => `/settings/ssl-certificates/${sslCertId}/edit/`,
+            },
         },
 
         emailAccounts: {
             $pattern: "settings/email-accounts",
             $route: "/settings/email-accounts/",
+
+            create: {
+                $pattern: "settings/email-accounts/create",
+                $route: "/settings/email-accounts/create/",
+            },
+
+            edit: {
+                $pattern: "settings/email-accounts/:emailAccountId/edit",
+                $route: (emailAccountId: string) => `/settings/email-accounts/${emailAccountId}/edit/`,
+            },
         },
 
         imPlatforms: {
             $pattern: "settings/im-platforms",
             $route: "/settings/im-platforms/",
+
+            create: {
+                $pattern: "settings/im-platforms/create",
+                $route: "/settings/im-platforms/create/",
+            },
+
+            edit: {
+                $pattern: "settings/im-platforms/:imPlatformId/edit",
+                $route: (imPlatformId: string) => `/settings/im-platforms/${imPlatformId}/edit/`,
+            },
         },
 
         sshKeys: {
             $pattern: "settings/ssh-keys",
             $route: "/settings/ssh-keys/",
+
+            create: {
+                $pattern: "settings/ssh-keys/create",
+                $route: "/settings/ssh-keys/create/",
+            },
+
+            edit: {
+                $pattern: "settings/ssh-keys/:sshKeyId/edit",
+                $route: (sshKeyId: string) => `/settings/ssh-keys/${sshKeyId}/edit/`,
+            },
         },
 
         accessTokens: {
@@ -166,21 +236,61 @@ export const ROUTE = {
         acmeDnsProviders: {
             $pattern: "settings/acme-dns-providers",
             $route: "/settings/acme-dns-providers/",
+
+            create: {
+                $pattern: "settings/acme-dns-providers/create",
+                $route: "/settings/acme-dns-providers/create/",
+            },
+
+            edit: {
+                $pattern: "settings/acme-dns-providers/:acmeDnsProviderId/edit",
+                $route: (acmeDnsProviderId: string) => `/settings/acme-dns-providers/${acmeDnsProviderId}/edit/`,
+            },
         },
 
         cloudStorages: {
             $pattern: "settings/cloud-storages",
             $route: "/settings/cloud-storages/",
+
+            create: {
+                $pattern: "settings/cloud-storages/create",
+                $route: "/settings/cloud-storages/create/",
+            },
+
+            edit: {
+                $pattern: "settings/cloud-storages/:cloudStorageId/edit",
+                $route: (cloudStorageId: string) => `/settings/cloud-storages/${cloudStorageId}/edit/`,
+            },
         },
 
         oauth: {
             $pattern: "settings/oauth",
             $route: "/settings/oauth/",
+
+            create: {
+                $pattern: "settings/oauth/create",
+                $route: "/settings/oauth/create/",
+            },
+
+            edit: {
+                $pattern: "settings/oauth/:oauthId/edit",
+                $route: (oauthId: string) => `/settings/oauth/${oauthId}/edit/`,
+            },
         },
 
         notificationTargets: {
             $pattern: "settings/notification-targets",
             $route: "/settings/notification-targets/",
+
+            create: {
+                $pattern: "settings/notification-targets/create",
+                $route: "/settings/notification-targets/create/",
+            },
+
+            edit: {
+                $pattern: "settings/notification-targets/:notificationTargetId/edit",
+                $route: (notificationTargetId: string) => `/settings/notification-targets/${notificationTargetId}/edit/`,
+            },
         },
     },
 
@@ -476,21 +586,65 @@ export const ROUTE = {
                 acmeDnsProviders: {
                     $pattern: "projects/:id/provider-settings/acme-dns-providers",
                     $route: (id: string) => `/projects/${id}/provider-settings/acme-dns-providers/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/acme-dns-providers/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/acme-dns-providers/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/acme-dns-providers/:acmeDnsProviderId/edit",
+                        $route: (id: string, acmeDnsProviderId: string) =>
+                            `/projects/${id}/provider-settings/acme-dns-providers/${acmeDnsProviderId}/edit/`,
+                    },
                 },
 
                 basicAuth: {
                     $pattern: "projects/:id/provider-settings/basic-auth",
                     $route: (id: string) => `/projects/${id}/provider-settings/basic-auth/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/basic-auth/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/basic-auth/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/basic-auth/:basicAuthId/edit",
+                        $route: (id: string, basicAuthId: string) =>
+                            `/projects/${id}/provider-settings/basic-auth/${basicAuthId}/edit/`,
+                    },
                 },
 
                 cloudStorages: {
                     $pattern: "projects/:id/provider-settings/cloud-storages",
                     $route: (id: string) => `/projects/${id}/provider-settings/cloud-storages/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/cloud-storages/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/cloud-storages/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/cloud-storages/:cloudStorageId/edit",
+                        $route: (id: string, cloudStorageId: string) =>
+                            `/projects/${id}/provider-settings/cloud-storages/${cloudStorageId}/edit/`,
+                    },
                 },
 
                 emailAccounts: {
                     $pattern: "projects/:id/provider-settings/email-accounts",
                     $route: (id: string) => `/projects/${id}/provider-settings/email-accounts/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/email-accounts/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/email-accounts/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/email-accounts/:emailAccountId/edit",
+                        $route: (id: string, emailAccountId: string) =>
+                            `/projects/${id}/provider-settings/email-accounts/${emailAccountId}/edit/`,
+                    },
                 },
 
                 envVariables: {
@@ -511,16 +665,49 @@ export const ROUTE = {
                 imPlatforms: {
                     $pattern: "projects/:id/provider-settings/im-platforms",
                     $route: (id: string) => `/projects/${id}/provider-settings/im-platforms/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/im-platforms/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/im-platforms/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/im-platforms/:imPlatformId/edit",
+                        $route: (id: string, imPlatformId: string) =>
+                            `/projects/${id}/provider-settings/im-platforms/${imPlatformId}/edit/`,
+                    },
                 },
 
                 notificationTargets: {
                     $pattern: "projects/:id/provider-settings/notification-targets",
                     $route: (id: string) => `/projects/${id}/provider-settings/notification-targets/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/notification-targets/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/notification-targets/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/notification-targets/:notificationTargetId/edit",
+                        $route: (id: string, notificationTargetId: string) =>
+                            `/projects/${id}/provider-settings/notification-targets/${notificationTargetId}/edit/`,
+                    },
                 },
 
                 registryAuth: {
                     $pattern: "projects/:id/provider-settings/registry-auth",
                     $route: (id: string) => `/projects/${id}/provider-settings/registry-auth/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/registry-auth/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/registry-auth/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/registry-auth/:registryAuthId/edit",
+                        $route: (id: string, registryAuthId: string) =>
+                            `/projects/${id}/provider-settings/registry-auth/${registryAuthId}/edit/`,
+                    },
                 },
 
                 secrets: {
@@ -531,16 +718,49 @@ export const ROUTE = {
                 sshKeys: {
                     $pattern: "projects/:id/provider-settings/ssh-keys",
                     $route: (id: string) => `/projects/${id}/provider-settings/ssh-keys/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/ssh-keys/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/ssh-keys/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/ssh-keys/:sshKeyId/edit",
+                        $route: (id: string, sshKeyId: string) =>
+                            `/projects/${id}/provider-settings/ssh-keys/${sshKeyId}/edit/`,
+                    },
                 },
 
                 sslProviders: {
                     $pattern: "projects/:id/provider-settings/ssl-providers",
                     $route: (id: string) => `/projects/${id}/provider-settings/ssl-providers/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/ssl-providers/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/ssl-providers/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/ssl-providers/:sslProviderId/edit",
+                        $route: (id: string, sslProviderId: string) =>
+                            `/projects/${id}/provider-settings/ssl-providers/${sslProviderId}/edit/`,
+                    },
                 },
 
                 sslCertificates: {
                     $pattern: "projects/:id/provider-settings/ssl-certificates",
                     $route: (id: string) => `/projects/${id}/provider-settings/ssl-certificates/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/ssl-certificates/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/ssl-certificates/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/ssl-certificates/:sslCertId/edit",
+                        $route: (id: string, sslCertId: string) =>
+                            `/projects/${id}/provider-settings/ssl-certificates/${sslCertId}/edit/`,
+                    },
                 },
             },
 

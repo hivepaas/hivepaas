@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectSSHKeyQueries } from "~/projects/data/queries";
 import { SSHKeyQueries } from "~/settings/data/queries";
-import { useCreateOrEditSSHKeyDialog } from "~/settings/dialogs/create-or-edit-ssh-key";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { SSHKeyTableScope } from "./ssh-key-table.types";
 
 function SSHKeyTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditSSHKeyDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = SSHKeyQueries.useFindManyPaginated(
         { pagination, sorting, search },
@@ -56,7 +56,7 @@ function SSHKeyTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getSSHKeyCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -81,6 +81,14 @@ function SSHKeyTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getSSHKeyCreateRoute(scope: SSHKeyTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.sshKeys.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.sshKeys.create.$route;
 }
 
 interface Props {

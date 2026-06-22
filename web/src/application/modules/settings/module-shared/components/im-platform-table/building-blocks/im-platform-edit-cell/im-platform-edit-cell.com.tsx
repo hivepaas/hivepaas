@@ -2,14 +2,14 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditImPlatformDialog } from "~/settings/dialogs/create-or-edit-im-platform";
-import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
-import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
+
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 
 import type { ImPlatformTableScope } from "../../im-platform-table.types";
 
-function View({ scope, id, inherited }: Props) {
-    const createOrEditDialog = useCreateOrEditImPlatformDialog();
+function View({ scope, id }: Props) {
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -17,17 +17,7 @@ function View({ scope, id, inherited }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                if (isInheritedProjectSetting(scope, inherited)) {
-                    createOrEditDialog.actions.openEdit(scope, id, {
-                        props: {
-                            readOnlyInherited: true,
-                            entityTitle: SETTINGS_ENTITY_TITLES.imPlatform,
-                        },
-                    });
-                    return;
-                }
-
-                createOrEditDialog.actions.openEdit(scope, id);
+                navigate.modules(getImPlatformEditRoute(scope, id));
             }}
         >
             <EyeIcon className="size-5" />
@@ -36,10 +26,17 @@ function View({ scope, id, inherited }: Props) {
     );
 }
 
+function getImPlatformEditRoute(scope: ImPlatformTableScope, id: string) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.imPlatforms.edit.$route(scope.projectId, id);
+    }
+
+    return ROUTE.settings.imPlatforms.edit.$route(id);
+}
+
 interface Props {
     scope: ImPlatformTableScope;
     id: string;
-    inherited?: boolean;
 }
 
 export const ImPlatformEditCell = memo(View);

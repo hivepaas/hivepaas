@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectEmailQueries } from "~/projects/data/queries";
 import { EmailQueries } from "~/settings/data/queries";
-import { useCreateOrEditEmailAccountDialog } from "~/settings/dialogs/create-or-edit-email-account";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -20,7 +20,7 @@ import type { EmailAccountTableScope } from "./email-account-table.types";
 
 function EmailAccountTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditEmailAccountDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = EmailQueries.useFindManyPaginated(
         {
@@ -64,7 +64,7 @@ function EmailAccountTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getEmailAccountCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -89,6 +89,14 @@ function EmailAccountTableView({ scope }: Props) {
             />
         </div>
     );
+}
+
+function getEmailAccountCreateRoute(scope: EmailAccountTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.emailAccounts.create.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.emailAccounts.create.$route;
 }
 
 interface Props {

@@ -7,7 +7,7 @@ export function SettingsSslCertEditRoute() {
     const { sslCertId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <SslCertFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

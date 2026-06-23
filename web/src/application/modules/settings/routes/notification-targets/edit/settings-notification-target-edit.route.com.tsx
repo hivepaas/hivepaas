@@ -7,7 +7,7 @@ export function SettingsNotificationTargetEditRoute() {
     const { notificationTargetId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <NotificationTargetFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

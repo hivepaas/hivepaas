@@ -124,6 +124,7 @@ function mapFormValuesToPayload(
         user: g.user,
         groups,
         stopSignal: g.stopSignal,
+        init: g.init,
         tty: g.tty,
         openStdin: g.openStdin,
         readOnly: g.readOnly,

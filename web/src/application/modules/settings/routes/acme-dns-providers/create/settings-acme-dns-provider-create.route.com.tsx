@@ -4,7 +4,7 @@ import { AcmeDnsProviderFormRoute } from "~/settings/module-shared/components/ac
 
 export function SettingsAcmeDnsProviderCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <AcmeDnsProviderFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

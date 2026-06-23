@@ -7,7 +7,7 @@ export function SettingsImPlatformEditRoute() {
     const { imPlatformId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <ImPlatformFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

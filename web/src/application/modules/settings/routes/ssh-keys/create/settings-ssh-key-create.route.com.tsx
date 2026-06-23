@@ -4,7 +4,7 @@ import { SSHKeyFormRoute } from "~/settings/module-shared/components/ssh-key-for
 
 export function SettingsSSHKeyCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <SSHKeyFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

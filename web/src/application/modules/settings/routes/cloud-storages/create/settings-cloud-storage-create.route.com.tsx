@@ -4,7 +4,7 @@ import { CloudStorageFormRoute } from "~/settings/module-shared/components/cloud
 
 export function SettingsCloudStorageCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <CloudStorageFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

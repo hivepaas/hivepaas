@@ -4,7 +4,7 @@ import { AccessTokenFormRoute } from "~/settings/module-shared/components/access
 
 export function SettingsAccessTokenCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <AccessTokenFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

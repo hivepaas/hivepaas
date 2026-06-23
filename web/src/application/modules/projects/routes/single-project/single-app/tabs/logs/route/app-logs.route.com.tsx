@@ -162,7 +162,7 @@ export function AppLogsRoute() {
                                     {isStreaming && (
                                         <span
                                             aria-label={`${tab.label} streaming`}
-                                            className="size-2.5 rounded-full bg-rose-500"
+                                            className="size-2.5 rounded-full bg-emerald-500"
                                         />
                                     )}
                                 </TabsTrigger>

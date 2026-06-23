@@ -4,7 +4,7 @@ import { RegistryAuthFormRoute } from "~/settings/module-shared/components/regis
 
 export function SettingsRegistryAuthCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <RegistryAuthFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

@@ -67,6 +67,7 @@ const ContainerSpecSchema = z.object({
     groups: z.array(z.string()).nullish(),
     stopSignal: z.string(),
     tty: z.boolean(),
+    init: z.boolean().nullish(),
     openStdin: z.boolean(),
     readOnly: z.boolean(),
     stopGracePeriod: z.union([z.string(), z.null()]),
@@ -101,6 +102,7 @@ export class AppContainerSettingsApiValidator {
                 serviceLabels: data.data.serviceLabels ?? {},
                 containerLabels: data.data.containerLabels ?? {},
                 groups: data.data.groups ?? [],
+                init: data.data.init ?? false,
                 logDriver: data.data.logDriver
                     ? { ...data.data.logDriver, options: data.data.logDriver.options ?? {} }
                     : null,

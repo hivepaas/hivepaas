@@ -1,12 +1,25 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigContainerSettingsFormSchemaInput,
     type AppConfigContainerSettingsFormSchemaOutput,
 } from "../schemas";
+
+const DOCKER_INIT_TOOLTIP =
+    "Runs an init process (Tini) as PID 1 to reap zombie processes and forward signals for a graceful shutdown.";
+const ALLOCATE_TTY_TOOLTIP =
+    "Allocates a pseudo-TTY (virtual terminal) to the container. Allows for terminal-like text styling (colors, formatting) and interactive shell sessions (e.g., bash/sh) when attaching to the container.";
+const KEEP_STDIN_OPEN_TOOLTIP =
+    "Keeps the container's standard input (stdin) open even if no client is attached. Essential for CLI applications or interactive shells that need to read keyboard inputs.";
+const READONLY_ROOT_FILESYSTEM_TOOLTIP =
+    "Mounts the container's root filesystem as read-only. Prevents the application from writing to the container's disk, enhancing security and ensuring statelessness. Any temp data must be written to volumes or tmpfs.";
+
+function TooltipText({ text }: { text: string }) {
+    return <span className="block max-w-[360px] whitespace-normal">{text}</span>;
+}
 
 export function GeneralFields() {
     const { control } = useFormContext<
@@ -48,6 +61,7 @@ export function GeneralFields() {
         control,
         name: "general.groups",
     });
+    const { field: dockerInit } = useController({ control, name: "general.init" });
     const { field: tty } = useController({ control, name: "general.tty" });
     const { field: openStdin } = useController({ control, name: "general.openStdin" });
     const { field: readOnly } = useController({ control, name: "general.readOnly" });
@@ -133,7 +147,32 @@ export function GeneralFields() {
                 <FieldError errors={[groupsError]} />
             </InfoBlock>
 
-            <InfoBlock title="TTY">
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Docker Init"
+                        content={<TooltipText text={DOCKER_INIT_TOOLTIP} />}
+                    />
+                }
+            >
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                        checked={dockerInit.value}
+                        onCheckedChange={v => {
+                            dockerInit.onChange(v === true);
+                        }}
+                    />
+                </div>
+            </InfoBlock>
+
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Allocate TTY"
+                        content={<TooltipText text={ALLOCATE_TTY_TOOLTIP} />}
+                    />
+                }
+            >
                 <div className="flex items-center gap-2">
                     <Checkbox
                         checked={tty.value}
@@ -144,7 +183,14 @@ export function GeneralFields() {
                 </div>
             </InfoBlock>
 
-            <InfoBlock title="Open Stdin">
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Keep Stdin Open"
+                        content={<TooltipText text={KEEP_STDIN_OPEN_TOOLTIP} />}
+                    />
+                }
+            >
                 <div className="flex items-center gap-2">
                     <Checkbox
                         checked={openStdin.value}
@@ -155,7 +201,14 @@ export function GeneralFields() {
                 </div>
             </InfoBlock>
 
-            <InfoBlock title="Read Only Root Filesystem">
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Read-only Root Filesystem"
+                        content={<TooltipText text={READONLY_ROOT_FILESYSTEM_TOOLTIP} />}
+                    />
+                }
+            >
                 <div className="flex items-center gap-2">
                     <Checkbox
                         checked={readOnly.value}

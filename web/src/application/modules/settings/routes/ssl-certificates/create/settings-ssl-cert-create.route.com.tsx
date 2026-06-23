@@ -4,7 +4,7 @@ import { SslCertFormRoute } from "~/settings/module-shared/components/ssl-cert-f
 
 export function SettingsSslCertCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <SslCertFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

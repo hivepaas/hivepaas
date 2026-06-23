@@ -4,7 +4,7 @@ import { ImPlatformFormRoute } from "~/settings/module-shared/components/im-plat
 
 export function SettingsImPlatformCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <ImPlatformFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

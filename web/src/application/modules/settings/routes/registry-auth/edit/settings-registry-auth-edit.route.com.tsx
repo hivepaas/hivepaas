@@ -7,7 +7,7 @@ export function SettingsRegistryAuthEditRoute() {
     const { registryAuthId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <RegistryAuthFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

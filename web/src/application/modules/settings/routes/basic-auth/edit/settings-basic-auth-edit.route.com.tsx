@@ -7,7 +7,7 @@ export function SettingsBasicAuthEditRoute() {
     const { basicAuthId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <BasicAuthFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

@@ -7,7 +7,7 @@ export function SettingsAccessTokenEditRoute() {
     const { accessTokenId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <AccessTokenFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

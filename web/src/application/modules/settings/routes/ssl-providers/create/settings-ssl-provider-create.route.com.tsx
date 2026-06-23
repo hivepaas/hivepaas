@@ -4,7 +4,7 @@ import { SslProviderFormRoute } from "~/settings/module-shared/components/ssl-pr
 
 export function SettingsSslProviderCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <SslProviderFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

@@ -4,7 +4,7 @@ import { EmailAccountFormRoute } from "~/settings/module-shared/components/email
 
 export function SettingsEmailAccountCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <EmailAccountFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

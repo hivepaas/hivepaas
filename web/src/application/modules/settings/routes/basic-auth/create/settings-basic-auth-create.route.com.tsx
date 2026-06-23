@@ -4,7 +4,7 @@ import { BasicAuthFormRoute } from "~/settings/module-shared/components/basic-au
 
 export function SettingsBasicAuthCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <BasicAuthFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

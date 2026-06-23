@@ -7,7 +7,7 @@ export function SettingsEmailAccountEditRoute() {
     const { emailAccountId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <EmailAccountFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

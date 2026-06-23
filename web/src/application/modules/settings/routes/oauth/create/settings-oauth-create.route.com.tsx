@@ -4,7 +4,7 @@ import { OAuthFormRoute } from "~/settings/module-shared/components/oauth-form-r
 
 export function SettingsOAuthCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <OAuthFormRoute mode="create" />
         </div>
     );

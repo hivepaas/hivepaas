@@ -7,7 +7,7 @@ export function SettingsOAuthEditRoute() {
     const { oauthId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <OAuthFormRoute
                 mode="edit"
                 oauthId={oauthId}

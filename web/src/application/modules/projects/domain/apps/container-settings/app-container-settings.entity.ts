@@ -20,6 +20,7 @@ export type ContainerSpec = {
     groups: string[];
     stopSignal: string;
     tty: boolean;
+    init: boolean;
     openStdin: boolean;
     readOnly: boolean;
     stopGracePeriod: string | null;

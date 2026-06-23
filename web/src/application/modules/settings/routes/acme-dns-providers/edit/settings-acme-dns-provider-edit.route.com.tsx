@@ -7,7 +7,7 @@ export function SettingsAcmeDnsProviderEditRoute() {
     const { acmeDnsProviderId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <AcmeDnsProviderFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

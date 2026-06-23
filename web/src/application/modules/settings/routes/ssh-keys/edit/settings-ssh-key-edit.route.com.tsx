@@ -7,7 +7,7 @@ export function SettingsSSHKeyEditRoute() {
     const { sshKeyId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <SSHKeyFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

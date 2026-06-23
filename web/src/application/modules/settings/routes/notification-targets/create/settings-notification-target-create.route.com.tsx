@@ -4,7 +4,7 @@ import { NotificationTargetFormRoute } from "~/settings/module-shared/components
 
 export function SettingsNotificationTargetCreateRoute() {
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <NotificationTargetFormRoute
                 mode="create"
                 scope={{ type: "settings" }}

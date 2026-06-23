@@ -7,7 +7,7 @@ export function SettingsCloudStorageEditRoute() {
     const { cloudStorageId = "" } = useParams();
 
     return (
-        <div className={cn(listBox, "p-0")}>
+        <div className={cn(listBox)}>
             <CloudStorageFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}

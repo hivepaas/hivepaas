@@ -15,6 +15,7 @@ import {
     ConfirmProjectDangerActionDialog,
     useConfirmProjectDangerActionDialogState,
 } from "~/projects/dialogs/confirm-project-danger-action";
+import { CopyProjectAppDialog, useCopyProjectAppDialogState } from "~/projects/dialogs/copy-project-app";
 import {
     CreateOrEditAppConfigFileDialog,
     useCreateOrEditAppConfigFileDialogState,
@@ -95,6 +96,7 @@ function View() {
     const location = useLocation();
     const createProjectDialog = useCreateProjectDialogState();
     const createProjectAppDialog = useCreateProjectAppDialogState();
+    const copyProjectAppDialog = useCopyProjectAppDialogState();
     const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
     const createOrEditAppConfigFileDialog = useCreateOrEditAppConfigFileDialogState();
     const createOrEditAppHealthCheckDialog = useCreateOrEditAppHealthCheckDialogState();
@@ -131,6 +133,7 @@ function View() {
     useUpdateEffect(() => {
         createProjectDialog.destroy();
         createProjectAppDialog.destroy();
+        copyProjectAppDialog.destroy();
         createOrEditProjectSecretDialog.destroy();
         createOrEditAppConfigFileDialog.destroy();
         createOrEditAppHealthCheckDialog.destroy();
@@ -169,6 +172,7 @@ function View() {
         <>
             <CreateProjectDialog />
             <CreateProjectAppDialog />
+            <CopyProjectAppDialog />
             <CreateOrEditProjectSecretDialog />
             <CreateOrEditAppConfigFileDialog />
             <CreateOrEditAppHealthCheckDialog />

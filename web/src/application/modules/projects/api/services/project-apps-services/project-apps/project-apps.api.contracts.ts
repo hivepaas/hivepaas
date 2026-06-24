@@ -31,6 +31,69 @@ export type ProjectApps_CreateOne_Res = ApiResponseBase<{
     id: string;
 }>;
 
+export interface ProjectApps_CopyToggle {
+    copy: boolean;
+}
+
+export interface ProjectApps_CopySslCertRef {
+    id: string;
+    name: string;
+}
+
+export interface ProjectApps_CopyPreparedDomainSetting {
+    sourceDomain: string;
+    targetDomain: string;
+    sourceSslCert: ProjectApps_CopySslCertRef | null;
+    targetSslCert: ProjectApps_CopySslCertRef | null;
+}
+
+export interface ProjectApps_CopyDomainSettingPayload {
+    sourceDomain: string;
+    targetDomain: string;
+    sourceSslCert: { id: string };
+    targetSslCert: { id: string };
+}
+
+export interface ProjectApps_CopyHttpSettings<TDomainSetting> {
+    copy: boolean;
+    copyDomainSettings: TDomainSetting[];
+}
+
+export interface ProjectApps_CopyBase<TDomainSetting> {
+    sourceName: string;
+    targetName: string;
+    sourceEnv: string;
+    targetEnv: string;
+    sourceStatus: EProjectAppStatus;
+    targetStatus: EProjectAppStatus;
+    copyConfigFiles: ProjectApps_CopyToggle;
+    copyDeploymentSettings: ProjectApps_CopyToggle;
+    copyEnvVars: ProjectApps_CopyToggle;
+    copyHealthChecks: ProjectApps_CopyToggle;
+    copyHttpSettings: ProjectApps_CopyHttpSettings<TDomainSetting>;
+    copySchedJobs: ProjectApps_CopyToggle;
+    copySecrets: ProjectApps_CopyToggle;
+    updateVer: number;
+}
+
+export type ProjectApps_PrepareCopy_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+}>;
+
+export type ProjectApps_PrepareCopy_Res = ApiResponseBase<ProjectApps_CopyBase<ProjectApps_CopyPreparedDomainSetting>>;
+
+export type ProjectApps_Copy_Req = ApiRequestBase<
+    {
+        projectID: string;
+        appID: string;
+    } & ProjectApps_CopyBase<ProjectApps_CopyDomainSettingPayload>
+>;
+
+export type ProjectApps_Copy_Res = ApiResponseBase<{
+    id: string;
+}>;
+
 /**
  * Find one project app by id
  */

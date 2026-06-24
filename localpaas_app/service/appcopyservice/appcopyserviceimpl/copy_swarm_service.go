@@ -57,8 +57,14 @@ func (s *service) copySwarmService(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	oldLocalNet := s.networkService.GetProjectNetworkName(data.SrcProject, data.SrcApp.Env)
-	newLocalNet := s.networkService.GetProjectNetworkName(data.TargetProject, data.TargetApp.Env)
+	oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, data.SrcProject, data.SrcApp.Env)
+	if err != nil {
+		return apperrors.New(err)
+	}
+	newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, data.TargetProject, data.TargetApp.Env)
+	if err != nil {
+		return apperrors.New(err)
+	}
 	var newNetAttachments []swarm.NetworkAttachmentConfig
 	localNetAdded := false
 	for _, net := range targetSvc.Spec.TaskTemplate.Networks {
@@ -66,10 +72,10 @@ func (s *service) copySwarmService(
 			newNetAttachments = append(newNetAttachments, net)
 			continue
 		}
-		if oldLocalNet != newLocalNet || net.Target == oldLocalNet {
+		if oldLocalNet.ID != newLocalNet.ID && (net.Target == oldLocalNet.ID || net.Target == oldLocalNet.Name) {
 			continue
 		}
-		if net.Target == newLocalNet {
+		if net.Target == newLocalNet.ID || net.Target == newLocalNet.Name {
 			net.Aliases = []string{slugify.SlugifyAsKey(targetApp.Name)}
 			newNetAttachments = append(newNetAttachments, net)
 			localNetAdded = true
@@ -79,7 +85,7 @@ func (s *service) copySwarmService(
 	}
 	if !localNetAdded { // Add local net
 		newNetAttachments = append(newNetAttachments, swarm.NetworkAttachmentConfig{
-			Target:  newLocalNet,
+			Target:  newLocalNet.ID,
 			Aliases: []string{slugify.SlugifyAsKey(targetApp.Name)},
 		})
 	}

@@ -34,8 +34,9 @@ export function AcmeDnsProviderField({ control, errors, name, label, isRequired,
                         {...field}
                         value={String(field.value)}
                         aria-invalid={invalid}
-                        className="min-h-24"
                         maxLength={1000}
+                        minRows={6}
+                        maxRows={10}
                     />
                 )}
                 {type === "password" && (

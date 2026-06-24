@@ -98,7 +98,7 @@ export function ProfileApiKeyCreateRoute() {
         <div className={cn(listBox, "min-h-64")}>
             <RouteFormHeader title="Create a new API key" />
 
-            <div className="flex max-w-[660px] flex-col gap-6">
+            <div className="flex flex-col gap-6">
                 {showForm && (
                     <CreateProfileApiKeyForm
                         formId={CREATE_PROFILE_API_KEY_FORM_ID}

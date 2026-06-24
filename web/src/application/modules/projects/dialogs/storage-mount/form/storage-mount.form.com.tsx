@@ -186,7 +186,7 @@ export function StorageMountForm({
                                         searchable={false}
                                         closeOnSelect
                                         emptyText="No storage types available"
-                                        className="w-[220px]"
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                         valueKey="id"
                                         aria-invalid={Boolean(errors.type)}
                                         loading={isFetchingStorageSettings}

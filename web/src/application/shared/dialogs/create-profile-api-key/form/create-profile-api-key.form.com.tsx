@@ -15,6 +15,8 @@ import {
     type CreateProfileApiKeyFormSchemaOutput,
 } from "../schemas";
 
+const PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS = "max-w-[600px]";
+
 export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Props) {
     const {
         handleSubmit,
@@ -85,6 +87,7 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                             onChange={e => {
                                 name.onChange(e.target.value);
                             }}
+                            className={PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS}
                             aria-invalid={isNameInvalid}
                             placeholder="Enter API key name"
                         />
@@ -181,6 +184,7 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                             onChange={date => {
                                 expireAt.onChange(date ?? undefined);
                             }}
+                            className={PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS}
                             displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
                             aria-invalid={isExpireAtInvalid}
                             placeholder="Select expiration date"

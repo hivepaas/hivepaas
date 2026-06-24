@@ -33,7 +33,7 @@ export function StorageMountsProvider({ initialMounts = [], children }: StorageM
         () =>
             initialMounts.map((mount, index) => ({
                 ...mount,
-                _id: `mount-${Date.now()}-${index}`,
+                _id: `mount-${index}`,
             })),
         [initialMounts],
     );

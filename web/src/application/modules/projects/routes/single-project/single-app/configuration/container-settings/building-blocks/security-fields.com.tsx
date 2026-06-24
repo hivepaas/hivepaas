@@ -1,6 +1,7 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppArmorMode, ESeccompMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -183,7 +184,7 @@ export function SecurityFields() {
                         value={seccompProfile.value}
                         onChange={seccompProfile.onChange}
                         placeholder="profile"
-                        className="max-w-[400px]"
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     />
                     <FieldError errors={[seccompProfileError]} />
                 </InfoBlock>

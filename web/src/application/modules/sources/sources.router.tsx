@@ -10,7 +10,12 @@ async function getLazyComponents() {
     return await import("./sources.module");
 }
 
-function createSourcesRoute(path: string, title: string, loadComponent: () => Promise<ComponentType>): RouteObject {
+function createSourcesRoute(
+    path: string,
+    title: string,
+    loadComponent: () => Promise<ComponentType>,
+    children: RouteObject[] = [],
+): RouteObject {
     return {
         path,
         element: (
@@ -31,6 +36,7 @@ function createSourcesRoute(path: string, title: string, loadComponent: () => Pr
                     };
                 },
             },
+            ...children,
         ],
     };
 }
@@ -60,15 +66,59 @@ export const sourcesRouter: RouteObject = {
                 </ConditionalModule>
             ),
         },
-        createSourcesRoute(ROUTE.sources.githubApps.$pattern, "Github Apps", async () => {
-            const { SourcesGithubAppsRoute } = await getLazyComponents();
+        createSourcesRoute(
+            ROUTE.sources.githubApps.$pattern,
+            "Github Apps",
+            async () => {
+                const { SourcesGithubAppsRoute } = await getLazyComponents();
 
-            return SourcesGithubAppsRoute;
-        }),
-        createSourcesRoute(ROUTE.sources.webhooks.$pattern, "Webhooks", async () => {
-            const { SourcesWebhooksRoute } = await getLazyComponents();
+                return SourcesGithubAppsRoute;
+            },
+            [
+                {
+                    path: "create",
+                    lazy: async () => {
+                        const { SourcesGithubAppCreateRoute } = await getLazyComponents();
 
-            return SourcesWebhooksRoute;
-        }),
+                        return { Component: SourcesGithubAppCreateRoute };
+                    },
+                },
+                {
+                    path: ":githubAppId/edit",
+                    lazy: async () => {
+                        const { SourcesGithubAppEditRoute } = await getLazyComponents();
+
+                        return { Component: SourcesGithubAppEditRoute };
+                    },
+                },
+            ],
+        ),
+        createSourcesRoute(
+            ROUTE.sources.webhooks.$pattern,
+            "Webhooks",
+            async () => {
+                const { SourcesWebhooksRoute } = await getLazyComponents();
+
+                return SourcesWebhooksRoute;
+            },
+            [
+                {
+                    path: "create",
+                    lazy: async () => {
+                        const { SourcesWebhookCreateRoute } = await getLazyComponents();
+
+                        return { Component: SourcesWebhookCreateRoute };
+                    },
+                },
+                {
+                    path: ":repoWebhookId/edit",
+                    lazy: async () => {
+                        const { SourcesWebhookEditRoute } = await getLazyComponents();
+
+                        return { Component: SourcesWebhookEditRoute };
+                    },
+                },
+            ],
+        ),
     ],
 } as const;

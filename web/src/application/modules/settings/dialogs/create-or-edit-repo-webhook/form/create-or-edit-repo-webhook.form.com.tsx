@@ -8,20 +8,12 @@ import { Clipboard } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
+import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import {
-    Button,
-    Checkbox,
-    DialogActionFooter,
-    DialogBody,
-    Field,
-    FieldError,
-    FieldGroup,
-    Input,
-} from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
 import type { CreateOrEditRepoWebhookFormInput, CreateOrEditRepoWebhookFormOutput } from "../schemas";
 import { CreateOrEditRepoWebhookFormSchema } from "../schemas";
@@ -121,7 +113,7 @@ export function CreateOrEditRepoWebhookForm({
             }}
             className="min-h-0 flex flex-1 flex-col"
         >
-            <DialogBody className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
@@ -260,10 +252,14 @@ export function CreateOrEditRepoWebhookForm({
                         or wherever your source code is hosted.
                     </div>
                 </fieldset>
-            </DialogBody>
+            </div>
             {!isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex justify-end">
+                <div className="pb-6 flex justify-end mt-6">
+                    <div className="flex items-center gap-3">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
                         <Button
                             type="submit"
                             isLoading={isPending}
@@ -271,19 +267,17 @@ export function CreateOrEditRepoWebhookForm({
                             Submit
                         </Button>
                     </div>
-                </DialogActionFooter>
+                </div>
             )}
             {isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </DialogActionFooter>
+                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
+                </div>
             )}
         </form>
     );

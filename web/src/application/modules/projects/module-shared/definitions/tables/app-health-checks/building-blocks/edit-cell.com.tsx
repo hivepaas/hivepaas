@@ -2,11 +2,13 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditAppHealthCheckDialog } from "~/projects/dialogs/create-or-edit-app-health-check";
 import type { AppHealthCheck } from "~/projects/domain";
 
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
 function View({ projectId, appId, healthCheck }: Props) {
-    const { actions } = useCreateOrEditAppHealthCheckDialog();
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -14,7 +16,13 @@ function View({ projectId, appId, healthCheck }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                actions.openEdit(projectId, appId, healthCheck);
+                navigate.modules(
+                    ROUTE.projects.single.apps.single.configuration.healthChecks.edit.$route(
+                        projectId,
+                        appId,
+                        healthCheck.id,
+                    ),
+                );
             }}
         >
             <EyeIcon className="size-5" />

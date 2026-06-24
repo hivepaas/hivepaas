@@ -1,7 +1,14 @@
 /**
  * Sources
  */
-export { SourcesGithubAppsRoute, SourcesWebhooksRoute } from "./routes";
+export {
+    SourcesGithubAppCreateRoute,
+    SourcesGithubAppEditRoute,
+    SourcesGithubAppsRoute,
+    SourcesWebhookCreateRoute,
+    SourcesWebhookEditRoute,
+    SourcesWebhooksRoute,
+} from "./routes";
 
 /**
  * Dialogs

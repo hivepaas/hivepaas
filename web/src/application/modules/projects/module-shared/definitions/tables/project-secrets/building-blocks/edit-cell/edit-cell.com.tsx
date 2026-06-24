@@ -2,11 +2,13 @@ import React from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret/hooks";
 import type { ProjectSecret } from "~/projects/domain";
 
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
 function View({ projectId, secret }: Props) {
-    const { actions: secretDialogActions } = useCreateOrEditProjectSecretDialog();
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -14,7 +16,7 @@ function View({ projectId, secret }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                secretDialogActions.openEdit(projectId, secret);
+                navigate.modules(ROUTE.projects.single.providerConfiguration.secrets.edit.$route(projectId, secret.id));
             }}
         >
             <EyeIcon className="size-5" />

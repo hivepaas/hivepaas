@@ -2,6 +2,7 @@ import { Checkbox, FieldError, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { useController, useFormContext, useWatch } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EHealthcheckMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -96,7 +97,7 @@ export function HealthcheckFields() {
                             value={command.value}
                             onChange={command.onChange}
                             placeholder="wget 127.0.0.1"
-                            className="max-w-[400px]"
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         />
                         <FieldError errors={[commandError]} />
                     </InfoBlock>

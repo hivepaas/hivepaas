@@ -6,6 +6,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import type { AppHealthCheck } from "~/projects/domain";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import {
     EAppHealthCheckGrpcStatus,
     EAppHealthCheckGrpcVersion,
@@ -19,7 +20,6 @@ import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/comp
 import { NotificationSettings } from "@application/shared/form";
 
 import { Button, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
-import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { InputNumber } from "@/components/ui/input-number";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -85,6 +85,7 @@ export function CreateOrEditAppHealthCheckForm({
     onHasChanges,
     initialValues,
     readOnly = false,
+    onClose,
 }: Props) {
     const methods = useForm<CreateOrEditAppHealthCheckFormInput, unknown, CreateOrEditAppHealthCheckFormOutput>({
         defaultValues: mapInitialValues(initialValues),
@@ -227,7 +228,7 @@ export function CreateOrEditAppHealthCheckForm({
                     disabled={readOnly}
                     className="contents"
                 >
-                    <DialogBody className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-6">
                         <InfoBlock
                             titleWidth={220}
                             title={
@@ -244,6 +245,7 @@ export function CreateOrEditAppHealthCheckForm({
                                         {...name}
                                         placeholder="health check name"
                                         aria-invalid={isNameInvalid}
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     />
                                     <FieldError errors={[errors.name]} />
                                 </Field>
@@ -372,6 +374,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                     {...restUrl}
                                                     placeholder="https://your-addr/path"
                                                     aria-invalid={isRestUrlInvalid}
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 />
                                                 <FieldError errors={[errors.rest?.url]} />
                                             </Field>
@@ -410,6 +413,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                 id="app-health-check-rest-content-type"
                                                 {...restContentType}
                                                 placeholder="application/json"
+                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                             />
                                         </InfoBlock>
 
@@ -422,6 +426,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                     id="app-health-check-rest-body"
                                                     {...restBody}
                                                     rows={5}
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 />
                                             </InfoBlock>
                                         )}
@@ -436,6 +441,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                     {...restReturnCode}
                                                     placeholder="200,201,202"
                                                     aria-invalid={isRestReturnCodeInvalid}
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 />
                                                 <FieldError errors={[errors.rest?.returnCode]} />
                                             </Field>
@@ -476,6 +482,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                         {...textExact}
                                                         placeholder="value"
                                                         rows={4}
+                                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                     />
                                                 </InfoBlock>
 
@@ -489,6 +496,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                             {...textRegex}
                                                             placeholder="regular expression"
                                                             aria-invalid={isTextRegexInvalid}
+                                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                         />
                                                         <FieldError errors={[errors.rest?.textRegex]} />
                                                     </Field>
@@ -509,6 +517,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                             placeholder={JSON_PLACEHOLDER}
                                                             rows={5}
                                                             aria-invalid={isJsonExactInvalid}
+                                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                         />
                                                         <FieldError errors={[errors.rest?.jsonExact]} />
                                                     </Field>
@@ -525,6 +534,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                             placeholder={JSON_PLACEHOLDER}
                                                             rows={4}
                                                             aria-invalid={isJsonContainInvalid}
+                                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                         />
                                                         <FieldError errors={[errors.rest?.jsonContain]} />
                                                     </Field>
@@ -565,6 +575,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                     {...grpcAddr}
                                                     placeholder="grpc address"
                                                     aria-invalid={isGrpcAddrInvalid}
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 />
                                                 <FieldError errors={[errors.grpc?.addr]} />
                                             </Field>
@@ -578,6 +589,7 @@ export function CreateOrEditAppHealthCheckForm({
                                                 id="app-health-check-grpc-service"
                                                 {...grpcService}
                                                 placeholder="grpc service"
+                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                             />
                                         </InfoBlock>
 
@@ -646,17 +658,39 @@ export function CreateOrEditAppHealthCheckForm({
                                 </InfoBlock>
                             </NotificationSettings>
                         </ContentBlock>
-                    </DialogBody>
-                    <DialogActionFooter>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
-                            disabled={readOnly}
-                        >
-                            Save
-                        </Button>
-                    </DialogActionFooter>
+                    </div>
+                    {!readOnly && (
+                        <div className="pb-6 flex justify-end mt-6">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-w-[100px]"
+                                    disabled={isPending}
+                                    onClick={onClose}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                    className="min-w-[100px]"
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    {readOnly && (
+                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={onClose}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    )}
                 </fieldset>
             </form>
         </FormProvider>
@@ -670,4 +704,5 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: AppHealthCheck;
     readOnly?: boolean;
+    onClose?: () => void;
 }

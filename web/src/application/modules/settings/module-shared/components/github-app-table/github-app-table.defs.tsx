@@ -21,7 +21,6 @@ function createColumns(scope: GithubAppTableScope): ColumnDef<SettingGithubApp>[
                 <GithubAppEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

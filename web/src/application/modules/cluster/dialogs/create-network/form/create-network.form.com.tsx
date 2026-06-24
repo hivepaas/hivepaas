@@ -1,7 +1,6 @@
 import { type PropsWithChildren } from "react";
 
 import { Checkbox, FieldError, Input } from "@components/ui";
-import { DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
@@ -70,7 +69,7 @@ export function CreateNetworkForm({
                 }}
                 className="min-h-0 flex flex-1 flex-col"
             >
-                <DialogBody>
+                <div>
                     {showProjectNamePrefixNote ? (
                         <div className={cn(dashedBorderBox, "mb-6 text-center text-sm leading-6")}>
                             <span className="text-orange-500">Note:</span> The name of the network in the project will
@@ -160,7 +159,7 @@ export function CreateNetworkForm({
                             />
                         ) : null}
                     </fieldset>
-                </DialogBody>
+                </div>
                 {children}
             </form>
         </FormProvider>

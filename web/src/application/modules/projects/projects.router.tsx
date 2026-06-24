@@ -598,12 +598,52 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectGithubAppCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectGithubAppCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectGithubAppEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectGithubAppEditRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.webhooks.$pattern,
                             lazy: async () => {
                                 const { ProjectWebhooksRoute } = await getLazyComponents();
 
                                 return {
                                     Component: ProjectWebhooksRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectWebhookCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectWebhookCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectWebhookEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectWebhookEditRoute,
                                 };
                             },
                         },
@@ -704,6 +744,26 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectSecretsRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.secrets.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectSecretCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSecretCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.secrets.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectSecretEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectSecretEditRoute,
                                 };
                             },
                         },
@@ -819,6 +879,26 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectNetworksRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.clusterResources.networks.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectNetworkCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectNetworkCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.clusterResources.networks.details.$pattern,
+                            lazy: async () => {
+                                const { ProjectNetworkDetailsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectNetworkDetailsRoute,
                                 };
                             },
                         },
@@ -1011,11 +1091,43 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.create.$pattern,
+                            lazy: async () => {
+                                const { AppHealthCheckCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppHealthCheckCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.edit.$pattern,
+                            lazy: async () => {
+                                const { AppHealthCheckEditRoute } = await getLazyComponents();
+
+                                return { Component: AppHealthCheckEditRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$pattern,
                             lazy: async () => {
                                 const { AppScheduledJobsRoute } = await getLazyComponents();
 
                                 return { Component: AppScheduledJobsRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$pattern,
+                            lazy: async () => {
+                                const { AppScheduledJobCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppScheduledJobCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
+                            lazy: async () => {
+                                const { AppScheduledJobEditRoute } = await getLazyComponents();
+
+                                return { Component: AppScheduledJobEditRoute };
                             },
                         },
                         {
@@ -1043,11 +1155,43 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.secrets.create.$pattern,
+                            lazy: async () => {
+                                const { AppConfigSecretCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigSecretCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.secrets.edit.$pattern,
+                            lazy: async () => {
+                                const { AppConfigSecretEditRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigSecretEditRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.configFiles.$pattern,
                             lazy: async () => {
                                 const { AppConfigFilesRoute } = await getLazyComponents();
 
                                 return { Component: AppConfigFilesRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.configFiles.create.$pattern,
+                            lazy: async () => {
+                                const { AppConfigFileCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigFileCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.configFiles.edit.$pattern,
+                            lazy: async () => {
+                                const { AppConfigFileEditRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigFileEditRoute };
                             },
                         },
                         {
@@ -1065,6 +1209,32 @@ export const projectsRouter: RouteObject = {
 
                                 return { Component: AppConfigStorageRoute };
                             },
+                            children: [
+                                {
+                                    index: true,
+                                    lazy: async () => {
+                                        const { AppConfigStorageListRoute } = await getLazyComponents();
+
+                                        return { Component: AppConfigStorageListRoute };
+                                    },
+                                },
+                                {
+                                    path: "create",
+                                    lazy: async () => {
+                                        const { StorageMountCreateRoute } = await getLazyComponents();
+
+                                        return { Component: StorageMountCreateRoute };
+                                    },
+                                },
+                                {
+                                    path: ":mountId/edit",
+                                    lazy: async () => {
+                                        const { StorageMountEditRoute } = await getLazyComponents();
+
+                                        return { Component: StorageMountEditRoute };
+                                    },
+                                },
+                            ],
                         },
                         {
                             path: ROUTE.projects.single.apps.single.configuration.networks.$pattern,

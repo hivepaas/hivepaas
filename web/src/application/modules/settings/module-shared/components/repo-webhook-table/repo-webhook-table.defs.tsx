@@ -21,7 +21,6 @@ function createColumns(scope: RepoWebhookTableScope): ColumnDef<SettingRepoWebho
                 <RepoWebhookEditCell
                     scope={scope}
                     id={original.id}
-                    inherited={original.inherited}
                 />
             ),
             meta: {

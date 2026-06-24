@@ -6,6 +6,7 @@ import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { dashedBorderBox } from "@lib/styles";
 import { useController, useFormContext, useWatch } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EMountPropagation } from "~/projects/module-shared/enums";
 import type { SettingStorageSettings } from "~/settings/domain";
 
@@ -53,6 +54,7 @@ export function BindFields({ storageSettings }: BindFieldsProps) {
                         placeholder="/data"
                         aria-invalid={baseDirInvalid}
                         emptyText={baseDirs.length === 0 ? "No base directories available" : "No matching directories"}
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     />
                     <FieldError errors={[baseDirError]} />
                 </InfoBlock>
@@ -79,6 +81,7 @@ export function BindFields({ storageSettings }: BindFieldsProps) {
                         id="subpath"
                         value={subpathValue}
                         placeholder={subpathRequiredField.value}
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     />
                 </InfoBlock>
             </Field>

@@ -8,19 +8,11 @@ import { cn } from "@lib/utils";
 import { RefreshCcw } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
+import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import {
-    Button,
-    Checkbox,
-    DialogActionFooter,
-    DialogBody,
-    Field,
-    FieldError,
-    FieldGroup,
-    Input,
-} from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditGithubAppFormInput, CreateOrEditGithubAppFormOutput } from "../schemas";
@@ -136,7 +128,7 @@ export function CreateOrEditGithubAppForm({
             }}
             className="min-h-0 flex flex-1 flex-col"
         >
-            <DialogBody className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 {onReprovision && !isReadOnly && (
@@ -373,9 +365,9 @@ export function CreateOrEditGithubAppForm({
                         />
                     </InfoBlock>
                 </fieldset>
-            </DialogBody>
+            </div>
             {!isReadOnly && (
-                <DialogActionFooter className="flex flex-wrap items-center justify-between gap-3">
+                <div className="pb-6 flex flex-wrap items-center justify-between gap-3 mt-6">
                     <div className="flex items-center gap-3">
                         {showTestConnection && (
                             <Button
@@ -390,26 +382,30 @@ export function CreateOrEditGithubAppForm({
                         {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
                         {testStatus === "failed" && <span className="text-sm text-red-600">Failed</span>}
                     </div>
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                        className="min-w-[100px]"
-                    >
-                        Save
-                    </Button>
-                </DialogActionFooter>
-            )}
-            {isReadOnly && (
-                <DialogActionFooter>
-                    <div className="flex justify-end">
+                    <div className="flex items-center gap-3">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending || isTesting || isReprovisioning}
+                        />
                         <Button
-                            type="button"
-                            onClick={onClose}
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
                         >
-                            Close
+                            Save
                         </Button>
                     </div>
-                </DialogActionFooter>
+                </div>
+            )}
+            {isReadOnly && (
+                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
+                </div>
             )}
         </form>
     );

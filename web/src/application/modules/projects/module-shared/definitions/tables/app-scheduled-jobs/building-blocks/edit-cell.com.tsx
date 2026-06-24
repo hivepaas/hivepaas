@@ -2,11 +2,13 @@ import { memo } from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditAppScheduledJobDialog } from "~/projects/dialogs/create-or-edit-app-scheduled-job";
 import type { AppScheduledJob } from "~/projects/domain";
 
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
 function View({ projectId, appId, scheduledJob }: Props) {
-    const { actions } = useCreateOrEditAppScheduledJobDialog();
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -14,7 +16,13 @@ function View({ projectId, appId, scheduledJob }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                actions.openEdit(projectId, appId, scheduledJob.id);
+                navigate.modules(
+                    ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$route(
+                        projectId,
+                        appId,
+                        scheduledJob.id,
+                    ),
+                );
             }}
         >
             <EyeIcon className="size-5" />

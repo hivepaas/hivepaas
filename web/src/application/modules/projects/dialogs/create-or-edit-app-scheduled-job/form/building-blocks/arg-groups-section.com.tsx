@@ -4,6 +4,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { get, useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -243,7 +244,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                                         value={exportEnv.value}
                                         onChange={exportEnv.onChange}
                                         placeholder="CMD_ARG_GROUP_1"
-                                        className="max-w-[400px]"
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                         aria-invalid={!!get(errors, `${basePath}.exportEnv`)}
                                         disabled={readOnly}
                                     />

@@ -1,5 +1,6 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -88,7 +89,7 @@ export function GeneralFields() {
                     value={image.value}
                     onChange={image.onChange}
                     readOnly
-                    className="max-w-[400px] bg-muted/50 text-muted-foreground"
+                    className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} bg-muted/50 text-muted-foreground`}
                 />
             </InfoBlock>
 
@@ -98,7 +99,7 @@ export function GeneralFields() {
                     value={command.value}
                     onChange={command.onChange}
                     placeholder='my_app --arg1=123 --arg2="my data"'
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[commandError]} />
             </InfoBlock>
@@ -109,7 +110,7 @@ export function GeneralFields() {
                     value={workingDir.value}
                     onChange={workingDir.onChange}
                     placeholder="/path/in/container"
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[workingDirError]} />
             </InfoBlock>
@@ -120,7 +121,7 @@ export function GeneralFields() {
                     value={hostname.value}
                     onChange={hostname.onChange}
                     placeholder="hostname"
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[hostnameError]} />
             </InfoBlock>
@@ -131,7 +132,7 @@ export function GeneralFields() {
                     value={user.value}
                     onChange={user.onChange}
                     placeholder="user"
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[userError]} />
             </InfoBlock>
@@ -142,7 +143,7 @@ export function GeneralFields() {
                     value={groups.value}
                     onChange={groups.onChange}
                     placeholder="space-separated groups"
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[groupsError]} />
             </InfoBlock>
@@ -225,7 +226,7 @@ export function GeneralFields() {
                     value={stopSignal.value}
                     onChange={stopSignal.onChange}
                     placeholder="SIGTERM"
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[stopSignalError]} />
             </InfoBlock>

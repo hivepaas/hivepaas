@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
@@ -126,7 +127,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                         type="email"
                         placeholder="email address"
                         aria-invalid={isEmailInvalid}
-                        className="max-w-[400px]"
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         disabled={readOnly}
                     />
                     <FieldError errors={[errors.certSettings?.email]} />
@@ -151,7 +152,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                     >
                         <SelectTrigger
                             aria-invalid={isKeyTypeInvalid}
-                            className="max-w-[400px]"
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         >
                             <SelectValue placeholder="Unspecified" />
                         </SelectTrigger>

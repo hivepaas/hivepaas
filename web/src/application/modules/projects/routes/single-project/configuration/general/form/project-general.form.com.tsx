@@ -10,6 +10,7 @@ import { Pencil } from "lucide-react";
 import { FormProvider, useController, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { type ProjectDetailsEntity, type ProjectEnvEntity } from "~/projects/domain";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { Combobox, type ComboboxOption, InfoBlock } from "@application/shared/components";
 import { UsersPublicQueries } from "@application/shared/data-public/queries";
@@ -316,7 +317,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                             <Input
                                 value={defaultValues.id}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 disabled
                                 readOnly
                             />
@@ -329,7 +330,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                 value={name.value}
                                 onChange={name.onChange}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 placeholder="Enter project name"
                                 aria-invalid={isNameInvalid}
                             />
@@ -341,7 +342,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                             <Input
                                 value={defaultValues.key}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 disabled
                                 readOnly
                             />
@@ -354,7 +355,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
 
                         {/* Owner */}
                         <InfoBlock title="Owner">
-                            <div className="max-w-[400px]">
+                            <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <Combobox
                                     options={ownerComboboxOptions}
                                     value={ownerId.value}
@@ -383,7 +384,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
 
                         {/* Environments */}
                         <InfoBlock title="Environments">
-                            <div>
+                            <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <ProjectEnvInput
                                     envs={envs}
                                     onCreate={handleCreateEnv}
@@ -398,7 +399,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
 
                         {/* Tags */}
                         <InfoBlock title="Tags">
-                            <div>
+                            <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <TagInput
                                     tags={tags}
                                     onCreate={handleCreateTag}
@@ -416,7 +417,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                                 {...note}
                                 value={note.value}
                                 onChange={note.onChange}
-                                className="w-[100%] min-h-[120px]"
+                                className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} min-h-[120px]`}
                                 placeholder="Enter project notes"
                                 rows={4}
                                 aria-invalid={isNoteInvalid}

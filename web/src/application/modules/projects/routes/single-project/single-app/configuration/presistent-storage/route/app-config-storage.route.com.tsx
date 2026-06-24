@@ -1,18 +1,13 @@
-import { useParams } from "react-router";
+import { Outlet, useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import {
-    AppStorageSettingsCommands,
-    AppStorageSettingsQueries,
-    ProjectAppsQueries,
-    ProjectsQueries,
-} from "~/projects/data";
+import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
-import { useStorageMountDialog } from "~/projects/dialogs/storage-mount";
 import type { AppStorageMount } from "~/projects/domain";
 
 import { AppLoader } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
 
@@ -23,8 +18,9 @@ type StorageMountWithId = AppStorageMount & { _id: string };
 
 function AppConfigStorageContent() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
-    const { mounts, addMount, updateMount, removeMount } = useStorageMounts();
+    const { mounts, removeMount } = useStorageMounts();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+    const { navigate } = useAppNavigate();
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -37,27 +33,8 @@ function AppConfigStorageContent() {
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
 
-    const { data: projectData, isLoading: projectMetaLoading } = ProjectsQueries.useFindOneById(
-        {
-            projectID: projectId,
-        },
-        APP_CONFIGURATION_QUERY_OPTIONS,
-    );
-
-    const { data: appDetailsData, isLoading: appDetailsLoading } = ProjectAppsQueries.useFindOneById(
-        {
-            projectID: projectId,
-            appID: appId,
-        },
-        APP_CONFIGURATION_QUERY_OPTIONS,
-    );
-
     const { mutateAsync: update } = AppStorageSettingsCommands.useUpdateOne();
 
-    const storageMountDialog = useStorageMountDialog();
-
-    const projectKey = projectData?.data.key;
-    const appLocalKey = appDetailsData?.data.localKey;
     const updateVer = appData?.data.updateVer ?? 0;
 
     async function persistMounts(nextMounts: StorageMountWithId[], successMessage: string) {
@@ -91,38 +68,15 @@ function AppConfigStorageContent() {
             return;
         }
 
-        storageMountDialog.actions.open({
-            projectKey,
-            appLocalKey,
-            onSubmit: async (mount: AppStorageMount) => {
-                const mountWithId: StorageMountWithId = {
-                    ...mount,
-                    _id: `mount-${Date.now()}-${Math.random()}`,
-                };
-                const nextMounts = [...mounts, mountWithId];
-                await persistMounts(nextMounts, "Storage mount created");
-                addMount(mount);
-            },
-        });
+        navigate.modules(
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(projectId, appId),
+        );
     };
 
     const handleEditMount = (mount: StorageMountWithId) => {
-        storageMountDialog.actions.openEdit(mount, {
-            readOnly: !canWrite,
-            projectKey,
-            appLocalKey,
-            onSubmit: async (updatedMount: AppStorageMount) => {
-                if (!canWrite) {
-                    return;
-                }
-
-                const nextMounts = mounts.map(existing =>
-                    existing._id === mount._id ? { ...updatedMount, _id: mount._id } : existing,
-                );
-                await persistMounts(nextMounts, "Storage mount updated");
-                updateMount(mount._id, updatedMount);
-            },
-        });
+        navigate.modules(
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$route(projectId, appId, mount._id),
+        );
     };
 
     const handleDeleteMount = (mount: StorageMountWithId) => {
@@ -136,7 +90,7 @@ function AppConfigStorageContent() {
         });
     };
 
-    if (appLoading || projectMetaLoading || appDetailsLoading) {
+    if (appLoading) {
         return <AppLoader />;
     }
 
@@ -162,6 +116,10 @@ function AppConfigStorageContent() {
             />
         </div>
     );
+}
+
+export function AppConfigStorageListRoute() {
+    return <AppConfigStorageContent />;
 }
 
 export function AppConfigStorageRoute() {
@@ -193,7 +151,7 @@ export function AppConfigStorageRoute() {
 
     return (
         <StorageMountsProvider initialMounts={data?.data.mounts ?? []}>
-            <AppConfigStorageContent />
+            <Outlet />
         </StorageMountsProvider>
     );
 }

@@ -4,9 +4,47 @@ import { type NavigateOptions, type To, useLocation, useNavigate } from "react-r
 
 import { useAppLink } from "./use-app-link";
 
-type Options = NavigateOptions & {
+type Options = Omit<NavigateOptions, "state"> & {
     ignorePrevPath?: boolean;
+    state?: unknown;
 };
+
+function isPlainStateRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getNavigateState(
+    options: Pick<Options, "state">,
+    locationState: unknown,
+    locationPath: string,
+    ignorePrevPath?: boolean,
+): unknown {
+    const nextState = options.state;
+
+    if (ignorePrevPath) {
+        return nextState ?? locationState;
+    }
+
+    const fromState = {
+        from: locationPath,
+    };
+
+    if (nextState === undefined) {
+        return fromState;
+    }
+
+    if (isPlainStateRecord(nextState)) {
+        return {
+            ...fromState,
+            ...nextState,
+        };
+    }
+
+    return {
+        ...fromState,
+        value: nextState,
+    };
+}
 
 function createHook() {
     return function useAppNavigate() {
@@ -22,11 +60,12 @@ function createHook() {
             (to: To, { ignorePrevPath, ...options }: Options = {}) => {
                 void navigate(link.modules(to), {
                     ...options,
-                    state: ignorePrevPath
-                        ? (location.state as unknown)
-                        : {
-                              from: location.pathname + location.search,
-                          },
+                    state: getNavigateState(
+                        options,
+                        location.state as unknown,
+                        location.pathname + location.search,
+                        ignorePrevPath,
+                    ),
                 });
             },
             [link, navigate, location],
@@ -37,11 +76,12 @@ function createHook() {
                 basic: async (to: To, { ignorePrevPath, ...options }: Options = {}) => {
                     return navigate(to, {
                         ...options,
-                        state: ignorePrevPath
-                            ? (location.state as unknown)
-                            : {
-                                  from: location.pathname + location.search,
-                              },
+                        state: getNavigateState(
+                            options,
+                            location.state as unknown,
+                            location.pathname + location.search,
+                            ignorePrevPath,
+                        ),
                     });
                 },
                 modules,

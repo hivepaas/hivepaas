@@ -79,6 +79,26 @@ export const clusterRouter: RouteObject = {
                         };
                     },
                 },
+                {
+                    path: ROUTE.cluster.networks.create.$pattern,
+                    lazy: async () => {
+                        const { NetworkCreateRoute } = await getLazyComponents();
+
+                        return {
+                            Component: NetworkCreateRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.cluster.networks.details.$pattern,
+                    lazy: async () => {
+                        const { NetworkDetailsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: NetworkDetailsRoute,
+                        };
+                    },
+                },
             ],
         },
         {

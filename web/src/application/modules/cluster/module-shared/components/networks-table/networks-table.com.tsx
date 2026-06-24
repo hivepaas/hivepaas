@@ -9,11 +9,10 @@ import type { NetworkManagementScope } from "~/cluster/module-shared/types";
 import { ProjectNetworksQueries } from "~/projects/data/queries";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
-
-import { useCreateNetworkDialog } from "@application/modules/cluster/dialogs";
 
 import { DataTable } from "@/components/ui";
 
@@ -23,6 +22,7 @@ export function NetworkManagementTable({ scope }: Props) {
     const projectPermission = useConditionalProject({
         projectId: scope.type === "project" ? scope.projectId : "",
     });
+    const { navigate } = useAppNavigate();
 
     const clusterNetworksQuery = ClusterNetworksQueries.useFindManyPaginated(
         {
@@ -49,12 +49,6 @@ export function NetworkManagementTable({ scope }: Props) {
     const { data: { data: networks } = DEFAULT_PAGINATED_DATA, isFetching } =
         scope.type === "cluster" ? clusterNetworksQuery : projectNetworksQuery;
 
-    const dialog = useCreateNetworkDialog({
-        onClose: () => {
-            dialog.actions.close();
-        },
-    });
-
     const columns = useMemo(() => NetworksTableDefs.columns(scope), [scope]);
     const canCreate = scope.type === "cluster" ? clusterPermission.canWrite : projectPermission.canWrite;
     const deniedMessage =
@@ -64,7 +58,7 @@ export function NetworkManagementTable({ scope }: Props) {
     const createButton = (
         <Button
             onClick={() => {
-                dialog.actions.open(scope);
+                navigate.modules(getNetworkCreateRoute(scope));
             }}
             disabled={!canCreate}
         >
@@ -110,4 +104,12 @@ export function NetworkManagementTable({ scope }: Props) {
 
 interface Props {
     scope: NetworkManagementScope;
+}
+
+function getNetworkCreateRoute(scope: NetworkManagementScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.clusterResources.networks.create.$route(scope.projectId);
+    }
+
+    return ROUTE.cluster.networks.create.$route;
 }

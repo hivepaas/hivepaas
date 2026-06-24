@@ -5,11 +5,11 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppConfigFilesQueries } from "~/projects/data/queries";
-import { useCreateOrEditAppConfigFileDialog } from "~/projects/dialogs/create-or-edit-app-config-file/hooks";
 import { AppConfigFilesTableDefs } from "~/projects/module-shared/definitions/tables/app-config-files";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
@@ -22,7 +22,7 @@ export function AppConfigFilesRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
-    const { actions: configFileDialogActions } = useCreateOrEditAppConfigFileDialog();
+    const { navigate } = useAppNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const { data: { data: configFiles, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
@@ -54,7 +54,12 @@ export function AppConfigFilesRoute() {
                         {({ isDenied }) => (
                             <Button
                                 onClick={() => {
-                                    configFileDialogActions.open(projectId, appId);
+                                    navigate.modules(
+                                        ROUTE.projects.single.apps.single.configuration.configFiles.create.$route(
+                                            projectId,
+                                            appId,
+                                        ),
+                                    );
                                 }}
                                 disabled={isDenied}
                             >

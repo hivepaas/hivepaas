@@ -10,6 +10,7 @@ export const QK = {
      */
     "projects.apps.$.find-many-paginated": "projects.apps.$.find-many-paginated",
     "projects.apps.$.find-one-by-id": "projects.apps.$.find-one-by-id",
+    "projects.apps.$.copy.prepare": "projects.apps.$.copy.prepare",
     "projects.apps.logs.$.get-info": "projects.apps.logs.$.get-info",
     "projects.apps.logs.$.get-logs": "projects.apps.logs.$.get-logs",
     "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",

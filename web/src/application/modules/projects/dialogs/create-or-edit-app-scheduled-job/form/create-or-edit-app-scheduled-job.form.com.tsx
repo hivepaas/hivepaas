@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
@@ -12,7 +13,6 @@ import { KeyValueList, NotificationSettings } from "@application/shared/form";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { InputNumber } from "@/components/ui/input-number";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
@@ -40,6 +40,7 @@ export function CreateOrEditAppScheduledJobForm({
     initialValues,
     onHasChanges,
     readOnly = false,
+    onClose,
 }: Props) {
     const defaultValues = useMemo(() => {
         if (initialValues) {
@@ -152,7 +153,7 @@ export function CreateOrEditAppScheduledJobForm({
                 className="min-h-0 flex flex-1 flex-col"
             >
                 <fieldset className="contents">
-                    <DialogBody>
+                    <div>
                         <input
                             type="hidden"
                             {...runInShell}
@@ -173,7 +174,7 @@ export function CreateOrEditAppScheduledJobForm({
                                         {...name}
                                         placeholder="scheduled job name"
                                         aria-invalid={isNameInvalid}
-                                        className="max-w-[420px]"
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                         disabled={readOnly}
                                     />
                                     <FieldError errors={[errors.name]} />
@@ -245,7 +246,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 <Input
                                                     {...scheduleCronExpr}
                                                     placeholder="accepted form: * * * * *"
-                                                    className="max-w-[400px]"
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                     aria-invalid={isScheduleCronExprInvalid}
                                                     disabled={readOnly}
                                                 />
@@ -268,7 +269,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 granularity="minute"
                                                 showClearButton
                                                 aria-invalid={isScheduleFromInvalid}
-                                                containerClassName="max-w-[400px]"
+                                                containerClassName={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 disabled={readOnly}
                                             />
                                             <FieldError errors={[errors.scheduleFrom]} />
@@ -405,7 +406,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 <Input
                                                     {...command}
                                                     placeholder="echo “$CMD_ARG_GROUP_1”"
-                                                    className="max-w-[400px]"
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                     aria-invalid={isCommandInvalid}
                                                     disabled={readOnly}
                                                 />
@@ -422,7 +423,7 @@ export function CreateOrEditAppScheduledJobForm({
                                             <Input
                                                 {...workingDir}
                                                 placeholder="/path/in/container"
-                                                className="max-w-[400px]"
+                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                                 aria-invalid={isWorkingDirInvalid}
                                                 disabled={readOnly}
                                             />
@@ -550,17 +551,39 @@ export function CreateOrEditAppScheduledJobForm({
                                 />
                             </ContentBlock>
                         </FieldGroup>
-                    </DialogBody>
-                    <DialogActionFooter>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            disabled={readOnly}
-                            className="min-w-[100px]"
-                        >
-                            Save
-                        </Button>
-                    </DialogActionFooter>
+                    </div>
+                    {!readOnly && (
+                        <div className="pb-6 flex justify-end mt-6">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-w-[100px]"
+                                    disabled={isPending}
+                                    onClick={onClose}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                    className="min-w-[100px]"
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    {readOnly && (
+                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={onClose}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    )}
                 </fieldset>
             </form>
         </FormProvider>
@@ -574,4 +597,5 @@ interface Props {
     initialValues?: AppScheduledJob;
     onHasChanges?: (dirty: boolean) => void;
     readOnly?: boolean;
+    onClose?: () => void;
 }

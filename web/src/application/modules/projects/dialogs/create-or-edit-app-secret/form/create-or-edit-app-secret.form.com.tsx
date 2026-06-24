@@ -3,11 +3,11 @@ import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
-import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditAppSecretFormInput, CreateOrEditAppSecretFormOutput } from "../schemas";
@@ -25,6 +25,7 @@ export function CreateOrEditAppSecretForm({
     isEditMode,
     initialValues,
     readOnly = false,
+    onClose,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,7 +153,7 @@ export function CreateOrEditAppSecretForm({
                 disabled={readOnly}
                 className="contents"
             >
-                <DialogBody className="flex flex-col gap-6">
+                <div className="flex flex-col gap-6">
                     <InfoBlock
                         titleWidth={220}
                         title={
@@ -169,6 +170,7 @@ export function CreateOrEditAppSecretForm({
                                     {...name}
                                     placeholder="SECRET_NAME"
                                     aria-invalid={isNameInvalid}
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={isEditMode}
                                 />
                                 <FieldError errors={[errors.name]} />
@@ -218,6 +220,7 @@ export function CreateOrEditAppSecretForm({
                                         }
                                         rows={8}
                                         aria-invalid={isTextValueInvalid}
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     />
                                     <p className="text-sm text-muted-foreground">Max size: 500kb</p>
                                     <FieldError errors={[errors.textValue]} />
@@ -298,6 +301,7 @@ export function CreateOrEditAppSecretForm({
                                             {...filePath}
                                             placeholder="/run/secrets/secret_name"
                                             aria-invalid={isFilePathInvalid}
+                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                         />
                                         <FieldError errors={[errors.filePath]} />
                                     </Field>
@@ -352,17 +356,39 @@ export function CreateOrEditAppSecretForm({
                             </InfoBlock>
                         </>
                     )}
-                </DialogBody>
-                <DialogActionFooter className="flex justify-end">
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                        className="min-w-[100px]"
-                        disabled={readOnly}
-                    >
-                        Save
-                    </Button>
-                </DialogActionFooter>
+                </div>
+                {!readOnly && (
+                    <div className="pb-6 flex justify-end mt-6">
+                        <div className="flex items-center gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-w-[100px]"
+                                disabled={isPending}
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </div>
+                )}
+                {readOnly && (
+                    <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                        >
+                            Close
+                        </Button>
+                    </div>
+                )}
             </fieldset>
         </form>
     );
@@ -375,4 +401,5 @@ interface Props {
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditAppSecretFormInput>;
     readOnly?: boolean;
+    onClose?: () => void;
 }

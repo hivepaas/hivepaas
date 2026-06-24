@@ -21,7 +21,7 @@ function getLineHeight(element: HTMLTextAreaElement) {
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-    ({ className, minRows = 2, maxRows, onPointerDown, style, ...props }, ref) => {
+    ({ className, minRows = 6, maxRows = 10, onPointerDown, style, ...props }, ref) => {
         const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
         const [minRowsHeight, setMinRowsHeight] = React.useState<number>();
         const [maxRowsHeight, setMaxRowsHeight] = React.useState<number>();

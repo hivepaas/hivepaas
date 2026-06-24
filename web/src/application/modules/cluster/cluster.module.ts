@@ -1,7 +1,7 @@
 /**
  * Nodes
  */
-export { NetworksRoute, NodesRoute, SingleNodeRoute } from "./routes";
+export { NetworkCreateRoute, NetworkDetailsRoute, NetworksRoute, NodesRoute, SingleNodeRoute } from "./routes";
 
 /**
  * Layouts

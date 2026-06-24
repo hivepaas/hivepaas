@@ -5,13 +5,11 @@ import { useLocation, useUpdateEffect } from "react-use";
 import {
     ChangePasswordDialog,
     CreateFeedbackDialog,
-    CreateProfileApiKeyDialog,
     F2aSetupDialog,
     GlobalAlertDialog,
     UpdateApiKeyStatusDialog,
     useChangePasswordDialogState,
     useCreateFeedbackDialogState,
-    useCreateProfileApiKeyDialogState,
     useF2aSetupDialogState,
     useGlobalAlertDialogState,
     useUpdateApiKeyStatusDialogState,
@@ -22,7 +20,6 @@ function View() {
     const changePasswordDialog = useChangePasswordDialogState();
     const createFeedbackDialog = useCreateFeedbackDialogState();
     const f2aSetupDialog = useF2aSetupDialogState();
-    const createProfileApiKeyDialog = useCreateProfileApiKeyDialogState();
     const updateApiKeyStatusDialog = useUpdateApiKeyStatusDialogState();
     const globalAlertDialog = useGlobalAlertDialogState();
 
@@ -30,7 +27,6 @@ function View() {
         changePasswordDialog.destroy();
         createFeedbackDialog.destroy();
         f2aSetupDialog.destroy();
-        createProfileApiKeyDialog.destroy();
         updateApiKeyStatusDialog.destroy();
         globalAlertDialog.destroy();
     }, [location]);
@@ -40,7 +36,6 @@ function View() {
             <ChangePasswordDialog />
             <CreateFeedbackDialog />
             <F2aSetupDialog />
-            <CreateProfileApiKeyDialog />
             <UpdateApiKeyStatusDialog />
             <GlobalAlertDialog />
             {/* TODO: Add other dialogs here */}

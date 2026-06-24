@@ -64,6 +64,11 @@ export const ROUTE = {
         profileApiKeys: {
             $pattern: "current-user/api-keys",
             $route: "/current-user/api-keys/",
+
+            create: {
+                $pattern: "current-user/api-keys/create",
+                $route: "/current-user/api-keys/create/",
+            },
         },
     },
 
@@ -86,6 +91,16 @@ export const ROUTE = {
         networks: {
             $pattern: "cluster/networks",
             $route: "/cluster/networks/",
+
+            create: {
+                $pattern: "cluster/networks/create",
+                $route: "/cluster/networks/create/",
+            },
+
+            details: {
+                $pattern: "cluster/networks/:networkId",
+                $route: (networkId: string) => `/cluster/networks/${networkId}/`,
+            },
         },
     },
 
@@ -99,11 +114,31 @@ export const ROUTE = {
         githubApps: {
             $pattern: "sources/github-apps",
             $route: "/sources/github-apps/",
+
+            create: {
+                $pattern: "sources/github-apps/create",
+                $route: "/sources/github-apps/create/",
+            },
+
+            edit: {
+                $pattern: "sources/github-apps/:githubAppId/edit",
+                $route: (githubAppId: string) => `/sources/github-apps/${githubAppId}/edit/`,
+            },
         },
 
         webhooks: {
             $pattern: "sources/webhooks",
             $route: "/sources/webhooks/",
+
+            create: {
+                $pattern: "sources/webhooks/create",
+                $route: "/sources/webhooks/create/",
+            },
+
+            edit: {
+                $pattern: "sources/webhooks/:repoWebhookId/edit",
+                $route: (repoWebhookId: string) => `/sources/webhooks/${repoWebhookId}/edit/`,
+            },
         },
     },
 
@@ -289,7 +324,8 @@ export const ROUTE = {
 
             edit: {
                 $pattern: "settings/notification-targets/:notificationTargetId/edit",
-                $route: (notificationTargetId: string) => `/settings/notification-targets/${notificationTargetId}/edit/`,
+                $route: (notificationTargetId: string) =>
+                    `/settings/notification-targets/${notificationTargetId}/edit/`,
             },
         },
     },
@@ -436,11 +472,35 @@ export const ROUTE = {
                         healthChecks: {
                             $pattern: "projects/:id/apps/:appId/health-checks",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/health-checks/`,
+
+                            create: {
+                                $pattern: "projects/:id/apps/:appId/health-checks/create",
+                                $route: (id: string, appId: string) =>
+                                    `/projects/${id}/apps/${appId}/health-checks/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/apps/:appId/health-checks/:healthCheckId/edit",
+                                $route: (id: string, appId: string, healthCheckId: string) =>
+                                    `/projects/${id}/apps/${appId}/health-checks/${healthCheckId}/edit/`,
+                            },
                         },
 
                         scheduledJobs: {
                             $pattern: "projects/:id/apps/:appId/sched-jobs",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/sched-jobs/`,
+
+                            create: {
+                                $pattern: "projects/:id/apps/:appId/sched-jobs/create",
+                                $route: (id: string, appId: string) =>
+                                    `/projects/${id}/apps/${appId}/sched-jobs/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/apps/:appId/sched-jobs/:scheduledJobId/edit",
+                                $route: (id: string, appId: string, scheduledJobId: string) =>
+                                    `/projects/${id}/apps/${appId}/sched-jobs/${scheduledJobId}/edit/`,
+                            },
                         },
 
                         envVariables: {
@@ -451,11 +511,34 @@ export const ROUTE = {
                         secrets: {
                             $pattern: "projects/:id/apps/:appId/secrets",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/`,
+
+                            create: {
+                                $pattern: "projects/:id/apps/:appId/secrets/create",
+                                $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/apps/:appId/secrets/:secretId/edit",
+                                $route: (id: string, appId: string, secretId: string) =>
+                                    `/projects/${id}/apps/${appId}/secrets/${secretId}/edit/`,
+                            },
                         },
 
                         configFiles: {
                             $pattern: "projects/:id/apps/:appId/config-files",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/config-files/`,
+
+                            create: {
+                                $pattern: "projects/:id/apps/:appId/config-files/create",
+                                $route: (id: string, appId: string) =>
+                                    `/projects/${id}/apps/${appId}/config-files/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/apps/:appId/config-files/:configFileId/edit",
+                                $route: (id: string, appId: string, configFileId: string) =>
+                                    `/projects/${id}/apps/${appId}/config-files/${configFileId}/edit/`,
+                            },
                         },
 
                         availabilityAndScaling: {
@@ -467,6 +550,18 @@ export const ROUTE = {
                         presistentStorage: {
                             $pattern: "projects/:id/apps/:appId/presistent-storage",
                             $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/presistent-storage/`,
+
+                            create: {
+                                $pattern: "projects/:id/apps/:appId/presistent-storage/create",
+                                $route: (id: string, appId: string) =>
+                                    `/projects/${id}/apps/${appId}/presistent-storage/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/apps/:appId/presistent-storage/:mountId/edit",
+                                $route: (id: string, appId: string, mountId: string) =>
+                                    `/projects/${id}/apps/${appId}/presistent-storage/${mountId}/edit/`,
+                            },
                         },
 
                         networks: {
@@ -655,11 +750,33 @@ export const ROUTE = {
                 githubApps: {
                     $pattern: "projects/:id/provider-settings/github-apps",
                     $route: (id: string) => `/projects/${id}/provider-settings/github-apps/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/github-apps/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/github-apps/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/github-apps/:githubAppId/edit",
+                        $route: (id: string, githubAppId: string) =>
+                            `/projects/${id}/provider-settings/github-apps/${githubAppId}/edit/`,
+                    },
                 },
 
                 webhooks: {
                     $pattern: "projects/:id/provider-settings/webhooks",
                     $route: (id: string) => `/projects/${id}/provider-settings/webhooks/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/webhooks/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/webhooks/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/webhooks/:repoWebhookId/edit",
+                        $route: (id: string, repoWebhookId: string) =>
+                            `/projects/${id}/provider-settings/webhooks/${repoWebhookId}/edit/`,
+                    },
                 },
 
                 imPlatforms: {
@@ -713,6 +830,17 @@ export const ROUTE = {
                 secrets: {
                     $pattern: "projects/:id/provider-settings/secrets",
                     $route: (id: string) => `/projects/${id}/provider-settings/secrets/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/secrets/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/secrets/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/secrets/:secretId/edit",
+                        $route: (id: string, secretId: string) =>
+                            `/projects/${id}/provider-settings/secrets/${secretId}/edit/`,
+                    },
                 },
 
                 sshKeys: {
@@ -771,6 +899,17 @@ export const ROUTE = {
                 networks: {
                     $pattern: "projects/:id/cluster-resources/networks",
                     $route: (id: string) => `/projects/${id}/cluster-resources/networks/`,
+
+                    create: {
+                        $pattern: "projects/:id/cluster-resources/networks/create",
+                        $route: (id: string) => `/projects/${id}/cluster-resources/networks/create/`,
+                    },
+
+                    details: {
+                        $pattern: "projects/:id/cluster-resources/networks/:networkId",
+                        $route: (id: string, networkId: string) =>
+                            `/projects/${id}/cluster-resources/networks/${networkId}/`,
+                    },
                 },
             },
         },

@@ -8,6 +8,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { Link, useParams } from "react-router";
 import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-docker-volumes";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import type { SettingStorageSettings } from "~/settings/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -80,7 +81,7 @@ function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: 
                         disabled={isLoadingVolumes}
                     >
                         <SelectTrigger
-                            className="w-[220px]"
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             aria-invalid={volumeInvalid}
                         >
                             <SelectValue placeholder={isLoadingVolumes ? "Loading volumes…" : "Volume"} />
@@ -134,6 +135,7 @@ function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: 
                         id="subpath"
                         value={subpathValue}
                         placeholder={subpathRequiredField.value}
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     />
                 </InfoBlock>
             </Field>

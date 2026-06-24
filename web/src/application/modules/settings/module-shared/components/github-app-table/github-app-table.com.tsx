@@ -6,11 +6,11 @@ import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppQueries } from "~/settings/data/queries";
-import { useCreateOrEditGithubAppDialog } from "~/settings/dialogs/create-or-edit-github-app";
 import { useProvisionGithubAppDialog } from "~/settings/dialogs/provision-github-app";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -23,8 +23,8 @@ import type { GithubAppTableScope } from "./github-app-table.types";
 
 function GithubAppTableView({ scope }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const createOrEditDialog = useCreateOrEditGithubAppDialog();
     const provisionDialog = useProvisionGithubAppDialog();
+    const { navigate } = useAppNavigate();
 
     const settingsQuery = GithubAppQueries.useFindManyPaginated(
         {
@@ -73,7 +73,7 @@ function GithubAppTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                createOrEditDialog.actions.open(scope);
+                                navigate.modules(getGithubAppCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />
@@ -111,6 +111,14 @@ function GithubAppTableView({ scope }: Props) {
 
 interface Props {
     scope: GithubAppTableScope;
+}
+
+function getGithubAppCreateRoute(scope: GithubAppTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.githubApps.create.$route(scope.projectId);
+    }
+
+    return ROUTE.sources.githubApps.create.$route;
 }
 
 export function SettingsGithubAppTable() {

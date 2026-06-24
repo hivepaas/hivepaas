@@ -1,5 +1,6 @@
 import { FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -37,7 +38,7 @@ export function DockerImageFields({ readOnly = false }: Props) {
                     onChange={image.onChange}
                     placeholder="image_name:latest"
                     aria-invalid={isImageInvalid}
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     disabled={readOnly}
                 />
                 <FieldError errors={[imageError]} />

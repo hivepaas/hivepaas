@@ -1,11 +1,14 @@
 import { type PropsWithChildren } from "react";
 
 import { Checkbox, FieldError, Input } from "@components/ui";
-import { DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
+import {
+    CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
+    CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
+} from "~/cluster/module-shared/constants/network-form-layout.constants";
 
 import { InfoBlock } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
@@ -70,7 +73,7 @@ export function CreateNetworkForm({
                 }}
                 className="min-h-0 flex flex-1 flex-col"
             >
-                <DialogBody>
+                <div>
                     {showProjectNamePrefixNote ? (
                         <div className={cn(dashedBorderBox, "mb-6 text-center text-sm leading-6")}>
                             <span className="text-orange-500">Note:</span> The name of the network in the project will
@@ -89,7 +92,7 @@ export function CreateNetworkForm({
                                 {...name}
                                 value={name.value}
                                 placeholder="my network"
-                                className="max-w-[520px]"
+                                className={CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 aria-invalid={Boolean(errors.name)}
                             />
                             <FieldError errors={[errors.name]} />
@@ -131,7 +134,7 @@ export function CreateNetworkForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[620px]"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
                             />
                             <FieldError errors={[errors.labels]} />
@@ -145,7 +148,7 @@ export function CreateNetworkForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[620px]"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
                             />
                             <FieldError errors={[errors.options]} />
@@ -160,7 +163,7 @@ export function CreateNetworkForm({
                             />
                         ) : null}
                     </fieldset>
-                </DialogBody>
+                </div>
                 {children}
             </form>
         </FormProvider>

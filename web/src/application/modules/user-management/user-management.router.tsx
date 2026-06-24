@@ -123,6 +123,16 @@ export const userManagementRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.currentUser.profileApiKeys.create.$pattern,
+                    lazy: async () => {
+                        const { ProfileApiKeyCreateRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProfileApiKeyCreateRoute,
+                        };
+                    },
+                },
+                {
                     path: LEGACY_PROFILE_API_KEYS_PATTERN,
                     element: (
                         <Navigate

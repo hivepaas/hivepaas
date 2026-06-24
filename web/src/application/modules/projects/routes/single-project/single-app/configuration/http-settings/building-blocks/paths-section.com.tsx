@@ -11,6 +11,7 @@ import { EHttpPathMode } from "~/projects/module-shared/enums";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 import { HttpConfigurableSections } from "./http-configurable-sections.com";
@@ -126,7 +127,7 @@ function PathRow({ domainIndex, pathIndex, expandedPaths, onExpandedChange, onRe
                                     value={path.value}
                                     onChange={path.onChange}
                                     placeholder="/api/v1"
-                                    className="max-w-[400px]"
+                                    className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
                                 />
                                 <FieldError errors={[pathError]} />

@@ -1,5 +1,6 @@
 import { FieldError } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
@@ -44,7 +45,7 @@ export function LogDriverFields() {
                     />
                 }
             >
-                <div className="max-w-[400px]">
+                <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                     <EditableCombobox
                         options={LOG_DRIVER_OPTIONS}
                         value={driver.value}

@@ -5,6 +5,7 @@ import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -78,7 +79,7 @@ export function GitRepositoryInput({ readOnly = false }: Props) {
                 emptyText={
                     hasCredential ? "No repositories available" : "Select git credentials for repository suggestions"
                 }
-                className="max-w-[400px]"
+                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 aria-invalid={isRepoUrlInvalid}
                 onRefresh={hasCredential ? () => void refetch() : undefined}
                 isRefreshing={isRefetching}

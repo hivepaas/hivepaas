@@ -12,6 +12,7 @@ import { PermissionTooltipAction, useConditionalModule } from "@application/shar
 
 import { ProjectSslCertQueries } from "@application/modules/projects/data";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../../schemas";
 
 import { SslInfo } from "./ssl-info.com";
@@ -111,7 +112,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                                 searchable
                                 closeOnSelect
                                 emptyText="No SSL certificates available"
-                                className="max-w-[400px]"
+                                className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                 valueKey="id"
                                 aria-invalid={isSslCertInvalid}
                                 loading={isFetching}

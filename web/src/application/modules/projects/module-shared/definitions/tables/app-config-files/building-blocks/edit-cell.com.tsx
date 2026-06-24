@@ -2,11 +2,13 @@ import React from "react";
 
 import { Button } from "@components/ui/button";
 import { EyeIcon } from "lucide-react";
-import { useCreateOrEditAppConfigFileDialog } from "~/projects/dialogs/create-or-edit-app-config-file/hooks";
 import type { AppConfigFile } from "~/projects/domain";
 
+import { ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
 function View({ projectId, appId, configFile }: Props) {
-    const { actions: configFileDialogActions } = useCreateOrEditAppConfigFileDialog();
+    const { navigate } = useAppNavigate();
 
     return (
         <Button
@@ -14,7 +16,13 @@ function View({ projectId, appId, configFile }: Props) {
             size="icon"
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
-                configFileDialogActions.openEdit(projectId, appId, configFile);
+                navigate.modules(
+                    ROUTE.projects.single.apps.single.configuration.configFiles.edit.$route(
+                        projectId,
+                        appId,
+                        configFile.id,
+                    ),
+                );
             }}
         >
             <EyeIcon className="size-5" />

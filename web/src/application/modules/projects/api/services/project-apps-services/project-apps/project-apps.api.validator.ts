@@ -1,10 +1,12 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    ProjectApps_Copy_Res,
     ProjectApps_CreateOne_Res,
     ProjectApps_Deploy_Res,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Res,
+    ProjectApps_PrepareCopy_Res,
 } from "~/projects/api/services";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
@@ -60,6 +62,60 @@ const CreateOneSchema = z.object({
         id: z.string(),
     }),
     meta: BaseMetaApiSchema.nullable(),
+});
+
+const CopyToggleSchema = z.object({
+    copy: z.boolean(),
+});
+
+const CopySslCertRefSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const CopyPreparedDomainSettingSchema = z.object({
+    sourceDomain: z.string(),
+    targetDomain: z.string(),
+    sourceSslCert: CopySslCertRefSchema,
+    targetSslCert: CopySslCertRefSchema,
+});
+
+const CopyHttpSettingsSchema = z.object({
+    copy: z.boolean(),
+    copyDomainSettings: z
+        .array(CopyPreparedDomainSettingSchema)
+        .nullish()
+        .transform(value => value ?? []),
+});
+
+const PrepareCopySchema = z.object({
+    data: z.object({
+        sourceName: z.string(),
+        targetName: z.string(),
+        sourceEnv: z.string(),
+        targetEnv: z.string(),
+        sourceStatus: z.nativeEnum(EProjectAppStatus),
+        targetStatus: z.nativeEnum(EProjectAppStatus),
+        copyConfigFiles: CopyToggleSchema,
+        copyDeploymentSettings: CopyToggleSchema,
+        copyEnvVars: CopyToggleSchema,
+        copyHealthChecks: CopyToggleSchema,
+        copyHttpSettings: CopyHttpSettingsSchema,
+        copySchedJobs: CopyToggleSchema,
+        copySecrets: CopyToggleSchema,
+        updateVer: z.number(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const CopySchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 /**
@@ -125,6 +181,20 @@ export class ProjectAppsApiValidator {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
+        });
+    };
+
+    prepareCopy = (response: AxiosResponse): ProjectApps_PrepareCopy_Res => {
+        return parseApiResponse({
+            response,
+            schema: PrepareCopySchema,
+        });
+    };
+
+    copy = (response: AxiosResponse): ProjectApps_Copy_Res => {
+        return parseApiResponse({
+            response,
+            schema: CopySchema,
         });
     };
 

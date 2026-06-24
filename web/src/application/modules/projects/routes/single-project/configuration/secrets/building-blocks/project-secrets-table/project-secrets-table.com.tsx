@@ -2,11 +2,11 @@ import { useMemo } from "react";
 
 import { Plus } from "lucide-react";
 import { ProjectSecretsQueries } from "~/projects/data/queries";
-import { useCreateOrEditProjectSecretDialog } from "~/projects/dialogs/create-or-edit-project-secret";
 import { ProjectSecretsTableDefs } from "~/projects/module-shared/definitions/tables/project-secrets";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
@@ -14,11 +14,7 @@ import { Button, DataTable } from "@/components/ui";
 
 export function ProjectSecretsTable({ projectId }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const { actions } = useCreateOrEditProjectSecretDialog({
-        onClose: () => {
-            actions.close();
-        },
-    });
+    const { navigate } = useAppNavigate();
 
     const { data: { data: secrets } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectSecretsQueries.useFindManyPaginated(
         {
@@ -43,7 +39,9 @@ export function ProjectSecretsTable({ projectId }: Props) {
                         {({ isDenied }) => (
                             <Button
                                 onClick={() => {
-                                    actions.open(projectId);
+                                    navigate.modules(
+                                        ROUTE.projects.single.providerConfiguration.secrets.create.$route(projectId),
+                                    );
                                 }}
                                 type="button"
                                 color="primary"

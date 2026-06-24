@@ -1,5 +1,6 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EDeploymentRepoOption } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -72,7 +73,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     onChange={repoRef.onChange}
                     placeholder="main, tags/v1.2.3"
                     aria-invalid={isRepoRefInvalid}
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     disabled={readOnly}
                 />
                 <FieldError errors={[repoRefError]} />
@@ -85,7 +86,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     onChange={commitHash.onChange}
                     placeholder="commit sha"
                     aria-invalid={isCommitHashInvalid}
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     disabled={readOnly}
                 />
                 <FieldError errors={[commitHashError]} />
@@ -135,7 +136,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     onChange={dockerfilePath.onChange}
                     placeholder="path/to/Dockerfile"
                     aria-invalid={isDockerfilePathInvalid}
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     disabled={readOnly}
                 />
                 <FieldError errors={[dockerfilePathError]} />
@@ -150,7 +151,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     onChange={imageName.onChange}
                     placeholder="auto"
                     aria-invalid={isImageNameInvalid}
-                    className="max-w-[400px]"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                     disabled={readOnly}
                 />
                 <FieldError errors={[imageNameError]} />
@@ -166,7 +167,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     placeholder="Select build tool"
                     searchable={false}
                     closeOnSelect
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                     valueKey="id"
                     aria-invalid={isBuildToolInvalid}
                 />
@@ -183,7 +184,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     placeholder="Select repo type"
                     searchable={false}
                     closeOnSelect
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                     valueKey="id"
                     aria-invalid={isRepoTypeInvalid}
                 />

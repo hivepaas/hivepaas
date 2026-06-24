@@ -6,6 +6,7 @@ import { type FieldErrors, FormProvider, useController, useFieldArray, useForm, 
 import { toast } from "sonner";
 
 import {
+    SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
@@ -32,6 +33,7 @@ import {
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import {
     type CreateOrEditEmailAccountFormInput,
@@ -395,7 +397,7 @@ export function CreateOrEditEmailAccountForm({
                                             keyPlaceholder="name"
                                             valuePlaceholder="value"
                                             checkDuplicates
-                                            className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                            className={SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                         />
                                     </InfoBlock>
                                     <InfoBlock
@@ -403,7 +405,7 @@ export function CreateOrEditEmailAccountForm({
                                         title={<LabelWithInfo label="Field Mappings" />}
                                     >
                                         <FieldListLayout
-                                            inputsClassName={`grid flex-1 grid-cols-2 gap-2 ${SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}`}
+                                            inputsClassName={`grid flex-1 grid-cols-2 gap-2 ${SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}`}
                                             inputRow={
                                                 <>
                                                     <SelectWithAddon
@@ -491,13 +493,19 @@ export function CreateOrEditEmailAccountForm({
                                 Test Send Email
                             </Button>
                         </div>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
-                        >
-                            Save
-                        </Button>
+                        <div className="flex items-center gap-3">
+                            <SettingsFormCancelAction
+                                onCancel={onClose}
+                                disabled={isPending}
+                            />
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </div>
                     </div>
                 )}
                 {isReadOnly && (

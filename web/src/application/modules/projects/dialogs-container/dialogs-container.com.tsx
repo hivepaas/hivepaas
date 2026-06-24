@@ -2,12 +2,6 @@ import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
-    CreateNetworkDialog,
-    ViewNetworkDialog,
-    useCreateNetworkDialogState,
-    useViewNetworkDialogState,
-} from "~/cluster/dialogs";
-import {
     ConfirmAppDangerActionDialog,
     useConfirmAppDangerActionDialogState,
 } from "~/projects/dialogs/confirm-app-danger-action";
@@ -15,26 +9,7 @@ import {
     ConfirmProjectDangerActionDialog,
     useConfirmProjectDangerActionDialogState,
 } from "~/projects/dialogs/confirm-project-danger-action";
-import {
-    CreateOrEditAppConfigFileDialog,
-    useCreateOrEditAppConfigFileDialogState,
-} from "~/projects/dialogs/create-or-edit-app-config-file";
-import {
-    CreateOrEditAppHealthCheckDialog,
-    useCreateOrEditAppHealthCheckDialogState,
-} from "~/projects/dialogs/create-or-edit-app-health-check";
-import {
-    CreateOrEditAppScheduledJobDialog,
-    useCreateOrEditAppScheduledJobDialogState,
-} from "~/projects/dialogs/create-or-edit-app-scheduled-job";
-import {
-    CreateOrEditAppSecretDialog,
-    useCreateOrEditAppSecretDialogState,
-} from "~/projects/dialogs/create-or-edit-app-secret";
-import {
-    CreateOrEditProjectSecretDialog,
-    useCreateOrEditProjectSecretDialogState,
-} from "~/projects/dialogs/create-or-edit-project-secret";
+import { CopyProjectAppDialog, useCopyProjectAppDialogState } from "~/projects/dialogs/copy-project-app";
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
 import {
@@ -47,7 +22,6 @@ import {
     useQuickInstallSslCertDialogState,
 } from "~/projects/dialogs/quick-install-ssl-cert";
 import { RunNowTaskCreatedDialog, useRunNowTaskCreatedDialogState } from "~/projects/dialogs/run-now-task-created";
-import { StorageMountDialog, useStorageMountDialogState } from "~/projects/dialogs/storage-mount";
 import {
     UpdateAppHealthCheckStatusDialog,
     useUpdateAppHealthCheckStatusDialogState,
@@ -57,8 +31,6 @@ import {
     useUpdateAppScheduledJobStatusDialogState,
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
-    CreateOrEditGithubAppDialog,
-    CreateOrEditRepoWebhookDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
@@ -73,8 +45,6 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditGithubAppDialogState,
-    useCreateOrEditRepoWebhookDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
@@ -95,20 +65,13 @@ function View() {
     const location = useLocation();
     const createProjectDialog = useCreateProjectDialogState();
     const createProjectAppDialog = useCreateProjectAppDialogState();
-    const createOrEditProjectSecretDialog = useCreateOrEditProjectSecretDialogState();
-    const createOrEditAppConfigFileDialog = useCreateOrEditAppConfigFileDialogState();
-    const createOrEditAppHealthCheckDialog = useCreateOrEditAppHealthCheckDialogState();
-    const createOrEditAppScheduledJobDialog = useCreateOrEditAppScheduledJobDialogState();
+    const copyProjectAppDialog = useCopyProjectAppDialogState();
     const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
     const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
-    const createOrEditAppSecretDialog = useCreateOrEditAppSecretDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
-    const storageMountDialog = useStorageMountDialogState();
     const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
     const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
-    const createNetworkDialog = useCreateNetworkDialogState();
-    const viewNetworkDialog = useViewNetworkDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
@@ -121,30 +84,21 @@ function View() {
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const projectUserAccessesDialog = useProjectUserAccessesDialogState();
-    const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
-    const createOrEditRepoWebhookDialog = useCreateOrEditRepoWebhookDialogState();
     const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
     const importProjectSettingsDialog = useImportProjectSettingsDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
         createProjectAppDialog.destroy();
-        createOrEditProjectSecretDialog.destroy();
-        createOrEditAppConfigFileDialog.destroy();
-        createOrEditAppHealthCheckDialog.destroy();
-        createOrEditAppScheduledJobDialog.destroy();
+        copyProjectAppDialog.destroy();
         updateAppHealthCheckStatusDialog.destroy();
         updateAppScheduledJobStatusDialog.destroy();
         runNowTaskCreatedDialog.destroy();
-        createOrEditAppSecretDialog.destroy();
         quickInstallSslCertDialog.destroy();
-        storageMountDialog.destroy();
         confirmAppDangerActionDialog.destroy();
         confirmProjectDangerActionDialog.destroy();
-        createNetworkDialog.destroy();
-        viewNetworkDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
         updateSslCertStatusDialog.destroy();
@@ -157,10 +111,8 @@ function View() {
         updateCloudStorageStatusDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
         projectUserAccessesDialog.destroy();
-        createOrEditGithubAppDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
-        createOrEditRepoWebhookDialog.destroy();
         updateRepoWebhookStatusDialog.destroy();
         importProjectSettingsDialog.destroy();
     }, [location]);
@@ -169,20 +121,13 @@ function View() {
         <>
             <CreateProjectDialog />
             <CreateProjectAppDialog />
-            <CreateOrEditProjectSecretDialog />
-            <CreateOrEditAppConfigFileDialog />
-            <CreateOrEditAppHealthCheckDialog />
-            <CreateOrEditAppScheduledJobDialog />
+            <CopyProjectAppDialog />
             <UpdateAppHealthCheckStatusDialog />
             <UpdateAppScheduledJobStatusDialog />
             <RunNowTaskCreatedDialog />
-            <CreateOrEditAppSecretDialog />
             <QuickInstallSslCertDialog />
-            <StorageMountDialog />
             <ConfirmAppDangerActionDialog />
             <ConfirmProjectDangerActionDialog />
-            <CreateNetworkDialog />
-            <ViewNetworkDialog />
             <UpdateBasicAuthStatusDialog />
             <UpdateRegistryAuthStatusDialog />
             <UpdateSslCertStatusDialog />
@@ -195,10 +140,8 @@ function View() {
             <UpdateCloudStorageStatusDialog />
             <UpdateNotificationTargetStatusDialog />
             <ProjectUserAccessesDialog />
-            <CreateOrEditGithubAppDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
-            <CreateOrEditRepoWebhookDialog />
             <UpdateRepoWebhookStatusDialog />
             <ImportProjectSettingsDialog />
             {/* TODO: Add other dialogs here */}

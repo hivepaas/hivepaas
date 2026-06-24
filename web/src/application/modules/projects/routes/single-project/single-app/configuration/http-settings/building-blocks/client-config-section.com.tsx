@@ -8,6 +8,7 @@ import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface ClientConfigSectionProps {
@@ -138,7 +139,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
                             </InfoBlock>
 
                             <InfoBlock title="Allowed IPs">
-                                <div className="flex flex-col gap-2 max-w-[400px]">
+                                <div className={`flex flex-col gap-2 ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}>
                                     <Textarea
                                         {...allowedIPs}
                                         onChange={allowedIPs.onChange}

@@ -5,6 +5,7 @@ import { useController, useFormContext } from "react-hook-form";
 import { Link, useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { Combobox, InfoBlock } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -70,7 +71,7 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                         allowClear
                         closeOnSelect
                         emptyText="No git credentials available"
-                        className="max-w-[400px]"
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         valueKey="id"
                         aria-invalid={isCredentialsInvalid}
                         loading={isFetching}

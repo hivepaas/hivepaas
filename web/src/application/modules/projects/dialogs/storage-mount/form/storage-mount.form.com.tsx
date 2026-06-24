@@ -2,7 +2,6 @@ import React, { useImperativeHandle } from "react";
 
 import { Checkbox, Input } from "@components/ui";
 import { Button } from "@components/ui/button";
-import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppStorageSettingsQueries } from "~/projects/data";
 import type { AppStorageMount } from "~/projects/domain";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
 import { Combobox, type ComboboxOption, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -35,10 +35,19 @@ type Props = {
     projectKey?: string;
     appLocalKey?: string;
     readOnly?: boolean;
+    onClose?: () => void;
     children?: React.ReactNode;
 };
 
-export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, readOnly = false, children }: Props) {
+export function StorageMountForm({
+    ref,
+    isPending,
+    onSubmit,
+    defaultValues,
+    readOnly = false,
+    onClose,
+    children,
+}: Props) {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
@@ -154,7 +163,7 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, read
                     disabled={readOnly}
                     className="contents"
                 >
-                    <DialogBody className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-6">
                         {children}
                         <FieldGroup className="gap-6">
                             <InfoBlock
@@ -240,6 +249,7 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, read
                                         id="target"
                                         placeholder="/path/in/container"
                                         aria-invalid={targetInvalid}
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     />
                                     <FieldError errors={[errors.target]} />
                                 </InfoBlock>
@@ -268,16 +278,38 @@ export function StorageMountForm({ ref, isPending, onSubmit, defaultValues, read
                                 </InfoBlock>
                             </Field>
                         </FieldGroup>
-                    </DialogBody>
-                    <DialogActionFooter>
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            disabled={readOnly}
-                        >
-                            {defaultValues ? "Update" : "Add"}
-                        </Button>
-                    </DialogActionFooter>
+                    </div>
+                    {!readOnly && (
+                        <div className="pb-6 flex justify-end mt-6">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-w-[100px]"
+                                    disabled={isPending}
+                                    onClick={onClose}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                >
+                                    {defaultValues ? "Update" : "Add"}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    {readOnly && (
+                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={onClose}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    )}
                 </fieldset>
             </form>
         </FormProvider>

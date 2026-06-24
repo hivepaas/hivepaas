@@ -12,6 +12,7 @@ import { EOAuthKind } from "@application/shared/enums";
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type { CreateOrEditOAuthFormInput, CreateOrEditOAuthFormOutput } from "./create-or-edit-oauth.form.schema";
 import { CreateOrEditOAuthFormSchema } from "./create-or-edit-oauth.form.schema";
@@ -338,6 +339,10 @@ export function CreateOrEditOAuthForm({
             {!isReadOnly && (
                 <div className="shrink-0 px-0 mt-6 pb-6">
                     <div className="flex items-center justify-end gap-4">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
                         <Button
                             type="submit"
                             isLoading={isPending}

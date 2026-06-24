@@ -24,6 +24,7 @@ import {
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import { AcmeDnsProviderFields, TestAcmeDnsProviderAccessDialog } from "./building-blocks";
 import {
@@ -266,13 +267,19 @@ export function CreateOrEditAcmeDnsProviderForm({
                                 {testStatus === "success" && <span className="text-sm text-green-500">Succeeded</span>}
                                 {testStatus === "error" && <span className="text-sm text-red-500">Failed</span>}
                             </div>
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                <SettingsFormCancelAction
+                                    onCancel={onClose}
+                                    disabled={isPending}
+                                />
+                                <Button
+                                    type="submit"
+                                    isLoading={isPending}
+                                    className="min-w-[100px]"
+                                >
+                                    Save
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
 import { type ProjectAppDetails, type ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock } from "@application/shared/components";
 
@@ -114,7 +115,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                             <Input
                                 value={defaultValues.id}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 disabled
                                 readOnly
                             />
@@ -127,7 +128,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                                 value={name.value}
                                 onChange={name.onChange}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 placeholder="Enter app name"
                                 aria-invalid={isNameInvalid}
                             />
@@ -139,7 +140,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                             <Input
                                 value={defaultValues.key}
                                 type="text"
-                                className="max-w-[400px]"
+                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 disabled
                                 readOnly
                             />
@@ -160,7 +161,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
 
                         {/* Tags */}
                         <InfoBlock title="Tags">
-                            <div className="max-w-[400px]">
+                            <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <TagInput
                                     tags={tags}
                                     onCreate={handleCreateTag}
@@ -178,7 +179,7 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                                 {...note}
                                 value={note.value}
                                 onChange={note.onChange}
-                                className="w-full min-h-[120px]"
+                                className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} min-h-[120px]`}
                                 placeholder="Enter app notes"
                                 rows={4}
                                 aria-invalid={isNoteInvalid}

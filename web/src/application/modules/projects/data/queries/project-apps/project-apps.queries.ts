@@ -5,6 +5,8 @@ import type {
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Req,
     ProjectApps_FindOneById_Res,
+    ProjectApps_PrepareCopy_Req,
+    ProjectApps_PrepareCopy_Res,
 } from "~/projects/api/services";
 import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
 
@@ -46,7 +48,23 @@ function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {
     });
 }
 
+type PrepareCopyReq = ProjectApps_PrepareCopy_Req["data"];
+type PrepareCopyRes = ProjectApps_PrepareCopy_Res;
+
+type PrepareCopyOptions = Omit<UseQueryOptions<PrepareCopyRes>, "queryKey" | "queryFn">;
+
+function usePrepareCopy(request: PrepareCopyReq, options: PrepareCopyOptions = {}) {
+    const { queries } = useProjectAppsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.$.copy.prepare"], request],
+        queryFn: ({ signal }) => queries.prepareCopy(request, signal),
+        ...options,
+    });
+}
+
 export const ProjectAppsQueries = Object.freeze({
     useFindManyPaginated,
     useFindOneById,
+    usePrepareCopy,
 });

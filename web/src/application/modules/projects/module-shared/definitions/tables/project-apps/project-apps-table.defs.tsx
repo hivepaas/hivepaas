@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
-import { ActionsCell } from "./building-blocks";
+import { ActionsCell, MenuCell } from "./building-blocks";
 
 const centerMeta = {
     align: "center",
@@ -19,6 +19,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
             minSize: 80,
             size: 80,
             meta: centerMeta,
+            enableSorting: false,
             cell: ({ row: { original } }) => {
                 return (
                     <ActionsCell
@@ -93,6 +94,22 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
             cell: ({ row: { original } }) => {
                 const updatedAt = original.updatedAt ?? original.createdAt;
                 return format(updatedAt, "yyyy-MM-dd HH:mm:ss");
+            },
+        },
+        {
+            id: "menu",
+            header: "",
+            minSize: 56,
+            size: 56,
+            meta: centerMeta,
+            enableSorting: false,
+            cell: ({ row: { original } }) => {
+                return (
+                    <MenuCell
+                        projectId={projectId}
+                        appId={original.id}
+                    />
+                );
             },
         },
     ];

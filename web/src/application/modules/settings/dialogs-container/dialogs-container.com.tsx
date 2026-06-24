@@ -2,7 +2,6 @@ import { memo } from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
-    CreateOrEditGithubAppDialog,
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
@@ -17,7 +16,6 @@ import {
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
-    useCreateOrEditGithubAppDialogState,
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
@@ -48,7 +46,6 @@ function View() {
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const updateOAuthStatusDialog = useUpdateOAuthStatusDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
-    const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
 
@@ -65,7 +62,6 @@ function View() {
         updateCloudStorageStatusDialog.destroy();
         updateOAuthStatusDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
-        createOrEditGithubAppDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
     }, [location]);
@@ -84,7 +80,6 @@ function View() {
             <UpdateCloudStorageStatusDialog />
             <UpdateOAuthStatusDialog />
             <UpdateNotificationTargetStatusDialog />
-            <CreateOrEditGithubAppDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
         </>

@@ -2,13 +2,9 @@ import { memo } from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
 import {
-    CreateOrEditGithubAppDialog,
-    CreateOrEditRepoWebhookDialog,
     ProvisionGithubAppDialog,
     UpdateGithubAppStatusDialog,
     UpdateRepoWebhookStatusDialog,
-    useCreateOrEditGithubAppDialogState,
-    useCreateOrEditRepoWebhookDialogState,
     useProvisionGithubAppDialogState,
     useUpdateGithubAppStatusDialogState,
     useUpdateRepoWebhookStatusDialogState,
@@ -16,15 +12,11 @@ import {
 
 function View() {
     const location = useLocation();
-    const createOrEditGithubAppDialog = useCreateOrEditGithubAppDialogState();
-    const createOrEditRepoWebhookDialog = useCreateOrEditRepoWebhookDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
     const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
 
     useUpdateEffect(() => {
-        createOrEditGithubAppDialog.destroy();
-        createOrEditRepoWebhookDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
         updateRepoWebhookStatusDialog.destroy();
@@ -32,8 +24,6 @@ function View() {
 
     return (
         <>
-            <CreateOrEditGithubAppDialog />
-            <CreateOrEditRepoWebhookDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
             <UpdateRepoWebhookStatusDialog />

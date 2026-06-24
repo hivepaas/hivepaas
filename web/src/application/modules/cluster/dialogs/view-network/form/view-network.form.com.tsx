@@ -2,6 +2,10 @@ import { Checkbox, Input } from "@components/ui";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { FormProvider, useForm } from "react-hook-form";
 import type { ClusterNetwork } from "~/cluster/domain";
+import {
+    CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
+    CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
+} from "~/cluster/module-shared/constants/network-form-layout.constants";
 import { EClusterNetworkDriver } from "~/cluster/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
@@ -37,7 +41,7 @@ export function ViewNetworkForm({ network }: Props) {
                     <Input
                         value={network.name}
                         readOnly
-                        className="max-w-[520px]"
+                        className={CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS}
                     />
                 </InfoBlock>
                 <InfoBlock
@@ -68,7 +72,7 @@ export function ViewNetworkForm({ network }: Props) {
                         <Input
                             value={network.driver}
                             readOnly
-                            className="max-w-[520px]"
+                            className={CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS}
                         />
                     )}
                 </InfoBlock>
@@ -100,7 +104,7 @@ export function ViewNetworkForm({ network }: Props) {
                         name="labels"
                         keyPlaceholder="name"
                         valuePlaceholder="value"
-                        className="max-w-[620px]"
+                        className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                         disabled
                     />
                 </InfoBlock>
@@ -112,7 +116,7 @@ export function ViewNetworkForm({ network }: Props) {
                         name="options"
                         keyPlaceholder="name"
                         valuePlaceholder="value"
-                        className="max-w-[620px]"
+                        className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                         disabled
                     />
                 </InfoBlock>

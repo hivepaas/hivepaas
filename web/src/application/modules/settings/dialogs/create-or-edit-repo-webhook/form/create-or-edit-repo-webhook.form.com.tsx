@@ -9,6 +9,10 @@ import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
+import {
+    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+    SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+} from "~/settings/module-shared/constants/settings-form-layout.constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -118,7 +122,10 @@ export function CreateOrEditRepoWebhookForm({
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <fieldset
                     disabled={isReadOnly}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    className={cn(
+                        "flex flex-col gap-6 border-0 p-0 m-0 min-w-0",
+                        SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+                    )}
                 >
                     <InfoBlock
                         titleWidth={220}
@@ -199,6 +206,7 @@ export function CreateOrEditRepoWebhookForm({
                             <div
                                 className={cn(
                                     dashedBorderBox,
+                                    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
                                     "flex min-h-12 items-center justify-center gap-3 break-all text-center text-sm",
                                 )}
                             >
@@ -215,7 +223,13 @@ export function CreateOrEditRepoWebhookForm({
                                 </Button>
                             </div>
                         ) : (
-                            <div className={cn(dashedBorderBox, "text-center text-sm p-2")}>
+                            <div
+                                className={cn(
+                                    dashedBorderBox,
+                                    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+                                    "text-center text-sm p-2",
+                                )}
+                            >
                                 please create a webhook first
                             </div>
                         )}
@@ -247,7 +261,13 @@ export function CreateOrEditRepoWebhookForm({
                         />
                     </InfoBlock>
 
-                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                    <div
+                        className={cn(
+                            dashedBorderBox,
+                            SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+                            "text-center text-sm leading-6",
+                        )}
+                    >
                         After creating it, you can use the information above to configure the webhook on GitHub, GitLab,
                         or wherever your source code is hosted.
                     </div>

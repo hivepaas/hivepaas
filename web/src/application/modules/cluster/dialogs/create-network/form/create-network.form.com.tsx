@@ -5,6 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
+import {
+    CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
+    CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
+} from "~/cluster/module-shared/constants/network-form-layout.constants";
 
 import { InfoBlock } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
@@ -88,7 +92,7 @@ export function CreateNetworkForm({
                                 {...name}
                                 value={name.value}
                                 placeholder="my network"
-                                className="max-w-[520px]"
+                                className={CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 aria-invalid={Boolean(errors.name)}
                             />
                             <FieldError errors={[errors.name]} />
@@ -130,7 +134,7 @@ export function CreateNetworkForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[620px]"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
                             />
                             <FieldError errors={[errors.labels]} />
@@ -144,7 +148,7 @@ export function CreateNetworkForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[620px]"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
                             />
                             <FieldError errors={[errors.options]} />

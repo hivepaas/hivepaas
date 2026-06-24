@@ -9,6 +9,10 @@ import { RefreshCcw } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
+import {
+    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+    SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+} from "~/settings/module-shared/constants/settings-form-layout.constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -152,7 +156,10 @@ export function CreateOrEditGithubAppForm({
                 )}
                 <fieldset
                     disabled={isReadOnly}
-                    className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    className={cn(
+                        "flex flex-col gap-6 border-0 p-0 m-0 min-w-0",
+                        SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+                    )}
                 >
                     <InfoBlock
                         titleWidth={160}
@@ -297,10 +304,12 @@ export function CreateOrEditGithubAppForm({
                                 titleWidth={160}
                                 title={<LabelWithInfo label="Webhook Secret" />}
                             >
-                                <PasswordInput
-                                    value={readonlyValues?.webhookSecret ?? ""}
-                                    readOnly
-                                />
+                                <div className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}>
+                                    <PasswordInput
+                                        value={readonlyValues?.webhookSecret ?? ""}
+                                        readOnly
+                                    />
+                                </div>
                             </InfoBlock>
                         </>
                     )}

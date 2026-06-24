@@ -11,6 +11,7 @@ import { useConditionalModule, useConditionalProject } from "@application/shared
 
 import { CreateNetworkForm } from "../../../dialogs/create-network/form";
 import type { CreateNetworkFormOutput } from "../../../dialogs/create-network/schemas";
+import { CLUSTER_NETWORK_FORM_ROUTE_PANEL_CLASS } from "../../constants/network-form-layout.constants";
 
 type CreateNetworkScope = { type: "cluster" } | { type: "project"; projectId: string };
 
@@ -92,45 +93,47 @@ export function CreateNetworkFormRoute({ scope }: Props) {
         <div className="flex w-full flex-col overflow-hidden">
             <RouteFormHeader title="Create a network" />
 
-            <CreateNetworkForm
-                readOnly={!canWrite}
-                isPending={isPending}
-                showAvailableInProjects={scope.type !== "project"}
-                showProjectNamePrefixNote={scope.type === "project"}
-                onSubmit={onSubmit}
-            >
-                {!canWrite ? (
-                    <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={navigateToList}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="pb-6 flex justify-end mt-6">
-                        <div className="flex items-center gap-3">
+            <div className={CLUSTER_NETWORK_FORM_ROUTE_PANEL_CLASS}>
+                <CreateNetworkForm
+                    readOnly={!canWrite}
+                    isPending={isPending}
+                    showAvailableInProjects={scope.type !== "project"}
+                    showProjectNamePrefixNote={scope.type === "project"}
+                    onSubmit={onSubmit}
+                >
+                    {!canWrite ? (
+                        <div className="shrink-0 px-0 mt-6 flex justify-end">
                             <Button
                                 type="button"
-                                variant="outline"
-                                className="min-w-[100px]"
-                                disabled={isPending}
                                 onClick={navigateToList}
                             >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isPending}
-                                className="min-w-[120px]"
-                            >
-                                Save
+                                Close
                             </Button>
                         </div>
-                    </div>
-                )}
-            </CreateNetworkForm>
+                    ) : (
+                        <div className="flex justify-end mt-6">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-w-[100px]"
+                                    disabled={isPending}
+                                    onClick={navigateToList}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isPending}
+                                    className="min-w-[120px]"
+                                >
+                                    Save
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CreateNetworkForm>
+            </div>
         </div>
     );
 }

@@ -5,6 +5,7 @@ import { useController, useFormContext, useWatch } from "react-hook-form";
 
 import { EditableCombobox, InfoBlock } from "@application/shared/components";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../../schemas";
 
 function View({ domainIndex, readOnly = false }: RedirectToProps) {
@@ -47,7 +48,7 @@ function View({ domainIndex, readOnly = false }: RedirectToProps) {
                     setValue(`domains.${domainIndex}.domainRedirect`, value, { shouldDirty: true });
                 }}
                 placeholder="https://other-domain.com"
-                className="max-w-[400px]"
+                className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                 allowClear
                 aria-invalid={isDomainRedirectInvalid}
                 disabled={readOnly}

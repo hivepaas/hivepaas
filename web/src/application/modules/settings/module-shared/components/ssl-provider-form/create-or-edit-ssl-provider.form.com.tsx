@@ -25,6 +25,7 @@ import {
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import {
     type CreateOrEditSslProviderFormInput,
@@ -315,7 +316,11 @@ export function CreateOrEditSslProviderForm({
             </div>
             {!isReadOnly && (
                 <div className="shrink-0 px-0 mt-6 pb-6">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-3">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
                         <Button
                             type="submit"
                             isLoading={isPending}

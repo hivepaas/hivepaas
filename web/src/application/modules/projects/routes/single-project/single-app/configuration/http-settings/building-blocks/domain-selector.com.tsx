@@ -11,6 +11,7 @@ import {
     type AppConfigHttpSettingsFormSchemaOutput,
     emptyDomain,
 } from "../schemas";
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 
 interface DomainSelectorProps {
     activeDomainIndex: number;
@@ -175,7 +176,7 @@ export function DomainSelector({
                             onRefresh={undefined}
                             placeholder="e.g. app.example.com"
                             emptyText="No domains configured"
-                            className="max-w-[400px]"
+                            className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                             disableFilter
                             disabled={readOnly}
                         />

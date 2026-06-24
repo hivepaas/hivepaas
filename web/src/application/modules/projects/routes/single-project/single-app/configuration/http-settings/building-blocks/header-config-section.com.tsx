@@ -8,6 +8,10 @@ import { useController, useFormContext } from "react-hook-form";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList, SingleValueList } from "@application/shared/form";
 
+import {
+    HTTP_SETTINGS_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
+    HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS,
+} from "../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface HeaderConfigSectionProps {
@@ -107,7 +111,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                             >
                                 <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toAddToRequests` as never}
-                                    className="max-w-[550px]"
+                                    className={HTTP_SETTINGS_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
                                 />
                             </InfoBlock>
@@ -122,7 +126,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 <SingleValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toRemoveFromRequests` as never}
                                     placeholder="Header name"
-                                    className="max-w-[314px]"
+                                    className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
                                 />
                             </InfoBlock>
@@ -136,7 +140,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                             >
                                 <KeyValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toAddToResponses` as never}
-                                    className="max-w-[550px]"
+                                    className={HTTP_SETTINGS_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
                                 />
                             </InfoBlock>
@@ -151,7 +155,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 <SingleValueList<AppConfigHttpSettingsFormSchemaInput>
                                     name={`${prefix}.toRemoveFromResponses` as never}
                                     placeholder="Header name"
-                                    className="max-w-[314px]"
+                                    className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
                                 />
                             </InfoBlock>

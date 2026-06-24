@@ -17,6 +17,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type {
     CreateOrEditAccessTokenFormInput,
@@ -289,13 +290,19 @@ export function CreateOrEditAccessTokenForm({
                         {testStatus === "succeeded" && <span className="text-sm text-green-600">Succeeded</span>}
                         {testStatus === "failed" && <span className="text-sm text-destructive">Failed</span>}
                     </div>
-                    <Button
-                        type="submit"
-                        isLoading={isPending}
-                        className="min-w-[100px]"
-                    >
-                        Save
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </div>
                 </div>
             )}
             {isReadOnly && (

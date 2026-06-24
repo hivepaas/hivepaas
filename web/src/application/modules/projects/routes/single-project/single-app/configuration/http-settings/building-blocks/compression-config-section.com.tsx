@@ -9,6 +9,7 @@ import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface CompressionConfigSectionProps {
@@ -155,7 +156,7 @@ export function CompressionConfigSection({
                                     onChange={excludedContentTypes.onChange}
                                     placeholder="content types"
                                     rows={2}
-                                    className="resize-y max-w-[400px]"
+                                    className={`resize-y ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}
                                     aria-invalid={isExcludedContentTypesInvalid}
                                     disabled={readOnly}
                                 />
@@ -169,7 +170,7 @@ export function CompressionConfigSection({
                                     onChange={includedContentTypes.onChange}
                                     placeholder="text/html"
                                     rows={2}
-                                    className="resize-y max-w-[400px]"
+                                    className={`resize-y ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}
                                     aria-invalid={isIncludedContentTypesInvalid}
                                     disabled={readOnly}
                                 />

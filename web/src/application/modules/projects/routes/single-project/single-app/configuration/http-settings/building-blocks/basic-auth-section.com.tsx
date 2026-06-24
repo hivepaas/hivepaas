@@ -12,6 +12,7 @@ import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import { ProjectBasicAuthQueries } from "@application/modules/projects/data";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 interface BasicAuthSectionProps {
@@ -151,7 +152,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                     searchable
                                     closeOnSelect
                                     emptyText="No basic auth credentials available"
-                                    className="max-w-[400px]"
+                                    className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                     valueKey="id"
                                     loading={isFetching}
                                     onRefresh={() => void refetch()}

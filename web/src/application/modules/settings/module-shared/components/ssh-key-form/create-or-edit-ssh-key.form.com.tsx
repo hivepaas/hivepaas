@@ -16,6 +16,7 @@ import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/compon
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type { CreateOrEditSSHKeyFormInput, CreateOrEditSSHKeyFormOutput } from "./create-or-edit-ssh-key.form.schema";
 import { CreateOrEditSSHKeyFormSchema } from "./create-or-edit-ssh-key.form.schema";
@@ -300,6 +301,10 @@ export function CreateOrEditSSHKeyForm({
                             >
                                 Generate
                             </Button>
+                            <SettingsFormCancelAction
+                                onCancel={onClose}
+                                disabled={isPending}
+                            />
                             <Button
                                 type="submit"
                                 isLoading={isPending}

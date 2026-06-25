@@ -3,6 +3,7 @@ import { Button } from "@/components/ui";
 export function SettingsFormCancelAction({ onCancel, disabled = false }: Props) {
     return (
         <Button
+            type="button"
             variant="outline"
             className="min-w-[100px]"
             disabled={disabled || !onCancel}

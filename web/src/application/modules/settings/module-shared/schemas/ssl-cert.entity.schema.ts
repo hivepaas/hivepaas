@@ -4,15 +4,18 @@ import { ESettingType, ESslCertType, ESslKeyType } from "@application/shared/enu
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
-const NamedObjectSchema = z.object({
+const SettingRefSchema = z.object({
     id: z.string(),
-    name: z.string(),
+    name: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
 });
 
 const SslCertEventNotificationSchema = z.object({
-    success: NamedObjectSchema.nullish(),
+    success: SettingRefSchema.nullish(),
     successUseDefault: z.boolean(),
-    failure: NamedObjectSchema.nullish(),
+    failure: SettingRefSchema.nullish(),
     failureUseDefault: z.boolean(),
 });
 
@@ -28,7 +31,7 @@ export const SslCertSettingEntitySchema = SettingsBaseEntitySchema.omit({ descri
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
     certType: SslCertTypeSchema,
-    provider: NamedObjectSchema.nullish(),
+    provider: SettingRefSchema.nullish(),
     domain: z.string(),
     certificate: z.string(),
     privateKey: z.string(),

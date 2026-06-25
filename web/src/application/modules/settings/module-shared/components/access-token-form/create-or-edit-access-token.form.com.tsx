@@ -4,11 +4,11 @@ import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-
 import {
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAccessTokenKind } from "@application/shared/enums";
 
@@ -111,6 +111,7 @@ export function CreateOrEditAccessTokenForm({
     return (
         <form
             onSubmit={event => {
+                console.log("onSubmit");
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}

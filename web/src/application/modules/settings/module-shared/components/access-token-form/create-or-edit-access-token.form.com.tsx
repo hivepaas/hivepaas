@@ -111,7 +111,6 @@ export function CreateOrEditAccessTokenForm({
     return (
         <form
             onSubmit={event => {
-                console.log("onSubmit");
                 event.preventDefault();
                 void handleSubmit(onValid, onInvalid)(event);
             }}

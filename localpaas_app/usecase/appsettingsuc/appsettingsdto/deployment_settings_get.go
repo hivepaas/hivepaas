@@ -106,16 +106,22 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 		if resp.ImageSource.RegistryAuth != nil && resp.ImageSource.RegistryAuth.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ImageSource.RegistryAuth.ID])
 			resp.ImageSource.RegistryAuth = itemResp
+		} else {
+			resp.ImageSource.RegistryAuth = nil
 		}
 	}
 	if resp.RepoSource != nil { //nolint:nestif
 		if resp.RepoSource.Credentials != nil && resp.RepoSource.Credentials.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.RepoSource.Credentials.ID])
 			resp.RepoSource.Credentials = itemResp
+		} else {
+			resp.RepoSource.Credentials = nil
 		}
 		if resp.RepoSource.PushToRegistry != nil && resp.RepoSource.PushToRegistry.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.RepoSource.PushToRegistry.ID])
 			resp.RepoSource.PushToRegistry = itemResp
+		} else {
+			resp.RepoSource.PushToRegistry = nil
 		}
 	}
 

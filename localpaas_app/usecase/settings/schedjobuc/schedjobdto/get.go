@@ -105,6 +105,8 @@ func TransformSchedJob(
 		if err = copier.Copy(&resp.App, refApp); err != nil {
 			return nil, apperrors.New(err)
 		}
+	} else {
+		resp.App = nil
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)

@@ -81,6 +81,8 @@ func TransformSSLCert(
 		if err != nil {
 			return nil, apperrors.New(err)
 		}
+	} else {
+		resp.Provider = nil
 	}
 
 	if config.AcmeProvider.ID != "" {
@@ -89,6 +91,8 @@ func TransformSSLCert(
 		if err != nil {
 			return nil, apperrors.New(err)
 		}
+	} else {
+		resp.AcmeProvider = nil
 	}
 
 	resp.SecretMasked = config.PrivateKey.IsEncrypted() || resp.Inherited

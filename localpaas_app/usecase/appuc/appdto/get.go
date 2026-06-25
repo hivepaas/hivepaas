@@ -46,8 +46,8 @@ type AppResp struct {
 	LocalKey  string                      `json:"localKey"`
 	Status    base.AppStatus              `json:"status"`
 	Env       string                      `json:"env"`
-	Note      string                      `json:"note,omitempty"`
-	Tags      []string                    `json:"tags,omitempty" copy:"-"` // manual copy AppTag -> string
+	Note      string                      `json:"note"`
+	Tags      []string                    `json:"tags" copy:"-"` // manual copy AppTag -> string
 	UpdateVer int                         `json:"updateVer"`
 
 	// Stats of app, only returns when req.getStats=true
@@ -93,6 +93,8 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.AccessLinks = TransformAppAccessLinks(app)
 	if app.ParentID != "" {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
+	} else {
+		resp.ParentApp = nil
 	}
 	return resp, nil
 }

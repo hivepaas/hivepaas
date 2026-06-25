@@ -89,6 +89,48 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// ListGitBranch Lists branches of a git repository
+// @Summary Lists branches of a git repository
+// @Description Lists branches of a git repository
+// @Tags    project_settings
+// @Produce json
+// @Id      listGitBranch
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "credential ID"
+// @Param   owner query string true "repo owner (org, user)"
+// @Param   repo query string true "repo name"
+// @Param   search query string false "`search=<target> (support *)`"
+// @Param   pageOffset query int false "`pageOffset=offset`"
+// @Param   pageLimit query int false "`pageLimit=limit`"
+// @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Success 200 {object} gitcredentialdto.ListBranchResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/git-credentials/{itemID}/repository/branches [get]
+func (h *Handler) ListGitBranch(ctx *gin.Context) {
+	auth, projectID, itemID, err := h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := gitcredentialdto.NewListBranchReq()
+	req.Scope = base.NewObjectScopeProject(projectID)
+	req.ID = itemID
+	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.GitCredentialUC.ListBranch(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // ListGitPullRequest Lists pull requests of a git repository
 // @Summary Lists pull requests of a git repository
 // @Description Lists pull requests of a git repository
@@ -103,7 +145,7 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} gitcredentialdto.ListRepoResp
+// @Success 200 {object} gitcredentialdto.ListPullRequestResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/git-credentials/{itemID}/repository/pull-requests [get]

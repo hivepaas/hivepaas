@@ -125,6 +125,8 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 
 		// Repos
 		gitCredentialGroup.GET("/:itemID/repositories", projectSettingsHandler.ListGitRepository)
+		// Branches
+		gitCredentialGroup.GET("/:itemID/repository/branches", projectSettingsHandler.ListGitBranch)
 		// Pull requests
 		gitCredentialGroup.GET("/:itemID/repository/pull-requests", projectSettingsHandler.ListGitPullRequest)
 	}

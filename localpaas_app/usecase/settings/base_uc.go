@@ -4,6 +4,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/fileservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
@@ -20,6 +21,7 @@ type BaseUC struct {
 	ProjectSharedSettingRepo repository.ProjectSharedSettingRepo
 	SettingService           settingservice.Service
 	FileService              fileservice.Service
+	ClusterService           clusterservice.Service
 }
 
 func New(
@@ -32,6 +34,7 @@ func New(
 	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
 	settingService settingservice.Service,
 	fileService fileservice.Service,
+	clusterService clusterservice.Service,
 ) *BaseUC {
 	return &BaseUC{
 		DB:                       db,
@@ -43,5 +46,6 @@ func New(
 		ProjectSharedSettingRepo: projectSharedSettingRepo,
 		SettingService:           settingService,
 		FileService:              fileService,
+		ClusterService:           clusterService,
 	}
 }

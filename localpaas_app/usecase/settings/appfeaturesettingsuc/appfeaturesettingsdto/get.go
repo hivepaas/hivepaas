@@ -34,6 +34,7 @@ type AppFeatureSettingsResp struct {
 	TerminalSettings *AppFeatureTerminalSettingsResp `json:"terminalSettings"`
 	LoggingSettings  *AppFeatureLoggingSettingsResp  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettingsResp `json:"schedJobSettings"`
+	PreviewSettings  *AppFeaturePreviewSettingsResp  `json:"previewSettings"`
 }
 
 type AppFeatureTerminalSettingsResp struct {
@@ -46,6 +47,11 @@ type AppFeatureLoggingSettingsResp struct {
 
 type AppFeatureSchedJobSettingsResp struct {
 	Enabled bool `json:"enabled"`
+}
+
+type AppFeaturePreviewSettingsResp struct {
+	PRCommentEnabled bool `json:"prCommentEnabled"`
+	DashboardEnabled bool `json:"dashboardEnabled"`
 }
 
 type AppFeatureSettingsTransformInput struct {

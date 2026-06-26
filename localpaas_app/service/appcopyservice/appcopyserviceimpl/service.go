@@ -7,6 +7,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appcopyservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/domainservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
@@ -43,6 +44,7 @@ type service struct {
 	networkService networkservice.Service
 	domainService  domainservice.Service
 	traefikService traefikservice.Service
+	clusterService clusterservice.Service
 	taskQueue      queue.TaskQueue
 	dockerManager  docker.Manager
 }
@@ -70,6 +72,7 @@ func New(
 	networkService networkservice.Service,
 	domainService domainservice.Service,
 	traefikService traefikservice.Service,
+	clusterService clusterservice.Service,
 	taskQueue queue.TaskQueue,
 	dockerManager docker.Manager,
 ) appcopyservice.Service {
@@ -96,6 +99,7 @@ func New(
 		networkService:           networkService,
 		domainService:            domainService,
 		traefikService:           traefikService,
+		clusterService:           clusterService,
 		taskQueue:                taskQueue,
 		dockerManager:            dockerManager,
 	}

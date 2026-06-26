@@ -18,7 +18,7 @@ func (uc *UC) parseGitlabWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, gitlab.PushEvents)
+	payload, err := hook.Parse(req, gitlab.PushEvents, gitlab.CommentEvents)
 	if err != nil {
 		if errors.Is(err, gitlab.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -26,13 +26,21 @@ func (uc *UC) parseGitlabWebhook(
 		return apperrors.New(err)
 	}
 
-	switch payload.(type) { //nolint
+	switch p := payload.(type) { //nolint
 	case gitlab.PushEventPayload:
 		push, _ := payload.(gitlab.PushEventPayload) //nolint
 		data.Push = &repoPushEventData{
 			RepoRef:  push.Ref,
 			RepoURL:  push.Repository.GitHTTPURL,
 			ChangeID: push.After,
+		}
+	case gitlab.CommentEventPayload:
+		if p.ObjectAttributes.NotebookType == "MergeRequest" {
+			data.PRComment = &repoPRCommentEventData{
+				RepoURL:     p.Repository.GitHTTPURL,
+				PRNumber:    p.MergeRequest.IID,
+				CommentBody: p.ObjectAttributes.Note,
+			}
 		}
 	}
 	return nil

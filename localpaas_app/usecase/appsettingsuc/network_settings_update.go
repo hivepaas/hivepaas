@@ -80,7 +80,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 	}
 	data.App = app
 
-	service, err := uc.appService.ServiceInspect(ctx, app.ServiceID, false)
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
 		return apperrors.New(err)
 	}

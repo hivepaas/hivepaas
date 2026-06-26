@@ -18,7 +18,7 @@ func (uc *UC) parseGiteaWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, gitea.PushEvent)
+	payload, err := hook.Parse(req, gitea.PushEvent, gitea.IssueCommentEvent, gitea.PullRequestCommentEvent)
 	if err != nil {
 		if errors.Is(err, gitea.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -26,13 +26,21 @@ func (uc *UC) parseGiteaWebhook(
 		return apperrors.New(err)
 	}
 
-	switch payload.(type) { //nolint
+	switch p := payload.(type) { //nolint
 	case gitea.PushPayload:
 		push, _ := payload.(gitea.PushPayload) //nolint
 		data.Push = &repoPushEventData{
 			RepoRef:  push.Ref,
 			RepoURL:  push.Repo.HTMLURL,
 			ChangeID: push.After,
+		}
+	case gitea.IssueCommentPayload:
+		if p.Action == actionCreated && p.IsPull {
+			data.PRComment = &repoPRCommentEventData{
+				RepoURL:     p.Repository.HTMLURL,
+				PRNumber:    p.Issue.Index,
+				CommentBody: p.Comment.Body,
+			}
 		}
 	}
 	return nil

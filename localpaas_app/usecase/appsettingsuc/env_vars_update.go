@@ -148,7 +148,7 @@ func (uc *UC) applyAppEnvVars(
 			WithExtraDetail("%s", strings.Join(errors, "\n"))
 	}
 
-	service, err := uc.appService.ServiceInspect(ctx, app.ServiceID, false)
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
 		return apperrors.New(err)
 	}

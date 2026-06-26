@@ -24,6 +24,7 @@ type AppFeatureSettings struct {
 	TerminalSettings *AppFeatureTerminalSettings `json:"terminalSettings"`
 	LoggingSettings  *AppFeatureLoggingSettings  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettings `json:"schedJobSettings"`
+	PreviewSettings  *AppFeaturePreviewSettings  `json:"previewSettings,omitempty"`
 }
 
 type AppFeatureTerminalSettings struct {
@@ -36,6 +37,11 @@ type AppFeatureLoggingSettings struct {
 
 type AppFeatureSchedJobSettings struct {
 	Enabled bool `json:"enabled,omitempty"`
+}
+
+type AppFeaturePreviewSettings struct {
+	PRCommentEnabled bool `json:"prCommentEnabled,omitempty"`
+	DashboardEnabled bool `json:"dashboardEnabled,omitempty"`
 }
 
 func (s *AppFeatureSettings) GetType() base.SettingType {
@@ -87,5 +93,11 @@ func InitAppFeatureSettingsDefault(settings *AppFeatureSettings) {
 	}
 	if settings.TerminalSettings == nil {
 		settings.TerminalSettings = &AppFeatureTerminalSettings{Enabled: true}
+	}
+	if settings.PreviewSettings == nil {
+		settings.PreviewSettings = &AppFeaturePreviewSettings{
+			PRCommentEnabled: false,
+			DashboardEnabled: true,
+		}
 	}
 }

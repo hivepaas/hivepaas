@@ -8,6 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 )
 
 func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error {
@@ -57,7 +58,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	}
 
 	// Remove service for the app in docker swarm
-	_, err = s.dockerManager.ServiceRemove(ctx, app.ServiceID)
+	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.New(err)
 	}

@@ -26,15 +26,18 @@ const (
 var (
 	defaultAppEvents = []string{
 		"push",
+		"issue_comment",
+		"pull_request",
 		// "create",
 	}
 
 	defaultAppPermissions = map[string]string{
-		"contents": "read",
+		"contents":      "read",
+		"issues":        "write",
+		"pull_requests": "write",
 		// "repository_hooks": "write",
 		// "organization_hooks": "write",
 		// "repository_projects": "read",
-		// "pull_requests": "read",
 		// "organization_personal_access_tokens": "read",
 	}
 

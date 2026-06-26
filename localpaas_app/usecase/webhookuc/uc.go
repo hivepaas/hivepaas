@@ -4,6 +4,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/apppreviewservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
@@ -23,6 +24,7 @@ type UC struct {
 	userService          userservice.Service
 	appService           appservice.Service
 	appDeploymentService appdeploymentservice.Service
+	appPreviewService    apppreviewservice.Service
 	projectService       projectservice.Service
 	networkService       networkservice.Service
 	envVarService        envvarservice.Service
@@ -40,6 +42,7 @@ func New(
 	userService userservice.Service,
 	appService appservice.Service,
 	appDeploymentService appdeploymentservice.Service,
+	appPreviewService apppreviewservice.Service,
 	projectService projectservice.Service,
 	networkService networkservice.Service,
 	envVarService envvarservice.Service,
@@ -56,6 +59,7 @@ func New(
 		userService:          userService,
 		appService:           appService,
 		appDeploymentService: appDeploymentService,
+		appPreviewService:    appPreviewService,
 		projectService:       projectService,
 		networkService:       networkService,
 		envVarService:        envVarService,

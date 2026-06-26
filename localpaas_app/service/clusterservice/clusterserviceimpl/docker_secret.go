@@ -1,9 +1,10 @@
-package appserviceimpl
+package clusterserviceimpl
 
 import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
@@ -23,7 +24,7 @@ const (
 	secretDefaultFileMode = 444
 )
 
-func (s *service) CreateSwarmSecrets(
+func (s *service) CreateSecretsForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
@@ -40,13 +41,13 @@ func (s *service) CreateSwarmSecrets(
 	return refs, s.addSwarmSecretsToService(ctx, db, app, refs)
 }
 
-func (s *service) CreateSwarmSecret(
+func (s *service) CreateSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	secret *entity.Secret,
 ) (*entity.SwarmSecretRef, error) {
-	refs, err := s.CreateSwarmSecrets(ctx, db, app, []*entity.Secret{secret})
+	refs, err := s.CreateSecretsForApp(ctx, db, app, []*entity.Secret{secret})
 	ref, _ := gofn.First(refs)
 	return ref, apperrors.New(err)
 }
@@ -158,7 +159,7 @@ func (s *service) addSwarmSecretsToService(
 	return nil
 }
 
-func (s *service) DeleteSwarmSecret(
+func (s *service) DeleteSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
@@ -183,7 +184,7 @@ func (s *service) DeleteSwarmSecret(
 			return apperrors.New(err)
 		}
 		for _, childApp := range childApps {
-			err = s.DeleteSwarmSecret(ctx, db, childApp, secret)
+			err = s.DeleteSecretForApp(ctx, db, childApp, secret)
 			if err != nil {
 				return apperrors.New(err)
 			}
@@ -215,20 +216,20 @@ func (s *service) DeleteSwarmSecret(
 	return nil
 }
 
-func (s *service) UpdateSwarmSecret(
+func (s *service) UpdateSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	oldSecret, newSecret *entity.Secret,
 ) (err error) {
 	// Remove the old secret from services then delete it from the swarm
-	err = s.DeleteSwarmSecret(ctx, db, app, oldSecret)
+	err = s.DeleteSecretForApp(ctx, db, app, oldSecret)
 	if err != nil {
 		return apperrors.New(err)
 	}
 
 	// Create a secret in the swarm then add it to the services
-	_, err = s.CreateSwarmSecret(ctx, db, app, newSecret)
+	_, err = s.CreateSecretForApp(ctx, db, app, newSecret)
 	if err != nil {
 		return apperrors.New(err)
 	}
@@ -326,4 +327,60 @@ func (s *service) deleteOrphanSwarmSecret(
 	}
 
 	return nil
+}
+
+func (s *service) SecretRemove(
+	ctx context.Context,
+	secretID string,
+	retryMax int,
+	retryDelay time.Duration,
+) (err error) {
+	if secretID == "" {
+		return nil
+	}
+	fn := func() error {
+		_, err := s.dockerManager.SecretRemove(ctx, secretID)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrNotFound) {
+				return nil
+			}
+			return apperrors.New(err)
+		}
+		return nil
+	}
+	if retryMax > 0 {
+		if retryDelay <= 0 {
+			retryDelay = itemRemovalRetryDelay
+		}
+		err = gofn.ExecRetryCtx(ctx, fn, retryMax, retryDelay, gofn.ExecRetryDelayIncr(itemRemovalRetryIncr))
+	} else {
+		err = fn()
+	}
+	if err != nil {
+		// TODO: create a cleanup task
+		return apperrors.New(err)
+	}
+	return nil
+}
+
+func (s *service) SecretsRemove(
+	ctx context.Context,
+	secretIDs []string,
+	retryMax int,
+	retryDelay time.Duration,
+) (err error) {
+	if len(secretIDs) == 0 {
+		return nil
+	}
+	if len(secretIDs) == 1 {
+		return s.SecretRemove(ctx, secretIDs[0], retryMax, retryDelay)
+	}
+	errMap := gofn.ExecTaskFuncEx(ctx, 10, false, //nolint:mnd
+		func(ctx context.Context, itemID string) error {
+			return s.SecretRemove(ctx, itemID, retryMax, retryDelay)
+		}, secretIDs...)
+	for _, e := range errMap {
+		err = errors.Join(err, e)
+	}
+	return err
 }

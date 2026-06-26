@@ -38,7 +38,7 @@ func (uc *UC) UpdateSecret(
 
 			if data.ScopeApp != nil {
 				// Update the related secrets in docker swarm
-				err := uc.AppService.UpdateSwarmSecret(ctx, db, data.ScopeApp, oldSecret, updatedSecret)
+				err := uc.ClusterService.UpdateSecretForApp(ctx, db, data.ScopeApp, oldSecret, updatedSecret)
 				if err != nil {
 					return apperrors.New(err)
 				}

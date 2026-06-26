@@ -9,6 +9,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
+const (
+	actionCreated = "created"
+)
+
 func (uc *UC) parseGithubWebhook(
 	req *http.Request,
 	secret string,
@@ -18,7 +22,7 @@ func (uc *UC) parseGithubWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, github.PushEvent)
+	payload, err := hook.Parse(req, github.PushEvent, github.IssueCommentEvent)
 	if err != nil {
 		if errors.Is(err, github.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -26,13 +30,21 @@ func (uc *UC) parseGithubWebhook(
 		return apperrors.New(err)
 	}
 
-	switch payload.(type) { //nolint
+	switch p := payload.(type) { //nolint
 	case github.PushPayload:
 		push, _ := payload.(github.PushPayload) //nolint
 		data.Push = &repoPushEventData{
 			RepoRef:  push.Ref,
 			RepoURL:  push.Repository.HTMLURL,
 			ChangeID: push.After,
+		}
+	case github.IssueCommentPayload:
+		if p.Action == actionCreated && p.Issue.PullRequest != nil {
+			data.PRComment = &repoPRCommentEventData{
+				RepoURL:     p.Repository.HTMLURL,
+				PRNumber:    p.Issue.Number,
+				CommentBody: p.Comment.Body,
+			}
 		}
 	}
 	return nil

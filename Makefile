@@ -110,7 +110,7 @@ local-build-fe:
 smee-connect:
 	# RUN ONCE go install -v github.com/chmouel/gosmee@latest
 	# Make sure you use correct <setting-id> below
-	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/_/webhooks/01JAB9XED0GTXBSQDFVYAJ8WO1/abc123
+	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/_/webhooks/01JAB9XED0GTXBSQDFVYAJ8WJ1
 
 # ----- Build local image -----
 build-image:

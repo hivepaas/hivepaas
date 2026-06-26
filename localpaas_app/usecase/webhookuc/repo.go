@@ -2,7 +2,6 @@ package webhookuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/gitsight/go-vcsurl"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/webhookuc/webhookdto"
@@ -59,19 +57,13 @@ type handleRepoWebhookData struct {
 }
 
 type repoEventData struct {
-	Push *repoPushEventData
-}
-
-type repoPushEventData struct {
-	RepoRef  string
-	RepoURL  string
-	RepoID   string
-	ChangeID string
+	Push      *repoPushEventData
+	PRComment *repoPRCommentEventData
 }
 
 func (uc *UC) processRepoWebhook(
 	ctx context.Context,
-	db database.IDB,
+	db database.Tx,
 	req *webhookdto.HandleRepoWebhookReq,
 	data *handleRepoWebhookData,
 	persistingData *appservice.PersistingAppData,
@@ -96,19 +88,48 @@ func (uc *UC) processRepoWebhook(
 		return apperrors.New(err)
 	}
 
-	if eventData.Push != nil {
-		parsedURL, err := vcsurl.Parse(eventData.Push.RepoURL)
+	pushEvent := eventData.Push
+	if pushEvent != nil {
+		parsedURL, err := vcsurl.Parse(pushEvent.RepoURL)
 		if err != nil {
 			return apperrors.New(err)
 		}
-		eventData.Push.RepoID = parsedURL.ID
+		pushEvent.RepoID = parsedURL.ID
 
-		apps, err := uc.findAppsToRedeployByPushEvent(ctx, db, eventData.Push)
+		apps, err := uc.findAppsMatchingRepository(ctx, db, pushEvent.RepoID)
 		if err != nil {
 			return apperrors.New(err)
 		}
 		for _, app := range apps {
-			err = uc.createAppDeploymentByPushEvent(app, eventData.Push, data, persistingData)
+			err = uc.createAppDeploymentByPushEvent(ctx, db, app, pushEvent, data, persistingData)
+			if err != nil {
+				return apperrors.New(err)
+			}
+		}
+	}
+
+	prCommentEvent := eventData.PRComment
+	if prCommentEvent != nil { //nolint:nestif
+		parsedURL, err := vcsurl.Parse(prCommentEvent.RepoURL)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		prCommentEvent.RepoID = parsedURL.ID
+
+		success, err := uc.parsePRCommentCommand(prCommentEvent)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		if !success {
+			return nil
+		}
+
+		apps, err := uc.findAppsMatchingRepository(ctx, db, prCommentEvent.RepoID)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		for _, app := range apps {
+			err = uc.createAppPreviewByCommentEvent(ctx, db, app, prCommentEvent, data, persistingData)
 			if err != nil {
 				return apperrors.New(err)
 			}
@@ -134,139 +155,5 @@ func (uc *UC) loadWebhookSettings(
 		return apperrors.New(err)
 	}
 	data.WebhookSetting = setting
-	return nil
-}
-
-func (uc *UC) findAppsToRedeployByPushEvent(
-	ctx context.Context,
-	db database.IDB,
-	pushEvent *repoPushEventData,
-) ([]*entity.App, error) {
-	// Finds all deployment settings which are linked to the repo ID (URL)
-	settings, _, err := uc.settingRepo.List(ctx, db, nil, nil,
-		bunex.SelectColumns("id", "type", "scope", "object_id"),
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
-		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectJoin("JOIN res_links ON res_links.src_id = setting.id"),
-		bunex.SelectWhere("res_links.deleted_at IS NULL"),
-		bunex.SelectWhere("res_links.dst_type = ?", base.ResourceTypeRepo),
-		bunex.SelectWhere("res_links.dst_id = ?", pushEvent.RepoID),
-	)
-	if err != nil {
-		return nil, apperrors.New(err)
-	}
-	if len(settings) == 0 {
-		return nil, nil
-	}
-
-	appIDs := make([]string, 0, len(settings))
-	for _, setting := range settings {
-		appIDs = append(appIDs, setting.ObjectID)
-	}
-
-	apps, _, err := uc.appRepo.List(ctx, db, "", nil,
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectWhereIn("app.id IN (?)", appIDs...),
-		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
-		bunex.SelectRelation("Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			bunex.SelectWhere("project.status = ?", base.ProjectStatusActive),
-		),
-		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
-			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		),
-	)
-	if err != nil {
-		return nil, apperrors.New(err)
-	}
-	if len(apps) == 0 {
-		return nil, nil
-	}
-
-	matchingApps := make([]*entity.App, 0, len(apps))
-	for _, app := range apps {
-		if app.Project == nil || app.Project.Status != base.ProjectStatusActive {
-			continue
-		}
-		shouldRedeploy, err := uc.shouldRedeployAppByPushEvent(ctx, db, app, pushEvent)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-		if shouldRedeploy {
-			matchingApps = append(matchingApps, app)
-		}
-	}
-	return matchingApps, nil
-}
-
-func (uc *UC) shouldRedeployAppByPushEvent(
-	ctx context.Context,
-	db database.IDB,
-	app *entity.App,
-	pushEvent *repoPushEventData,
-) (bool, error) {
-	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
-	if deploymentSetting == nil {
-		return false, nil
-	}
-	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
-	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
-		deploymentSettings.RepoSource == nil || deploymentSettings.RepoSource.RepoID != pushEvent.RepoID {
-		return false, nil
-	}
-
-	// Make sure there is no duplicated deployment having the same `change id`
-	if pushEvent.ChangeID == "" {
-		return true, nil
-	}
-	deployments, _, err := uc.deploymentRepo.List(ctx, db, app.ID, nil,
-		bunex.SelectColumns("id"),
-		bunex.SelectLimit(1),
-		bunex.SelectWhere("deployment.created_at > ?", timeutil.NowUTC().Add(-time.Minute)),
-		bunex.SelectWhere("deployment.trigger->>'source' = ?", base.DeploymentTriggerSourceRepoWebhook),
-		bunex.SelectWhere("deployment.trigger->>'changeId' = ?", pushEvent.ChangeID),
-	)
-	if err != nil {
-		return false, apperrors.New(err)
-	}
-	return len(deployments) == 0, nil
-}
-
-func (uc *UC) createAppDeploymentByPushEvent(
-	app *entity.App,
-	pushEvent *repoPushEventData,
-	data *handleRepoWebhookData,
-	persistingData *appservice.PersistingAppData,
-) error {
-	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
-	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
-	if err != nil {
-		return apperrors.New(err)
-	}
-	if deploymentSettings.RepoSource != nil && deploymentSettings.RepoSource.CommitHash != "" {
-		deploymentSettings.RepoSource.CommitHash = ""
-		deploymentSetting.MustSetData(deploymentSettings)
-		deploymentSetting.UpdateVer++
-		deploymentSetting.UpdatedAt = timeutil.NowUTC()
-		persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, deploymentSetting)
-	}
-
-	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
-	if err != nil {
-		return apperrors.New(err)
-	}
-	// Override target commit hash
-	deployment.Settings.RepoSource.CommitHash = pushEvent.ChangeID
-	// Set trigger for the deployment
-	deployment.Trigger = &entity.AppDeploymentTrigger{
-		Source:   base.DeploymentTriggerSourceRepoWebhook,
-		SourceID: data.WebhookSetting.ID,
-		ChangeID: pushEvent.ChangeID,
-	}
-
-	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)
-	persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, task)
 	return nil
 }

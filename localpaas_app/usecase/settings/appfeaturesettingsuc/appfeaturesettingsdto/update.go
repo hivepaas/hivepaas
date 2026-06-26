@@ -18,6 +18,7 @@ type AppFeatureSettingsBaseReq struct {
 	LoggingSettings  *AppFeatureLoggingSettingsReq  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettingsReq `json:"schedJobSettings"`
 	TerminalSettings *AppFeatureTerminalSettingsReq `json:"terminalSettings"`
+	PreviewSettings  *AppFeaturePreviewSettingsReq  `json:"previewSettings"`
 }
 
 func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
@@ -28,6 +29,7 @@ func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
 		LoggingSettings:  req.LoggingSettings.ToEntity(),
 		SchedJobSettings: req.SchedJobSettings.ToEntity(),
 		TerminalSettings: req.TerminalSettings.ToEntity(),
+		PreviewSettings:  req.PreviewSettings.ToEntity(),
 	}
 }
 
@@ -41,6 +43,7 @@ func (req *AppFeatureSettingsBaseReq) validate(field string) (res []vld.Validato
 	res = append(res, req.TerminalSettings.validate(field+"terminalSettings")...)
 	res = append(res, req.LoggingSettings.validate(field+"loggingSettings")...)
 	res = append(res, req.SchedJobSettings.validate(field+"schedJobSettings")...)
+	res = append(res, req.PreviewSettings.validate(field+"previewSettings")...)
 	return res
 }
 
@@ -92,6 +95,25 @@ func (req *AppFeatureSchedJobSettingsReq) ToEntity() *entity.AppFeatureSchedJobS
 }
 
 func (req *AppFeatureSchedJobSettingsReq) validate(_ string) (res []vld.Validator) {
+	return res
+}
+
+type AppFeaturePreviewSettingsReq struct {
+	PRCommentEnabled bool `json:"prCommentEnabled"`
+	DashboardEnabled bool `json:"dashboardEnabled"`
+}
+
+func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSettings {
+	if req == nil {
+		return nil
+	}
+	return &entity.AppFeaturePreviewSettings{
+		PRCommentEnabled: req.PRCommentEnabled,
+		DashboardEnabled: req.DashboardEnabled,
+	}
+}
+
+func (req *AppFeaturePreviewSettingsReq) validate(_ string) (res []vld.Validator) {
 	return res
 }
 

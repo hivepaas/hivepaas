@@ -29,7 +29,7 @@ func (uc *UC) CreateSecret(
 		) error {
 			if data.ScopeApp != nil {
 				// Create a secret in docker swarm
-				_, err := uc.AppService.CreateSwarmSecret(ctx, db, data.ScopeApp, secret)
+				_, err := uc.ClusterService.CreateSecretForApp(ctx, db, data.ScopeApp, secret)
 				if err != nil {
 					return apperrors.New(err)
 				}

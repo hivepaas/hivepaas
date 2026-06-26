@@ -19,7 +19,7 @@ func (uc *UC) parseGogsWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, gogs.PushEvent)
+	payload, err := hook.Parse(req, gogs.PushEvent, gogs.IssueCommentEvent)
 	if err != nil {
 		if errors.Is(err, gogs.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -27,13 +27,21 @@ func (uc *UC) parseGogsWebhook(
 		return apperrors.New(err)
 	}
 
-	switch payload.(type) { //nolint
+	switch p := payload.(type) { //nolint
 	case client.PushPayload:
 		push, _ := payload.(client.PushPayload) //nolint
 		data.Push = &repoPushEventData{
 			RepoRef:  push.Ref,
 			RepoURL:  push.Repo.HTMLURL,
 			ChangeID: push.After,
+		}
+	case client.IssueCommentPayload:
+		if string(p.Action) == actionCreated && p.Issue.PullRequest != nil {
+			data.PRComment = &repoPRCommentEventData{
+				RepoURL:     p.Repository.HTMLURL,
+				PRNumber:    p.Issue.Index,
+				CommentBody: p.Comment.Body,
+			}
 		}
 	}
 	return nil

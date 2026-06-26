@@ -3,6 +3,7 @@ package appcopyserviceimpl
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -18,6 +19,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 	"github.com/localpaas/localpaas/localpaas_app/service/appcopyservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 )
 
 type appCopyData struct {
@@ -138,6 +140,11 @@ func (s *service) copyApp(
 	}
 
 	targetApp.LocalKey = slugify.SlugifyAsKey(targetApp.Name)
+	if targetApp.ParentApp != nil {
+		parentAppKey := targetApp.ParentApp.LocalKey
+		parentAppKey, _ = strings.CutSuffix(parentAppKey, "_"+projecthelper.CalcProjectEnvKey(targetApp.ParentApp.Env))
+		targetApp.LocalKey = parentAppKey + "_" + targetApp.LocalKey
+	}
 	if targetApp.Env != "" {
 		targetApp.LocalKey += "_" + projecthelper.CalcProjectEnvKey(targetApp.Env)
 	}
@@ -264,13 +271,19 @@ func (s *service) cleanupOnFail(
 	}
 	// Remove all created objects in docker
 	if data.TargetService != nil && data.TargetService.ID != "" {
-		_, _ = s.dockerManager.ServiceRemove(ctx, data.TargetService.ID)
+		_ = s.clusterService.ServiceRemove(ctx, data.TargetService.ID, clusterservice.ItemRemovalRetryMax, 0)
 	}
+
+	var secretIDs []string
 	for _, secret := range data.TargetSecrets {
-		_, _ = s.dockerManager.SecretRemove(ctx, secret.SecretID)
+		secretIDs = append(secretIDs, secret.SecretID)
 	}
+	_ = s.clusterService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
+
+	var configIDs []string
 	for _, cfg := range data.TargetConfig {
-		_, _ = s.dockerManager.ConfigRemove(ctx, cfg.ConfigID)
+		configIDs = append(configIDs, cfg.ConfigID)
 	}
+	_ = s.clusterService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
 	return nil
 }

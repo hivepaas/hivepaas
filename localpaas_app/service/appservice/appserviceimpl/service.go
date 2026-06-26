@@ -5,6 +5,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/services/docker"
@@ -22,6 +23,7 @@ func New(
 	permissionManager permission.Manager,
 	userService userservice.Service,
 	traefikService traefikservice.Service,
+	clusterService clusterservice.Service,
 	dockerManager docker.Manager,
 ) appservice.Service {
 	return &service{
@@ -36,6 +38,7 @@ func New(
 		permissionManager:  permissionManager,
 		userService:        userService,
 		traefikService:     traefikService,
+		clusterService:     clusterService,
 		dockerManager:      dockerManager,
 	}
 }
@@ -52,5 +55,6 @@ type service struct {
 	permissionManager  permission.Manager
 	userService        userservice.Service
 	traefikService     traefikservice.Service
+	clusterService     clusterservice.Service
 	dockerManager      docker.Manager
 }

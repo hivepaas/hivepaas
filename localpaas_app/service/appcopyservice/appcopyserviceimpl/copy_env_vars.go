@@ -31,7 +31,7 @@ func (s *service) applyEnvVars(
 			WithExtraDetail("%s", strings.Join(errs, "\n"))
 	}
 
-	service, err := s.appService.ServiceInspect(ctx, app.ServiceID, false)
+	service, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
 		return apperrors.New(err)
 	}

@@ -19,7 +19,7 @@ func (uc *UC) parseBitbucketWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, bitbucket.RepoPushEvent)
+	payload, err := hook.Parse(req, bitbucket.RepoPushEvent, bitbucket.PullRequestCommentCreatedEvent)
 	if err != nil {
 		if errors.Is(err, bitbucket.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -27,7 +27,7 @@ func (uc *UC) parseBitbucketWebhook(
 		return apperrors.New(err)
 	}
 
-	switch payload.(type) { //nolint
+	switch p := payload.(type) { //nolint
 	case bitbucket.RepoPushPayload:
 		push, _ := payload.(bitbucket.RepoPushPayload) //nolint
 		lastChange := push.Push.Changes[len(push.Push.Changes)-1]
@@ -35,6 +35,13 @@ func (uc *UC) parseBitbucketWebhook(
 			RepoRef:  string(githelper.NormalizeRepoRef(lastChange.New.Name)),
 			RepoURL:  push.Repository.Links.HTML.Href,
 			ChangeID: lastChange.New.Target.Hash,
+		}
+	case bitbucket.PullRequestCommentCreatedPayload:
+		data.PRComment = &repoPRCommentEventData{
+			RepoURL:     p.Repository.Links.HTML.Href,
+			PRNumber:    p.PullRequest.ID,
+			CommentBody: p.Comment.Content.Raw,
+			Branch:      "heads/" + p.PullRequest.Source.Branch.Name,
 		}
 	}
 	return nil

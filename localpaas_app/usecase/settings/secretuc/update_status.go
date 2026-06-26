@@ -26,11 +26,11 @@ func (uc *UC) UpdateSecretStatus(
 			if data.ScopeApp != nil {
 				secret := pData.Setting.MustAsSecret()
 				if pData.Setting.IsActive() {
-					// Create a secret in docker swarm for the app
-					_, err = uc.AppService.CreateSwarmSecret(ctx, db, data.ScopeApp, secret)
+					// Create a secret in the cluster for the app
+					_, err = uc.ClusterService.CreateSecretForApp(ctx, db, data.ScopeApp, secret)
 				} else {
-					// Delete the related secret in docker swarm
-					err = uc.AppService.DeleteSwarmSecret(ctx, db, data.ScopeApp, secret)
+					// Delete the related secret in the cluster
+					err = uc.ClusterService.DeleteSecretForApp(ctx, db, data.ScopeApp, secret)
 				}
 				if err != nil {
 					return apperrors.New(err)

@@ -9,11 +9,13 @@ import (
 
 func New(
 	settingRepo repository.SettingRepo,
+	appRepo repository.AppRepo,
 	permissionManager permission.Manager,
 	dockerManager docker.Manager,
 ) clusterservice.Service {
 	return &service{
 		settingRepo:       settingRepo,
+		appRepo:           appRepo,
 		permissionManager: permissionManager,
 		dockerManager:     dockerManager,
 	}
@@ -21,6 +23,7 @@ func New(
 
 type service struct {
 	settingRepo       repository.SettingRepo
+	appRepo           repository.AppRepo
 	permissionManager permission.Manager
 	dockerManager     docker.Manager
 }

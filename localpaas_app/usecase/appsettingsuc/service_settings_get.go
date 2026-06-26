@@ -22,7 +22,7 @@ func (uc *UC) GetAppServiceSettings(
 		return nil, apperrors.New(err)
 	}
 
-	service, err := uc.appService.ServiceInspect(ctx, app.ServiceID, true)
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

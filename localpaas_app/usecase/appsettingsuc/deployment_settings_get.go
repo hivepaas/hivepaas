@@ -60,7 +60,7 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	input *appsettingsdto.AppDeploymentSettingsTransformInput,
 ) (err error) {
 	app := input.App
-	service, err := uc.appService.ServiceInspect(ctx, app.ServiceID, true)
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
 		return apperrors.New(err)
 	}

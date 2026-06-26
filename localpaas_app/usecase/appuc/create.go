@@ -21,6 +21,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/transaction"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/ulid"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/clusterservice"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/appuc/appdto"
 )
 
@@ -65,7 +66,7 @@ func (uc *UC) CreateApp(
 	if err != nil {
 		// Transaction fails, but service is created in docker, need to delete it
 		if createdApp != nil && createdApp.ServiceID != "" {
-			_, _ = uc.dockerManager.ServiceRemove(ctx, createdApp.ServiceID)
+			_ = uc.clusterService.ServiceRemove(ctx, createdApp.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
 		}
 		return nil, apperrors.New(err)
 	}

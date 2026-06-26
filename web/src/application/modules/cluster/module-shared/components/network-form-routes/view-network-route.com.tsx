@@ -7,7 +7,6 @@ import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
 import { ViewNetworkForm } from "../../../dialogs/view-network/form";
-import { CLUSTER_NETWORK_FORM_ROUTE_PANEL_CLASS } from "../../constants/network-form-layout.constants";
 
 type ViewNetworkScope = { type: "cluster" } | { type: "project"; projectId: string };
 
@@ -40,29 +39,27 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
         <div className="flex w-full flex-col overflow-hidden">
             <RouteFormHeader title="Network info" />
 
-            <div className={CLUSTER_NETWORK_FORM_ROUTE_PANEL_CLASS}>
-                {isFetching ? (
-                    <div className="flex min-h-[220px] items-center justify-center">
-                        <AppLoader />
-                    </div>
-                ) : network ? (
-                    <ViewNetworkForm
-                        key={network.id}
-                        network={network}
-                    />
-                ) : (
-                    <div className="py-10 text-center text-sm text-muted-foreground">Network not found</div>
-                )}
-
-                <div className="shrink-0 px-0 mt-6 flex justify-end">
-                    <Button
-                        type="button"
-                        className="min-w-[120px]"
-                        onClick={navigateToList}
-                    >
-                        Close
-                    </Button>
+            {isFetching ? (
+                <div className="flex min-h-[220px] items-center justify-center">
+                    <AppLoader />
                 </div>
+            ) : network ? (
+                <ViewNetworkForm
+                    key={network.id}
+                    network={network}
+                />
+            ) : (
+                <div className="py-10 text-center text-sm text-muted-foreground">Network not found</div>
+            )}
+
+            <div className="shrink-0 px-0 mt-6 flex justify-end">
+                <Button
+                    type="button"
+                    className="min-w-[120px]"
+                    onClick={navigateToList}
+                >
+                    Close
+                </Button>
             </div>
         </div>
     );

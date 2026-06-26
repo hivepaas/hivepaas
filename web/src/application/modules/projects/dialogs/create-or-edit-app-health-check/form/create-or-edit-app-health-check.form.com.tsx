@@ -633,7 +633,7 @@ export function CreateOrEditAppHealthCheckForm({
                                 readOnly={readOnly}
                                 titleWidth={220}
                             >
-                                <div className={cn(dashedBorderBox, "text-center text-[12px]")}>
+                                <div className={cn(dashedBorderBox, "text-center")}>
                                     <span className="text-orange-500">Note:</span> If you don&apos;t want to receive
                                     continuous notifications for identical results, use this configuration. For example,
                                     if you set <span className="text-orange-500"> Min Send Interval = 10m</span>, and

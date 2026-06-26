@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
-
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESSHKeyType } from "@application/shared/enums";
 
@@ -292,6 +292,10 @@ export function CreateOrEditSSHKeyForm({
                 {!isReadOnly && (
                     <div className="shrink-0 px-0 mt-6 pb-6">
                         <div className="flex justify-end gap-4">
+                            <SettingsFormCancelAction
+                                onCancel={onClose}
+                                disabled={isPending}
+                            />
                             <Button
                                 type="button"
                                 isLoading={isGenerating}
@@ -301,10 +305,6 @@ export function CreateOrEditSSHKeyForm({
                             >
                                 Generate
                             </Button>
-                            <SettingsFormCancelAction
-                                onCancel={onClose}
-                                disabled={isPending}
-                            />
                             <Button
                                 type="submit"
                                 isLoading={isPending}

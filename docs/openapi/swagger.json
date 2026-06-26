@@ -36363,6 +36363,9 @@
             "description" : "cronExpr and interval are mutually exclusive",
             "type" : "string"
           },
+          "endTime" : {
+            "type" : "string"
+          },
           "initialTime" : {
             "type" : "string"
           },
@@ -36370,7 +36373,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "count", "cronExpr", "initialTime", "interval" ],
+        "required" : [ "count", "cronExpr", "endTime", "initialTime", "interval" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.CalcNextRunsResp" : {
@@ -36827,6 +36830,9 @@
             "description" : "cronExpr and interval are mutually exclusive",
             "type" : "string"
           },
+          "endTime" : {
+            "type" : "string"
+          },
           "initialTime" : {
             "type" : "string"
           },
@@ -36834,7 +36840,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "required" : [ "cronExpr", "endTime", "initialTime", "interval" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.ScheduleResp" : {
@@ -36843,6 +36849,9 @@
             "description" : "cronExpr and interval are mutually exclusive",
             "type" : "string"
           },
+          "endTime" : {
+            "type" : "string"
+          },
           "initialTime" : {
             "type" : "string"
           },
@@ -36850,7 +36859,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "required" : [ "cronExpr", "endTime", "initialTime", "interval" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.UpdateSchedJobReq" : {
@@ -40652,9 +40661,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

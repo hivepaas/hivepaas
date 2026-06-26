@@ -105,6 +105,9 @@ func (req *ContainerCommandReq) ToEntity() *entity.SchedJobContainerCommand {
 		Command:    req.Command,
 		Script:     req.Script,
 		WorkingDir: req.WorkingDir,
+		EnvVars: gofn.MapSlice(req.EnvVars, func(item *basedto.EnvVarReq) *entity.EnvVar {
+			return item.ToEntity(false)
+		}),
 		ArgGroups: gofn.MapSlice(req.ArgGroups, func(item *CommandArgGroupReq) *entity.SchedJobCommandArgGroup {
 			return item.ToEntity()
 		}),

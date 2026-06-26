@@ -5,8 +5,8 @@ import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { ProjectEmailQueries, ProjectImServiceQueries } from "~/projects/data/queries";
 import { EmailQueries, ImServiceQueries } from "~/settings/data/queries";
 import type { SettingEmail, SettingImService } from "~/settings/domain";
-
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EImServiceKind } from "@application/shared/enums";
@@ -26,9 +26,9 @@ import type {
 import { CreateOrEditNotificationTargetFormSchema } from "./create-or-edit-notification-target.form.schema";
 
 const selectPagination = { page: 1, size: 100 };
-const initialOpenSections: NotificationSection[] = ["email"];
-
 type NotificationSection = "email" | "slack" | "discord" | "telegram";
+
+const initialOpenSections: NotificationSection[] = ["email", "slack", "discord", "telegram"];
 
 function mergeOpenSections(current: NotificationSection[], additions: NotificationSection[]) {
     return Array.from(new Set([...current, ...additions]));

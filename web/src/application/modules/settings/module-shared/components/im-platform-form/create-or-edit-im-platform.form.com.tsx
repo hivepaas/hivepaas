@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 
+import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
-
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EImServiceKind } from "@application/shared/enums";
 
@@ -174,7 +175,7 @@ export function CreateOrEditImPlatformForm({
                                     }
                                 >
                                     <Field>
-                                        <Input
+                                        <PasswordInput
                                             {...botToken}
                                             aria-invalid={isBotTokenInvalid}
                                             placeholder="Telegram bot token"
@@ -213,7 +214,7 @@ export function CreateOrEditImPlatformForm({
                                 }
                             >
                                 <Field>
-                                    <Input
+                                    <PasswordInput
                                         {...webhook}
                                         aria-invalid={isWebhookInvalid}
                                         placeholder={

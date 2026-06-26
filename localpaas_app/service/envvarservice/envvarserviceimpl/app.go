@@ -74,11 +74,17 @@ func (s *service) ProcessEnvRefs(
 
 	// App inherits ENV vars in order from the parent app, then the project, and then from global
 	envStore := vars.FinalEnvVars()
+	if envStore == nil {
+		envStore = map[string]*entity.EnvVar{}
+	}
 	// Update the envStore with the input values
 	for _, env := range envVars {
 		envStore[env.Key] = env
 	}
 	secretStore := secrets.FinalSecrets()
+	if secretStore == nil {
+		secretStore = map[string]*entity.Secret{}
+	}
 	// Process all references within the ENV values
 	usedSecrets = make([]*entity.Secret, 0)
 	for _, env := range res {
@@ -98,6 +104,9 @@ type AppEnvVars struct {
 }
 
 func (ev *AppEnvVars) FinalEnvVars() map[string]*entity.EnvVar {
+	if ev == nil {
+		return nil
+	}
 	res := make(map[string]*entity.EnvVar, len(ev.App)+10) //nolint
 	maps.Copy(res, ev.Global)
 	maps.Copy(res, ev.Project)
@@ -114,6 +123,9 @@ type AppSecrets struct {
 }
 
 func (ev *AppSecrets) FinalSecrets() map[string]*entity.Secret {
+	if ev == nil {
+		return nil
+	}
 	res := make(map[string]*entity.Secret, len(ev.App)+10) //nolint
 	maps.Copy(res, ev.Global)
 	maps.Copy(res, ev.Project)

@@ -24,6 +24,7 @@ type ContainerExecReq struct {
 }
 
 type ContainerExecResp struct {
+	ExecStarted      bool
 	IsRemoteExec     bool
 	ExecCreateResult *client.ExecCreateResult
 	ExecAttachResult *client.ExecAttachResult

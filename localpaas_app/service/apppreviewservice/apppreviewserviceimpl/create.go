@@ -225,11 +225,19 @@ func (s *service) onCopyHttpSetting(
 
 func (s *service) onCopyAppService(
 	targetSvc, _ *swarm.Service,
-	_ *createPreviewData,
+	data *createPreviewData,
 ) error {
 	targetSvcSpec := &targetSvc.Spec
 	if targetSvcSpec.Mode.Replicated != nil {
 		targetSvcSpec.Mode.Replicated.Replicas = new(uint64(1))
+	}
+	if data.NoStart { // If noStart, use replicated service mode with replicas = 0
+		if targetSvcSpec.Mode.Replicated == nil {
+			targetSvcSpec.Mode = swarm.ServiceMode{
+				Replicated: &swarm.ReplicatedService{},
+			}
+		}
+		targetSvcSpec.Mode.Replicated.Replicas = new(uint64(0))
 	}
 	return nil
 }

@@ -18,6 +18,7 @@ type CreatePreviewReq struct {
 
 	RepoRef         string `json:"repoRef"`
 	CustomSubdomain string `json:"customSubdomain"`
+	NoStart         bool   `json:"noStart"`
 }
 
 func NewCreatePreviewReq() *CreatePreviewReq {

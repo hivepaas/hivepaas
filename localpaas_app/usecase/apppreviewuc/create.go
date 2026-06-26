@@ -25,6 +25,7 @@ func (uc *UC) CreatePreview(
 			AppID:           req.AppID,
 			RepoRef:         req.RepoRef,
 			CustomSubdomain: req.CustomSubdomain,
+			NoStart:         req.NoStart,
 			OnInitDeployment: func(deployment *entity.Deployment) error {
 				// Set trigger for the deployment
 				deployment.Trigger = &entity.AppDeploymentTrigger{

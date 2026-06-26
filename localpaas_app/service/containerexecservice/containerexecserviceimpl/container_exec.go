@@ -46,7 +46,21 @@ func (s *service) containerExec(
 		logStore = tasklog.NewNullStore()
 	}
 
-	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, req.App.ServiceID,
+	serviceID := req.App.ServiceID
+	if serviceID == "" {
+		return nil, apperrors.NewNotFound("Swarm service")
+	}
+
+	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	svcMode := &inspectResp.Service.Spec.Mode
+	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
+		return &containerexecservice.ContainerExecResp{ExecStarted: false}, nil
+	}
+
+	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
 		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
 		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
 		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
@@ -101,6 +115,7 @@ func (s *service) containerExec(
 		return nil, apperrors.New(err)
 	}
 
+	resp.ExecStarted = true
 	resp.ExecCreateResult = createResp
 	resp.ExecAttachResult = attachResp
 	resp.ExecStartResult = startResp

@@ -9,6 +9,7 @@ type CreatePreviewReq struct {
 	AppID           string
 	RepoRef         string
 	CustomSubdomain string
+	NoStart         bool
 
 	OnInitDeployment func(*entity.Deployment) error
 	OnDeploymentTask func(*entity.Task) error

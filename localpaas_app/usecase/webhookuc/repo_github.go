@@ -11,6 +11,7 @@ import (
 
 const (
 	actionCreated = "created"
+	actionClosed  = "closed"
 )
 
 func (uc *UC) parseGithubWebhook(
@@ -22,7 +23,7 @@ func (uc *UC) parseGithubWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, github.PushEvent, github.IssueCommentEvent)
+	payload, err := hook.Parse(req, github.PushEvent, github.IssueCommentEvent, github.PullRequestEvent)
 	if err != nil {
 		if errors.Is(err, github.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -44,6 +45,13 @@ func (uc *UC) parseGithubWebhook(
 				RepoURL:     p.Repository.HTMLURL,
 				PRNumber:    p.Issue.Number,
 				CommentBody: p.Comment.Body,
+			}
+		}
+	case github.PullRequestPayload:
+		if p.Action == actionClosed {
+			data.PRClosed = &repoPRClosedEventData{
+				RepoURL:  p.Repository.HTMLURL,
+				PRNumber: p.Number,
 			}
 		}
 	}

@@ -96,3 +96,17 @@ func (c *Client) GetPullRequestByNumber(
 	}
 	return output, nil
 }
+
+func (c *Client) CreatePullRequestComment(
+	ctx context.Context,
+	pid any,
+	number int,
+	body string,
+) (*gogitlab.Note, error) {
+	note, _, err := c.client.Notes.CreateMergeRequestNote(pid, int64(number),
+		&gogitlab.CreateMergeRequestNoteOptions{Body: &body}, gogitlab.WithContext(ctx))
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	return note, nil
+}

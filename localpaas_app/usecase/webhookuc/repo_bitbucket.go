@@ -19,7 +19,8 @@ func (uc *UC) parseBitbucketWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, bitbucket.RepoPushEvent, bitbucket.PullRequestCommentCreatedEvent)
+	payload, err := hook.Parse(req, bitbucket.RepoPushEvent, bitbucket.PullRequestCommentCreatedEvent,
+		bitbucket.PullRequestMergedEvent, bitbucket.PullRequestDeclinedEvent)
 	if err != nil {
 		if errors.Is(err, bitbucket.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -42,6 +43,18 @@ func (uc *UC) parseBitbucketWebhook(
 			PRNumber:    p.PullRequest.ID,
 			CommentBody: p.Comment.Content.Raw,
 			Branch:      "heads/" + p.PullRequest.Source.Branch.Name,
+		}
+	case bitbucket.PullRequestMergedPayload:
+		data.PRClosed = &repoPRClosedEventData{
+			RepoURL:  p.Repository.Links.HTML.Href,
+			PRNumber: p.PullRequest.ID,
+			Branch:   "heads/" + p.PullRequest.Source.Branch.Name,
+		}
+	case bitbucket.PullRequestDeclinedPayload:
+		data.PRClosed = &repoPRClosedEventData{
+			RepoURL:  p.Repository.Links.HTML.Href,
+			PRNumber: p.PullRequest.ID,
+			Branch:   "heads/" + p.PullRequest.Source.Branch.Name,
 		}
 	}
 	return nil

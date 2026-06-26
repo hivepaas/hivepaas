@@ -99,3 +99,18 @@ func (c *Client) GetPullRequestByNumber(
 	}
 	return output, nil
 }
+
+func (c *Client) CreatePullRequestComment(
+	ctx context.Context,
+	owner string,
+	repo string,
+	number int,
+	body string,
+) (*gogitea.Comment, error) {
+	comment, _, err := c.client.CreateIssueComment(owner, repo, int64(number),
+		gogitea.CreateIssueCommentOption{Body: body})
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	return comment, nil
+}

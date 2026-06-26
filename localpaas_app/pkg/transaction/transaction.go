@@ -29,7 +29,7 @@ func defaultOptions() *options {
 	return &options{
 		isolation:      sql.LevelDefault,
 		retryTimes:     0,
-		maxRetryTimes:  1,
+		maxRetryTimes:  0,
 		retryDelay:     0,
 		checkRetryable: IsErrorDeadLock,
 	}

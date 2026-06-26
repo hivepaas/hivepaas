@@ -41,20 +41,18 @@ func NormalizeRepoRef(ref string) plumbing.ReferenceName {
 	if ref == "" || ref == "HEAD" { //nolint:goconst
 		return "HEAD"
 	}
-	if strings.HasPrefix(ref, "refs/") {
-		return plumbing.ReferenceName(ref)
+	ref, _ = strings.CutPrefix(ref, "refs/")
+
+	// Heads ref (branch)
+	if after, ok := strings.CutPrefix(ref, "heads/"); ok {
+		ref = after
+		return plumbing.NewBranchReferenceName(ref)
 	}
 
 	// Tags ref
 	if after, ok := strings.CutPrefix(ref, "tags/"); ok {
 		ref = after
 		return plumbing.NewTagReferenceName(ref)
-	}
-
-	// Heads ref
-	if after, ok := strings.CutPrefix(ref, "heads/"); ok {
-		ref = after
-		return plumbing.NewBranchReferenceName(ref)
 	}
 
 	// Pull ref (github, gitea)

@@ -13,18 +13,27 @@ import (
 func (uc *UC) findAppsMatchingRepository(
 	ctx context.Context,
 	db database.IDB,
-	repoID string,
+	repoID, repoRef string,
+	extraAppOpts ...bunex.SelectQueryOption,
 ) ([]*entity.App, error) {
 	// Finds all deployment settings which are linked to the repo ID (URL)
-	settings, _, err := uc.settingRepo.List(ctx, db, nil, nil,
+	settingListOpts := []bunex.SelectQueryOption{
 		bunex.SelectColumns("id", "type", "scope", "object_id"),
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhere("setting.data->>'activeMethod' = ?", base.DeploymentMethodRepo),
 		bunex.SelectJoin("JOIN res_links ON res_links.src_id = setting.id"),
 		bunex.SelectWhere("res_links.deleted_at IS NULL"),
 		bunex.SelectWhere("res_links.dst_type = ?", base.ResourceTypeRepo),
 		bunex.SelectWhere("res_links.dst_id = ?", repoID),
-	)
+	}
+	if repoRef != "" {
+		settingListOpts = append(settingListOpts,
+			bunex.SelectWhere("setting.data->'repoSource'->>'repoRef' = ?", repoRef),
+		)
+	}
+
+	settings, _, err := uc.settingRepo.List(ctx, db, nil, nil, settingListOpts...)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -37,7 +46,7 @@ func (uc *UC) findAppsMatchingRepository(
 		appIDs = append(appIDs, setting.ObjectID)
 	}
 
-	apps, _, err := uc.appRepo.List(ctx, db, "", nil,
+	appListOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectWhereIn("app.id IN (?)", appIDs...),
@@ -50,7 +59,10 @@ func (uc *UC) findAppsMatchingRepository(
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		),
-	)
+	}
+	appListOpts = append(appListOpts, extraAppOpts...)
+
+	apps, _, err := uc.appRepo.List(ctx, db, "", nil, appListOpts...)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -70,7 +82,8 @@ func (uc *UC) findAppsMatchingRepository(
 		deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 		if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
 			deploymentSettings.RepoSource == nil ||
-			deploymentSettings.RepoSource.RepoID != repoID {
+			deploymentSettings.RepoSource.RepoID != repoID ||
+			(repoRef != "" && deploymentSettings.RepoSource.RepoRef != repoRef) {
 			continue
 		}
 		matchingApps = append(matchingApps, app)

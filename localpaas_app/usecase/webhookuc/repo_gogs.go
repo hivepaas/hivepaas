@@ -19,7 +19,7 @@ func (uc *UC) parseGogsWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, gogs.PushEvent, gogs.IssueCommentEvent)
+	payload, err := hook.Parse(req, gogs.PushEvent, gogs.IssueCommentEvent, gogs.PullRequestEvent)
 	if err != nil {
 		if errors.Is(err, gogs.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -41,6 +41,13 @@ func (uc *UC) parseGogsWebhook(
 				RepoURL:     p.Repository.HTMLURL,
 				PRNumber:    p.Issue.Index,
 				CommentBody: p.Comment.Body,
+			}
+		}
+	case client.PullRequestPayload:
+		if string(p.Action) == actionClosed {
+			data.PRClosed = &repoPRClosedEventData{
+				RepoURL:  p.Repository.HTMLURL,
+				PRNumber: p.Index,
 			}
 		}
 	}

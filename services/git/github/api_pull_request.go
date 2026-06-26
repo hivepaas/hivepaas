@@ -99,3 +99,17 @@ func (c *Client) GetPullRequestByNumber(
 	}
 	return output, nil
 }
+
+func (c *Client) CreatePullRequestComment(
+	ctx context.Context,
+	owner string,
+	repo string,
+	number int,
+	body string,
+) (*gogithub.IssueComment, error) {
+	comment, _, err := c.client.Issues.CreateComment(ctx, owner, repo, number, &gogithub.IssueComment{Body: &body})
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	return comment, nil
+}

@@ -9,6 +9,10 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
 
+const (
+	actionMerged = "merged"
+)
+
 func (uc *UC) parseGitlabWebhook(
 	req *http.Request,
 	secret string,
@@ -18,7 +22,7 @@ func (uc *UC) parseGitlabWebhook(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	payload, err := hook.Parse(req, gitlab.PushEvents, gitlab.CommentEvents)
+	payload, err := hook.Parse(req, gitlab.PushEvents, gitlab.CommentEvents, gitlab.MergeRequestEvents)
 	if err != nil {
 		if errors.Is(err, gitlab.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
@@ -40,6 +44,13 @@ func (uc *UC) parseGitlabWebhook(
 				RepoURL:     p.Repository.GitHTTPURL,
 				PRNumber:    p.MergeRequest.IID,
 				CommentBody: p.ObjectAttributes.Note,
+			}
+		}
+	case gitlab.MergeRequestEventPayload:
+		if p.ObjectAttributes.State == actionClosed || p.ObjectAttributes.State == actionMerged {
+			data.PRClosed = &repoPRClosedEventData{
+				RepoURL:  p.Repository.GitHTTPURL,
+				PRNumber: p.ObjectAttributes.IID,
 			}
 		}
 	}

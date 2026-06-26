@@ -3,8 +3,6 @@ package webhookuc
 import (
 	"context"
 
-	"github.com/gitsight/go-vcsurl"
-
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
@@ -59,6 +57,27 @@ type handleRepoWebhookData struct {
 type repoEventData struct {
 	Push      *repoPushEventData
 	PRComment *repoPRCommentEventData
+	PRClosed  *repoPRClosedEventData
+}
+
+func (uc *UC) loadWebhookSettings(
+	ctx context.Context,
+	db database.IDB,
+	req *webhookdto.HandleRepoWebhookReq,
+	data *handleRepoWebhookData,
+) error {
+	setting, err := uc.settingRepo.GetByID(ctx, db, nil, "", req.ID, true,
+		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeRepoWebhook, base.SettingTypeGithubApp),
+	)
+	if err != nil {
+		return apperrors.New(err)
+	}
+	_, err = setting.AsRepoWebhook()
+	if err != nil {
+		return apperrors.New(err)
+	}
+	data.WebhookSetting = setting
+	return nil
 }
 
 func (uc *UC) processRepoWebhook(
@@ -88,72 +107,23 @@ func (uc *UC) processRepoWebhook(
 		return apperrors.New(err)
 	}
 
-	pushEvent := eventData.Push
-	if pushEvent != nil {
-		parsedURL, err := vcsurl.Parse(pushEvent.RepoURL)
-		if err != nil {
+	if eventData.Push != nil {
+		if err := uc.processWebhookEventPush(ctx, db, eventData.Push, data, persistingData); err != nil {
 			return apperrors.New(err)
-		}
-		pushEvent.RepoID = parsedURL.ID
-
-		apps, err := uc.findAppsMatchingRepository(ctx, db, pushEvent.RepoID)
-		if err != nil {
-			return apperrors.New(err)
-		}
-		for _, app := range apps {
-			err = uc.createAppDeploymentByPushEvent(ctx, db, app, pushEvent, data, persistingData)
-			if err != nil {
-				return apperrors.New(err)
-			}
 		}
 	}
 
-	prCommentEvent := eventData.PRComment
-	if prCommentEvent != nil { //nolint:nestif
-		parsedURL, err := vcsurl.Parse(prCommentEvent.RepoURL)
-		if err != nil {
+	if eventData.PRComment != nil {
+		if err := uc.processWebhookEventPRComment(ctx, db, eventData.PRComment, data, persistingData); err != nil {
 			return apperrors.New(err)
 		}
-		prCommentEvent.RepoID = parsedURL.ID
+	}
 
-		success, err := uc.parsePRCommentCommand(prCommentEvent)
-		if err != nil {
+	if eventData.PRClosed != nil {
+		if err := uc.processWebhookEventPRClosed(ctx, db, eventData.PRClosed, data, persistingData); err != nil {
 			return apperrors.New(err)
 		}
-		if !success {
-			return nil
-		}
+	}
 
-		apps, err := uc.findAppsMatchingRepository(ctx, db, prCommentEvent.RepoID)
-		if err != nil {
-			return apperrors.New(err)
-		}
-		for _, app := range apps {
-			err = uc.createAppPreviewByCommentEvent(ctx, db, app, prCommentEvent, data, persistingData)
-			if err != nil {
-				return apperrors.New(err)
-			}
-		}
-	}
-	return nil
-}
-
-func (uc *UC) loadWebhookSettings(
-	ctx context.Context,
-	db database.IDB,
-	req *webhookdto.HandleRepoWebhookReq,
-	data *handleRepoWebhookData,
-) error {
-	setting, err := uc.settingRepo.GetByID(ctx, db, nil, "", req.ID, true,
-		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeRepoWebhook, base.SettingTypeGithubApp),
-	)
-	if err != nil {
-		return apperrors.New(err)
-	}
-	_, err = setting.AsRepoWebhook()
-	if err != nil {
-		return apperrors.New(err)
-	}
-	data.WebhookSetting = setting
 	return nil
 }

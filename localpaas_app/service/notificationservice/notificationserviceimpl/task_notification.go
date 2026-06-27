@@ -10,6 +10,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bbpool"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/bunex"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
@@ -220,8 +221,8 @@ func (s *service) notifyForTaskResultViaEmail(
 		return apperrors.New(err)
 	}
 
-	buf, cleanup := s.getEmailBuildBuf()
-	defer cleanup()
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
 		return apperrors.New(err)
@@ -263,8 +264,8 @@ func (s *service) notifyForTaskResultViaSlack(
 		return apperrors.New(err)
 	}
 
-	buf, cleanup := s.getSlackBuildBuf()
-	defer cleanup()
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
 		return apperrors.New(err)
@@ -301,8 +302,8 @@ func (s *service) notifyForTaskResultViaDiscord(
 		return apperrors.New(err)
 	}
 
-	buf, cleanup := s.getDiscordBuildBuf()
-	defer cleanup()
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
 		return apperrors.New(err)
@@ -339,8 +340,8 @@ func (s *service) notifyForTaskResultViaTelegram(
 		return apperrors.New(err)
 	}
 
-	buf, cleanup := s.getTelegramBuildBuf()
-	defer cleanup()
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
 		return apperrors.New(err)

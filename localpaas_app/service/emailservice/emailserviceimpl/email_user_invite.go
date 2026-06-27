@@ -7,6 +7,7 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/bbpool"
 	"github.com/localpaas/localpaas/localpaas_app/service/emailservice"
 	"github.com/localpaas/localpaas/services/email"
 )
@@ -21,8 +22,8 @@ func (s *service) SendMailUserInvite(
 		return apperrors.New(err)
 	}
 
-	buf, cleanup := s.getBuildBuf()
-	defer cleanup()
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
 	err = template.Execute(buf, *data)
 	if err != nil {
 		return apperrors.New(err)

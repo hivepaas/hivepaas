@@ -43,12 +43,22 @@ func (uc *UC) UpdateProjectStatus(
 			// Do nothing
 		}
 
-		// TODO: lock apps
-		if targetAppStatus != "" {
-			for _, app := range project.Apps {
-				// TODO: handle error when update a specific app status
-				_ = uc.appService.SetAppStatus(ctx, db, app, targetAppStatus, true)
+		for _, app := range project.Apps {
+			if targetAppStatus == "" {
+				continue
 			}
+			// Run app update in a separate transaction to reduce lock time
+			err = uc.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
+				err := uc.appService.SetAppStatus(ctx, db, app, targetAppStatus, true)
+				if err != nil {
+					return apperrors.New(err)
+				}
+				return nil
+			})
+			if err != nil {
+				return apperrors.New(err)
+			}
+			return nil
 		}
 
 		return uc.persistData(ctx, db, persistingData)

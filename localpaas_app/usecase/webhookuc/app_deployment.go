@@ -16,13 +16,12 @@ import (
 
 func (uc *UC) createAppDeployment(
 	ctx context.Context,
-	db database.IDB,
 	app *entity.App,
 	changeID string,
 	webhookID string,
 ) error {
 	persistingData := &appservice.PersistingAppData{}
-	err := transaction.Execute(ctx, db, func(db database.Tx) error {
+	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err := uc.createAppDeploymentByChangeID(ctx, db, app, changeID, webhookID, persistingData)
 		if err != nil {
 			return apperrors.New(err)
@@ -91,7 +90,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 
 func (uc *UC) getAppDeploymentByChangeID(
 	ctx context.Context,
-	db database.IDB,
+	db database.Tx,
 	app *entity.App,
 	changeID string,
 ) (*entity.Deployment, error) {
@@ -116,7 +115,7 @@ func (uc *UC) getAppDeploymentByChangeID(
 
 func (uc *UC) hasAppDeploymentByChangeID(
 	ctx context.Context,
-	db database.IDB,
+	db database.Tx,
 	app *entity.App,
 	changeID string,
 ) (bool, error) {

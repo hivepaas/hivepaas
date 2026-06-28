@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gitsight/go-vcsurl"
@@ -79,19 +80,23 @@ func (uc *UC) processWebhookEventPRComment(
 		return apperrors.New(err)
 	}
 
+	var wg sync.WaitGroup
 	for _, app := range apps {
-		switch prCommentEvent.previewCmd {
-		case previewCmdDeploy:
-			if app.ParentID == "" {
-				_ = uc.createAppPreview(ctx, db, app, prCommentEvent, repoRef, data.WebhookSetting.ID)
-			} else {
-				// TODO: find the SHA of the head commit of the PR (change id)
-				_ = uc.createAppDeployment(ctx, db, app, "", data.WebhookSetting.ID)
+		wg.Go(func() {
+			switch prCommentEvent.previewCmd {
+			case previewCmdDeploy:
+				if app.ParentID == "" {
+					_ = uc.createAppPreview(ctx, app, prCommentEvent, repoRef, data.WebhookSetting.ID)
+				} else {
+					// TODO: find the SHA of the head commit of the PR (change id)
+					_ = uc.createAppDeployment(ctx, app, "", data.WebhookSetting.ID)
+				}
+			case previewCmdCancel:
+				_ = uc.deleteAppPreview(ctx, app, repoRef)
 			}
-		case previewCmdCancel:
-			_ = uc.deleteAppPreview(ctx, db, app, repoRef)
-		}
+		})
 	}
+	wg.Wait()
 
 	return nil
 }

@@ -16,7 +16,12 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	var wg sync.WaitGroup
 	for _, app := range project.Apps {
 		wg.Go(func() {
-			_ = s.appService.DeleteApp(ctx, db, app)
+			_ = s.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
+				if err := s.appService.DeleteApp(ctx, db, app); err != nil {
+					return apperrors.New(err)
+				}
+				return nil
+			})
 			// NOTE: it's hard to rollback, maybe we only show the errors if there is any
 		})
 	}

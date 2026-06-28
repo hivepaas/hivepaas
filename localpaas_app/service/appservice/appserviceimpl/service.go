@@ -1,6 +1,7 @@
 package appserviceimpl
 
 import (
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/repository/cacherepository"
@@ -12,6 +13,7 @@ import (
 )
 
 func New(
+	db *database.DB,
 	appRepo repository.AppRepo,
 	appTagRepo repository.AppTagRepo,
 	settingRepo repository.SettingRepo,
@@ -27,6 +29,7 @@ func New(
 	dockerManager docker.Manager,
 ) appservice.Service {
 	return &service{
+		db:                 db,
 		appRepo:            appRepo,
 		appTagRepo:         appTagRepo,
 		settingRepo:        settingRepo,
@@ -44,6 +47,7 @@ func New(
 }
 
 type service struct {
+	db                 *database.DB
 	appRepo            repository.AppRepo
 	appTagRepo         repository.AppTagRepo
 	settingRepo        repository.SettingRepo

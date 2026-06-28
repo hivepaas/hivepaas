@@ -2,6 +2,7 @@ package webhookuc
 
 import (
 	"context"
+	"sync"
 
 	"github.com/gitsight/go-vcsurl"
 
@@ -49,8 +50,14 @@ func (uc *UC) processWebhookEventPRClosed(
 	if err != nil {
 		return apperrors.New(err)
 	}
+
+	var wg sync.WaitGroup
 	for _, app := range apps {
-		_ = uc.deleteAppPreview(ctx, db, app, expectedRef)
+		wg.Go(func() {
+			_ = uc.deleteAppPreview(ctx, app, expectedRef)
+		})
 	}
+	wg.Wait()
+
 	return nil
 }

@@ -15,7 +15,6 @@ import (
 
 func (uc *UC) createAppPreview(
 	ctx context.Context,
-	db database.IDB,
 	app *entity.App,
 	commentEvent *repoPRCommentEventData,
 	repoRef string,
@@ -25,7 +24,7 @@ func (uc *UC) createAppPreview(
 		return nil
 	}
 	var createResp *apppreviewservice.CreatePreviewResp
-	err := transaction.Execute(ctx, db, func(db database.Tx) (err error) {
+	err := transaction.Execute(ctx, uc.db, func(db database.Tx) (err error) {
 		createResp, err = uc.appPreviewService.CreatePreview(ctx, db, &apppreviewservice.CreatePreviewReq{
 			ProjectID:       app.ProjectID,
 			AppID:           app.ID,
@@ -66,7 +65,6 @@ func (uc *UC) createAppPreview(
 
 func (uc *UC) deleteAppPreview(
 	ctx context.Context,
-	db database.IDB,
 	app *entity.App,
 	expectedRef string,
 ) error {
@@ -86,7 +84,7 @@ func (uc *UC) deleteAppPreview(
 		return nil
 	}
 
-	err = transaction.Execute(ctx, db, func(db database.Tx) error {
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		if err = uc.appService.DeleteApp(ctx, db, app); err != nil {
 			return apperrors.New(err)
 		}

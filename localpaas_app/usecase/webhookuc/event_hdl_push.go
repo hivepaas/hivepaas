@@ -2,6 +2,7 @@ package webhookuc
 
 import (
 	"context"
+	"sync"
 
 	"github.com/gitsight/go-vcsurl"
 
@@ -34,8 +35,12 @@ func (uc *UC) processWebhookEventPush(
 	if err != nil {
 		return apperrors.New(err)
 	}
+	var wg sync.WaitGroup
 	for _, app := range apps {
-		_ = uc.createAppDeployment(ctx, db, app, pushEvent.ChangeID, data.WebhookSetting.ID)
+		wg.Go(func() {
+			_ = uc.createAppDeployment(ctx, app, pushEvent.ChangeID, data.WebhookSetting.ID)
+		})
 	}
+	wg.Wait()
 	return nil
 }

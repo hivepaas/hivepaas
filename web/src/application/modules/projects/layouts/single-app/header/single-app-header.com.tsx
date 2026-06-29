@@ -8,7 +8,7 @@ import invariant from "tiny-invariant";
 import { AppScheduledJobsQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 
-import { BackButton, TabNavigation } from "@application/shared/components";
+import { BackButton, PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { SingleAppBreadcrumbs } from "../buidling-blocks";
@@ -111,7 +111,7 @@ function View({ projectId, appId }: Props) {
     const links = [
         {
             route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId),
-            label: "Configuration",
+            label: "Settings",
             activePathPrefixes: configurationActivePathPrefixes,
         },
         {
@@ -175,30 +175,44 @@ function View({ projectId, appId }: Props) {
                 </div>
 
                 <div className="ml-auto flex items-center gap-2 pb-1">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        isLoading={isDeploying}
-                        disabled={isRestarting}
-                        onClick={() => {
+                    <PopConfirm
+                        title="Re-deploy app"
+                        description="Are you sure you want to re-deploy this app?"
+                        confirmText="Re-deploy"
+                        cancelText="Cancel"
+                        onConfirm={() => {
                             deploy({ projectID: projectId, appID: appId });
                         }}
                     >
-                        <RefreshCw className="size-4 text-orange-600" />
-                        Re-deploy
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        isLoading={isRestarting}
-                        disabled={isDeploying}
-                        onClick={() => {
+                        <Button
+                            type="button"
+                            variant="outline"
+                            isLoading={isDeploying}
+                            disabled={isRestarting}
+                        >
+                            <RefreshCw className="size-4 text-orange-600" />
+                            Re-deploy
+                        </Button>
+                    </PopConfirm>
+                    <PopConfirm
+                        title="Restart app"
+                        description="Are you sure you want to restart this app?"
+                        confirmText="Restart"
+                        cancelText="Cancel"
+                        onConfirm={() => {
                             restart({ projectID: projectId, appID: appId });
                         }}
                     >
-                        <Power className="size-4 text-orange-600" />
-                        Restart
-                    </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            isLoading={isRestarting}
+                            disabled={isDeploying}
+                        >
+                            <Power className="size-4 text-orange-600" />
+                            Restart
+                        </Button>
+                    </PopConfirm>
                 </div>
             </div>
         </div>

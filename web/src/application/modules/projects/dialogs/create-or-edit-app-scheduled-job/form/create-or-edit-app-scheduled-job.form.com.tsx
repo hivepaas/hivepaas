@@ -69,6 +69,11 @@ export function CreateOrEditAppScheduledJobForm({
 
     const { sources: notificationSources, manageLink: notificationManageLink } =
         useProjectNotificationSettingsSources(projectId);
+    const retryMaxInputId = useId();
+    const retryDelayInputId = useId();
+    const retryDelayIncrInputId = useId();
+    const retryBackoffInputId = useId();
+    const retryDelayMaxInputId = useId();
     const consoleWidthInputId = useId();
     const consoleHeightInputId = useId();
 
@@ -90,6 +95,10 @@ export function CreateOrEditAppScheduledJobForm({
         fieldState: { invalid: isScheduleFromInvalid },
     } = useController({ control, name: "scheduleFrom" });
     const {
+        field: scheduleTo,
+        fieldState: { invalid: isScheduleToInvalid },
+    } = useController({ control, name: "scheduleTo" });
+    const {
         field: timeout,
         fieldState: { invalid: isTimeoutInvalid },
     } = useController({ control, name: "timeout" });
@@ -101,6 +110,15 @@ export function CreateOrEditAppScheduledJobForm({
         field: retryDelay,
         fieldState: { invalid: isRetryDelayInvalid },
     } = useController({ control, name: "retryDelay" });
+    const {
+        field: retryDelayIncr,
+        fieldState: { invalid: isRetryDelayIncrInvalid },
+    } = useController({ control, name: "retryDelayIncr" });
+    const { field: retryBackoff } = useController({ control, name: "retryBackoff" });
+    const {
+        field: retryDelayMax,
+        fieldState: { invalid: isRetryDelayMaxInvalid },
+    } = useController({ control, name: "retryDelayMax" });
     const { field: priority } = useController({ control, name: "priority" });
     const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
     const { field: runInShell } = useController({ control, name: "runInShell" });
@@ -259,21 +277,41 @@ export function CreateOrEditAppScheduledJobForm({
                                         title="Schedule From"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
-                                        <Field>
-                                            <DateTimePicker
-                                                value={scheduleFrom.value ?? undefined}
-                                                onChange={date => {
-                                                    scheduleFrom.onChange(date ?? null);
-                                                }}
-                                                placeholder="select date time"
-                                                granularity="minute"
-                                                showClearButton
-                                                aria-invalid={isScheduleFromInvalid}
-                                                containerClassName={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.scheduleFrom]} />
-                                        </Field>
+                                        <div className="flex w-full max-w-[860px] flex-wrap items-start gap-x-4 gap-y-3">
+                                            <Field className="min-w-[260px] flex-1">
+                                                <DateTimePicker
+                                                    value={scheduleFrom.value ?? undefined}
+                                                    onChange={date => {
+                                                        scheduleFrom.onChange(date ?? null);
+                                                    }}
+                                                    placeholder="select date time"
+                                                    granularity="minute"
+                                                    showClearButton
+                                                    aria-invalid={isScheduleFromInvalid}
+                                                    containerClassName="w-full"
+                                                    disabled={readOnly}
+                                                />
+                                                <FieldError errors={[errors.scheduleFrom]} />
+                                            </Field>
+
+                                            <div className="flex h-9 items-center text-sm font-medium">To</div>
+
+                                            <Field className="min-w-[260px] flex-1">
+                                                <DateTimePicker
+                                                    value={scheduleTo.value ?? undefined}
+                                                    onChange={date => {
+                                                        scheduleTo.onChange(date ?? null);
+                                                    }}
+                                                    placeholder="select date time"
+                                                    granularity="minute"
+                                                    showClearButton
+                                                    aria-invalid={isScheduleToInvalid}
+                                                    containerClassName="w-full"
+                                                    disabled={readOnly}
+                                                />
+                                                <FieldError errors={[errors.scheduleTo]} />
+                                            </Field>
+                                        </div>
                                     </InfoBlock>
 
                                     <NextRunsField nextRuns={initialValues?.nextRuns ?? []} />
@@ -295,45 +333,117 @@ export function CreateOrEditAppScheduledJobForm({
                                     </InfoBlock>
 
                                     <InfoBlock
-                                        title="Max Retry"
+                                        title="Retry"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
-                                        <Field>
-                                            <InputNumber
-                                                value={maxRetry.value}
-                                                onValueChange={value => {
-                                                    const nextValue =
-                                                        value !== undefined && Number.isFinite(value)
-                                                            ? value
-                                                            : undefined;
+                                        <div className="flex w-full max-w-[1180px] flex-wrap items-start gap-x-5 gap-y-3">
+                                            <div className="flex min-w-[130px] flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <label
+                                                        htmlFor={retryMaxInputId}
+                                                        className="shrink-0 text-sm font-medium"
+                                                    >
+                                                        Max
+                                                    </label>
+                                                    <InputNumber
+                                                        id={retryMaxInputId}
+                                                        ref={maxRetry.ref}
+                                                        name={maxRetry.name}
+                                                        value={maxRetry.value}
+                                                        onBlur={maxRetry.onBlur}
+                                                        onValueChange={value => {
+                                                            const nextValue =
+                                                                value !== undefined && Number.isFinite(value)
+                                                                    ? value
+                                                                    : undefined;
 
-                                                    maxRetry.onChange(nextValue);
-                                                }}
-                                                min={0}
-                                                useGrouping={false}
-                                                placeholder="3"
-                                                aria-invalid={isMaxRetryInvalid}
-                                                className="max-w-[100px]"
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.maxRetry]} />
-                                        </Field>
-                                    </InfoBlock>
+                                                            maxRetry.onChange(nextValue);
+                                                        }}
+                                                        min={0}
+                                                        useGrouping={false}
+                                                        showControls={false}
+                                                        placeholder="0"
+                                                        aria-invalid={isMaxRetryInvalid}
+                                                        className="w-[92px]"
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.maxRetry]} />
+                                            </div>
 
-                                    <InfoBlock
-                                        title="Retry Delay"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Field>
-                                            <Input
-                                                {...retryDelay}
-                                                placeholder="10s"
-                                                className="max-w-[400px]"
-                                                aria-invalid={isRetryDelayInvalid}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.retryDelay]} />
-                                        </Field>
+                                            <div className="flex min-w-[180px] flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <label
+                                                        htmlFor={retryDelayInputId}
+                                                        className="shrink-0 text-sm font-medium"
+                                                    >
+                                                        Delay
+                                                    </label>
+                                                    <Input
+                                                        id={retryDelayInputId}
+                                                        {...retryDelay}
+                                                        placeholder="10s"
+                                                        className="w-[110px]"
+                                                        aria-invalid={isRetryDelayInvalid}
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.retryDelay]} />
+                                            </div>
+
+                                            <div className="flex min-w-[210px] flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <label
+                                                        htmlFor={retryDelayIncrInputId}
+                                                        className="shrink-0 text-sm font-medium"
+                                                    >
+                                                        Delay Incr
+                                                    </label>
+                                                    <Input
+                                                        id={retryDelayIncrInputId}
+                                                        {...retryDelayIncr}
+                                                        placeholder="5s"
+                                                        className="w-[110px]"
+                                                        aria-invalid={isRetryDelayIncrInvalid}
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.retryDelayIncr]} />
+                                            </div>
+
+                                            <div className="flex h-9 items-center gap-3 text-sm font-medium">
+                                                <label htmlFor={retryBackoffInputId}>Expo Backoff</label>
+                                                <Checkbox
+                                                    id={retryBackoffInputId}
+                                                    checked={retryBackoff.value}
+                                                    onCheckedChange={checked => {
+                                                        retryBackoff.onChange(checked === true);
+                                                    }}
+                                                    aria-label="Expo Backoff"
+                                                    disabled={readOnly}
+                                                />
+                                            </div>
+
+                                            <div className="flex min-w-[200px] flex-col gap-1.5">
+                                                <div className="flex min-w-0 items-center gap-2">
+                                                    <label
+                                                        htmlFor={retryDelayMaxInputId}
+                                                        className="shrink-0 text-sm font-medium"
+                                                    >
+                                                        Delay Max
+                                                    </label>
+                                                    <Input
+                                                        id={retryDelayMaxInputId}
+                                                        {...retryDelayMax}
+                                                        placeholder="24h"
+                                                        className="w-[110px]"
+                                                        aria-invalid={isRetryDelayMaxInvalid}
+                                                        disabled={readOnly}
+                                                    />
+                                                </div>
+                                                <FieldError errors={[errors.retryDelayMax]} />
+                                            </div>
+                                        </div>
                                     </InfoBlock>
 
                                     <InfoBlock

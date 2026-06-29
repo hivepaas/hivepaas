@@ -18,6 +18,7 @@ export type AppScheduledJobs_Schedule_Payload = {
     cronExpr?: string;
     interval?: string;
     initialTime?: Date;
+    endTime?: Date;
 };
 
 export type AppScheduledJobs_EnvVar_Payload = {
@@ -71,6 +72,9 @@ export type AppScheduledJobs_Upsert_Payload = {
     priority: EAppScheduledJobTaskPriority;
     maxRetry?: number;
     retryDelay?: string;
+    retryDelayIncr?: string;
+    retryBackoff: boolean;
+    retryDelayMax?: string;
     timeout?: string;
     controlDisabled: boolean;
     command: AppScheduledJobs_Command_Payload;

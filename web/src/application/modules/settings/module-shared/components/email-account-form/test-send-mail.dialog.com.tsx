@@ -160,21 +160,19 @@ export function TestSendMailDialog({ open, isPending, testStatus, onOpenChange, 
                                 </InfoBlock>
                             </FieldGroup>
                         </div>
-                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                >
-                                    Send Test Email
-                                </Button>
-                                {testStatus === "succeeded" && (
-                                    <span className="text-sm font-medium text-green-600">Succeeded</span>
-                                )}
-                                {testStatus === "failed" && (
-                                    <span className="text-sm font-medium text-destructive">Failed</span>
-                                )}
-                            </div>
+                        <div className="shrink-0 px-0 mt-6 pb-6 pr-6 flex justify-end items-center gap-3">
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                Send Test Email
+                            </Button>
+                            {testStatus === "succeeded" && (
+                                <span className="text-sm font-medium text-green-600">Succeeded</span>
+                            )}
+                            {testStatus === "failed" && (
+                                <span className="text-sm font-medium text-destructive">Failed</span>
+                            )}
                         </div>
                     </form>
                     <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">

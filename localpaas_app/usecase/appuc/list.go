@@ -21,20 +21,26 @@ func (uc *UC) ListApp(
 	req *appdto.ListAppReq,
 ) (*appdto.ListAppResp, error) {
 	listOpts := []bunex.SelectQueryOption{
-		bunex.SelectRelation("Project"),
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectRelation("ParentApp",
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	}
 
 	if req.ParentID != "" {
 		listOpts = append(listOpts,
 			bunex.SelectWhere("app.parent_id = ?", req.ParentID),
+			bunex.SelectRelation("ParentApp",
+				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			),
 			bunex.SelectRelation("Settings",
 				// NOTE: load http settings to extract active domain names of the app
 				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 			),
+		)
+	} else {
+		listOpts = append(listOpts,
+			bunex.SelectWhere("app.parent_id IS NULL"),
 		)
 	}
 	if len(req.Status) > 0 {

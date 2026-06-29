@@ -23,6 +23,10 @@ func (uc *UC) ListAppBase(
 		listOpts = append(listOpts,
 			bunex.SelectWhere("app.parent_id = ?", req.ParentID),
 		)
+	} else {
+		listOpts = append(listOpts,
+			bunex.SelectWhere("app.parent_id IS NULL"),
+		)
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,

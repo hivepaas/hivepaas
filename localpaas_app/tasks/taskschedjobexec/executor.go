@@ -87,8 +87,8 @@ func (e *Executor) execute(
 		TaskExecData: task,
 		SchedJob:     task.Task.TargetJob,
 	}
-	data.LogStore = tasklog.NewRemoteStore(fmt.Sprintf("task:%s:log", data.Task.ID), true, e.redisClient)
 	data.OnPostTransaction(func() { e.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
+	e.initLogStore(data)
 
 	err = e.loadSchedJobData(ctx, db, data)
 	if err != nil {
@@ -186,6 +186,13 @@ func (e *Executor) loadSchedJobData(
 	return nil
 }
 
+func (e *Executor) initLogStore(data *taskData) {
+	data.LogStore = tasklog.NewRemoteStore(fmt.Sprintf("task:%s:log", data.Task.ID), e.redisClient)
+	data.LogStore.SetOnFlush(tasklog.DefaultMaxSize, func(ctx context.Context, frames []*tasklog.LogFrame) error {
+		return e.saveLogFramesToDB(ctx, e.db, data.Task.ID, data.SchedJob.ID, frames)
+	})
+}
+
 func (e *Executor) saveLogs(
 	ctx context.Context,
 	db database.IDB,
@@ -209,24 +216,32 @@ func (e *Executor) saveLogs(
 	}
 	_ = logStore.Reset() //nolint
 
-	// Insert data in to DB by chunk to avoid exceeding DBMS limit
+	return e.saveLogFramesToDB(ctx, db, data.Task.ID, data.SchedJob.ID, logFrames)
+}
+
+func (e *Executor) saveLogFramesToDB(
+	ctx context.Context,
+	db database.IDB,
+	taskID string,
+	targetID string,
+	logFrames []*tasklog.LogFrame,
+) error {
 	for _, chunk := range gofn.Chunk(logFrames, 10000) { //nolint
 		taskLogs := make([]*entity.TaskLog, 0, len(chunk))
 		for _, logFrame := range chunk {
 			taskLogs = append(taskLogs, &entity.TaskLog{
-				TaskID:   data.Task.ID,
-				TargetID: data.SchedJob.ID,
+				TaskID:   taskID,
+				TargetID: targetID,
 				Type:     logFrame.Type,
 				Data:     logFrame.Data,
 				Ts:       logFrame.Ts,
 			})
 		}
-		err = e.taskLogRepo.InsertMulti(ctx, db, taskLogs)
+		err := e.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
 			return apperrors.New(err)
 		}
 	}
-
 	return nil
 }
 

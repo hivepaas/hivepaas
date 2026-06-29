@@ -45,9 +45,8 @@ func (s *service) Deploy(
 		AppDeploymentReq: req,
 		DeploymentOutput: &entity.AppDeploymentOutput{},
 	}
-	logStoreKey := fmt.Sprintf("task:%s:log", req.Task.ID)
-	data.LogStore = tasklog.NewRemoteStore(logStoreKey, true, s.redisClient)
 	data.OnPostTransaction(func() { s.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
+	s.initLogStore(data)
 
 	err = s.loadDeploymentData(ctx, db, data)
 	if err != nil {
@@ -153,6 +152,13 @@ func (s *service) loadDeploymentData(
 	return nil
 }
 
+func (s *service) initLogStore(data *appDeploymentData) {
+	data.LogStore = tasklog.NewRemoteStore(fmt.Sprintf("task:%s:log", data.Task.ID), s.redisClient)
+	data.LogStore.SetOnFlush(tasklog.DefaultMaxSize, func(ctx context.Context, frames []*tasklog.LogFrame) error {
+		return s.saveLogFramesToDB(ctx, s.db, data.Task.ID, data.Deployment.ID, frames)
+	})
+}
+
 func (s *service) saveLogs(
 	ctx context.Context,
 	db database.IDB,
@@ -178,24 +184,32 @@ func (s *service) saveLogs(
 	}
 	_ = logStore.Close() //nolint
 
-	// Insert data in to DB by chunk to avoid exceeding DBMS limit
+	return s.saveLogFramesToDB(ctx, db, data.Task.ID, deployment.ID, logFrames)
+}
+
+func (s *service) saveLogFramesToDB(
+	ctx context.Context,
+	db database.IDB,
+	taskID string,
+	targetID string,
+	logFrames []*tasklog.LogFrame,
+) error {
 	for _, chunk := range gofn.Chunk(logFrames, 10000) { //nolint
 		taskLogs := make([]*entity.TaskLog, 0, len(chunk))
 		for _, logFrame := range chunk {
 			taskLogs = append(taskLogs, &entity.TaskLog{
-				TaskID:   data.Task.ID,
-				TargetID: deployment.ID,
+				TaskID:   taskID,
+				TargetID: targetID,
 				Type:     logFrame.Type,
 				Data:     logFrame.Data,
 				Ts:       logFrame.Ts,
 			})
 		}
-		err = s.taskLogRepo.InsertMulti(ctx, db, taskLogs)
+		err := s.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
 			return apperrors.New(err)
 		}
 	}
-
 	return nil
 }
 

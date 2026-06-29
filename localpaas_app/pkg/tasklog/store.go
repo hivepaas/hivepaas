@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	KB              = 1024
+	DefaultMaxSize  = 64 * KB
 	storeExpiration = 4 * time.Hour
 )
 
@@ -27,6 +29,9 @@ type Store struct {
 	redactor          *redact.Redactor
 	mu                sync.RWMutex
 	frames            []*LogFrame
+	totalSize         int64
+	maxSize           int64
+	onFlush           func(ctx context.Context, frames []*LogFrame) error
 }
 
 func (s *Store) GetRedactor() *redact.Redactor {
@@ -51,12 +56,28 @@ func (s *Store) UpdateRedactorAddSecrets(secrets []string) {
 	s.mu.Unlock()
 }
 
-func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
-	if s.storeLocal {
-		s.mu.Lock()
-		s.frames = append(s.frames, frames...)
-		s.mu.Unlock()
+func (s *Store) SetOnFlush(maxSize int64, onFlush func(context.Context, []*LogFrame) error) {
+	s.mu.Lock()
+	s.maxSize = maxSize
+	s.onFlush = onFlush
+	if s.frames == nil {
+		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
 	}
+	s.mu.Unlock()
+}
+
+func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
+	var framesSize int64
+	for _, f := range frames {
+		framesSize += int64(len(f.Data))
+	}
+
+	s.mu.Lock()
+	if s.storeLocal || s.onFlush != nil {
+		s.frames = append(s.frames, frames...)
+	}
+	s.totalSize += framesSize
+	s.mu.Unlock()
 
 	if s.storeRemote {
 		// Store log data in redis
@@ -73,6 +94,25 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		_, err = s.redisClient.Publish(ctx, s.Key, buildMessage(CommandNewData)).Result()
 		if err != nil {
 			return apperrors.New(err).WithMsgLog("failed to notify consumers about the new data")
+		}
+	}
+
+	s.mu.Lock()
+	shouldFlush := s.onFlush != nil && s.maxSize > 0 && s.totalSize >= s.maxSize
+	var framesToFlush []*LogFrame
+	if shouldFlush {
+		framesToFlush = s.frames
+		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
+		s.totalSize = 0
+	}
+	s.mu.Unlock()
+
+	if shouldFlush && len(framesToFlush) > 0 {
+		if s.storeRemote {
+			_ = redishelper.Del(ctx, s.redisClient, s.Key)
+		}
+		if err := s.onFlush(ctx, framesToFlush); err != nil {
+			return err
 		}
 	}
 
@@ -144,6 +184,7 @@ func (s *Store) Reset() (err error) {
 	if s.storeLocal {
 		s.mu.Lock()
 		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
+		s.totalSize = 0
 		s.mu.Unlock()
 	}
 	return err
@@ -173,10 +214,9 @@ func newStore(
 
 func NewRemoteStore(
 	key string,
-	storeLocal bool,
 	redisClient redis.UniversalClient,
 ) *Store {
-	return newStore(key, storeLocal, true, redisClient)
+	return newStore(key, true, true, redisClient)
 }
 
 func NewLocalStore(

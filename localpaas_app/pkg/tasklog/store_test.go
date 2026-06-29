@@ -44,3 +44,66 @@ func TestStore_AddRedacted(t *testing.T) {
 	assert.Equal(t, "normal message", frames[0].Data)
 	assert.Equal(t, "leak ******** in log", frames[1].Data)
 }
+
+func TestStore_FlushThreshold(t *testing.T) {
+	store := newStore("testkey", true, false, nil)
+
+	var flushedFrames []*LogFrame
+	var callCount int
+
+	store.SetOnFlush(10, func(ctx context.Context, frames []*LogFrame) error {
+		flushedFrames = append(flushedFrames, frames...)
+		callCount++
+		return nil
+	})
+
+	// Add a frame of size 5. Size < 10, shouldn't flush.
+	err := store.Add(context.Background(), NewOutFrame("hello", TsNow))
+	assert.NoError(t, err)
+	assert.Equal(t, 0, callCount)
+	assert.Equal(t, int64(5), store.totalSize)
+
+	// Add another frame of size 5. Total size becomes 10 >= 10. Should flush!
+	err = store.Add(context.Background(), NewOutFrame("world", TsNow))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, callCount)
+	assert.Len(t, flushedFrames, 2)
+	assert.Equal(t, "hello", flushedFrames[0].Data)
+	assert.Equal(t, "world", flushedFrames[1].Data)
+
+	// Store size should be reset
+	assert.Equal(t, int64(0), store.totalSize)
+	assert.Len(t, store.frames, 0)
+}
+
+func TestStore_FlushThreshold_NoStoreLocal(t *testing.T) {
+	// Initialize with storeLocal = false, storeRemote = false
+	store := newStore("testkey", false, false, nil)
+
+	var flushedFrames []*LogFrame
+	var callCount int
+
+	store.SetOnFlush(10, func(ctx context.Context, frames []*LogFrame) error {
+		flushedFrames = append(flushedFrames, frames...)
+		callCount++
+		return nil
+	})
+
+	// Add a frame of size 5. Shouldn't flush.
+	err := store.Add(context.Background(), NewOutFrame("hello", TsNow))
+	assert.NoError(t, err)
+	assert.Equal(t, 0, callCount)
+	assert.Equal(t, int64(5), store.totalSize)
+
+	// Add another frame of size 5. Total size becomes 10 >= 10. Should flush!
+	err = store.Add(context.Background(), NewOutFrame("world", TsNow))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, callCount)
+	assert.Len(t, flushedFrames, 2)
+	assert.Equal(t, "hello", flushedFrames[0].Data)
+	assert.Equal(t, "world", flushedFrames[1].Data)
+
+	// Store size and frames should be reset
+	assert.Equal(t, int64(0), store.totalSize)
+	assert.Len(t, store.frames, 0)
+}

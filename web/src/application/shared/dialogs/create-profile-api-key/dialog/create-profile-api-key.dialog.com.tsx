@@ -132,7 +132,7 @@ export function CreateProfileApiKeyDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                     />
-                    {showGeneratedKey ? (
+                    {showGeneratedKey && (
                         <div className={cn(dashedBorderBox, "space-y-6")}>
                             <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1">
@@ -177,15 +177,6 @@ export function CreateProfileApiKeyDialog() {
                                     </div>
                                 </>
                             )}
-                        </div>
-                    ) : (
-                        <div
-                            className={cn(
-                                dashedBorderBox,
-                                "space-y-6 text-center flex items-center justify-center min-h-[66px]",
-                            )}
-                        >
-                            Press the button below to generate an API key
                         </div>
                     )}
                 </DialogBody>

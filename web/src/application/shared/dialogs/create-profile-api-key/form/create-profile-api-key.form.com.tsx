@@ -1,4 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 
@@ -71,11 +73,26 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
         <div className="flex flex-col gap-4">
             <form
                 id={formId}
+                className="flex flex-col gap-4"
                 onSubmit={event => {
                     event.preventDefault();
                     void handleSubmit(onValid, onInvalid)(event);
                 }}
             >
+                <div className={cn(dashedBorderBox, "space-y-3 text-center text-sm leading-6")}>
+                    <p>
+                        <span className="text-orange-500">Note:</span> An API key allows you to call the LocalPaaS API
+                        without accessing the dashboard. We recommend granting only the permissions necessary for your
+                        purpose.
+                    </p>
+                    <p>
+                        Examples of permission scopes: to trigger a deployment for an application or access the
+                        application&apos;s terminal, you need <span className="text-orange-500">Execute</span>{" "}
+                        permission. To configure deployment settings or other application settings, you need{" "}
+                        <span className="text-orange-500">Write</span> permission.
+                    </p>
+                </div>
+
                 <FieldGroup>
                     <InfoBlock
                         title={<LabelWithInfo label="Name" />}

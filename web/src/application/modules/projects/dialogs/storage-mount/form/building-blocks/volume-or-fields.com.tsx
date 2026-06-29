@@ -120,7 +120,15 @@ function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: 
                         title={<LabelWithInfo label="Required Subpath Prefix" />}
                         titleWidth={180}
                     >
-                        <div className={cn(dashedBorderBox, "py-2 px-3 rounded-md")}>{subpathRequiredField.value}</div>
+                        <div
+                            className={cn(
+                                dashedBorderBox,
+                                PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS,
+                                "py-2 px-3 rounded-md",
+                            )}
+                        >
+                            {subpathRequiredField.value}
+                        </div>
                     </InfoBlock>
                 </Field>
             )}

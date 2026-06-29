@@ -4,12 +4,12 @@ import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-
 import {
     SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { InfoBlock, InputWithAddOn, LabelWithInfo, SelectWithAddon } from "@application/shared/components";
 import { EEmailKind } from "@application/shared/enums";
 import { FieldListLayout, KeyValueList } from "@application/shared/form";
@@ -405,7 +405,8 @@ export function CreateOrEditEmailAccountForm({
                                         title={<LabelWithInfo label="Field Mappings" />}
                                     >
                                         <FieldListLayout
-                                            inputsClassName={`grid flex-1 grid-cols-2 gap-2 ${SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}`}
+                                            className={SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
+                                            inputsClassName="grid min-w-0 flex-1 grid-cols-2 gap-2"
                                             inputRow={
                                                 <>
                                                     <SelectWithAddon

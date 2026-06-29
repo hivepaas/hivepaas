@@ -16,6 +16,7 @@ export const QK = {
     "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",
     "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
     "projects.apps.deployments.$.find-one-by-id": "projects.apps.deployments.$.find-one-by-id",
+    "projects.apps.previews.$.find-many-paginated": "projects.apps.previews.$.find-many-paginated",
     /*
      * Project Secrets
      */
@@ -104,6 +105,8 @@ export const QK = {
      */
     "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",
     "projects.git-credentials.$.find-many-repos": "projects.git-credentials.$.find-many-repos",
+    "projects.git-credentials.$.find-many-branches": "projects.git-credentials.$.find-many-branches",
+    "projects.git-credentials.$.find-many-pull-requests": "projects.git-credentials.$.find-many-pull-requests",
     /*
      * Project Registry Auth
      */

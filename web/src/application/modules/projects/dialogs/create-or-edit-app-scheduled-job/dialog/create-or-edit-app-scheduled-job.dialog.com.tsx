@@ -40,13 +40,17 @@ function mapFormValuesToPayload(
             ...(scheduleInterval ? { interval: scheduleInterval } : {}),
             ...(scheduleCronExpr ? { cronExpr: scheduleCronExpr } : {}),
             ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
+            ...(values.scheduleTo ? { endTime: values.scheduleTo } : {}),
         },
         app: {
             id: appId,
         },
         priority: values.priority,
-        maxRetry: values.maxRetry,
+        maxRetry: values.maxRetry ?? 0,
         ...(hasText(values.retryDelay) ? { retryDelay: values.retryDelay } : {}),
+        ...(hasText(values.retryDelayIncr) ? { retryDelayIncr: values.retryDelayIncr } : {}),
+        retryBackoff: values.retryBackoff,
+        ...(hasText(values.retryDelayMax) ? { retryDelayMax: values.retryDelayMax } : {}),
         ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
         controlDisabled: !values.controlEnabled,
         command: {

@@ -1025,6 +1025,16 @@ export const projectsRouter: RouteObject = {
                  * Single App – Preview Deployments
                  */
                 {
+                    path: ROUTE.projects.single.apps.single.previewDeployments.create.$pattern,
+                    lazy: async () => {
+                        const { AppPreviewDeploymentCreateRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppPreviewDeploymentCreateRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.apps.single.previewDeployments.$pattern,
                     lazy: async () => {
                         const { AppPreviewDeploymentsRoute } = await getLazyComponents();

@@ -29,10 +29,29 @@ const NamedRefSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+const NullableDateSchema = z.preprocess(value => {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}, z.date().nullable());
+
 const ScheduleSchema = z.object({
     cronExpr: z.string().optional().default(""),
     interval: z.string().optional().default(""),
     initialTime: z.coerce.date(),
+    endTime: NullableDateSchema,
 });
 
 const EnvVarSchema = z.object({
@@ -122,30 +141,15 @@ const AppScheduledJobSchema = z.object({
     priority: z.nativeEnum(EAppScheduledJobTaskPriority),
     maxRetry: z.number().optional().default(0),
     retryDelay: z.string().optional().default(""),
+    retryDelayIncr: z.string().optional().default(""),
+    retryBackoff: z.boolean().optional().default(false),
+    retryDelayMax: z.string().optional().default(""),
     timeout: z.string().optional().default(""),
     controlDisabled: z.boolean().optional().default(false),
     command: CommandSchema,
     notification: NotificationSchema,
     nextRuns: z.array(z.coerce.date()).optional().default([]),
 });
-
-const NullableDateSchema = z.preprocess(value => {
-    if (value === null || value === undefined || value === "") {
-        return null;
-    }
-
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-
-    if (typeof value !== "string" && typeof value !== "number") {
-        return null;
-    }
-
-    const date = new Date(value);
-
-    return Number.isNaN(date.getTime()) ? null : date;
-}, z.date().nullable());
 
 const AppScheduledJobTaskPrioritySchema = z
     .string()

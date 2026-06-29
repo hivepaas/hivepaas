@@ -624,6 +624,12 @@ export const ROUTE = {
                     previewDeployments: {
                         $pattern: "projects/:id/apps/:appId/preview-deployments",
                         $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/preview-deployments/`,
+
+                        create: {
+                            $pattern: "projects/:id/apps/:appId/preview-deployments/create",
+                            $route: (id: string, appId: string) =>
+                                `/projects/${id}/apps/${appId}/preview-deployments/create/`,
+                        },
                     },
                 },
             },

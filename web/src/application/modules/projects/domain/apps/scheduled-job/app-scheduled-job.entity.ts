@@ -15,6 +15,7 @@ export interface AppScheduledJobSchedule {
     cronExpr: string;
     interval: string;
     initialTime: Date;
+    endTime: Date | null;
 }
 
 export interface AppScheduledJobCommandEnvVar {
@@ -84,6 +85,9 @@ export interface AppScheduledJob {
     priority: EAppScheduledJobTaskPriority;
     maxRetry: number;
     retryDelay: string;
+    retryDelayIncr: string;
+    retryBackoff: boolean;
+    retryDelayMax: string;
     timeout: string;
     controlDisabled: boolean;
     command: AppScheduledJobCommand | null;

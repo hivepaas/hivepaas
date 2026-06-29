@@ -104,6 +104,10 @@ func (s *service) loadAppDataForCreatingPreview(
 	if err != nil {
 		return apperrors.New(err)
 	}
+	// The app must not be a child app
+	if app.ParentID != "" {
+		return apperrors.New(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	if deploymentSetting == nil {

@@ -17,6 +17,8 @@ import {
     AppLogsApi,
     AppLogsApiValidator,
     AppLogsWsApi,
+    AppPreviewsApi,
+    AppPreviewsApiValidator,
     AppScheduledJobTaskLogsWsApi,
     AppScheduledJobsApi,
     AppScheduledJobsApiValidator,
@@ -127,6 +129,7 @@ function createApi() {
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
     const appDeploymentsApiValidator = new AppDeploymentsApiValidator();
     const appDeploymentsApi = new AppDeploymentsApi(appDeploymentsApiValidator);
+    const appPreviewsApiValidator = new AppPreviewsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appFeatureSettingsApiValidator = new AppFeatureSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
@@ -186,6 +189,9 @@ function createApi() {
                     logs: {
                         $: new AppDeploymentLogsWsApi(),
                     },
+                },
+                previews: {
+                    $: new AppPreviewsApi(appPreviewsApiValidator),
                 },
                 containerSettings: {
                     $: new AppContainerSettingsApi(appContainerSettingsApiValidator),

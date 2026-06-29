@@ -1,5 +1,6 @@
 export * from "./project-apps.commands";
 export * from "./app-deployments.commands";
+export * from "./app-previews.commands";
 export * from "./project-app-env-vars.commands";
 export * from "./project-app-secrets.commands";
 export * from "./app-config-files.commands";

@@ -14,7 +14,6 @@ import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { Button, DataTable } from "@/components/ui";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export function AppConfigFilesRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
@@ -36,9 +35,6 @@ export function AppConfigFilesRoute() {
             },
             APP_CONFIGURATION_QUERY_OPTIONS,
         );
-
-    const ownConfigFiles = useMemo(() => configFiles.filter(configFile => !configFile.inherited), [configFiles]);
-    const inheritedConfigFiles = useMemo(() => configFiles.filter(configFile => configFile.inherited), [configFiles]);
 
     const columns = useMemo(() => AppConfigFilesTableDefs.columns(projectId, appId), [projectId, appId]);
 
@@ -70,51 +66,19 @@ export function AppConfigFilesRoute() {
                 }
             />
 
-            <Accordion
-                type="multiple"
-                defaultValue={["config-files"]}
-                className="w-full"
-            >
-                <AccordionItem
-                    value="inherited-config-files"
-                    className="border-none"
-                >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 data-[state=closed]:mb-6 bg-accent">
-                        Inherited Config Files
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pt-4 mb-4">
-                        <DataTable
-                            columns={columns}
-                            data={inheritedConfigFiles}
-                            isLoading={isFetching}
-                            enablePagination={false}
-                        />
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem
-                    value="config-files"
-                    className="border-none"
-                >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
-                        Config Files
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pt-4 mb-4">
-                        <DataTable
-                            columns={columns}
-                            data={ownConfigFiles}
-                            isLoading={isFetching}
-                            pageSize={pagination.size}
-                            manualPagination
-                            totalCount={meta.page.total}
-                            onPaginationChange={setPagination}
-                            manualSorting
-                            onSortingChange={setSorting}
-                            enablePagination
-                            showPageSizeSelector={false}
-                        />
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+            <DataTable
+                columns={columns}
+                data={configFiles}
+                isLoading={isFetching}
+                pageSize={pagination.size}
+                manualPagination
+                totalCount={meta.page.total}
+                onPaginationChange={setPagination}
+                manualSorting
+                onSortingChange={setSorting}
+                enablePagination
+                showPageSizeSelector={false}
+            />
         </div>
     );
 }

@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { AppConfigFile } from "~/projects/domain";
@@ -41,7 +42,12 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppConfigFil
             header: "Status",
             cell: ({ row: { original } }) => {
                 const { status } = original;
-                return <ProjectSecretStatusBadge status={status} />;
+                return (
+                    <div className="flex items-center justify-center gap-2">
+                        <ProjectSecretStatusBadge status={status} />
+                        {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
+                    </div>
+                );
             },
             meta: {
                 align: "center",

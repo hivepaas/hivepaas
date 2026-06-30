@@ -277,7 +277,7 @@ export function CreateOrEditAppScheduledJobForm({
                                         title="Schedule From"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
-                                        <div className="flex w-full max-w-[860px] flex-wrap items-start gap-x-4 gap-y-3">
+                                        <div className="flex w-full max-w-[600px] flex-wrap items-start gap-x-4 gap-y-3">
                                             <Field className="min-w-[260px] flex-1">
                                                 <DateTimePicker
                                                     value={scheduleFrom.value ?? undefined}
@@ -371,7 +371,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 <FieldError errors={[errors.maxRetry]} />
                                             </div>
 
-                                            <div className="flex min-w-[180px] flex-col gap-1.5">
+                                            <div className="flex min-w-[0] flex-col gap-1.5">
                                                 <div className="flex min-w-0 items-center gap-2">
                                                     <label
                                                         htmlFor={retryDelayInputId}
@@ -379,19 +379,21 @@ export function CreateOrEditAppScheduledJobForm({
                                                     >
                                                         Delay
                                                     </label>
-                                                    <Input
-                                                        id={retryDelayInputId}
-                                                        {...retryDelay}
-                                                        placeholder="10s"
-                                                        className="w-[110px]"
-                                                        aria-invalid={isRetryDelayInvalid}
-                                                        disabled={readOnly}
-                                                    />
+                                                    <div className="">
+                                                        <Input
+                                                            id={retryDelayInputId}
+                                                            {...retryDelay}
+                                                            placeholder="10s"
+                                                            className="w-[110px]"
+                                                            aria-invalid={isRetryDelayInvalid}
+                                                            disabled={readOnly}
+                                                        />
+                                                        <FieldError errors={[errors.retryDelay]} />
+                                                    </div>
                                                 </div>
-                                                <FieldError errors={[errors.retryDelay]} />
                                             </div>
 
-                                            <div className="flex min-w-[210px] flex-col gap-1.5">
+                                            <div className="flex min-w-0 flex-col gap-1.5">
                                                 <div className="flex min-w-0 items-center gap-2">
                                                     <label
                                                         htmlFor={retryDelayIncrInputId}
@@ -424,7 +426,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 />
                                             </div>
 
-                                            <div className="flex min-w-[200px] flex-col gap-1.5">
+                                            <div className="flex min-w-0 flex-col gap-1.5">
                                                 <div className="flex min-w-0 items-center gap-2">
                                                     <label
                                                         htmlFor={retryDelayMaxInputId}
@@ -634,7 +636,7 @@ export function CreateOrEditAppScheduledJobForm({
                                             name="envVars"
                                             keyLabel="Key"
                                             valueLabel="Value"
-                                            className="max-w-[660px]"
+                                            className="max-w-[600px]"
                                             checkDuplicates
                                             disabled={readOnly}
                                         />

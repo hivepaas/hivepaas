@@ -280,7 +280,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                             </InfoBlock>
 
                             <div
-                                className="flex max-w-[760px] flex-col gap-3"
+                                className="flex flex-col gap-3"
                                 style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
                             >
                                 <div className="flex flex-wrap gap-3">
@@ -316,7 +316,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                             </div>
 
                             <div
-                                className={cn(dashedBorderBox, "max-w-[760px] text-center text-sm")}
+                                className={cn(dashedBorderBox, "text-center text-sm")}
                                 style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
                             >
                                 <div className="break-all">

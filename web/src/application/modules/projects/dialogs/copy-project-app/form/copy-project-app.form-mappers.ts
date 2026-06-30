@@ -27,16 +27,18 @@ export function mapCopyProjectAppFormToPayload(values: CopyProjectAppFormOutput)
         ...values,
         copyHttpSettings: {
             copy: values.copyHttpSettings.copy,
-            copyDomainSettings: values.copyHttpSettings.copyDomainSettings.map(domain => ({
-                sourceDomain: domain.sourceDomain,
-                targetDomain: domain.targetDomain,
-                sourceSslCert: {
-                    id: domain.sourceSslCert?.id ?? "",
-                },
-                targetSslCert: {
-                    id: domain.targetSslCert?.id ?? "",
-                },
-            })),
+            copyDomainSettings: values.copyHttpSettings.copyDomainSettings
+                .filter(domain => domain.targetDomain.trim() !== "")
+                .map(domain => ({
+                    sourceDomain: domain.sourceDomain,
+                    targetDomain: domain.targetDomain.trim(),
+                    sourceSslCert: {
+                        id: domain.sourceSslCert?.id ?? "",
+                    },
+                    targetSslCert: {
+                        id: domain.targetSslCert?.id ?? "",
+                    },
+                })),
         },
     };
 }

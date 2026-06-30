@@ -12,7 +12,7 @@ const CopyProjectAppToggleSchema = z.object({
 
 const CopyProjectAppDomainSchema = z.object({
     sourceDomain: z.string(),
-    targetDomain: z.string().trim().min(1, "Domain is required"),
+    targetDomain: z.string().trim(),
     sourceSslCert: CopyProjectAppSslCertRefSchema.nullable(),
     targetSslCert: CopyProjectAppSslCertRefSchema.nullable(),
 });

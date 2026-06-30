@@ -6,16 +6,19 @@ import (
 )
 
 type UC struct {
-	db           *database.DB
+	db *database.DB
+
 	appErrorRepo repository.SysErrorRepo
 }
 
 func New(
 	db *database.DB,
+
 	appErrorRepo repository.SysErrorRepo,
 ) *UC {
 	return &UC{
-		db:           db,
+		db: db,
+
 		appErrorRepo: appErrorRepo,
 	}
 }

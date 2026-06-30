@@ -14,9 +14,11 @@ import (
 )
 
 type Executor struct {
-	logger              logging.Logger
-	db                  *database.DB
-	notifEventRepo      cacherepository.HealthcheckNotifEventRepo
+	logger logging.Logger
+	db     *database.DB
+
+	notifEventRepo cacherepository.HealthcheckNotifEventRepo
+
 	healthcheckService  healthcheckservice.Service
 	notificationService notificationservice.Service
 }
@@ -25,7 +27,9 @@ func NewExecutor(
 	logger logging.Logger,
 	db *database.DB,
 	taskQueue queue.TaskQueue,
+
 	notifEventRepo cacherepository.HealthcheckNotifEventRepo,
+
 	healthcheckService healthcheckservice.Service,
 	notificationService notificationservice.Service,
 ) *Executor {

@@ -8,34 +8,37 @@ import (
 )
 
 func New(
-	userRepo repository.UserRepo,
-	settingRepo repository.SettingRepo,
-	resLinkRepo repository.ResLinkRepo,
-	fileRepo repository.FileRepo,
-	taskRepo repository.TaskRepo,
 	binObjectRepo repository.BinObjectRepo,
+	fileRepo repository.FileRepo,
+	resLinkRepo repository.ResLinkRepo,
+	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
+	userRepo repository.UserRepo,
 	userTokenRepo cacherepository.UserTokenRepo,
+
 	permissionManager permission.Manager,
 ) userservice.Service {
 	return &service{
-		userRepo:          userRepo,
-		settingRepo:       settingRepo,
-		resLinkRepo:       resLinkRepo,
-		fileRepo:          fileRepo,
-		taskRepo:          taskRepo,
-		binObjectRepo:     binObjectRepo,
-		userTokenRepo:     userTokenRepo,
+		binObjectRepo: binObjectRepo,
+		fileRepo:      fileRepo,
+		resLinkRepo:   resLinkRepo,
+		settingRepo:   settingRepo,
+		taskRepo:      taskRepo,
+		userRepo:      userRepo,
+		userTokenRepo: userTokenRepo,
+
 		permissionManager: permissionManager,
 	}
 }
 
 type service struct {
-	userRepo          repository.UserRepo
-	settingRepo       repository.SettingRepo
-	resLinkRepo       repository.ResLinkRepo
-	fileRepo          repository.FileRepo
-	taskRepo          repository.TaskRepo
-	binObjectRepo     repository.BinObjectRepo
-	userTokenRepo     cacherepository.UserTokenRepo
+	binObjectRepo repository.BinObjectRepo
+	fileRepo      repository.FileRepo
+	resLinkRepo   repository.ResLinkRepo
+	settingRepo   repository.SettingRepo
+	taskRepo      repository.TaskRepo
+	userRepo      repository.UserRepo
+	userTokenRepo cacherepository.UserTokenRepo
+
 	permissionManager permission.Manager
 }

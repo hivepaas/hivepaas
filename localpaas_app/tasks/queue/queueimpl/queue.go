@@ -20,21 +20,23 @@ import (
 )
 
 type taskQueue struct {
-	db                        *database.DB
-	config                    *config.Config
-	logger                    logging.Logger
-	server                    *gocronqueue.Server
-	client                    *gocronqueue.Client
-	redisClient               rediscache.Client
+	db          *database.DB
+	config      *config.Config
+	logger      logging.Logger
+	server      *gocronqueue.Server
+	client      *gocronqueue.Client
+	redisClient rediscache.Client
+
 	settingRepo               repository.SettingRepo
 	taskRepo                  repository.TaskRepo
 	taskInfoRepo              cacherepository.TaskInfoRepo
-	healthcheckSettingsRepo   cacherepository.HealthcheckSettingsRepo
 	healthcheckNotifEventRepo cacherepository.HealthcheckNotifEventRepo
-	schedJobService           schedjobservice.Service
-	taskService               taskservice.Service
-	settingService            settingservice.Service
-	startupService            startupservice.Service
+	healthcheckSettingsRepo   cacherepository.HealthcheckSettingsRepo
+
+	schedJobService schedjobservice.Service
+	settingService  settingservice.Service
+	startupService  startupservice.Service
+	taskService     taskservice.Service
 
 	taskExecutorMap     map[base.TaskType]gocronqueue.TaskExecFunc
 	healthcheckExecutor queue.HealthcheckExecFunc

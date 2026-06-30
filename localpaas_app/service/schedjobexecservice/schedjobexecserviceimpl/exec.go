@@ -1,4 +1,4 @@
-package containerexecserviceimpl
+package schedjobexecserviceimpl
 
 import (
 	"context"
@@ -13,11 +13,12 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/funcutil"
 	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobexecservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
 type schedJobExecData struct {
-	*containerexecservice.SchedJobExecReq
+	*schedjobexecservice.SchedJobExecReq
 
 	SchedJob *entity.SchedJob
 	File     *entity.File
@@ -31,8 +32,8 @@ type schedJobExecData struct {
 func (s *service) SchedJobExec(
 	ctx context.Context,
 	db database.Tx,
-	req *containerexecservice.SchedJobExecReq,
-) (_ *containerexecservice.SchedJobExecResp, err error) {
+	req *schedjobexecservice.SchedJobExecReq,
+) (_ *schedjobexecservice.SchedJobExecResp, err error) {
 	defer funcutil.EnsureNoPanic(&err)
 
 	schedJob := req.SchedJobSetting.MustAsSchedJob()
@@ -60,7 +61,7 @@ func (s *service) SchedJobExec(
 
 	defer s.schedJobExecCleanup(err, data)
 
-	_, err = s.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
+	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 		Project:                req.Project,
 		App:                    req.App,
 		TaskMinRunningDuration: req.TaskMinRunningDuration,
@@ -88,5 +89,5 @@ func (s *service) SchedJobExec(
 		return nil, apperrors.New(err)
 	}
 
-	return &containerexecservice.SchedJobExecResp{}, nil
+	return &schedjobexecservice.SchedJobExecResp{}, nil
 }

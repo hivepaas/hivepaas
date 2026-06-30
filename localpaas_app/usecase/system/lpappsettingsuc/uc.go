@@ -10,28 +10,37 @@ import (
 )
 
 type UC struct {
-	db            *database.DB
-	settingRepo   repository.SettingRepo
-	lpAppService  lpappservice.Service
-	taskService   taskservice.Service
-	taskQueue     queue.TaskQueue
+	db        *database.DB
+	taskQueue queue.TaskQueue
+
+	settingRepo repository.SettingRepo
+
+	lpAppService lpappservice.Service
+	taskService  taskservice.Service
+
 	dockerManager docker.Manager
 }
 
 func New(
 	db *database.DB,
+	taskQueue queue.TaskQueue,
+
 	settingRepo repository.SettingRepo,
+
 	lpAppService lpappservice.Service,
 	taskService taskservice.Service,
-	taskQueue queue.TaskQueue,
+
 	dockerManager docker.Manager,
 ) *UC {
 	return &UC{
-		db:            db,
-		settingRepo:   settingRepo,
-		lpAppService:  lpAppService,
-		taskService:   taskService,
-		taskQueue:     taskQueue,
+		db:        db,
+		taskQueue: taskQueue,
+
+		settingRepo: settingRepo,
+
+		lpAppService: lpAppService,
+		taskService:  taskService,
+
 		dockerManager: dockerManager,
 	}
 }

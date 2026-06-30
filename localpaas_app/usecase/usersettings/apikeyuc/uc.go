@@ -9,9 +9,9 @@ type UC struct {
 }
 
 func New(
-	baseSettingUC *settings.BaseUC,
+	baseUC *settings.BaseUC,
 ) *UC {
 	return &UC{
-		BaseUC: baseSettingUC,
+		BaseUC: baseUC,
 	}
 }

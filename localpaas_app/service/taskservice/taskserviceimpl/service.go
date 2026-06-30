@@ -11,32 +11,32 @@ import (
 func New(
 	db *database.DB,
 	redisClient rediscache.Client,
-	taskRepo repository.TaskRepo,
-	taskLogRepo repository.TaskLogRepo,
-	settingRepo repository.SettingRepo,
+
 	lockRepo repository.LockRepo,
-	taskInfoRepo cacherepository.TaskInfoRepo,
 	taskControlRepo cacherepository.TaskControlRepo,
+	taskInfoRepo cacherepository.TaskInfoRepo,
+	taskLogRepo repository.TaskLogRepo,
+	taskRepo repository.TaskRepo,
 ) taskservice.Service {
 	return &service{
-		db:              db,
-		redisClient:     redisClient,
-		taskRepo:        taskRepo,
-		taskLogRepo:     taskLogRepo,
-		settingRepo:     settingRepo,
+		db:          db,
+		redisClient: redisClient,
+
 		lockRepo:        lockRepo,
-		taskInfoRepo:    taskInfoRepo,
 		taskControlRepo: taskControlRepo,
+		taskInfoRepo:    taskInfoRepo,
+		taskLogRepo:     taskLogRepo,
+		taskRepo:        taskRepo,
 	}
 }
 
 type service struct {
-	db              *database.DB
-	redisClient     rediscache.Client
-	taskRepo        repository.TaskRepo
-	taskLogRepo     repository.TaskLogRepo
-	settingRepo     repository.SettingRepo
+	db          *database.DB
+	redisClient rediscache.Client
+
 	lockRepo        repository.LockRepo
-	taskInfoRepo    cacherepository.TaskInfoRepo
 	taskControlRepo cacherepository.TaskControlRepo
+	taskInfoRepo    cacherepository.TaskInfoRepo
+	taskLogRepo     repository.TaskLogRepo
+	taskRepo        repository.TaskRepo
 }

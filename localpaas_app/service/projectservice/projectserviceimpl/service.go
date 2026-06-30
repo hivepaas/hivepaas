@@ -6,57 +6,59 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
 func New(
-	projectRepo repository.ProjectRepo,
 	appRepo repository.AppRepo,
-	projectTagRepo repository.ProjectTagRepo,
-	settingRepo repository.SettingRepo,
-	resLinkRepo repository.ResLinkRepo,
-	fileRepo repository.FileRepo,
-	userRepo repository.UserRepo,
-	taskRepo repository.TaskRepo,
 	binObjectRepo repository.BinObjectRepo,
-	permissionManager permission.Manager,
-	userService userservice.Service,
+	fileRepo repository.FileRepo,
+	projectRepo repository.ProjectRepo,
+	projectTagRepo repository.ProjectTagRepo,
+	resLinkRepo repository.ResLinkRepo,
+	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
+	userRepo repository.UserRepo,
+
 	appService appservice.Service,
 	networkService networkservice.Service,
+
 	dockerManager docker.Manager,
+	permissionManager permission.Manager,
 ) projectservice.Service {
 	return &service{
-		projectRepo:       projectRepo,
-		appRepo:           appRepo,
-		projectTagRepo:    projectTagRepo,
-		settingRepo:       settingRepo,
-		resLinkRepo:       resLinkRepo,
-		fileRepo:          fileRepo,
-		userRepo:          userRepo,
-		taskRepo:          taskRepo,
-		binObjectRepo:     binObjectRepo,
-		permissionManager: permissionManager,
-		userService:       userService,
-		appService:        appService,
-		networkService:    networkService,
+		appRepo:        appRepo,
+		binObjectRepo:  binObjectRepo,
+		fileRepo:       fileRepo,
+		projectRepo:    projectRepo,
+		projectTagRepo: projectTagRepo,
+		resLinkRepo:    resLinkRepo,
+		settingRepo:    settingRepo,
+		taskRepo:       taskRepo,
+		userRepo:       userRepo,
+
+		appService:     appService,
+		networkService: networkService,
+
 		dockerManager:     dockerManager,
+		permissionManager: permissionManager,
 	}
 }
 
 type service struct {
-	projectRepo       repository.ProjectRepo
-	appRepo           repository.AppRepo
-	projectTagRepo    repository.ProjectTagRepo
-	settingRepo       repository.SettingRepo
-	resLinkRepo       repository.ResLinkRepo
-	fileRepo          repository.FileRepo
-	userRepo          repository.UserRepo
-	taskRepo          repository.TaskRepo
-	binObjectRepo     repository.BinObjectRepo
-	permissionManager permission.Manager
-	userService       userservice.Service
-	appService        appservice.Service
-	networkService    networkservice.Service
+	appRepo        repository.AppRepo
+	binObjectRepo  repository.BinObjectRepo
+	fileRepo       repository.FileRepo
+	projectRepo    repository.ProjectRepo
+	projectTagRepo repository.ProjectTagRepo
+	resLinkRepo    repository.ResLinkRepo
+	settingRepo    repository.SettingRepo
+	taskRepo       repository.TaskRepo
+	userRepo       repository.UserRepo
+
+	appService     appservice.Service
+	networkService networkservice.Service
+
 	dockerManager     docker.Manager
+	permissionManager permission.Manager
 }

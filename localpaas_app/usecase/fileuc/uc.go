@@ -10,28 +10,34 @@ import (
 )
 
 type UC struct {
-	db             *database.DB
-	fileRepo       repository.FileRepo
+	db *database.DB
+
+	fileRepo repository.FileRepo
+
+	appService     appservice.Service
 	fileService    fileservice.Service
 	projectService projectservice.Service
-	appService     appservice.Service
 	userService    userservice.Service
 }
 
 func New(
 	db *database.DB,
+
 	fileRepo repository.FileRepo,
+
+	appService appservice.Service,
 	fileService fileservice.Service,
 	projectService projectservice.Service,
-	appService appservice.Service,
 	userService userservice.Service,
 ) *UC {
 	return &UC{
-		db:             db,
-		fileRepo:       fileRepo,
+		db: db,
+
+		fileRepo: fileRepo,
+
+		appService:     appService,
 		fileService:    fileService,
 		projectService: projectService,
-		appService:     appService,
 		userService:    userService,
 	}
 }

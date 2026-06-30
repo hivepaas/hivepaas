@@ -14,19 +14,22 @@ const (
 )
 
 type UC struct {
-	*settings.BaseUC
-	sslService    sslservice.Service
 	domainService domainservice.Service
+	sslService    sslservice.Service
+
+	*settings.BaseUC
 }
 
 func New(
-	baseUC *settings.BaseUC,
-	sslService sslservice.Service,
 	domainService domainservice.Service,
+	sslService sslservice.Service,
+
+	baseUC *settings.BaseUC,
 ) *UC {
 	return &UC{
-		BaseUC:        baseUC,
-		sslService:    sslService,
 		domainService: domainService,
+		sslService:    sslService,
+
+		BaseUC: baseUC,
 	}
 }

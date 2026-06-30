@@ -5,50 +5,45 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/permission"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
-	"github.com/localpaas/localpaas/services/docker"
 )
 
 type UC struct {
-	db                       *database.DB
-	projectRepo              repository.ProjectRepo
-	settingRepo              repository.SettingRepo
-	binObjectRepo            repository.BinObjectRepo
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo
-	permissionManager        permission.Manager
-	userService              userservice.Service
-	projectService           projectservice.Service
-	appService               appservice.Service
-	networkService           networkservice.Service
-	dockerManager            docker.Manager
+	db *database.DB
+
+	binObjectRepo repository.BinObjectRepo
+	projectRepo   repository.ProjectRepo
+
+	appService     appservice.Service
+	projectService projectservice.Service
+	userService    userservice.Service
+
+	permissionManager permission.Manager
 }
 
 func New(
 	db *database.DB,
-	projectRepo repository.ProjectRepo,
-	settingRepo repository.SettingRepo,
+
 	binObjectRepo repository.BinObjectRepo,
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
-	permissionManager permission.Manager,
-	userService userservice.Service,
-	projectService projectservice.Service,
+	projectRepo repository.ProjectRepo,
+
 	appService appservice.Service,
-	networkService networkservice.Service,
-	dockerManager docker.Manager,
+	projectService projectservice.Service,
+	userService userservice.Service,
+
+	permissionManager permission.Manager,
 ) *UC {
 	return &UC{
-		db:                       db,
-		projectRepo:              projectRepo,
-		settingRepo:              settingRepo,
-		binObjectRepo:            binObjectRepo,
-		projectSharedSettingRepo: projectSharedSettingRepo,
-		permissionManager:        permissionManager,
-		userService:              userService,
-		projectService:           projectService,
-		appService:               appService,
-		networkService:           networkService,
-		dockerManager:            dockerManager,
+		db: db,
+
+		binObjectRepo: binObjectRepo,
+		projectRepo:   projectRepo,
+
+		appService:     appService,
+		projectService: projectService,
+		userService:    userService,
+
+		permissionManager: permissionManager,
 	}
 }

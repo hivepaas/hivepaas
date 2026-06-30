@@ -6,16 +6,16 @@ import (
 )
 
 func New(
-	settingRepo repository.SettingRepo,
 	resLinkRepo repository.ResLinkRepo,
+	settingRepo repository.SettingRepo,
 ) domainservice.Service {
 	return &service{
-		settingRepo: settingRepo,
 		resLinkRepo: resLinkRepo,
+		settingRepo: settingRepo,
 	}
 }
 
 type service struct {
-	settingRepo repository.SettingRepo
 	resLinkRepo repository.ResLinkRepo
+	settingRepo repository.SettingRepo
 }

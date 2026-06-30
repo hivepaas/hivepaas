@@ -11,16 +11,19 @@ const (
 )
 
 type UC struct {
-	*settings.BaseUC
 	sysCleanupService syscleanupservice.Service
+
+	*settings.BaseUC
 }
 
 func New(
-	baseUC *settings.BaseUC,
 	sysCleanupService syscleanupservice.Service,
+
+	baseUC *settings.BaseUC,
 ) *UC {
 	return &UC{
-		BaseUC:            baseUC,
 		sysCleanupService: sysCleanupService,
+
+		BaseUC: baseUC,
 	}
 }

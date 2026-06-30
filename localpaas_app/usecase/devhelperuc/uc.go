@@ -6,16 +6,19 @@ import (
 )
 
 type UC struct {
-	db       *database.DB
+	db *database.DB
+
 	taskRepo repository.TaskRepo
 }
 
 func New(
 	db *database.DB,
+
 	taskRepo repository.TaskRepo,
 ) *UC {
 	return &UC{
-		db:       db,
+		db: db,
+
 		taskRepo: taskRepo,
 	}
 }

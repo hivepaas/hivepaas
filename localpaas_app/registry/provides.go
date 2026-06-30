@@ -56,6 +56,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/projectservice/projectserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/repocheckoutservice/repocheckoutserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/reslinkservice/reslinkserviceimpl"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobexecservice/schedjobexecserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/schedjobservice/schedjobserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice/settingserviceimpl"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice/sslrenewalserviceimpl"
@@ -285,6 +286,7 @@ var Provides = []any{
 	agentserviceimpl.New,
 	appcopyserviceimpl.New,
 	apppreviewserviceimpl.New,
+	schedjobexecserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

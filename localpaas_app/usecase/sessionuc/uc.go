@@ -10,43 +10,52 @@ import (
 )
 
 type UC struct {
-	db                     *database.DB
-	userRepo               repository.UserRepo
+	cacheLoginAttemptRepo cacherepository.LoginAttemptRepo
+	cacheMfaPasscodeRepo  cacherepository.MFAPasscodeRepo
+	db                    *database.DB
+
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo
 	settingRepo            repository.SettingRepo
 	systemStatusRepo       repository.SystemStatusRepo
+	userRepo               repository.UserRepo
 	userTokenRepo          cacherepository.UserTokenRepo
-	cacheMfaPasscodeRepo   cacherepository.MFAPasscodeRepo
-	cacheLoginAttemptRepo  cacherepository.LoginAttemptRepo
-	userService            userservice.Service
-	emailService           emailservice.Service
-	permissionManager      permission.Manager
+
+	emailService emailservice.Service
+	userService  userservice.Service
+
+	permissionManager permission.Manager
 }
 
 func New(
+	cacheLoginAttemptRepo cacherepository.LoginAttemptRepo,
+	cacheMfaPasscodeRepo cacherepository.MFAPasscodeRepo,
 	db *database.DB,
-	userRepo repository.UserRepo,
+
 	loginTrustedDeviceRepo repository.LoginTrustedDeviceRepo,
 	settingRepo repository.SettingRepo,
 	systemStatusRepo repository.SystemStatusRepo,
+	userRepo repository.UserRepo,
 	userTokenRepo cacherepository.UserTokenRepo,
-	cacheMfaPasscodeRepo cacherepository.MFAPasscodeRepo,
-	cacheLoginAttemptRepo cacherepository.LoginAttemptRepo,
-	userService userservice.Service,
+
 	emailService emailservice.Service,
+	userService userservice.Service,
+
 	permissionManager permission.Manager,
 ) *UC {
 	return &UC{
-		db:                     db,
-		userRepo:               userRepo,
+		cacheLoginAttemptRepo: cacheLoginAttemptRepo,
+		cacheMfaPasscodeRepo:  cacheMfaPasscodeRepo,
+		db:                    db,
+
 		loginTrustedDeviceRepo: loginTrustedDeviceRepo,
 		settingRepo:            settingRepo,
 		systemStatusRepo:       systemStatusRepo,
+		userRepo:               userRepo,
 		userTokenRepo:          userTokenRepo,
-		cacheMfaPasscodeRepo:   cacheMfaPasscodeRepo,
-		cacheLoginAttemptRepo:  cacheLoginAttemptRepo,
-		userService:            userService,
-		emailService:           emailService,
-		permissionManager:      permissionManager,
+
+		emailService: emailService,
+		userService:  userService,
+
+		permissionManager: permissionManager,
 	}
 }

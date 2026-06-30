@@ -16,28 +16,34 @@ const (
 )
 
 type UC struct {
-	*settings.BaseUC
-	appRepo         repository.AppRepo
-	taskRepo        repository.TaskRepo
-	taskService     taskservice.Service
+	taskQueue queue.TaskQueue
+
+	taskRepo repository.TaskRepo
+
 	schedJobService schedjobservice.Service
-	taskQueue       queue.TaskQueue
+	taskService     taskservice.Service
+
+	*settings.BaseUC
 }
 
 func New(
-	baseUC *settings.BaseUC,
-	appRepo repository.AppRepo,
-	taskRepo repository.TaskRepo,
-	taskService taskservice.Service,
-	schedJobService schedjobservice.Service,
 	taskQueue queue.TaskQueue,
+
+	taskRepo repository.TaskRepo,
+
+	schedJobService schedjobservice.Service,
+	taskService taskservice.Service,
+
+	baseUC *settings.BaseUC,
 ) *UC {
 	return &UC{
-		BaseUC:          baseUC,
-		appRepo:         appRepo,
-		taskRepo:        taskRepo,
-		taskService:     taskService,
+		taskQueue: taskQueue,
+
+		taskRepo: taskRepo,
+
 		schedJobService: schedJobService,
-		taskQueue:       taskQueue,
+		taskService:     taskService,
+
+		BaseUC: baseUC,
 	}
 }

@@ -24,10 +24,12 @@ import (
 )
 
 type Executor struct {
-	logger           logging.Logger
-	taskQueue        queue.TaskQueue
-	taskLogRepo      repository.TaskLogRepo
-	taskRepo         repository.TaskRepo
+	logger    logging.Logger
+	taskQueue queue.TaskQueue
+
+	taskLogRepo repository.TaskLogRepo
+	taskRepo    repository.TaskRepo
+
 	sysUpdateService sysupdateservice.Service
 	taskService      taskservice.Service
 }
@@ -35,16 +37,20 @@ type Executor struct {
 func NewExecutor(
 	logger logging.Logger,
 	taskQueue queue.TaskQueue,
+
 	taskLogRepo repository.TaskLogRepo,
 	taskRepo repository.TaskRepo,
+
 	sysUpdateService sysupdateservice.Service,
 	taskService taskservice.Service,
 ) *Executor {
 	return &Executor{
-		logger:           logger,
-		taskQueue:        taskQueue,
-		taskLogRepo:      taskLogRepo,
-		taskRepo:         taskRepo,
+		logger:    logger,
+		taskQueue: taskQueue,
+
+		taskLogRepo: taskLogRepo,
+		taskRepo:    taskRepo,
+
 		sysUpdateService: sysUpdateService,
 		taskService:      taskService,
 	}

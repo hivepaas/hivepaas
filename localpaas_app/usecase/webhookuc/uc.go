@@ -6,65 +6,41 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/service/appdeploymentservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/apppreviewservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/appservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/envvarservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/networkservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/projectservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/traefikservice"
-	"github.com/localpaas/localpaas/localpaas_app/service/userservice"
 	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
-	"github.com/localpaas/localpaas/services/docker"
 )
 
 type UC struct {
-	db                   *database.DB
-	projectRepo          repository.ProjectRepo
-	appRepo              repository.AppRepo
-	settingRepo          repository.SettingRepo
-	deploymentRepo       repository.DeploymentRepo
-	userService          userservice.Service
-	appService           appservice.Service
+	db        *database.DB
+	taskQueue queue.TaskQueue
+
+	deploymentRepo repository.DeploymentRepo
+	settingRepo    repository.SettingRepo
+
 	appDeploymentService appdeploymentservice.Service
 	appPreviewService    apppreviewservice.Service
-	projectService       projectservice.Service
-	networkService       networkservice.Service
-	envVarService        envvarservice.Service
-	traefikService       traefikservice.Service
-	dockerManager        docker.Manager
-	taskQueue            queue.TaskQueue
+	appService           appservice.Service
 }
 
 func New(
 	db *database.DB,
-	projectRepo repository.ProjectRepo,
-	appRepo repository.AppRepo,
-	settingRepo repository.SettingRepo,
+	taskQueue queue.TaskQueue,
+
 	deploymentRepo repository.DeploymentRepo,
-	userService userservice.Service,
-	appService appservice.Service,
+	settingRepo repository.SettingRepo,
+
 	appDeploymentService appdeploymentservice.Service,
 	appPreviewService apppreviewservice.Service,
-	projectService projectservice.Service,
-	networkService networkservice.Service,
-	envVarService envvarservice.Service,
-	traefikService traefikservice.Service,
-	dockerManager docker.Manager,
-	taskQueue queue.TaskQueue,
+	appService appservice.Service,
 ) *UC {
 	return &UC{
-		db:                   db,
-		projectRepo:          projectRepo,
-		appRepo:              appRepo,
-		settingRepo:          settingRepo,
-		deploymentRepo:       deploymentRepo,
-		userService:          userService,
-		appService:           appService,
+		db:        db,
+		taskQueue: taskQueue,
+
+		deploymentRepo: deploymentRepo,
+		settingRepo:    settingRepo,
+
 		appDeploymentService: appDeploymentService,
 		appPreviewService:    appPreviewService,
-		projectService:       projectService,
-		networkService:       networkService,
-		envVarService:        envVarService,
-		traefikService:       traefikService,
-		dockerManager:        dockerManager,
-		taskQueue:            taskQueue,
+		appService:           appService,
 	}
 }

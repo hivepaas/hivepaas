@@ -7,19 +7,25 @@ import (
 )
 
 type UC struct {
-	db           *database.DB
-	lockRepo     repository.LockRepo
+	db *database.DB
+
+	lockRepo repository.LockRepo
+
 	lpAppService lpappservice.Service
 }
 
 func New(
 	db *database.DB,
+
 	lockRepo repository.LockRepo,
+
 	lpAppService lpappservice.Service,
 ) *UC {
 	return &UC{
-		db:           db,
-		lockRepo:     lockRepo,
+		db: db,
+
+		lockRepo: lockRepo,
+
 		lpAppService: lpAppService,
 	}
 }

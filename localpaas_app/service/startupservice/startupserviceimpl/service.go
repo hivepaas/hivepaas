@@ -8,15 +8,18 @@ import (
 
 func New(
 	db *database.DB,
+
 	settingRepo repository.SettingRepo,
 ) startupservice.Service {
 	return &service{
-		db:          db,
+		db: db,
+
 		settingRepo: settingRepo,
 	}
 }
 
 type service struct {
-	db          *database.DB
+	db *database.DB
+
 	settingRepo repository.SettingRepo
 }

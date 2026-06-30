@@ -9,7 +9,6 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
-	"github.com/localpaas/localpaas/localpaas_app/tasks/queue"
 	"github.com/localpaas/localpaas/services/docker"
 )
 
@@ -34,18 +33,4 @@ type ContainerExecResp struct {
 
 	CloseFunc      func() // NOTE: need to call this when done
 	ExecResizeFunc func(ctx context.Context, w, h uint) error
-}
-
-type SchedJobExecReq struct {
-	*queue.TaskExecData
-	SchedJobSetting        *entity.Setting
-	Project                *entity.Project
-	App                    *entity.App
-	TaskMinRunningDuration time.Duration
-	TaskFindRetryMax       int
-	TaskFindRetryDelay     time.Duration
-}
-
-type SchedJobExecResp struct {
-	SkipResultNotification bool
 }

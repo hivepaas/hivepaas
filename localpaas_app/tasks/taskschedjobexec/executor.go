@@ -17,8 +17,8 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
 	"github.com/localpaas/localpaas/localpaas_app/pkg/timeutil"
 	"github.com/localpaas/localpaas/localpaas_app/repository"
-	"github.com/localpaas/localpaas/localpaas_app/service/containerexecservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/notificationservice"
+	"github.com/localpaas/localpaas/localpaas_app/service/schedjobexecservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/settingservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sslrenewalservice"
 	"github.com/localpaas/localpaas/localpaas_app/service/sysbackupservice"
@@ -27,16 +27,18 @@ import (
 )
 
 type Executor struct {
-	logger               logging.Logger
-	db                   *database.DB
-	redisClient          rediscache.Client
-	taskLogRepo          repository.TaskLogRepo
-	settingService       settingservice.Service
-	notificationService  notificationservice.Service
-	containerExecService containerexecservice.Service
-	sysBackupService     sysbackupservice.Service
-	sysCleanupService    syscleanupservice.Service
-	sslRenewalService    sslrenewalservice.Service
+	logger      logging.Logger
+	db          *database.DB
+	redisClient rediscache.Client
+
+	taskLogRepo repository.TaskLogRepo
+
+	notificationService notificationservice.Service
+	schedJobExecService schedjobexecservice.Service
+	settingService      settingservice.Service
+	sslRenewalService   sslrenewalservice.Service
+	sysBackupService    sysbackupservice.Service
+	sysCleanupService   syscleanupservice.Service
 }
 
 func NewExecutor(
@@ -44,25 +46,29 @@ func NewExecutor(
 	db *database.DB,
 	redisClient rediscache.Client,
 	taskQueue queue.TaskQueue,
+
 	taskLogRepo repository.TaskLogRepo,
-	settingService settingservice.Service,
+
 	notificationService notificationservice.Service,
-	containerExecService containerexecservice.Service,
+	schedJobExecService schedjobexecservice.Service,
+	settingService settingservice.Service,
+	sslRenewalService sslrenewalservice.Service,
 	sysBackupService sysbackupservice.Service,
 	sysCleanupService syscleanupservice.Service,
-	sslRenewalService sslrenewalservice.Service,
 ) *Executor {
 	e := &Executor{
-		logger:               logger,
-		db:                   db,
-		redisClient:          redisClient,
-		taskLogRepo:          taskLogRepo,
-		settingService:       settingService,
-		notificationService:  notificationService,
-		containerExecService: containerExecService,
-		sysBackupService:     sysBackupService,
-		sysCleanupService:    sysCleanupService,
-		sslRenewalService:    sslRenewalService,
+		logger:      logger,
+		db:          db,
+		redisClient: redisClient,
+
+		taskLogRepo: taskLogRepo,
+
+		notificationService: notificationService,
+		schedJobExecService: schedJobExecService,
+		settingService:      settingService,
+		sslRenewalService:   sslRenewalService,
+		sysBackupService:    sysBackupService,
+		sysCleanupService:   sysCleanupService,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeSchedJobExec, e.execute)
 	return e
@@ -103,7 +109,7 @@ func (e *Executor) execute(
 	schedJob := data.SchedJob.MustAsSchedJob()
 	switch schedJob.JobType {
 	case base.SchedJobTypeContainerCommand:
-		resp, err := e.containerExecService.SchedJobExec(ctx, db, &containerexecservice.SchedJobExecReq{
+		resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
 			TaskExecData:    data.TaskExecData,
 			SchedJobSetting: data.SchedJob,
 			Project:         data.Project,

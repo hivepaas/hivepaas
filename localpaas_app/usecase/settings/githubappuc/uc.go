@@ -13,16 +13,19 @@ const (
 )
 
 type UC struct {
-	*settings.BaseUC
 	cacheAppManifestRepo cacherepository.GithubAppManifestRepo
+
+	*settings.BaseUC
 }
 
 func New(
-	baseUC *settings.BaseUC,
 	cacheAppManifestRepo cacherepository.GithubAppManifestRepo,
+
+	baseUC *settings.BaseUC,
 ) *UC {
 	return &UC{
-		BaseUC:               baseUC,
 		cacheAppManifestRepo: cacheAppManifestRepo,
+
+		BaseUC: baseUC,
 	}
 }

@@ -8,22 +8,31 @@ import (
 )
 
 type UC struct {
-	db             *database.DB
-	settingRepo    repository.SettingRepo
+	db *database.DB
+
+	settingRepo repository.SettingRepo
+
 	traefikService traefikservice.Service
-	dockerManager  docker.Manager
+
+	dockerManager docker.Manager
 }
 
 func New(
 	db *database.DB,
+
 	settingRepo repository.SettingRepo,
+
 	traefikService traefikservice.Service,
+
 	dockerManager docker.Manager,
 ) *UC {
 	return &UC{
-		db:             db,
-		settingRepo:    settingRepo,
+		db: db,
+
+		settingRepo: settingRepo,
+
 		traefikService: traefikService,
-		dockerManager:  dockerManager,
+
+		dockerManager: dockerManager,
 	}
 }

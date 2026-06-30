@@ -234,6 +234,7 @@ function DomainSslCertField({ projectId, index, readOnly }: DomainSslCertFieldPr
         name: `copyHttpSettings.copyDomainSettings.${index}.targetDomain`,
     });
     const normalizedTargetDomain = typeof targetDomain === "string" ? targetDomain.trim() : "";
+    const hasTargetDomain = normalizedTargetDomain !== "";
     const { field } = useController({
         control,
         name: `copyHttpSettings.copyDomainSettings.${index}.targetSslCert`,
@@ -248,14 +249,18 @@ function DomainSslCertField({ projectId, index, readOnly }: DomainSslCertFieldPr
         {
             projectID: projectId,
             search: searchQuery,
-            domain: normalizedTargetDomain || undefined,
+            domain: normalizedTargetDomain,
         },
         {
-            enabled: Boolean(projectId),
+            enabled: Boolean(projectId) && hasTargetDomain,
         },
     );
 
     const comboboxOptions = useMemo(() => {
+        if (!hasTargetDomain) {
+            return [];
+        }
+
         const options = sslCerts.map(cert => ({
             value: { id: cert.id, name: cert.name, domain: cert.domain },
             label: cert.name,
@@ -272,7 +277,7 @@ function DomainSslCertField({ projectId, index, readOnly }: DomainSslCertFieldPr
         }
 
         return options;
-    }, [field.value, sslCerts]);
+    }, [field.value, hasTargetDomain, sslCerts]);
 
     return (
         <CopyFormRow
@@ -281,9 +286,9 @@ function DomainSslCertField({ projectId, index, readOnly }: DomainSslCertFieldPr
         >
             <Combobox
                 options={comboboxOptions}
-                value={field.value?.id ?? null}
+                value={hasTargetDomain ? (field.value?.id ?? null) : null}
                 onChange={(_, option) => {
-                    if (readOnly) {
+                    if (readOnly || !hasTargetDomain) {
                         return;
                     }
 
@@ -296,10 +301,10 @@ function DomainSslCertField({ projectId, index, readOnly }: DomainSslCertFieldPr
                 emptyText="No SSL certificates available"
                 valueKey="id"
                 loading={isFetching}
-                onRefresh={() => void refetch()}
+                onRefresh={hasTargetDomain ? () => void refetch() : undefined}
                 isRefreshing={isRefetching}
                 allowClear
-                disabled={readOnly}
+                disabled={readOnly || !hasTargetDomain}
             />
         </CopyFormRow>
     );

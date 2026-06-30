@@ -1,3 +1,4 @@
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { AppSecret } from "~/projects/domain";
@@ -40,7 +41,12 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
             header: "Status",
             cell: ({ row: { original } }) => {
                 const { status } = original;
-                return <ProjectSecretStatusBadge status={status} />;
+                return (
+                    <div className="flex items-center justify-center gap-2">
+                        <ProjectSecretStatusBadge status={status} />
+                        {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
+                    </div>
+                );
             },
             meta: {
                 align: "center",
@@ -57,7 +63,12 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
                 titleAlign: "center",
             },
         },
-
+        {
+            header: "Mountpoint",
+            cell: ({ row: { original } }) => {
+                return original.swarmRef?.file?.name ?? "-";
+            },
+        },
         {
             accessorKey: "expireAt",
             header: "Expire At",

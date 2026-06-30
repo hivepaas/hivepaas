@@ -16,7 +16,6 @@ import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { Button, DataTable } from "@/components/ui";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export function AppConfigSecretsRoute() {
     const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
@@ -38,9 +37,6 @@ export function AppConfigSecretsRoute() {
             },
             APP_CONFIGURATION_QUERY_OPTIONS,
         );
-
-    const ownSecrets = useMemo(() => secrets.filter(s => !s.inherited), [secrets]);
-    const inheritedSecrets = useMemo(() => secrets.filter(s => s.inherited), [secrets]);
 
     const columns = useMemo(() => AppSecretsTableDefs.columns(projectId, appId), [projectId, appId]);
 
@@ -78,51 +74,19 @@ export function AppConfigSecretsRoute() {
                 }
             />
 
-            <Accordion
-                type="multiple"
-                defaultValue={["secrets"]}
-                className="w-full"
-            >
-                <AccordionItem
-                    value="inherited-secrets"
-                    className="border-none"
-                >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 data-[state=closed]:mb-6 bg-accent">
-                        Inherited Secrets
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pt-4 mb-4">
-                        <DataTable
-                            columns={columns}
-                            data={inheritedSecrets}
-                            isLoading={isFetching}
-                            enablePagination={false}
-                        />
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem
-                    value="secrets"
-                    className="border-none"
-                >
-                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
-                        Secrets
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pt-4 mb-4">
-                        <DataTable
-                            columns={columns}
-                            data={ownSecrets}
-                            isLoading={isFetching}
-                            pageSize={pagination.size}
-                            manualPagination
-                            totalCount={meta.page.total}
-                            onPaginationChange={setPagination}
-                            manualSorting
-                            onSortingChange={setSorting}
-                            enablePagination
-                            showPageSizeSelector={false}
-                        />
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+            <DataTable
+                columns={columns}
+                data={secrets}
+                isLoading={isFetching}
+                pageSize={pagination.size}
+                manualPagination
+                totalCount={meta.page.total}
+                onPaginationChange={setPagination}
+                manualSorting
+                onSortingChange={setSorting}
+                enablePagination
+                showPageSizeSelector={false}
+            />
         </div>
     );
 }

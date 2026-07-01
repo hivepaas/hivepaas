@@ -6,7 +6,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/infra/database"
@@ -17,11 +16,6 @@ import (
 const (
 	keyLen    = 16
 	secretLen = 32
-)
-
-const (
-	currentSettingType    = base.SettingTypeAPIKey
-	currentSettingVersion = entity.CurrentAPIKeyVersion
 )
 
 func (uc *UC) CreateAPIKey(

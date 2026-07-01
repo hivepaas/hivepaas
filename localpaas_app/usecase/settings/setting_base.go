@@ -27,6 +27,7 @@ type BaseSettingResp struct {
 	Name            string             `json:"name"`
 	Kind            string             `json:"kind"`
 	Status          base.SettingStatus `json:"status"`
+	Size            int64              `json:"size,omitempty"`
 	Inherited       bool               `json:"inherited,omitempty"`
 	AvailInProjects bool               `json:"availableInProjects,omitempty"`
 	Default         bool               `json:"default,omitempty"`

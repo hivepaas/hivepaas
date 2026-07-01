@@ -1368,16 +1368,9 @@
     },
     "/cluster/volumes" : {
       "get" : {
-        "description" : "Lists cluster volumes",
+        "description" : "Lists cluster volume settings",
         "operationId" : "listClusterVolume",
         "parameters" : [ {
-          "description" : "`status=<target>`",
-          "in" : "query",
-          "name" : "status",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
           "description" : "`search=<target> (support *)`",
           "in" : "query",
           "name" : "search",
@@ -1438,11 +1431,11 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Lists cluster volumes",
+        "summary" : "Lists cluster volume settings",
         "tags" : [ "cluster_volumes" ]
       },
       "post" : {
-        "description" : "Creates a volume",
+        "description" : "Creates a new volume setting",
         "operationId" : "createClusterVolume",
         "requestBody" : {
           "content" : {
@@ -1456,7 +1449,7 @@
           "required" : true
         },
         "responses" : {
-          "200" : {
+          "201" : {
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1464,7 +1457,7 @@
                 }
               }
             },
-            "description" : "OK"
+            "description" : "Created"
           },
           "400" : {
             "content" : {
@@ -1487,29 +1480,74 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Creates a volume",
+        "summary" : "Creates a new volume setting",
         "tags" : [ "cluster_volumes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/cluster/volumes/{volumeID}" : {
+    "/cluster/volumes/sync" : {
+      "post" : {
+        "description" : "Sync volumes from Docker",
+        "operationId" : "syncClusterVolume",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.SyncVolumeReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.SyncVolumeResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Sync volumes from Docker",
+        "tags" : [ "cluster_volumes" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/cluster/volumes/{itemID}" : {
       "delete" : {
-        "description" : "Deletes a volume",
+        "description" : "Deletes volume setting",
         "operationId" : "deleteClusterVolume",
         "parameters" : [ {
-          "description" : "volume ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "volumeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
-          }
-        }, {
-          "description" : "`force=true/false`",
-          "in" : "query",
-          "name" : "force",
-          "schema" : {
-            "type" : "boolean"
           }
         } ],
         "responses" : {
@@ -1544,16 +1582,16 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Deletes a volume",
+        "summary" : "Deletes volume setting",
         "tags" : [ "cluster_volumes" ]
       },
       "get" : {
-        "description" : "Gets volume details",
+        "description" : "Gets volume setting details",
         "operationId" : "getClusterVolume",
         "parameters" : [ {
-          "description" : "volume ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "volumeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -1591,29 +1629,38 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Gets volume details",
+        "summary" : "Gets volume setting details",
         "tags" : [ "cluster_volumes" ]
-      }
-    },
-    "/cluster/volumes/{volumeID}/inspect" : {
-      "get" : {
-        "description" : "Gets volume details",
-        "operationId" : "getClusterVolumeInspection",
+      },
+      "put" : {
+        "description" : "Updates cluster volume",
+        "operationId" : "updateClusterVolume",
         "parameters" : [ {
-          "description" : "volume ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "volumeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
         "responses" : {
           "200" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeInspectionResp"
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeResp"
                 }
               }
             },
@@ -1640,8 +1687,70 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Gets volume details",
-        "tags" : [ "cluster_volumes" ]
+        "summary" : "Updates cluster volume",
+        "tags" : [ "cluster_volumes" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/cluster/volumes/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates cluster volume status",
+        "operationId" : "updateClusterVolumeStatus",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates cluster volume status",
+        "tags" : [ "cluster_volumes" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/dev-helper/exec-cmd" : {
@@ -9332,6 +9441,390 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/cluster-volumes" : {
+      "get" : {
+        "description" : "Lists cluster-volume settings",
+        "operationId" : "listProjectClusterVolume",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.ListVolumeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists cluster-volume settings",
+        "tags" : [ "project_settings" ]
+      },
+      "post" : {
+        "description" : "Creates a new cluster-volume setting",
+        "operationId" : "createProjectClusterVolume",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a new cluster-volume setting",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/cluster-volumes/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes cluster-volume setting",
+        "operationId" : "deleteProjectClusterVolume",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.DeleteVolumeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes cluster-volume setting",
+        "tags" : [ "project_settings" ]
+      },
+      "get" : {
+        "description" : "Gets cluster-volume setting details",
+        "operationId" : "getProjectClusterVolume",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets cluster-volume setting details",
+        "tags" : [ "project_settings" ]
+      },
+      "put" : {
+        "description" : "Updates cluster-volume",
+        "operationId" : "updateProjectClusterVolume",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates cluster-volume",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/cluster-volumes/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates cluster-volume status",
+        "operationId" : "updateProjectClusterVolumeStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates cluster-volume status",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/docker-networks" : {
       "get" : {
         "description" : "Lists docker networks",
@@ -9634,311 +10127,6 @@
           }
         },
         "summary" : "Gets docker network details",
-        "tags" : [ "project_settings" ]
-      }
-    },
-    "/projects/{projectID}/docker-volumes" : {
-      "get" : {
-        "description" : "Lists docker volumes",
-        "operationId" : "listProjectDockerVolume",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`search=<target> (support *)`",
-          "in" : "query",
-          "name" : "search",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`pageOffset=offset`",
-          "in" : "query",
-          "name" : "pageOffset",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`pageLimit=limit`",
-          "in" : "query",
-          "name" : "pageLimit",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`sort=[-]field1|field2...`",
-          "in" : "query",
-          "name" : "sort",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.ListVolumeResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Lists docker volumes",
-        "tags" : [ "project_settings" ]
-      },
-      "post" : {
-        "description" : "Creates a new docker volume",
-        "operationId" : "createProjectDockerVolume",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeResp"
-                }
-              }
-            },
-            "description" : "Created"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Creates a new docker volume",
-        "tags" : [ "project_settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/docker-volumes/{volumeID}" : {
-      "delete" : {
-        "description" : "Deletes a docker volume",
-        "operationId" : "deleteProjectDockerVolume",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "volume ID",
-          "in" : "path",
-          "name" : "volumeID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.DeleteVolumeResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Deletes a docker volume",
-        "tags" : [ "project_settings" ]
-      },
-      "get" : {
-        "description" : "Gets docker volume details",
-        "operationId" : "getProjectDockerVolume",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "volume ID",
-          "in" : "path",
-          "name" : "volumeID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets docker volume details",
-        "tags" : [ "project_settings" ]
-      }
-    },
-    "/projects/{projectID}/docker-volumes/{volumeID}/inspect" : {
-      "get" : {
-        "description" : "Gets docker volume details",
-        "operationId" : "getProjectVolumeInspection",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "volume ID",
-          "in" : "path",
-          "name" : "volumeID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeInspectionResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets docker volume details",
         "tags" : [ "project_settings" ]
       }
     },
@@ -26452,7 +26640,7 @@
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -26470,7 +26658,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_localpaas_localpaas_localpaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -27598,6 +27786,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -27611,7 +27802,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "enabled", "expireAt", "id", "inherited", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "enabled", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigReq" : {
@@ -30023,8 +30214,18 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
+          "bindOptions" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBindOptionsReq"
+            } ],
+            "description" : "For `local` driver only",
+            "type" : "object"
+          },
           "btrfsOptions" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsReq"
+          },
+          "default" : {
+            "type" : "boolean"
           },
           "driver" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.VolumeDriver"
@@ -30039,11 +30240,7 @@
             "type" : "string"
           },
           "nfsOptions" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsReq"
-            } ],
-            "description" : "For `local` driver only",
-            "type" : "object"
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsReq"
           },
           "options" : {
             "additionalProperties" : {
@@ -30051,14 +30248,11 @@
             },
             "type" : "object"
           },
-          "projectId" : {
-            "type" : "string"
-          },
           "tmpfsOptions" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsReq"
           }
         },
-        "required" : [ "availableInProjects", "btrfsOptions", "driver", "labels", "name", "nfsOptions", "options", "projectId", "tmpfsOptions" ],
+        "required" : [ "availableInProjects", "bindOptions", "btrfsOptions", "default", "driver", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.CreateVolumeResp" : {
@@ -30080,18 +30274,6 @@
           }
         },
         "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeInspectionResp" : {
-        "properties" : {
-          "data" : {
-            "type" : "string"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.GetVolumeResp" : {
@@ -30121,13 +30303,130 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.SyncVolumeReq" : {
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.SyncVolumeResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.UpdateVolumeStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBindOptionsReq" : {
+        "properties" : {
+          "directory" : {
+            "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          },
+          "propagation" : {
+            "$ref" : "#/components/schemas/mount.Propagation"
+          },
+          "readonly" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBindOptionsResp" : {
+        "properties" : {
+          "directory" : {
+            "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          },
+          "propagation" : {
+            "$ref" : "#/components/schemas/mount.Propagation"
+          },
+          "readonly" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
+        "type" : "object"
+      },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsReq" : {
         "properties" : {
           "device" : {
             "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
           }
         },
-        "required" : [ "device" ],
+        "required" : [ "device", "extraOptions" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsResp" : {
+        "properties" : {
+          "device" : {
+            "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "device", "extraOptions" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsReq" : {
@@ -30138,6 +30437,9 @@
           "device" : {
             "type" : "string"
           },
+          "extraOptions" : {
+            "type" : "string"
+          },
           "readonly" : {
             "type" : "boolean"
           },
@@ -30145,7 +30447,28 @@
             "type" : "string"
           }
         },
-        "required" : [ "addr", "device", "readonly", "version" ],
+        "required" : [ "addr", "device", "extraOptions", "readonly", "version" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsResp" : {
+        "properties" : {
+          "addr" : {
+            "type" : "string"
+          },
+          "device" : {
+            "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          },
+          "readonly" : {
+            "type" : "boolean"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "addr", "device", "extraOptions", "readonly", "version" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeResp" : {
@@ -30153,16 +30476,38 @@
           "availableInProjects" : {
             "type" : "boolean"
           },
+          "bindOptions" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBindOptionsResp"
+            } ],
+            "description" : "If driver is `local`",
+            "type" : "object"
+          },
+          "btrfsOptions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeBtrfsOptionsResp"
+          },
           "clusterVolumeSpec" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.ClusterVolumeSpecResp"
           },
           "createdAt" : {
             "type" : "string"
           },
+          "default" : {
+            "type" : "boolean"
+          },
           "driver" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_services_docker.VolumeDriver"
           },
+          "expireAt" : {
+            "type" : "string"
+          },
           "id" : {
+            "type" : "string"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
             "type" : "string"
           },
           "labels" : {
@@ -30176,6 +30521,9 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "nfsOptions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeNfsOptionsResp"
           },
           "options" : {
             "additionalProperties" : {
@@ -30193,22 +30541,37 @@
             "type" : "integer"
           },
           "status" : {
-            "additionalProperties" : {
-              "type" : "object"
-            },
-            "type" : "object"
+            "type" : "string"
+          },
+          "tmpfsOptions" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsResp"
+          },
+          "type" : {
+            "type" : "string"
           },
           "updateVer" : {
             "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "clusterVolumeSpec", "createdAt", "driver", "id", "labels", "mountpoint", "name", "options", "refCount", "scope", "size", "status", "updateVer" ],
+        "required" : [ "availableInProjects", "bindOptions", "btrfsOptions", "clusterVolumeSpec", "createdAt", "default", "driver", "expireAt", "id", "inherited", "kind", "labels", "mountpoint", "name", "nfsOptions", "options", "refCount", "scope", "size", "status", "tmpfsOptions", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsReq" : {
         "properties" : {
           "device" : {
             "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          },
+          "gid" : {
+            "type" : "integer"
+          },
+          "mode" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
           },
           "size" : {
             "type" : "integer"
@@ -30217,7 +30580,31 @@
             "type" : "integer"
           }
         },
-        "required" : [ "device", "size", "uid" ],
+        "required" : [ "device", "extraOptions", "gid", "mode", "size", "uid" ],
+        "type" : "object"
+      },
+      "github_com_localpaas_localpaas_localpaas_app_usecase_cluster_volumeuc_volumedto.VolumeTmpfsOptionsResp" : {
+        "properties" : {
+          "device" : {
+            "type" : "string"
+          },
+          "extraOptions" : {
+            "type" : "string"
+          },
+          "gid" : {
+            "type" : "integer"
+          },
+          "mode" : {
+            "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_pkg_fileutil.FileMode"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "uid" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "device", "extraOptions", "gid", "mode", "size", "uid" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_devhelperuc_devhelperdto.ExecuteCmdDataResp" : {
@@ -31285,6 +31672,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -31298,7 +31688,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accessiblebyprojectsuc_accessiblebyprojectsdto.AccessibleByProjectReq" : {
@@ -31408,6 +31798,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -31427,7 +31820,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "baseURL", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "status", "token", "type", "updateVer", "updatedAt", "user" ],
+        "required" : [ "availableInProjects", "baseURL", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "size", "status", "token", "type", "updateVer", "updatedAt", "user" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_accesstokenuc_accesstokendto.CreateAccessTokenReq" : {
@@ -31978,6 +32371,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -31994,7 +32390,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "acmeDns", "availableInProjects", "azure", "baiduCloud", "cloudflare", "createdAt", "default", "digitalOcean", "expireAt", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "id", "inherited", "kind", "name", "namecheap", "rfc2136", "route53", "secretMasked", "status", "tencentCloud", "type", "updateVer", "updatedAt" ],
+        "required" : [ "acmeDns", "availableInProjects", "azure", "baiduCloud", "cloudflare", "createdAt", "default", "digitalOcean", "expireAt", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "id", "inherited", "kind", "name", "namecheap", "rfc2136", "route53", "secretMasked", "size", "status", "tencentCloud", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_acmednsprovideruc_acmednsproviderdto.AcmeDnsProviderRoute53Req" : {
@@ -32398,6 +32794,9 @@
           "schedJobSettings" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureSchedJobSettingsResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -32414,7 +32813,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "loggingSettings", "name", "schedJobSettings", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "loggingSettings", "name", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureTerminalSettingsReq" : {
@@ -32512,6 +32911,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -32528,7 +32930,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "secretMasked", "status", "type", "updateVer", "updatedAt", "username" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_basicauthuc_basicauthdto.CreateBasicAuthReq" : {
@@ -32695,6 +33097,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -32708,7 +33113,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "s3", "secretMasked", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "s3", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_cloudstorageuc_cloudstoragedto.CloudStorageS3Req" : {
@@ -32941,6 +33346,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -32957,7 +33365,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "content", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "base64", "content", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_configfileuc_configfiledto.CreateConfigFileReq" : {
@@ -33295,6 +33703,9 @@
           "rootDomain" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -33308,7 +33719,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowedDomains", "availableInProjects", "certSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "rootDomain", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "allowedDomains", "availableInProjects", "certSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "rootDomain", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_domainsettingsuc_domainsettingsdto.GetDomainSettingsResp" : {
@@ -33536,6 +33947,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "smtp" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.EmailSMTPResp"
           },
@@ -33552,7 +33966,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "http", "id", "inherited", "kind", "name", "secretMasked", "smtp", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "http", "id", "inherited", "kind", "name", "secretMasked", "size", "smtp", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_emailuc_emaildto.EmailSMTP" : {
@@ -33773,6 +34187,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -33786,7 +34203,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_gitcredentialuc_gitcredentialdto.ListBranchResp" : {
@@ -34139,6 +34556,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "ssoEnabled" : {
             "type" : "boolean"
           },
@@ -34161,7 +34581,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appId", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "installationId", "kind", "name", "organization", "privateKey", "secretMasked", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
+        "required" : [ "appId", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "installationId", "kind", "name", "organization", "privateKey", "secretMasked", "size", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_githubappuc_githubappdto.ListAppInstallationReq" : {
@@ -34646,6 +35066,9 @@
           "saveResultTasks" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -34662,7 +35085,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "grpc", "healthcheckType", "id", "inherited", "interval", "kind", "maxRetry", "name", "notification", "rest", "retryDelay", "saveResultTasks", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "grpc", "healthcheckType", "id", "inherited", "interval", "kind", "maxRetry", "name", "notification", "rest", "retryDelay", "saveResultTasks", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_healthcheckuc_healthcheckdto.ListHealthcheckResp" : {
@@ -34910,6 +35333,9 @@
           "resources" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildResourceSettingsResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "sources" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildSourceSettingsResp"
           },
@@ -34926,7 +35352,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "sources", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "size", "sources", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imagebuildsettingsuc_imagebuildsettingsdto.ImageBuildSourceSettingsReq" : {
@@ -35135,6 +35561,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "slack" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.IMSlackResp"
           },
@@ -35154,7 +35583,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "discord", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "slack", "status", "telegram", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "discord", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "size", "slack", "status", "telegram", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_imserviceuc_imservicedto.IMSlackReq" : {
@@ -35423,6 +35852,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -35448,7 +35880,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaTelegramResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "minSendInterval", "name", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "minSendInterval", "name", "size", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_notificationuc_notificationdto.NotificationViaDiscordReq" : {
@@ -35834,6 +36266,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -35850,7 +36285,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "organization", "profileURL", "scopes", "secretMasked", "status", "tokenURL", "type", "updateVer", "updatedAt" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "organization", "profileURL", "scopes", "secretMasked", "size", "status", "tokenURL", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_oauthuc_oauthdto.UpdateOAuthReq" : {
@@ -36053,6 +36488,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -36069,7 +36507,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "readonly", "secretMasked", "status", "type", "updateVer", "updatedAt", "username" ],
+        "required" : [ "address", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "readonly", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_registryauthuc_registryauthdto.TestRegistryAuthConnReq" : {
@@ -36284,6 +36722,9 @@
           "secret" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -36300,7 +36741,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secret", "status", "type", "updateVer", "updatedAt", "webhookURL" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secret", "size", "status", "type", "updateVer", "updatedAt", "webhookURL" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_repowebhookuc_repowebhookdto.UpdateRepoWebhookReq" : {
@@ -36829,6 +37270,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.ScheduleResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -36845,7 +37289,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "createdAt", "default", "expireAt", "id", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "createdAt", "default", "expireAt", "id", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobTaskLogsDataResp" : {
@@ -37155,6 +37599,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -37171,7 +37618,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "createdAt", "default", "expireAt", "id", "inherited", "key", "kind", "name", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "base64", "createdAt", "default", "expireAt", "id", "inherited", "key", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_secretuc_secretdto.SwarmRefFileTargetReq" : {
@@ -37449,6 +37896,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -37462,7 +37912,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "secretMasked", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sshkeyuc_sshkeydto.UpdateSSHKeyReq" : {
@@ -37698,6 +38148,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -37714,7 +38167,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "availableInProjects", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "availableInProjects", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslcertuc_sslcertdto.UpdateSSLCertReq" : {
@@ -37962,6 +38415,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -37978,7 +38434,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderZeroSSLResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "defaultKeyType", "email", "expireAt", "googleTrust", "id", "inherited", "kind", "letsEncrypt", "name", "secretMasked", "status", "type", "updateVer", "updatedAt", "zeroSSL" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "defaultKeyType", "email", "expireAt", "googleTrust", "id", "inherited", "kind", "letsEncrypt", "name", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "zeroSSL" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_sslprovideruc_sslproviderdto.SSLProviderZeroSSLReq" : {
@@ -38213,6 +38669,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -38232,7 +38691,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageVolumeSettingsResp"
           }
         },
-        "required" : [ "availableInProjects", "bindSettings", "clusterVolumeSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
+        "required" : [ "availableInProjects", "bindSettings", "clusterVolumeSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageTmpfsSettingsReq" : {
@@ -38535,6 +38994,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -38554,7 +39016,7 @@
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.LocalPaaSWorkerSettingsResp"
           }
         },
-        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "healthcheckSettings", "id", "inherited", "kind", "name", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "healthcheckSettings", "id", "inherited", "kind", "name", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_system_lpappsettingsuc_lpappsettingsdto.UpdateServiceSettingsReq" : {
@@ -38941,6 +39403,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -38954,7 +39419,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_system_traefiksettingsuc_traefiksettingsdto.TraefikAppSettingsReq" : {
@@ -39116,6 +39581,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -39129,7 +39597,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_sslrenewaluc_sslrenewaldto.ScheduleReq" : {
@@ -39306,6 +39774,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -39319,7 +39790,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "destinationDir", "expireAt", "id", "inherited", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "destinationDir", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.SystemBackupCompressionReq" : {
@@ -39433,6 +39904,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.ScheduleResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -39446,7 +39920,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systembackupuc_systembackupdto.UpdateSystemBackupReq" : {
@@ -39712,6 +40186,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.ScheduleResp"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -39725,7 +40202,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_systemsettings_systemcleanupuc_systemcleanupdto.SystemClusterCleanupReq" : {
@@ -39883,6 +40360,9 @@
           "name" : {
             "type" : "string"
           },
+          "size" : {
+            "type" : "integer"
+          },
           "status" : {
             "type" : "string"
           },
@@ -39896,7 +40376,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessAction", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyId", "kind", "name", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "accessAction", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyId", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_localpaas_localpaas_localpaas_app_usecase_usersettings_apikeyuc_apikeydto.CreateAPIKeyReq" : {
@@ -40709,9 +41189,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

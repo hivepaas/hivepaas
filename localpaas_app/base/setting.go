@@ -18,6 +18,7 @@ const (
 	SettingTypeAppHttp            SettingType = "app-http"
 	SettingTypeBasicAuth          SettingType = "basic-auth"
 	SettingTypeCloudStorage       SettingType = "cloud-storage"
+	SettingTypeClusterVolume      SettingType = "cluster-volume"
 	SettingTypeCommandTpl         SettingType = "command-tpl"
 	SettingTypeConfigFile         SettingType = "config-file"
 	SettingTypeDomainSettings     SettingType = "domain-settings"

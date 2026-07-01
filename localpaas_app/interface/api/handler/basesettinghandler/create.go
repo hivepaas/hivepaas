@@ -8,6 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/basicauthuc/basicauthdto"
@@ -103,6 +104,11 @@ func (h *Handler) CreateSetting(
 		r := cloudstoragedto.NewCreateCloudStorageReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.CloudStorageUC.CreateCloudStorage(reqCtx, auth, r) }
+
+	case base.ResourceTypeClusterVolume:
+		r := volumedto.NewCreateVolumeReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.ClusterVolumeUC.CreateVolume(reqCtx, auth, r) }
 
 	case base.ResourceTypeConfigFile:
 		r := configfiledto.NewCreateConfigFileReq()

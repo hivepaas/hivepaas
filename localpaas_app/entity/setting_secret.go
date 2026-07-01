@@ -95,12 +95,12 @@ func (s *Secret) ValueAsBytes() ([]byte, error) {
 	return reflectutil.UnsafeStrToBytes(plain), nil
 }
 
-func (s *Secret) ValueSize() (int32, error) {
+func (s *Secret) ValueSize() (int64, error) {
 	plain, err := s.Value.GetPlain()
 	if err != nil {
 		return 0, apperrors.New(err)
 	}
-	return int32(len(plain)), nil //nolint:gosec
+	return int64(len(plain)), nil //nolint:gosec
 }
 
 func (s *Setting) AsSecret() (*Secret, error) {

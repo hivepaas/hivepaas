@@ -20,7 +20,7 @@ func (h *Handler) getAuth(
 			return
 		}
 	}
-	auth, err = h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+	auth, err = h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
 		ResourceModule: base.ResourceModuleCluster,
 		ResourceType:   resType,
 		ResourceID:     itemID,

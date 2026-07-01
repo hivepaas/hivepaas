@@ -5,8 +5,9 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
-	"github.com/localpaas/localpaas/services/docker"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) GetVolume(
@@ -14,24 +15,24 @@ func (uc *UC) GetVolume(
 	auth *basedto.Auth,
 	req *volumedto.GetVolumeReq,
 ) (*volumedto.GetVolumeResp, error) {
-	inspect, err := uc.dockerManager.VolumeInspect(ctx, req.VolumeID)
+	req.Type = currentSettingType
+	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
-	volume := &inspect.Volume
 
-	if req.ProjectID != "" {
-		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
+	refClusterObjects := entity.NewRefClusterObjects()
+	err = uc.listVolumesInDocker(ctx, []*entity.Setting{resp.Data}, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
 
-		if volume.Labels[docker.StackLabelNamespace] != project.Key {
-			return nil, apperrors.NewNotFound("Volume").WithMsgLog("volume not belong to project")
-		}
+	respData, err := volumedto.TransformVolume(resp.Data, resp.RefObjects, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
 
 	return &volumedto.GetVolumeResp{
-		Data: volumedto.TransformVolume(volume, true),
+		Data: respData,
 	}, nil
 }

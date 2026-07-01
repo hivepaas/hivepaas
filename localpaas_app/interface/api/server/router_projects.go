@@ -86,13 +86,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		networkGroup.DELETE("/:networkID", projectSettingsHandler.DeleteDockerNetwork)
 	}
 
-	{ // Docker volume group
-		volumeGroup := projectGroup.Group("/:projectID/docker-volumes")
-		volumeGroup.GET("/:volumeID", projectSettingsHandler.GetDockerVolume)
-		volumeGroup.GET("/:volumeID/inspect", projectSettingsHandler.GetDockerVolumeInspection)
-		volumeGroup.GET("", projectSettingsHandler.ListDockerVolume)
-		volumeGroup.POST("", projectSettingsHandler.CreateDockerVolume)
-		volumeGroup.DELETE("/:volumeID", projectSettingsHandler.DeleteDockerVolume)
+	{ // Cluster volume group
+		volumeGroup := projectGroup.Group("/:projectID/cluster-volumes")
+		volumeGroup.GET("/:itemID", projectSettingsHandler.GetClusterVolume)
+		volumeGroup.GET("", projectSettingsHandler.ListClusterVolume)
+		volumeGroup.POST("", projectSettingsHandler.CreateClusterVolume)
+		volumeGroup.PUT("/:itemID", projectSettingsHandler.UpdateClusterVolume)
+		volumeGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateClusterVolumeStatus)
+		volumeGroup.DELETE("/:itemID", projectSettingsHandler.DeleteClusterVolume)
 	}
 
 	{ // Domain settings group

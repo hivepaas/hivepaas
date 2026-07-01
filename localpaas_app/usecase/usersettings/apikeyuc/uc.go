@@ -1,7 +1,14 @@
 package apikeyuc
 
 import (
+	"github.com/localpaas/localpaas/localpaas_app/base"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
+)
+
+const (
+	currentSettingType    = base.SettingTypeAPIKey
+	currentSettingVersion = entity.CurrentAPIKeyVersion
 )
 
 type UC struct {

@@ -2,11 +2,13 @@ package volumeuc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
-	"github.com/localpaas/localpaas/services/docker"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) DeleteVolume(
@@ -14,23 +16,26 @@ func (uc *UC) DeleteVolume(
 	auth *basedto.Auth,
 	req *volumedto.DeleteVolumeReq,
 ) (*volumedto.DeleteVolumeResp, error) {
-	if req.ProjectID != "" {
-		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-
-		inspect, err := uc.dockerManager.VolumeInspect(ctx, req.VolumeID)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-
-		if inspect.Volume.Labels[docker.StackLabelNamespace] != project.Key {
-			return nil, apperrors.NewNotFound("Volume").WithMsgLog("volume not belong to project")
-		}
-	}
-
-	_, err := uc.dockerManager.VolumeRemove(ctx, req.VolumeID, req.Force)
+	req.Type = currentSettingType
+	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
+		AfterLoading: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.DeleteSettingData,
+		) error {
+			if data.Setting.ObjectID == req.Scope.MainObjectID() {
+				volEntity, err := data.Setting.AsClusterVolume()
+				if err != nil {
+					return apperrors.New(err)
+				}
+				_, err = uc.dockerManager.VolumeRemove(ctx, volEntity.VolumeID, true)
+				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+					return apperrors.New(err)
+				}
+			}
+			return nil
+		},
+	})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

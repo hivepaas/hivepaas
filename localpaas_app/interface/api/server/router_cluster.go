@@ -25,10 +25,12 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		volumeGroup := clusterGroup.Group("/volumes")
 		// Volumes
 		volumeGroup.GET("", clusterHandler.ListVolume)
-		volumeGroup.GET("/:volumeID", clusterHandler.GetVolume)
-		volumeGroup.GET("/:volumeID/inspect", clusterHandler.GetVolumeInspection)
+		volumeGroup.GET("/:itemID", clusterHandler.GetVolume)
 		volumeGroup.POST("", clusterHandler.CreateVolume)
-		volumeGroup.DELETE("/:volumeID", clusterHandler.DeleteVolume)
+		volumeGroup.PUT("/:itemID", clusterHandler.UpdateVolume)
+		volumeGroup.PUT("/:itemID/status", clusterHandler.UpdateVolumeStatus)
+		volumeGroup.DELETE("/:itemID", clusterHandler.DeleteVolume)
+		volumeGroup.POST("/sync", clusterHandler.SyncVolume)
 	}
 
 	{ // image group

@@ -2,85 +2,80 @@ package volumeuc
 
 import (
 	"context"
-	"strings"
-
-	"github.com/moby/moby/api/types/volume"
-	"github.com/moby/moby/client"
-	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
-	"github.com/localpaas/localpaas/services/docker"
-)
-
-const (
-	localpaasVolumeLabel = "localpaas.volume.managed"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) ListVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.ListVolumeReq,
-) (_ *volumedto.ListVolumeResp, err error) {
-	var project *entity.Project
-	if req.ProjectID != "" {
-		project, err = uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-	}
-
-	listResp, err := uc.dockerManager.VolumeList(ctx, func(opts *client.VolumeListOptions) {
-		if !req.ListAll {
-			docker.FilterAdd(&opts.Filters, "label", localpaasVolumeLabel)
-		}
-	})
+) (*volumedto.ListVolumeResp, error) {
+	req.Type = currentSettingType
+	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	filterVolumes := listResp.Items
-	if req.ProjectID != "" {
-		filterVolumes = gofn.FilterPtr(filterVolumes, func(vol *volume.Volume) bool {
-			label := vol.Labels[docker.StackLabelNamespace]
-			return label == "" || label == project.Key
-		})
+	refClusterObjects := entity.NewRefClusterObjects()
+	err = uc.listVolumesInDocker(ctx, resp.Data, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
-	if req.Type != "" {
-		filterVolumes = gofn.FilterPtr(filterVolumes, func(vol *volume.Volume) bool {
-			switch req.Type {
-			case docker.VolumeTypeVolume:
-				return vol.ClusterVolume == nil
-			case docker.VolumeTypeCluster:
-				return vol.ClusterVolume != nil
-			}
-			return false
-		})
-	}
-	if req.Search != "" {
-		keyword := strings.ToLower(req.Search)
-		filterVolumes = gofn.FilterPtr(filterVolumes, func(vol *volume.Volume) bool {
-			return strings.Contains(vol.Name, keyword) || strings.Contains(vol.Mountpoint, keyword)
-		})
-	}
-	if len(auth.AllowObjectIDs) > 0 {
-		filterVolumes = gofn.FilterPtr(filterVolumes, func(vol *volume.Volume) bool {
-			volID := vol.Name
-			if vol.ClusterVolume != nil {
-				volID = vol.ClusterVolume.ID
-			}
-			return gofn.Contain(auth.AllowObjectIDs, volID)
-		})
+
+	respData, err := volumedto.TransformVolumes(resp.Data, resp.RefObjects, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
 
 	return &volumedto.ListVolumeResp{
-		Meta: &basedto.ListMeta{Page: &basedto.PagingMeta{
-			Offset: 0,
-			Limit:  req.Paging.Limit,
-			Total:  len(filterVolumes),
-		}},
-		Data: volumedto.TransformVolumes(filterVolumes, false),
+		Meta: resp.Meta,
+		Data: respData,
 	}, nil
+}
+
+func (uc *UC) listVolumesInDocker(
+	ctx context.Context,
+	settings []*entity.Setting,
+	refClusterObjects *entity.RefClusterObjects,
+) error {
+	volumes := make([]string, 0, len(settings))
+	for _, setting := range settings {
+		vol, err := setting.AsClusterVolume()
+		if err != nil {
+			return apperrors.New(err)
+		}
+		volumes = append(volumes, vol.VolumeID)
+	}
+	if len(volumes) == 0 {
+		return nil
+	}
+
+	if len(volumes) == 1 {
+		inspectResp, err := uc.dockerManager.VolumeInspect(ctx, volumes[0])
+		if err != nil {
+			return apperrors.New(err)
+		}
+		refClusterObjects.RefVolumes[volumes[0]] = &inspectResp.Volume
+		return nil
+	}
+
+	res, err := uc.dockerManager.VolumeListByIDs(ctx, volumes)
+	if err != nil {
+		return apperrors.New(err)
+	}
+
+	for i := range res.Items {
+		vol := &res.Items[i]
+		volID := vol.Name
+		if vol.ClusterVolume != nil {
+			volID = vol.ClusterVolume.ID
+		}
+		refClusterObjects.RefVolumes[volID] = vol
+	}
+	return nil
 }

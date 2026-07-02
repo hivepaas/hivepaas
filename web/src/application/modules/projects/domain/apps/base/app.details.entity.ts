@@ -1,10 +1,11 @@
-import type { ProjectAppBase } from "./app.base.entity";
+import type { ProjectAppBase, ProjectAppBaseRef } from "./app.base.entity";
 
 export interface ProjectAppDetails extends ProjectAppBase {
     key: string;
     localKey: string;
     updateVer: number;
     accessLinks: string[];
+    parentApp: ProjectAppBaseRef | null;
     stats: {
         runningTasks: number;
         desiredTasks: number;

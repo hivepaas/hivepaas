@@ -60,6 +60,7 @@ function View({ projectId, appId }: Props) {
     invariant(app, "app must be defined");
     const { data: project } = data;
     const { data: appData } = app;
+    const isChildApp = Boolean(appData.parentApp);
     const appEnv = project.envs.find(env => env.name === appData.env);
     const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId);
     const scheduledJobName = scheduledJobResponse?.data.name.trim();
@@ -132,10 +133,14 @@ function View({ projectId, appId }: Props) {
             route: ROUTE.projects.single.apps.single.terminal.$route(projectId, appId),
             label: "Terminal",
         },
-        {
-            route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, appId),
-            label: "Preview Deployments",
-        },
+        ...(!isChildApp
+            ? [
+                  {
+                      route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, appId),
+                      label: "Preview Deployments",
+                  },
+              ]
+            : []),
     ];
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
@@ -144,6 +149,7 @@ function View({ projectId, appId }: Props) {
                     app={appData}
                     appRoute={appRoute}
                     items={taskBreadcrumbItems}
+                    parentApp={appData.parentApp}
                     project={project}
                 />
             </div>

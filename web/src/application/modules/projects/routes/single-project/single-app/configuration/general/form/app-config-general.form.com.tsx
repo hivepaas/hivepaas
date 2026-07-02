@@ -38,6 +38,9 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
 
     const tags = watch("tags");
     const selectedEnv = envs.find(env => env.name === defaultValues.env);
+    const parentAppName = defaultValues.parentApp
+        ? defaultValues.parentApp.name.trim() || defaultValues.parentApp.id
+        : null;
 
     useImperativeHandle(
         ref,
@@ -110,6 +113,18 @@ export function AppConfigGeneralForm({ ref, defaultValues, envs, onSubmit, readO
                         disabled={readOnly}
                         className="contents"
                     >
+                        {parentAppName && (
+                            <InfoBlock title="Parent App">
+                                <Input
+                                    value={parentAppName}
+                                    type="text"
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                    disabled
+                                    readOnly
+                                />
+                            </InfoBlock>
+                        )}
+
                         {/* ID - Read Only */}
                         <InfoBlock title="ID">
                             <Input

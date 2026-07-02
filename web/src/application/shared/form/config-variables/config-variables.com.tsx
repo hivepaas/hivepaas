@@ -1,20 +1,28 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@components/ui/button";
 import { Checkbox } from "@components/ui/checkbox";
 import { Field, FieldError } from "@components/ui/field";
 import { Input } from "@components/ui/input";
 import { Textarea } from "@components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
+import { Plus, Trash2, WrapText } from "lucide-react";
 import { type Path, get, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
-import { parseEnvVars, stringifyEnvVars } from "@application/shared/utils/env-vars";
+import { MULTILINE_ENV_SEPARATOR, parseEnvVars, stringifyEnvVars } from "@application/shared/utils/env-vars";
 
 type EnvVarRecord = {
     key: string;
     value: string;
     isLiteral: boolean;
 };
+
+const MERGE_VIEW_PLACEHOLDER = `KEY_1=VALUE_1
+${MULTILINE_ENV_SEPARATOR}
+KEY_2=
+value line
+${MULTILINE_ENV_SEPARATOR}`;
 
 function View<T>({ name, search = "", viewMode = "individual", isRevealed = false, readOnly = false }: Props<T>) {
     const {
@@ -39,6 +47,33 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
 
     const previousViewModeRef = useRef<"merge" | "individual">(viewMode);
     const [mergeText, setMergeText] = useState<string | null>(null);
+    const [multilineFieldIds, setMultilineFieldIds] = useState<Set<string>>(() => new Set());
+
+    useEffect(() => {
+        setMultilineFieldIds(previousIds => {
+            const nextIds = new Set(previousIds);
+            let changed = false;
+            const currentFieldIds = new Set(fields.map(field => field.id));
+
+            for (const fieldId of Array.from(nextIds)) {
+                if (!currentFieldIds.has(fieldId)) {
+                    nextIds.delete(fieldId);
+                    changed = true;
+                }
+            }
+
+            fields.forEach((field, index) => {
+                const record = fieldValues[index];
+
+                if (record?.value.includes("\n") && !nextIds.has(field.id)) {
+                    nextIds.add(field.id);
+                    changed = true;
+                }
+            });
+
+            return changed ? nextIds : previousIds;
+        });
+    }, [fields, fieldValues]);
 
     // Filter records based on search query
     const filteredFields = useMemo(() => {
@@ -120,6 +155,33 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
         append({ key: "", value: "", isLiteral: false });
     };
 
+    const handleMultilineToggle = (fieldId: string, value: string) => {
+        if (readOnly) {
+            return;
+        }
+
+        const isMultiline = multilineFieldIds.has(fieldId) || value.includes("\n");
+
+        if (isMultiline) {
+            if (value.includes("\n")) {
+                return;
+            }
+
+            setMultilineFieldIds(previousIds => {
+                const nextIds = new Set(previousIds);
+                nextIds.delete(fieldId);
+                return nextIds;
+            });
+            return;
+        }
+
+        setMultilineFieldIds(previousIds => {
+            const nextIds = new Set(previousIds);
+            nextIds.add(fieldId);
+            return nextIds;
+        });
+    };
+
     return viewMode === "individual" ? (
         <div className="flex flex-col gap-4">
             {/* Individual Records List */}
@@ -130,13 +192,17 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                         const field = fields[index];
                         if (!field || !record) return null;
 
+                        const hasMultilineValue = record.value.includes("\n");
+                        const isMultiline = multilineFieldIds.has(field.id) || hasMultilineValue;
+                        const cannotDisableMultiline = isMultiline && hasMultilineValue;
+
                         return (
                             <div
                                 key={field.id}
-                                className="flex items-center gap-3"
+                                className="flex items-start gap-3"
                             >
                                 {/* Key Input */}
-                                <div className="flex-1">
+                                <div className="min-w-0 flex-1">
                                     <Field>
                                         <Input
                                             id={`${name}-${index}-key`}
@@ -150,21 +216,64 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                 </div>
 
                                 {/* Value Input */}
-                                <div className="flex-1">
+                                <div className="min-w-0 flex-1">
                                     <Field>
-                                        <Input
-                                            type={isRevealed ? "text" : "password"}
-                                            {...register(`${name}.${index}.value`)}
-                                            placeholder="Value"
-                                            aria-invalid={!!get(errors, `${name}.${index}.value`)}
-                                            disabled={readOnly}
-                                        />
+                                        {isMultiline ? (
+                                            <Textarea
+                                                id={`${name}-${index}-value`}
+                                                {...register(`${name}.${index}.value`)}
+                                                placeholder="Value"
+                                                aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                disabled={readOnly}
+                                                minRows={4}
+                                                maxRows={0}
+                                                className={cn(
+                                                    "min-h-24 resize-y",
+                                                    !isRevealed && "[-webkit-text-security:disc]",
+                                                )}
+                                            />
+                                        ) : (
+                                            <Input
+                                                id={`${name}-${index}-value`}
+                                                type={isRevealed ? "text" : "password"}
+                                                {...register(`${name}.${index}.value`)}
+                                                placeholder="Value"
+                                                aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                disabled={readOnly}
+                                            />
+                                        )}
                                         <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
                                     </Field>
                                 </div>
 
+                                {/* Multi-line Toggle */}
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant={isMultiline ? "secondary" : "ghost"}
+                                            size="icon"
+                                            onClick={() => {
+                                                handleMultilineToggle(field.id, record.value);
+                                            }}
+                                            disabled={readOnly}
+                                            aria-label="Toggle multi-line mode"
+                                            aria-pressed={isMultiline}
+                                            aria-disabled={readOnly || cannotDisableMultiline || undefined}
+                                            className={cn(
+                                                "h-8 w-8 text-muted-foreground",
+                                                isMultiline && "text-foreground",
+                                                cannotDisableMultiline && "cursor-not-allowed opacity-50",
+                                            )}
+                                        >
+                                            <WrapText className="size-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Toggle multi-line mode</TooltipContent>
+                                </Tooltip>
+
                                 {/* Literal Checkbox */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex h-9 items-center gap-2">
                                     <Checkbox
                                         id={`${name}-${index}-literal`}
                                         checked={record.isLiteral}
@@ -238,7 +347,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 onBlur={() => {
                     syncMergeTextToFields();
                 }}
-                placeholder="KEY_1=VALUE_1&#10;KEY_2=VALUE_2"
+                placeholder={MERGE_VIEW_PLACEHOLDER}
                 rows={10}
                 className="font-mono text-sm min-h-[500px]"
                 disabled={readOnly}

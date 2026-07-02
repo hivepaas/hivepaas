@@ -1,6 +1,10 @@
-import { useLocation, useParams } from "react-router";
+import { Navigate, useLocation, useParams } from "react-router";
 import invariant from "tiny-invariant";
 import type { AppPreviews_PrepareCreate_Res } from "~/projects/api/services";
+import { ProjectAppsQueries } from "~/projects/data";
+
+import { AppLoader } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import { AppPreviewDeploymentFormRoute } from "../form-route";
 
@@ -32,6 +36,24 @@ export function AppPreviewDeploymentCreateRoute() {
 
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
+
+    const { data: appData, isLoading: isLoadingApp } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        appID: appId,
+    });
+
+    if (isLoadingApp) {
+        return <AppLoader />;
+    }
+
+    if (appData?.data.parentApp) {
+        return (
+            <Navigate
+                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId)}
+                replace
+            />
+        );
+    }
 
     return (
         <AppPreviewDeploymentFormRoute

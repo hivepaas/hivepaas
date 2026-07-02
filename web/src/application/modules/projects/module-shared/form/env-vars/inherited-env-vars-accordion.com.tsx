@@ -3,6 +3,7 @@ import React from "react";
 import { Checkbox } from "@components/ui";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@components/ui/accordion";
 import { Input } from "@components/ui/input";
+import { Textarea } from "@components/ui/textarea";
 
 type EnvVarRecord = {
     key: string;
@@ -41,47 +42,66 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                     {filteredItems.length > 0 ? (
                         <div className="flex flex-col gap-4">
                             <div className="space-y-3">
-                                {filteredItems.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-3"
-                                    >
-                                        {/* Key */}
-                                        <div className="flex-1">
-                                            <Input
-                                                value={item.key}
-                                                readOnly
-                                                disabled
-                                                placeholder="Key"
-                                                className="bg-muted cursor-default"
-                                            />
-                                        </div>
+                                {filteredItems.map((item, index) => {
+                                    const isMultilineValue = item.value.includes("\n");
 
-                                        {/* Value */}
-                                        <div className="flex-1">
-                                            <Input
-                                                type={isRevealed ? "text" : "password"}
-                                                value={item.value}
-                                                readOnly
-                                                disabled
-                                                placeholder="Value"
-                                                className="bg-muted cursor-default"
-                                            />
-                                        </div>
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="flex items-start gap-3"
+                                        >
+                                            {/* Key */}
+                                            <div className="min-w-0 flex-1">
+                                                <Input
+                                                    value={item.key}
+                                                    readOnly
+                                                    disabled
+                                                    placeholder="Key"
+                                                    className="bg-muted cursor-default"
+                                                />
+                                            </div>
 
-                                        {/* Literal badge */}
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                checked
-                                                disabled
-                                            />
-                                            <span className="text-sm cursor-pointer">Literal</span>
-                                        </div>
+                                            {/* Value */}
+                                            <div className="min-w-0 flex-1">
+                                                {isRevealed && isMultilineValue ? (
+                                                    <Textarea
+                                                        value={item.value}
+                                                        readOnly
+                                                        disabled
+                                                        placeholder="Value"
+                                                        minRows={4}
+                                                        maxRows={0}
+                                                        className="bg-muted cursor-default resize-y"
+                                                    />
+                                                ) : (
+                                                    <Input
+                                                        type={isRevealed ? "text" : "password"}
+                                                        value={item.value}
+                                                        readOnly
+                                                        disabled
+                                                        placeholder="Value"
+                                                        className="bg-muted cursor-default"
+                                                    />
+                                                )}
+                                            </div>
 
-                                        {/* Spacer to align with editable rows that have a delete button */}
-                                        <div className="h-8 w-8" />
-                                    </div>
-                                ))}
+                                            {/* Spacer to align with editable rows that have a multi-line toggle */}
+                                            <div className="h-8 w-8" />
+
+                                            {/* Literal badge */}
+                                            <div className="flex h-9 items-center gap-2">
+                                                <Checkbox
+                                                    checked
+                                                    disabled
+                                                />
+                                                <span className="text-sm cursor-pointer">Literal</span>
+                                            </div>
+
+                                            {/* Spacer to align with editable rows that have row action buttons */}
+                                            <div className="h-8 w-8" />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ) : (

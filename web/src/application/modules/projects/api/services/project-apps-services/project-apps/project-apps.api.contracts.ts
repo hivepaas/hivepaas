@@ -127,7 +127,7 @@ export type ProjectApps_UpdateOne_Req = ApiRequestBase<
     } & Partial<
         Omit<
             ProjectAppDetails,
-            "id" | "key" | "env" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "updateVer"
+            "id" | "key" | "env" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "parentApp" | "updateVer"
         >
     >
 >;

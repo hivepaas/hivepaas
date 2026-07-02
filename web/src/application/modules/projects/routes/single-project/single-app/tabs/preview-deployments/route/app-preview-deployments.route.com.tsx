@@ -3,12 +3,12 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { listBox } from "@lib/styles";
 import { Plus } from "lucide-react";
-import { useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 import invariant from "tiny-invariant";
-import { AppPreviewsCommands, AppPreviewsQueries, ProjectsQueries } from "~/projects/data";
+import { AppPreviewsCommands, AppPreviewsQueries, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import type { ProjectEnvEntity } from "~/projects/domain";
 
-import { TableActions } from "@application/shared/components";
+import { AppLoader, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
@@ -28,14 +28,25 @@ export function AppPreviewDeploymentsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(appId, "appId must be defined");
 
+    const { data: appData, isLoading: isLoadingApp } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        appID: appId,
+    });
+    const isChildApp = Boolean(appData?.data.parentApp);
+    const canLoadPreviews = Boolean(appData) && !isChildApp;
     const { data: { data: previews, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppPreviewsQueries.useFindManyPaginated({
-            projectID: projectId,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+        AppPreviewsQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            {
+                enabled: canLoadPreviews,
+            },
+        );
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const projectEnvs = projectData?.data.envs ?? EMPTY_PROJECT_ENVS;
     const columns = useMemo(
@@ -50,6 +61,19 @@ export function AppPreviewDeploymentsRoute() {
             });
         },
     });
+
+    if (isLoadingApp) {
+        return <AppLoader />;
+    }
+
+    if (isChildApp) {
+        return (
+            <Navigate
+                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId)}
+                replace
+            />
+        );
+    }
 
     return (
         <section className={cn(listBox)}>

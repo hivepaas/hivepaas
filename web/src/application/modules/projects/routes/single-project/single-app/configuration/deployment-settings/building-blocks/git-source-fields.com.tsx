@@ -1,9 +1,16 @@
-import { Checkbox, FieldError, Input } from "@components/ui";
-import { useController, useFormContext } from "react-hook-form";
+import { useMemo, useState } from "react";
+
+import { Button, Checkbox, Field, FieldError, Input } from "@components/ui";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { BranchesDialog } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EDeploymentRepoOption } from "~/projects/module-shared/enums";
+import { canUseGitCredentialSelectors, parseGitRepository } from "~/projects/module-shared/utils";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ESettingType } from "@application/shared/enums";
 
 import { GitCredentialSelect, GitRepositoryInput, PushToRegistrySelect } from "../form-components";
 import {
@@ -12,8 +19,12 @@ import {
 } from "../schemas";
 
 export function GitSourceFields({ readOnly = false }: Props) {
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
+
     const gitSubmodulesOptionId = "repo-options-git-submodules";
     const gitLfsOptionId = "repo-options-git-lfs";
+    const [isBranchesDialogOpen, setBranchesDialogOpen] = useState(false);
 
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
@@ -25,6 +36,15 @@ export function GitSourceFields({ readOnly = false }: Props) {
         field: repoRef,
         fieldState: { invalid: isRepoRefInvalid, error: repoRefError },
     } = useController({ control, name: "repoSource.repoRef" });
+
+    const credentials = useWatch({ control, name: "repoSource.credentials" });
+    const repoUrlValue = useWatch({ control, name: "repoSource.repoUrl" }) as string | undefined;
+    const credentialId = credentials?.id;
+    const normalizedRepoUrl = repoUrlValue?.trim() ?? "";
+    const repository = useMemo(() => parseGitRepository(normalizedRepoUrl), [normalizedRepoUrl]);
+    const canShowGitSelectors = !readOnly && Boolean(credentialId) && canUseGitCredentialSelectors(credentials?.type);
+    const canShowBranchesButton = canShowGitSelectors && Boolean(normalizedRepoUrl) && Boolean(repository);
+    const isGithubAppCredential = credentials?.type === ESettingType.GithubApp;
 
     const {
         field: commitHash,
@@ -67,16 +87,31 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     />
                 }
             >
-                <Input
-                    {...repoRef}
-                    value={repoRef.value}
-                    onChange={repoRef.onChange}
-                    placeholder="main, tags/v1.2.3"
-                    aria-invalid={isRepoRefInvalid}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                    disabled={readOnly}
-                />
-                <FieldError errors={[repoRefError]} />
+                <Field>
+                    <div className="flex flex-wrap items-start gap-3">
+                        <Input
+                            {...repoRef}
+                            value={repoRef.value}
+                            onChange={repoRef.onChange}
+                            placeholder="main, tags/v1.2.3"
+                            aria-invalid={isRepoRefInvalid}
+                            className="w-full min-w-[260px] max-w-[600px] flex-1"
+                            disabled={readOnly}
+                        />
+                        {canShowBranchesButton && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setBranchesDialogOpen(true);
+                                }}
+                            >
+                                Show Branches
+                            </Button>
+                        )}
+                    </div>
+                    <FieldError errors={[repoRefError]} />
+                </Field>
             </InfoBlock>
 
             <InfoBlock title="Commit Hash">
@@ -190,6 +225,20 @@ export function GitSourceFields({ readOnly = false }: Props) {
                 />
                 <FieldError errors={[repoTypeError]} />
             </InfoBlock> */}
+
+            {canShowBranchesButton && credentialId && repository && (
+                <BranchesDialog
+                    open={isBranchesDialogOpen}
+                    onOpenChange={setBranchesDialogOpen}
+                    projectId={projectId}
+                    credentialId={credentialId}
+                    repository={repository}
+                    isGithubAppCredential={isGithubAppCredential}
+                    onSelect={ref => {
+                        repoRef.onChange(ref);
+                    }}
+                />
+            )}
         </>
     );
 }

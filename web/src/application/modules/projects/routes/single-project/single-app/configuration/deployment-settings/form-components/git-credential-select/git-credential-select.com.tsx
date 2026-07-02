@@ -45,7 +45,7 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
     const comboboxOptions = useMemo(() => {
         return credentials.map(cred => {
             return {
-                value: { id: cred.id, name: cred.name },
+                value: { id: cred.id, name: cred.name, type: cred.type },
                 label: `${cred.type} ${cred.name}`,
             };
         });

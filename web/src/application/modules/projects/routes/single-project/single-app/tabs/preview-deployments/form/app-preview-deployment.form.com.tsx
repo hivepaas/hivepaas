@@ -3,14 +3,15 @@ import { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import type { AppPreviews_PrepareCreate_Res } from "~/projects/api/services";
+import { BranchesDialog, PullRequestsDialog } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { parseGitRepository } from "~/projects/module-shared/utils";
 
 import { AppLink, InfoBlock } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 
-import { BranchesDialog, PullRequestsDialog } from "../building-blocks";
 import {
     type AppPreviewDeploymentFormInput,
     type AppPreviewDeploymentFormOutput,
@@ -19,7 +20,6 @@ import {
     PREVIEW_DEPLOYMENT_TRIGGER,
     type PreviewDeploymentTrigger,
 } from "../schemas";
-import { parseGitRepository } from "../utils";
 
 const INFO_BLOCK_TITLE_WIDTH = 300;
 
@@ -256,6 +256,8 @@ export function AppPreviewDeploymentForm({
                         repository={repository}
                         isGithubAppCredential={isGithubAppCredential}
                         onSelect={handleSelectGitRef}
+                        selectLabel="Deploy"
+                        dialogWidthClassName="w-[1000px]"
                     />
                 </>
             )}

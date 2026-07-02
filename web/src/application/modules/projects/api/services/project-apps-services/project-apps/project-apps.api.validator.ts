@@ -12,39 +12,7 @@ import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-/**
- * Project app schema
- */
-const ProjectAppSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    status: z.nativeEnum(EProjectAppStatus),
-    env: z
-        .string()
-        .nullish()
-        .transform(val => val ?? ""),
-    note: z.string(),
-    tags: z.array(z.string()),
-    key: z.string(),
-    localKey: z
-        .string()
-        .nullish()
-        .transform(val => val ?? ""),
-    updateVer: z.number(),
-    stats: z
-        .object({
-            runningTasks: z.number(),
-            desiredTasks: z.number(),
-            completedTasks: z.number(),
-        })
-        .nullable(),
-    accessLinks: z
-        .array(z.string())
-        .nullish()
-        .transform(val => val ?? []),
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date().nullable(),
-});
+import { ProjectAppDetailsSchema, ProjectAppSchema } from "./project-apps.api.schemas";
 
 /**
  * Find many project apps paginated API response schema
@@ -126,28 +94,6 @@ const DeploySchema = z.object({
         deploymentId: z.string(),
     }),
     meta: BaseMetaApiSchema.nullable(),
-});
-
-/**
- * Project app stats schema
- */
-const ProjectAppStatsSchema = z.object({
-    runningTasks: z.number(),
-    desiredTasks: z.number(),
-    completedTasks: z.number(),
-});
-
-/**
- * Project app details schema
- */
-const ProjectAppDetailsSchema = ProjectAppSchema.extend({
-    key: z.string(),
-    localKey: z
-        .string()
-        .nullish()
-        .transform(val => val ?? ""),
-    updateVer: z.number(),
-    stats: ProjectAppStatsSchema.nullable(),
 });
 
 /**

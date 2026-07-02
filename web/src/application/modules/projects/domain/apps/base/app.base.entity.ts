@@ -11,3 +11,12 @@ export interface ProjectAppBase {
     createdAt: Date;
     updatedAt: Date | null;
 }
+
+export interface ProjectAppBaseRef {
+    id: string;
+    name: string;
+    key: string;
+    localKey: string;
+    status: EProjectAppStatus | "";
+    env: string;
+}

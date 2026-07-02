@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
+import { ESettingType } from "@application/shared/enums";
+
 const SettingsRefSchema = z.object({
     id: z.string(),
     name: z.string(),
+    type: z.nativeEnum(ESettingType).optional(),
 });
 
 const OptionalSettingsRefSchema = SettingsRefSchema.nullish();

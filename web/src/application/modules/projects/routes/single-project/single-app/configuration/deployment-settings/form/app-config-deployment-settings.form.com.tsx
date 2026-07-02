@@ -59,7 +59,11 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                     gitLfsEnabled: data.repoSource.repoOptions.gitLfsEnabled,
                 },
                 credentials: data.repoSource.credentials
-                    ? { id: data.repoSource.credentials.id, name: data.repoSource.credentials.name }
+                    ? {
+                          id: data.repoSource.credentials.id,
+                          name: data.repoSource.credentials.name,
+                          type: data.repoSource.credentials.type,
+                      }
                     : undefined,
                 dockerfilePath: data.repoSource.dockerfilePath,
                 imageName: data.repoSource.imageName,

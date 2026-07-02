@@ -27,6 +27,9 @@ func (uc *UC) GetApp(
 			// NOTE: load http settings to extract active domain names of the app
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 		),
+		bunex.SelectRelation("ParentApp",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		),
 	)
 	if err != nil {
 		return nil, apperrors.New(err)

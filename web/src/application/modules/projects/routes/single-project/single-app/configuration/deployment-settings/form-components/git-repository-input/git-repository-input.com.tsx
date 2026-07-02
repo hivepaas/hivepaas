@@ -1,14 +1,13 @@
-import { useMemo } from "react";
+import { useState } from "react";
 
-import { FieldError } from "@components/ui";
+import { Button, Field, FieldError, Input } from "@components/ui";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
-import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { GitRepositoriesDialog } from "~/projects/module-shared/components";
+import { canUseGitCredentialSelectors } from "~/projects/module-shared/utils";
 
-import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
@@ -18,6 +17,7 @@ import {
 export function GitRepositoryInput({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
+    const [isRepositoriesDialogOpen, setRepositoriesDialogOpen] = useState(false);
 
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
@@ -29,64 +29,62 @@ export function GitRepositoryInput({ readOnly = false }: Props) {
     const credentialId = credentials?.id;
 
     const {
-        data: { data: repos } = DEFAULT_PAGINATED_DATA,
-        refetch,
-        isRefetching,
-    } = ProjectGitCredentialsQueries.useFindManyRepos(
-        {
-            projectID: projectId,
-            itemID: credentialId ?? "",
-        },
-        { enabled: Boolean(credentialId) },
-    );
-
-    const {
         field: repoUrl,
         fieldState: { invalid: isRepoUrlInvalid, error: repoUrlError },
     } = useController({ control, name: "repoSource.repoUrl" });
 
-    const repoCloneUrls = useMemo(() => {
-        const urls = repos.map(repo => repo.cloneURL).filter(Boolean);
-        return [...new Set(urls)];
-    }, [repos]);
-
-    const hasCredential = Boolean(credentialId);
+    const canShowRepositoriesButton =
+        !readOnly && Boolean(credentialId) && canUseGitCredentialSelectors(credentials?.type);
 
     return (
-        <InfoBlock
-            title={
-                <LabelWithInfo
-                    label="Git Repository"
-                    isRequired
-                />
-            }
-        >
-            <EditableCombobox
-                options={repoCloneUrls}
-                value={repoUrl.value}
-                onChange={v => {
-                    if (readOnly) {
-                        return;
-                    }
+        <>
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Git Repository"
+                        isRequired
+                    />
+                }
+            >
+                <Field>
+                    <div className="flex flex-wrap items-start gap-3">
+                        <Input
+                            {...repoUrl}
+                            value={repoUrl.value}
+                            onChange={repoUrl.onChange}
+                            placeholder="Paste repository URL"
+                            aria-invalid={isRepoUrlInvalid}
+                            className="w-full min-w-[260px] max-w-[600px] flex-1"
+                            disabled={readOnly}
+                        />
+                        {canShowRepositoriesButton && credentialId && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setRepositoriesDialogOpen(true);
+                                }}
+                            >
+                                Show Repos
+                            </Button>
+                        )}
+                    </div>
+                    <FieldError errors={[repoUrlError]} />
+                </Field>
+            </InfoBlock>
 
-                    repoUrl.onChange(v);
-                }}
-                placeholder={
-                    hasCredential
-                        ? "Search or paste repository URL"
-                        : "Paste repository URL or select git credentials for suggestions"
-                }
-                emptyText={
-                    hasCredential ? "No repositories available" : "Select git credentials for repository suggestions"
-                }
-                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                aria-invalid={isRepoUrlInvalid}
-                onRefresh={hasCredential ? () => void refetch() : undefined}
-                isRefreshing={isRefetching}
-                disabled={readOnly}
-            />
-            <FieldError errors={[repoUrlError]} />
-        </InfoBlock>
+            {canShowRepositoriesButton && credentialId && (
+                <GitRepositoriesDialog
+                    open={isRepositoriesDialogOpen}
+                    onOpenChange={setRepositoriesDialogOpen}
+                    projectId={projectId}
+                    credentialId={credentialId}
+                    onSelect={repository => {
+                        repoUrl.onChange(repository.cloneURL);
+                    }}
+                />
+            )}
+        </>
     );
 }
 

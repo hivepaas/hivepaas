@@ -47,10 +47,12 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		networkGroup := clusterGroup.Group("/networks")
 		// Networks
 		networkGroup.GET("", clusterHandler.ListNetwork)
-		networkGroup.GET("/:networkID", clusterHandler.GetNetwork)
-		networkGroup.GET("/:networkID/inspect", clusterHandler.GetNetworkInspection)
+		networkGroup.GET("/:itemID", clusterHandler.GetNetwork)
 		networkGroup.POST("", clusterHandler.CreateNetwork)
-		networkGroup.DELETE("/:networkID", clusterHandler.DeleteNetwork)
+		networkGroup.PUT("/:itemID", clusterHandler.UpdateNetwork)
+		networkGroup.PUT("/:itemID/status", clusterHandler.UpdateNetworkStatus)
+		networkGroup.DELETE("/:itemID", clusterHandler.DeleteNetwork)
+		networkGroup.POST("/sync", clusterHandler.SyncNetwork)
 	}
 
 	{ // build group

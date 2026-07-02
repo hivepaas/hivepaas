@@ -2,9 +2,12 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 )
@@ -34,6 +37,42 @@ func (m *manager) NetworkList(
 		return nil, apperrors.NewInfra(err)
 	}
 	return &resp, nil
+}
+
+func (m *manager) NetworkListByIDs(
+	ctx context.Context,
+	networkIDOrNames []string,
+	options ...NetworkListOption,
+) (*client.NetworkListResult, error) {
+	resp := &client.NetworkListResult{}
+	if len(networkIDOrNames) == 0 {
+		return resp, nil
+	}
+
+	if len(networkIDOrNames) == 1 {
+		inspect, err := m.NetworkInspect(ctx, networkIDOrNames[0])
+		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+			return nil, apperrors.New(err)
+		}
+		if inspect != nil {
+			resp.Items = append(resp.Items, network.Summary{Network: inspect.Network.Network})
+		}
+		return resp, nil
+	}
+
+	listResp, err := m.NetworkList(ctx, options...)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	for i := range listResp.Items {
+		net := &listResp.Items[i]
+		if gofn.Contain(networkIDOrNames, net.Name) || gofn.Contain(networkIDOrNames, net.ID) {
+			resp.Items = append(resp.Items, *net)
+			continue
+		}
+	}
+
+	return resp, nil
 }
 
 type NetworkCreateOption func(*client.NetworkCreateOptions)

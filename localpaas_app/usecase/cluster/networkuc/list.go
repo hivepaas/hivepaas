@@ -2,61 +2,76 @@ package networkuc
 
 import (
 	"context"
-	"strings"
-
-	"github.com/moby/moby/api/types/network"
-	"github.com/tiendc/gofn"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
 	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
-	"github.com/localpaas/localpaas/services/docker"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) ListNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.ListNetworkReq,
-) (_ *networkdto.ListNetworkResp, err error) {
-	var project *entity.Project
-	if req.ProjectID != "" {
-		project, err = uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-	}
-
-	listResp, err := uc.dockerManager.NetworkList(ctx)
+) (*networkdto.ListNetworkResp, error) {
+	req.Type = currentSettingType
+	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	filterNetworks := listResp.Items
-	if req.ProjectID != "" {
-		filterNetworks = gofn.FilterPtr(filterNetworks, func(net *network.Summary) bool {
-			label := net.Labels[docker.StackLabelNamespace]
-			return label == "" || label == project.Key
-		})
+	refClusterObjects := entity.NewRefClusterObjects()
+	err = uc.listNetworksInDocker(ctx, resp.Data, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
-	if req.Search != "" {
-		keyword := strings.ToLower(req.Search)
-		filterNetworks = gofn.FilterPtr(filterNetworks, func(net *network.Summary) bool {
-			return strings.Contains(strings.ToLower(net.Name), keyword)
-		})
-	}
-	if len(auth.AllowObjectIDs) > 0 {
-		filterNetworks = gofn.FilterPtr(filterNetworks, func(net *network.Summary) bool {
-			return gofn.Contain(auth.AllowObjectIDs, net.ID) || gofn.Contain(auth.AllowObjectIDs, net.Name)
-		})
+
+	respData, err := networkdto.TransformNetworks(resp.Data, resp.RefObjects, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
 
 	return &networkdto.ListNetworkResp{
-		Meta: &basedto.ListMeta{Page: &basedto.PagingMeta{
-			Offset: 0,
-			Limit:  req.Paging.Limit,
-			Total:  len(filterNetworks),
-		}},
-		Data: networkdto.TransformNetworks(filterNetworks),
+		Meta: resp.Meta,
+		Data: respData,
 	}, nil
+}
+
+func (uc *UC) listNetworksInDocker(
+	ctx context.Context,
+	settings []*entity.Setting,
+	refClusterObjects *entity.RefClusterObjects,
+) error {
+	networks := make([]string, 0, len(settings))
+	for _, setting := range settings {
+		net, err := setting.AsClusterNetwork()
+		if err != nil {
+			return apperrors.New(err)
+		}
+		networks = append(networks, net.NetworkID)
+	}
+	if len(networks) == 0 {
+		return nil
+	}
+
+	if len(networks) == 1 {
+		inspectResp, err := uc.dockerManager.NetworkInspect(ctx, networks[0])
+		if err != nil {
+			return apperrors.New(err)
+		}
+		refClusterObjects.RefNetworks[networks[0]] = &inspectResp.Network.Network
+		return nil
+	}
+
+	res, err := uc.dockerManager.NetworkListByIDs(ctx, networks)
+	if err != nil {
+		return apperrors.New(err)
+	}
+
+	for i := range res.Items {
+		net := &res.Items[i]
+		refClusterObjects.RefNetworks[net.ID] = &net.Network
+	}
+	return nil
 }

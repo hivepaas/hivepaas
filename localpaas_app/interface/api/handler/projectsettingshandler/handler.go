@@ -10,20 +10,20 @@ import (
 type Handler struct {
 	*projectbasehandler.Handler
 	projectSettingsUC *projectsettingsuc.UC
-	dockerNetworkUC   *networkuc.UC
-	dockerVolumeUC    *volumeuc.UC
+	clusterNetworkUC  *networkuc.UC
+	clusterVolumeUC   *volumeuc.UC
 }
 
 func New(
 	baseHandler *projectbasehandler.Handler,
 	projectSettingsUC *projectsettingsuc.UC,
-	dockerNetworkUC *networkuc.UC,
-	dockerVolumeUC *volumeuc.UC,
+	clusterNetworkUC *networkuc.UC,
+	clusterVolumeUC *volumeuc.UC,
 ) *Handler {
 	return &Handler{
 		Handler:           baseHandler,
 		projectSettingsUC: projectSettingsUC,
-		dockerNetworkUC:   dockerNetworkUC,
-		dockerVolumeUC:    dockerVolumeUC,
+		clusterNetworkUC:  clusterNetworkUC,
+		clusterVolumeUC:   clusterVolumeUC,
 	}
 }

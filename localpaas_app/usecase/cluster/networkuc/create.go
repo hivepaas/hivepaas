@@ -2,18 +2,16 @@ package networkuc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/moby/moby/client"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/dockerhelper"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 	"github.com/localpaas/localpaas/services/docker"
-)
-
-const (
-	namespaceGlobal = "global"
 )
 
 func (uc *UC) CreateNetwork(
@@ -21,27 +19,60 @@ func (uc *UC) CreateNetwork(
 	auth *basedto.Auth,
 	req *networkdto.CreateNetworkReq,
 ) (*networkdto.CreateNetworkResp, error) {
-	if req.Labels == nil {
-		req.Labels = map[string]string{}
+	req.Type = currentSettingType
+	netEntity := req.ToEntity()
+	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
+		VerifyingRefIDs: netEntity.GetRefObjectIDs(),
+		Version:         currentSettingVersion,
+		PrepareCreation: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.CreateSettingData,
+			pData *settings.PersistingSettingCreationData,
+		) error {
+			// If network is for a project, need to apply some restrictions
+			if req.Scope.IsProjectScope() {
+				req.Driver = docker.NetworkDriverOverlay
+				req.Attachable = false
+				req.Name = data.ScopeProject.Key + "_" + req.Name
+				netEntity.Name = req.Name
+			}
+			createResp, err := uc.createNetworkInDocker(ctx, req.CreateNetworkBaseReq)
+			if err != nil {
+				return apperrors.New(err)
+			}
+			netEntity.NetworkID = createResp.ID
+
+			pData.Setting.Name = req.Name
+			pData.Setting.Kind = req.Driver
+			if err := pData.Setting.SetData(netEntity); err != nil {
+				return apperrors.New(err)
+			}
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
 
-	labels := dockerhelper.ApplyUserLabels(map[string]string{}, req.Labels)
-	if req.ProjectID != "" {
-		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-		labels[docker.StackLabelNamespace] = project.Key
+	return &networkdto.CreateNetworkResp{
+		Data: resp.Data,
+	}, nil
+}
 
-		// If network is for a project, need to apply some restrictions
-		req.Driver = docker.NetworkDriverOverlay
-		req.Attachable = false
-		req.Name = project.Key + "_" + req.Name
-	} else if !req.AvailInProjects {
-		labels[docker.StackLabelNamespace] = namespaceGlobal
+func (uc *UC) createNetworkInDocker(
+	ctx context.Context,
+	req *networkdto.CreateNetworkBaseReq,
+) (*client.NetworkCreateResult, error) {
+	_, err := uc.dockerManager.NetworkInspect(ctx, req.Name)
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+		return nil, apperrors.New(err)
+	}
+	if err == nil {
+		return nil, apperrors.NewAlreadyExist("Cluster network")
 	}
 
-	resp, err := uc.dockerManager.NetworkCreate(ctx, req.Name, func(opts *client.NetworkCreateOptions) {
+	createResp, err := uc.dockerManager.NetworkCreate(ctx, req.Name, func(opts *client.NetworkCreateOptions) {
 		opts.Driver = req.Driver
 		opts.Scope = docker.NetworkScopeSwarm
 		opts.EnableIPv4 = &req.EnableIPv4
@@ -49,16 +80,11 @@ func (uc *UC) CreateNetwork(
 		opts.Internal = req.Internal
 		opts.Attachable = req.Attachable
 		opts.Options = req.Options
-		opts.Labels = labels
+		opts.Labels = req.Labels
 	})
-
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	return &networkdto.CreateNetworkResp{
-		Data: &basedto.ObjectIDResp{
-			ID: resp.ID,
-		},
-	}, nil
+	return createResp, nil
 }

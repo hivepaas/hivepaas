@@ -59,16 +59,16 @@ func (m *manager) VolumeList(
 
 func (m *manager) VolumeListByIDs(
 	ctx context.Context,
-	volumes []string,
+	volumeIDOrNames []string,
 	options ...VolumeListOption,
 ) (*client.VolumeListResult, error) {
 	resp := &client.VolumeListResult{}
-	if len(volumes) == 0 {
+	if len(volumeIDOrNames) == 0 {
 		return resp, nil
 	}
 
-	if len(volumes) == 1 {
-		inspect, err := m.VolumeInspect(ctx, volumes[0])
+	if len(volumeIDOrNames) == 1 {
+		inspect, err := m.VolumeInspect(ctx, volumeIDOrNames[0])
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return nil, apperrors.New(err)
 		}
@@ -78,17 +78,17 @@ func (m *manager) VolumeListByIDs(
 		return resp, nil
 	}
 
-	volResp, err := m.VolumeList(ctx, options...)
+	listResp, err := m.VolumeList(ctx, options...)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
-	for i := range volResp.Items {
-		vol := &volResp.Items[i]
-		if gofn.Contain(volumes, vol.Name) {
+	for i := range listResp.Items {
+		vol := &listResp.Items[i]
+		if gofn.Contain(volumeIDOrNames, vol.Name) {
 			resp.Items = append(resp.Items, *vol)
 			continue
 		}
-		if vol.ClusterVolume != nil && gofn.Contain(volumes, vol.ClusterVolume.ID) {
+		if vol.ClusterVolume != nil && gofn.Contain(volumeIDOrNames, vol.ClusterVolume.ID) {
 			resp.Items = append(resp.Items, *vol)
 			continue
 		}

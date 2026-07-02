@@ -2,11 +2,13 @@ package networkuc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/infra/database"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
-	"github.com/localpaas/localpaas/services/docker"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) DeleteNetwork(
@@ -14,23 +16,26 @@ func (uc *UC) DeleteNetwork(
 	auth *basedto.Auth,
 	req *networkdto.DeleteNetworkReq,
 ) (*networkdto.DeleteNetworkResp, error) {
-	if req.ProjectID != "" {
-		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-
-		inspect, err := uc.dockerManager.NetworkInspect(ctx, req.NetworkID)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
-
-		if inspect.Network.Labels[docker.StackLabelNamespace] != project.Key {
-			return nil, apperrors.NewNotFound("Network").WithMsgLog("network not belong to project")
-		}
-	}
-
-	_, err := uc.dockerManager.NetworkRemove(ctx, req.NetworkID)
+	req.Type = currentSettingType
+	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
+		AfterLoading: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.DeleteSettingData,
+		) error {
+			if data.Setting.ObjectID == req.Scope.MainObjectID() {
+				netEntity, err := data.Setting.AsClusterNetwork()
+				if err != nil {
+					return apperrors.New(err)
+				}
+				_, err = uc.dockerManager.NetworkRemove(ctx, netEntity.NetworkID)
+				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+					return apperrors.New(err)
+				}
+			}
+			return nil
+		},
+	})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

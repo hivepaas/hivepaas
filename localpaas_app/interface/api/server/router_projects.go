@@ -77,13 +77,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		cloudStorageGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCloudStorage)
 	}
 
-	{ // Docker network group
-		networkGroup := projectGroup.Group("/:projectID/docker-networks")
-		networkGroup.GET("/:networkID", projectSettingsHandler.GetDockerNetwork)
-		networkGroup.GET("/:networkID/inspect", projectSettingsHandler.GetDockerNetworkInspection)
-		networkGroup.GET("", projectSettingsHandler.ListDockerNetwork)
-		networkGroup.POST("", projectSettingsHandler.CreateDockerNetwork)
-		networkGroup.DELETE("/:networkID", projectSettingsHandler.DeleteDockerNetwork)
+	{ // Cluster network group
+		networkGroup := projectGroup.Group("/:projectID/cluster-networks")
+		networkGroup.GET("/:itemID", projectSettingsHandler.GetClusterNetwork)
+		networkGroup.GET("", projectSettingsHandler.ListClusterNetwork)
+		networkGroup.POST("", projectSettingsHandler.CreateClusterNetwork)
+		networkGroup.PUT("/:itemID", projectSettingsHandler.UpdateClusterNetwork)
+		networkGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateClusterNetworkStatus)
+		networkGroup.DELETE("/:itemID", projectSettingsHandler.DeleteClusterNetwork)
 	}
 
 	{ // Cluster volume group

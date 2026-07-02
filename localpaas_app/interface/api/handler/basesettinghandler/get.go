@@ -8,6 +8,7 @@ import (
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/base"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
@@ -105,6 +106,11 @@ func (h *Handler) GetSetting(
 		r := cloudstoragedto.NewGetCloudStorageReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.CloudStorageUC.GetCloudStorage(reqCtx, auth, r) }
+
+	case base.ResourceTypeClusterNetwork:
+		r := networkdto.NewGetNetworkReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.ClusterNetworkUC.GetNetwork(reqCtx, auth, r) }
 
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewGetVolumeReq()

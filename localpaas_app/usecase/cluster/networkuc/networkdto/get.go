@@ -1,23 +1,17 @@
 package networkdto
 
 import (
-	"time"
-
-	"github.com/moby/moby/api/types/network"
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
-	"github.com/localpaas/localpaas/services/docker"
-)
-
-const (
-	networkIDMaxLen = 100
+	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/localpaas/localpaas/localpaas_app/pkg/copier"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 type GetNetworkReq struct {
-	NetworkID string `json:"-"`
-	ProjectID string `json:"-"`
+	settings.GetSettingReq
 }
 
 func NewGetNetworkReq() *GetNetworkReq {
@@ -26,9 +20,7 @@ func NewGetNetworkReq() *GetNetworkReq {
 
 func (req *GetNetworkReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	// NOTE: network id is docker id normally
-	validators = append(validators, basedto.ValidateStr(&req.NetworkID, true, 1, networkIDMaxLen, "networkId")...)
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, false, "projectId")...)
+	validators = append(validators, req.GetSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
@@ -38,50 +30,44 @@ type GetNetworkResp struct {
 }
 
 type NetworkResp struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	AvailInProjects bool              `json:"availableInProjects"`
-	Driver          string            `json:"driver"`
-	Internal        bool              `json:"internal"`
-	Attachable      bool              `json:"attachable"`
-	Ingress         bool              `json:"ingress"`
-	EnableIPv4      bool              `json:"enableIPv4"`
-	EnableIPv6      bool              `json:"enableIPv6"`
-	Options         map[string]string `json:"options"`
-	Labels          map[string]string `json:"labels"`
-	CreatedAt       time.Time         `json:"createdAt"`
+	*settings.BaseSettingResp
+
+	Driver     string            `json:"driver"`
+	Internal   bool              `json:"internal"`
+	Attachable bool              `json:"attachable"`
+	Ingress    bool              `json:"ingress"`
+	EnableIPv4 bool              `json:"enableIPv4"`
+	EnableIPv6 bool              `json:"enableIPv6"`
+	Options    map[string]string `json:"options"`
+	Labels     map[string]string `json:"labels"`
 }
 
-func TransformNetworkInspection(net *network.Inspect) *NetworkResp {
-	return &NetworkResp{
-		ID:              net.ID,
-		Name:            net.Name,
-		AvailInProjects: net.Labels[docker.StackLabelNamespace] == "",
-		Driver:          net.Driver,
-		Internal:        net.Internal,
-		Attachable:      net.Attachable,
-		Ingress:         net.Ingress,
-		EnableIPv4:      net.EnableIPv4,
-		EnableIPv6:      net.EnableIPv6,
-		Options:         net.Options,
-		Labels:          net.Labels,
-		CreatedAt:       net.Created,
+func TransformNetwork(
+	setting *entity.Setting,
+	_ *entity.RefObjects,
+	refClusterObjects *entity.RefClusterObjects,
+) (resp *NetworkResp, err error) {
+	netEnt := setting.MustAsClusterNetwork()
+	if err = copier.Copy(&resp, netEnt); err != nil {
+		return nil, apperrors.New(err)
 	}
-}
 
-func TransformNetwork(net *network.Summary) *NetworkResp {
-	return &NetworkResp{
-		ID:              net.ID,
-		Name:            net.Name,
-		AvailInProjects: net.Labels[docker.StackLabelNamespace] == "",
-		Driver:          net.Driver,
-		Internal:        net.Internal,
-		Attachable:      net.Attachable,
-		Ingress:         net.Ingress,
-		EnableIPv4:      net.EnableIPv4,
-		EnableIPv6:      net.EnableIPv6,
-		Options:         net.Options,
-		Labels:          net.Labels,
-		CreatedAt:       net.Created,
+	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
+
+	net := refClusterObjects.RefNetworks[netEnt.NetworkID]
+
+	resp.Driver = net.Driver
+	resp.Internal = net.Internal
+	resp.Attachable = net.Attachable
+	resp.Ingress = net.Ingress
+	resp.EnableIPv4 = net.EnableIPv4
+	resp.EnableIPv6 = net.EnableIPv6
+	resp.Options = net.Options
+	resp.Labels = net.Labels
+	resp.CreatedAt = net.Created
+
+	return resp, nil
 }

@@ -5,8 +5,9 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/entity"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc/networkdto"
-	"github.com/localpaas/localpaas/services/docker"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 func (uc *UC) GetNetwork(
@@ -14,24 +15,24 @@ func (uc *UC) GetNetwork(
 	auth *basedto.Auth,
 	req *networkdto.GetNetworkReq,
 ) (*networkdto.GetNetworkResp, error) {
-	inspect, err := uc.dockerManager.NetworkInspect(ctx, req.NetworkID)
+	req.Type = currentSettingType
+	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
-	network := &inspect.Network
 
-	if req.ProjectID != "" {
-		project, err := uc.projectService.LoadProject(ctx, uc.db, req.ProjectID, true)
-		if err != nil {
-			return nil, apperrors.New(err)
-		}
+	refClusterObjects := entity.NewRefClusterObjects()
+	err = uc.listNetworksInDocker(ctx, []*entity.Setting{resp.Data}, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
 
-		if network.Labels[docker.StackLabelNamespace] != project.Key {
-			return nil, apperrors.NewNotFound("Network").WithMsgLog("network not belong to project")
-		}
+	respData, err := networkdto.TransformNetwork(resp.Data, resp.RefObjects, refClusterObjects)
+	if err != nil {
+		return nil, apperrors.New(err)
 	}
 
 	return &networkdto.GetNetworkResp{
-		Data: networkdto.TransformNetworkInspection(network),
+		Data: respData,
 	}, nil
 }

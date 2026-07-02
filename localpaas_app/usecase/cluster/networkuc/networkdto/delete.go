@@ -5,21 +5,21 @@ import (
 
 	"github.com/localpaas/localpaas/localpaas_app/apperrors"
 	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/settings"
 )
 
 type DeleteNetworkReq struct {
-	NetworkID string `json:"-"`
-	ProjectID string `json:"-"`
+	settings.DeleteSettingReq
 }
 
 func NewDeleteNetworkReq() *DeleteNetworkReq {
 	return &DeleteNetworkReq{}
 }
 
+// Validate implements interface basedto.ReqValidator
 func (req *DeleteNetworkReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateStr(&req.NetworkID, true, 1, networkIDMaxLen, "networkId")...)
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, false, "projectId")...)
+	validators = append(validators, req.DeleteSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

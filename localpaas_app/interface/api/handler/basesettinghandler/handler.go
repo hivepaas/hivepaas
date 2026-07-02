@@ -3,6 +3,7 @@ package basesettinghandler
 import (
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler"
 	"github.com/localpaas/localpaas/localpaas_app/interface/api/handler/authhandler"
+	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/networkuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/cluster/volumeuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/fileuc"
 	"github.com/localpaas/localpaas/localpaas_app/usecase/settings/accessiblebyprojectsuc"
@@ -41,6 +42,7 @@ type Handler struct {
 	AccessibleByProjectsUC *accessiblebyprojectsuc.UC
 	OAuthUC                *oauthuc.UC
 	CloudStorageUC         *cloudstorageuc.UC
+	ClusterNetworkUC       *networkuc.UC
 	ClusterVolumeUC        *volumeuc.UC
 	SSHKeyUC               *sshkeyuc.UC
 	IMServiceUC            *imserviceuc.UC
@@ -76,6 +78,7 @@ func New(
 	accessibleByProjectsUC *accessiblebyprojectsuc.UC,
 	oauthUC *oauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
+	clusterNetworkUC *networkuc.UC,
 	clusterVolumeUC *volumeuc.UC,
 	sshKeyUC *sshkeyuc.UC,
 	imServiceUC *imserviceuc.UC,
@@ -110,6 +113,7 @@ func New(
 		AccessibleByProjectsUC: accessibleByProjectsUC,
 		OAuthUC:                oauthUC,
 		CloudStorageUC:         cloudStorageUC,
+		ClusterNetworkUC:       clusterNetworkUC,
 		ClusterVolumeUC:        clusterVolumeUC,
 		SSHKeyUC:               sshKeyUC,
 		IMServiceUC:            imServiceUC,

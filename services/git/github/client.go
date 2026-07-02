@@ -7,10 +7,10 @@ import (
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/base"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
 type Client struct {

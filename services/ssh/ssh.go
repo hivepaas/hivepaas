@@ -9,7 +9,7 @@ import (
 	"github.com/tiendc/gofn"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 const (

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service AgentService {
+  rpc Ping(PingReq) returns (PingResp);
+}
+
+message PingReq {
+  string message = 1;
+}
+
+message PingResp {
+  string message = 1;
+}

@@ -6,8 +6,8 @@ import (
 	"github.com/tiendc/gofn"
 	"gopkg.in/gomail.v2"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 type SendMailOption func(*gomail.Message)

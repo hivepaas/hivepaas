@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/localpaas/localpaas/localpaas_app/infra/httpclient"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/httpclient"
 )
 
 const (

@@ -1,0 +1,266 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.swarm=true"
+      - "--providers.swarm.watch=true"
+      - "--providers.swarm.network=hivepaas_net"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--log.level=DEBUG"
+      - "--log.filepath=/var/log/traefik/traefik.log"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+    networks:
+      # Connect to the 'hivepaas' overlay network for inter-container communication across nodes
+      - hivepaas_net
+    ports:
+      # Expose traefik's entry points to the Swarm
+      # Swarm requires the long syntax for ports.
+      - target: 80 # Container port
+        published: 80 # Host port exposed on the nodes
+        protocol: tcp
+        # 'host' mode binds directly to the node's IP where the task runs.
+        # 'ingress' mode uses Swarm's Routing Mesh (load balances across nodes).
+        # Choose based on your load balancing strategy. 'host' is often simpler if using an external LB.
+        mode: host
+      - target: 443 # Container port
+        published: 443 # Host port
+        protocol: tcp
+        mode: host
+      - target: 8080 # Traefik dashboard
+        published: 38081 # Exposed dashboard
+        protocol: tcp
+        mode: host
+    volumes:
+      - ./hivepaas/traefik/etc/dynamic:/etc/traefik/dynamic
+      - ./hivepaas/ssl/certs:/etc/traefik/ssl/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  db:
+    image: postgres:18-alpine
+    networks:
+      - local_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    environment:
+      POSTGRES_DB: hivepaas
+      POSTGRES_USER: hivepaas
+      POSTGRES_PASSWORD: abc123
+      PGDATA: /var/lib/postgresql/18/docker
+    ports:
+      - target: 5432 # Container port
+        published: 35432 # Host port exposed on the nodes
+        protocol: tcp
+        mode: host
+    volumes:
+      - db:/var/lib/postgresql
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  redis:
+    image: redis:8-alpine
+    command: redis-server
+    networks:
+      - local_net
+    ports:
+      - target: 6379 # Container port
+        published: 36379 # Host port exposed on the nodes
+        protocol: tcp
+        mode: host
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  adminer:
+    image: adminer:latest
+    networks:
+      - hivepaas_net
+      - local_net
+    ports:
+      - target: 8080 # Container port
+        published: 38080 # Host port exposed on the nodes
+        protocol: tcp
+        mode: host
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.adminer.rule=Host(`adminer.localhost`)"
+        - "traefik.http.routers.adminer.entrypoints=websecure"
+        - "traefik.http.routers.adminer.tls=true"
+        - "traefik.http.routers.adminer-http.rule=Host(`adminer.localhost`)"
+        - "traefik.http.routers.adminer-http.entrypoints=web"
+        - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+        - "traefik.swarm.network=hivepaas_net"
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  redis_ui:
+    image: redislabs/redisinsight:latest
+    networks:
+      - local_net
+    ports:
+      - target: 5540 # Container port
+        published: 35540 # Host port exposed on the nodes
+        protocol: tcp
+        mode: host
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  app:
+    image: hivepaas/hivepaas-dev:latest
+    networks:
+      - hivepaas_net
+      - local_net
+    environment:
+      HP_CONFIG_FILE: config/config.development.toml
+      HP_USER_ADMIN_USERNAME: admin
+      HP_USER_ADMIN_EMAIL: admin@domain.name
+      HP_USER_ADMIN_PASSWORD: abc123
+      VITE_API_URL: http://localhost:10000
+    volumes:
+      - ./hivepaas:/var/lib/hivepaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.app-svc.loadbalancer.server.port=10000"
+        - "traefik.http.routers.app-router.rule=Host(`app.dev.localhost`)"
+        - "traefik.http.routers.app-router.entrypoints=websecure"
+        - "traefik.http.routers.app-router.tls=true"
+        - "traefik.http.routers.app-router.service=app-svc"
+        - "traefik.http.middlewares.app-router-compress.compress=true"
+        - "traefik.http.middlewares.app-router-compress.compress.defaultencoding=br"
+        - "traefik.http.middlewares.app-router-compress.compress.includedcontenttypes=text/plain,text/html,text/css,text/javascript,text/xml,application/javascript,application/json,application/xml,application/xml+rss,application/manifest+json,application/vnd.api+json,image/svg+xml,font/eot,font/otf,font/ttf"
+        - "traefik.http.middlewares.app-router-compress.compress.minresponsebodybytes=1024"
+        - "traefik.http.routers.app-router.middlewares=app-router-compress@swarm"
+        - "traefik.http.routers.x-custom-router-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.x-custom-router-acme.entrypoints=web"
+        - "traefik.http.routers.x-custom-router-acme.tls=false"
+        - "traefik.http.middlewares.x-custom-addprefix-acme.addprefix.prefix=/acme"
+        - "traefik.http.routers.x-custom-router-acme.middlewares=x-custom-addprefix-acme@swarm"
+        - "traefik.swarm.network=hivepaas_net"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  worker:
+    image: hivepaas/hivepaas-dev:latest
+    networks:
+      - local_net
+    environment:
+      HP_CONFIG_FILE: config/config.development.toml
+      HP_RUN_MODE: worker
+    volumes:
+      - ./hivepaas:/var/lib/hivepaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  updater:
+    image: hivepaas/hivepaas-dev:latest
+    networks:
+      - local_net
+    environment:
+      HP_CONFIG_FILE: config/config.development.toml
+      HP_RUN_MODE: updater
+    volumes:
+      - ./hivepaas:/var/lib/hivepaas
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: local
+      options:
+        max-size: 50m
+        compress: "true"
+
+  agent:
+    image: hivepaas/hivepaas-agent-dev:latest
+    environment:
+      HP_CONFIG_FILE: config/config.development.toml
+      HP_AGENT_PORT: "10001"
+      HP_AGENT_NODE_ID: "{{.Node.ID}}"
+      HP_AGENT_NODE_NAME: "{{.Node.Hostname}}"
+      HP_AGENT_SECRET_TOKEN: abc123
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - local_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+    logging:
+      driver: local
+      options:
+        max-size: 20m
+        compress: "true"
+
+# Define the overlay network for Swarm
+networks:
+  hivepaas_net:
+    external: true
+  local_net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  db:
+    driver: local

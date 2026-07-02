@@ -5,7 +5,7 @@ TEST_RESULT_DIR="${TEST_RESULTS:-./test-results}"
 mkdir -p ${TEST_RESULT_DIR}
 
 PKG_LIST=$(go list ./...\
-  | sed -e "s/github.com\/localpaas\/localpaas/./g"\
+  | sed -e "s/github.com\/hivepaas\/hivepaas/./g"\
   | grep -v\
       -e /mock\
       -e ^./config\
@@ -16,8 +16,8 @@ PKG_LIST=$(go list ./...\
       -e ^./tests\
       -e ^./test-results\
       -e ^./tools\
-      -e ^./localpaas_app/cmd\
-      -e ^./localpaas_app/db\
+      -e ^./hivepaas_app/cmd\
+      -e ^./hivepaas_app/db\
   | tr '\n' ',')
 
 echo "---------------------------------------------------------------"

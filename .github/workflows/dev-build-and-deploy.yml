@@ -6,8 +6,8 @@ on:
       - 'dev-**'
 
 env:
-  APP_IMAGE_NAME: localpaas/localpaas-dev
-  AGENT_IMAGE_NAME: localpaas/localpaas-agent-dev
+  APP_IMAGE_NAME: hivepaas/hivepaas-dev
+  AGENT_IMAGE_NAME: hivepaas/hivepaas-agent-dev
 
 jobs:
   build-image:
@@ -15,28 +15,28 @@ jobs:
       matrix:
         include:
           # Intel/AMD builds for App
-          - image_name: localpaas/localpaas-dev
+          - image_name: hivepaas/hivepaas-dev
             dockerfile: deployment/dev/Dockerfile
             platform: linux/amd64
             runner: ubuntu-24.04
             arch: amd64
 
           # ARM builds for App
-          - image_name: localpaas/localpaas-dev
+          - image_name: hivepaas/hivepaas-dev
             dockerfile: deployment/dev/Dockerfile
             platform: linux/arm64
             runner: ubuntu-24.04-arm
             arch: arm64
 
           # Intel/AMD builds for Agent
-          - image_name: localpaas/localpaas-agent-dev
+          - image_name: hivepaas/hivepaas-agent-dev
             dockerfile: deployment/dev/Dockerfile.agent
             platform: linux/amd64
             runner: ubuntu-24.04
             arch: amd64
 
           # ARM builds for Agent
-          - image_name: localpaas/localpaas-agent-dev
+          - image_name: hivepaas/hivepaas-agent-dev
             dockerfile: deployment/dev/Dockerfile.agent
             platform: linux/arm64
             runner: ubuntu-24.04-arm
@@ -108,11 +108,11 @@ jobs:
     needs: create-image-manifest
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy LocalPaaS
+      - name: Deploy HivePaaS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEV_SRV_IP }}
           port: ${{ secrets.DEV_SRV_SSH_PORT }}
           username: ${{ secrets.DEV_SRV_USERNAME }}
           password: ${{ secrets.DEV_SRV_PASSWORD }}
-          script: curl -sL "https://raw.githubusercontent.com/localpaas/localpaas/main/deployment/dev/install.sh" | bash
+          script: curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/dev/install.sh" | bash

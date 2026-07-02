@@ -1,0 +1,156 @@
+package appuc
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"time"
+
+	"github.com/moby/moby/client"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/services/docker"
+)
+
+const (
+	runtimeLogBatchThresholdPeriod = time.Millisecond * 500
+	runtimeLogBatchMaxFrame        = 20
+	runtimeLogSessionTimeout       = time.Hour
+)
+
+//nolint:gocognit
+func (uc *UC) GetAppLogs(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *appdto.GetAppLogsReq,
+) (_ *appdto.GetAppLogsResp, err error) {
+	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
+		true, true,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	if app.ServiceID == "" {
+		return nil, apperrors.NewUnavailable("App service").
+			WithMsgLog("service not exist for app")
+	}
+	if featureSettings.LoggingSettings != nil && !featureSettings.LoggingSettings.Enabled {
+		return nil, apperrors.NewUnavailable("App logs")
+	}
+	serviceID := app.ServiceID
+
+	var since, until, tail string
+	if req.Duration > 0 && req.Since.IsZero() {
+		req.Since = timeutil.NowUTC().Add(-req.Duration.ToDuration())
+		req.Duration = 0
+	}
+	if !req.Since.IsZero() {
+		since = fmt.Sprintf("%d", req.Since.Unix())
+	}
+	if !req.Follow && req.Duration > 0 {
+		until = fmt.Sprintf("%d", req.Since.Add(req.Duration.ToDuration()).Unix())
+	}
+	if req.Tail > 0 {
+		tail = fmt.Sprintf("%d", req.Tail)
+	}
+	if req.Timestamps == nil {
+		req.Timestamps = new(true)
+	}
+
+	var logsReader io.ReadCloser
+	if req.TaskID != "" { //nolint:nestif
+		// Validate task belongs to the service
+		taskInspect, err := uc.dockerManager.TaskInspect(ctx, req.TaskID)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
+		if taskInspect.Task.ServiceID != serviceID {
+			return nil, apperrors.New(apperrors.ErrUnavailable).
+				WithMsgLog("task doesn't belong to service")
+		}
+
+		logsReader, err = uc.dockerManager.TaskLogs(ctx, req.TaskID, func(opts *client.TaskLogsOptions) {
+			opts.ShowStdout = true
+			opts.ShowStderr = true
+			opts.Follow = req.Follow
+			opts.Timestamps = *req.Timestamps
+			if since != "" {
+				opts.Since = since
+			}
+			if until != "" {
+				opts.Until = until
+			}
+			if tail != "" {
+				opts.Tail = tail
+			}
+		})
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
+	} else {
+		logsReader, err = uc.dockerManager.ServiceLogs(ctx, serviceID, func(opts *client.ServiceLogsOptions) {
+			opts.ShowStdout = true
+			opts.ShowStderr = true
+			opts.Follow = req.Follow
+			opts.Timestamps = *req.Timestamps
+			if since != "" {
+				opts.Since = since
+			}
+			if until != "" {
+				opts.Until = until
+			}
+			if tail != "" {
+				opts.Tail = tail
+			}
+		})
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
+	}
+
+	resp := &appdto.AppLogsDataResp{}
+	if req.Follow {
+		// NOTE: we don't want to keep the log stream session forever
+		ctx, cancel := context.WithTimeout(ctx, runtimeLogSessionTimeout)
+
+		// NOTE: We may want to send log frames to client by batch to reduce network overhead.
+		// I'm not an expert about this, appreciate if anyone can verify this solution.
+		// This solution: only send data to client after a period of time or when we have some frames.
+		logStream, logStreamCloser := docker.StartScanningLog(ctx, logsReader,
+			docker.WithParseLogHeader(true),
+			docker.WithParseLogTimestamp(*req.Timestamps),
+			docker.WithBatchRecvOptions(batchrecvchan.Options{
+				ThresholdPeriod: runtimeLogBatchThresholdPeriod,
+				MaxItem:         runtimeLogBatchMaxFrame,
+			}),
+		)
+		resp.LogsStream = logStream
+		resp.LogsStreamCloser = func() error {
+			cancel()
+			return logStreamCloser()
+		}
+	} else {
+		// Scan all data at once
+		logStream, _ := docker.StartScanningLog(ctx, logsReader,
+			docker.WithParseLogHeader(true),
+			docker.WithParseLogTimestamp(*req.Timestamps),
+		)
+		for frames := range logStream {
+			resp.StaticLogs = append(resp.StaticLogs, frames...)
+		}
+	}
+
+	return &appdto.GetAppLogsResp{
+		Data: resp,
+	}, nil
+}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 type SystemInfoOption func(options *client.InfoOptions)

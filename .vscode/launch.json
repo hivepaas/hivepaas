@@ -7,7 +7,7 @@
       "request": "launch",
       "mode": "debug",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/localpaas_app/cmd/app",
+      "program": "${workspaceFolder}/hivepaas_app/cmd/app",
       "envFile": "${workspaceFolder}/.env",
     },
   ],

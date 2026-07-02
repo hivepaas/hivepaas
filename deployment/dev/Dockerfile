@@ -6,8 +6,8 @@ RUN apk update && apk upgrade --no-cache && apk add --update --no-cache git yarn
 WORKDIR /build
 
 RUN --mount=type=cache,target=/tmp/yarn-cache \
-    git clone --depth=1 https://github.com/localpaas/localpaas-dashboard.git && \
-    cd localpaas-dashboard && \
+    git clone --depth=1 https://github.com/hivepaas/hivepaas-dashboard.git && \
+    cd hivepaas-dashboard && \
     yarn config set network-timeout 300000 && \
     yarn config set cache-folder /tmp/yarn-cache && \
     yarn install --frozen-lockfile && \
@@ -46,15 +46,15 @@ RUN go install github.com/rubenv/sql-migrate/...@latest && \
 ############################################################
 # Build a small image
 FROM alpine:3.23
-WORKDIR /localpaas
+WORKDIR /hivepaas
 RUN apk update && \
     apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client zstd lz4 docker-cli && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 
 # For running app
-COPY --from=builder /build/localpaas .
-COPY --from=builder /build/localpaas_app/db ./localpaas_app/db
+COPY --from=builder /build/hivepaas .
+COPY --from=builder /build/hivepaas_app/db ./hivepaas_app/db
 COPY --from=builder /build/config ./config
 COPY --from=builder /build/scripts ./scripts
 COPY --from=builder /build/Makefile .
@@ -62,4 +62,4 @@ COPY --from=builder /build/sql-migrate /usr/local/bin/sql-migrate
 COPY --from=dashboard_builder /dist-dashboard ./dist-dashboard
 
 # Command to run
-CMD ["sh","-c","./localpaas"]
+CMD ["sh","-c","./hivepaas"]

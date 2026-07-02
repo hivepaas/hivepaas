@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/infra/httpclient"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/httpclient"
 )
 
 const (

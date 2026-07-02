@@ -1,0 +1,44 @@
+package notificationuc
+
+import (
+	"context"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc/notificationdto"
+)
+
+func (uc *UC) CreateNotification(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *notificationdto.CreateNotificationReq,
+) (*notificationdto.CreateNotificationResp, error) {
+	req.Type = currentSettingType
+	notification := req.ToEntity()
+	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
+		VerifyingName:   req.Name,
+		VerifyingRefIDs: notification.GetRefObjectIDs(),
+		Version:         currentSettingVersion,
+		PrepareCreation: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.CreateSettingData,
+			pData *settings.PersistingSettingCreationData,
+		) error {
+			err := pData.Setting.SetData(notification)
+			if err != nil {
+				return apperrors.New(err)
+			}
+			return nil
+		},
+	})
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+
+	return &notificationdto.CreateNotificationResp{
+		Data: resp.Data,
+	}, nil
+}

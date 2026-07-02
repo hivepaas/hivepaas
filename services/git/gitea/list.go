@@ -3,7 +3,7 @@ package gitea
 import (
 	gogitea "code.gitea.io/sdk/gitea"
 
-	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 const (

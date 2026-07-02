@@ -7,8 +7,8 @@ import (
 
 	"github.com/slack-go/slack"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
 type WebhookMessageOption func(*slack.WebhookMessage)

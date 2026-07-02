@@ -6,7 +6,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/localpaas/localpaas/localpaas_app/pkg/executil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 )
 
 func ContainerCommandBuild(cmd []string, args []string) string {

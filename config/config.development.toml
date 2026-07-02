@@ -1,11 +1,11 @@
 env = "development"
 platform = "remote"
 run_mode = "app+worker"
-root_domain = "localpaas.com"
-app_domain = "app.dev.localpaas.com"
-base_url = "https://app.dev.localpaas.com" # dashboard base URL
+root_domain = "hivepaas.com"
+app_domain = "app.dev.hivepaas.com"
+base_url = "https://app.dev.hivepaas.com" # dashboard base URL
 secret = "abc123"
-app_path = "/var/lib/localpaas"
+app_path = "/var/lib/hivepaas"
 
 [users.admin]
     username = "admin"
@@ -18,9 +18,9 @@ app_path = "/var/lib/localpaas"
 [db]
     host = "db"
     port = 5432
-    user = "localpaas"
+    user = "hivepaas"
     password = "abc123"
-    db_name = "localpaas"
+    db_name = "hivepaas"
     ssl_mode = "disable"
 
 [cache]
@@ -39,7 +39,7 @@ app_path = "/var/lib/localpaas"
     access_token_exp = "12h"
     refresh_token_exp = "24h"
 
-    basic_auth_username = "localpaas"
+    basic_auth_username = "hivepaas"
     basic_auth_password = "abc123"
 
 [proxy]

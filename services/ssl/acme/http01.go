@@ -4,7 +4,7 @@ import (
 	"github.com/go-acme/lego/v5/challenge"
 	"github.com/go-acme/lego/v5/providers/http/webroot"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 func NewHTTP01Provider(webrootDir string) (provider challenge.Provider, err error) {

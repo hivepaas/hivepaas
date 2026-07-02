@@ -64,7 +64,7 @@ linters:
         path: _test\.go
       - linters:
           - goconst
-        path: localpaas_app/entity/
+        path: hivepaas_app/entity/
     paths:
       - third_party$
       - builtin$
@@ -79,7 +79,7 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/localpaas/localpaas)
+        - prefix(github.com/hivepaas/hivepaas)
     goimports:
       local-prefixes:
         - github.com/golangci/golangci-lint

@@ -8,7 +8,7 @@ import (
 
 	"github.com/moby/moby/api/types/jsonstream"
 
-	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 )
 
 type JSONMsg struct {

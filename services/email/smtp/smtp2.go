@@ -6,8 +6,8 @@ import (
 	"github.com/darkrockmountain/gomail"
 	"github.com/darkrockmountain/gomail/providers/smtp"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 type SendMailOption2 func(*gomail.EmailMessage)

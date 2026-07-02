@@ -3,10 +3,10 @@ package email
 import (
 	"context"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/entity"
-	"github.com/localpaas/localpaas/services/email/http"
-	"github.com/localpaas/localpaas/services/email/smtp"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/services/email/http"
+	"github.com/hivepaas/hivepaas/services/email/smtp"
 )
 
 func SendMail(

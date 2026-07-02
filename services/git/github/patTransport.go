@@ -3,7 +3,7 @@ package github
 import (
 	"net/http"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 type PatTransport struct {

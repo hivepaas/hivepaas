@@ -5,8 +5,8 @@ import (
 
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type ListBranchOption func(*gogitlab.ListBranchesOptions)

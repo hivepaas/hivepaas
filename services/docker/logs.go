@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/batchrecvchan"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/reflectutil"
-	"github.com/localpaas/localpaas/localpaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
 type ScanningLogOptions struct {

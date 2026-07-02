@@ -4,7 +4,7 @@ services:
   frontend:
     image: crccheck/hello-world:latest
     networks:
-      - localpaas_net
+      - hivepaas_net
       - local_net
     ports:
       - target: 80 # Container port
@@ -20,7 +20,7 @@ services:
   backend:
     image: crccheck/hello-world:latest
     networks:
-      - localpaas_net
+      - hivepaas_net
       - local_net
     logging:
       driver: local
@@ -31,7 +31,7 @@ services:
   db:
     image: crccheck/hello-world:latest
     networks:
-      - localpaas_net
+      - hivepaas_net
       - local_net
     logging:
       driver: local
@@ -40,7 +40,7 @@ services:
         compress: "true"
 
 networks:
-  localpaas_net:
+  hivepaas_net:
     external: true
   local_net:
     driver: overlay

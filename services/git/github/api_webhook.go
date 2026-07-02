@@ -5,7 +5,7 @@ import (
 
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 func (c *Client) GetAppHookConfig(

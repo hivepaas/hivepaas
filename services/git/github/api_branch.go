@@ -5,8 +5,8 @@ import (
 
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
-	"github.com/localpaas/localpaas/localpaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type ListBranchOption func(options *gogithub.BranchListOptions)

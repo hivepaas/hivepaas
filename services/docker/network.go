@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 const (

@@ -1,4 +1,4 @@
-## LocalPaaS
+## HivePaaS
 
 Self-hosted Platform-as-a-Service (PaaS).
 

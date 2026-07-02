@@ -1,0 +1,11 @@
+main:
+  dialect: postgres
+  datasource: postgres://${HP_DB_USER}:${HP_DB_PASSWORD}@${HP_DB_HOST}:${HP_DB_PORT}/${HP_DB_DB_NAME}?sslmode=disable
+  dir: hivepaas_app/db/migrations
+  table: migrations
+
+development:
+  dialect: postgres
+  datasource: postgres://hivepaas:abc123@localhost:35432/hivepaas?sslmode=disable
+  dir: hivepaas_app/db/migrations
+  table: migrations

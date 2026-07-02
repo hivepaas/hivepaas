@@ -1,0 +1,29 @@
+package projectsettingsdto
+
+import (
+	vld "github.com/tiendc/go-validator"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+)
+
+type DeleteProjectTagsReq struct {
+	ProjectID string   `json:"-"`
+	Tags      []string `json:"tags"`
+}
+
+func NewDeleteProjectTagsReq() *DeleteProjectTagsReq {
+	return &DeleteProjectTagsReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *DeleteProjectTagsReq) Validate() apperrors.ValidationErrors {
+	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateSlice(req.Tags, true, 1, nil, "tags")...)
+	return apperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+type DeleteProjectTagsResp struct {
+	Meta *basedto.Meta `json:"meta"`
+}

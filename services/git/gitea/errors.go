@@ -1,7 +1,7 @@
 package gitea
 
 import (
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 var (

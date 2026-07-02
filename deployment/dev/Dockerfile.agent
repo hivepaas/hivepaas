@@ -19,12 +19,12 @@ COPY . .
 RUN make mod
 
 # Build the agent application
-RUN go build -o localpaas-agent ./localpaas_app/cmd/agent/...
+RUN go build -o hivepaas-agent ./hivepaas_app/cmd/agent/...
 
 ############################################################
 # Build a small image
 FROM alpine:3.23
-WORKDIR /localpaas
+WORKDIR /hivepaas
 
 RUN apk update && \
     apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client zstd lz4 docker-cli && \
@@ -32,8 +32,8 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 # Copy compiled agent binary and base configurations
-COPY --from=builder /build/localpaas-agent .
+COPY --from=builder /build/hivepaas-agent .
 COPY --from=builder /build/config ./config
 
 # Command to run
-CMD ["./localpaas-agent"]
+CMD ["./hivepaas-agent"]

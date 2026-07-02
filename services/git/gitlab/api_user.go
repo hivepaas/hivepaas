@@ -3,7 +3,7 @@ package gitlab
 import (
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/localpaas/localpaas/localpaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
 func (c *Client) GetCurrentUser() (*gogitlab.User, error) {

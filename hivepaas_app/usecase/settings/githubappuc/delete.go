@@ -1,0 +1,24 @@
+package githubappuc
+
+import (
+	"context"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
+)
+
+func (uc *UC) DeleteGithubApp(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *githubappdto.DeleteGithubAppReq,
+) (*githubappdto.DeleteGithubAppResp, error) {
+	req.Type = currentSettingType
+	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+
+	return &githubappdto.DeleteGithubAppResp{}, nil
+}

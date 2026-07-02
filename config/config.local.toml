@@ -5,7 +5,7 @@ root_domain = "localhost"
 app_domain = "localhost"
 base_url = "http://localhost:10000" # dashboard base URL
 secret = "abc123"
-app_path = ".appdata/localpaas"
+app_path = ".appdata/hivepaas"
 
 [users.admin]
     username = "admin"
@@ -18,9 +18,9 @@ app_path = ".appdata/localpaas"
 [db]
     host = "localhost"
     port = 35432
-    user = "localpaas"
+    user = "hivepaas"
     password = "abc123"
-    db_name = "localpaas"
+    db_name = "hivepaas"
     ssl_mode = "disable"
 
 [cache]
@@ -39,7 +39,7 @@ app_path = ".appdata/localpaas"
     access_token_exp = "12h"
     refresh_token_exp = "24h"
 
-    basic_auth_username = "localpaas"
+    basic_auth_username = "hivepaas"
     basic_auth_password = "abc123"
 
 [proxy]

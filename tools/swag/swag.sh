@@ -1,11 +1,11 @@
 #!/bin/bash
 set -eo pipefail
 
-DEVTOOLS_IMAGE=localpaas-devtools
+DEVTOOLS_IMAGE=hivepaas-devtools
 
 # Gen swagger.json
 docker run --entrypoint "/go/bin/swag" --rm --volume "${PWD}":/app --volume "${HOME}/go/pkg/mod":/go/pkg/mod ${DEVTOOLS_IMAGE} init \
-  -g localpaas_app/interface/api/server/server.go -o docs/openapi --outputTypes json \
+  -g hivepaas_app/interface/api/server/server.go -o docs/openapi --outputTypes json \
   --parseDependencyLevel 1 --requiredByDefault
 
 # Convert swagger.json to OpenAPI v3 format

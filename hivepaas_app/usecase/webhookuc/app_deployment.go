@@ -22,7 +22,11 @@ func (uc *UC) createAppDeployment(
 ) error {
 	persistingData := &appservice.PersistingAppData{}
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		err := uc.createAppDeploymentByChangeID(ctx, db, app, changeID, webhookID, persistingData)
+		err := uc.ensureAppActive(ctx, db, app, false, true)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		err = uc.createAppDeploymentByChangeID(ctx, db, app, changeID, webhookID, persistingData)
 		if err != nil {
 			return apperrors.New(err)
 		}
@@ -124,4 +128,30 @@ func (uc *UC) hasAppDeploymentByChangeID(
 		return false, apperrors.New(err)
 	}
 	return deployment != nil, nil
+}
+
+func (uc *UC) ensureAppActive(
+	ctx context.Context,
+	db database.Tx,
+	app *entity.App,
+	checkUpdateVer bool,
+	lockApp bool,
+) error {
+	qryOpts := []bunex.SelectQueryOption{
+		bunex.SelectColumns("id"),
+		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
+	}
+	if checkUpdateVer {
+		qryOpts = append(qryOpts,
+			bunex.SelectWhere("app.update_ver = ?", app.UpdateVer),
+		)
+	}
+	if lockApp {
+		qryOpts = append(qryOpts, bunex.SelectFor("UPDATE OF app"))
+	}
+	_, err := uc.appRepo.GetByID(ctx, db, "", app.ID, qryOpts...)
+	if err != nil {
+		return apperrors.New(err)
+	}
+	return nil
 }

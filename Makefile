@@ -110,9 +110,10 @@ local-build-fe:
 	mv ${HP_FE_DIR}/dist dist-dashboard
 
 # ----- Smee.io config -----
-smee-connect:
+smee-run:
 	# RUN ONCE go install -v github.com/chmouel/gosmee@latest
-	# Make sure you use correct <setting-id> below
+	# github app id: 01JAB9XED0GTXBSQDFVYAJ8WJ1
+	# webhook id: 01JAB9XED0GTXBSQDFVYAJ8WO1 (github), 01JAB9XED0GTXBSQDFVYAJ8WO2 (gitlab), 01JAB9XED0GTXBSQDFVYAJ8WO3 (gitea)
 	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/_/webhooks/01JAB9XED0GTXBSQDFVYAJ8WJ1
 
 # ----- Build local image -----
@@ -121,4 +122,3 @@ build-image:
 
 build-agent-image:
 	docker build -f deployment/dev/Dockerfile.agent -t hivepaas-agent:latest .
-

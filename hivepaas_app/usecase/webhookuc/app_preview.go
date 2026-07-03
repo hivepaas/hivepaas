@@ -25,6 +25,9 @@ func (uc *UC) createAppPreview(
 	}
 	var createResp *apppreviewservice.CreatePreviewResp
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) (err error) {
+		// Creating a preview may take time, so we don't lock the parent app.
+		// However, after creating, we check the app status again. If it's not active and valid,
+		// the preview app will be deleted.
 		createResp, err = uc.appPreviewService.CreatePreview(ctx, db, &apppreviewservice.CreatePreviewReq{
 			ProjectID:       app.ProjectID,
 			AppID:           app.ID,
@@ -46,6 +49,11 @@ func (uc *UC) createAppPreview(
 				return nil
 			},
 		})
+		if err != nil {
+			return apperrors.New(err)
+		}
+		// Ensure app valid when we complete creating the preview
+		err = uc.ensureAppActive(ctx, db, app, false, false)
 		if err != nil {
 			return apperrors.New(err)
 		}

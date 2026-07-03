@@ -17,6 +17,9 @@ func (s *service) applyAppHttpSettings(
 ) error {
 	app := data.TargetApp
 	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)
+	if httpSetting == nil {
+		return nil
+	}
 	httpSettings, err := httpSetting.AsAppHttpSettings()
 	if err != nil {
 		return apperrors.New(err)

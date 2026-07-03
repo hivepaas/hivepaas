@@ -13,6 +13,7 @@ type UC struct {
 	db        *database.DB
 	taskQueue queue.TaskQueue
 
+	appRepo        repository.AppRepo
 	deploymentRepo repository.DeploymentRepo
 	settingRepo    repository.SettingRepo
 
@@ -25,6 +26,7 @@ func New(
 	db *database.DB,
 	taskQueue queue.TaskQueue,
 
+	appRepo repository.AppRepo,
 	deploymentRepo repository.DeploymentRepo,
 	settingRepo repository.SettingRepo,
 
@@ -36,6 +38,7 @@ func New(
 		db:        db,
 		taskQueue: taskQueue,
 
+		appRepo:        appRepo,
 		deploymentRepo: deploymentRepo,
 		settingRepo:    settingRepo,
 

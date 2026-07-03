@@ -67,7 +67,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
         <div className="flex flex-col gap-6">
             <Card>
                 <CardHeader className="flex flex-col items-center text-center">
-                    <LogoIcon className="h-12 w-12" />
+                    <LogoIcon className="x-logo h-12 w-12" />
                     <CardDescription>Enter your account details below to sign in</CardDescription>
                 </CardHeader>
                 <CardContent>

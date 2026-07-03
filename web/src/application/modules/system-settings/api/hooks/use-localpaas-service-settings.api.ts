@@ -22,7 +22,7 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            notifyError({ message: "Failed to get LocalPaaS service settings", error });
+                            notifyError({ message: "Failed to get HivePaaS service settings", error });
                             throw error;
                         },
                     });
@@ -39,7 +39,7 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            notifyError({ message: "Failed to update LocalPaaS service settings", error });
+                            notifyError({ message: "Failed to update HivePaaS service settings", error });
                             throw error;
                         },
                     });

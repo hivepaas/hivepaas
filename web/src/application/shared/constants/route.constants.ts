@@ -336,13 +336,13 @@ export const ROUTE = {
     systemSettings: {
         $pattern: "system-settings",
 
-        localpaas: {
-            $pattern: "system-settings/localpaas",
-            $route: "/system-settings/localpaas/general/",
+        hivepaas: {
+            $pattern: "system-settings/hivepaas",
+            $route: "/system-settings/hivepaas/general/",
 
             general: {
-                $pattern: "system-settings/localpaas/general",
-                $route: "/system-settings/localpaas/general/",
+                $pattern: "system-settings/hivepaas/general",
+                $route: "/system-settings/hivepaas/general/",
             },
         },
 

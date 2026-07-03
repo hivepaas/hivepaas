@@ -50,7 +50,7 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
 
     const { mutate: update, isPending } = LocalPaaSServiceSettingsCommands.useUpdateOne({
         onSuccess: () => {
-            toast.success("LocalPaaS service settings updated");
+            toast.success("HivePaaS service settings updated");
         },
         onError: err => {
             if (isValidationException(err)) {
@@ -58,7 +58,7 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
             } else if (err instanceof Error) {
                 toast.error(err.message);
             } else {
-                toast.error("Failed to update LocalPaaS service settings");
+                toast.error("Failed to update HivePaaS service settings");
             }
         },
     });

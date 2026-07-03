@@ -4,7 +4,7 @@ import { create } from "zustand";
 export const COLOR_MODES = ["dark", "light", "system"] as const;
 export type ColorMode = (typeof COLOR_MODES)[number];
 
-const STORAGE_KEY = "localpaas-color-mode";
+const STORAGE_KEY = "hivepaas-color-mode";
 const DEFAULT_COLOR_MODE: ColorMode = "system";
 
 function isColorMode(value: unknown): value is ColorMode {

@@ -1,4 +1,4 @@
-import { GithubIcon, GitlabIcon, GiteaIcon, GoogleIcon } from "@/assets/icons";
+import { GiteaIcon, GithubIcon, GitlabIcon, GoogleIcon, LogoIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
@@ -9,7 +9,7 @@ import { ROUTE } from "@application/shared/constants";
 import { type LoginOption } from "@application/authentication/domain";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -66,9 +66,9 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     return (
         <div className="flex flex-col gap-6">
             <Card>
-                <CardHeader>
-                    <CardTitle>Login to your account</CardTitle>
-                    <CardDescription>Enter your account details below to login</CardDescription>
+                <CardHeader className="flex flex-col items-center text-center">
+                    <LogoIcon className="h-12 w-12" />
+                    <CardDescription>Enter your account details below to sign in</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form
@@ -127,7 +127,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                     type="submit"
                                     isLoading={isPending}
                                 >
-                                    Login
+                                    Sign in
                                 </Button>
 
                                 {loginOptions.map(option => (

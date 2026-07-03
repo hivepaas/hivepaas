@@ -117,7 +117,7 @@ function RunWorkerInMainAppField() {
             title={
                 <LabelWithInfo
                     label="Run Worker in Main App"
-                    content="Run worker tasks in the main LocalPaaS application instance."
+                    content="Run worker tasks in the main HivePaaS application instance."
                 />
             }
         >
@@ -191,7 +191,7 @@ export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = 
                     className="contents"
                 >
                     <NoteBox>
-                        By default, LocalPaaS runs a single instance for both the main application and the worker. This
+                        By default, HivePaaS runs a single instance for both the main application and the worker. This
                         model is the most resource-efficient. If you need a system with higher processing capacity, you
                         can increase the number of instances and run the worker separately from the main application.
                     </NoteBox>
@@ -201,7 +201,7 @@ export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = 
                         <NumberField
                             name="appSettings.replicas"
                             label="Replicas"
-                            content="Number of LocalPaaS main application replicas."
+                            content="Number of HivePaaS main application replicas."
                             min={1}
                             max={100}
                         />
@@ -212,7 +212,7 @@ export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = 
                         <NumberField
                             name="workerSettings.replicas"
                             label="Replicas"
-                            content="Number of LocalPaaS worker replicas."
+                            content="Number of HivePaaS worker replicas."
                             min={0}
                             max={100}
                         />
@@ -231,13 +231,13 @@ export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = 
                         <DurationField
                             name="taskSettings.taskCheckInterval"
                             label="Task Check Interval"
-                            content="How often LocalPaaS checks queued tasks."
+                            content="How often HivePaaS checks queued tasks."
                             placeholder="10m"
                         />
                         <DurationField
                             name="taskSettings.taskCreateInterval"
                             label="Task Creation Interval"
-                            content="How often LocalPaaS creates queued tasks."
+                            content="How often HivePaaS creates queued tasks."
                             placeholder="10m"
                         />
                     </div>
@@ -247,7 +247,7 @@ export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = 
                         <DurationField
                             name="healthcheckSettings.baseInterval"
                             label="Base Interval"
-                            content="Base interval for LocalPaaS health checks."
+                            content="Base interval for HivePaaS health checks."
                             placeholder="15s"
                         />
                     </div>

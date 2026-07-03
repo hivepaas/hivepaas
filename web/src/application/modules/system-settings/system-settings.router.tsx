@@ -18,7 +18,7 @@ export const systemSettingsRouter: RouteObject = {
                 return {
                     element: (
                         <ConditionalModule id={MODULE_IDS.System}>
-                            <ModuleTitle title="LocalPaaS">
+                            <ModuleTitle title="HivePaaS">
                                 <LocalPaaSLayout>
                                     <Outlet />
                                 </LocalPaaSLayout>
@@ -27,13 +27,13 @@ export const systemSettingsRouter: RouteObject = {
                     ),
                 };
             },
-            path: ROUTE.systemSettings.localpaas.$pattern,
+            path: ROUTE.systemSettings.hivepaas.$pattern,
             children: [
                 {
                     index: true,
                     element: (
                         <AppNavigate.Basic
-                            to={ROUTE.systemSettings.localpaas.general.$route}
+                            to={ROUTE.systemSettings.hivepaas.general.$route}
                             replace
                             ignorePrevPath
                         />

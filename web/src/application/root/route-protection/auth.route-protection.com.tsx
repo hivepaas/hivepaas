@@ -32,7 +32,7 @@ const DEFAULT_MODULE_ROUTES = [
     },
     {
         moduleId: MODULE_IDS.System,
-        route: ROUTE.systemSettings.localpaas.general.$route,
+        route: ROUTE.systemSettings.hivepaas.general.$route,
     },
 ] as const;
 

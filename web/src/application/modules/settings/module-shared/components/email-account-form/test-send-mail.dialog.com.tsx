@@ -16,7 +16,7 @@ import { Button, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
 const DEFAULT_TEST_SEND_MAIL_VALUES = {
     testRecipient: "",
-    testSubject: "test message from LocalPaaS",
+    testSubject: "test message from HivePaaS",
     testContent: "this is test email content",
 };
 

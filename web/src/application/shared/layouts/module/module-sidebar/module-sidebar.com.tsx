@@ -1,11 +1,11 @@
 import * as React from "react";
 
+import { LogoIcon } from "@/assets/icons";
 import {
     CircleDashed,
     Container,
     LayoutGrid,
     type LucideIcon,
-    PawPrint,
     Settings,
     Settings2,
     SlidersHorizontal,
@@ -143,9 +143,9 @@ const navMain: SidebarItem[] = [
         moduleId: MODULE_IDS.System,
         items: [
             {
-                title: "LocalPaaS",
-                route: ROUTE.systemSettings.localpaas.general.$route,
-                pattern: ROUTE.systemSettings.localpaas.$pattern,
+                title: "HivePaaS",
+                route: ROUTE.systemSettings.hivepaas.general.$route,
+                pattern: ROUTE.systemSettings.hivepaas.$pattern,
             },
             {
                 title: "Traefik",
@@ -271,7 +271,7 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
             {...props}
         >
             <SidebarHeader className="items-center justify-center p-2">
-                <PawPrint size={36} />
+                <LogoIcon className="h-12 w-12" />
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navigationItems} />

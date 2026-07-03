@@ -20,7 +20,7 @@ function View({ children }: PropsWithChildren) {
     const tabs: TabItem[] = [
         {
             label: "General",
-            route: ROUTE.systemSettings.localpaas.general.$route,
+            route: ROUTE.systemSettings.hivepaas.general.$route,
         },
     ];
 

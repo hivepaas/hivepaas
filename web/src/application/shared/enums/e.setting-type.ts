@@ -27,6 +27,7 @@ export const ESettingType = {
     RepoWebhook: "repo-webhook",
     Notification: "notification",
     LocalPaaSService: "localpaas-service",
+    HivePaaSService: "hivepaas-service",
     TraefikService: "traefik-service",
     SystemCleanup: "system-cleanup",
     SystemBackup: "system-backup",

@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS tasks
     deleted_at       TIMESTAMPTZ NULL
 );
 
+CREATE UNIQUE INDEX idx_uq_tasks ON tasks(target_id, run_at) WHERE target_id IS NOT NULL AND deleted_at IS NULL;
+
 CREATE INDEX idx_tasks_scope ON tasks(scope);
 CREATE INDEX idx_tasks_object_id ON tasks(object_id);
 CREATE INDEX idx_tasks_target_id ON tasks(target_id);

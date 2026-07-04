@@ -51,14 +51,15 @@ type SchedJobSchedule struct {
 	InitialTime time.Time         `json:"initialTime"`
 	EndTime     time.Time         `json:"endTime,omitzero"`
 
-	InitialTimeAdj  time.Time `json:"initialTimeAdj"`
-	LastCronExpr    string    `json:"lastCronExpr,omitempty"`
-	LastInitialTime time.Time `json:"lastInitialTime,omitzero"`
+	LastSchedTime   time.Time         `json:"lastSchedTime"`
+	LastCronExpr    string            `json:"lastCronExpr,omitempty"`
+	LastInterval    timeutil.Duration `json:"lastInterval,omitempty"`
+	LastInitialTime time.Time         `json:"lastInitialTime,omitzero"`
 }
 
 func (s *SchedJobSchedule) Equal(oldSched *SchedJobSchedule) bool {
 	return s.CronExpr == oldSched.CronExpr && s.Interval == oldSched.Interval &&
-		s.InitialTime.Equal(oldSched.InitialTime)
+		s.InitialTime.Equal(oldSched.InitialTime) && s.EndTime.Equal(oldSched.EndTime)
 }
 
 func (s *SchedJobSchedule) IsValid() error {
@@ -78,6 +79,25 @@ func (s *SchedJobSchedule) IsValid() error {
 	return apperrors.NewArgumentInvalid("Schedule")
 }
 
+func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
+	if !s.LastSchedTime.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInterval == s.Interval &&
+		s.LastInitialTime.Equal(s.LastSchedTime) {
+		return s.LastSchedTime
+	}
+	return s.InitialTime
+}
+
+func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
+	if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
+		return false
+	}
+	s.LastSchedTime = lastSchedTime
+	s.LastCronExpr = s.CronExpr
+	s.LastInterval = s.Interval
+	s.LastInitialTime = s.InitialTime
+	return true
+}
+
 func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	if s.CronExpr == "" {
 		return nil, apperrors.NewInactive("Cron expression")
@@ -89,13 +109,12 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	return sched, nil
 }
 
-//nolint:gocognit
 func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
 	if count == 0 {
 		return nil, apperrors.NewArgumentInvalid("count")
 	}
 
-	nextRunAt := s.InitialTime
+	nextRunAt := s.GetLastSchedTime()
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()
 		if interval < 0 {
@@ -119,9 +138,6 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	}
 
 	if s.CronExpr != "" { //nolint:nestif
-		if !s.InitialTimeAdj.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInitialTime.Equal(s.InitialTime) {
-			nextRunAt = s.InitialTimeAdj
-		}
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.New(err)
@@ -145,12 +161,11 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	return nil, apperrors.NewArgumentInvalid("Schedule")
 }
 
-//nolint:gocognit
 func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
 	if toTime.IsZero() {
 		return nil, apperrors.NewArgumentInvalid("toTime")
 	}
-	nextRunAt := s.InitialTime
+	nextRunAt := s.GetLastSchedTime()
 
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()
@@ -175,9 +190,6 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	}
 
 	if s.CronExpr != "" { //nolint:nestif
-		if !s.InitialTimeAdj.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInitialTime.Equal(s.InitialTime) {
-			nextRunAt = s.InitialTimeAdj
-		}
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.New(err)
@@ -199,19 +211,6 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	}
 
 	return nil, apperrors.NewArgumentInvalid("Schedule")
-}
-
-func (s *SchedJobSchedule) AdjustInitialTime(initialTimeAdj time.Time) bool {
-	if s.CronExpr == "" { // Only need to adjust initial time on `Cron` mode
-		return false
-	}
-	if !s.InitialTimeAdj.IsZero() && initialTimeAdj.Sub(s.InitialTimeAdj) < timeutil.Dur7Days {
-		return false
-	}
-	s.InitialTimeAdj = initialTimeAdj
-	s.LastInitialTime = s.InitialTime
-	s.LastCronExpr = s.CronExpr
-	return true
 }
 
 type SchedJobContainerCommand struct {

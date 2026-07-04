@@ -91,7 +91,7 @@ func (q *taskQueue) ScheduleTasksForSchedJobs(
 			return apperrors.New(err)
 		}
 		err = q.taskRepo.UpsertMulti(ctx, db, unschedulingTasks,
-			entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
+			entity.TaskUpsertingConflictCols, []string{"status", "update_ver", "updated_at", "deleted_at"})
 		if err != nil {
 			return apperrors.New(err)
 		}

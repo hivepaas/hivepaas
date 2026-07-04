@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -80,16 +82,17 @@ func (q *taskQueue) createTasksForJobs(
 			allNewTasks = append(allNewTasks, task)
 		}
 
-		if schedJob.Schedule.AdjustInitialTime(lastSchedTime) {
+		if schedJob.Schedule.SetLastSchedTime(lastSchedTime) {
 			jobSetting.MustSetData(schedJob)
 			updatingJobSettings = append(updatingJobSettings, jobSetting)
 		}
 	}
 
-	err = q.taskRepo.UpsertMulti(ctx, db, allNewTasks,
-		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
-	if err != nil {
-		return nil, apperrors.New(err)
+	for _, chunk := range gofn.Chunk(allNewTasks, 10000) { //nolint:mnd
+		err = q.taskRepo.UpsertMulti(ctx, db, chunk, entity.TaskUpsertingConflictColsByUK, nil)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
 	}
 
 	err = q.settingRepo.UpsertMulti(ctx, db, updatingJobSettings,

@@ -88,7 +88,7 @@ func (q *taskQueue) doHealthcheck(
 
 	// Save tasks in DB
 	err = q.taskRepo.UpsertMulti(ctx, q.db, savingTasks,
-		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
+		entity.TaskUpsertingConflictColsByUK, nil)
 	if err != nil {
 		return apperrors.New(err)
 	}

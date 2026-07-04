@@ -24,6 +24,10 @@ var (
 	TaskUpsertingUpdateCols   = []string{"scope", "object_id", "target_id", "type", "status", "config",
 		"args", "runs", "output", "version", "update_ver", "run_at", "retry_at",
 		"started_at", "ended_at", "updated_at", "deleted_at"}
+
+	// NOTE: see the unique index definition in the `tasks` table migration file
+	TaskUpsertingConflictColsByUK = []string{
+		"(target_id, run_at) WHERE target_id IS NOT NULL AND deleted_at IS NULL"}
 )
 
 type Task struct {

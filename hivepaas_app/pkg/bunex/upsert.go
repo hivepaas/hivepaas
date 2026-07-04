@@ -19,7 +19,8 @@ func ApplyUpsert(qry *bun.InsertQuery, conflictCols []string, updateCols []strin
 	if len(updateCols) == 0 {
 		action = "NOTHING"
 	}
-	if len(conflictCols) == 1 && strings.HasPrefix(conflictCols[0], "ON CONSTRAINT ") {
+	if len(conflictCols) == 1 && (strings.HasPrefix(conflictCols[0], "ON CONSTRAINT ") ||
+		strings.HasPrefix(conflictCols[0], "(")) {
 		qry = qry.On(fmt.Sprintf("CONFLICT %s DO %s", conflictCols[0], action))
 	} else {
 		qry = qry.On(fmt.Sprintf("CONFLICT (%s) DO %s", strings.Join(conflictCols, ","), action))

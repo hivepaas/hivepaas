@@ -52,12 +52,12 @@ func (s *service) SetAppStatus(
 	app.UpdateVer++
 
 	if app.Status == base.AppStatusDisabled {
-		if err := s.onAppDisabled(ctx, app); err != nil {
+		if err := s.stopApp(ctx, app, nil); err != nil {
 			return apperrors.New(err)
 		}
 	}
 	if app.Status == base.AppStatusActive {
-		if err := s.onAppEnabled(ctx, app); err != nil {
+		if err := s.startApp(ctx, app, nil); err != nil {
 			return apperrors.New(err)
 		}
 	}
@@ -69,16 +69,44 @@ func (s *service) SetAppStatus(
 	return nil
 }
 
-func (s *service) onAppDisabled(ctx context.Context, app *entity.App) error {
+func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bool) error {
 	if app.ServiceID == "" {
 		return nil
 	}
-
 	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
 		return apperrors.New(err)
 	}
 	service := &inspect.Service
+
+	if service.Spec.Mode.Replicated == nil {
+		return apperrors.New(apperrors.ErrServiceModeReplicatedRequired)
+	}
+
+	if running {
+		return s.startApp(ctx, app, service)
+	} else {
+		return s.stopApp(ctx, app, service)
+	}
+}
+
+func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
+	if app.ServiceID == "" {
+		return nil
+	}
+
+	if service == nil {
+		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		service = &inspect.Service
+	}
+
+	if service.Spec.Mode.Replicated != nil &&
+		(service.Spec.Mode.Replicated.Replicas == nil || *service.Spec.Mode.Replicated.Replicas == 0) {
+		return nil
+	}
 
 	prevSvcMode, err := json.Marshal(service.Spec.Mode)
 	if err != nil {
@@ -96,7 +124,7 @@ func (s *service) onAppDisabled(ctx context.Context, app *entity.App) error {
 	err = gofn.ExecRetry(func() error {
 		_, err := s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
 		return apperrors.New(err)
-	}, 2, 5*time.Second) //nolint:mnd
+	}, 2, 3*time.Second) //nolint:mnd
 	if err != nil {
 		return apperrors.New(err)
 	}
@@ -104,21 +132,23 @@ func (s *service) onAppDisabled(ctx context.Context, app *entity.App) error {
 	return nil
 }
 
-func (s *service) onAppEnabled(ctx context.Context, app *entity.App) error {
+func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
 	if app.ServiceID == "" {
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-	if err != nil {
-		return apperrors.New(err)
+	if service == nil {
+		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+		if err != nil {
+			return apperrors.New(err)
+		}
+		service = &inspect.Service
 	}
-	service := &inspect.Service
 
 	prevSvcModeStr := service.Spec.Labels[labelHivePaaSAppPrevServiceMode]
 	if prevSvcModeStr != "" {
 		mode := swarm.ServiceMode{}
-		err = json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
+		err := json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
 		if err != nil {
 			return apperrors.New(err)
 		}
@@ -132,10 +162,10 @@ func (s *service) onAppEnabled(ctx context.Context, app *entity.App) error {
 		}
 	}
 
-	err = gofn.ExecRetry(func() error {
+	err := gofn.ExecRetry(func() error {
 		_, err := s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
 		return apperrors.New(err)
-	}, 2, 5*time.Second) //nolint:mnd
+	}, 2, 3*time.Second) //nolint:mnd
 	if err != nil {
 		return apperrors.New(err)
 	}

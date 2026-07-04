@@ -104,6 +104,7 @@ ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_MOUNT_TYPE_UNSUPPORTED = "Mount type '{{.Type}}' is not supported"
 ERR_VOLUME_ALREADY_EXISTS = "Volume '{{.Volume}}' already exists"
 ERR_VOLUME_DRIVER_UNSUPPORTED = "Volume driver '{{.Driver}}' is not supported"
+ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
 
 # File errors
 ERR_FILE_SCOPE_UNSUPPORTED = "File scope '{{.Scope}}' is not supported"

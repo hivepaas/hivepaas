@@ -167,11 +167,12 @@ var (
 
 // Errors for cluster
 var (
-	ErrNodeRequiredByHivePaaSApp = NewErr(ErrPreconditionRequired, "ERR_NODE_REQUIRED_BY_HIVEPAAS_APP")
-	ErrServiceNotRunning         = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
-	ErrMountTypeUnsupported      = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
-	ErrVolumeAlreadyExists       = NewErr(ErrAlreadyExist, "ERR_VOLUME_ALREADY_EXISTS")
-	ErrVolumeDriverUnsupported   = NewErr(ErrUnsupported, "ERR_VOLUME_DRIVER_UNSUPPORTED")
+	ErrNodeRequiredByHivePaaSApp     = NewErr(ErrPreconditionRequired, "ERR_NODE_REQUIRED_BY_HIVEPAAS_APP")
+	ErrServiceNotRunning             = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
+	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
+	ErrVolumeAlreadyExists           = NewErr(ErrAlreadyExist, "ERR_VOLUME_ALREADY_EXISTS")
+	ErrVolumeDriverUnsupported       = NewErr(ErrUnsupported, "ERR_VOLUME_DRIVER_UNSUPPORTED")
+	ErrServiceModeReplicatedRequired = NewErr(ErrPreconditionFailed, "ERR_SERVICE_MODE_REPLICATED_REQUIRED")
 )
 
 // Errors for files

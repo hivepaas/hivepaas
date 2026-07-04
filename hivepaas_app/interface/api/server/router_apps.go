@@ -156,6 +156,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		appActionGroup.POST("/deploy", appActionHandler.DeployApp)
 		// Restart app
 		appActionGroup.POST("/restart", appActionHandler.RestartApp)
+		// Set app running status
+		appActionGroup.POST("/running-status", appActionHandler.SetAppRunning)
 	}
 
 	{ // App previews

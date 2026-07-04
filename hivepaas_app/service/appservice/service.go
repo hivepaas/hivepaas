@@ -29,6 +29,7 @@ type Service interface {
 	PersistAppData(ctx context.Context, db database.IDB, data *PersistingAppData) error
 	DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error
 	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, recursive bool) error
+	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
 
 	ExecuteInTx(ctx context.Context, app *entity.App, requireUpdateVerMatch bool, fn func(database.Tx) error) error
 }

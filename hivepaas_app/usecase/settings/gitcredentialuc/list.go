@@ -16,8 +16,20 @@ func (uc *UC) ListGitCredential(
 	req *gitcredentialdto.ListGitCredentialReq,
 ) (*gitcredentialdto.ListGitCredentialResp, error) {
 	listOpts := []bunex.SelectQueryOption{
-		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeGithubApp,
-			base.SettingTypeAccessToken, base.SettingTypeSSHKey),
+		bunex.SelectWhereGroup(
+			// Github app
+			bunex.SelectWhereIn("setting.type = ?", base.SettingTypeGithubApp),
+			// All access tokens of kind `git`
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAccessToken),
+				bunex.SelectWhereIn("setting.kind IN (?)", base.AllGitAccessTokenKinds...),
+			),
+			// All ssh keys of kind `git`
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeSSHKey),
+				bunex.SelectWhereIn("setting.kind IN (?)", base.AllGitSSHKeyKinds...),
+			),
+		),
 	}
 	if len(req.Statuses) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("setting.status IN (?)", req.Statuses...))

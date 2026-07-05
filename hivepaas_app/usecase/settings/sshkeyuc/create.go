@@ -34,6 +34,7 @@ func (uc *UC) CreateSSHKey(
 			if err := generateKey(sshKey); err != nil {
 				return apperrors.New(err)
 			}
+			pData.Setting.Kind = string(req.Kind)
 			if err := pData.Setting.SetData(sshKey); err != nil {
 				return apperrors.New(err)
 			}

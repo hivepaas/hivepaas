@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	kindMaxLen  = 50
 	tokenMaxLen = 512
 	urlMaxLen   = 512
 )
@@ -52,7 +53,7 @@ func (req *AccessTokenBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllAccessTokenKinds, field+"kind")...)
+	res = append(res, basedto.ValidateStr(&req.Kind, true, 1, kindMaxLen, field+"kind")...)
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.Token, true, 1, tokenMaxLen, field+"token")...)
 	res = append(res, basedto.ValidateStr(&req.User, false, 1, base.SettingNameMaxLen, field+"user")...)

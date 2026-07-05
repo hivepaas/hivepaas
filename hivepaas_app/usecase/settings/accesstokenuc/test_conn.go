@@ -27,6 +27,8 @@ func (uc *UC) TestAccessTokenConn(
 		err = uc.testGiteaTokenConn(ctx, req)
 	case base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
 		fallthrough
+	case base.AccessTokenKindCloudflare:
+		fallthrough
 	default:
 		err = apperrors.New(apperrors.ErrGitTypeUnsupported).WithParam("Type", req.Kind)
 	}
@@ -41,7 +43,7 @@ func (uc *UC) testGithubTokenConn(
 	ctx context.Context,
 	req *accesstokendto.TestAccessTokenConnReq,
 ) error {
-	client, err := github.NewFromPersonalToken(req.Token)
+	client, err := github.NewFromToken(req.Token)
 	if err != nil {
 		return apperrors.New(err)
 	}

@@ -1,5 +1,22 @@
 package base
 
+type SSHKeyKind string
+
+const (
+	// Git
+	SSHKeyKindGit       SSHKeyKind = "git"
+	SSHKeyKindGithub    SSHKeyKind = "github"
+	SSHKeyKindGitlab    SSHKeyKind = "gitlab"
+	SSHKeyKindGitea     SSHKeyKind = "gitea"
+	SSHKeyKindBitbucket SSHKeyKind = "bitbucket"
+	SSHKeyKindGogs      SSHKeyKind = "gogs"
+)
+
+var (
+	AllGitSSHKeyKinds = []SSHKeyKind{SSHKeyKindGit, SSHKeyKindGithub, SSHKeyKindGitlab,
+		SSHKeyKindGitea, SSHKeyKindBitbucket, SSHKeyKindGogs}
+)
+
 type PrivateKeyType string
 
 const (

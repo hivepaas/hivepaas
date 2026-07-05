@@ -16,7 +16,7 @@ import (
 type Client struct {
 	appID          int64
 	installationID int64
-	personalToken  string
+	accessToken    string
 
 	appsTransport    *ghinstallation.AppsTransport
 	installTransport *ghinstallation.Transport
@@ -30,7 +30,7 @@ func (c *Client) IsAppClient() bool {
 }
 
 func (c *Client) IsTokenClient() bool {
-	return c.personalToken != ""
+	return c.accessToken != ""
 }
 
 func (c *Client) CreateAppToken(ctx context.Context) (string, error) {
@@ -68,11 +68,11 @@ func NewFromApp(appID, installationID int64, privateKey []byte) (*Client, error)
 	return client, nil
 }
 
-func NewFromPersonalToken(personalToken string) (*Client, error) {
+func NewFromToken(accessToken string) (*Client, error) {
 	client := &Client{
-		personalToken: personalToken,
+		accessToken: accessToken,
 		client: gogithub.NewClient(&http.Client{
-			Transport: NewPatTransport(http.DefaultTransport, personalToken),
+			Transport: NewPatTransport(http.DefaultTransport, accessToken),
 		}),
 	}
 	return client, nil
@@ -104,7 +104,7 @@ func NewFromSetting(setting *entity.Setting) (*Client, error) {
 		if err != nil {
 			return nil, apperrors.New(err)
 		}
-		return NewFromPersonalToken(token)
+		return NewFromToken(token)
 
 	default:
 		return nil, apperrors.New(ErrAccessProviderInvalid).

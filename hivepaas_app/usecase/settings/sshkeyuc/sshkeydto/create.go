@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	kindMaxLen       = 50
 	privKeyMaxLen    = 10000
 	pubKeyMaxLen     = 2000
 	passphraseMaxLen = 100
@@ -22,6 +23,7 @@ type CreateSSHKeyReq struct {
 }
 
 type SSHKeyBaseReq struct {
+	Kind       base.SSHKeyKind     `json:"kind"`
 	Name       string              `json:"name"`
 	KeyType    base.PrivateKeyType `json:"keyType"`
 	PublicKey  string              `json:"publicKey"`
@@ -42,6 +44,7 @@ func (req *SSHKeyBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
+	res = append(res, basedto.ValidateStr(&req.Kind, true, 1, kindMaxLen, field+"kind")...)
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.PublicKey, false, 1, pubKeyMaxLen, field+"publicKey")...)
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, true, 1, privKeyMaxLen, field+"privateKey")...)

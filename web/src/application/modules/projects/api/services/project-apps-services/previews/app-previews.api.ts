@@ -21,14 +21,17 @@ export class AppPreviewsApi extends BaseApi {
         request: AppPreviews_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppPreviews_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, appID, search, pagination, sorting, getStats } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
                 this.client.v1.get(`/projects/${projectID}/apps/${appID}/previews`, {
-                    params: query.build(),
+                    params: {
+                        ...query.build(),
+                        ...(getStats === undefined ? {} : { getStats }),
+                    },
                     signal,
                 }),
             ).pipe(

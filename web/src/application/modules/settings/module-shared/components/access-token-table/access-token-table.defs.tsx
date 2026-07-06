@@ -11,6 +11,10 @@ import { AccessTokenEditCell, AccessTokenMenuCell } from "./building-blocks";
 
 function getAccessTokenKindClassName(kind: SettingAccessToken["kind"]): string {
     switch (kind) {
+        case EAccessTokenKind.Bitbucket:
+            return "bg-blue-600 text-white";
+        case EAccessTokenKind.Cloudflare:
+            return "bg-orange-500 text-white";
         case EAccessTokenKind.Github:
             return "bg-sky-500 text-white";
         case EAccessTokenKind.Gitlab:

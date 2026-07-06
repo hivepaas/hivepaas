@@ -4,9 +4,13 @@ import type {
     ClusterNetworks_CreateOne_Res,
     ClusterNetworks_FindManyPaginated_Res,
     ClusterNetworks_FindOneById_Res,
+    ClusterNetworks_UpdateOne_Res,
+    ClusterNetworks_UpdateStatus_Res,
 } from "~/cluster/api/services/network-services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const mapSchema = z
     .record(z.string())
@@ -14,10 +18,31 @@ const mapSchema = z
     .default({})
     .transform(value => value ?? {});
 
-const NetworkSchema = z.object({
+const optionalBooleanSchema = z
+    .boolean()
+    .nullish()
+    .transform(value => value ?? false);
+
+export const ClusterNetworkSchema = z.object({
     id: z.string(),
-    name: z.string(),
-    availableInProjects: z.boolean(),
+    type: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    name: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    kind: z.string().optional(),
+    status: z.nativeEnum(ESettingStatus),
+    inherited: optionalBooleanSchema,
+    availableInProjects: optionalBooleanSchema,
+    default: optionalBooleanSchema,
+    updateVer: z.number(),
+    size: z
+        .number()
+        .nullish()
+        .transform(value => value ?? 0),
     driver: z.string(),
     internal: z.boolean(),
     attachable: z.boolean(),
@@ -27,21 +52,29 @@ const NetworkSchema = z.object({
     options: mapSchema,
     labels: mapSchema,
     createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullish(),
+    expireAt: z.coerce.date().nullish(),
 });
 
 const FindManyPaginatedSchema = z.object({
-    data: z.array(NetworkSchema),
+    data: z.array(ClusterNetworkSchema),
     meta: PagingMetaApiSchema,
 });
 
 const FindOneByIdSchema = z.object({
-    data: NetworkSchema,
+    data: ClusterNetworkSchema,
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 const CreateOneSchema = z.object({
     data: z.object({
         id: z.string(),
     }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const MetaOnlySchema = z.object({
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 export class ClusterNetworksApiValidator {
@@ -76,6 +109,32 @@ export class ClusterNetworksApiValidator {
 
         return {
             data,
+        };
+    };
+
+    updateOne = (response: AxiosResponse): ClusterNetworks_UpdateOne_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    updateStatus = (response: AxiosResponse): ClusterNetworks_UpdateStatus_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                type: "success",
+            },
         };
     };
 }

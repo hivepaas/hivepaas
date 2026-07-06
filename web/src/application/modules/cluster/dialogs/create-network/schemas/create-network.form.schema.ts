@@ -30,6 +30,7 @@ export const CreateNetworkFormSchema = z
         labels: z.array(KeyValueSchema),
         options: z.array(KeyValueSchema),
         availableInProjects: z.boolean(),
+        default: z.boolean(),
     })
     .superRefine((values, ctx) => {
         if (hasDuplicateKeys(values.labels)) {

@@ -10,6 +10,10 @@ import type {
     ClusterNetworks_FindManyPaginated_Res,
     ClusterNetworks_FindOneById_Req,
     ClusterNetworks_FindOneById_Res,
+    ClusterNetworks_UpdateOne_Req,
+    ClusterNetworks_UpdateOne_Res,
+    ClusterNetworks_UpdateStatus_Req,
+    ClusterNetworks_UpdateStatus_Res,
 } from "~/cluster/api/services/network-services";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
@@ -76,11 +80,42 @@ export class ClusterNetworksApi extends BaseApi {
             labels: payload.labels,
             options: payload.options,
             availableInProjects: payload.availableInProjects,
+            default: payload.default ?? false,
         };
 
         return lastValueFrom(
             from(this.client.v1.post("/cluster/networks", json, { signal })).pipe(
                 map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: ClusterNetworks_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ClusterNetworks_UpdateOne_Res, Error>> {
+        const { networkID, payload } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.put(`/cluster/networks/${networkID}`, payload, { signal })).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: ClusterNetworks_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ClusterNetworks_UpdateStatus_Res, Error>> {
+        const { networkID, payload } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.put(`/cluster/networks/${networkID}/status`, payload, { signal })).pipe(
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

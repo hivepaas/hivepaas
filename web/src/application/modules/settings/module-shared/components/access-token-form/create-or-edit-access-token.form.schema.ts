@@ -1,10 +1,8 @@
 import { z } from "zod";
 
-import { EAccessTokenKind } from "@application/shared/enums";
-
 export const CreateOrEditAccessTokenFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
-    kind: z.nativeEnum(EAccessTokenKind),
+    kind: z.string().trim().min(1, "Type is required"),
     user: z.string().trim().min(1, "User is required"),
     token: z.string().min(1, "Token is required"),
     baseURL: z.string().trim(),

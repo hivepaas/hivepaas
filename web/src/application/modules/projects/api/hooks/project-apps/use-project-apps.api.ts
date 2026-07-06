@@ -11,6 +11,7 @@ import type {
     ProjectApps_FindOneById_Req,
     ProjectApps_PrepareCopy_Req,
     ProjectApps_Restart_Req,
+    ProjectApps_SetRunning_Req,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateStatus_Req,
 } from "~/projects/api/services";
@@ -227,6 +228,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to restart project app",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Set project app running status
+                 */
+                setRunning: async (data: ProjectApps_SetRunning_Req["data"]) => {
+                    const result = await api.projects.apps.$.setRunning({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to set project app running status",
                                 error,
                             });
 

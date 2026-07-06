@@ -10,7 +10,7 @@ import { type FieldErrors, FormProvider, useController, useForm } from "react-ho
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { ESSHKeyType } from "@application/shared/enums";
+import { ESSHKeyKind, ESSHKeyType } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -22,6 +22,8 @@ import type { CreateOrEditSSHKeyFormInput, CreateOrEditSSHKeyFormOutput } from "
 import { CreateOrEditSSHKeyFormSchema } from "./create-or-edit-ssh-key.form.schema";
 
 const UNSPECIFIED_KEY_TYPE_VALUE = "__unspecified__";
+
+const kindOptions = Object.values(ESSHKeyKind);
 
 const keyTypeOptions = [
     { value: ESSHKeyType.Ed25519, label: "Ed25519 (ed25519)" },
@@ -52,6 +54,7 @@ export function CreateOrEditSSHKeyForm({
     const form = useForm<CreateOrEditSSHKeyFormInput, unknown, CreateOrEditSSHKeyFormOutput>({
         defaultValues: {
             name: initialValues?.name ?? "",
+            kind: initialValues?.kind ?? ESSHKeyKind.Git,
             keyType: initialValues?.keyType ?? ESSHKeyType.Ed25519,
             publicKey: initialValues?.publicKey ?? "",
             privateKey: initialValues?.privateKey ?? "",
@@ -80,6 +83,10 @@ export function CreateOrEditSSHKeyForm({
         field: name,
         fieldState: { invalid: isNameInvalid },
     } = useController({ name: "name", control });
+    const {
+        field: kind,
+        fieldState: { invalid: isKindInvalid },
+    } = useController({ name: "kind", control });
     const {
         field: keyType,
         fieldState: { invalid: isKeyTypeInvalid },
@@ -160,6 +167,42 @@ export function CreateOrEditSSHKeyForm({
                                         aria-invalid={isNameInvalid}
                                     />
                                     <FieldError errors={[errors.name]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Type"
+                                    isRequired
+                                />
+                            }
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Select
+                                        value={kind.value}
+                                        onValueChange={value => {
+                                            kind.onChange(value as ESSHKeyKind);
+                                        }}
+                                    >
+                                        <SelectTrigger aria-invalid={isKindInvalid}>
+                                            <SelectValue placeholder="Select type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {kindOptions.map(option => (
+                                                <SelectItem
+                                                    key={option}
+                                                    value={option}
+                                                >
+                                                    {option}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError errors={[errors.kind]} />
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>

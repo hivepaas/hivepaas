@@ -100,6 +100,7 @@ export type ProjectApps_Copy_Res = ApiResponseBase<{
 export type ProjectApps_FindOneById_Req = ApiRequestBase<{
     projectID: string;
     appID: string;
+    getStats?: boolean;
 }>;
 
 export type ProjectApps_FindOneById_Res = ApiResponseBase<ProjectAppDetails>;
@@ -173,5 +174,18 @@ export type ProjectApps_Restart_Req = ApiRequestBase<{
 }>;
 
 export type ProjectApps_Restart_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Set project app running status
+ */
+export type ProjectApps_SetRunning_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    running: boolean;
+}>;
+
+export type ProjectApps_SetRunning_Res = ApiResponseBase<{
     type: "success";
 }>;

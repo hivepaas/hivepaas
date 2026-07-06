@@ -1,9 +1,7 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { EAccessTokenKind } from "@application/shared/enums";
-
 export interface SettingAccessToken extends SettingsBaseEntity {
-    kind?: EAccessTokenKind;
+    kind?: string;
     user: string;
     token: string;
     baseURL: string;

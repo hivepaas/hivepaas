@@ -5,6 +5,10 @@ import type {
     ProjectNetworks_CreateOne_Res,
     ProjectNetworks_DeleteOne_Req,
     ProjectNetworks_DeleteOne_Res,
+    ProjectNetworks_UpdateOne_Req,
+    ProjectNetworks_UpdateOne_Res,
+    ProjectNetworks_UpdateStatus_Req,
+    ProjectNetworks_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -26,6 +30,66 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
             if (onSuccess) {
                 onSuccess(response, request, ...rest);
             }
+        },
+        ...options,
+    });
+}
+
+type UpdateOneReq = ProjectNetworks_UpdateOne_Req["data"];
+type UpdateOneRes = ProjectNetworks_UpdateOne_Res;
+type UpdateOneOptions = Omit<UseMutationOptions<UpdateOneRes, Error, UpdateOneReq>, "mutationFn">;
+
+function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
+    const { mutations } = useProjectNetworksApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateOne,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.networks.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    QK["projects.networks.$.find-one-by-id"],
+                    {
+                        projectID: request.projectID,
+                        networkID: request.networkID,
+                    },
+                ],
+            });
+
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
+type UpdateStatusReq = ProjectNetworks_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectNetworks_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
+
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
+    const { mutations } = useProjectNetworksApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateStatus,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.networks.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    QK["projects.networks.$.find-one-by-id"],
+                    {
+                        projectID: request.projectID,
+                        networkID: request.networkID,
+                    },
+                ],
+            });
+
+            onSuccess?.(response, request, ...rest);
         },
         ...options,
     });
@@ -66,5 +130,7 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
 export const ProjectNetworksCommands = Object.freeze({
     useCreateOne,
+    useUpdateOne,
+    useUpdateStatus,
     useDeleteOne,
 });

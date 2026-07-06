@@ -1,49 +1,36 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
+import { ClusterNetworkSchema } from "~/cluster/api/services";
 import type {
     ProjectNetworks_CreateOne_Res,
+    ProjectNetworks_DeleteOne_Res,
     ProjectNetworks_FindManyPaginated_Res,
     ProjectNetworks_FindOneById_Res,
+    ProjectNetworks_UpdateOne_Res,
+    ProjectNetworks_UpdateStatus_Res,
 } from "~/projects/api/services/projects-services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
-
-const ProjectNetworkSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    availableInProjects: z.boolean(),
-    driver: z.string(),
-    internal: z.boolean(),
-    attachable: z.boolean(),
-    ingress: z.boolean(),
-    enableIPv4: z.boolean(),
-    enableIPv6: z.boolean(),
-    options: z
-        .record(z.string())
-        .nullish()
-        .default({})
-        .transform(value => value ?? {}),
-    labels: z
-        .record(z.string())
-        .nullish()
-        .default({})
-        .transform(value => value ?? {}),
-    createdAt: z.coerce.date(),
-});
+import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const FindManyPaginatedSchema = z.object({
-    data: z.array(ProjectNetworkSchema),
+    data: z.array(ClusterNetworkSchema),
     meta: PagingMetaApiSchema,
 });
 
 const FindOneByIdSchema = z.object({
-    data: ProjectNetworkSchema,
+    data: ClusterNetworkSchema,
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 const CreateOneSchema = z.object({
     data: z.object({
         id: z.string(),
     }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const MetaOnlySchema = z.object({
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 export class ProjectNetworksApiValidator {
@@ -78,6 +65,45 @@ export class ProjectNetworksApiValidator {
 
         return {
             data,
+        };
+    };
+
+    updateOne = (response: AxiosResponse): ProjectNetworks_UpdateOne_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    updateStatus = (response: AxiosResponse): ProjectNetworks_UpdateStatus_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    deleteOne = (response: AxiosResponse): ProjectNetworks_DeleteOne_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                networkID: "",
+            },
         };
     };
 }

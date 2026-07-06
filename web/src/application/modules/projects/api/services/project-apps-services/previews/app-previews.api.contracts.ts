@@ -9,6 +9,7 @@ export type AppPreviews_FindManyPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
+    getStats?: boolean;
 }>;
 
 export type AppPreviews_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;

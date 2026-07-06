@@ -1,4 +1,4 @@
-import { type PropsWithChildren } from "react";
+import { type PropsWithChildren, type ReactNode } from "react";
 
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import {
     CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
 } from "~/cluster/module-shared/constants/network-form-layout.constants";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
 import { type CreateNetworkFormInput, type CreateNetworkFormOutput, CreateNetworkFormSchema } from "../schemas";
@@ -34,6 +34,7 @@ export function CreateNetworkForm({
             labels: [],
             options: [],
             availableInProjects: false,
+            default: false,
         },
         resolver: zodResolver(CreateNetworkFormSchema),
         mode: "onSubmit",
@@ -51,6 +52,7 @@ export function CreateNetworkForm({
     const { field: internal } = useController({ control, name: "internal" });
     const { field: attachable } = useController({ control, name: "attachable" });
     const { field: availableInProjects } = useController({ control, name: "availableInProjects" });
+    const { field: defaultField } = useController({ control, name: "default" });
 
     function onValid(values: CreateNetworkFormOutput) {
         if (readOnly) {
@@ -162,6 +164,13 @@ export function CreateNetworkForm({
                                 }}
                             />
                         ) : null}
+                        <CheckboxField
+                            title={<LabelWithInfo label="Default" />}
+                            checked={defaultField.value}
+                            onCheckedChange={value => {
+                                defaultField.onChange(value);
+                            }}
+                        />
                     </fieldset>
                 </div>
                 {children}
@@ -187,7 +196,7 @@ function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) 
 }
 
 interface CheckboxFieldProps {
-    title: string;
+    title: string | ReactNode;
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
 }

@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
-import { MoreVertical, Trash2Icon } from "lucide-react";
+import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ClusterNetworksCommands } from "~/cluster/data/commands";
+import { useUpdateNetworkStatusDialog } from "~/cluster/dialogs";
 import type { ClusterNetwork } from "~/cluster/domain";
 import type { NetworkManagementScope } from "~/cluster/module-shared/types";
 import { ProjectNetworksCommands } from "~/projects/data/commands";
@@ -16,10 +17,16 @@ import { useConditionalModule, useConditionalProject } from "@application/shared
 
 function View({ network, scope }: Props) {
     const [open, setOpen] = useState(false);
-    const { canDelete: canDeleteCluster } = useConditionalModule({ id: MODULE_IDS.Cluster });
+    const updateStatusDialog = useUpdateNetworkStatusDialog({
+        onSuccess: () => {
+            setOpen(false);
+        },
+    });
+    const clusterPermission = useConditionalModule({ id: MODULE_IDS.Cluster });
     const projectPermission = useConditionalProject({
         projectId: scope.type === "project" ? scope.projectId : "",
     });
+    const isInheritedProjectNetwork = scope.type === "project" && network.inherited;
 
     const { mutate: deleteOneClusterNetwork, isPending: isDeletingClusterNetwork } =
         ClusterNetworksCommands.useDeleteOne({
@@ -37,12 +44,21 @@ function View({ network, scope }: Props) {
             },
         });
 
-    const isInheritedProjectNetwork = scope.type === "project" && network.availableInProjects;
-    const canDelete = scope.type === "cluster" ? canDeleteCluster : projectPermission.canDelete;
+    const canWrite = scope.type === "cluster" ? clusterPermission.canWrite : projectPermission.canWrite;
+    const canDelete = scope.type === "cluster" ? clusterPermission.canDelete : projectPermission.canDelete;
     const isDeleting = isDeletingClusterNetwork || isDeletingProjectNetwork;
 
+    function onChangeStatus() {
+        updateStatusDialog.actions.open(scope, network.id, {
+            props: {
+                readOnlyInherited: isInheritedProjectNetwork,
+                entityTitle: network.name,
+            },
+        });
+    }
+
     function onDelete() {
-        if (!canDelete) {
+        if (!canDelete || isInheritedProjectNetwork) {
             return;
         }
 
@@ -55,10 +71,6 @@ function View({ network, scope }: Props) {
             projectID: scope.projectId,
             networkID: network.id,
         });
-    }
-
-    if (isInheritedProjectNetwork) {
-        return null;
     }
 
     return (
@@ -81,7 +93,16 @@ function View({ network, scope }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
-                    {canDelete ? (
+                    <Button
+                        className="justify-start py-1.5 w-full"
+                        variant="ghost"
+                        disabled={!canWrite && !isInheritedProjectNetwork}
+                        onClick={onChangeStatus}
+                    >
+                        <SlidersHorizontal className="mr-2 size-4" />
+                        Change Status
+                    </Button>
+                    {canDelete && !isInheritedProjectNetwork ? (
                         <PopConfirm
                             title="Remove network"
                             variant="destructive"
@@ -117,9 +138,11 @@ function View({ network, scope }: Props) {
                                 </span>
                             </TooltipTrigger>
                             <TooltipContent side="left">
-                                {scope.type === "cluster"
-                                    ? "You do not have permission to delete cluster networks."
-                                    : "You do not have permission to delete project networks."}
+                                {isInheritedProjectNetwork
+                                    ? "Inherited networks are read-only."
+                                    : scope.type === "cluster"
+                                      ? "You do not have permission to delete cluster networks."
+                                      : "You do not have permission to delete project networks."}
                             </TooltipContent>
                         </Tooltip>
                     )}

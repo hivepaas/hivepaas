@@ -18,6 +18,8 @@ import type {
     ProjectApps_PrepareCopy_Res,
     ProjectApps_Restart_Req,
     ProjectApps_Restart_Res,
+    ProjectApps_SetRunning_Req,
+    ProjectApps_SetRunning_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
     ProjectApps_UpdateStatus_Req,
@@ -73,11 +75,12 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindOneById_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, appID, getStats } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.get(`/projects/${projectID}/apps/${appID}`, {
+                    params: getStats === undefined ? undefined : { getStats },
                     signal,
                 }),
             ).pipe(
@@ -256,6 +259,20 @@ export class ProjectAppsApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/restart`, {})).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Set a project app running status
+     */
+    async setRunning(request: ProjectApps_SetRunning_Req): Promise<Result<ProjectApps_SetRunning_Res, Error>> {
+        const { projectID, appID, running } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/running-status`, { running })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

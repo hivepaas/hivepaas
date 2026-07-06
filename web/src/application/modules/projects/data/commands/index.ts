@@ -21,3 +21,4 @@ export * from "./project-notification";
 export * from "./project-image-build-settings";
 export * from "./project-settings";
 export * from "./project-networks";
+export * from "./project-cluster-volumes";

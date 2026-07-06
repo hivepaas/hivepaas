@@ -123,6 +123,10 @@ function createClusterResourcesTabs(projectId: string): TabItem[] {
             label: "Networks",
             route: ROUTE.projects.single.clusterResources.networks.$route(projectId),
         },
+        {
+            label: "Volumes",
+            route: ROUTE.projects.single.clusterResources.volumes.$route(projectId),
+        },
     ];
 }
 

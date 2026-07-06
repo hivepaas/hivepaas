@@ -11,6 +11,8 @@ export const SettingsBaseEntitySchema = z.object({
     description: z.string().optional().default(""),
     status: z.nativeEnum(ESettingStatus),
     type: z.nativeEnum(ESettingType),
+    kind: z.string().optional(),
+    inherited: z.boolean().optional(),
     availableInProjects: z.boolean().optional(),
     default: z.boolean().optional(),
     updateVer: z.number(),

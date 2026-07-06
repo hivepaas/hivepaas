@@ -7,6 +7,7 @@ export * from "./project-github-app";
 export * from "./project-repo-webhook";
 export * from "./project-git-credentials";
 export * from "./project-networks";
+export * from "./project-cluster-volumes";
 export * from "./project-registry-auth";
 export * from "./project-im-service";
 export * from "./project-email";

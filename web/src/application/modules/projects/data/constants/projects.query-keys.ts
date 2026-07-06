@@ -34,6 +34,8 @@ export const QK = {
     "projects.domain-settings.$.find-one": "projects.domain-settings.$.find-one",
     "projects.networks.$.find-many-paginated": "projects.networks.$.find-many-paginated",
     "projects.networks.$.find-one-by-id": "projects.networks.$.find-one-by-id",
+    "projects.cluster-volumes.$.find-many-paginated": "projects.cluster-volumes.$.find-many-paginated",
+    "projects.cluster-volumes.$.find-one-by-id": "projects.cluster-volumes.$.find-one-by-id",
     "projects.notifications.$.find-many-paginated": "projects.notifications.$.find-many-paginated",
     "projects.notifications.$.find-one-by-id": "projects.notifications.$.find-one-by-id",
     /*

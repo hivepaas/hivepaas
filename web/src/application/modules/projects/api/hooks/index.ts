@@ -8,6 +8,7 @@ export * from "./project-domain-settings";
 export * from "./project-env-vars";
 export * from "./project-git-credentials";
 export * from "./project-networks";
+export * from "./project-cluster-volumes";
 export * from "./project-notification";
 export * from "./project-registry-auth";
 export * from "./project-im-service";

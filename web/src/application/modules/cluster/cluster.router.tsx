@@ -131,5 +131,52 @@ export const clusterRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { VolumesLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.Cluster}>
+                            <VolumesLayout>
+                                <Outlet />
+                            </VolumesLayout>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            children: [
+                {
+                    path: ROUTE.cluster.volumes.$pattern,
+                    lazy: async () => {
+                        const { VolumesRoute } = await getLazyComponents();
+
+                        return {
+                            Component: VolumesRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.cluster.volumes.create.$pattern,
+                    lazy: async () => {
+                        const { VolumeCreateRoute } = await getLazyComponents();
+
+                        return {
+                            Component: VolumeCreateRoute,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.cluster.volumes.edit.$pattern,
+                    lazy: async () => {
+                        const { VolumeEditRoute } = await getLazyComponents();
+
+                        return {
+                            Component: VolumeEditRoute,
+                        };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

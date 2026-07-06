@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useLocation, useUpdateEffect } from "react-use";
+import { UpdateVolumeStatusDialog, useUpdateVolumeStatusDialogState } from "~/cluster/dialogs";
 import {
     ConfirmAppDangerActionDialog,
     useConfirmAppDangerActionDialogState,
@@ -88,6 +89,7 @@ function View() {
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
     const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
     const importProjectSettingsDialog = useImportProjectSettingsDialogState();
+    const updateVolumeStatusDialog = useUpdateVolumeStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -115,6 +117,7 @@ function View() {
         updateGithubAppStatusDialog.destroy();
         updateRepoWebhookStatusDialog.destroy();
         importProjectSettingsDialog.destroy();
+        updateVolumeStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -144,6 +147,7 @@ function View() {
             <UpdateGithubAppStatusDialog />
             <UpdateRepoWebhookStatusDialog />
             <ImportProjectSettingsDialog />
+            <UpdateVolumeStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

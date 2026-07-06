@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { ClusterVolumesQueries } from "~/cluster/data/queries";
+import { VolumesTableDefs } from "~/cluster/module-shared/definitions/tables/volumes/volumes-table.defs";
 import {
     PROJECT_SETTINGS_IMPORT_KIND,
     ProjectSettingsImportCommands,
     type ProjectSettingsImportKind,
 } from "~/projects/data/commands";
 import {
-    ProjectAcmeDnsProviderQueries,
     ProjectAccessTokenQueries,
+    ProjectAcmeDnsProviderQueries,
     ProjectBasicAuthQueries,
     ProjectCloudStorageQueries,
+    ProjectClusterVolumesQueries,
     ProjectEmailQueries,
     ProjectGithubAppQueries,
     ProjectImServiceQueries,
@@ -23,8 +26,8 @@ import {
     ProjectSslProviderQueries,
 } from "~/projects/data/queries";
 import {
-    AcmeDnsProviderQueries,
     AccessTokenQueries,
+    AcmeDnsProviderQueries,
     BasicAuthQueries,
     CloudStorageQueries,
     EmailQueries,
@@ -89,6 +92,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: "Notification Targets",
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: "Github Apps",
     [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: "Webhooks",
+    [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: "Cluster Volumes",
 } as const satisfies Record<ProjectSettingsImportKind, string>;
 
 function castColumns<T extends ImportableSetting>(columns: ColumnDef<T>[]): ColumnDef<ImportableSetting>[] {
@@ -135,6 +139,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(GithubAppTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
             return castColumns(RepoWebhookTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
+            return castColumns(VolumesTableDefs.columns({ type: "cluster" }));
         default:
             return [];
     }
@@ -261,6 +267,13 @@ export function ImportProjectSettingsDialog() {
     });
     const repoWebhookProjectQuery = ProjectRepoWebhookQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+
+    const clusterVolumeSettingsQuery = ClusterVolumesQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume,
+    });
+    const clusterVolumeProjectQuery = ProjectClusterVolumesQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume,
     });
 
     let settings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
@@ -398,6 +411,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void repoWebhookSettingsQuery.refetch();
                 void repoWebhookProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
+            settings = clusterVolumeSettingsQuery.data?.data ?? [];
+            projectSettings = clusterVolumeProjectQuery.data?.data ?? [];
+            isFetching = clusterVolumeSettingsQuery.isFetching || clusterVolumeProjectQuery.isFetching;
+            hasError = Boolean(clusterVolumeSettingsQuery.error ?? clusterVolumeProjectQuery.error);
+            refetch = () => {
+                void clusterVolumeSettingsQuery.refetch();
+                void clusterVolumeProjectQuery.refetch();
             };
             break;
     }

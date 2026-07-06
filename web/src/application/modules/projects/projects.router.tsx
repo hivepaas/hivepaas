@@ -902,6 +902,36 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.clusterResources.volumes.$pattern,
+                            lazy: async () => {
+                                const { ProjectVolumesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectVolumesRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.clusterResources.volumes.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectVolumeCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectVolumeCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.clusterResources.volumes.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectVolumeEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectVolumeEditRoute,
+                                };
+                            },
+                        },
                     ],
                 },
                 {

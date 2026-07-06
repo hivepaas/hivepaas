@@ -38,6 +38,7 @@ export const ESettingType = {
     SSLProvider: "ssl-provider",
     DomainSettings: "domain-settings",
     StorageSettings: "storage-settings",
+    ClusterVolume: "cluster-volume",
 } as const;
 
 export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

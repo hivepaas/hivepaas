@@ -186,6 +186,11 @@ const navMain: SidebarItem[] = [
                 route: ROUTE.cluster.networks.$route,
                 pattern: ROUTE.cluster.networks.$pattern,
             },
+            {
+                title: "Volumes",
+                route: ROUTE.cluster.volumes.$route,
+                pattern: ROUTE.cluster.volumes.$pattern,
+            },
         ],
     },
     {

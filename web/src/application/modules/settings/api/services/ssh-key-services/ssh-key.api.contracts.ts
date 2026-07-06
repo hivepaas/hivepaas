@@ -1,7 +1,7 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type { SettingSSHKey } from "~/settings/domain";
 
-import type { ESSHKeyType, ESettingStatus } from "@application/shared/enums";
+import type { ESSHKeyKind, ESSHKeyType, ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -21,6 +21,7 @@ export type SSHKey_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     name: string;
+    kind: ESSHKeyKind;
     keyType: ESSHKeyType | "";
     publicKey: string;
     privateKey: string;

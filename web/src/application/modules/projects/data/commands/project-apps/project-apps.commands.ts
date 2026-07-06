@@ -11,6 +11,8 @@ import type {
     ProjectApps_Deploy_Res,
     ProjectApps_Restart_Req,
     ProjectApps_Restart_Res,
+    ProjectApps_SetRunning_Req,
+    ProjectApps_SetRunning_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
     ProjectApps_UpdateStatus_Req,
@@ -210,6 +212,34 @@ function useRestart({ onSuccess, ...options }: RestartOptions = {}) {
     });
 }
 
+/**
+ * Set project app running status command
+ */
+type SetRunningReq = ProjectApps_SetRunning_Req["data"];
+type SetRunningRes = ProjectApps_SetRunning_Res;
+type SetRunningOptions = Omit<UseMutationOptions<SetRunningRes, Error, SetRunningReq>, "mutationFn">;
+
+function useSetRunning({ onSuccess, ...options }: SetRunningOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.setRunning,
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.service-tasks.$.find-many"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
     useCopy,
@@ -218,4 +248,5 @@ export const ProjectAppsCommands = Object.freeze({
     useUpdateStatus,
     useDeploy,
     useRestart,
+    useSetRunning,
 });

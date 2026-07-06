@@ -1,8 +1,9 @@
 export const EAccessTokenKind = {
+    Bitbucket: "bitbucket",
+    Cloudflare: "cloudflare",
+    Gitea: "gitea",
     Github: "github",
     Gitlab: "gitlab",
-    Gitea: "gitea",
-    Bitbucket: "bitbucket",
     Gogs: "gogs",
 } as const;
 

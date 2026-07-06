@@ -1,5 +1,9 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
-import type { EClusterNetworkDriver } from "~/cluster/module-shared/enums";
+import type {
+    ClusterNetworkCreatePayload,
+    ClusterNetworkUpdatePayload,
+    ClusterNetworkUpdateStatusPayload,
+} from "~/cluster/domain";
 import { type ProjectNetworkEntity } from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
@@ -25,21 +29,37 @@ export type ProjectNetworks_FindOneById_Res = ApiResponseBase<ProjectNetworkEnti
 
 export type ProjectNetworks_CreateOne_Req = ApiRequestBase<{
     projectID: string;
-    payload: {
-        name: string;
-        driver: EClusterNetworkDriver;
-        enableIPv4: boolean;
-        enableIPv6: boolean;
-        internal: boolean;
-        attachable: boolean;
-        ingress: boolean;
-        labels: Record<string, string>;
-        options: Record<string, string>;
+    payload: Omit<ClusterNetworkCreatePayload, "availableInProjects"> & {
+        availableInProjects?: false;
     };
 }>;
 
 export type ProjectNetworks_CreateOne_Res = ApiResponseBase<{
     id: string;
+}>;
+
+export type ProjectNetworks_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    networkID: string;
+    payload: Omit<ClusterNetworkUpdatePayload, "availableInProjects"> & {
+        availableInProjects?: false;
+    };
+}>;
+
+export type ProjectNetworks_UpdateOne_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+export type ProjectNetworks_UpdateStatus_Req = ApiRequestBase<{
+    projectID: string;
+    networkID: string;
+    payload: Omit<ClusterNetworkUpdateStatusPayload, "availableInProjects"> & {
+        availableInProjects?: false;
+    };
+}>;
+
+export type ProjectNetworks_UpdateStatus_Res = ApiResponseBase<{
+    type: "success";
 }>;
 
 export type ProjectNetworks_DeleteOne_Req = ApiRequestBase<{

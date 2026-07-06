@@ -7,6 +7,8 @@ import type {
     ClusterNetworks_DeleteOne_Req,
     ClusterNetworks_FindManyPaginated_Req,
     ClusterNetworks_FindOneById_Req,
+    ClusterNetworks_UpdateOne_Req,
+    ClusterNetworks_UpdateStatus_Req,
 } from "~/cluster/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -65,6 +67,36 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create cluster network",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                updateOne: async (data: ClusterNetworks_UpdateOne_Req["data"]) => {
+                    const result = await api.networks.$.updateOne({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update cluster network",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                updateStatus: async (data: ClusterNetworks_UpdateStatus_Req["data"]) => {
+                    const result = await api.networks.$.updateStatus({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update cluster network status",
                                 error,
                             });
 

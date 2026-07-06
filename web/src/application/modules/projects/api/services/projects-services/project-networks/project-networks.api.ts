@@ -12,6 +12,10 @@ import {
     type ProjectNetworks_FindManyPaginated_Res,
     type ProjectNetworks_FindOneById_Req,
     type ProjectNetworks_FindOneById_Res,
+    type ProjectNetworks_UpdateOne_Req,
+    type ProjectNetworks_UpdateOne_Res,
+    type ProjectNetworks_UpdateStatus_Req,
+    type ProjectNetworks_UpdateStatus_Res,
 } from "./project-networks.api.contracts";
 import { type ProjectNetworksApiValidator } from "./project-networks.api.validator";
 
@@ -31,7 +35,7 @@ export class ProjectNetworksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/docker-networks`, {
+                this.client.v1.get(`/projects/${projectID}/cluster-networks`, {
                     params: query.build(),
                     signal,
                 }),
@@ -51,7 +55,7 @@ export class ProjectNetworksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/docker-networks/${networkID}`, {
+                this.client.v1.get(`/projects/${projectID}/cluster-networks/${networkID}`, {
                     signal,
                 }),
             ).pipe(
@@ -77,11 +81,55 @@ export class ProjectNetworksApi extends BaseApi {
             ingress: payload.ingress,
             labels: payload.labels,
             options: payload.options,
+            availableInProjects: false,
+            default: payload.default ?? false,
         };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/docker-networks`, json, { signal })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/cluster-networks`, json, { signal })).pipe(
                 map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: ProjectNetworks_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNetworks_UpdateOne_Res, Error>> {
+        const { projectID, networkID, payload } = request.data;
+        const json = {
+            ...payload,
+            availableInProjects: false,
+        };
+
+        return lastValueFrom(
+            from(this.client.v1.put(`/projects/${projectID}/cluster-networks/${networkID}`, json, { signal })).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: ProjectNetworks_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNetworks_UpdateStatus_Res, Error>> {
+        const { projectID, networkID, payload } = request.data;
+        const json = {
+            ...payload,
+            availableInProjects: false,
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}/cluster-networks/${networkID}/status`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -92,7 +140,7 @@ export class ProjectNetworksApi extends BaseApi {
         const { projectID, networkID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/docker-networks/${networkID}`)).pipe(
+            from(this.client.v1.delete(`/projects/${projectID}/cluster-networks/${networkID}`)).pipe(
                 map(() =>
                     Ok({
                         data: {

@@ -5,21 +5,23 @@ import { ProjectSSHKeyCommands } from "~/projects/data/commands";
 import { ProjectSSHKeyQueries } from "~/projects/data/queries";
 import { SSHKeyCommands } from "~/settings/data/commands";
 import { SSHKeyQueries } from "~/settings/data/queries";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import { CreateOrEditSSHKeyForm } from "~/settings/module-shared/components/ssh-key-form";
 import type {
     CreateOrEditSSHKeyFormInput,
     CreateOrEditSSHKeyFormOutput,
 } from "~/settings/module-shared/components/ssh-key-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
-import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
+import { ESSHKeyKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
 import type { SSHKeyTableScope } from "../ssh-key-table";
 
 type SSHKeyFormRouteMode = "create" | "edit";
+const SSH_KEY_KIND_VALUES = Object.values(ESSHKeyKind);
 
 export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
@@ -80,6 +82,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
             availableInProjects: scope.type === "project" ? false : values.availableInProjects,
             default: values.default,
             name: values.name,
+            kind: values.kind,
             keyType: values.keyType,
             publicKey: values.publicKey,
             privateKey: values.privateKey,
@@ -128,6 +131,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     const initialValues: Partial<CreateOrEditSSHKeyFormInput> | undefined = sshKey
         ? {
               name: sshKey.name,
+              kind: getInitialKind(sshKey.kind),
               keyType: sshKey.keyType ?? "",
               publicKey: sshKey.publicKey ?? "",
               privateKey: sshKey.privateKey,
@@ -168,6 +172,14 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
             )}
         </div>
     );
+}
+
+function getInitialKind(kind?: string): ESSHKeyKind {
+    if (SSH_KEY_KIND_VALUES.includes(kind as ESSHKeyKind)) {
+        return kind as ESSHKeyKind;
+    }
+
+    return ESSHKeyKind.Git;
 }
 
 function getSSHKeyListRoute(scope: SSHKeyTableScope) {

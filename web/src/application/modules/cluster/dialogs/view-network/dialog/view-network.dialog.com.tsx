@@ -10,7 +10,7 @@ import {
 import { ClusterNetworksQueries } from "~/cluster/data/queries";
 import { ProjectNetworksQueries } from "~/projects/data/queries";
 
-import { ViewNetworkForm } from "../form";
+import { ViewNetworkForm, type ViewNetworkFormOutput } from "../form";
 import { useViewNetworkDialogState } from "../hooks";
 
 export function ViewNetworkDialog() {
@@ -19,7 +19,7 @@ export function ViewNetworkDialog() {
     const scope = state.mode === "open" ? state.scope : null;
     const targetNetwork = state.mode === "open" ? state.network : null;
     const networkID = targetNetwork?.id ?? "";
-    const isInheritedProjectNetwork = scope?.type === "project" && Boolean(targetNetwork?.availableInProjects);
+    const isInheritedProjectNetwork = scope?.type === "project" && targetNetwork?.inherited === true;
 
     const clusterNetworkQuery = ClusterNetworksQueries.useFindOneById(
         { networkID },
@@ -48,6 +48,10 @@ export function ViewNetworkDialog() {
         dialogOptions?.onClose?.();
     }
 
+    function handleReadonlySubmit(_values: ViewNetworkFormOutput) {
+        void _values;
+    }
+
     return (
         <Dialog
             open={open}
@@ -66,6 +70,10 @@ export function ViewNetworkDialog() {
                         <ViewNetworkForm
                             key={network.id}
                             network={network}
+                            readOnlyAvailableInProjects
+                            readOnlyDefault
+                            showAvailableInProjects={scope?.type === "cluster"}
+                            onSubmit={handleReadonlySubmit}
                         />
                     ) : (
                         <div className="py-10 text-center text-sm text-muted-foreground">

@@ -7,6 +7,8 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { SSHKeyEditCell, SSHKeyMenuCell } from "./building-blocks";
 import type { SSHKeyTableScope } from "./ssh-key-table.types";
 
+const SSH_KEY_KIND_BADGE_CLASSNAME = "bg-sky-500 text-white";
+
 function formatKeyType(keyType?: string) {
     if (keyType === undefined || keyType === "") {
         return "Unspecified";
@@ -36,6 +38,15 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
             accessorKey: "name",
             header: "Name",
             enableSorting: true,
+        },
+        {
+            accessorKey: "kind",
+            header: "Type",
+            cell: ({ row: { original } }) => {
+                if (!original.kind) return "-";
+
+                return <Badge className={SSH_KEY_KIND_BADGE_CLASSNAME}>{original.kind}</Badge>;
+            },
         },
         {
             accessorKey: "keyType",

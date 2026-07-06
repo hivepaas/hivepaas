@@ -1,12 +1,21 @@
 /**
  * Nodes
  */
-export { NetworkCreateRoute, NetworkDetailsRoute, NetworksRoute, NodesRoute, SingleNodeRoute } from "./routes";
+export {
+    NetworkCreateRoute,
+    NetworkDetailsRoute,
+    NetworksRoute,
+    NodesRoute,
+    SingleNodeRoute,
+    VolumeCreateRoute,
+    VolumeEditRoute,
+    VolumesRoute,
+} from "./routes";
 
 /**
  * Layouts
  */
-export { NetworksLayout, NodesLayout, SingleNodeLayout } from "./layouts";
+export { NetworksLayout, NodesLayout, SingleNodeLayout, VolumesLayout } from "./layouts";
 
 /**
  * Dialogs

@@ -42,6 +42,7 @@ export function AppPreviewDeploymentsRoute() {
                 pagination,
                 sorting,
                 search,
+                getStats: true,
             },
             {
                 enabled: canLoadPreviews,

@@ -14,4 +14,6 @@ export const QK = {
      * Volumes
      */
     "volumes.$.list": "volumes.$.list",
+    "volumes.$.find-many-paginated": "volumes.$.find-many-paginated",
+    "volumes.$.find-one-by-id": "volumes.$.find-one-by-id",
 } as const;

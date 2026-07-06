@@ -43,6 +43,8 @@ import {
     ProjectBasicAuthApiValidator,
     ProjectCloudStorageApi,
     ProjectCloudStorageApiValidator,
+    ProjectClusterVolumesApi,
+    ProjectClusterVolumesApiValidator,
     ProjectDockerVolumesApi,
     ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
@@ -123,6 +125,7 @@ function createApi() {
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
     const projectNetworksApiValidator = new ProjectNetworksApiValidator();
+    const projectClusterVolumesApiValidator = new ProjectClusterVolumesApiValidator();
     const projectDockerVolumesApiValidator = new ProjectDockerVolumesApiValidator();
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
@@ -256,6 +259,9 @@ function createApi() {
             },
             networks: {
                 $: new ProjectNetworksApi(projectNetworksApiValidator),
+            },
+            clusterVolumes: {
+                $: new ProjectClusterVolumesApi(projectClusterVolumesApiValidator),
             },
             dockerVolumes: {
                 $: new ProjectDockerVolumesApi(projectDockerVolumesApiValidator),

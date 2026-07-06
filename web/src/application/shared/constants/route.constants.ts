@@ -102,6 +102,21 @@ export const ROUTE = {
                 $route: (networkId: string) => `/cluster/networks/${networkId}/`,
             },
         },
+
+        volumes: {
+            $pattern: "cluster/volumes",
+            $route: "/cluster/volumes/",
+
+            create: {
+                $pattern: "cluster/volumes/create",
+                $route: "/cluster/volumes/create/",
+            },
+
+            edit: {
+                $pattern: "cluster/volumes/:volumeId/edit",
+                $route: (volumeId: string) => `/cluster/volumes/${volumeId}/edit/`,
+            },
+        },
     },
 
     /**
@@ -915,6 +930,22 @@ export const ROUTE = {
                         $pattern: "projects/:id/cluster-resources/networks/:networkId",
                         $route: (id: string, networkId: string) =>
                             `/projects/${id}/cluster-resources/networks/${networkId}/`,
+                    },
+                },
+
+                volumes: {
+                    $pattern: "projects/:id/cluster-resources/volumes",
+                    $route: (id: string) => `/projects/${id}/cluster-resources/volumes/`,
+
+                    create: {
+                        $pattern: "projects/:id/cluster-resources/volumes/create",
+                        $route: (id: string) => `/projects/${id}/cluster-resources/volumes/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/cluster-resources/volumes/:volumeId/edit",
+                        $route: (id: string, volumeId: string) =>
+                            `/projects/${id}/cluster-resources/volumes/${volumeId}/edit/`,
                     },
                 },
             },

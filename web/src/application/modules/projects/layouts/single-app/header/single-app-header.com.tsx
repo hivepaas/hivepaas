@@ -26,7 +26,7 @@ function View({ projectId, appId }: Props) {
         data: app,
         isLoading: isLoadingApp,
         error: errorApp,
-    } = ProjectAppsQueries.useFindOneById({ projectID: projectId, appID: appId });
+    } = ProjectAppsQueries.useFindOneById({ projectID: projectId, appID: appId, getStats: true });
     const { data: scheduledJobResponse } = AppScheduledJobsQueries.useFindOneById(
         {
             projectID: projectId,
@@ -47,6 +47,12 @@ function View({ projectId, appId }: Props) {
             toast.success("Restart started");
         },
     });
+    const { mutate: setRunning, isPending: isSettingRunning } = ProjectAppsCommands.useSetRunning({
+        onSuccess: (_, request) => {
+            toast.success(request.running ? "App start requested" : "App stop requested");
+        },
+    });
+    const isAppActionPending = isDeploying || isRestarting || isSettingRunning;
 
     if (isLoading || isLoadingApp) {
         return <SingleAppHeaderSkeleton />;
@@ -61,6 +67,8 @@ function View({ projectId, appId }: Props) {
     const { data: project } = data;
     const { data: appData } = app;
     const isChildApp = Boolean(appData.parentApp);
+    const isAppRunning = (appData.stats?.runningTasks ?? 0) > 0;
+    const startStopText = isAppRunning ? "Stop" : "Start";
     const appEnv = project.envs.find(env => env.name === appData.env);
     const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId);
     const scheduledJobName = scheduledJobResponse?.data.name.trim();
@@ -194,7 +202,7 @@ function View({ projectId, appId }: Props) {
                             type="button"
                             variant="outline"
                             isLoading={isDeploying}
-                            disabled={isRestarting}
+                            disabled={isAppActionPending && !isDeploying}
                         >
                             <RefreshCw className="size-4 text-orange-600" />
                             Re-deploy
@@ -213,12 +221,46 @@ function View({ projectId, appId }: Props) {
                             type="button"
                             variant="outline"
                             isLoading={isRestarting}
-                            disabled={isDeploying}
+                            disabled={isAppActionPending && !isRestarting}
                         >
                             <Power className="size-4 text-orange-600" />
                             Restart
                         </Button>
                     </PopConfirm>
+                    {isAppRunning ? (
+                        <PopConfirm
+                            title="Stop app"
+                            description="Are you sure you want to stop this app?"
+                            confirmText="Stop"
+                            cancelText="Cancel"
+                            onConfirm={() => {
+                                setRunning({ projectID: projectId, appID: appId, running: false });
+                            }}
+                        >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                isLoading={isSettingRunning}
+                                disabled={isAppActionPending && !isSettingRunning}
+                            >
+                                <Power className="size-4 text-orange-600" />
+                                {startStopText}
+                            </Button>
+                        </PopConfirm>
+                    ) : (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            isLoading={isSettingRunning}
+                            disabled={isAppActionPending && !isSettingRunning}
+                            onClick={() => {
+                                setRunning({ projectID: projectId, appID: appId, running: true });
+                            }}
+                        >
+                            <Power className="size-4 text-orange-600" />
+                            {startStopText}
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>

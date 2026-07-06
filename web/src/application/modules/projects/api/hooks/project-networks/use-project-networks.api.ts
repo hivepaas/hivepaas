@@ -7,6 +7,8 @@ import type {
     ProjectNetworks_DeleteOne_Req,
     ProjectNetworks_FindManyPaginated_Req,
     ProjectNetworks_FindOneById_Req,
+    ProjectNetworks_UpdateOne_Req,
+    ProjectNetworks_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -73,6 +75,34 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create project network",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
+                updateOne: async (data: ProjectNetworks_UpdateOne_Req["data"]) => {
+                    const result = await api.projects.networks.$.updateOne({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project network",
+                                error,
+                            });
+                            throw error;
+                        },
+                    });
+                },
+                updateStatus: async (data: ProjectNetworks_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.networks.$.updateStatus({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project network status",
                                 error,
                             });
                             throw error;

@@ -74,6 +74,7 @@ export function CreateNetworkDialog() {
             ingress: values.ingress,
             labels: toRecord(values.labels),
             options: toRecord(values.options),
+            default: values.default,
         };
 
         if (scope.type === "cluster") {

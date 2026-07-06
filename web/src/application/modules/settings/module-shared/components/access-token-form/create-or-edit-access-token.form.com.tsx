@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import { PasswordInput } from "@components/ui/input-password";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import {
@@ -9,7 +8,7 @@ import {
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAccessTokenKind } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
@@ -149,24 +148,14 @@ export function CreateOrEditAccessTokenForm({
                     >
                         <FieldGroup>
                             <Field>
-                                <Select
+                                <EditableCombobox
+                                    options={kindOptions}
                                     value={kind.value}
-                                    onValueChange={kind.onChange}
-                                >
-                                    <SelectTrigger aria-invalid={isKindInvalid}>
-                                        <SelectValue placeholder="Select type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {kindOptions.map(option => (
-                                            <SelectItem
-                                                key={option}
-                                                value={option}
-                                            >
-                                                {option}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onChange={kind.onChange}
+                                    placeholder="Select or enter type"
+                                    aria-invalid={isKindInvalid}
+                                    disabled={isReadOnly}
+                                />
                                 <FieldError errors={[errors.kind]} />
                             </Field>
                         </FieldGroup>

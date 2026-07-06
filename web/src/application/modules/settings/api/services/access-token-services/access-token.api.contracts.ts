@@ -1,7 +1,7 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type { SettingAccessToken } from "~/settings/domain";
 
-import type { EAccessTokenKind, ESettingStatus } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -21,7 +21,7 @@ export type AccessToken_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     expireAt: Date | null;
-    kind: EAccessTokenKind;
+    kind: string;
     name: string;
     user: string;
     token: string;
@@ -64,7 +64,7 @@ export type AccessToken_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type AccessToken_TestConn_Payload = {
     expireAt: Date | null;
-    kind: EAccessTokenKind;
+    kind: string;
     name: string;
     user: string;
     token: string;

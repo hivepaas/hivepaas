@@ -51,7 +51,7 @@ function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>
                           titleAlign: "center",
                       },
                       cell: ({ row: { original } }) => {
-                          if (!original.availableInProjects) {
+                          if (!original.inherited) {
                               return "-";
                           }
 

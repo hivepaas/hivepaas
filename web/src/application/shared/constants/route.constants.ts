@@ -747,6 +747,22 @@ export const ROUTE = {
                     },
                 },
 
+                commandTemplates: {
+                    $pattern: "projects/:id/provider-settings/command-templates",
+                    $route: (id: string) => `/projects/${id}/provider-settings/command-templates/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/command-templates/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/command-templates/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/command-templates/:commandTemplateId/edit",
+                        $route: (id: string, commandTemplateId: string) =>
+                            `/projects/${id}/provider-settings/command-templates/${commandTemplateId}/edit/`,
+                    },
+                },
+
                 emailAccounts: {
                     $pattern: "projects/:id/provider-settings/email-accounts",
                     $route: (id: string) => `/projects/${id}/provider-settings/email-accounts/`,

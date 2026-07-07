@@ -25,11 +25,11 @@ import {
     SelectValue,
 } from "@/components/ui";
 
-import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../../schemas";
-import { createDefaultArg, createDefaultArgGroup } from "../create-or-edit-app-scheduled-job.form-mappers";
+import { createDefaultCommandArg, createDefaultCommandArgGroup } from "./command-arg-groups-section.helpers";
+import type { CommandArgGroupsFormValue } from "./command-arg-groups-section.types";
 
-type SchemaInput = CreateOrEditAppScheduledJobFormInput;
-type SchemaOutput = CreateOrEditAppScheduledJobFormOutput;
+type SchemaInput = CommandArgGroupsFormValue;
+type SchemaOutput = CommandArgGroupsFormValue;
 
 const CONTENT_COLUMN_OFFSET = 120 + 12;
 
@@ -307,7 +307,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                                     className="h-8 w-8"
                                     disabled={readOnly}
                                     onClick={() => {
-                                        append(createDefaultArg() as never);
+                                        append(createDefaultCommandArg() as never);
                                     }}
                                 >
                                     <Plus className="size-4" />
@@ -361,7 +361,7 @@ function View({ readOnly = false }: Props) {
                 className="w-fit"
                 disabled={readOnly}
                 onClick={() => {
-                    append(createDefaultArgGroup(fields.length));
+                    append(createDefaultCommandArgGroup(fields.length));
                 }}
             >
                 <Plus className="size-4" />
@@ -388,4 +388,4 @@ interface Props {
     readOnly?: boolean;
 }
 
-export const ArgGroupsSection = React.memo(View);
+export const CommandArgGroupsSection = React.memo(View);

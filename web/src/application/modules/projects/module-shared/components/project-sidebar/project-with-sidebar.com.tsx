@@ -71,6 +71,10 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.cloudStorages.$route(projectId),
         },
         {
+            label: "Command Templates",
+            route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
+        },
+        {
             label: "Email Accounts",
             route: ROUTE.projects.single.providerConfiguration.emailAccounts.$route(projectId),
         },

@@ -9,3 +9,4 @@ export * from "./domain-settings";
 export * from "./storage-settings";
 export * from "./image-build-settings";
 export * from "./docker-volume";
+export * from "./command-template";

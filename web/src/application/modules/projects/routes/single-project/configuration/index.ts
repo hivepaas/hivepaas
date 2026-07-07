@@ -13,6 +13,7 @@ export * from "./ssh-keys";
 export * from "./access-tokens";
 export * from "./acme-dns-providers";
 export * from "./cloud-storages";
+export * from "./command-templates";
 export * from "./notification-targets";
 export * from "./build-settings";
 export * from "./storage-settings";

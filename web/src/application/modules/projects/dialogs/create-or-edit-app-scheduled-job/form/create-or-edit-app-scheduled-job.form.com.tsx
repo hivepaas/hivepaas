@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
+import { CommandArgGroupsSection } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
@@ -18,13 +19,7 @@ import { InputNumber } from "@/components/ui/input-number";
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 import { APP_SCHEDULED_JOB_COMMAND_MODE, CreateOrEditAppScheduledJobFormSchema } from "../schemas";
 
-import {
-    ArgGroupsSection,
-    INFO_BLOCK_TITLE_WIDTH,
-    NextRunsField,
-    PriorityTabsField,
-    ScriptEditorField,
-} from "./building-blocks";
+import { INFO_BLOCK_TITLE_WIDTH, NextRunsField, PriorityTabsField, ScriptEditorField } from "./building-blocks";
 import {
     createEmptyAppScheduledJobFormDefaults,
     mapAppScheduledJobToFormInput,
@@ -645,7 +640,7 @@ export function CreateOrEditAppScheduledJobForm({
                             </ContentBlock>
 
                             <ContentBlock label="Arg Groups">
-                                <ArgGroupsSection readOnly={readOnly} />
+                                <CommandArgGroupsSection readOnly={readOnly} />
                             </ContentBlock>
 
                             <ContentBlock label="Notification Configuration">

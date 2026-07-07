@@ -45,6 +45,8 @@ import {
     ProjectCloudStorageApiValidator,
     ProjectClusterVolumesApi,
     ProjectClusterVolumesApiValidator,
+    ProjectCommandTemplateApi,
+    ProjectCommandTemplateApiValidator,
     ProjectDockerVolumesApi,
     ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
@@ -155,6 +157,7 @@ function createApi() {
     const projectSSHKeyApiValidator = new ProjectSSHKeyApiValidator();
     const projectAccessTokenApiValidator = new ProjectAccessTokenApiValidator();
     const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
+    const projectCommandTemplateApiValidator = new ProjectCommandTemplateApiValidator();
     const projectUserAccessesApiValidator = new ProjectUserAccessesApiValidator();
     const projectImageBuildSettingsApiValidator = new ProjectImageBuildSettingsApiValidator();
 
@@ -301,6 +304,9 @@ function createApi() {
             },
             cloudStorage: {
                 $: new ProjectCloudStorageApi(projectCloudStorageApiValidator),
+            },
+            commandTemplates: {
+                $: new ProjectCommandTemplateApi(projectCommandTemplateApiValidator),
             },
         },
     };

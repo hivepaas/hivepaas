@@ -20,6 +20,7 @@ type GithubAppFormRouteMode = "create" | "edit";
 
 export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -32,28 +33,33 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingsGithubApp, isPending: isCreatingSettings } = GithubAppCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Github app created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingsGithubApp, isPending: isUpdatingSettings } = GithubAppCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Github app updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectGithubApp, isPending: isCreatingProject } = ProjectGithubAppCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project github app created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectGithubApp, isPending: isUpdatingProject } = ProjectGithubAppCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project github app updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: testConnection, isPending: isTesting } = GithubAppCommands.useTestConnection({
@@ -260,6 +266,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                     onTestConnection={onTestConnection}
                     onReprovision={isEditMode && !readOnlyInherited && canWrite ? onReprovision : undefined}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     readonlyValues={readonlyValues}
                     showAvailableInProjects={showAvailableInProjects}

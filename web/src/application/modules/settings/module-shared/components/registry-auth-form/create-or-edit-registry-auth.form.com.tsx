@@ -26,6 +26,7 @@ export function CreateOrEditRegistryAuthForm({
     onSubmit,
     onTestConnection,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -37,6 +38,8 @@ export function CreateOrEditRegistryAuthForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditRegistryAuthFormInput, unknown, CreateOrEditRegistryAuthFormOutput>({
         defaultValues: {
@@ -51,6 +54,15 @@ export function CreateOrEditRegistryAuthForm({
         resolver: zodResolver(CreateOrEditRegistryAuthFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -276,6 +288,7 @@ interface Props {
     onSubmit: (values: CreateOrEditRegistryAuthFormOutput) => void;
     onTestConnection: (values: CreateOrEditRegistryAuthFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditRegistryAuthFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

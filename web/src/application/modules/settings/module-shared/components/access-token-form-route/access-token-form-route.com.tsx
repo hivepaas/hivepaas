@@ -24,6 +24,7 @@ type AccessTokenFormRouteMode = "create" | "edit";
 
 export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -36,28 +37,33 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingAccessToken, isPending: isCreatingSetting } = AccessTokenCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Access token created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingAccessToken, isPending: isUpdatingSetting } = AccessTokenCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Access token updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectAccessToken, isPending: isCreatingProject } = ProjectAccessTokenCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project access token created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectAccessToken, isPending: isUpdatingProject } = ProjectAccessTokenCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project access token updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: testConnection, isPending: isTesting } = AccessTokenCommands.useTestConn({
@@ -186,6 +192,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
                     onSubmit={onSubmit}
                     onTestConnection={onTestConnection}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

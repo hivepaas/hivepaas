@@ -17,6 +17,7 @@ export function CreateOrEditProjectSecretForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     isEditMode,
     initialValues,
     readOnly = false,
@@ -27,6 +28,8 @@ export function CreateOrEditProjectSecretForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditProjectSecretFormInput, unknown, CreateOrEditProjectSecretFormOutput>({
         defaultValues: {
@@ -42,6 +45,15 @@ export function CreateOrEditProjectSecretForm({
 
     const valueType = useWatch({ control, name: "valueType" });
     const selectedFile = useWatch({ control, name: "binaryFile" });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(readOnly ? false : isDirty);
@@ -260,6 +272,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditProjectSecretFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditProjectSecretFormInput>;
     readOnly?: boolean;

@@ -32,55 +32,47 @@ type RepoWebhookLocationState = {
 
 export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
+    const location = useLocation();
+    const [createdWebhook, setCreatedWebhook] = useState<CreatedWebhookResult | null>(
+        () => (location.state as RepoWebhookLocationState | null)?.createdRepoWebhook ?? null,
+    );
+    const [createdWebhookValues, setCreatedWebhookValues] = useState<CreateOrEditRepoWebhookFormOutput | null>(null);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
-    const location = useLocation();
 
-    const listRoute = getRepoWebhookListRoute(scope);
     const isEditMode = mode === "edit";
     const detailId = isEditMode ? (repoWebhookId ?? "") : "";
-    const createdWebhook = (location.state as RepoWebhookLocationState | null)?.createdRepoWebhook ?? null;
 
-    function navigateToList() {
-        navigate.modules(listRoute, { ignorePrevPath: true });
-    }
-
-    function navigateToEdit(created: CreatedWebhookResult) {
-        const editRoute =
-            scope.type === "project"
-                ? ROUTE.projects.single.sources.webhooks.edit.$route(scope.projectId, created.id)
-                : ROUTE.sources.webhooks.edit.$route(created.id);
-
-        navigate.modules(editRoute, {
-            ignorePrevPath: true,
-            state: {
-                createdRepoWebhook: created,
-            },
-        });
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
     }
 
     const { mutate: createSettingsRepoWebhook, isPending: isCreatingSettings } = RepoWebhookCommands.useCreateOne({
         onSuccess: response => {
             toast.success("Webhook created successfully");
-            navigateToEdit(response.data);
+            setCreatedWebhook(response.data);
+            markSaved();
         },
     });
     const { mutate: updateSettingsRepoWebhook, isPending: isUpdatingSettings } = RepoWebhookCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Webhook updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectRepoWebhook, isPending: isCreatingProject } = ProjectRepoWebhookCommands.useCreateOne({
         onSuccess: response => {
             toast.success("Project webhook created successfully");
-            navigateToEdit(response.data);
+            setCreatedWebhook(response.data);
+            markSaved();
         },
     });
     const { mutate: updateProjectRepoWebhook, isPending: isUpdatingProject } = ProjectRepoWebhookCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project webhook updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -139,6 +131,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
         }
 
         if (scope.type === "project") {
+            setCreatedWebhookValues(values);
             createProjectRepoWebhook({
                 projectID: scope.projectId,
                 payload,
@@ -146,6 +139,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
             return;
         }
 
+        setCreatedWebhookValues(values);
         createSettingsRepoWebhook({ payload });
     }
 
@@ -163,13 +157,20 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
             return;
         }
 
-        navigateToList();
+        navigate.modules(getRepoWebhookListRoute(scope), { ignorePrevPath: true });
     }
 
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
     const showAvailableInProjects = scope.type === "settings";
     const matchedCreatedWebhook =
         createdWebhook && isEditMode && createdWebhook.id === repoWebhookId ? createdWebhook : null;
+    const createdInitialValues =
+        !isEditMode && createdWebhook && createdWebhookValues
+            ? {
+                  ...createdWebhookValues,
+                  secret: createdWebhook.secret,
+              }
+            : undefined;
     const initialValues = repoWebhook
         ? {
               name: repoWebhook.name,
@@ -178,8 +179,8 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
               availableInProjects: repoWebhook.availableInProjects ?? false,
               default: repoWebhook.default ?? false,
           }
-        : undefined;
-    const webhookURL = repoWebhook?.webhookURL ?? matchedCreatedWebhook?.webhookURL;
+        : createdInitialValues;
+    const webhookURL = repoWebhook?.webhookURL ?? matchedCreatedWebhook?.webhookURL ?? createdWebhook?.webhookURL;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
     const canRenderForm = mode === "create" || (isEditMode && !!repoWebhook);
     const title = readOnlyInherited ? "Webhook" : mode === "create" ? "Create Webhook" : "Edit Webhook";
@@ -199,6 +200,8 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
+                    key={createdWebhook?.id ?? "new"}
                     initialValues={initialValues}
                     webhookURL={webhookURL}
                     showAvailableInProjects={showAvailableInProjects}

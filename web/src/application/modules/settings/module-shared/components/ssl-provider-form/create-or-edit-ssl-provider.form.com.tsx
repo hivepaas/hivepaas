@@ -49,6 +49,7 @@ export function CreateOrEditSslProviderForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     isEdit,
@@ -61,6 +62,8 @@ export function CreateOrEditSslProviderForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditSslProviderFormInput, unknown, CreateOrEditSslProviderFormOutput>({
         defaultValues: {
@@ -70,6 +73,15 @@ export function CreateOrEditSslProviderForm({
         resolver: zodResolver(CreateOrEditSslProviderFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -351,6 +363,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditSslProviderFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditSslProviderFormInput>;
     showAvailableInProjects: boolean;
     isEdit: boolean;

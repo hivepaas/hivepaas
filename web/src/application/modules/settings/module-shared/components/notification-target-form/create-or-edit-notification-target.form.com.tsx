@@ -104,6 +104,7 @@ export function CreateOrEditNotificationTargetForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -117,6 +118,8 @@ export function CreateOrEditNotificationTargetForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditNotificationTargetFormInput, unknown, CreateOrEditNotificationTargetFormOutput>({
         defaultValues: {
@@ -144,6 +147,15 @@ export function CreateOrEditNotificationTargetForm({
         resolver: zodResolver(CreateOrEditNotificationTargetFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -752,6 +764,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditNotificationTargetFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditNotificationTargetFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

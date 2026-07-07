@@ -20,6 +20,7 @@ type OAuthFormRouteMode = "create" | "edit";
 
 export function OAuthFormRoute({ mode, oauthId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
     const { navigate } = useAppNavigate();
 
@@ -30,16 +31,21 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
         navigate.modules(ROUTE.settings.oauth.$route, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createOAuth, isPending: isCreating } = OAuthCommands.useCreateOne({
         onSuccess: () => {
             toast.success("OAuth created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateOAuth, isPending: isUpdating } = OAuthCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("OAuth updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -119,6 +125,7 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     disableProvider={isEditMode}
                     readOnly={!canWrite}

@@ -67,6 +67,7 @@ function buildNotificationPayload(
 
 export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
 
@@ -77,6 +78,11 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
 
     function navigateToList() {
         navigate.modules(listRoute, { ignorePrevPath: true });
+    }
+
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
     }
 
     const settingsDomainSettingsQuery = DomainSettingsQueries.useFindOne(
@@ -113,25 +119,25 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     const { mutate: createSettingSslCert, isPending: isCreatingSetting } = SslCertCommands.useCreateOne({
         onSuccess: () => {
             toast.success("SSL certificate created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingSslCert, isPending: isUpdatingSetting } = SslCertCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("SSL certificate updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectSslCert, isPending: isCreatingProject } = ProjectSslCertCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project SSL certificate created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectSslCert, isPending: isUpdatingProject } = ProjectSslCertCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project SSL certificate updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -261,6 +267,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     scope={scope}
                     showAvailableInProjects={scope.type === "settings"}

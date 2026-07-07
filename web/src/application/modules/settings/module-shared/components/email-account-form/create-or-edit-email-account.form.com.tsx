@@ -62,6 +62,7 @@ export function CreateOrEditEmailAccountForm({
     onSubmit,
     onOpenTestSendMail,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -97,8 +98,19 @@ export function CreateOrEditEmailAccountForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = form;
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -531,6 +543,7 @@ interface Props {
     onSubmit: (values: CreateOrEditEmailAccountFormOutput) => void;
     onOpenTestSendMail: (values: CreateOrEditEmailAccountFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditEmailAccountFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

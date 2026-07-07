@@ -39,6 +39,7 @@ const FIELD_MAPPING_NAMES = [
 
 export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const [testDialogOpen, setTestDialogOpen] = useState(false);
     const [testAccountValues, setTestAccountValues] = useState<CreateOrEditEmailAccountFormOutput | null>(null);
@@ -53,28 +54,33 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingEmailAccount, isPending: isCreatingSetting } = EmailCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Email account created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingEmailAccount, isPending: isUpdatingSetting } = EmailCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Email account updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectEmailAccount, isPending: isCreatingProject } = ProjectEmailCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project Email account created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectEmailAccount, isPending: isUpdatingProject } = ProjectEmailCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project Email account updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: testSendMail, isPending: isTesting } = EmailCommands.useTestSendMail({
@@ -241,6 +247,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
                         onSubmit={onSubmit}
                         onOpenTestSendMail={openTestSendMailDialog}
                         onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
                         initialValues={initialValues}
                         showAvailableInProjects={scope.type === "settings"}
                         readOnlyInherited={readOnlyInherited}

@@ -34,6 +34,7 @@ function joinAddresses(value?: string[]): string {
 
 export function NotificationTargetFormRoute({ mode, scope, notificationTargetId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
 
@@ -45,30 +46,35 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingNotification, isPending: isCreatingSetting } = NotificationCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Notification target created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingNotification, isPending: isUpdatingSetting } = NotificationCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Notification target updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectNotification, isPending: isCreatingProject } =
         ProjectNotificationCommands.useCreateOne({
             onSuccess: () => {
                 toast.success("Project notification target created successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: updateProjectNotification, isPending: isUpdatingProject } =
         ProjectNotificationCommands.useUpdateOne({
             onSuccess: () => {
                 toast.success("Project notification target updated successfully");
-                navigateToList();
+                markSaved();
             },
         });
 
@@ -218,6 +224,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

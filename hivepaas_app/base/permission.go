@@ -26,6 +26,7 @@ const (
 	ResourceTypeClusterNode        ResourceType = "cluster-node"
 	ResourceTypeClusterNetwork     ResourceType = "cluster-network"
 	ResourceTypeClusterVolume      ResourceType = "cluster-volume"
+	ResourceTypeCommandTemplate    ResourceType = "command-template"
 	ResourceTypeConfigFile         ResourceType = "config-file"
 	ResourceTypeDomain             ResourceType = "domain"
 	ResourceTypeDomainSettings     ResourceType = "domain-settings"

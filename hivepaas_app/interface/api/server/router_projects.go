@@ -97,6 +97,16 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		volumeGroup.DELETE("/:itemID", projectSettingsHandler.DeleteClusterVolume)
 	}
 
+	{ // Command templates group
+		commandTemplateGroup := projectGroup.Group("/:projectID/command-templates")
+		commandTemplateGroup.GET("/:itemID", projectSettingsHandler.GetCommandTemplate)
+		commandTemplateGroup.GET("", projectSettingsHandler.ListCommandTemplate)
+		commandTemplateGroup.POST("", projectSettingsHandler.CreateCommandTemplate)
+		commandTemplateGroup.PUT("/:itemID", projectSettingsHandler.UpdateCommandTemplate)
+		commandTemplateGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCommandTemplateStatus)
+		commandTemplateGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCommandTemplate)
+	}
+
 	{ // Domain settings group
 		domainSettingsGroup := projectGroup.Group("/:projectID/domain-settings")
 		domainSettingsGroup.GET("", projectSettingsHandler.GetDomainSettings)

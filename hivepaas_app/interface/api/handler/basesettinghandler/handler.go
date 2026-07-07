@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc"
@@ -48,6 +49,7 @@ type Handler struct {
 	IMServiceUC            *imserviceuc.UC
 	RegistryAuthUC         *registryauthuc.UC
 	BasicAuthUC            *basicauthuc.UC
+	CommandTemplateUC      *commandtemplateuc.UC
 	AcmeDnsProviderUC      *acmednsprovideruc.UC
 	SSLProviderUC          *sslprovideruc.UC
 	SSLCertUC              *sslcertuc.UC
@@ -84,6 +86,7 @@ func New(
 	imServiceUC *imserviceuc.UC,
 	registryAuthUC *registryauthuc.UC,
 	basicAuthUC *basicauthuc.UC,
+	commandTemplateUC *commandtemplateuc.UC,
 	acmeDnsProviderUC *acmednsprovideruc.UC,
 	sslProviderUC *sslprovideruc.UC,
 	sslCertUC *sslcertuc.UC,
@@ -119,6 +122,7 @@ func New(
 		IMServiceUC:            imServiceUC,
 		RegistryAuthUC:         registryAuthUC,
 		BasicAuthUC:            basicAuthUC,
+		CommandTemplateUC:      commandTemplateUC,
 		AcmeDnsProviderUC:      acmeDnsProviderUC,
 		SSLProviderUC:          sslProviderUC,
 		SSLCertUC:              sslCertUC,

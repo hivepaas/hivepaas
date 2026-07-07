@@ -32,6 +32,7 @@ export const SslCertSettingEntitySchema = SettingsBaseEntitySchema.omit({ descri
     inherited: z.boolean().optional(),
     certType: SslCertTypeSchema,
     provider: SettingRefSchema.nullish(),
+    acmeProvider: SettingRefSchema.nullish(),
     domain: z.string(),
     certificate: z.string(),
     privateKey: z.string(),

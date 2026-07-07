@@ -7,7 +7,7 @@ export function ProjectGithubAppsLegacyRedirect() {
 
     return (
         <Navigate
-            to={id ? ROUTE.projects.single.providerConfiguration.githubApps.$route(id) : ROUTE.projects.list.$route}
+            to={id ? ROUTE.projects.single.sources.githubApps.$route(id) : ROUTE.projects.list.$route}
             replace
         />
     );

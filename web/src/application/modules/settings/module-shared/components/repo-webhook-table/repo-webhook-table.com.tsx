@@ -103,7 +103,7 @@ interface Props {
 
 function getRepoWebhookCreateRoute(scope: RepoWebhookTableScope) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.webhooks.create.$route(scope.projectId);
+        return ROUTE.projects.single.sources.webhooks.create.$route(scope.projectId);
     }
 
     return ROUTE.sources.webhooks.create.$route;

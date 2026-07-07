@@ -35,7 +35,7 @@ export const RepoWebhookEditCell = memo(View);
 
 function getRepoWebhookEditRoute(scope: RepoWebhookTableScope, id: string) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.webhooks.edit.$route(scope.projectId, id);
+        return ROUTE.projects.single.sources.webhooks.edit.$route(scope.projectId, id);
     }
 
     return ROUTE.sources.webhooks.edit.$route(id);

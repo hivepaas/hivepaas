@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { ClusterVolumesQueries } from "~/cluster/data/queries";
+import { ClusterNetworksQueries, ClusterVolumesQueries } from "~/cluster/data/queries";
+import { NetworksTableDefs } from "~/cluster/module-shared/definitions/tables/networks/networks-table.defs";
 import { VolumesTableDefs } from "~/cluster/module-shared/definitions/tables/volumes/volumes-table.defs";
 import {
     PROJECT_SETTINGS_IMPORT_KIND,
@@ -18,6 +19,7 @@ import {
     ProjectEmailQueries,
     ProjectGithubAppQueries,
     ProjectImServiceQueries,
+    ProjectNetworksQueries,
     ProjectNotificationQueries,
     ProjectRegistryAuthQueries,
     ProjectRepoWebhookQueries,
@@ -40,7 +42,6 @@ import {
     SslCertQueries,
     SslProviderQueries,
 } from "~/settings/data/queries";
-import type { SettingsBaseEntity } from "~/settings/domain";
 import { AccessTokenTableDefs } from "~/settings/module-shared/components/access-token-table/access-token-table.defs";
 import { AcmeDnsProviderTableDefs } from "~/settings/module-shared/components/acme-dns-provider-table/acme-dns-provider-table.defs";
 import { BasicAuthTableDefs } from "~/settings/module-shared/components/basic-auth-table/basic-auth-table.defs";
@@ -72,7 +73,8 @@ import { useImportProjectSettingsDialogState } from "../hooks";
 
 const IMPORT_DIALOG_PAGINATION = { page: 1, size: 10000 };
 
-type ImportableSetting = SettingsBaseEntity & {
+type ImportableSetting = {
+    id: string;
     inherited?: boolean;
 };
 
@@ -92,6 +94,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: "Notification Targets",
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: "Github Apps",
     [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: "Webhooks",
+    [PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork]: "Cluster Networks",
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: "Cluster Volumes",
 } as const satisfies Record<ProjectSettingsImportKind, string>;
 
@@ -139,6 +142,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(GithubAppTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
             return castColumns(RepoWebhookTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork:
+            return castColumns(NetworksTableDefs.columns({ type: "cluster" }));
         case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
             return castColumns(VolumesTableDefs.columns({ type: "cluster" }));
         default:
@@ -267,6 +272,13 @@ export function ImportProjectSettingsDialog() {
     });
     const repoWebhookProjectQuery = ProjectRepoWebhookQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+
+    const clusterNetworkSettingsQuery = ClusterNetworksQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork,
+    });
+    const clusterNetworkProjectQuery = ProjectNetworksQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork,
     });
 
     const clusterVolumeSettingsQuery = ClusterVolumesQueries.useFindManyPaginated(queryRequest, {
@@ -411,6 +423,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void repoWebhookSettingsQuery.refetch();
                 void repoWebhookProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork:
+            settings = clusterNetworkSettingsQuery.data?.data ?? [];
+            projectSettings = clusterNetworkProjectQuery.data?.data ?? [];
+            isFetching = clusterNetworkSettingsQuery.isFetching || clusterNetworkProjectQuery.isFetching;
+            hasError = Boolean(clusterNetworkSettingsQuery.error ?? clusterNetworkProjectQuery.error);
+            refetch = () => {
+                void clusterNetworkSettingsQuery.refetch();
+                void clusterNetworkProjectQuery.refetch();
             };
             break;
         case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:

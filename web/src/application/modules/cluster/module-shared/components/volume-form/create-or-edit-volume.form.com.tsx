@@ -349,7 +349,7 @@ export function CreateOrEditVolumeForm({
                                             <Input
                                                 {...tmpfsSize}
                                                 value={tmpfsSize.value}
-                                                placeholder="1 gb"
+                                                placeholder="1gb"
                                                 className="max-w-[180px]"
                                                 aria-invalid={Boolean(errors.tmpfsOptions?.size)}
                                             />

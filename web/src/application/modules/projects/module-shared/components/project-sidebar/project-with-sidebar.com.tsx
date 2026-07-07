@@ -79,10 +79,6 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.envVariables.$route(projectId),
         },
         {
-            label: "Github Apps",
-            route: ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId),
-        },
-        {
             label: "IM Platforms",
             route: ROUTE.projects.single.providerConfiguration.imPlatforms.$route(projectId),
         },
@@ -110,9 +106,18 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             label: "SSL Providers",
             route: ROUTE.projects.single.providerConfiguration.sslProviders.$route(projectId),
         },
+    ];
+}
+
+function createSourcesTabs(projectId: string): TabItem[] {
+    return [
+        {
+            label: "Github Apps",
+            route: ROUTE.projects.single.sources.githubApps.$route(projectId),
+        },
         {
             label: "Webhooks",
-            route: ROUTE.projects.single.providerConfiguration.webhooks.$route(projectId),
+            route: ROUTE.projects.single.sources.webhooks.$route(projectId),
         },
     ];
 }
@@ -142,7 +147,9 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
             ? createConfigurationTabs(projectId)
             : section === "clusterResources"
               ? createClusterResourcesTabs(projectId)
-              : createProviderConfigurationTabs(projectId);
+              : section === "sources"
+                ? createSourcesTabs(projectId)
+                : createProviderConfigurationTabs(projectId);
 
     const activeKey = tabs.find(({ route }) => isRouteActive(route, location.pathname))?.route;
     return (
@@ -183,7 +190,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
 interface Props extends PropsWithChildren {
     projectId?: string;
-    section?: "configuration" | "providerConfiguration" | "clusterResources";
+    section?: "configuration" | "providerConfiguration" | "sources" | "clusterResources";
 }
 
 export const ProjectWithSidebar = memo(View);

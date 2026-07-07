@@ -55,3 +55,9 @@ export type ClusterNetworks_DeleteOne_Req = ApiRequestBase<{
 export type ClusterNetworks_DeleteOne_Res = ApiResponseBase<{
     networkID: string;
 }>;
+
+export type ClusterNetworks_SyncFromDocker_Req = ApiRequestBase<Record<string, never>>;
+
+export type ClusterNetworks_SyncFromDocker_Res = ApiResponseBase<{
+    type: "success";
+}>;

@@ -1,8 +1,11 @@
 import { useState } from "react";
 
+import { CardDescription, CardHeader } from "@components/ui";
 import { useSearchParams } from "react-router";
 import { useMount } from "react-use";
 import { toast } from "sonner";
+
+import { LogoIcon } from "@assets/icons";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -39,7 +42,11 @@ function View({ method }: ViewProps) {
 
     return (
         <AuthenticationLayout>
-            <div className="w-full max-w-2xl mx-auto">
+            <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
+                <CardHeader className="flex flex-col items-center text-center">
+                    <LogoIcon className="h-12 w-12" />
+                    <CardDescription className="font-medium">Sign up to HivePaaS</CardDescription>
+                </CardHeader>
                 <SignUpForm
                     method={method}
                     isPending={isPending}

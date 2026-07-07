@@ -22,6 +22,7 @@ export type SslCert_CreateOne_Payload = {
     default: boolean;
     certType: ESslCertType;
     provider?: SslCert_Provider_Payload;
+    acmeProvider?: SslCert_Provider_Payload;
     domain: string;
     certificate: string;
     privateKey: string;
@@ -40,6 +41,7 @@ export type SslCert_UpdateOne_Payload = {
     default: boolean;
     certType: ESslCertType;
     provider?: SslCert_Provider_Payload;
+    acmeProvider?: SslCert_Provider_Payload;
     domain: string;
     certificate: string;
     privateKey: string;

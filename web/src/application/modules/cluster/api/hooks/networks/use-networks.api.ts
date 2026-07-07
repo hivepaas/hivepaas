@@ -7,6 +7,7 @@ import type {
     ClusterNetworks_DeleteOne_Req,
     ClusterNetworks_FindManyPaginated_Req,
     ClusterNetworks_FindOneById_Req,
+    ClusterNetworks_SyncFromDocker_Req,
     ClusterNetworks_UpdateOne_Req,
     ClusterNetworks_UpdateStatus_Req,
 } from "~/cluster/api/services";
@@ -112,6 +113,21 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete cluster network",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                syncFromDocker: async (data: ClusterNetworks_SyncFromDocker_Req["data"]) => {
+                    const result = await api.networks.$.syncFromDocker({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to sync cluster networks from Docker",
                                 error,
                             });
 

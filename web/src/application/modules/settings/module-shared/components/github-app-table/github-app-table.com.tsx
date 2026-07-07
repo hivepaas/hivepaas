@@ -115,7 +115,7 @@ interface Props {
 
 function getGithubAppCreateRoute(scope: GithubAppTableScope) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.githubApps.create.$route(scope.projectId);
+        return ROUTE.projects.single.sources.githubApps.create.$route(scope.projectId);
     }
 
     return ROUTE.sources.githubApps.create.$route;

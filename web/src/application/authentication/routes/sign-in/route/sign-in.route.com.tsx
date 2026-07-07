@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { useCookie, useMount } from "react-use";
 
-import { WarningAuthenticationIcon } from "@assets/icons";
+import { LogoIcon, WarningAuthenticationIcon } from "@assets/icons";
 
 import { AppLoader, AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -14,7 +14,7 @@ import { AuthCommands } from "@application/authentication/data/commands";
 import { AuthQueries } from "@application/authentication/data/queries";
 import { AuthenticationLayout } from "@application/authentication/layouts";
 
-import { Button, Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 
 import { SignInForm } from "../form";
 
@@ -91,7 +91,13 @@ function View() {
 
     return (
         <AuthenticationLayout>
-            <div className="w-full max-w-sm mx-auto">{child}</div>
+            <div className="flex flex-col gap-6">
+                <CardHeader className="flex flex-col items-center text-center">
+                    <LogoIcon className="h-12 w-12" />
+                    <CardDescription className="font-medium">Sign in to HivePaaS</CardDescription>
+                </CardHeader>
+                <div className="w-full max-w-sm mx-auto">{child}</div>
+            </div>
         </AuthenticationLayout>
     );
 }

@@ -4,6 +4,7 @@ import type {
     ClusterNetworks_CreateOne_Res,
     ClusterNetworks_FindManyPaginated_Res,
     ClusterNetworks_FindOneById_Res,
+    ClusterNetworks_SyncFromDocker_Res,
     ClusterNetworks_UpdateOne_Res,
     ClusterNetworks_UpdateStatus_Res,
 } from "~/cluster/api/services/network-services";
@@ -126,6 +127,19 @@ export class ClusterNetworksApiValidator {
     };
 
     updateStatus = (response: AxiosResponse): ClusterNetworks_UpdateStatus_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return {
+            data: {
+                type: "success",
+            },
+        };
+    };
+
+    syncFromDocker = (response: AxiosResponse): ClusterNetworks_SyncFromDocker_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

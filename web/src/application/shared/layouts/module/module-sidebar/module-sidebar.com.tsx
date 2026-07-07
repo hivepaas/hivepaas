@@ -276,7 +276,7 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
             {...props}
         >
             <SidebarHeader className="items-center justify-center p-2">
-                <LogoIcon className="h-12 w-12" />
+                <LogoIcon className="x-logo h-12 w-12" />
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navigationItems} />

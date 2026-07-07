@@ -23,7 +23,7 @@ const LocalPaaSHealthcheckSettingsSchema = z.object({
 });
 
 export const LocalPaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.LocalPaaSService),
+    type: z.literal(ESettingType.HivePaaSService),
     appSettings: LocalPaaSAppSettingsSchema,
     workerSettings: LocalPaaSWorkerSettingsSchema,
     taskSettings: LocalPaaSTaskSettingsSchema,

@@ -67,6 +67,7 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
                     onSearch={setSearchQuery}
                     placeholder="Select registry to push image to"
                     searchable
+                    allowClear
                     closeOnSelect
                     emptyText="No registry to push image to available"
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}

@@ -17,6 +17,7 @@ export const PROJECT_SETTINGS_IMPORT_KIND = {
     Notification: "notification",
     GithubApp: "githubApp",
     RepoWebhook: "repoWebhook",
+    ClusterNetwork: "clusterNetwork",
     ClusterVolume: "clusterVolume",
 } as const;
 
@@ -37,6 +38,7 @@ const PROJECT_SETTINGS_IMPORT_LIST_QUERY_KEYS = {
     [PROJECT_SETTINGS_IMPORT_KIND.Notification]: QK["projects.notifications.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: QK["projects.github-app.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: QK["projects.repo-webhook.$.find-many-paginated"],
+    [PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork]: QK["projects.networks.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: QK["projects.cluster-volumes.$.find-many-paginated"],
 } as const satisfies Record<ProjectSettingsImportKind, (typeof QK)[keyof typeof QK]>;
 

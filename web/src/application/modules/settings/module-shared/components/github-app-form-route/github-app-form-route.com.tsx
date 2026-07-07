@@ -275,7 +275,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
 
 function getGithubAppListRoute(scope: GithubAppTableScope) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.githubApps.$route(scope.projectId);
+        return ROUTE.projects.single.sources.githubApps.$route(scope.projectId);
     }
 
     return ROUTE.sources.githubApps.$route;

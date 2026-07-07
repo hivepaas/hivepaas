@@ -136,7 +136,31 @@ const navMain: SidebarItem[] = [
         ],
     },
     {
-        title: "System Settings",
+        title: "Cluster",
+        route: "#",
+        pattern: "#",
+        icon: Container,
+        moduleId: MODULE_IDS.Cluster,
+        items: [
+            {
+                title: "Nodes",
+                route: ROUTE.cluster.nodes.$route,
+                pattern: ROUTE.cluster.nodes.$pattern,
+            },
+            {
+                title: "Networks",
+                route: ROUTE.cluster.networks.$route,
+                pattern: ROUTE.cluster.networks.$pattern,
+            },
+            {
+                title: "Volumes",
+                route: ROUTE.cluster.volumes.$route,
+                pattern: ROUTE.cluster.volumes.$pattern,
+            },
+        ],
+    },
+    {
+        title: "System",
         route: "#",
         pattern: ROUTE.systemSettings.$pattern,
         icon: Settings2,
@@ -166,30 +190,6 @@ const navMain: SidebarItem[] = [
                 title: "SSL Renewal",
                 route: ROUTE.systemSettings.sslRenewal.configuration.$route,
                 pattern: ROUTE.systemSettings.sslRenewal.$pattern,
-            },
-        ],
-    },
-    {
-        title: "Cluster",
-        route: "#",
-        pattern: "#",
-        icon: Container,
-        moduleId: MODULE_IDS.Cluster,
-        items: [
-            {
-                title: "Nodes",
-                route: ROUTE.cluster.nodes.$route,
-                pattern: ROUTE.cluster.nodes.$pattern,
-            },
-            {
-                title: "Networks",
-                route: ROUTE.cluster.networks.$route,
-                pattern: ROUTE.cluster.networks.$pattern,
-            },
-            {
-                title: "Volumes",
-                route: ROUTE.cluster.volumes.$route,
-                pattern: ROUTE.cluster.volumes.$pattern,
             },
         ],
     },

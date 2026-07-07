@@ -48,7 +48,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
     function navigateToEdit(created: CreatedWebhookResult) {
         const editRoute =
             scope.type === "project"
-                ? ROUTE.projects.single.providerConfiguration.webhooks.edit.$route(scope.projectId, created.id)
+                ? ROUTE.projects.single.sources.webhooks.edit.$route(scope.projectId, created.id)
                 : ROUTE.sources.webhooks.edit.$route(created.id);
 
         navigate.modules(editRoute, {
@@ -213,7 +213,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
 
 function getRepoWebhookListRoute(scope: RepoWebhookTableScope) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.webhooks.$route(scope.projectId);
+        return ROUTE.projects.single.sources.webhooks.$route(scope.projectId);
     }
 
     return ROUTE.sources.webhooks.$route;

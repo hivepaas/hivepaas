@@ -17,6 +17,7 @@ export interface SslCertProvider {
 export interface SettingSslCert extends SettingsBaseEntity {
     certType: ESslCertType;
     provider?: SslCertProvider | null;
+    acmeProvider?: SslCertProvider | null;
     domain: string;
     certificate: string;
     privateKey: string;

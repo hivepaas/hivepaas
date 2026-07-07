@@ -2,11 +2,15 @@ import { useMemo } from "react";
 
 import { Button } from "@components/ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { ClusterNetworksCommands } from "~/cluster/data/commands";
 import { ClusterNetworksQueries } from "~/cluster/data/queries";
 import { NetworksTableDefs } from "~/cluster/module-shared/definitions/tables/networks/networks-table.defs";
 import type { NetworkManagementScope } from "~/cluster/module-shared/types";
+import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectNetworksQueries } from "~/projects/data/queries";
+import { ProjectSettingsImportButton } from "~/settings/module-shared/components";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -46,6 +50,12 @@ export function NetworkManagementTable({ scope }: Props) {
         },
     );
 
+    const { mutate: syncFromDocker, isPending: isSyncing } = ClusterNetworksCommands.useSyncFromDocker({
+        onSuccess: () => {
+            toast.success("Networks synced from Docker");
+        },
+    });
+
     const { data: { data: networks } = DEFAULT_PAGINATED_DATA, isFetching } =
         scope.type === "cluster" ? clusterNetworksQuery : projectNetworksQuery;
 
@@ -65,22 +75,54 @@ export function NetworkManagementTable({ scope }: Props) {
             <Plus /> New Network
         </Button>
     );
+    const syncButton = (
+        <Button
+            type="button"
+            variant="outline"
+            disabled={!clusterPermission.canWrite || isSyncing}
+            isLoading={isSyncing}
+            onClick={() => {
+                syncFromDocker({});
+            }}
+        >
+            <RefreshCw className="size-4" /> Sync From Docker
+        </Button>
+    );
 
     return (
         <div className="flex flex-col gap-4">
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    canCreate ? (
-                        createButton
-                    ) : (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span className="inline-flex">{createButton}</span>
-                            </TooltipTrigger>
-                            <TooltipContent>{deniedMessage}</TooltipContent>
-                        </Tooltip>
-                    )
+                    <div className="flex flex-wrap gap-3">
+                        {scope.type === "cluster" &&
+                            (clusterPermission.canWrite ? (
+                                syncButton
+                            ) : (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="inline-flex">{syncButton}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{deniedMessage}</TooltipContent>
+                                </Tooltip>
+                            ))}
+                        {scope.type === "project" && (
+                            <ProjectSettingsImportButton
+                                projectId={scope.projectId}
+                                settingKind={PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork}
+                            />
+                        )}
+                        {canCreate ? (
+                            createButton
+                        ) : (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="inline-flex">{createButton}</span>
+                                </TooltipTrigger>
+                                <TooltipContent>{deniedMessage}</TooltipContent>
+                            </Tooltip>
+                        )}
+                    </div>
                 }
             />
             <DataTable

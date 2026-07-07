@@ -10,6 +10,8 @@ import type {
     ClusterNetworks_FindManyPaginated_Res,
     ClusterNetworks_FindOneById_Req,
     ClusterNetworks_FindOneById_Res,
+    ClusterNetworks_SyncFromDocker_Req,
+    ClusterNetworks_SyncFromDocker_Res,
     ClusterNetworks_UpdateOne_Req,
     ClusterNetworks_UpdateOne_Res,
     ClusterNetworks_UpdateStatus_Req,
@@ -134,6 +136,19 @@ export class ClusterNetworksApi extends BaseApi {
                         },
                     }),
                 ),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async syncFromDocker(
+        _request: ClusterNetworks_SyncFromDocker_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ClusterNetworks_SyncFromDocker_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.post("/cluster/networks/sync", {}, { signal })).pipe(
+                map(this.validator.syncFromDocker),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

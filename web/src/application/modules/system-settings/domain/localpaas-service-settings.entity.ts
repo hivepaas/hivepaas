@@ -22,7 +22,7 @@ export interface LocalPaaSHealthcheckSettings {
 }
 
 export interface LocalPaaSServiceSettings extends SettingsBaseEntity {
-    type: typeof ESettingType.LocalPaaSService;
+    type: typeof ESettingType.HivePaaSService;
     appSettings: LocalPaaSAppSettings;
     workerSettings: LocalPaaSWorkerSettings;
     taskSettings: LocalPaaSTaskSettings;

@@ -21,7 +21,7 @@ export class LocalPaaSServiceSettingsApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<LocalPaaSServiceSettings_FindOne_Res, Error>> {
         return lastValueFrom(
-            from(this.client.v1.get("/system/localpaas/service-settings", { signal })).pipe(
+            from(this.client.v1.get("/system/hivepaas/service-settings", { signal })).pipe(
                 map(this.validator.findOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -36,7 +36,7 @@ export class LocalPaaSServiceSettingsApi extends BaseApi {
         const { payload } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.put("/system/localpaas/service-settings", payload, { signal })).pipe(
+            from(this.client.v1.put("/system/hivepaas/service-settings", payload, { signal })).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

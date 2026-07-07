@@ -3,16 +3,17 @@ import { useEffect, useMemo } from "react";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
-import { ProjectSslProviderQueries } from "~/projects/data/queries";
-import { SslProviderQueries } from "~/settings/data/queries";
-import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
+import { ProjectAcmeDnsProviderQueries, ProjectSslProviderQueries } from "~/projects/data/queries";
+import { AcmeDnsProviderQueries, SslProviderQueries } from "~/settings/data/queries";
 import {
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
+import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 import { ESslCertType, ESslKeyType, ESslProviderKind } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
 
@@ -59,7 +60,7 @@ const CUSTOM_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.RSA4096,
 ];
 
-const SSL_CERT_PROVIDER_UNSPECIFIED = "__unspecified_provider";
+type SettingProviderOption = Record<"id" | "name", string>;
 
 function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
     switch (certType) {
@@ -117,12 +118,19 @@ export function CreateOrEditSslCertForm({
         () => (initialProviderId ? { id: initialProviderId, name: initialProviderName ?? "" } : undefined),
         [initialProviderId, initialProviderName],
     );
+    const initialAcmeProviderId = initialValues?.acmeProvider?.id;
+    const initialAcmeProviderName = initialValues?.acmeProvider?.name;
+    const initialAcmeProvider = useMemo(
+        () => (initialAcmeProviderId ? { id: initialAcmeProviderId, name: initialAcmeProviderName ?? "" } : undefined),
+        [initialAcmeProviderId, initialAcmeProviderName],
+    );
 
     const methods = useForm<CreateOrEditSslCertFormInput, unknown, CreateOrEditSslCertFormOutput>({
         defaultValues: {
             domain: initialValues?.domain ?? "",
             certType: initialValues?.certType ?? ESslCertType.LetsEncrypt,
             provider: initialProvider,
+            acmeProvider: initialAcmeProvider,
             email: initialValues?.email ?? "",
             keyType: initialValues?.keyType ?? ESslKeyType.ECP256,
             autoRenew: initialValues?.autoRenew ?? true,
@@ -156,6 +164,7 @@ export function CreateOrEditSslCertForm({
             domain: initialValues?.domain ?? "",
             certType: initialValues?.certType ?? ESslCertType.LetsEncrypt,
             provider: initialProvider,
+            acmeProvider: initialAcmeProvider,
             email: initialValues?.email ?? "",
             keyType: initialValues?.keyType ?? ESslKeyType.ECP256,
             autoRenew: initialValues?.autoRenew ?? true,
@@ -188,6 +197,7 @@ export function CreateOrEditSslCertForm({
         initialValues?.notification?.successUseDefault,
         initialValues?.notifyFrom,
         initialValues?.privateKey,
+        initialAcmeProvider,
         initialProvider,
         reset,
     ]);
@@ -197,12 +207,24 @@ export function CreateOrEditSslCertForm({
     }, [isDirty, onHasChanges, isReadOnly]);
 
     const certType = useWatch({ control, name: "certType" });
+    const domainValue = useWatch({ control, name: "domain" });
     const providerValue = useWatch({ control, name: "provider" });
+    const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
     const expireAt = useWatch({ control, name: "expireAt" });
     const notifyFrom = useWatch({ control, name: "notifyFrom" });
     const providerKind = getProviderKind(certType);
     const isCustom = certType === ESslCertType.Custom;
     const isAcme = providerKind !== undefined;
+    const isWildcardAcme = isAcme && domainValue.trim().startsWith("*.");
+    const projectId = scope.type === "project" ? scope.projectId : "";
+    const sslProvidersManageRoute =
+        scope.type === "project"
+            ? ROUTE.projects.single.providerConfiguration.sslProviders.$route(scope.projectId)
+            : ROUTE.settings.sslProviders.$route;
+    const acmeDnsProvidersManageRoute =
+        scope.type === "project"
+            ? ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$route(scope.projectId)
+            : ROUTE.settings.acmeDnsProviders.$route;
     const { sources: notificationSources, manageLink: notificationManageLink } = useNotificationSettingsSources(scope);
 
     const settingsProviderQuery = SslProviderQueries.useFindManyPaginated(
@@ -214,16 +236,51 @@ export function CreateOrEditSslCertForm({
 
     const projectProviderQuery = ProjectSslProviderQueries.useFindManyPaginated(
         {
-            projectID: scope.type === "project" ? scope.projectId : "",
+            projectID: projectId,
             kind: providerKind,
         },
         {
-            enabled: providerKind !== undefined && scope.type === "project",
+            enabled: providerKind !== undefined && scope.type === "project" && projectId.length > 0,
         },
     );
 
     const providerQuery = scope.type === "project" ? projectProviderQuery : settingsProviderQuery;
     const providerOptions = useMemo(() => providerQuery.data?.data ?? [], [providerQuery.data?.data]);
+    const providerComboboxOptions = useMemo(
+        () =>
+            providerOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies SettingProviderOption,
+                label: option.name,
+            })),
+        [providerOptions],
+    );
+
+    const settingsAcmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated(
+        {},
+        {
+            enabled: isAcme && scope.type === "settings",
+        },
+    );
+
+    const projectAcmeProviderQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+        },
+        {
+            enabled: isAcme && scope.type === "project" && projectId.length > 0,
+        },
+    );
+
+    const acmeProviderQuery = scope.type === "project" ? projectAcmeProviderQuery : settingsAcmeProviderQuery;
+    const acmeProviderOptions = useMemo(() => acmeProviderQuery.data?.data ?? [], [acmeProviderQuery.data?.data]);
+    const acmeProviderComboboxOptions = useMemo(
+        () =>
+            acmeProviderOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies SettingProviderOption,
+                label: option.name,
+            })),
+        [acmeProviderOptions],
+    );
 
     useEffect(() => {
         if (isAcme) {
@@ -250,6 +307,24 @@ export function CreateOrEditSslCertForm({
     }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
 
     useEffect(() => {
+        if (isAcme || !acmeProviderValue) {
+            return;
+        }
+
+        setValue("acmeProvider", undefined, { shouldDirty: true });
+    }, [acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
+        if (!isAcme || !acmeProviderValue || acmeProviderQuery.isFetching || acmeProviderOptions.length === 0) {
+            return;
+        }
+
+        if (!acmeProviderOptions.some(option => option.id === acmeProviderValue.id)) {
+            setValue("acmeProvider", undefined, { shouldDirty: true });
+        }
+    }, [acmeProviderOptions, acmeProviderQuery.isFetching, acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
         if (!expireAt || notifyFrom) {
             return;
         }
@@ -273,6 +348,10 @@ export function CreateOrEditSslCertForm({
         field: provider,
         fieldState: { invalid: isProviderInvalid },
     } = useController({ name: "provider", control });
+    const {
+        field: acmeProvider,
+        fieldState: { invalid: isAcmeProviderInvalid },
+    } = useController({ name: "acmeProvider", control });
     const {
         field: email,
         fieldState: { invalid: isEmailInvalid },
@@ -383,49 +462,77 @@ export function CreateOrEditSslCertForm({
                                     title={<LabelWithInfo label="SSL Provider" />}
                                 >
                                     <Field>
-                                        <Select
-                                            value={provider.value?.id ?? SSL_CERT_PROVIDER_UNSPECIFIED}
-                                            onValueChange={value => {
-                                                if (value === SSL_CERT_PROVIDER_UNSPECIFIED) {
-                                                    provider.onChange(undefined);
-                                                    return;
-                                                }
-
-                                                const selectedProvider = providerOptions.find(
-                                                    option => option.id === value,
-                                                );
-                                                provider.onChange(
-                                                    selectedProvider
-                                                        ? {
-                                                              id: selectedProvider.id,
-                                                              name: selectedProvider.name,
-                                                          }
-                                                        : undefined,
-                                                );
+                                        <Combobox<SettingProviderOption>
+                                            options={providerComboboxOptions}
+                                            value={provider.value?.id ?? null}
+                                            onChange={(_, option) => {
+                                                provider.onChange(option ?? undefined);
                                             }}
-                                        >
-                                            <SelectTrigger aria-invalid={isProviderInvalid}>
-                                                <SelectValue
-                                                    placeholder={
-                                                        providerQuery.isFetching
-                                                            ? "Loading providers..."
-                                                            : "select provider"
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value={SSL_CERT_PROVIDER_UNSPECIFIED}>None</SelectItem>
-                                                {providerOptions.map(option => (
-                                                    <SelectItem
-                                                        key={option.id}
-                                                        value={option.id}
-                                                    >
-                                                        {option.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="select provider"
+                                            searchable
+                                            allowClear
+                                            closeOnSelect
+                                            emptyText="No SSL providers available"
+                                            className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                            valueKey="id"
+                                            aria-invalid={isProviderInvalid}
+                                            loading={providerQuery.isFetching}
+                                            onRefresh={() => void providerQuery.refetch()}
+                                            isRefreshing={providerQuery.isRefetching}
+                                            disabled={isReadOnly}
+                                        />
                                         <FieldError errors={[errors.provider]} />
+                                        <AppLink.Modules
+                                            to={sslProvidersManageRoute}
+                                            className="text-sm text-link"
+                                            ignorePrevPath
+                                        >
+                                            Configure SSL providers
+                                        </AppLink.Modules>
+                                    </Field>
+                                </InfoBlock>
+                            )}
+
+                            {isAcme && (
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="ACME DNS Provider"
+                                            isRequired={isWildcardAcme}
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <Combobox<SettingProviderOption>
+                                            options={acmeProviderComboboxOptions}
+                                            value={acmeProvider.value?.id ?? null}
+                                            onChange={(_, option) => {
+                                                acmeProvider.onChange(option ?? undefined);
+                                            }}
+                                            placeholder="select ACME DNS provider"
+                                            searchable
+                                            allowClear
+                                            closeOnSelect
+                                            emptyText="No ACME DNS providers available"
+                                            className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                            valueKey="id"
+                                            aria-invalid={isAcmeProviderInvalid}
+                                            loading={acmeProviderQuery.isFetching}
+                                            onRefresh={() => void acmeProviderQuery.refetch()}
+                                            isRefreshing={acmeProviderQuery.isRefetching}
+                                            disabled={isReadOnly}
+                                        />
+                                        <FieldError errors={[errors.acmeProvider]} />
+                                        <AppLink.Modules
+                                            to={acmeDnsProvidersManageRoute}
+                                            className="text-sm text-link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            ignorePrevPath
+                                        >
+                                            Configure ACME DNS providers
+                                        </AppLink.Modules>
                                     </Field>
                                 </InfoBlock>
                             )}

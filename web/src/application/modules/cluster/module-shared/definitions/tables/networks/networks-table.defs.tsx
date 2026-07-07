@@ -20,7 +20,7 @@ function BooleanCell({ value }: { value: boolean }) {
 function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>[] {
     return [
         {
-            id: "actions",
+            id: "view",
             header: "",
             minSize: 80,
             size: 80,
@@ -114,6 +114,7 @@ function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>
             cell: ({ row: { original } }) => format(original.createdAt, "yyyy-MM-dd HH:mm:ss"),
         },
         {
+            id: "actions",
             header: "Actions",
             meta: {
                 align: "center",

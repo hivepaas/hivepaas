@@ -5,13 +5,13 @@ import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { ProjectDomainSettingsQueries, ProjectSslCertQueries } from "~/projects/data/queries";
 import type { SslCert_Notification_Payload } from "~/settings/api/services/ssl-cert-services";
 import { DomainSettingsQueries, SslCertCommands, SslCertQueries } from "~/settings/data";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import { CreateOrEditSslCertForm } from "~/settings/module-shared/components/ssl-cert-form";
 import type {
     CreateOrEditSslCertFormInput,
     CreateOrEditSslCertFormOutput,
 } from "~/settings/module-shared/components/ssl-cert-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
-import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -148,6 +148,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
             default: values.default,
             certType: values.certType,
             provider: values.provider?.id ? { id: values.provider.id } : undefined,
+            acmeProvider: values.acmeProvider?.id ? { id: values.acmeProvider.id } : undefined,
             domain: values.domain,
             certificate: isCustom ? values.certificate : "",
             privateKey: isCustom ? values.privateKey : "",
@@ -213,6 +214,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   domain: sslCert.domain,
                   certType: normalizeCertType(sslCert.certType),
                   provider: sslCert.provider ?? undefined,
+                  acmeProvider: sslCert.acmeProvider ?? undefined,
                   email: sslCert.email,
                   keyType: sslCert.keyType,
                   autoRenew: sslCert.autoRenew,

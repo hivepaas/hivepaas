@@ -14,6 +14,7 @@ export const CreateOrEditSslCertFormSchema = z
         domain: z.string().trim().min(1, "Domain is required"),
         certType: z.nativeEnum(ESslCertType),
         provider: NamedObjectSchema.nullish(),
+        acmeProvider: NamedObjectSchema.nullish(),
         email: z.string().trim().email("Invalid email"),
         keyType: z.nativeEnum(ESslKeyType),
         autoRenew: z.boolean(),
@@ -31,6 +32,19 @@ export const CreateOrEditSslCertFormSchema = z
         }),
     })
     .superRefine((value, ctx) => {
+        const requiresAcmeProvider =
+            value.domain.trim().startsWith("*.") &&
+            value.certType !== ESslCertType.Custom &&
+            value.certType !== ESslCertType.SelfSigned;
+
+        if (requiresAcmeProvider && !value.acmeProvider?.id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["acmeProvider"],
+                message: "ACME DNS Provider is required",
+            });
+        }
+
         if (value.certType !== ESslCertType.Custom) {
             return;
         }

@@ -35,7 +35,7 @@ export const GithubAppEditCell = memo(View);
 
 function getGithubAppEditRoute(scope: GithubAppTableScope, id: string) {
     if (scope.type === "project") {
-        return ROUTE.projects.single.providerConfiguration.githubApps.edit.$route(scope.projectId, id);
+        return ROUTE.projects.single.sources.githubApps.edit.$route(scope.projectId, id);
     }
 
     return ROUTE.sources.githubApps.edit.$route(id);

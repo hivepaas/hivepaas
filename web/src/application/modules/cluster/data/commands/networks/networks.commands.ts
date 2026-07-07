@@ -5,6 +5,8 @@ import type {
     ClusterNetworks_CreateOne_Res,
     ClusterNetworks_DeleteOne_Req,
     ClusterNetworks_DeleteOne_Res,
+    ClusterNetworks_SyncFromDocker_Req,
+    ClusterNetworks_SyncFromDocker_Res,
     ClusterNetworks_UpdateOne_Req,
     ClusterNetworks_UpdateOne_Res,
     ClusterNetworks_UpdateStatus_Req,
@@ -110,9 +112,31 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
     });
 }
 
+type SyncFromDockerReq = ClusterNetworks_SyncFromDocker_Req["data"];
+type SyncFromDockerRes = ClusterNetworks_SyncFromDocker_Res;
+type SyncFromDockerOptions = Omit<UseMutationOptions<SyncFromDockerRes, Error, SyncFromDockerReq>, "mutationFn">;
+
+function useSyncFromDocker({ onSuccess, ...options }: SyncFromDockerOptions = {}) {
+    const { mutations } = useClusterNetworksApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.syncFromDocker,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["networks.$.find-many-paginated"]],
+            });
+
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
 export const ClusterNetworksCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
     useUpdateStatus,
     useDeleteOne,
+    useSyncFromDocker,
 });

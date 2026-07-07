@@ -24,6 +24,7 @@ type CloudStorageFormRouteMode = "create" | "edit";
 
 export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -36,30 +37,35 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingCloudStorage, isPending: isCreatingSetting } = CloudStorageCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Cloud storage created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingCloudStorage, isPending: isUpdatingSetting } = CloudStorageCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Cloud storage updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectCloudStorage, isPending: isCreatingProject } =
         ProjectCloudStorageCommands.useCreateOne({
             onSuccess: () => {
                 toast.success("Project cloud storage created successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: updateProjectCloudStorage, isPending: isUpdatingProject } =
         ProjectCloudStorageCommands.useUpdateOne({
             onSuccess: () => {
                 toast.success("Project cloud storage updated successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: testConnection, isPending: isTesting } = CloudStorageCommands.useTestConn({
@@ -195,6 +201,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
                     onSubmit={onSubmit}
                     onTestConnection={onTestConnection}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

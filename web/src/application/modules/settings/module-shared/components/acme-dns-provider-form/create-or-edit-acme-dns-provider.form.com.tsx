@@ -81,6 +81,7 @@ export function CreateOrEditAcmeDnsProviderForm({
     onSubmit,
     onTestAccess,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     showTestAccess,
@@ -96,6 +97,8 @@ export function CreateOrEditAcmeDnsProviderForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditAcmeDnsProviderFormInput, unknown, CreateOrEditAcmeDnsProviderFormOutput>({
         defaultValues: {
@@ -105,6 +108,15 @@ export function CreateOrEditAcmeDnsProviderForm({
         resolver: zodResolver(CreateOrEditAcmeDnsProviderFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -315,6 +327,7 @@ interface Props {
     onSubmit: (values: CreateOrEditAcmeDnsProviderFormOutput) => void;
     onTestAccess?: (values: CreateOrEditAcmeDnsProviderFormOutput, testDomain: string) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditAcmeDnsProviderFormInput>;
     showAvailableInProjects: boolean;
     showTestAccess: boolean;

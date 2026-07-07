@@ -30,6 +30,7 @@ export function CreateOrEditCloudStorageForm({
     onSubmit,
     onTestConnection,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -41,6 +42,8 @@ export function CreateOrEditCloudStorageForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditCloudStorageFormInput, unknown, CreateOrEditCloudStorageFormOutput>({
         defaultValues: {
@@ -57,6 +60,15 @@ export function CreateOrEditCloudStorageForm({
         resolver: zodResolver(CreateOrEditCloudStorageFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -350,6 +362,7 @@ interface Props {
     onSubmit: (values: CreateOrEditCloudStorageFormOutput) => void;
     onTestConnection: (values: CreateOrEditCloudStorageFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditCloudStorageFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

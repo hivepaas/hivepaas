@@ -131,6 +131,11 @@ export const QK = {
     "projects.email.$.find-many-paginated": "projects.email.$.find-many-paginated",
     "projects.email.$.find-one-by-id": "projects.email.$.find-one-by-id",
     /*
+     * Project Command Templates
+     */
+    "projects.command-templates.$.find-many-paginated": "projects.command-templates.$.find-many-paginated",
+    "projects.command-templates.$.find-one-by-id": "projects.command-templates.$.find-one-by-id",
+    /*
      * Project SSL certs
      */
     "projects.ssl-cert.$.find-many-paginated": "projects.ssl-cert.$.find-many-paginated",

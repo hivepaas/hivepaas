@@ -23,6 +23,7 @@ export function CreateOrEditBasicAuthForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -34,6 +35,8 @@ export function CreateOrEditBasicAuthForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditBasicAuthFormInput, unknown, CreateOrEditBasicAuthFormOutput>({
         defaultValues: {
@@ -46,6 +49,15 @@ export function CreateOrEditBasicAuthForm({
         resolver: zodResolver(CreateOrEditBasicAuthFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -213,6 +225,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditBasicAuthFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditBasicAuthFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

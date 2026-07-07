@@ -37,6 +37,10 @@ import {
     useUpdateAppScheduledJobStatusDialogState,
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
+    UpdateProjectCommandTemplateStatusDialog,
+    useUpdateProjectCommandTemplateStatusDialogState,
+} from "~/projects/dialogs/update-project-command-template-status";
+import {
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
@@ -96,6 +100,7 @@ function View() {
     const importProjectSettingsDialog = useImportProjectSettingsDialogState();
     const updateNetworkStatusDialog = useUpdateNetworkStatusDialogState();
     const updateVolumeStatusDialog = useUpdateVolumeStatusDialogState();
+    const updateProjectCommandTemplateStatusDialog = useUpdateProjectCommandTemplateStatusDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -125,6 +130,7 @@ function View() {
         importProjectSettingsDialog.destroy();
         updateNetworkStatusDialog.destroy();
         updateVolumeStatusDialog.destroy();
+        updateProjectCommandTemplateStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -156,6 +162,7 @@ function View() {
             <ImportProjectSettingsDialog />
             <UpdateNetworkStatusDialog />
             <UpdateVolumeStatusDialog />
+            <UpdateProjectCommandTemplateStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

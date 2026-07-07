@@ -25,6 +25,7 @@ const SSH_KEY_KIND_VALUES = Object.values(ESSHKeyKind);
 
 export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
 
@@ -36,28 +37,33 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingSSHKey, isPending: isCreatingSetting } = SSHKeyCommands.useCreateOne({
         onSuccess: () => {
             toast.success("SSH key created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingSSHKey, isPending: isUpdatingSetting } = SSHKeyCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("SSH key updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectSSHKey, isPending: isCreatingProject } = ProjectSSHKeyCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project SSH key created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectSSHKey, isPending: isUpdatingProject } = ProjectSSHKeyCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project SSH key updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutateAsync: generateSSHKey, isPending: isGenerating } = SSHKeyCommands.useGenerate();
@@ -163,6 +169,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
                     }}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

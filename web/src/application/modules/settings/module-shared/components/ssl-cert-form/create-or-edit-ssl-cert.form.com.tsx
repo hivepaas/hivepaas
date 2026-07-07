@@ -104,6 +104,7 @@ export function CreateOrEditSslCertForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     scope,
     showAvailableInProjects,
@@ -155,6 +156,7 @@ export function CreateOrEditSslCertForm({
         handleSubmit,
         control,
         formState: { errors, isDirty },
+        getValues,
         reset,
         setValue,
     } = methods;
@@ -201,6 +203,15 @@ export function CreateOrEditSslCertForm({
         initialProvider,
         reset,
     ]);
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -770,6 +781,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditSslCertFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditSslCertFormInput>;
     scope: SslCertTableScope;
     showAvailableInProjects: boolean;

@@ -40,6 +40,7 @@ async function getSecretValue(values: CreateOrEditProjectSecretFormOutput): Prom
 
 export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
@@ -47,6 +48,11 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
 
     function navigateToList() {
         navigate.modules(listRoute, { ignorePrevPath: true });
+    }
+
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
     }
 
     const detailQuery = ProjectSecretsQueries.useFindOneById(
@@ -63,14 +69,14 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     const { mutate: createProjectSecret, isPending: isCreatingProject } = ProjectSecretsCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project secret created successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
     const { mutate: updateProjectSecret, isPending: isUpdatingProject } = ProjectSecretsCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project secret updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -142,6 +148,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                     readOnly={!canWrite}

@@ -31,6 +31,7 @@ export function CreateOrEditGithubAppForm({
     onTestConnection,
     onReprovision,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     readonlyValues,
     showAvailableInProjects,
@@ -44,6 +45,8 @@ export function CreateOrEditGithubAppForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditGithubAppFormInput, unknown, CreateOrEditGithubAppFormOutput>({
         defaultValues: {
@@ -61,6 +64,15 @@ export function CreateOrEditGithubAppForm({
         resolver: zodResolver(CreateOrEditGithubAppFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -429,6 +441,7 @@ interface Props {
     onTestConnection: (values: CreateOrEditGithubAppFormOutput) => void;
     onReprovision?: () => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditGithubAppFormInput>;
     readonlyValues?: {
         callbackURL?: string;

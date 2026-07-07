@@ -84,6 +84,7 @@ function createPayload(
 
 export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
 
@@ -95,28 +96,33 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingSslProvider, isPending: isCreatingSetting } = SslProviderCommands.useCreateOne({
         onSuccess: () => {
             toast.success("SSL provider created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingSslProvider, isPending: isUpdatingSetting } = SslProviderCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("SSL provider updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectSslProvider, isPending: isCreatingProject } = ProjectSslProviderCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project SSL provider created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectSslProvider, isPending: isUpdatingProject } = ProjectSslProviderCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project SSL provider updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -212,6 +218,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     isEdit={isEditMode}

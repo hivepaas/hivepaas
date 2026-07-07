@@ -1,31 +1,21 @@
 import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE, type AppScheduledJob } from "~/projects/domain";
 import {
-    EAppScheduledJobArgSeparator,
-    EAppScheduledJobScheduleMode,
-    EAppScheduledJobTaskPriority,
-} from "~/projects/module-shared/enums";
+    type CommandArgFormValue,
+    type CommandArgGroupFormValue,
+    createDefaultCommandArg,
+    createDefaultCommandArgGroup,
+} from "~/projects/module-shared/components";
+import { EAppScheduledJobScheduleMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
 
 import type { CreateOrEditAppScheduledJobFormInput } from "../schemas";
 import { APP_SCHEDULED_JOB_COMMAND_MODE } from "../schemas";
 
-type ArgGroupFormInput = CreateOrEditAppScheduledJobFormInput["argGroups"][number];
-type ArgFormInput = ArgGroupFormInput["args"][number];
-
-export function createDefaultArgGroup(index: number): ArgGroupFormInput {
-    return {
-        enabled: true,
-        exportEnv: `CMD_ARG_GROUP_${index + 1}`,
-        separator: EAppScheduledJobArgSeparator.Equal,
-        args: [],
-    };
+export function createDefaultArgGroup(index: number): CommandArgGroupFormValue {
+    return createDefaultCommandArgGroup(index);
 }
 
-export function createDefaultArg(): ArgFormInput {
-    return {
-        use: true,
-        name: "",
-        value: "",
-    };
+export function createDefaultArg(): CommandArgFormValue {
+    return createDefaultCommandArg();
 }
 
 export function createEmptyAppScheduledJobFormDefaults(): CreateOrEditAppScheduledJobFormInput {

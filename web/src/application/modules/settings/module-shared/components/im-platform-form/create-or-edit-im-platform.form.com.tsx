@@ -39,6 +39,7 @@ export function CreateOrEditImPlatformForm({
     onSubmit,
     onTestSendMsg,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     showAvailableInProjects,
     readOnlyInherited = false,
@@ -50,6 +51,8 @@ export function CreateOrEditImPlatformForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditImPlatformFormInput, unknown, CreateOrEditImPlatformFormOutput>({
         defaultValues: {
@@ -64,6 +67,15 @@ export function CreateOrEditImPlatformForm({
         resolver: zodResolver(CreateOrEditImPlatformFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -310,6 +322,7 @@ interface Props {
     onSubmit: (values: CreateOrEditImPlatformFormOutput) => void;
     onTestSendMsg: (values: CreateOrEditImPlatformFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditImPlatformFormInput>;
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;

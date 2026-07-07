@@ -20,6 +20,7 @@ export const ESettingType = {
     SSL: "ssl",
     GithubApp: "github-app",
     AccessToken: "access-token",
+    CommandTemplate: "command-template",
     CronJob: "cron-job",
     SchedJob: "sched-job",
     Healthcheck: "healthcheck",

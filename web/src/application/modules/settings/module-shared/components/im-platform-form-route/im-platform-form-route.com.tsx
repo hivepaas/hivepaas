@@ -24,6 +24,7 @@ type ImPlatformFormRouteMode = "create" | "edit";
 
 export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -36,28 +37,33 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingImPlatform, isPending: isCreatingSetting } = ImServiceCommands.useCreateOne({
         onSuccess: () => {
             toast.success("IM platform created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingImPlatform, isPending: isUpdatingSetting } = ImServiceCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("IM platform updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectImPlatform, isPending: isCreatingProject } = ProjectImServiceCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project IM platform created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectImPlatform, isPending: isUpdatingProject } = ProjectImServiceCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project IM platform updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: testSendMsg, isPending: isTesting } = ImServiceCommands.useTestSendMsg({
@@ -210,6 +216,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                     onSubmit={onSubmit}
                     onTestSendMsg={onTestSendMsg}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

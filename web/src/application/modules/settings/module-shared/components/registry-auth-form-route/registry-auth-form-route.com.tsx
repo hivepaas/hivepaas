@@ -23,6 +23,7 @@ type RegistryAuthFormRouteMode = "create" | "edit";
 
 export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -35,30 +36,35 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingRegistryAuth, isPending: isCreatingSetting } = RegistryAuthCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Registry auth created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingRegistryAuth, isPending: isUpdatingSetting } = RegistryAuthCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Registry auth updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectRegistryAuth, isPending: isCreatingProject } =
         ProjectRegistryAuthCommands.useCreateOne({
             onSuccess: () => {
                 toast.success("Project registry auth created successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: updateProjectRegistryAuth, isPending: isUpdatingProject } =
         ProjectRegistryAuthCommands.useUpdateOne({
             onSuccess: () => {
                 toast.success("Project registry auth updated successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: testConnection, isPending: isTesting } = RegistryAuthCommands.useTestConn({
@@ -184,6 +190,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
                     onSubmit={onSubmit}
                     onTestConnection={onTestConnection}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

@@ -30,6 +30,7 @@ export function CreateOrEditOAuthForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     disableProvider,
     readOnly = false,
@@ -40,6 +41,8 @@ export function CreateOrEditOAuthForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditOAuthFormInput, unknown, CreateOrEditOAuthFormOutput>({
         defaultValues: {
@@ -58,6 +61,15 @@ export function CreateOrEditOAuthForm({
         resolver: zodResolver(CreateOrEditOAuthFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -373,6 +385,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditOAuthFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditOAuthFormInput>;
     disableProvider: boolean;
     readOnly?: boolean;

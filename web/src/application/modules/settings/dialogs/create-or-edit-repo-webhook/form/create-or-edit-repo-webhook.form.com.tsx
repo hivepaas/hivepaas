@@ -34,6 +34,7 @@ export function CreateOrEditRepoWebhookForm({
     isPending,
     onSubmit,
     onHasChanges,
+    savedVersion = 0,
     initialValues,
     webhookURL,
     showAvailableInProjects,
@@ -46,6 +47,8 @@ export function CreateOrEditRepoWebhookForm({
     const {
         handleSubmit,
         control,
+        getValues,
+        reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditRepoWebhookFormInput, unknown, CreateOrEditRepoWebhookFormOutput>({
         defaultValues: {
@@ -58,6 +61,15 @@ export function CreateOrEditRepoWebhookForm({
         resolver: zodResolver(CreateOrEditRepoWebhookFormSchema),
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
 
     useEffect(() => {
         onHasChanges?.(isReadOnly ? false : isDirty);
@@ -261,13 +273,7 @@ export function CreateOrEditRepoWebhookForm({
                         />
                     </InfoBlock>
 
-                    <div
-                        className={cn(
-                            dashedBorderBox,
-                            SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
-                            "text-center text-sm leading-6",
-                        )}
-                    >
+                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
                         After creating it, you can use the information above to configure the webhook on GitHub, GitLab,
                         or wherever your source code is hosted.
                     </div>
@@ -284,7 +290,7 @@ export function CreateOrEditRepoWebhookForm({
                             type="submit"
                             isLoading={isPending}
                         >
-                            Submit
+                            Save
                         </Button>
                     </div>
                 </div>
@@ -307,6 +313,7 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditRepoWebhookFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
     initialValues?: Partial<CreateOrEditRepoWebhookFormInput>;
     webhookURL?: string;
     showAvailableInProjects: boolean;

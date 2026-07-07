@@ -15,5 +15,6 @@ export * from "./e.im-service-kind";
 export * from "./e.email-kind";
 export * from "./e.access-token-kind";
 export * from "./e.cloud-storage-kind";
+export * from "./e.command-template-kind";
 export * from "./e.oauth-kind";
 export * from "./e.support-feedback-category";

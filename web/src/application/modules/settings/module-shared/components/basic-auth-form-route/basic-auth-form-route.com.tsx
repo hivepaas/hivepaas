@@ -23,6 +23,7 @@ type BasicAuthFormRouteMode = "create" | "edit";
 
 export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
 
@@ -34,28 +35,33 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingBasicAuth, isPending: isCreatingSetting } = BasicAuthCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Basic auth created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateSettingBasicAuth, isPending: isUpdatingSetting } = BasicAuthCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Basic auth updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: createProjectBasicAuth, isPending: isCreatingProject } = ProjectBasicAuthCommands.useCreateOne({
         onSuccess: () => {
             toast.success("Project basic auth created successfully");
-            navigateToList();
+            markSaved();
         },
     });
     const { mutate: updateProjectBasicAuth, isPending: isUpdatingProject } = ProjectBasicAuthCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Project basic auth updated successfully");
-            navigateToList();
+            markSaved();
         },
     });
 
@@ -153,6 +159,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     readOnlyInherited={readOnlyInherited}

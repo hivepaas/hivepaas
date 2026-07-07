@@ -35,6 +35,7 @@ const ACME_DNS_ALLOW_LIST_SEPARATOR = ",";
 
 export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
     const [testStatus, setTestStatus] = useState<TestStatus>("idle");
     const { canWrite } = useSettingsScopePermissions(scope);
     const { navigate } = useAppNavigate();
@@ -47,11 +48,16 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
         navigate.modules(listRoute, { ignorePrevPath: true });
     }
 
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+    }
+
     const { mutate: createSettingAcmeDnsProvider, isPending: isCreatingSetting } = AcmeDnsProviderCommands.useCreateOne(
         {
             onSuccess: () => {
                 toast.success("ACME DNS provider created successfully");
-                navigateToList();
+                markSaved();
             },
         },
     );
@@ -59,7 +65,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
         {
             onSuccess: () => {
                 toast.success("ACME DNS provider updated successfully");
-                navigateToList();
+                markSaved();
             },
         },
     );
@@ -67,14 +73,14 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
         ProjectAcmeDnsProviderCommands.useCreateOne({
             onSuccess: () => {
                 toast.success("Project ACME DNS provider created successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: updateProjectAcmeDnsProvider, isPending: isUpdatingProject } =
         ProjectAcmeDnsProviderCommands.useUpdateOne({
             onSuccess: () => {
                 toast.success("Project ACME DNS provider updated successfully");
-                navigateToList();
+                markSaved();
             },
         });
     const { mutate: testAccess, isPending: isTesting } = AcmeDnsProviderCommands.useTestAccess({
@@ -185,6 +191,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
                     onSubmit={onSubmit}
                     onTestAccess={onTestAccess}
                     onHasChanges={setHasChanges}
+                    savedVersion={saveRevision}
                     initialValues={initialValues}
                     showAvailableInProjects={scope.type === "settings"}
                     showTestAccess

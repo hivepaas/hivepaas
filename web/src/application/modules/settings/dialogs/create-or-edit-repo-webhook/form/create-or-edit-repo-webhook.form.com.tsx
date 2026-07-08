@@ -15,7 +15,7 @@ import {
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -40,6 +40,7 @@ export function CreateOrEditRepoWebhookForm({
     showAvailableInProjects,
     readOnlyInherited = false,
     readOnly = false,
+    stickyActions = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
@@ -280,30 +281,28 @@ export function CreateOrEditRepoWebhookForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="pb-6 flex justify-end mt-6">
-                    <div className="flex items-center gap-3">
-                        <SettingsFormCancelAction
-                            onCancel={onClose}
-                            disabled={isPending}
-                        />
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Save
-                        </Button>
-                    </div>
-                </div>
+                <FormActionBar sticky={stickyActions}>
+                    <SettingsFormCancelAction
+                        onCancel={onClose}
+                        disabled={isPending}
+                    />
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                    >
+                        Save
+                    </Button>
+                </FormActionBar>
             )}
             {isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                <FormActionBar sticky={stickyActions}>
                     <Button
                         type="button"
                         onClick={onClose}
                     >
                         Close
                     </Button>
-                </div>
+                </FormActionBar>
             )}
         </form>
     );
@@ -319,5 +318,6 @@ interface Props {
     showAvailableInProjects: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
+    stickyActions?: boolean;
     onClose?: () => void;
 }

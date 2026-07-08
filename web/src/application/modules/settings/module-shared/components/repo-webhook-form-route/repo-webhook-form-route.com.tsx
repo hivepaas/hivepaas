@@ -186,7 +186,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
     const title = readOnlyInherited ? "Webhook" : mode === "create" ? "Create Webhook" : "Edit Webhook";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (
@@ -207,6 +207,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
                     showAvailableInProjects={showAvailableInProjects}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

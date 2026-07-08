@@ -5,7 +5,7 @@ import { UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +24,7 @@ export function CreateOrEditAppConfigFileForm({
     isEditMode,
     initialValues,
     readOnly = false,
+    stickyActions = false,
     onClose,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -347,36 +348,34 @@ export function CreateOrEditAppConfigFileForm({
                     )}
                 </div>
                 {!readOnly && (
-                    <div className="pb-6 flex justify-end mt-6">
-                        <div className="flex items-center gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="min-w-[100px]"
-                                disabled={isPending}
-                                onClick={onClose}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </div>
+                    <FormActionBar sticky={stickyActions}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-w-[100px]"
+                            disabled={isPending}
+                            onClick={onClose}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </FormActionBar>
                 )}
                 {readOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                    <FormActionBar sticky={stickyActions}>
                         <Button
                             type="button"
                             onClick={onClose}
                         >
                             Close
                         </Button>
-                    </div>
+                    </FormActionBar>
                 )}
             </fieldset>
         </form>
@@ -390,5 +389,6 @@ interface Props {
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditAppConfigFileFormInput>;
     readOnly?: boolean;
+    stickyActions?: boolean;
     onClose?: () => void;
 }

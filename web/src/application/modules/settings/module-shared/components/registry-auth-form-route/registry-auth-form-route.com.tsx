@@ -173,7 +173,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     const title = mode === "create" ? "Create Registry Auth" : "Edit Registry Auth";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

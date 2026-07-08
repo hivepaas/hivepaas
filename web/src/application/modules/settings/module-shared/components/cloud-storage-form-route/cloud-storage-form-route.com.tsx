@@ -184,7 +184,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
     const title = mode === "create" ? "Create Cloud Storage" : "Edit Cloud Storage";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

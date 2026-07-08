@@ -145,7 +145,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
     const title = mode === "create" ? "Create Basic Auth" : "Edit Basic Auth";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

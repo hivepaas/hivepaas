@@ -8,7 +8,7 @@ import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -110,9 +110,9 @@ export function AppConfigGeneralRoute() {
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
-            <div className="flex justify-end mt-4">
+            <FormActionBar>
                 <ProjectPermissionSubmitButton isPending={isPending} />
-            </div>
+            </FormActionBar>
         </AppConfigGeneralForm>
     );
 }

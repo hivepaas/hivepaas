@@ -16,7 +16,7 @@ import {
 } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { NotificationSettings } from "@application/shared/form";
 
 import { Button, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
@@ -85,6 +85,7 @@ export function CreateOrEditAppHealthCheckForm({
     onHasChanges,
     initialValues,
     readOnly = false,
+    stickyActions = false,
     onClose,
 }: Props) {
     const methods = useForm<CreateOrEditAppHealthCheckFormInput, unknown, CreateOrEditAppHealthCheckFormOutput>({
@@ -660,36 +661,34 @@ export function CreateOrEditAppHealthCheckForm({
                         </ContentBlock>
                     </div>
                     {!readOnly && (
-                        <div className="pb-6 flex justify-end mt-6">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="min-w-[100px]"
-                                    disabled={isPending}
-                                    onClick={onClose}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                    className="min-w-[100px]"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </div>
+                        <FormActionBar sticky={stickyActions}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-w-[100px]"
+                                disabled={isPending}
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
+                            >
+                                Save
+                            </Button>
+                        </FormActionBar>
                     )}
                     {readOnly && (
-                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                        <FormActionBar sticky={stickyActions}>
                             <Button
                                 type="button"
                                 onClick={onClose}
                             >
                                 Close
                             </Button>
-                        </div>
+                        </FormActionBar>
                     )}
                 </fieldset>
             </form>
@@ -704,5 +703,6 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     initialValues?: AppHealthCheck;
     readOnly?: boolean;
+    stickyActions?: boolean;
     onClose?: () => void;
 }

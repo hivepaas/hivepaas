@@ -10,7 +10,13 @@ import {
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo, SelectWithAddon } from "@application/shared/components";
+import {
+    FormActionBar,
+    InfoBlock,
+    InputWithAddOn,
+    LabelWithInfo,
+    SelectWithAddon,
+} from "@application/shared/components";
 import { EEmailKind } from "@application/shared/enums";
 import { FieldListLayout, KeyValueList } from "@application/shared/form";
 
@@ -494,7 +500,7 @@ export function CreateOrEditEmailAccountForm({
                     </fieldset>
                 </div>
                 {!isReadOnly && (
-                    <div className="pb-6 flex justify-between mt-6">
+                    <FormActionBar contentClassName="justify-between">
                         <div className="flex items-center gap-3">
                             <Button
                                 type="button"
@@ -519,19 +525,17 @@ export function CreateOrEditEmailAccountForm({
                                 Save
                             </Button>
                         </div>
-                    </div>
+                    </FormActionBar>
                 )}
                 {isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6">
-                        <div className="flex justify-end">
-                            <Button
-                                type="button"
-                                onClick={onClose}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
+                    <FormActionBar>
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                        >
+                            Close
+                        </Button>
+                    </FormActionBar>
                 )}
             </form>
         </FormProvider>

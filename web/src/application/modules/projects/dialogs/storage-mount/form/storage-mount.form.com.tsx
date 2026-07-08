@@ -15,7 +15,7 @@ import type { AppStorageMount } from "~/projects/domain";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
-import { Combobox, type ComboboxOption, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { Combobox, type ComboboxOption, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
@@ -35,6 +35,7 @@ type Props = {
     projectKey?: string;
     appLocalKey?: string;
     readOnly?: boolean;
+    stickyActions?: boolean;
     onClose?: () => void;
     children?: React.ReactNode;
 };
@@ -45,6 +46,7 @@ export function StorageMountForm({
     onSubmit,
     defaultValues,
     readOnly = false,
+    stickyActions = false,
     onClose,
     children,
 }: Props) {
@@ -280,35 +282,33 @@ export function StorageMountForm({
                         </FieldGroup>
                     </div>
                     {!readOnly && (
-                        <div className="pb-6 flex justify-end mt-6">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="min-w-[100px]"
-                                    disabled={isPending}
-                                    onClick={onClose}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                >
-                                    {defaultValues ? "Update" : "Add"}
-                                </Button>
-                            </div>
-                        </div>
+                        <FormActionBar sticky={stickyActions}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-w-[100px]"
+                                disabled={isPending}
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                isLoading={isPending}
+                            >
+                                {defaultValues ? "Update" : "Add"}
+                            </Button>
+                        </FormActionBar>
                     )}
                     {readOnly && (
-                        <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                        <FormActionBar sticky={stickyActions}>
                             <Button
                                 type="button"
                                 onClick={onClose}
                             >
                                 Close
                             </Button>
-                        </div>
+                        </FormActionBar>
                     )}
                 </fieldset>
             </form>

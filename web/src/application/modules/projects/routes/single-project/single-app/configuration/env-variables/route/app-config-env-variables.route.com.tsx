@@ -8,7 +8,7 @@ import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppEnvVarsQueries } from "~/projects/data/queries";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -95,9 +95,9 @@ export function AppConfigEnvVariablesRoute() {
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
-            <div className="flex justify-end gap-2 mt-4">
+            <FormActionBar contentClassName="gap-2">
                 <ProjectPermissionSubmitButton isPending={isPending} />
-            </div>
+            </FormActionBar>
         </AppConfigEnvVarsForm>
     );
 }

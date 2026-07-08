@@ -174,7 +174,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     const title = mode === "create" ? "Create ACME DNS Provider" : "Edit ACME DNS Provider";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

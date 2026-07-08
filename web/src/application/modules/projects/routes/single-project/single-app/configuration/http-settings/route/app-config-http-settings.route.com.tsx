@@ -7,7 +7,7 @@ import { AppHttpSettingsCommands, AppHttpSettingsQueries } from "~/projects/data
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 
@@ -81,9 +81,9 @@ export function AppConfigHttpSettingsRoute() {
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >
-                <div className="flex justify-end mt-4">
+                <FormActionBar>
                     <ProjectPermissionSubmitButton isPending={isPending} />
-                </div>
+                </FormActionBar>
             </AppConfigHttpSettingsForm>
         </div>
     );

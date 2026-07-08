@@ -14,7 +14,7 @@ import {
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +38,7 @@ export function CreateOrEditGithubAppForm({
     showTestConnection,
     readOnlyInherited = false,
     readOnly = false,
+    stickyActions = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
@@ -388,7 +389,10 @@ export function CreateOrEditGithubAppForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="pb-6 flex flex-wrap items-center justify-between gap-3 mt-6">
+                <FormActionBar
+                    sticky={stickyActions}
+                    contentClassName="flex-wrap justify-between"
+                >
                     <div className="flex items-center gap-3">
                         {showTestConnection && (
                             <Button
@@ -416,17 +420,17 @@ export function CreateOrEditGithubAppForm({
                             Save
                         </Button>
                     </div>
-                </div>
+                </FormActionBar>
             )}
             {isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                <FormActionBar sticky={stickyActions}>
                     <Button
                         type="button"
                         onClick={onClose}
                     >
                         Close
                     </Button>
-                </div>
+                </FormActionBar>
             )}
         </form>
     );
@@ -452,5 +456,6 @@ interface Props {
     showTestConnection: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
+    stickyActions?: boolean;
     onClose?: () => void;
 }

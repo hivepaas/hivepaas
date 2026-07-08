@@ -150,7 +150,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     const title = mode === "create" ? "Create SSH Key" : "Edit SSH Key";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

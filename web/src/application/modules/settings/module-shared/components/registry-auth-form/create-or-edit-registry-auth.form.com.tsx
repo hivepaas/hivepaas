@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -235,7 +235,7 @@ export function CreateOrEditRegistryAuthForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="pb-6 flex justify-between mt-6">
+                <FormActionBar contentClassName="justify-between">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -263,19 +263,17 @@ export function CreateOrEditRegistryAuthForm({
                             Save
                         </Button>
                     </div>
-                </div>
+                </FormActionBar>
             )}
             {isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6">
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </div>
+                <FormActionBar>
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
+                </FormActionBar>
             )}
         </form>
     );

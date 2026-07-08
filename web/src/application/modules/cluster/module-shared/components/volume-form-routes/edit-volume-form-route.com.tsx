@@ -6,7 +6,7 @@ import type { VolumeManagementScope } from "~/cluster/module-shared/types";
 import { ProjectClusterVolumesCommands } from "~/projects/data/commands";
 import { ProjectClusterVolumesQueries } from "~/projects/data/queries";
 
-import { AppLoader, RouteFormHeader } from "@application/shared/components";
+import { AppLoader, FormActionBar, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
@@ -91,7 +91,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
     }
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title="Edit volume" />
 
             {isFetching ? (
@@ -112,35 +112,33 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                     onSubmit={onSubmit}
                 >
                     {!canSubmit ? (
-                        <div className="shrink-0 px-0 mt-6 flex justify-end">
+                        <FormActionBar>
                             <Button
                                 type="button"
                                 onClick={navigateToList}
                             >
                                 Close
                             </Button>
-                        </div>
+                        </FormActionBar>
                     ) : (
-                        <div className="flex justify-end mt-6">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="min-w-[100px]"
-                                    disabled={isPending}
-                                    onClick={navigateToList}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={isPending}
-                                    className="min-w-[120px]"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </div>
+                        <FormActionBar>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-w-[100px]"
+                                disabled={isPending}
+                                onClick={navigateToList}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isPending}
+                                className="min-w-[120px]"
+                            >
+                                Save
+                            </Button>
+                        </FormActionBar>
                     )}
                 </CreateOrEditVolumeForm>
             ) : (

@@ -209,7 +209,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
     const title = mode === "create" ? "Create Notification Target" : "Edit Notification Target";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

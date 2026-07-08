@@ -111,7 +111,7 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
     const title = mode === "create" ? "Create OAuth" : "Edit OAuth";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

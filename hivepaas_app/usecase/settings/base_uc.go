@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -12,40 +13,49 @@ import (
 )
 
 type BaseUC struct {
-	DB                       *database.DB
-	SettingRepo              repository.SettingRepo
+	DB *database.DB
+
 	FileRepo                 repository.FileRepo
-	ProjectService           projectservice.Service
-	AppService               appservice.Service
-	UserService              userservice.Service
 	ProjectSharedSettingRepo repository.ProjectSharedSettingRepo
-	SettingService           settingservice.Service
-	FileService              fileservice.Service
-	ClusterService           clusterservice.Service
+	SettingRepo              repository.SettingRepo
+
+	AppService        appservice.Service
+	ClusterService    clusterservice.Service
+	FileService       fileservice.Service
+	ProjectService    projectservice.Service
+	SettingService    settingservice.Service
+	UserService       userservice.Service
+	PermissionManager permission.Manager
 }
 
 func New(
 	db *database.DB,
-	settingRepo repository.SettingRepo,
+
 	fileRepo repository.FileRepo,
-	projectService projectservice.Service,
-	appService appservice.Service,
-	userService userservice.Service,
 	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
-	settingService settingservice.Service,
-	fileService fileservice.Service,
+	settingRepo repository.SettingRepo,
+
+	appService appservice.Service,
 	clusterService clusterservice.Service,
+	fileService fileservice.Service,
+	projectService projectservice.Service,
+	settingService settingservice.Service,
+	userService userservice.Service,
+	permissionManager permission.Manager,
 ) *BaseUC {
 	return &BaseUC{
-		DB:                       db,
-		SettingRepo:              settingRepo,
+		DB: db,
+
 		FileRepo:                 fileRepo,
-		ProjectService:           projectService,
-		AppService:               appService,
-		UserService:              userService,
 		ProjectSharedSettingRepo: projectSharedSettingRepo,
-		SettingService:           settingService,
-		FileService:              fileService,
-		ClusterService:           clusterService,
+		SettingRepo:              settingRepo,
+
+		AppService:        appService,
+		ClusterService:    clusterService,
+		FileService:       fileService,
+		ProjectService:    projectService,
+		SettingService:    settingService,
+		UserService:       userService,
+		PermissionManager: permissionManager,
 	}
 }

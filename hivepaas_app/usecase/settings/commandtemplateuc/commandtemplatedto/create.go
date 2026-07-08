@@ -49,14 +49,14 @@ func (req *CommandTemplateBaseReq) ToEntity() *entity.CommandTemplate {
 	}
 }
 
-func (req *CommandTemplateBaseReq) modifyRequest() error {
+func (req *CommandTemplateBaseReq) ModifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.WorkingDir = strings.TrimSpace(req.WorkingDir)
 	req.Script = strings.ReplaceAll(req.Script, "\r\n", "\n")
 	return nil
 }
 
-func (req *CommandTemplateBaseReq) validate(field string) (res []vld.Validator) {
+func (req *CommandTemplateBaseReq) Validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
@@ -126,12 +126,12 @@ func NewCreateCommandTemplateReq() *CreateCommandTemplateReq {
 }
 
 func (req *CreateCommandTemplateReq) ModifyRequest() error {
-	return req.modifyRequest()
+	return req.CommandTemplateBaseReq.ModifyRequest()
 }
 
 func (req *CreateCommandTemplateReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.validate("")...)
+	validators = append(validators, req.CommandTemplateBaseReq.Validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

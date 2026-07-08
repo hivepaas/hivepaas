@@ -4,8 +4,12 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
@@ -27,6 +31,9 @@ func (uc *UC) CreateSchedJob(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
+			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
+				return apperrors.New(err)
+			}
 			pData.Setting.Kind = string(schedJob.JobType)
 			if err := pData.Setting.SetData(schedJob); err != nil {
 				return apperrors.New(err)
@@ -53,4 +60,46 @@ func (uc *UC) CreateSchedJob(
 	return &schedjobdto.CreateSchedJobResp{
 		Data: resp.Data,
 	}, nil
+}
+
+func (uc *UC) checkPermissionPipeToApp(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	schedJob *entity.SchedJob,
+) error {
+	cmdOutput := schedJob.CommandOutput
+	if cmdOutput == nil || cmdOutput.PipeToApp == nil {
+		return nil
+	}
+
+	targetAppID := cmdOutput.PipeToApp.TargetApp.ID
+	targetApp, err := uc.AppService.LoadApp(ctx, db, "", targetAppID, true, true,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	)
+	if err != nil {
+		return apperrors.New(err)
+	}
+
+	// If command output is piped to another app, need to check permission
+	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.AccessCheck{
+		SubjectType:        base.SubjectTypeUser,
+		SubjectID:          auth.User.ID,
+		ResourceModule:     base.ResourceModuleProject,
+		ResourceType:       base.ResourceTypeApp,
+		ResourceID:         targetApp.ID,
+		ParentResourceType: base.ResourceTypeProject,
+		ParentResourceID:   targetApp.ProjectID,
+		Action:             base.ActionTypeWrite,
+	})
+	if err != nil {
+		return apperrors.New(err)
+	}
+	if !hasPerm {
+		return apperrors.New(apperrors.ErrUnauthorized)
+	}
+	return nil
 }

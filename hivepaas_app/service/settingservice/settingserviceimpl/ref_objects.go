@@ -56,12 +56,7 @@ func (s *service) LoadReferenceObjectsByIDs(
 	}
 	// Load ref apps
 	if len(refIDs.RefAppIDs) > 0 {
-		projectID := ""
-		if scope != nil {
-			projectID = scope.ProjectID
-		}
-		refObjects.RefApps, err = s.LoadReferenceApps(ctx, db, projectID, requireActive,
-			errorIfUnavail, refIDs.RefAppIDs)
+		refObjects.RefApps, err = s.LoadReferenceApps(ctx, db, requireActive, errorIfUnavail, refIDs.RefAppIDs)
 		if err != nil {
 			return nil, apperrors.New(err)
 		}
@@ -130,7 +125,6 @@ func (s *service) LoadReferenceSettings(
 func (s *service) LoadReferenceApps(
 	ctx context.Context,
 	db database.IDB,
-	projectID string,
 	requireActive bool,
 	errorIfUnavail bool,
 	appIDs []string,
@@ -146,7 +140,7 @@ func (s *service) LoadReferenceApps(
 		opts = append(opts, bunex.SelectWhere("app.status = ?", base.AppStatusActive))
 	}
 
-	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, opts...)
+	apps, err := s.appRepo.ListByIDs(ctx, db, "", appIDs, opts...)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

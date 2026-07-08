@@ -12,7 +12,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 )
 
 type GetSchedJobReq struct {
@@ -36,20 +38,21 @@ type GetSchedJobResp struct {
 
 type SchedJobResp struct {
 	*settings.BaseSettingResp
-	JobType            base.SchedJobType                  `json:"jobType"`
-	Schedule           *ScheduleResp                      `json:"schedule"`
-	App                *basedto.NamedObjectResp           `json:"app"`
-	Priority           base.TaskPriority                  `json:"priority"`
-	MaxRetry           int                                `json:"maxRetry"`
-	RetryDelay         timeutil.Duration                  `json:"retryDelay"`
-	RetryDelayIncr     timeutil.Duration                  `json:"retryDelayIncr,omitempty"`
-	RetryBackoff       bool                               `json:"retryBackoff,omitempty"`
-	RetryBackoffJitter timeutil.Duration                  `json:"retryBackoffJitter,omitempty"`
-	RetryDelayMax      timeutil.Duration                  `json:"retryDelayMax,omitempty"`
-	Timeout            timeutil.Duration                  `json:"timeout"`
-	ControlDisabled    bool                               `json:"controlDisabled"`
-	Command            *ContainerCommandResp              `json:"command"`
-	Notification       *basedto.BaseEventNotificationResp `json:"notification"`
+	JobType            base.SchedJobType                       `json:"jobType"`
+	Schedule           *ScheduleResp                           `json:"schedule"`
+	App                *basedto.NamedObjectResp                `json:"app"`
+	Priority           base.TaskPriority                       `json:"priority"`
+	MaxRetry           int                                     `json:"maxRetry"`
+	RetryDelay         timeutil.Duration                       `json:"retryDelay"`
+	RetryDelayIncr     timeutil.Duration                       `json:"retryDelayIncr,omitempty"`
+	RetryBackoff       bool                                    `json:"retryBackoff,omitempty"`
+	RetryBackoffJitter timeutil.Duration                       `json:"retryBackoffJitter,omitempty"`
+	RetryDelayMax      timeutil.Duration                       `json:"retryDelayMax,omitempty"`
+	Timeout            timeutil.Duration                       `json:"timeout"`
+	ControlDisabled    bool                                    `json:"controlDisabled"`
+	Command            *commandtemplatedto.CommandTemplateResp `json:"command"`
+	CommandOutput      *CommandOutputResp                      `json:"commandOutput,omitempty"`
+	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`
@@ -62,32 +65,30 @@ type ScheduleResp struct {
 	EndTime     time.Time         `json:"endTime,omitzero"`
 }
 
-type ContainerCommandResp struct {
-	Command     string                  `json:"command"`
-	Script      string                  `json:"script"`
-	WorkingDir  string                  `json:"workingDir"`
-	EnvVars     []*basedto.EnvVarResp   `json:"envVars"`
-	ArgGroups   []*CommandArgGroupResp  `json:"argGroups"`
-	ConsoleSize *CommandConsoleSizeResp `json:"consoleSize"`
-	TTY         bool                    `json:"tty"`
+type CommandOutputResp struct {
+	Enabled    bool                         `json:"enabled"`
+	SaveToFile *CommandOutputSaveToFileResp `json:"saveToFile,omitempty"`
+	PipeToApp  *CommandOutputPipeToAppResp  `json:"pipeToApp,omitempty"`
 }
 
-type CommandArgGroupResp struct {
-	Enabled   bool              `json:"enabled"`
-	ExportEnv string            `json:"exportEnv"`
-	Separator string            `json:"separator"`
-	Args      []*CommandArgResp `json:"args"`
+type CommandOutputSaveToFileResp struct {
+	FileName          string                     `json:"fileName"`
+	FilePath          string                     `json:"filePath"`
+	FileKind          base.FileKind              `json:"fileKind"`
+	Storage           *settings.BaseSettingResp  `json:"storage,omitempty"`
+	CompressionFormat base.FileCompressionFormat `json:"compressionFormat,omitempty"`
+	EncryptionFormat  base.FileEncryptionFormat  `json:"encryptionFormat,omitempty"`
+	EncryptionSecret  string                     `json:"encryptionSecret,omitempty"`
 }
 
-type CommandArgResp struct {
-	Use   bool   `json:"use"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
+func (resp *CommandOutputSaveToFileResp) CopyEncryptionSecret(field entity.EncryptedField) error {
+	resp.EncryptionSecret = field.String()
+	return nil
 }
 
-type CommandConsoleSizeResp struct {
-	Width  uint `json:"width"`
-	Height uint `json:"height"`
+type CommandOutputPipeToAppResp struct {
+	TargetApp *appdto.AppResp                         `json:"targetApp"`
+	Command   *commandtemplatedto.CommandTemplateResp `json:"command"`
 }
 
 func TransformSchedJob(
@@ -112,6 +113,31 @@ func TransformSchedJob(
 		}
 	} else {
 		resp.App = nil
+	}
+
+	if job.CommandOutput != nil { //nolint:nestif
+		cmdOutput := job.CommandOutput
+		cmdOutputResp := resp.CommandOutput
+
+		if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
+			targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
+			cmdOutputResp.SaveToFile.Storage, err = settings.TransformSettingBase(targetStorage)
+			if err != nil {
+				return nil, apperrors.New(err)
+			}
+		} else {
+			cmdOutputResp.SaveToFile = nil
+		}
+
+		if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
+			targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
+			cmdOutputResp.PipeToApp.TargetApp, err = appdto.TransformApp(targetApp, nil)
+			if err != nil {
+				return nil, apperrors.New(err)
+			}
+		} else {
+			cmdOutputResp.PipeToApp = nil
+		}
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)

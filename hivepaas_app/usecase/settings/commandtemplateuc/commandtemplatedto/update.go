@@ -18,12 +18,12 @@ func NewUpdateCommandTemplateReq() *UpdateCommandTemplateReq {
 }
 
 func (req *UpdateCommandTemplateReq) ModifyRequest() error {
-	return req.modifyRequest()
+	return req.CommandTemplateBaseReq.ModifyRequest()
 }
 
 func (req *UpdateCommandTemplateReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.validate("")...)
+	validators = append(validators, req.CommandTemplateBaseReq.Validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

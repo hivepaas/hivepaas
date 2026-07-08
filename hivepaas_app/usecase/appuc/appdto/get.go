@@ -85,6 +85,9 @@ type AppTransformationInput struct {
 }
 
 func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp, err error) {
+	if app == nil {
+		return nil, nil
+	}
 	if err = copier.Copy(&resp, &app); err != nil {
 		return nil, apperrors.New(err)
 	}

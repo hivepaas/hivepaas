@@ -17,7 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-type schedJobExecData struct {
+type execData struct {
 	*schedjobexecservice.SchedJobExecReq
 
 	SchedJob *entity.SchedJob
@@ -38,28 +38,28 @@ func (s *service) SchedJobExec(
 
 	schedJob := req.SchedJobSetting.MustAsSchedJob()
 	command := schedJob.Command
-	data := &schedJobExecData{
+	data := &execData{
 		SchedJobExecReq: req,
 		SchedJob:        schedJob,
 		TimeNow:         time.Now(),
 	}
 
-	cmd, err := s.schedJobExecCalcCommand(ctx, data)
+	cmd, err := s.calcCommand(ctx, data)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	env, err := s.schedJobExecCalcCommandEnv(ctx, db, data)
+	env, err := s.calcCommandEnv(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	stdoutWriter, err := s.schedJobExecInitWriter(ctx, data)
+	stdoutWriter, err := s.initOutputWriter(ctx, data)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
-	defer s.schedJobExecCleanup(err, data)
+	defer s.cleanup(err, data)
 
 	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 		Project:                req.Project,
@@ -84,7 +84,7 @@ func (s *service) SchedJobExec(
 		},
 	})
 
-	err = s.schedJobExecFinalize(ctx, db, err, data)
+	err = s.finalize(ctx, db, err, data)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

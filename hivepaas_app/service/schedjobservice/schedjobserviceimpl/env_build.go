@@ -45,7 +45,7 @@ func (s *service) BuildCommandEnv(
 }
 
 func (s *service) buildEnvForArgs(
-	argGroup *entity.SchedJobCommandArgGroup,
+	argGroup *entity.CommandTemplateArgGroup,
 ) *entity.EnvVar {
 	if !argGroup.Enabled || len(argGroup.Args) == 0 {
 		return nil

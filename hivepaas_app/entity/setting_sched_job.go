@@ -29,20 +29,21 @@ var (
 )
 
 type SchedJob struct {
-	JobType            base.SchedJobType         `json:"jobType"`
-	Schedule           *SchedJobSchedule         `json:"schedule"`
-	App                ObjectID                  `json:"app,omitzero"`
-	TargetSetting      ObjectID                  `json:"targetSetting,omitzero"`
-	Priority           base.TaskPriority         `json:"priority,omitempty"`
-	MaxRetry           int                       `json:"maxRetry,omitempty"`
-	RetryDelay         timeutil.Duration         `json:"retryDelay,omitempty"`
-	RetryDelayIncr     timeutil.Duration         `json:"retryDelayIncr,omitempty"`
-	RetryBackoffJitter timeutil.Duration         `json:"retryBackoffJitter,omitempty"`
-	RetryDelayMax      timeutil.Duration         `json:"retryDelayMax,omitempty"`
-	Timeout            timeutil.Duration         `json:"timeout,omitempty"`
-	ControlDisabled    bool                      `json:"controlDisabled,omitempty"`
-	Command            *SchedJobContainerCommand `json:"command,omitempty"`
-	Notification       *BaseEventNotification    `json:"notification,omitempty"`
+	JobType            base.SchedJobType      `json:"jobType"`
+	Schedule           *SchedJobSchedule      `json:"schedule"`
+	App                ObjectID               `json:"app,omitzero"`
+	TargetSetting      ObjectID               `json:"targetSetting,omitzero"`
+	Priority           base.TaskPriority      `json:"priority,omitempty"`
+	MaxRetry           int                    `json:"maxRetry,omitempty"`
+	RetryDelay         timeutil.Duration      `json:"retryDelay,omitempty"`
+	RetryDelayIncr     timeutil.Duration      `json:"retryDelayIncr,omitempty"`
+	RetryBackoffJitter timeutil.Duration      `json:"retryBackoffJitter,omitempty"`
+	RetryDelayMax      timeutil.Duration      `json:"retryDelayMax,omitempty"`
+	Timeout            timeutil.Duration      `json:"timeout,omitempty"`
+	ControlDisabled    bool                   `json:"controlDisabled,omitempty"`
+	Command            *CommandTemplate       `json:"command,omitempty"`
+	CommandOutput      *SchedJobCommandOutput `json:"commandOutput,omitempty"`
+	Notification       *BaseEventNotification `json:"notification,omitempty"`
 }
 
 type SchedJobSchedule struct {
@@ -213,44 +214,25 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	return nil, apperrors.NewArgumentInvalid("Schedule")
 }
 
-type SchedJobContainerCommand struct {
-	Command     string                     `json:"command"`
-	Script      string                     `json:"script,omitempty"`
-	WorkingDir  string                     `json:"workingDir,omitempty"`
-	EnvVars     []*EnvVar                  `json:"envVars,omitempty"`
-	ArgGroups   []*SchedJobCommandArgGroup `json:"argGroups,omitempty"`
-	ConsoleSize SchedJobCommandConsoleSize `json:"consoleSize"`
-	TTY         bool                       `json:"tty,omitempty"`
-	Output      *SchedJobCommandOutput     `json:"output,omitempty"`
-}
-
-type SchedJobCommandArgGroup struct {
-	Enabled   bool                  `json:"enabled"`
-	ExportEnv string                `json:"exportEnv"`
-	Separator string                `json:"separator"`
-	Args      []*SchedJobCommandArg `json:"args,omitempty"`
-}
-
-type SchedJobCommandArg struct {
-	Use   bool   `json:"use"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type SchedJobCommandConsoleSize struct {
-	Width  uint `json:"w"`
-	Height uint `json:"h"`
-}
-
 type SchedJobCommandOutput struct {
-	Enabled           bool                       `json:"enabled"`
-	SaveFileName      string                     `json:"saveFileName"`
-	SavePath          string                     `json:"savePath"`
-	Storage           ObjectID                   `json:"storage"`
+	Enabled    bool                             `json:"enabled"`
+	SaveToFile *SchedJobCommandOutputSaveToFile `json:"saveToFile,omitempty"`
+	PipeToApp  *SchedJobCommandOutputPipeToApp  `json:"pipeToApp,omitempty"`
+}
+
+type SchedJobCommandOutputSaveToFile struct {
+	FileName          string                     `json:"fileName"`
+	FilePath          string                     `json:"filePath"`
 	FileKind          base.FileKind              `json:"fileKind"`
+	Storage           ObjectID                   `json:"storage"`
 	CompressionFormat base.FileCompressionFormat `json:"compressionFormat"`
 	EncryptionFormat  base.FileEncryptionFormat  `json:"encryptionFormat"`
 	EncryptionSecret  EncryptedField             `json:"encryptionSecret"`
+}
+
+type SchedJobCommandOutputPipeToApp struct {
+	TargetApp ObjectID         `json:"targetApp"`
+	Command   *CommandTemplate `json:"command"`
 }
 
 func (s *SchedJob) GetType() base.SettingType {
@@ -268,8 +250,13 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
 	}
-	if s.Command != nil && s.Command.Output != nil && s.Command.Output.Storage.ID != "" {
-		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Command.Output.Storage.ID)
+	if s.CommandOutput != nil {
+		if s.CommandOutput.SaveToFile != nil && s.CommandOutput.SaveToFile.Storage.ID != "" {
+			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.CommandOutput.SaveToFile.Storage.ID)
+		}
+		if s.CommandOutput.PipeToApp != nil && s.CommandOutput.PipeToApp.TargetApp.ID != "" {
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.CommandOutput.PipeToApp.TargetApp.ID)
+		}
 	}
 	return refIDs
 }

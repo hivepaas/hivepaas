@@ -35,6 +35,9 @@ func (uc *UC) UpdateSchedJob(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
+			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
+				return apperrors.New(err)
+			}
 			pData.Setting.Kind = string(newJob.JobType)
 			err := pData.Setting.SetData(newJob)
 			if err != nil {

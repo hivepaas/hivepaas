@@ -27288,25 +27288,15 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -34133,6 +34123,45 @@
         "required" : [ "name", "use", "value" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateBaseReq" : {
+        "properties" : {
+          "argGroups" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateArgGroupReq"
+            },
+            "type" : "array"
+          },
+          "command" : {
+            "type" : "string"
+          },
+          "consoleSize" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateConsoleSizeReq"
+          },
+          "envVars" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.EnvVarReq"
+            },
+            "type" : "array"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "script" : {
+            "type" : "string"
+          },
+          "tty" : {
+            "type" : "boolean"
+          },
+          "workingDir" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "argGroups", "command", "consoleSize", "envVars", "kind", "name", "script", "tty", "workingDir" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateConsoleSizeReq" : {
         "properties" : {
           "height" : {
@@ -37963,166 +37992,112 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupReq" : {
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputPipeToAppReq" : {
         "properties" : {
-          "args" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgReq"
-            },
-            "type" : "array"
+          "command" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateBaseReq"
           },
+          "targetApp" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "command", "targetApp" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputPipeToAppResp" : {
+        "properties" : {
+          "command" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateResp"
+          },
+          "targetApp" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.AppResp"
+          }
+        },
+        "required" : [ "command", "targetApp" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputReq" : {
+        "properties" : {
           "enabled" : {
             "type" : "boolean"
           },
-          "exportEnv" : {
-            "type" : "string"
+          "pipeToApp" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputPipeToAppReq"
           },
-          "separator" : {
-            "type" : "string"
+          "saveToFile" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputSaveToFileReq"
           }
         },
-        "required" : [ "args", "enabled", "exportEnv", "separator" ],
+        "required" : [ "enabled", "pipeToApp", "saveToFile" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupResp" : {
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputResp" : {
         "properties" : {
-          "args" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgResp"
-            },
-            "type" : "array"
-          },
           "enabled" : {
             "type" : "boolean"
           },
-          "exportEnv" : {
-            "type" : "string"
+          "pipeToApp" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputPipeToAppResp"
           },
-          "separator" : {
-            "type" : "string"
+          "saveToFile" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputSaveToFileResp"
           }
         },
-        "required" : [ "args", "enabled", "exportEnv", "separator" ],
+        "required" : [ "enabled", "pipeToApp", "saveToFile" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgReq" : {
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputSaveToFileReq" : {
         "properties" : {
-          "name" : {
+          "compressionFormat" : {
             "type" : "string"
           },
-          "use" : {
-            "type" : "boolean"
-          },
-          "value" : {
+          "encryptionFormat" : {
             "type" : "string"
+          },
+          "encryptionSecret" : {
+            "type" : "string"
+          },
+          "fileKind" : {
+            "type" : "string"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "filePath" : {
+            "type" : "string"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
           }
         },
-        "required" : [ "name", "use", "value" ],
+        "required" : [ "compressionFormat", "encryptionFormat", "encryptionSecret", "fileKind", "fileName", "filePath", "storage" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgResp" : {
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputSaveToFileResp" : {
         "properties" : {
-          "name" : {
+          "compressionFormat" : {
             "type" : "string"
           },
-          "use" : {
-            "type" : "boolean"
-          },
-          "value" : {
+          "encryptionFormat" : {
             "type" : "string"
+          },
+          "encryptionSecret" : {
+            "type" : "string"
+          },
+          "fileKind" : {
+            "type" : "string"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "filePath" : {
+            "type" : "string"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings.BaseSettingResp"
           }
         },
-        "required" : [ "name", "use", "value" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandConsoleSizeReq" : {
-        "properties" : {
-          "height" : {
-            "type" : "integer"
-          },
-          "width" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "height", "width" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandConsoleSizeResp" : {
-        "properties" : {
-          "height" : {
-            "type" : "integer"
-          },
-          "width" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "height", "width" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.ContainerCommandReq" : {
-        "properties" : {
-          "argGroups" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupReq"
-            },
-            "type" : "array"
-          },
-          "command" : {
-            "type" : "string"
-          },
-          "consoleSize" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandConsoleSizeReq"
-          },
-          "envVars" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.EnvVarReq"
-            },
-            "type" : "array"
-          },
-          "script" : {
-            "type" : "string"
-          },
-          "tty" : {
-            "type" : "boolean"
-          },
-          "workingDir" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "argGroups", "command", "consoleSize", "envVars", "script", "tty", "workingDir" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.ContainerCommandResp" : {
-        "properties" : {
-          "argGroups" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandArgGroupResp"
-            },
-            "type" : "array"
-          },
-          "command" : {
-            "type" : "string"
-          },
-          "consoleSize" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandConsoleSizeResp"
-          },
-          "envVars" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.EnvVarResp"
-            },
-            "type" : "array"
-          },
-          "script" : {
-            "type" : "string"
-          },
-          "tty" : {
-            "type" : "boolean"
-          },
-          "workingDir" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "argGroups", "command", "consoleSize", "envVars", "script", "tty", "workingDir" ],
+        "required" : [ "compressionFormat", "encryptionFormat", "encryptionSecret", "fileKind", "fileName", "filePath", "storage" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CreateSchedJobReq" : {
@@ -38134,7 +38109,10 @@
             "type" : "boolean"
           },
           "command" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.ContainerCommandReq"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateBaseReq"
+          },
+          "commandOutput" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputReq"
           },
           "controlDisabled" : {
             "type" : "boolean"
@@ -38179,7 +38157,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
+        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CreateSchedJobResp" : {
@@ -38302,7 +38280,10 @@
             "type" : "boolean"
           },
           "command" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.ContainerCommandResp"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateResp"
+          },
+          "commandOutput" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputResp"
           },
           "controlDisabled" : {
             "type" : "boolean"
@@ -38384,7 +38365,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "createdAt", "default", "expireAt", "id", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.SchedJobTaskLogsDataResp" : {
@@ -38446,7 +38427,10 @@
             "type" : "boolean"
           },
           "command" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.ContainerCommandReq"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_commandtemplateuc_commandtemplatedto.CommandTemplateBaseReq"
+          },
+          "commandOutput" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputReq"
           },
           "controlDisabled" : {
             "type" : "boolean"
@@ -38494,7 +38478,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout", "updateVer" ],
+        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.UpdateSchedJobResp" : {
@@ -42290,9 +42274,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

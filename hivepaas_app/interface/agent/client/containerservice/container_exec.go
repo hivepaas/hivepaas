@@ -173,6 +173,11 @@ func (s *ContainerExecStream) CloseSend() error {
 	return s.stream.CloseSend() //nolint:wrapcheck
 }
 
+// CloseWrite implements client.CloseWriter interface to support closing stdin stream.
+func (s *ContainerExecStream) CloseWrite() error {
+	return s.CloseSend()
+}
+
 // Helper to create the ExecAttachResult compatible struct
 func (s *ContainerExecStream) ToExecAttachResult() *client.ExecAttachResult {
 	return &client.ExecAttachResult{

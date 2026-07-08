@@ -120,6 +120,14 @@ func (s *service) containerExec(
 	resp.ExecAttachResult = attachResp
 	resp.ExecStartResult = startResp
 
+	if req.StdinReader != nil {
+		go func() {
+			defer funcutil.EnsureNoPanic(nil)
+			_, _ = io.Copy(attachResp.Conn, req.StdinReader)
+			_ = attachResp.CloseWrite()
+		}()
+	}
+
 	if req.TerminalMode {
 		return resp, nil
 	}
@@ -177,6 +185,9 @@ func (h *containerExecHelper) ExecCreate(
 		createRes, attachRes, startRes, err := h.dockerClient.ContainerExec(ctx, containerID,
 			func(opts *client.ExecCreateOptions) {
 				req.ExecOptions(opts)
+				if req.StdinReader != nil {
+					opts.AttachStdin = true
+				}
 				h.isTTY = opts.TTY || opts.ConsoleSize.Width > 0 && opts.ConsoleSize.Height > 0
 			})
 		if err != nil {

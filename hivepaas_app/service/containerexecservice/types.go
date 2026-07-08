@@ -22,6 +22,7 @@ type ContainerExecReq struct {
 	TaskFindRetryDelay     time.Duration
 	LogStore               *tasklog.Store
 	StdoutWriter           io.Writer
+	StdinReader            io.Reader
 }
 
 type ContainerExecResp struct {

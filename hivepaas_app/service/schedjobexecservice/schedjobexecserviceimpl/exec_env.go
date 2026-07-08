@@ -7,10 +7,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
-func (s *service) schedJobExecCalcCommandEnv(
+func (s *service) calcCommandEnv(
 	ctx context.Context,
 	db database.Tx,
-	data *schedJobExecData,
+	data *execData,
 ) (env []string, err error) {
 	schedJob := data.SchedJobSetting.MustAsSchedJob()
 	envVars, refSecrets, err := s.schedJobService.BuildCommandEnv(ctx, db, data.App, schedJob)

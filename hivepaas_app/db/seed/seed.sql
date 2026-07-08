@@ -189,7 +189,7 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WE1', '', NULL, 'oauth', 'github', 'Github', 'ac
         '{"keyId": "d73a0d105f9ae3a57483f92047ded9f1", "secretKey": "hpsalt:656c8553d103b455905b e86c9afa080ff64c0c871c32b6bfc71d1a047176eeaaf6985f7121ec3375e2f6", "accessAction": {"read": true, "write": true, "delete": false}}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WR1', '', NULL, 'cloud-storage', 'aws-s3', 'my cloud storage (s3)', 'active', true, true,
-        '{"s3": {"secretKey": "hpsalt:HIx2ZGU2ub+0Jg== u6pTNbPq9T5oTeZPN1nnofaFcm6vN1u30OFVsF+fEsSiksyesKjnEeNOg2L4vnMpkUnsoYCiuru5xBEgXQl3Jt4y6Y40evvLVKnyj14lgWO8RWrAKfhhc2vAOEg=", "accessKeyId": "e74c319305880f8ce70dedb4463b4e8a", "bucket": "hivepaas-dev", "region": "apac", "endpoint": "https://2d8acc928b0d56d7301b169067ba96af.r2.cloudflarestorage.com"}}',
+        '{"s3": {"secretKey": "hpsalt:HIx2ZGU2ub+0Jg== u6pTNbPq9T5oTeZPN1nnofaFcm6vN1u30OFVsF+fEsSiksyesKjnEeNOg2L4vnMpkUnsoYCiuru5xBEgXQl3Jt4y6Y40evvLVKnyj14lgWO8RWrAKfhhc2vAOEg=", "accessKeyId": "e74c319305880f8ce70dedb4463b4e8a", "bucket": "localpaas-dev", "region": "apac", "endpoint": "https://2d8acc928b0d56d7301b169067ba96af.r2.cloudflarestorage.com"}}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJXXX1', 'project', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'project-envs', NULL, 'Project Envs', 'active', false, false,
         '{"envs":[{"name":"development","color":"#008000"},{"name":"staging","color":"#d19fe8"},{"name":"production","color":"#ed9121"},{"name":"more-env","color":"#12345678"}]}',

@@ -124,7 +124,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
     const title = mode === "create" ? "Create Command Template" : "Edit Command Template";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

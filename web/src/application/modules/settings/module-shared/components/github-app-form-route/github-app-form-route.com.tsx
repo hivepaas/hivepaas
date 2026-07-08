@@ -247,7 +247,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
     const title = readOnlyInherited ? "Github App" : mode === "create" ? "Create Github App" : "Edit Github App";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (
@@ -273,6 +273,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                     showTestConnection={showTestConnection}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

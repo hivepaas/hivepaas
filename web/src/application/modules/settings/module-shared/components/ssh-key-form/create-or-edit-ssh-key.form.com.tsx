@@ -9,7 +9,7 @@ import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESSHKeyKind, ESSHKeyType } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
@@ -345,42 +345,38 @@ export function CreateOrEditSSHKeyForm({
                     </fieldset>
                 </div>
                 {!isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6">
-                        <div className="flex justify-end gap-4">
-                            <SettingsFormCancelAction
-                                onCancel={onClose}
-                                disabled={isPending}
-                            />
-                            <Button
-                                type="button"
-                                isLoading={isGenerating}
-                                onClick={() => {
-                                    void handleGenerate();
-                                }}
-                            >
-                                Generate
-                            </Button>
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </div>
+                    <FormActionBar contentClassName="gap-4">
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
+                        <Button
+                            type="button"
+                            isLoading={isGenerating}
+                            onClick={() => {
+                                void handleGenerate();
+                            }}
+                        >
+                            Generate
+                        </Button>
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </FormActionBar>
                 )}
                 {isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6">
-                        <div className="flex justify-end">
-                            <Button
-                                type="button"
-                                onClick={onClose}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
+                    <FormActionBar>
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                        >
+                            Close
+                        </Button>
+                    </FormActionBar>
                 )}
             </form>
         </FormProvider>

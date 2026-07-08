@@ -175,7 +175,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     const title = mode === "create" ? "Create Access Token" : "Edit Access Token";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

@@ -6,7 +6,7 @@ import invariant from "tiny-invariant";
 import type { LocalPaaSServiceSettings_UpdateOne_Req } from "~/system-settings/api/services";
 import { LocalPaaSServiceSettingsCommands, LocalPaaSServiceSettingsQueries } from "~/system-settings/data";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
@@ -98,7 +98,7 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
-            <div className="flex justify-end pt-4">
+            <FormActionBar>
                 <PermissionTooltipAction
                     id={MODULE_IDS.System}
                     action="write"
@@ -114,7 +114,7 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
                         </Button>
                     )}
                 </PermissionTooltipAction>
-            </div>
+            </FormActionBar>
         </LocalPaaSGeneralForm>
     );
 }

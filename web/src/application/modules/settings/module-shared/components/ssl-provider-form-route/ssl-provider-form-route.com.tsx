@@ -204,7 +204,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     const title = mode === "create" ? "Create SSL Provider" : "Edit SSL Provider";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

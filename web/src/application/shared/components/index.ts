@@ -13,5 +13,6 @@ export * from "./mfa-qr-code";
 export * from "./input";
 export * from "./module-title";
 export * from "./content-block";
+export * from "./form-action-bar";
 export * from "./logs-viewer";
 export * from "./route-form-header";

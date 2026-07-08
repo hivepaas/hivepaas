@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { SystemBackup_UpdateOne_Req } from "~/system-settings/api/services";
 import { SystemBackupCommands, SystemBackupQueries } from "~/system-settings/data";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -84,7 +84,7 @@ export function SystemSettingsDataBackupConfigurationRoute() {
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
-            <div className="flex justify-end pt-4">
+            <FormActionBar>
                 <PermissionTooltipAction
                     id={MODULE_IDS.System}
                     action="write"
@@ -100,7 +100,7 @@ export function SystemSettingsDataBackupConfigurationRoute() {
                         </Button>
                     )}
                 </PermissionTooltipAction>
-            </div>
+            </FormActionBar>
         </SystemBackupConfigurationForm>
     );
 }

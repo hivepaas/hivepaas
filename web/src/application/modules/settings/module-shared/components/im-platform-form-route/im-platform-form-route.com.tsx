@@ -199,7 +199,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
     const title = mode === "create" ? "Create IM Platform" : "Edit IM Platform";
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
             {isDetailLoading && (

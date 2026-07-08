@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -189,33 +189,29 @@ export function CreateOrEditBasicAuthForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6">
-                    <div className="flex items-center justify-end gap-3">
-                        <SettingsFormCancelAction
-                            onCancel={onClose}
-                            disabled={isPending}
-                        />
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                            className="min-w-[100px]"
-                        >
-                            Save
-                        </Button>
-                    </div>
-                </div>
+                <FormActionBar>
+                    <SettingsFormCancelAction
+                        onCancel={onClose}
+                        disabled={isPending}
+                    />
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        className="min-w-[100px]"
+                    >
+                        Save
+                    </Button>
+                </FormActionBar>
             )}
             {isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6">
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                    </div>
-                </div>
+                <FormActionBar>
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
+                </FormActionBar>
             )}
         </form>
     );

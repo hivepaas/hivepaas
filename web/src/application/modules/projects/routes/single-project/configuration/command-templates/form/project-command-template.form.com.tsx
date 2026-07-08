@@ -11,7 +11,7 @@ import {
     SettingsFormCancelAction,
 } from "~/settings/module-shared/components";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ECommandTemplateKind } from "@application/shared/enums";
 import { KeyValueList } from "@application/shared/form";
 
@@ -422,31 +422,29 @@ export function ProjectCommandTemplateForm({
                     </fieldset>
                 </div>
                 {!isReadOnly && (
-                    <div className="pb-6 flex justify-end mt-6">
-                        <div className="flex items-center gap-3">
-                            <SettingsFormCancelAction
-                                onCancel={onClose}
-                                disabled={isPending}
-                            />
-                            <Button
-                                type="submit"
-                                isLoading={isPending}
-                                className="min-w-[100px]"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </div>
+                    <FormActionBar>
+                        <SettingsFormCancelAction
+                            onCancel={onClose}
+                            disabled={isPending}
+                        />
+                        <Button
+                            type="submit"
+                            isLoading={isPending}
+                            className="min-w-[100px]"
+                        >
+                            Save
+                        </Button>
+                    </FormActionBar>
                 )}
                 {isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                    <FormActionBar>
                         <Button
                             type="button"
                             onClick={onClose}
                         >
                             Close
                         </Button>
-                    </div>
+                    </FormActionBar>
                 )}
             </form>
         </FormProvider>

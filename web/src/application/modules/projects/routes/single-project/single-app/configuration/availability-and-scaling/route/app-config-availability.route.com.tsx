@@ -9,7 +9,7 @@ import { AppServiceSettingsCommands, AppServiceSettingsQueries } from "~/project
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLink, AppLoader } from "@application/shared/components";
+import { AppLink, AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 
@@ -117,9 +117,9 @@ export function AppConfigAvailabilityRoute() {
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >
-                <div className="flex justify-end mt-4">
+                <FormActionBar>
                     <ProjectPermissionSubmitButton isPending={isPending} />
-                </div>
+                </FormActionBar>
             </AppConfigAvailabilityForm>
         </div>
     );

@@ -156,7 +156,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
     const shouldRenderForm = mode === "create" || Boolean(configFile);
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title={mode === "create" ? "Create Config File" : "Edit Config File"} />
 
             {isDetailLoading && (
@@ -173,6 +173,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

@@ -232,7 +232,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
 
     return (
         <>
-            <div className="flex w-full flex-col overflow-hidden">
+            <div className="flex w-full flex-col">
                 <SettingsFormRouteHeader title={title} />
 
                 {isDetailLoading && (

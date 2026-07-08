@@ -8,7 +8,7 @@ import {
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { EditableCombobox, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAccessTokenKind } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
@@ -276,7 +276,7 @@ export function CreateOrEditAccessTokenForm({
                 </fieldset>
             </div>
             {!isReadOnly && (
-                <div className="pb-6 flex justify-between mt-6">
+                <FormActionBar contentClassName="justify-between">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -304,17 +304,17 @@ export function CreateOrEditAccessTokenForm({
                             Save
                         </Button>
                     </div>
-                </div>
+                </FormActionBar>
             )}
             {isReadOnly && (
-                <div className="shrink-0 px-0 mt-6 pb-6 flex justify-end">
+                <FormActionBar>
                     <Button
                         type="button"
                         onClick={onClose}
                     >
                         Close
                     </Button>
-                </div>
+                </FormActionBar>
             )}
         </form>
     );

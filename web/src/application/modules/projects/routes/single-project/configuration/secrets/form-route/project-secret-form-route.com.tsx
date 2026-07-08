@@ -134,7 +134,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     const shouldRenderForm = mode === "create" || Boolean(secret);
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title={mode === "create" ? "Create Secret" : "Edit Secret"} />
 
             {isDetailLoading && (
@@ -152,6 +152,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

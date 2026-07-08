@@ -5,7 +5,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { ACME_DNS_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/acme-dns-provider.constants";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EAcmeDnsProviderKind } from "@application/shared/enums";
 
 import {
@@ -263,49 +263,45 @@ export function CreateOrEditAcmeDnsProviderForm({
                     </fieldset>
                 </div>
                 {!isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6">
-                        <div className="flex flex-1 items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                {showTestAccess && (
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        isLoading={isTesting}
-                                        onClick={handleOpenTestAccessDialog}
-                                    >
-                                        Test Access
-                                    </Button>
-                                )}
-                                {testStatus === "success" && <span className="text-sm text-green-500">Succeeded</span>}
-                                {testStatus === "error" && <span className="text-sm text-red-500">Failed</span>}
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <SettingsFormCancelAction
-                                    onCancel={onClose}
-                                    disabled={isPending}
-                                />
+                    <FormActionBar contentClassName="justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            {showTestAccess && (
                                 <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                    className="min-w-[100px]"
+                                    type="button"
+                                    variant="secondary"
+                                    isLoading={isTesting}
+                                    onClick={handleOpenTestAccessDialog}
                                 >
-                                    Save
+                                    Test Access
                                 </Button>
-                            </div>
+                            )}
+                            {testStatus === "success" && <span className="text-sm text-green-500">Succeeded</span>}
+                            {testStatus === "error" && <span className="text-sm text-red-500">Failed</span>}
                         </div>
-                    </div>
-                )}
-                {isReadOnly && (
-                    <div className="shrink-0 px-0 mt-6 pb-6">
-                        <div className="flex justify-end">
+                        <div className="flex items-center gap-3">
+                            <SettingsFormCancelAction
+                                onCancel={onClose}
+                                disabled={isPending}
+                            />
                             <Button
-                                type="button"
-                                onClick={onClose}
+                                type="submit"
+                                isLoading={isPending}
+                                className="min-w-[100px]"
                             >
-                                Close
+                                Save
                             </Button>
                         </div>
-                    </div>
+                    </FormActionBar>
+                )}
+                {isReadOnly && (
+                    <FormActionBar>
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                        >
+                            Close
+                        </Button>
+                    </FormActionBar>
                 )}
             </form>
             {showTestAccess && (

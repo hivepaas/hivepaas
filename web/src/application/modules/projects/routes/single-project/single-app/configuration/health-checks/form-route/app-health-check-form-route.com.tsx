@@ -170,7 +170,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
     const shouldRenderForm = mode === "create" || Boolean(healthCheck);
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title={mode === "create" ? "Create Health Check" : "Edit Health Check"} />
 
             {isDetailLoading && (
@@ -187,6 +187,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
                     onHasChanges={setHasChanges}
                     initialValues={isEditMode ? healthCheck : undefined}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

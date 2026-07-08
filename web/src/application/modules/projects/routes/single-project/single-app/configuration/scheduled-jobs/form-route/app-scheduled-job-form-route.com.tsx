@@ -172,7 +172,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
     const shouldRenderForm = mode === "create" || Boolean(scheduledJob);
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title={mode === "create" ? "Create Scheduled Job" : "Edit Scheduled Job"} />
 
             {isEditMode && isDetailLoading && (
@@ -189,6 +189,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
                     onHasChanges={setHasChanges}
                     initialValues={isEditMode ? scheduledJob : undefined}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={handleClose}
                 />
             )}

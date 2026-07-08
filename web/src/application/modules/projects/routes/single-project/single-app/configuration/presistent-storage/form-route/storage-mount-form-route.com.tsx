@@ -105,7 +105,7 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
     const shouldRenderForm = !isEditMode || Boolean(targetMount);
 
     return (
-        <div className="flex w-full flex-col overflow-hidden">
+        <div className="flex w-full flex-col">
             <RouteFormHeader title={isEditMode ? "Edit Storage" : "Add a new storage to the app"} />
 
             {shouldRenderForm ? (
@@ -114,6 +114,7 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
                     onSubmit={values => void handleSubmit(values)}
                     defaultValues={targetMount ? mountWithoutId(targetMount) : undefined}
                     readOnly={!canWrite}
+                    stickyActions
                     onClose={navigateToList}
                 >
                     <div className={cn(dashedBorderBox, "text-center")}>

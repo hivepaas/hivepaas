@@ -112,7 +112,7 @@ func (q *taskQueue) executeTask(
 				_ = task.AddRun(&entity.TaskRun{
 					StartedAt: task.StartedAt,
 					EndedAt:   task.EndedAt,
-					Error:     execErr.Error(),
+					Error:     apperrors.GetErrorDetail(execErr, ""),
 				})
 			} else {
 				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)

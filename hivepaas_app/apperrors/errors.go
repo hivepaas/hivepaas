@@ -40,13 +40,19 @@ func ParseError(err error, lang translation.Lang) (*ErrorInfo, ErrLevel) {
 	return errorInfo, ErrLevelInfo
 }
 
-// ParseErrorDetail parses to get detail from the given error
-func ParseErrorDetail(err error, lang translation.Lang) (detail string) {
-	errInfo, _ := ParseError(err, lang)
-	if errInfo != nil {
-		detail = errInfo.Detail
+// GetErrorDetail parses to get detail from the given error
+func GetErrorDetail(err error, lang translation.Lang) string {
+	if err == nil {
+		return ""
 	}
-	return detail
+	if lang == "" {
+		lang = translation.GetDefaultLang()
+	}
+	errInfo, _ := ParseError(err, lang)
+	if errInfo == nil {
+		return err.Error()
+	}
+	return errInfo.Code + "\n" + errInfo.Detail
 }
 
 // NewInternal return AppError for error Internal

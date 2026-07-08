@@ -49,7 +49,7 @@ func (s *service) SysUpdate(
 			_ = task.AddRun(&entity.TaskRun{
 				StartedAt: task.StartedAt,
 				EndedAt:   task.EndedAt,
-				Error:     err.Error(),
+				Error:     apperrors.GetErrorDetail(err, ""),
 			})
 		} else {
 			task.Status = base.TaskStatusDone

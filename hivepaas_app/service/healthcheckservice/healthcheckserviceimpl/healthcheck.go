@@ -34,6 +34,13 @@ func (s *service) Healthcheck(
 	defer func() {
 		data.Task.Status = gofn.If(testErr == nil, base.TaskStatusDone, base.TaskStatusFailed)
 		data.Task.EndedAt = timeutil.NowUTC()
+		if testErr != nil {
+			_ = data.Task.AddRun(&entity.TaskRun{
+				StartedAt: data.Task.StartedAt,
+				EndedAt:   data.Task.EndedAt,
+				Error:     apperrors.GetErrorDetail(testErr, ""),
+			})
+		}
 		data.Task.MustSetOutput(data.Output)
 	}()
 	defer funcutil.EnsureNoPanic(&err)

@@ -78,7 +78,7 @@ func (uc *UC) downloadLocalFile(
 		},
 	}
 
-	filePath := filepath.Join(config.Current.AppPath, file.Path, file.Name)
+	filePath := filepath.Join(config.Current.AppPath, file.Path)
 	reader, err := os.Open(filePath)
 	if err != nil {
 		return nil, apperrors.New(err)
@@ -118,7 +118,7 @@ func (uc *UC) downloadCloudFile(
 			return nil, apperrors.New(err)
 		}
 
-		objectKey := filepath.Join(file.Path, file.Name)
+		objectKey := file.Path
 		if !usePresignURL {
 			s3Object, err := s3Client.GetObject(ctx, file.Bucket, objectKey)
 			if err != nil {

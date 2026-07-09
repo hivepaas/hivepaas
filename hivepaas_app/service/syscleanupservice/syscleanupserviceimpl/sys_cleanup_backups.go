@@ -84,14 +84,13 @@ func (s *service) sysCleanupLocalBackupFiles(
 	// Delete real files in local
 	rootDir := config.Current.AppPath
 	for _, file := range deletingFiles {
-		filePath := filepath.Join(file.Path, file.Name)
-		filePathAbs := filepath.Join(rootDir, filePath)
+		filePathAbs := filepath.Join(rootDir, file.Path)
 		err := os.Remove(filePathAbs)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove outdated backup file: "+
-				filePath+" with error: "+err.Error(), tasklog.TsNow))
+				file.Path+" with error: "+err.Error(), tasklog.TsNow))
 		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed: "+filePath,
+			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed: "+file.Path,
 				tasklog.TsNow))
 		}
 	}
@@ -157,7 +156,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 				return nil, apperrors.New(err)
 			}
 			delFunc = func(file *entity.File) error {
-				return s3Client.DeleteObject(ctx, file.Bucket, filepath.Join(file.Path, file.Name))
+				return s3Client.DeleteObject(ctx, file.Bucket, file.Path)
 			}
 			mapDelFuncByStorage[file.StorageID] = delFunc
 		}
@@ -165,20 +164,18 @@ func (s *service) sysCleanupCloudBackupFiles(
 	}
 
 	for _, file := range deletingFiles {
-		filePath := filepath.Join(file.Path, file.Name)
-
 		delFunc, err := getDelFunc(file)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove backup file in cloud: "+
-				filePath+" with creating client error: "+err.Error(), tasklog.TsNow))
+				file.Path+" with creating client error: "+err.Error(), tasklog.TsNow))
 		}
 
 		err = delFunc(file)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove backup file in cloud: "+
-				filePath+" with error: "+err.Error(), tasklog.TsNow))
+				file.Path+" with error: "+err.Error(), tasklog.TsNow))
 		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed from cloud: "+filePath,
+			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed from cloud: "+file.Path,
 				tasklog.TsNow))
 		}
 	}

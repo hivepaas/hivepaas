@@ -10,6 +10,7 @@ import (
 )
 
 type ListFileReq struct {
+	ObjectID     string                 `json:"-" mapstructure:"-"`
 	Types        []base.FileType        `json:"-" mapstructure:"type"`
 	Kinds        []base.FileKind        `json:"-" mapstructure:"kind"`
 	Keys         []string               `json:"-" mapstructure:"key"`

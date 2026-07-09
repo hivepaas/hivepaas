@@ -16,10 +16,15 @@ func (uc *UC) GetFileDownloadURL(
 	auth *basedto.Auth,
 	req *filedto.GetFileDownloadURLReq,
 ) (*filedto.GetFileDownloadURLResp, error) {
-	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID,
+	opts := []bunex.SelectQueryOption{
 		bunex.SelectRelation("Storage"),
 		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
-	)
+	}
+	if req.ObjectID != "" {
+		opts = append(opts, bunex.SelectWhere("file.object_id = ?", req.ObjectID))
+	}
+
+	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID, opts...)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

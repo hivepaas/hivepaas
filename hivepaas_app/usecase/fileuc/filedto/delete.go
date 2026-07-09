@@ -8,7 +8,9 @@ import (
 )
 
 type DeleteFileReq struct {
-	ID string `json:"-" mapstructure:"-"`
+	ID                string `json:"-" mapstructure:"-"`
+	ObjectID          string `json:"-" mapstructure:"-"`
+	DeletePermanently bool   `json:"-" mapstructure:"deletePermanently"`
 }
 
 func NewDeleteFileReq() *DeleteFileReq {
@@ -19,6 +21,7 @@ func NewDeleteFileReq() *DeleteFileReq {
 func (req *DeleteFileReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
+	validators = append(validators, basedto.ValidateID(&req.ObjectID, false, "objectId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

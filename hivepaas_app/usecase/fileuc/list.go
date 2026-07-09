@@ -17,6 +17,9 @@ func (uc *UC) ListFile(
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectRelation("Storage"),
 	}
+	if req.ObjectID != "" {
+		listOpts = append(listOpts, bunex.SelectWhere("file.object_id = ?", req.ObjectID))
+	}
 	if len(req.Types) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("file.type IN (?)", req.Types...))
 	}

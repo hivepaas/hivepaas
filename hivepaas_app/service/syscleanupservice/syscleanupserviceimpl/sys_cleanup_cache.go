@@ -84,14 +84,12 @@ func (s *service) sysCleanupCacheRepoSource(
 	// Delete real files in local
 	rootDir := config.Current.AppPath
 	for _, file := range deletingFiles {
-		filePath := filepath.Join(file.Path, file.Name)
-		filePathAbs := filepath.Join(rootDir, filePath)
-		err := os.Remove(filePathAbs)
+		err := os.Remove(filepath.Join(rootDir, file.Path))
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove outdated cache file: "+
-				filePath+" with error: "+err.Error(), tasklog.TsNow))
+				file.Path+" with error: "+err.Error(), tasklog.TsNow))
 		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated cache file removed: "+filePath,
+			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated cache file removed: "+file.Path,
 				tasklog.TsNow))
 		}
 	}

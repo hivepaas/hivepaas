@@ -71,7 +71,7 @@ func (s *service) loadRepoCache(
 		data.RepoCacheFile = file
 
 		rootDir := config.Current.AppPath
-		filePath := filepath.Join(rootDir, file.Path, file.Name)
+		filePath := filepath.Join(rootDir, file.Path)
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			return nil
 		}
@@ -127,7 +127,6 @@ func (s *service) saveRepoCache(
 			Type:        base.FileTypeRepoCache,
 			Status:      base.FileStatusActive,
 			Key:         data.RepoSource.RepoID,
-			Path:        config.Current.DataPathSystemCacheRepos().RelPath(),
 			Mimetype:    "application/octet-stream",
 			StorageType: base.FileStorageLocal,
 		}
@@ -135,6 +134,7 @@ func (s *service) saveRepoCache(
 	for {
 		newCacheFile.Name = fmt.Sprintf("%v.%v%v", newCacheFile.ID, gofn.RandTokenAsHex(4), //nolint:mnd
 			repoCacheArchiveFormat.FileExtDefault())
+		newCacheFile.Path = filepath.Join(config.Current.DataPathSystemCacheRepos().RelPath(), newCacheFile.Name)
 		if data.RepoCacheFile == nil || data.RepoCacheFile.Name != newCacheFile.Name {
 			break
 		}
@@ -143,14 +143,14 @@ func (s *service) saveRepoCache(
 	newCacheFile.Deleted = false
 
 	rootDir := config.Current.AppPath
-	newFilePath := filepath.Join(rootDir, newCacheFile.Path, newCacheFile.Name)
+	newFilePath := filepath.Join(rootDir, newCacheFile.Path)
 	fileEntitySaved := false
 
 	defer func() {
 		if err == nil && recover() == nil && fileEntitySaved {
 			// Remove the old cache file as it becomes orphaned
 			if data.RepoCacheFile != nil {
-				oldFilePath := filepath.Join(rootDir, data.RepoCacheFile.Path, data.RepoCacheFile.Name)
+				oldFilePath := filepath.Join(rootDir, data.RepoCacheFile.Path)
 				_ = os.RemoveAll(oldFilePath)
 			}
 		} else {

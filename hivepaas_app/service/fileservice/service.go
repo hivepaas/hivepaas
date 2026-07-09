@@ -18,4 +18,6 @@ type Service interface {
 	ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error)
 
 	Upload(ctx context.Context, db database.IDB, req *UploadReq) (*UploadResp, error)
+
+	DeleteFileData(ctx context.Context, req *DeleteDataReq) (*DeleteDataResp, error)
 }

@@ -20,6 +20,8 @@ func NewUpdateFileStatusReq() *UpdateFileStatusReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateFileStatusReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
+	// TODO: add validation
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

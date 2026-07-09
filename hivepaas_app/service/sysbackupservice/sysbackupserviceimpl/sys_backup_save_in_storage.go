@@ -84,7 +84,7 @@ func (s *service) sysBackupSaveResultInStorage(
 		StorageID:   data.SysBackupSettings.CloudStorage.ID,
 		Bucket:      storageBucket,
 		Name:        data.OutFileName,
-		Path:        data.SysBackupSettings.CloudStorage.DestinationDir,
+		Path:        targetFilePath,
 		Mimetype:    localFile.Mimetype,
 		Size:        localFile.Size,
 		CreatedAt:   data.TimeNow,

@@ -69,7 +69,7 @@ func (s *service) sysBackupSaveResultInLocal(
 		Status:      base.FileStatusActive,
 		Name:        data.OutFileName,
 		Mimetype:    "application/octet-stream",
-		Path:        strings.TrimPrefix(data.BackupSaveDir, config.Current.AppPath),
+		Path:        strings.TrimPrefix(data.OutFilePath, config.Current.AppPath),
 		CreatedAt:   data.TimeNow,
 		UpdatedAt:   data.TimeNow,
 	}

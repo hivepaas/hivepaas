@@ -101,6 +101,14 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		configFileGroup.GET("/:itemID/download", appSettingsHandler.DownloadConfigFile)
 	}
 
+	{ // Data files
+		dataFileGroup := appGroup.Group("/:appID/data-files")
+		dataFileGroup.GET("", appSettingsHandler.ListDataFile)
+		dataFileGroup.GET("/:itemID", appSettingsHandler.GetDataFile)
+		dataFileGroup.GET("/:itemID/download-url", appSettingsHandler.GetDataFileDownloadURL)
+		dataFileGroup.DELETE("/:itemID", appSettingsHandler.DeleteDataFile)
+	}
+
 	{ // Scheduled jobs
 		schedJobGroup := appGroup.Group("/:appID/sched-jobs")
 		schedJobGroup.GET("", appSettingsHandler.ListAppSchedJob)

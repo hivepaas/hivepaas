@@ -31,10 +31,10 @@ func (s *service) Upload(
 	files := make([]*entity.File, 0, len(req.Items))
 	timeNow := timeutil.NowUTC()
 
-	var filePath string
+	var fileDir string
 	switch req.FileType { //nolint
 	case base.FileTypeBuildSource:
-		filePath = config.Current.DataPathFiles().RelPath()
+		fileDir = config.Current.DataPathFiles().RelPath()
 	default:
 		// Do nothing
 	}
@@ -48,7 +48,7 @@ func (s *service) Upload(
 			Status:      base.FileStatusActive,
 			Type:        req.FileType,
 			Name:        fileName,
-			Path:        filePath,
+			Path:        filepath.Join(fileDir, fileName),
 			Size:        item.FileSize,
 			Mimetype:    mime.TypeByExtension(strings.ToLower(filepath.Ext(fileName))),
 			StorageType: req.StorageType,
@@ -115,7 +115,7 @@ func (s *service) uploadItem(
 func (s *service) uploadItemToLocal(
 	req *uploadItemReq,
 ) (*uploadItemResp, error) {
-	filePath := filepath.Join(config.Current.AppPath, req.file.Path, req.file.Name)
+	filePath := filepath.Join(config.Current.AppPath, req.file.Path)
 	file, err := os.Create(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for writing: %w", err)

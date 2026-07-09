@@ -44,3 +44,14 @@ type UploadItemReq struct {
 type UploadResp struct {
 	Files []*entity.File
 }
+
+/// DELETE
+
+type DeleteDataReq struct {
+	File       *entity.File
+	RetryMax   int
+	RetryDelay time.Duration
+}
+
+type DeleteDataResp struct {
+}

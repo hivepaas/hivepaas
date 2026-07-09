@@ -3,7 +3,6 @@ package fileserviceimpl
 import (
 	"context"
 	"net/url"
-	"path/filepath"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -46,7 +45,7 @@ func (s *service) GetDownloadURL(
 		if err != nil {
 			return nil, apperrors.New(err)
 		}
-		urlStr, err := s3Client.PresignGetObject(ctx, file.Bucket, filepath.Join(file.Path, file.Name),
+		urlStr, err := s3Client.PresignGetObject(ctx, file.Bucket, file.Path,
 			file.Name, file.Mimetype, req.ViewInline, req.Expiration)
 		if err != nil {
 			return nil, apperrors.New(err)

@@ -349,75 +349,75 @@ export const ROUTE = {
      * System Settings
      */
     systemSettings: {
-        $pattern: "system-settings",
+        $pattern: "system",
 
         hivepaas: {
-            $pattern: "system-settings/hivepaas",
-            $route: "/system-settings/hivepaas/general/",
+            $pattern: "system/hivepaas",
+            $route: "/system/hivepaas/general/",
 
             general: {
-                $pattern: "system-settings/hivepaas/general",
-                $route: "/system-settings/hivepaas/general/",
+                $pattern: "system/hivepaas/general",
+                $route: "/system/hivepaas/general/",
             },
         },
 
         traefik: {
-            $pattern: "system-settings/traefik",
-            $route: "/system-settings/traefik/general/",
+            $pattern: "system/traefik",
+            $route: "/system/traefik/general/",
 
             general: {
-                $pattern: "system-settings/traefik/general",
-                $route: "/system-settings/traefik/general/",
+                $pattern: "system/traefik/general",
+                $route: "/system/traefik/general/",
             },
         },
 
         dataBackup: {
-            $pattern: "system-settings/data-backup",
-            $route: "/system-settings/data-backup/configuration/",
+            $pattern: "system/data-backup",
+            $route: "/system/data-backup/configuration/",
 
             configuration: {
-                $pattern: "system-settings/data-backup/configuration",
-                $route: "/system-settings/data-backup/configuration/",
+                $pattern: "system/data-backup/configuration",
+                $route: "/system/data-backup/configuration/",
             },
 
             backupFiles: {
-                $pattern: "system-settings/data-backup/backup-files",
-                $route: "/system-settings/data-backup/backup-files/",
+                $pattern: "system/data-backup/backup-files",
+                $route: "/system/data-backup/backup-files/",
             },
 
             actions: {
-                $pattern: "system-settings/data-backup/actions",
-                $route: "/system-settings/data-backup/actions/",
+                $pattern: "system/data-backup/actions",
+                $route: "/system/data-backup/actions/",
             },
         },
 
         dataCleanup: {
-            $pattern: "system-settings/data-cleanup",
-            $route: "/system-settings/data-cleanup/configuration/",
+            $pattern: "system/data-cleanup",
+            $route: "/system/data-cleanup/configuration/",
 
             configuration: {
-                $pattern: "system-settings/data-cleanup/configuration",
-                $route: "/system-settings/data-cleanup/configuration/",
+                $pattern: "system/data-cleanup/configuration",
+                $route: "/system/data-cleanup/configuration/",
             },
 
             actions: {
-                $pattern: "system-settings/data-cleanup/actions",
-                $route: "/system-settings/data-cleanup/actions/",
+                $pattern: "system/data-cleanup/actions",
+                $route: "/system/data-cleanup/actions/",
             },
         },
 
         sslRenewal: {
-            $pattern: "system-settings/ssl-renewal",
-            $route: "/system-settings/ssl-renewal/configuration/",
+            $pattern: "system/ssl-renewal",
+            $route: "/system/ssl-renewal/configuration/",
 
             configuration: {
-                $pattern: "system-settings/ssl-renewal/configuration",
-                $route: "/system-settings/ssl-renewal/configuration/",
+                $pattern: "system/ssl-renewal/configuration",
+                $route: "/system/ssl-renewal/configuration/",
             },
 
             actions: {
-                $pattern: "system-settings/ssl-renewal/actions",
-                $route: "/system-settings/ssl-renewal/actions/",
+                $pattern: "system/ssl-renewal/actions",
+                $route: "/system/ssl-renewal/actions/",
             },
         },
     },

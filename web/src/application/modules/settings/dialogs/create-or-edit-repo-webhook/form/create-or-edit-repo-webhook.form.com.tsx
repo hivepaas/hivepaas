@@ -288,6 +288,7 @@ export function CreateOrEditRepoWebhookForm({
                     />
                     <Button
                         type="submit"
+                        className="min-w-[100px]"
                         isLoading={isPending}
                     >
                         Save
@@ -299,6 +300,7 @@ export function CreateOrEditRepoWebhookForm({
                     <Button
                         type="button"
                         onClick={onClose}
+                        className="min-w-[100px]"
                     >
                         Close
                     </Button>

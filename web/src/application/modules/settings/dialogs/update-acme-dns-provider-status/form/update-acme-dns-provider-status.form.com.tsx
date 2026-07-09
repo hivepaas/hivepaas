@@ -49,8 +49,7 @@ export function UpdateAcmeDnsProviderStatusForm({
         formState: { errors },
     } = useForm<UpdateAcmeDnsProviderStatusFormInput, unknown, UpdateAcmeDnsProviderStatusFormOutput>({
         defaultValues: {
-            status:
-                initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+            status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
             expireAt: initialValues?.expireAt ?? undefined,
             availableInProjects: initialValues?.availableInProjects ?? false,
             default: initialValues?.default ?? false,
@@ -196,6 +195,7 @@ export function UpdateAcmeDnsProviderStatusForm({
                         <Button
                             type="button"
                             onClick={onClose}
+                            className="min-w-[100px]"
                         >
                             Close
                         </Button>

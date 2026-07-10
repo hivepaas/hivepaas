@@ -2,6 +2,7 @@ package schedjobuc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -31,6 +32,9 @@ func (uc *UC) CreateSchedJob(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+				return apperrors.New(err)
+			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
 				return apperrors.New(err)
 			}
@@ -98,6 +102,32 @@ func (uc *UC) checkPermissionPipeToApp(
 	}
 	if !hasPerm {
 		return apperrors.New(apperrors.ErrUnauthorized)
+	}
+	return nil
+}
+
+func (uc *UC) isSchedJobFeatureEnabledInApp(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+) error {
+	if app == nil {
+		return nil
+	}
+	featureSetting, err := uc.SettingRepo.GetSingle(ctx, db, app.GetObjectScope(),
+		base.SettingTypeAppFeatures, true)
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+		return apperrors.New(err)
+	}
+	var featureSettings *entity.AppFeatureSettings
+	if featureSetting != nil {
+		featureSettings = featureSetting.MustAsAppFeatureSettings()
+	} else {
+		featureSettings = &entity.AppFeatureSettings{}
+		entity.InitAppFeatureSettingsDefault(featureSettings)
+	}
+	if featureSettings.SchedJobSettings != nil && !featureSettings.SchedJobSettings.Enabled {
+		return apperrors.New(apperrors.ErrFeatureDisabled).WithParam("Name", "scheduled-job")
 	}
 	return nil
 }

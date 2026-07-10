@@ -22,6 +22,9 @@ func (uc *UC) UpdateSchedJob(
 		VerifyingName:   req.Name,
 		VerifyingRefIDs: newJob.GetRefObjectIDs(),
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+				return apperrors.New(err)
+			}
 			job, err := data.Setting.AsSchedJob()
 			if err != nil {
 				return apperrors.New(err)

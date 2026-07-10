@@ -17,6 +17,16 @@ func (uc *UC) UpdateSchedJobStatus(
 ) (*schedjobdto.UpdateSchedJobStatusResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
+		AfterLoading: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.UpdateSettingStatusData,
+		) error {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+				return apperrors.New(err)
+			}
+			return nil
+		},
 		AfterPersisting: func(
 			ctx context.Context,
 			db database.Tx,

@@ -17,6 +17,16 @@ func (uc *UC) DeleteSchedJob(
 ) (*schedjobdto.DeleteSchedJobResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
+		AfterLoading: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.DeleteSettingData,
+		) error {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+				return apperrors.New(err)
+			}
+			return nil
+		},
 		AfterPersisting: func(
 			ctx context.Context,
 			db database.Tx,

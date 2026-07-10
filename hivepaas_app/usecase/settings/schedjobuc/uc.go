@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -20,6 +21,7 @@ type UC struct {
 
 	taskRepo repository.TaskRepo
 
+	appService      appservice.Service
 	schedJobService schedjobservice.Service
 	taskService     taskservice.Service
 
@@ -31,6 +33,7 @@ func New(
 
 	taskRepo repository.TaskRepo,
 
+	appService appservice.Service,
 	schedJobService schedjobservice.Service,
 	taskService taskservice.Service,
 
@@ -41,6 +44,7 @@ func New(
 
 		taskRepo: taskRepo,
 
+		appService:      appService,
 		schedJobService: schedJobService,
 		taskService:     taskService,
 

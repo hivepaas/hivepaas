@@ -98,6 +98,7 @@ ERR_APP_NOT_FOUND = "App '{{.Name}}' is not found"
 ERR_APP_INACTIVE = "App '{{.Name}}' is inactive"
 ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquires an accessible registry for the built images"
 ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a repo source"
+ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
 
 # Cluster error
 ERR_NODE_REQUIRED_BY_HIVEPAAS_APP = "Node is required to be an active manager as HivePaaS app is running in it"

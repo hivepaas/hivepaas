@@ -30,7 +30,10 @@ type GetSettingResp struct {
 type GetSettingData struct {
 	BaseSettingData
 
-	ExtraLoadOpts []bunex.SelectQueryOption
+	SkipLoadingRefObjects bool
+	ExtraLoadOpts         []bunex.SelectQueryOption
+
+	AfterLoading func(context.Context, database.IDB, *GetSettingData) error
 }
 
 func (uc *BaseUC) GetSetting(
@@ -46,6 +49,12 @@ func (uc *BaseUC) GetSetting(
 		return nil, apperrors.New(err)
 	}
 
+	if data.AfterLoading != nil {
+		if err = data.AfterLoading(ctx, db, data); err != nil {
+			return nil, apperrors.New(err)
+		}
+	}
+
 	setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 		false, data.ExtraLoadOpts...)
 	if err != nil {
@@ -55,9 +64,13 @@ func (uc *BaseUC) GetSetting(
 		setting.CurrentObjectID = req.Scope.MainObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true, false, setting)
-	if err != nil {
-		return nil, apperrors.New(err)
+	var refObjects *entity.RefObjects
+	if !data.SkipLoadingRefObjects {
+		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+			true, false, setting)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
 	}
 
 	return &GetSettingResp{

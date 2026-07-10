@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
@@ -36,7 +37,10 @@ type ListSettingResp struct {
 type ListSettingData struct {
 	BaseSettingData
 
-	ExtraLoadOpts []bunex.SelectQueryOption
+	SkipLoadingRefObjects bool
+	ExtraLoadOpts         []bunex.SelectQueryOption
+
+	AfterLoading func(context.Context, database.IDB, *ListSettingData) error
 }
 
 func (uc *BaseUC) ListSetting(
@@ -50,6 +54,12 @@ func (uc *BaseUC) ListSetting(
 	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
 		return nil, apperrors.New(err)
+	}
+
+	if data.AfterLoading != nil {
+		if err = data.AfterLoading(ctx, db, data); err != nil {
+			return nil, apperrors.New(err)
+		}
 	}
 
 	listOpts := []bunex.SelectQueryOption{
@@ -85,10 +95,13 @@ func (uc *BaseUC) ListSetting(
 		setting.CurrentObjectID = req.Scope.MainObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true,
-		false, settings...)
-	if err != nil {
-		return nil, apperrors.New(err)
+	var refObjects *entity.RefObjects
+	if !data.SkipLoadingRefObjects {
+		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true,
+			false, settings...)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
 	}
 
 	return &ListSettingResp{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -25,6 +26,11 @@ type UpdateSettingStatusReq struct {
 	AvailableInProjects *bool               `json:"availableInProjects"`
 	Default             *bool               `json:"default"`
 	UpdateVer           int                 `json:"updateVer"`
+}
+
+func (req *UpdateSettingStatusReq) Validate() (validators []vld.Validator) {
+	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
+	return
 }
 
 type UpdateSettingStatusResp struct {

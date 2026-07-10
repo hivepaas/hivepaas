@@ -261,6 +261,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		sslCertGroup.PUT("/:itemID", projectSettingsHandler.UpdateSSLCert)
 		sslCertGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSSLCert)
+		sslCertGroup.POST("/:itemID/renew", projectSettingsHandler.RenewSSLCert)
 	}
 
 	{ // Storage settings group

@@ -208,6 +208,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		sslCertGroup.PUT("/:itemID", settingHandler.UpdateSSLCert)
 		sslCertGroup.PUT("/:itemID/status", settingHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", settingHandler.DeleteSSLCert)
+		sslCertGroup.POST("/:itemID/renew", settingHandler.RenewSSLCert)
 	}
 
 	{ // ssl provider group

@@ -108,3 +108,20 @@ func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
 func (h *Handler) DeleteSSLCert(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSSLCert, base.ObjectScopeProject)
 }
+
+// RenewSSLCert Renews SSL cert
+// @Summary Renews SSL cert
+// @Description Renews SSL cert
+// @Tags    project_settings
+// @Produce json
+// @Id      renewProjectSSLCert
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "setting ID"
+// @Param   body body sslcertdto.RenewSSLCertReq true "request data"
+// @Success 200 {object} sslcertdto.RenewSSLCertResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/ssl-certs/{itemID}/renew [post]
+func (h *Handler) RenewSSLCert(ctx *gin.Context) {
+	h.SSLCertRenew(ctx, base.ObjectScopeProject)
+}

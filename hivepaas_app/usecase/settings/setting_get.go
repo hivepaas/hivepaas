@@ -18,6 +18,7 @@ type GetSettingReq struct {
 }
 
 func (req *GetSettingReq) Validate() (validators []vld.Validator) {
+	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	return
 }
 

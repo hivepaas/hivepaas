@@ -14,7 +14,7 @@ import (
 )
 
 type UpdateSystemCleanupReq struct {
-	settings.UpdateSettingReq
+	settings.UpdateUniqueSettingReq
 	*SystemCleanupBaseReq
 }
 

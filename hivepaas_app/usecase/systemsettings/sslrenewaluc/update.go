@@ -38,20 +38,20 @@ func (uc *UC) UpdateSSLRenewal(
 	}
 	persistingData := &persistingSettingData{}
 
-	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
-		VerifyingName: renewalSettingName,
+	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
+		Name: renewalSettingName,
 		Load: func(
 			ctx context.Context,
 			db database.Tx,
-			data *settings.UpdateSettingData,
+			data *settings.UpdateUniqueSettingData,
 		) error {
-			updateData.UpdateSettingData = data
+			updateData.UpdateUniqueSettingData = data
 			return uc.loadSettingData(ctx, db, req, updateData)
 		},
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,
-			data *settings.UpdateSettingData,
+			data *settings.UpdateUniqueSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
 			persistingData.PersistingSettingData = pData
@@ -60,7 +60,7 @@ func (uc *UC) UpdateSSLRenewal(
 		AfterPersisting: func(
 			ctx context.Context,
 			db database.Tx,
-			data *settings.UpdateSettingData,
+			data *settings.UpdateUniqueSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
 			return uc.postPersisting(ctx, db, updateData, persistingData)
@@ -74,7 +74,7 @@ func (uc *UC) UpdateSSLRenewal(
 }
 
 type updateSettingData struct {
-	*settings.UpdateSettingData
+	*settings.UpdateUniqueSettingData
 	NewRenewal         *entity.SSLRenewal
 	JobSetting         *entity.Setting
 	JobScheduleChanges bool

@@ -9,7 +9,7 @@ import (
 )
 
 type ExecuteSystemCleanupReq struct {
-	settings.GetSettingReq
+	settings.GetUniqueSettingReq
 }
 
 func NewExecuteSystemCleanupReq() *ExecuteSystemCleanupReq {
@@ -18,7 +18,7 @@ func NewExecuteSystemCleanupReq() *ExecuteSystemCleanupReq {
 
 func (req *ExecuteSystemCleanupReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.GetSettingReq.Validate()...)
+	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

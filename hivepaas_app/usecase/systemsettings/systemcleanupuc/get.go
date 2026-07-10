@@ -15,7 +15,7 @@ func (uc *UC) GetSystemCleanup(
 	req *systemcleanupdto.GetSystemCleanupReq,
 ) (*systemcleanupdto.GetSystemCleanupResp, error) {
 	req.Type = currentSettingType
-	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
+	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

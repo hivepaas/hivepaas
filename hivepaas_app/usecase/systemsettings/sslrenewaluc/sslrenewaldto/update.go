@@ -14,7 +14,7 @@ import (
 )
 
 type UpdateSSLRenewalReq struct {
-	settings.UpdateSettingReq
+	settings.UpdateUniqueSettingReq
 	*SSLRenewalBaseReq
 }
 

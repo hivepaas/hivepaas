@@ -9,7 +9,7 @@ import (
 )
 
 type ExecuteSystemBackupReq struct {
-	settings.GetSettingReq
+	settings.GetUniqueSettingReq
 }
 
 func NewExecuteSystemBackupReq() *ExecuteSystemBackupReq {
@@ -18,7 +18,7 @@ func NewExecuteSystemBackupReq() *ExecuteSystemBackupReq {
 
 func (req *ExecuteSystemBackupReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, req.GetSettingReq.Validate()...)
+	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

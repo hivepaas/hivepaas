@@ -14,7 +14,7 @@ import (
 )
 
 type UpdateSystemBackupReq struct {
-	settings.UpdateSettingReq
+	settings.UpdateUniqueSettingReq
 	*SystemBackupBaseReq
 }
 

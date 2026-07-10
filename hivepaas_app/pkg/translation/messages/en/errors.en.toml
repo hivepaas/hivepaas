@@ -84,6 +84,7 @@ ERR_DOMAIN_UNALLOWED = "Setting violation: Domain {{.Domain}} is not allowed"
 ERR_SSL_TYPE_UNSUPPORTED = "SLL certificate type '{{.Type}}' is not supported"
 ERR_PRIVATE_KEY_TYPE_UNSUPPORTED = "Private key type '{{.Type}}' is not supported"
 ERR_ADDRESS_INVALID = "Address '{{.Address}}' is invalid"
+ERR_TOKEN_TYPE_UNSUPPORTED = "Token type '{{.Type}}' is not supported"
 ERR_WEBHOOK_TYPE_UNSUPPORTED = "Webhook type '{{.Type}}' is not supported"
 ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 

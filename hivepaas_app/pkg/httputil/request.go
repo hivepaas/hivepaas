@@ -17,10 +17,14 @@ var (
 type RequestSetupFunc func(r *http.Request)
 
 // HTTPGet sends a GET request to get data from a URL
-func HTTPGet(ctx context.Context, url string) ([]byte, error) {
+func HTTPGet(ctx context.Context, url string, reqFuncs ...RequestSetupFunc) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, tracerr.Wrap(err)
+	}
+
+	for _, reqFunc := range reqFuncs {
+		reqFunc(req)
 	}
 
 	res, err := http.DefaultClient.Do(req)

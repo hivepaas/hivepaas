@@ -146,6 +146,7 @@ var (
 	ErrSSLTypeUnsupported            = NewErr(ErrUnsupported, "ERR_SSL_TYPE_UNSUPPORTED")
 	ErrPrivateKeyTypeUnsupported     = NewErr(ErrUnsupported, "ERR_PRIVATE_KEY_TYPE_UNSUPPORTED")
 	ErrAddressInvalid                = NewErr(ErrValueInvalid, "ERR_ADDRESS_INVALID")
+	ErrTokenTypeUnsupported          = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
 	ErrWebhookTypeUnsupported        = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrDataVerNewerThanSystemVer     = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )

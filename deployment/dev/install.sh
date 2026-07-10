@@ -15,15 +15,22 @@ docker swarm init
 
 HIVEPAAS_DIR=hivepaas
 HIVEPAAS_SSL_CERTS=$HIVEPAAS_DIR/ssl/certs
+HIVEPAAS_FILES=$HIVEPAAS_DIR/files
 
 mkdir -p $HIVEPAAS_DIR
 mkdir -p $HIVEPAAS_SSL_CERTS
+mkdir -p $HIVEPAAS_FILES
 
 TRAEFIK_DYNAMIC=$HIVEPAAS_DIR/traefik/etc/dynamic
 TRAEFIK_VAR_LOG=$HIVEPAAS_DIR/traefik/var/log
 
 mkdir -p $TRAEFIK_DYNAMIC
 mkdir -p $TRAEFIK_VAR_LOG
+
+# Create some test files
+echo "test" > $HIVEPAAS_FILES/test1.txt
+echo "test" > $HIVEPAAS_FILES/test2.txt
+echo "test" > $HIVEPAAS_FILES/test3.txt
 
 # Download traefik conf files
 echo "Download traefik config files..."

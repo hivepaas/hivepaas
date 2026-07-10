@@ -195,3 +195,16 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WE1', '', NULL, 'oauth', 'github', 'Github', 'ac
         '{"envs":[{"name":"development","color":"#008000"},{"name":"staging","color":"#d19fe8"},{"name":"production","color":"#ed9121"},{"name":"more-env","color":"#12345678"}]}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
+
+-- Files
+INSERT INTO files (id, scope, object_id, type, kind, key, status, name, path, size, storage_type, storage_id, created_at, updated_at)
+VALUES ('01JAB9XED0GTXBSQDFVYAJ8WF1', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'postgres-backup', NULL, 'active',
+        'test1.txt', 'files/test1.txt', 1234, 'local', NULL,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WF2', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'mysql-backup', NULL, 'active',
+        'test2.txt', 'files/test2.txt', 12345, 'local', NULL,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WF3', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'postgres-backup', NULL, 'active',
+        'test3.txt', 'files/test3.txt', 54321, 'local', NULL,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+ON CONFLICT DO NOTHING;

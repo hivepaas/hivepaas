@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
@@ -46,15 +45,6 @@ func (uc *UC) VerifyAuth(
 		}
 	}
 
-	// Admins have all privileges
-	if auth.User.Role == base.UserRoleAdmin {
-		return nil
-	}
-
-	if accessCheck.SubjectID == "" {
-		accessCheck.SubjectType = base.SubjectTypeUser
-		accessCheck.SubjectID = auth.User.ID
-	}
 	hasPerm, err := uc.permissionManager.CheckAccess(ctx, uc.db, auth, accessCheck)
 	if err != nil {
 		return apperrors.New(err)

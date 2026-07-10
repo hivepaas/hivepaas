@@ -83,6 +83,31 @@ type Capabilities struct {
 	Sysctls        map[string]string `json:"sysctls,omitempty"`
 }
 
+func (c *Capabilities) Equal(other *Capabilities) bool {
+	if c == nil && other == nil {
+		return true
+	}
+	if c == nil || other == nil {
+		return false
+	}
+	if c.EnableGPU != other.EnableGPU {
+		return false
+	}
+	if c.OomScoreAdj != other.OomScoreAdj {
+		return false
+	}
+	if !gofn.ContentEqual(c.CapabilityAdd, other.CapabilityAdd) {
+		return false
+	}
+	if !gofn.ContentEqual(c.CapabilityDrop, other.CapabilityDrop) {
+		return false
+	}
+	if !gofn.MapEqual(c.Sysctls, other.Sysctls) {
+		return false
+	}
+	return true
+}
+
 func TransformResourceSettings(
 	service *swarm.Service,
 ) (resp *ResourceSettingsResp, err error) {

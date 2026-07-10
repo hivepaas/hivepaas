@@ -9,9 +9,11 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -27,7 +29,7 @@ func (uc *UC) UpdateAppResourceSettings(
 ) (*appsettingsdto.UpdateAppResourceSettingsResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data := &updateAppResourceSettingsData{}
-		err := uc.loadAppResourceSettingsForUpdate(ctx, db, req, data)
+		err := uc.loadAppResourceSettingsForUpdate(ctx, db, auth, req, data)
 		if err != nil {
 			return apperrors.New(err)
 		}
@@ -61,6 +63,7 @@ type updateAppResourceSettingsData struct {
 func (uc *UC) loadAppResourceSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
+	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) error {
@@ -84,6 +87,21 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
 		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+	}
+
+	currCaps := appsettingsdto.TransformCapabilities(service.Spec.TaskTemplate.ContainerSpec)
+	if !req.Capabilities.Equal(currCaps) { // Modifying capabilities requires Write on Cluster module
+		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.AccessCheck{
+			ResourceModule: base.ResourceModuleCluster,
+			Action:         base.ActionTypeWrite,
+		})
+		if err != nil {
+			return apperrors.New(err)
+		}
+		if !hasPerm {
+			return apperrors.New(apperrors.ErrUnauthorized).WithMsgLog(
+				"changing capabilities requires Write permission on Cluster module")
+		}
 	}
 
 	return nil

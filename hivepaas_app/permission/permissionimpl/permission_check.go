@@ -19,6 +19,16 @@ func (p *manager) CheckAccess(
 	auth *basedto.Auth,
 	check *permission.AccessCheck,
 ) (hasPerm bool, err error) {
+	// Admins have all privileges
+	if auth.User.Role == base.UserRoleAdmin {
+		return true, nil
+	}
+
+	if check.SubjectID == "" {
+		check.SubjectType = base.SubjectTypeUser
+		check.SubjectID = auth.User.ID
+	}
+
 	// Special project/app access check
 	hasPerm, err = p.checkProjectAccess(ctx, db, check)
 	if err != nil {

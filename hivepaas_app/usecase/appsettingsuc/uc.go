@@ -2,6 +2,7 @@ package appsettingsuc
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -33,7 +34,8 @@ type UC struct {
 	sslService           sslservice.Service
 	traefikService       traefikservice.Service
 
-	dockerManager docker.Manager
+	permissionManager permission.Manager
+	dockerManager     docker.Manager
 }
 
 func New(
@@ -53,6 +55,7 @@ func New(
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
 
+	permissionManager permission.Manager,
 	dockerManager docker.Manager,
 ) *UC {
 	return &UC{
@@ -72,6 +75,7 @@ func New(
 		sslService:           sslService,
 		traefikService:       traefikService,
 
-		dockerManager: dockerManager,
+		permissionManager: permissionManager,
+		dockerManager:     dockerManager,
 	}
 }

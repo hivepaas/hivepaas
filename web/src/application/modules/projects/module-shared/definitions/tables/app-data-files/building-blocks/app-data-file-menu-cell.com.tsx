@@ -11,6 +11,8 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDataFilesApi } from "~/projects/api/hooks/project-apps";
@@ -138,16 +140,16 @@ function View({ projectId, appId, dataFile }: Props) {
                     </DialogHeader>
                     <DialogBody className="flex flex-col gap-4">
                         {isLocalFile ? (
-                            <p className="rounded-md border border-dashed border-primary/60 px-4 py-3 text-sm">
-                                <span className="font-medium text-destructive">Warning:</span> This will delete the
+                            <div className={cn(dashedBorderBox, "text-center")}>
+                                <span className="font-medium text-orange-500">Warning:</span> This will delete the
                                 database record and permanently erase the physical file from the storage system. Once
                                 deleted, this file cannot be retrieved or restored.
-                            </p>
+                            </div>
                         ) : (
                             <>
-                                <p className="rounded-md border border-dashed border-primary/60 px-4 py-3 text-sm">
+                                <p className={cn(dashedBorderBox, "text-center")}>
                                     If you select{" "}
-                                    <span className="font-medium text-destructive">Delete Physical File</span>, the file
+                                    <span className="font-medium text-orange-500">Delete Physical File</span>, the file
                                     will be permanently deleted and cannot be recovered. Otherwise, only the file record
                                     in the database will be removed.
                                 </p>

@@ -82,7 +82,7 @@ function View({ oauth }: Props) {
                                 disabled={isDeleting}
                             >
                                 <Trash2Icon className="mr-2 size-4" />
-                                Remove
+                                Delete
                             </Button>
                         </PopConfirm>
                     ) : (
@@ -98,7 +98,7 @@ function View({ oauth }: Props) {
                                     disabled={isDenied}
                                 >
                                     <Trash2Icon className="mr-2 size-4" />
-                                    Remove
+                                    Delete
                                 </Button>
                             )}
                         </PermissionTooltipAction>

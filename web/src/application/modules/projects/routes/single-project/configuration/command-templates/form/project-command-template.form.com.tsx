@@ -46,7 +46,7 @@ import {
 } from "./project-command-template.form-mappers";
 import { ProjectCommandTemplateScriptEditorField } from "./script-editor-field.com";
 
-const INFO_BLOCK_TITLE_WIDTH = 220;
+const INFO_BLOCK_TITLE_WIDTH = 150;
 
 const COMMAND_TEMPLATE_KIND_OPTIONS = [
     { value: ECommandTemplateKind.Backup, label: "backup" },

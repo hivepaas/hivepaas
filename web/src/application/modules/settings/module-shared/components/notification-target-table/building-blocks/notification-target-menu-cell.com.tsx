@@ -96,7 +96,7 @@ function View({ scope, notificationTarget }: Props) {
                         isLoading={isDeleting}
                     >
                         <Trash2Icon className="mr-2 size-4" />
-                        Remove
+                        Delete
                     </SettingsScopePopConfirmButton>
                 </div>
             </DropdownMenuContent>

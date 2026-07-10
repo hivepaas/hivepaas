@@ -4,6 +4,7 @@ export * from "./app-previews.queries";
 export * from "./project-app-env-vars.queries";
 export * from "./project-app-secrets.queries";
 export * from "./app-config-files.queries";
+export * from "./app-data-files.queries";
 export * from "./app-container-settings.queries";
 export * from "./app-deployment-settings.queries";
 export * from "./app-feature-settings.queries";

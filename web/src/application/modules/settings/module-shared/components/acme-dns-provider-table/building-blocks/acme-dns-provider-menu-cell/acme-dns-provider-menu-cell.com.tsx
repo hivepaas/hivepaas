@@ -18,13 +18,14 @@ function View({ scope, acmeDnsProvider }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateAcmeDnsProviderStatusDialog();
-    const { mutate: deleteSettingAcmeDnsProvider, isPending: isDeletingSetting } =
-        AcmeDnsProviderCommands.useDeleteOne({
+    const { mutate: deleteSettingAcmeDnsProvider, isPending: isDeletingSetting } = AcmeDnsProviderCommands.useDeleteOne(
+        {
             onSuccess: () => {
                 toast.success("ACME DNS provider deleted successfully");
                 setOpen(false);
             },
-        });
+        },
+    );
 
     const { mutate: deleteProjectAcmeDnsProvider, isPending: isDeletingProject } =
         ProjectAcmeDnsProviderCommands.useDeleteOne({
@@ -102,7 +103,7 @@ function View({ scope, acmeDnsProvider }: Props) {
                             isLoading={isDeleting}
                         >
                             <Trash2Icon className="mr-2 size-4" />
-                            Remove
+                            Delete
                         </SettingsScopePopConfirmButton>
                     )}
                 </div>

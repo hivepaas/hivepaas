@@ -8,6 +8,7 @@ export * from "./env-variables";
 export * from "./feature-settings";
 export * from "./secrets";
 export * from "./config-files";
+export * from "./data-files";
 export * from "./availability-and-scaling";
 export * from "./presistent-storage";
 export * from "./networks";

@@ -1,4 +1,5 @@
 export * from "./use-app-config-files.api";
+export * from "./use-app-data-files.api";
 export * from "./use-app-deployments.api";
 export * from "./use-app-deployment-logs.ws-api";
 export * from "./use-app-previews.api";

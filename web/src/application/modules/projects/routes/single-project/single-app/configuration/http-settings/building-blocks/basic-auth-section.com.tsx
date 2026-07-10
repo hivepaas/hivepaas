@@ -162,15 +162,12 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                 />
                                 <FieldError errors={[nameError]} />
                                 <div className="text-xs">
-                                    <p>
-                                        Need to add new basic auth?{" "}
-                                        <Link
-                                            to={ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId)}
-                                            className="text-blue-500"
-                                        >
-                                            Click here
-                                        </Link>
-                                    </p>
+                                    <Link
+                                        to={ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId)}
+                                        className="text-blue-500"
+                                    >
+                                        Configure Basic Auth Items
+                                    </Link>
                                 </div>
                             </Field>
                         </InfoBlock>

@@ -101,15 +101,12 @@ function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: 
                     <FieldError errors={[volumeError]} />
 
                     <div className="text-xs">
-                        <p>
-                            Need to add new volume?{" "}
-                            <Link
-                                to={ROUTE.projects.single.configuration.general.$route(projectId ?? "")}
-                                className="text-blue-500"
-                            >
-                                Click here
-                            </Link>
-                        </p>
+                        <Link
+                            to={ROUTE.projects.single.configuration.general.$route(projectId ?? "")}
+                            className="text-blue-500"
+                        >
+                            Configure Volumes
+                        </Link>
                     </div>
                 </Field>
             </InfoBlock>

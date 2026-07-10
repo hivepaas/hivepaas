@@ -160,15 +160,12 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                         </div>
                         <FieldError errors={[sslCertError]} />
                         <div className="text-xs text-muted-foreground">
-                            <p>
-                                Need another certificate?{" "}
-                                <Link
-                                    to="#"
-                                    className="text-primary underline-offset-4 hover:underline"
-                                >
-                                    Add in project settings
-                                </Link>
-                            </p>
+                            <Link
+                                to="#"
+                                className="text-primary underline-offset-4 hover:underline"
+                            >
+                                Configure SSL Certificates
+                            </Link>
                         </div>
                     </Field>
                 </FieldGroup>

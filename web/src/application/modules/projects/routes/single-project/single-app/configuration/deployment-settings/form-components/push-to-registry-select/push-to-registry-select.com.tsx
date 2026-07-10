@@ -81,15 +81,12 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
                 />
                 <FieldError errors={[pushToRegistryError]} />
                 <div className="text-xs">
-                    <p>
-                        Need to add a new registry to push image to?{" "}
-                        <Link
-                            to="#"
-                            className="text-blue-500"
-                        >
-                            Click here
-                        </Link>
-                    </p>
+                    <Link
+                        to="#"
+                        className="text-blue-500"
+                    >
+                        Configure Registry Credentials
+                    </Link>
                 </div>
             </Field>
         </InfoBlock>

@@ -320,7 +320,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 className="text-sm text-blue-500"
                                 ignorePrevPath
                             >
-                                Manage Cloud Storage Settings
+                                Configure Cloud Storages
                             </AppLink.Basic>
                         </Field>
                         <Field>

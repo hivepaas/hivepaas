@@ -82,15 +82,12 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                     />
                     <FieldError errors={[credentialsError]} />
                     <div className="text-xs">
-                        <p>
-                            Need to add new git credentials?{" "}
-                            <Link
-                                to="#"
-                                className="text-blue-500"
-                            >
-                                Click here
-                            </Link>
-                        </p>
+                        <Link
+                            to="#"
+                            className="text-blue-500"
+                        >
+                            Configure Git Credentials
+                        </Link>
                     </div>
                 </Field>
             </FieldGroup>

@@ -81,15 +81,12 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
                     />
                     <FieldError errors={[registryAuthError]} />
                     <div className="text-xs">
-                        <p>
-                            Need to add new registry credentials?{" "}
-                            <Link
-                                to="#"
-                                className="text-blue-500"
-                            >
-                                Click here
-                            </Link>
-                        </p>
+                        <Link
+                            to="#"
+                            className="text-blue-500"
+                        >
+                            Configure Registry Credentials
+                        </Link>
                     </div>
                 </Field>
             </FieldGroup>

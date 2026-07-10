@@ -158,17 +158,14 @@ function View({ readOnly = false }: Props) {
                         />
                         <FieldError errors={[sshKeyError]} />
                         <div className="text-xs">
-                            <p>
-                                Need to add a new SSH key?{" "}
-                                <Link
-                                    to={ROUTE.settings.sshKeys.$route}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500"
-                                >
-                                    Manage SSH key settings
-                                </Link>
-                            </p>
+                            <Link
+                                to={ROUTE.settings.sshKeys.$route}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500"
+                            >
+                                Configure SSH Keys
+                            </Link>
                         </div>
                     </Field>
                 </FieldGroup>

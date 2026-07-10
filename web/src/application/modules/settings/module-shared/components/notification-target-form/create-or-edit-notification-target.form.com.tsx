@@ -397,7 +397,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 to={emailAccountsRoute}
                                                                 ignorePrevPath
                                                             >
-                                                                Manage email account Settings
+                                                                Configure email accounts
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.senderEmailAccountId]} />
                                                         </Field>
@@ -520,7 +520,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 to={imPlatformsRoute}
                                                                 ignorePrevPath
                                                             >
-                                                                Manage IM Platform Settings
+                                                                Configure IM Platforms
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.slackWebhookId]} />
                                                         </Field>
@@ -595,7 +595,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 to={imPlatformsRoute}
                                                                 ignorePrevPath
                                                             >
-                                                                Manage IM Platform Settings
+                                                                Configure IM Platforms
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.discordWebhookId]} />
                                                         </Field>
@@ -670,7 +670,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 to={imPlatformsRoute}
                                                                 ignorePrevPath
                                                             >
-                                                                Manage IM Platform Settings
+                                                                Configure IM Platforms
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.telegramSettingId]} />
                                                         </Field>

@@ -93,7 +93,7 @@ export function useNotificationSettingsSources(scope: NotificationSettingsScope)
                   }
                 : {
                       to: ROUTE.settings.notificationTargets.$route,
-                      label: "Manage Notification Settings",
+                      label: "Configure Notification Settings",
                   },
     };
 }

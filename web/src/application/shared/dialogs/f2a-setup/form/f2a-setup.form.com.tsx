@@ -60,7 +60,7 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey
             <DialogBody className="flex flex-col gap-6">
                 <FieldGroup>
                     <Field>
-                        <FieldLabel>Please scan the QR code</FieldLabel>
+                        <FieldLabel>First, scan the QR code</FieldLabel>
                         <MfaQrCode
                             qrCode={qrCode}
                             secretKey={secretKey}
@@ -68,7 +68,7 @@ export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey
                     </Field>
 
                     <Field>
-                        <FieldLabel htmlFor="passcode">Enter the generated passcode</FieldLabel>
+                        <FieldLabel htmlFor="passcode">Then, enter the generated passcode</FieldLabel>
                         <div className="flex justify-center">
                             <InputOTP
                                 id="passcode"

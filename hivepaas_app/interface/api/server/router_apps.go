@@ -106,6 +106,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.Route
 		dataFileGroup.GET("", appSettingsHandler.ListDataFile)
 		dataFileGroup.GET("/:itemID", appSettingsHandler.GetDataFile)
 		dataFileGroup.GET("/:itemID/download-url", appSettingsHandler.GetDataFileDownloadURL)
+		dataFileGroup.POST("", appSettingsHandler.CreateDataFile)
 		dataFileGroup.DELETE("/:itemID", appSettingsHandler.DeleteDataFile)
 	}
 

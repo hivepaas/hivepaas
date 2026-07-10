@@ -6,8 +6,11 @@ import (
 )
 
 func TypeByExtension(fileExt string) string {
+	if fileExt == "" {
+		return ""
+	}
 	if !strings.HasPrefix(fileExt, ".") {
 		fileExt = "." + fileExt
 	}
-	return mime.TypeByExtension(fileExt)
+	return mime.TypeByExtension(strings.ToLower(fileExt))
 }

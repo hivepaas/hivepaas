@@ -21,6 +21,7 @@ var (
 type FileType string
 
 const (
+	FileTypeDataFile       FileType = "data-file"
 	FileTypeSystemBackup   FileType = "system-backup"
 	FileTypeRepoCache      FileType = "repo-cache"
 	FileTypeBuildSource    FileType = "build-source"
@@ -28,23 +29,26 @@ const (
 )
 
 var (
-	AllFileTypes = []FileType{FileTypeSystemBackup, FileTypeRepoCache, FileTypeBuildSource, FileTypeSchedJobOutput}
+	AllFileTypes = []FileType{FileTypeDataFile, FileTypeSystemBackup, FileTypeRepoCache, FileTypeBuildSource,
+		FileTypeSchedJobOutput}
 )
 
 type FileKind string
 
 const (
 	FileKindBackupClickhouse FileKind = "clickhouse-backup"
+	FileKindBackupOracle     FileKind = "oracle-backup"
 	FileKindBackupMaria      FileKind = "maria-backup"
 	FileKindBackupMongo      FileKind = "mongo-backup"
 	FileKindBackupMysql      FileKind = "mysql-backup"
 	FileKindBackupPostgres   FileKind = "postgres-backup"
 	FileKindBackupRedis      FileKind = "redis-backup"
+	FileKindBackupSqlServer  FileKind = "sql-server-backup"
 )
 
 var (
-	AllFileKinds = []FileKind{FileKindBackupClickhouse, FileKindBackupMaria, FileKindBackupMongo,
-		FileKindBackupMysql, FileKindBackupPostgres, FileKindBackupRedis}
+	AllFileKinds = []FileKind{FileKindBackupClickhouse, FileKindBackupOracle, FileKindBackupMaria, FileKindBackupMongo,
+		FileKindBackupMysql, FileKindBackupPostgres, FileKindBackupRedis, FileKindBackupSqlServer}
 )
 
 type FileStorageType string

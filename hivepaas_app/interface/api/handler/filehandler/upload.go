@@ -55,6 +55,25 @@ func (h *Handler) UploadFiles(ctx *gin.Context) {
 func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq) (auth *basedto.Auth, err error) {
 	var accessCheck *permission.AccessCheck
 	switch req.FileType {
+	case base.FileTypeDataFile:
+		accessCheck = &permission.AccessCheck{
+			ResourceModule: base.ResourceModuleProject,
+			AnyOf:          []base.ActionType{base.ActionTypeWrite},
+		}
+		switch req.Scope.ScopeType() {
+		case base.ObjectScopeApp:
+			accessCheck.ResourceType = base.ResourceTypeApp
+			accessCheck.ResourceID = req.Scope.AppID
+			accessCheck.ParentResourceType = base.ResourceTypeProject
+			accessCheck.ParentResourceID = req.Scope.ProjectID
+		case base.ObjectScopeProject:
+			accessCheck.ResourceType = base.ResourceTypeProject
+			accessCheck.ResourceID = req.Scope.ProjectID
+		case base.ObjectScopeGlobal, base.ObjectScopeUser:
+			fallthrough
+		default:
+			return nil, apperrors.New(apperrors.ErrUnsupported).WithParam("Name", "Scope")
+		}
 	case base.FileTypeBuildSource:
 		accessCheck = &permission.AccessCheck{
 			ResourceModule:     base.ResourceModuleProject,
@@ -62,7 +81,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 			ResourceID:         req.Scope.AppID,
 			ParentResourceType: base.ResourceTypeProject,
 			ParentResourceID:   req.Scope.ProjectID,
-			AnyOf:              []base.ActionType{base.ActionTypeExecute, base.ActionTypeWrite},
+			AnyOf:              []base.ActionType{base.ActionTypeWrite},
 		}
 	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
 		fallthrough

@@ -12,7 +12,8 @@ import (
 type UC struct {
 	db *database.DB
 
-	fileRepo repository.FileRepo
+	fileRepo    repository.FileRepo
+	settingRepo repository.SettingRepo
 
 	appService     appservice.Service
 	fileService    fileservice.Service
@@ -24,6 +25,7 @@ func New(
 	db *database.DB,
 
 	fileRepo repository.FileRepo,
+	settingRepo repository.SettingRepo,
 
 	appService appservice.Service,
 	fileService fileservice.Service,
@@ -33,7 +35,8 @@ func New(
 	return &UC{
 		db: db,
 
-		fileRepo: fileRepo,
+		fileRepo:    fileRepo,
+		settingRepo: settingRepo,
 
 		appService:     appService,
 		fileService:    fileService,

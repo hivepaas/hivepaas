@@ -2,7 +2,6 @@ package s3
 
 import (
 	"context"
-	"mime"
 	"net/url"
 	"path/filepath"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 )
 
 func (client *Client) GetObject(
@@ -39,7 +39,7 @@ func (client *Client) PresignGetObject(
 	expiration time.Duration,
 ) (string, error) {
 	if mimetype == "" {
-		mimetype = mime.TypeByExtension(filepath.Ext(fileName))
+		mimetype = fileutil.TypeByExtension(filepath.Ext(fileName))
 	}
 	objectInput := &s3.GetObjectInput{
 		Bucket:              aws.String(bucketName),
@@ -56,4 +56,19 @@ func (client *Client) PresignGetObject(
 		return "", apperrors.New(err)
 	}
 	return request.URL, nil
+}
+
+func (client *Client) HeadObject(
+	ctx context.Context,
+	bucketName string,
+	objectKey string,
+) (*s3.HeadObjectOutput, error) {
+	result, err := client.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	return result, nil
 }

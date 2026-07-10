@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
-	"strings"
 
 	"github.com/tiendc/gofn"
 
@@ -103,12 +102,11 @@ func (uc *UC) preparePersistingProjectPhoto(
 			CreatedAt: timeNow,
 		}
 	}
-	fileExt := strings.ToLower(filepath.Ext(req.FileName))
 	photoData.UpdatedAt = timeNow
 	photoData.Type = base.BinObjectTypeProjectPhoto
 	photoData.Status = base.BinObjectStatusActive
 	photoData.Name = req.FileName
-	photoData.ContentType = fileutil.TypeByExtension(fileExt)
+	photoData.ContentType = fileutil.TypeByExtension(filepath.Ext(req.FileName))
 	photoData.Data = req.DataBytes
 	persistingData.UpsertingBinObjects = append(persistingData.UpsertingBinObjects, photoData)
 

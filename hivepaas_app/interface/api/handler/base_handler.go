@@ -436,12 +436,18 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		return apperrors.New(err)
 	}
 
+	// File type
 	fileType := ctx.PostForm("fileType")
 	var maxFile int
 	var maxFileSize unit.DataSize
 	var fileExts []string
 	var requiredScopes []base.ObjectScopeType
 	switch base.FileType(fileType) {
+	case base.FileTypeDataFile:
+		maxFile = cfg.DataMaxFile
+		maxFileSize = cfg.DataMaxSize
+		fileExts = cfg.DataFileExts
+		requiredScopes = []base.ObjectScopeType{base.ObjectScopeProject, base.ObjectScopeApp}
 	case base.FileTypeBuildSource:
 		maxFile = cfg.BuildSourceMaxFile
 		maxFileSize = cfg.BuildSourceMaxSize
@@ -457,8 +463,12 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	}
 	req.FileType = base.FileType(fileType)
 
+	// File kind
+	req.FileKind = base.FileKind(ctx.PostForm("fileKind"))
+
+	// Scope
 	scope := base.ObjectScopeType(ctx.PostForm("scope"))
-	if !gofn.Contain(requiredScopes, scope) {
+	if requiredScopes != nil && !gofn.Contain(requiredScopes, scope) {
 		return apperrors.New(apperrors.ErrFileScopeUnsupported).WithParam("Scope", scope)
 	}
 
@@ -487,12 +497,14 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		return apperrors.New(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scope)
 	}
 
+	// Storage (type and ID)
 	req.StorageType = base.FileStorageType(ctx.PostForm("storageType"))
 	if !gofn.Contain(base.AllFileStorageTypes, req.StorageType) {
 		return apperrors.New(apperrors.ErrStorageTypeUnsupported).WithParam("Type", req.StorageType)
 	}
 	req.StorageID = ctx.PostForm("storageId")
 
+	// File items
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return apperrors.New(err)

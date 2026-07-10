@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
@@ -41,16 +41,18 @@ func (s *service) Upload(
 
 	for _, item := range req.Items {
 		fileName := gofn.LastOr(strings.Split(item.FilePath, "/"), "")
+		mimetype := fileutil.TypeByExtension(filepath.Ext(fileName))
 		file := &entity.File{
 			ID:          gofn.Must(ulid.NewStringULID()),
 			Scope:       req.Scope.ScopeType(),
 			ObjectID:    req.Scope.MainObjectID(),
 			Status:      base.FileStatusActive,
 			Type:        req.FileType,
+			Kind:        string(req.FileKind),
 			Name:        fileName,
 			Path:        filepath.Join(fileDir, fileName),
 			Size:        item.FileSize,
-			Mimetype:    mime.TypeByExtension(strings.ToLower(filepath.Ext(fileName))),
+			Mimetype:    gofn.Coalesce(mimetype, "application/octet-stream"),
 			StorageType: req.StorageType,
 			StorageID:   req.StorageID,
 			CreatedAt:   timeNow,

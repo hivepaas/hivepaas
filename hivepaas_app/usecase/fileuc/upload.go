@@ -24,6 +24,7 @@ func (uc *UC) Upload(
 
 	uploadReq := &fileservice.UploadReq{
 		FileType:    req.FileType,
+		FileKind:    req.FileKind,
 		StorageType: req.StorageType,
 		StorageID:   req.StorageID,
 		Scope:       req.Scope,

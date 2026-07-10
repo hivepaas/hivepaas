@@ -7,6 +7,11 @@ type Files struct {
 	RequestMaxSize    unit.DataSize `toml:"request_max_size" env:"HP_FILES_REQUEST_MAX_SIZE" default:"10gb"`
 	FileNameMaxLength int           `toml:"file_name_max_length" env:"HP_FILES_FILE_NAME_MAX_LENGTH" default:"100"`
 
+	// Data Files
+	DataFileExts []string      `toml:"data_exts" env:"HP_FILES_DATA_EXTS" default:"[\"*\"]"`
+	DataMaxFile  int           `toml:"data_max_file" env:"HP_FILES_DATA_MAX_FILE" default:"10"`
+	DataMaxSize  unit.DataSize `toml:"data_max_size" env:"HP_FILES_DATA_MAX_SIZE" default:"1000gb"`
+
 	// Build Source Tarballs
 	BuildSourceFileExts []string      `toml:"build_source_exts" env:"HP_FILES_BUILD_SOURCE_EXTS" default:"[.tar.zst, .tar.gz, .tgz, .tar.lz4]"` //nolint:lll
 	BuildSourceMaxFile  int           `toml:"build_source_max_file" env:"HP_FILES_BUILD_SOURCE_MAX_FILE" default:"1"`

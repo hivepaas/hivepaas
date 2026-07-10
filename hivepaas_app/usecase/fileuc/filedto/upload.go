@@ -13,6 +13,7 @@ import (
 type UploadReq struct {
 	Scope       *base.ObjectScope
 	FileType    base.FileType
+	FileKind    base.FileKind
 	StorageType base.FileStorageType
 	StorageID   string
 	Files       []*multipart.FileHeader

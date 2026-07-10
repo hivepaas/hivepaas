@@ -29,6 +29,7 @@ type UploadReq struct {
 	Items           []*UploadItemReq
 	Scope           *base.ObjectScope
 	FileType        base.FileType
+	FileKind        base.FileKind
 	StorageType     base.FileStorageType
 	StorageID       string
 	ParallelUploads uint

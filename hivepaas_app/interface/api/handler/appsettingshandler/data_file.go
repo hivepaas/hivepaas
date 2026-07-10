@@ -12,6 +12,42 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
 
+// CreateDataFile Creates a data file of an app
+// @Summary Creates a data file of an app
+// @Description Creates a data file of an app
+// @Tags    app_settings
+// @Produce json
+// @Id      createAppDataFile
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   body body filedto.CreateFileReq true "request data"
+// @Success 201 {object} filedto.CreateFileResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/data-files [post]
+func (h *Handler) CreateDataFile(ctx *gin.Context) {
+	auth, projectID, appID, _, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := filedto.NewCreateFileReq()
+	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.fileUC.CreateFile(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, resp)
+}
+
 // ListDataFile Lists data files of an app
 // @Summary Lists data files of an app
 // @Description Lists data files of an app

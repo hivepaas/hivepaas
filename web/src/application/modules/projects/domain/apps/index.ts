@@ -1,5 +1,6 @@
 export * from "./base";
 export * from "./config-file";
+export * from "./data-file";
 export * from "./container-settings";
 export * from "./deployment";
 export * from "./deployment-settings";

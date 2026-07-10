@@ -50,6 +50,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
         },
         {
+            label: "Data Files",
+            route: ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, appId),
+        },
+        {
             label: "Container Settings",
             route: ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
         },

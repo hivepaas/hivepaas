@@ -5,6 +5,8 @@ import {
     AppConfigFilesApiValidator,
     AppContainerSettingsApi,
     AppContainerSettingsApiValidator,
+    AppDataFilesApi,
+    AppDataFilesApiValidator,
     AppDeploymentLogsWsApi,
     AppDeploymentSettingsApi,
     AppDeploymentSettingsApiValidator,
@@ -132,6 +134,7 @@ function createApi() {
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
+    const appDataFilesApiValidator = new AppDataFilesApiValidator();
     const appDeploymentsApiValidator = new AppDeploymentsApiValidator();
     const appDeploymentsApi = new AppDeploymentsApi(appDeploymentsApiValidator);
     const appPreviewsApiValidator = new AppPreviewsApiValidator();
@@ -189,6 +192,9 @@ function createApi() {
                 },
                 configFiles: {
                     $: new AppConfigFilesApi(appConfigFilesApiValidator),
+                },
+                dataFiles: {
+                    $: new AppDataFilesApi(appDataFilesApiValidator),
                 },
                 deployments: {
                     $: appDeploymentsApi,

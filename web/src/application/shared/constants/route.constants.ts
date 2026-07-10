@@ -556,6 +556,11 @@ export const ROUTE = {
                             },
                         },
 
+                        dataFiles: {
+                            $pattern: "projects/:id/apps/:appId/data-files",
+                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/data-files/`,
+                        },
+
                         availabilityAndScaling: {
                             $pattern: "projects/:id/apps/:appId/availability-and-scaling",
                             $route: (id: string, appId: string) =>

@@ -13,7 +13,7 @@ export type SystemSslRenewal_UpdateOne_Payload = {
     schedule: {
         interval: string;
         cronExpr: string;
-        initialTime: Date | null;
+        initialTime?: Date;
     };
     notification: {
         success: {

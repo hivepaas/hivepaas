@@ -1,11 +1,10 @@
-import type { SettingSslCert } from "~/settings/domain";
+import type { PaginationState, SortingState } from "@infrastructure/data";
 import type {
     SslCert_CreateOne_Payload,
     SslCert_UpdateOne_Payload,
     SslCert_UpdateStatus_Payload,
 } from "~/settings/api/services/ssl-cert-services";
-
-import type { PaginationState, SortingState } from "@infrastructure/data";
+import type { SettingSslCert } from "~/settings/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -55,3 +54,10 @@ export type ProjectSslCert_DeleteOne_Req = ApiRequestBase<{
 }>;
 
 export type ProjectSslCert_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectSslCert_RenewOne_Req = ApiRequestBase<{
+    projectID: string;
+    id: string;
+}>;
+
+export type ProjectSslCert_RenewOne_Res = ApiResponseBase<{ type: "success" }>;

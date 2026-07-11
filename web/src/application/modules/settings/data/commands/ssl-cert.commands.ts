@@ -5,6 +5,8 @@ import type {
     SslCert_CreateOne_Res,
     SslCert_DeleteOne_Req,
     SslCert_DeleteOne_Res,
+    SslCert_RenewOne_Req,
+    SslCert_RenewOne_Res,
     SslCert_UpdateOne_Req,
     SslCert_UpdateOne_Res,
     SslCert_UpdateStatus_Req,
@@ -105,9 +107,34 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
     });
 }
 
+type RenewOneReq = SslCert_RenewOne_Req["data"];
+type RenewOneRes = SslCert_RenewOne_Res;
+type RenewOneOptions = Omit<UseMutationOptions<RenewOneRes, Error, RenewOneReq>, "mutationFn">;
+
+function useRenewOne({ onSuccess, ...options }: RenewOneOptions = {}) {
+    const { mutations } = useSslCertApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.renewOne,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.ssl-cert.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["settings.ssl-cert.find-one-by-id"]],
+            });
+
+            onSuccess?.(response, ...rest);
+        },
+        ...options,
+    });
+}
+
 export const SslCertCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
     useUpdateStatus,
     useDeleteOne,
+    useRenewOne,
 });

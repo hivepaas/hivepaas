@@ -2,6 +2,8 @@ import { useEffect, useMemo } from "react";
 
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { ProjectAcmeDnsProviderQueries, ProjectSslProviderQueries } from "~/projects/data/queries";
 import { AcmeDnsProviderQueries, SslProviderQueries } from "~/settings/data/queries";
@@ -233,6 +235,7 @@ export function CreateOrEditSslCertForm({
     const providerKind = getProviderKind(certType);
     const isCustom = certType === ESslCertType.Custom;
     const isAcme = providerKind !== undefined;
+    const requiresProvider = certType === ESslCertType.ZeroSSL || certType === ESslCertType.GoogleTrust;
     const isWildcardAcme = isAcme && domainValue.trim().startsWith("*.");
     const projectId = scope.type === "project" ? scope.projectId : "";
     const sslProvidersManageRoute =
@@ -475,84 +478,54 @@ export function CreateOrEditSslCertForm({
                             </InfoBlock>
 
                             {providerKind !== undefined && (
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={<LabelWithInfo label="SSL Provider" />}
-                                >
-                                    <Field>
-                                        <Combobox<SettingProviderOption>
-                                            options={providerComboboxOptions}
-                                            value={provider.value?.id ?? null}
-                                            onChange={(_, option) => {
-                                                provider.onChange(option ?? undefined);
-                                            }}
-                                            placeholder="select provider"
-                                            searchable
-                                            allowClear
-                                            closeOnSelect
-                                            emptyText="No SSL providers available"
-                                            className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                            valueKey="id"
-                                            aria-invalid={isProviderInvalid}
-                                            loading={providerQuery.isFetching}
-                                            onRefresh={() => void providerQuery.refetch()}
-                                            isRefreshing={providerQuery.isRefetching}
-                                            disabled={isReadOnly}
-                                        />
-                                        <FieldError errors={[errors.provider]} />
-                                        <AppLink.Modules
-                                            to={sslProvidersManageRoute}
-                                            className="text-sm text-link"
-                                            ignorePrevPath
-                                        >
-                                            Configure SSL providers
-                                        </AppLink.Modules>
-                                    </Field>
-                                </InfoBlock>
-                            )}
+                                <>
+                                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                                        <span className="text-orange-500">Note:</span> SSL provider is required if you
+                                        select <span className="text-orange-500">Zero SSL</span> or{" "}
+                                        <span className="text-orange-500">Google Trust Services</span> as the
+                                        certificate type.
+                                    </div>
 
-                            {isAcme && (
-                                <InfoBlock
-                                    titleWidth={220}
-                                    title={
-                                        <LabelWithInfo
-                                            label="ACME DNS Provider"
-                                            isRequired={isWildcardAcme}
-                                        />
-                                    }
-                                >
-                                    <Field>
-                                        <Combobox<SettingProviderOption>
-                                            options={acmeProviderComboboxOptions}
-                                            value={acmeProvider.value?.id ?? null}
-                                            onChange={(_, option) => {
-                                                acmeProvider.onChange(option ?? undefined);
-                                            }}
-                                            placeholder="select ACME DNS provider"
-                                            searchable
-                                            allowClear
-                                            closeOnSelect
-                                            emptyText="No ACME DNS providers available"
-                                            className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                            valueKey="id"
-                                            aria-invalid={isAcmeProviderInvalid}
-                                            loading={acmeProviderQuery.isFetching}
-                                            onRefresh={() => void acmeProviderQuery.refetch()}
-                                            isRefreshing={acmeProviderQuery.isRefetching}
-                                            disabled={isReadOnly}
-                                        />
-                                        <FieldError errors={[errors.acmeProvider]} />
-                                        <AppLink.Modules
-                                            to={acmeDnsProvidersManageRoute}
-                                            className="text-sm text-link"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            ignorePrevPath
-                                        >
-                                            Configure ACME DNS providers
-                                        </AppLink.Modules>
-                                    </Field>
-                                </InfoBlock>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="SSL Provider"
+                                                isRequired={requiresProvider}
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Combobox<SettingProviderOption>
+                                                options={providerComboboxOptions}
+                                                value={provider.value?.id ?? null}
+                                                onChange={(_, option) => {
+                                                    provider.onChange(option ?? undefined);
+                                                }}
+                                                placeholder="select provider"
+                                                searchable
+                                                allowClear
+                                                closeOnSelect
+                                                emptyText="No SSL providers available"
+                                                className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                                valueKey="id"
+                                                aria-invalid={isProviderInvalid}
+                                                loading={providerQuery.isFetching}
+                                                onRefresh={() => void providerQuery.refetch()}
+                                                isRefreshing={providerQuery.isRefetching}
+                                                disabled={isReadOnly}
+                                            />
+                                            <FieldError errors={[errors.provider]} />
+                                            <AppLink.Modules
+                                                to={sslProvidersManageRoute}
+                                                className="text-sm text-link"
+                                                ignorePrevPath
+                                            >
+                                                Configure SSL providers
+                                            </AppLink.Modules>
+                                        </Field>
+                                    </InfoBlock>
+                                </>
                             )}
 
                             <InfoBlock
@@ -607,6 +580,57 @@ export function CreateOrEditSslCertForm({
                                     <FieldError errors={[errors.keyType]} />
                                 </Field>
                             </InfoBlock>
+
+                            {isAcme && (
+                                <>
+                                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                                        <span className="text-orange-500">Note:</span> ACME DNS provider is required if
+                                        your domain is a wildcard domain.
+                                    </div>
+
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="ACME DNS Provider"
+                                                isRequired={isWildcardAcme}
+                                            />
+                                        }
+                                    >
+                                        <Field>
+                                            <Combobox<SettingProviderOption>
+                                                options={acmeProviderComboboxOptions}
+                                                value={acmeProvider.value?.id ?? null}
+                                                onChange={(_, option) => {
+                                                    acmeProvider.onChange(option ?? undefined);
+                                                }}
+                                                placeholder="select ACME DNS provider"
+                                                searchable
+                                                allowClear
+                                                closeOnSelect
+                                                emptyText="No ACME DNS providers available"
+                                                className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                                valueKey="id"
+                                                aria-invalid={isAcmeProviderInvalid}
+                                                loading={acmeProviderQuery.isFetching}
+                                                onRefresh={() => void acmeProviderQuery.refetch()}
+                                                isRefreshing={acmeProviderQuery.isRefetching}
+                                                disabled={isReadOnly}
+                                            />
+                                            <FieldError errors={[errors.acmeProvider]} />
+                                            <AppLink.Modules
+                                                to={acmeDnsProvidersManageRoute}
+                                                className="text-sm text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                ignorePrevPath
+                                            >
+                                                Configure ACME DNS providers
+                                            </AppLink.Modules>
+                                        </Field>
+                                    </InfoBlock>
+                                </>
+                            )}
 
                             {!isCustom ? (
                                 <InfoBlock

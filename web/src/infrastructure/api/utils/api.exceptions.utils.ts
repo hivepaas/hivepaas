@@ -108,3 +108,10 @@ export function isValidationException(error: Error): error is Http400Exception {
 export function isHighLevelException(error: Error): boolean {
     return isHttpException(error) && error.problem.displayLevel === "high";
 }
+
+/**
+ * Check if the error is a feature disabled error
+ */
+export function isFeatureDisabledException(error: Error): boolean {
+    return isHttpException(error) && error.code === "ERR_FEATURE_DISABLED";
+}

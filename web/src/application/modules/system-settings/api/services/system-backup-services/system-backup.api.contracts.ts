@@ -15,7 +15,7 @@ export type SystemBackup_UpdateOne_Payload = {
     schedule: {
         interval: string;
         cronExpr: string;
-        initialTime: Date | null;
+        initialTime?: Date;
     };
     compression: {
         format: ESystemBackupCompressionFormat;

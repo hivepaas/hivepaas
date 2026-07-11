@@ -26,7 +26,7 @@ function mapFormValuesToPayload(
         schedule: {
             interval: values.scheduleMode === SystemSslRenewalScheduleMode.Interval ? values.scheduleInterval : "",
             cronExpr: values.scheduleMode === SystemSslRenewalScheduleMode.Cron ? values.scheduleCronExpr : "",
-            initialTime: values.scheduleFrom ?? null,
+            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
         },
         notification: {
             successUseDefault: values.notification.successUseDefault,

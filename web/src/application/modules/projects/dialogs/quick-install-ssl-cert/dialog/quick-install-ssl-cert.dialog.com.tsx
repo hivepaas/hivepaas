@@ -70,10 +70,14 @@ export function QuickInstallSslCertDialog() {
 
         createdNameRef.current = values.name;
 
+        const isCustom = values.certType === ESslCertType.Custom;
+        const isAcme = !isCustom;
+        const validPeriodDays = isAcme ? 90 : 365;
         const now = new Date();
-        const fallbackExpireAt = addDays(now, values.certType === ESslCertType.LetsEncrypt ? 90 : 365);
+        const fallbackExpireAt = addDays(now, validPeriodDays);
         const expireAt = values.expireAt ?? fallbackExpireAt;
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
+        const certDomain = values.wildcardDomain ? `*.${values.domain}` : values.domain;
 
         createSslCert({
             projectID: projectId,
@@ -81,14 +85,15 @@ export function QuickInstallSslCertDialog() {
                 availableInProjects: false,
                 default: false,
                 certType: values.certType,
-                provider: undefined,
-                domain: values.domain,
-                certificate: values.certType === ESslCertType.Custom ? values.certificate : "",
-                privateKey: values.certType === ESslCertType.Custom ? values.privateKey : "",
+                provider: values.provider?.id ? { id: values.provider.id } : undefined,
+                acmeProvider: values.acmeProvider?.id ? { id: values.acmeProvider.id } : undefined,
+                domain: certDomain,
+                certificate: isCustom ? values.certificate : "",
+                privateKey: isCustom ? values.privateKey : "",
                 keyType: values.keyType,
-                validPeriod: values.certType === ESslCertType.LetsEncrypt ? "90d" : "365d",
+                validPeriod: `${validPeriodDays}d`,
                 email: values.email,
-                autoRenew: values.certType === ESslCertType.LetsEncrypt ? values.autoRenew : false,
+                autoRenew: isCustom ? false : values.autoRenew,
                 expireAt,
                 notifyFrom,
                 notification: {
@@ -128,6 +133,7 @@ export function QuickInstallSslCertDialog() {
                     <DialogTitle>Quick install an SSL certificate</DialogTitle>
                 </DialogHeader>
                 <QuickInstallSslCertForm
+                    projectId={projectId}
                     domain={domain}
                     isPending={isPending}
                     prefill={prefill}

@@ -12,6 +12,8 @@ import type {
     SslCert_FindManyPaginated_Res,
     SslCert_FindOneById_Req,
     SslCert_FindOneById_Res,
+    SslCert_RenewOne_Req,
+    SslCert_RenewOne_Res,
     SslCert_UpdateOne_Req,
     SslCert_UpdateOne_Res,
     SslCert_UpdateStatus_Req,
@@ -133,6 +135,18 @@ export class SslCertApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/settings/ssl-certs/${id}`)).pipe(
                 map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async renewOne(request: SslCert_RenewOne_Req): Promise<Result<SslCert_RenewOne_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/settings/ssl-certs/${id}/renew`, {})).pipe(
+                map(this.validator.renewOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -231,7 +231,9 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                         <Field>
                             <DateTimePicker
                                 value={scheduleFrom.value ?? undefined}
-                                onChange={scheduleFrom.onChange}
+                                onChange={date => {
+                                    scheduleFrom.onChange(date ?? null);
+                                }}
                                 placeholder="select date time"
                                 granularity="minute"
                                 showClearButton

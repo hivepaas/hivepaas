@@ -7,6 +7,7 @@ import type {
     ProjectSslCert_DeleteOne_Req,
     ProjectSslCert_FindManyPaginated_Req,
     ProjectSslCert_FindOneById_Req,
+    ProjectSslCert_RenewOne_Req,
     ProjectSslCert_UpdateOne_Req,
     ProjectSslCert_UpdateStatus_Req,
 } from "~/projects/api/services";
@@ -21,10 +22,7 @@ function createHook() {
 
         const queries = useMemo(
             () => ({
-                findManyPaginated: async (
-                    data: ProjectSslCert_FindManyPaginated_Req["data"],
-                    signal?: AbortSignal,
-                ) => {
+                findManyPaginated: async (data: ProjectSslCert_FindManyPaginated_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.sslCert.$.findManyPaginated(
                         {
                             data,
@@ -44,10 +42,7 @@ function createHook() {
                         },
                     });
                 },
-                findOneById: async (
-                    data: ProjectSslCert_FindOneById_Req["data"],
-                    signal?: AbortSignal,
-                ) => {
+                findOneById: async (data: ProjectSslCert_FindOneById_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.sslCert.$.findOneById(
                         {
                             data,
@@ -134,6 +129,23 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete project SSL certificate",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                renewOne: async (data: ProjectSslCert_RenewOne_Req["data"]) => {
+                    const result = await api.projects.sslCert.$.renewOne({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to renew project SSL certificate",
                                 error,
                             });
 

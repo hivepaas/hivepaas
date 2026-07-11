@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { ProjectSslCertApiValidator } from "./project-ssl-cert.api.validator";
 import type {
     ProjectSslCert_CreateOne_Req,
     ProjectSslCert_CreateOne_Res,
@@ -13,11 +12,14 @@ import type {
     ProjectSslCert_FindManyPaginated_Res,
     ProjectSslCert_FindOneById_Req,
     ProjectSslCert_FindOneById_Res,
+    ProjectSslCert_RenewOne_Req,
+    ProjectSslCert_RenewOne_Res,
     ProjectSslCert_UpdateOne_Req,
     ProjectSslCert_UpdateOne_Res,
     ProjectSslCert_UpdateStatus_Req,
     ProjectSslCert_UpdateStatus_Res,
 } from "./project-ssl-cert.api.contracts";
+import type { ProjectSslCertApiValidator } from "./project-ssl-cert.api.validator";
 
 export class ProjectSslCertApi extends BaseApi {
     public constructor(private readonly validator: ProjectSslCertApiValidator) {
@@ -127,14 +129,24 @@ export class ProjectSslCertApi extends BaseApi {
         );
     }
 
-    async deleteOne(
-        request: ProjectSslCert_DeleteOne_Req,
-    ): Promise<Result<ProjectSslCert_DeleteOne_Res, Error>> {
+    async deleteOne(request: ProjectSslCert_DeleteOne_Req): Promise<Result<ProjectSslCert_DeleteOne_Res, Error>> {
         const { projectID, id } = request.data;
 
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/ssl-certs/${id}`)).pipe(
                 map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async renewOne(request: ProjectSslCert_RenewOne_Req): Promise<Result<ProjectSslCert_RenewOne_Res, Error>> {
+        const { projectID, id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/projects/${projectID}/ssl-certs/${id}/renew`, {})).pipe(
+                map(this.validator.renewOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

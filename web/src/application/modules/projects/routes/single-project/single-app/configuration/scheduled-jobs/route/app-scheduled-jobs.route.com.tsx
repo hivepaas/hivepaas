@@ -7,11 +7,13 @@ import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppScheduledJobsQueries } from "~/projects/data/queries";
 import { AppScheduledJobsTableDefs } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
 
-import { TableActions } from "@application/shared/components";
+import { AppLink, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
+
+import { isFeatureDisabledException } from "@infrastructure/api";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -24,19 +26,39 @@ export function AppScheduledJobsRoute() {
     const { navigate } = useAppNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
-    const { data: { data: scheduledJobs, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppScheduledJobsQueries.useFindManyPaginated(
-            {
-                projectID: projectId,
-                appID: appId,
-                pagination,
-                sorting,
-                search,
-            },
-            APP_CONFIGURATION_QUERY_OPTIONS,
-        );
+    const {
+        data: { data: scheduledJobs, meta } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        error,
+    } = AppScheduledJobsQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+            appID: appId,
+            pagination,
+            sorting,
+            search,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
+    const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
     const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, appId), [projectId, appId]);
+
+    if (isFeatureDisabled) {
+        return (
+            <div className="flex flex-col gap-6">
+                <p className="text-base">
+                    Scheduled Jobs feature is disabled, enable it in{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId)}
+                        className="text-primary underline-offset-4 hover:underline"
+                    >
+                        Feature Settings
+                    </AppLink.Basic>
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-6">

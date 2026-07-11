@@ -22,7 +22,7 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
         schedule: {
             interval: values.scheduleMode === SystemCleanupScheduleMode.Interval ? values.scheduleInterval : "",
             cronExpr: values.scheduleMode === SystemCleanupScheduleMode.Cron ? values.scheduleCronExpr : "",
-            initialTime: values.scheduleFrom ?? null,
+            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
         },
         dbObjectRetention: {
             enabled: values.dbObjectRetention.enabled,

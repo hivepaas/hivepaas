@@ -55,10 +55,7 @@ func (req *VolumeBaseReq) validate(field string) (res []vld.Validator) {
 }
 
 func (req *VolumeBaseReq) ToEntity() *entity.ClusterVolume {
-	return &entity.ClusterVolume{
-		Name:   req.Name,
-		Driver: req.Driver,
-	}
+	return &entity.ClusterVolume{}
 }
 
 type VolumeBindOptionsReq struct {
@@ -144,6 +141,7 @@ func NewCreateVolumeReq() *CreateVolumeReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateVolumeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

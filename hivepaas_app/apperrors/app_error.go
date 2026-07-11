@@ -308,8 +308,8 @@ func getMessageID(err error) (msg string) {
 	if err == nil {
 		return ""
 	}
-	if isValidMessageID(err.Error()) {
-		return err.Error()
+	if msgID := err.Error(); isValidMessageID(msgID) {
+		return msgID
 	}
 	u, ok := err.(interface{ Unwrap() error })
 	if ok {
@@ -319,8 +319,8 @@ func getMessageID(err error) (msg string) {
 	if ok {
 		errs := u2.Unwrap()
 		for i := len(errs) - 1; i >= 0; i-- {
-			if getMessageID(errs[i]) != "" {
-				return errs[i].Error()
+			if msgID := getMessageID(errs[i]); msgID != "" {
+				return msgID
 			}
 		}
 	}

@@ -113,6 +113,8 @@ type Manager interface {
 		*client.NodeListResult, error)
 	NodeManagerList(ctx context.Context, options ...NodeListOption) (
 		*client.NodeListResult, error)
+	NodeListByIDs(ctx context.Context, nodeIDOrNames []string, options ...NodeListOption) (
+		*client.NodeListResult, error)
 	NodeInspect(ctx context.Context, nodeID string, options ...NodeInspectOption) (
 		*client.NodeInspectResult, error)
 	NodeUpdate(ctx context.Context, nodeID string, version *swarm.Version, spec *swarm.NodeSpec) (
@@ -189,6 +191,9 @@ type Manager interface {
 		*client.VolumePruneResult, error)
 
 	NewClientForNode(ctx context.Context, nodeID string) (Manager, error)
+
+	// Events
+	Events(ctx context.Context, options ...EventsOption) *client.EventsResult
 
 	Close() error
 }

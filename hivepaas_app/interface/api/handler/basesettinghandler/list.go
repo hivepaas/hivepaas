@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
@@ -112,6 +113,11 @@ func (h *Handler) ListSetting(
 		r := networkdto.NewListNetworkReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ClusterNetworkUC.ListNetwork(reqCtx, auth, r) }
+
+	case base.ResourceTypeClusterNode:
+		r := nodedto.NewListNodeReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.ClusterNodeUC.ListNode(reqCtx, auth, r) }
 
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewListVolumeReq()

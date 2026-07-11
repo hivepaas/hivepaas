@@ -21,8 +21,6 @@ func (s *clusterNetworkParser) New() SettingData {
 }
 
 type ClusterNetwork struct {
-	NetworkID string `json:"networkId"`
-	Name      string `json:"name"`
 }
 
 func (s *ClusterNetwork) GetType() base.SettingType {

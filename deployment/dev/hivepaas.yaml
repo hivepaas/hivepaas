@@ -229,6 +229,7 @@ services:
     image: hivepaas/hivepaas-agent-dev:latest
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      HP_RUN_MODE: agent
       HP_AGENT_PORT: "10001"
       HP_AGENT_NODE_ID: "{{.Node.ID}}"
       HP_AGENT_NODE_NAME: "{{.Node.Hostname}}"

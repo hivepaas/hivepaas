@@ -1,25 +1,26 @@
 package nodedto
 
 import (
-	"time"
-
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 const (
-	nodeIDMaxLen   = 100
 	nodeNameMaxLen = 100
 )
 
 type GetNodeReq struct {
-	NodeID string `json:"-"`
+	settings.GetSettingReq
 }
 
 func NewGetNodeReq() *GetNodeReq {
@@ -28,8 +29,7 @@ func NewGetNodeReq() *GetNodeReq {
 
 func (req *GetNodeReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	// NOTE: node id is docker id, it's not ULID
-	validators = append(validators, basedto.ValidateStr(&req.NodeID, true, 1, nodeIDMaxLen, "nodeId")...)
+	validators = append(validators, req.GetSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
@@ -39,22 +39,18 @@ type GetNodeResp struct {
 }
 
 type NodeResp struct {
-	ID           string                  `json:"id"`
-	Name         string                  `json:"name"`
+	*settings.BaseSettingResp
+
 	Labels       map[string]string       `json:"labels"`
 	Hostname     string                  `json:"hostname"`
 	Addr         string                  `json:"addr"`
-	Status       docker.NodeStatus       `json:"status"`
+	State        docker.NodeState        `json:"state"`
 	Availability docker.NodeAvailability `json:"availability"`
 	Role         docker.NodeRole         `json:"role"`
 	IsLeader     bool                    `json:"isLeader"`
 	Platform     *NodePlatformResp       `json:"platform"`
 	Resources    *NodeResources          `json:"resources"`
 	EngineDesc   *NodeEngineDescResp     `json:"engineDesc"`
-	UpdateVer    int                     `json:"updateVer"`
-
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type NodeBaseResp struct {
@@ -62,7 +58,7 @@ type NodeBaseResp struct {
 	Name         string                  `json:"name"`
 	Hostname     string                  `json:"hostname"`
 	Addr         string                  `json:"addr"`
-	Status       docker.NodeStatus       `json:"status"`
+	State        docker.NodeState        `json:"state"`
 	Availability docker.NodeAvailability `json:"availability"`
 	Role         docker.NodeRole         `json:"role"`
 	IsLeader     bool                    `json:"isLeader"`
@@ -90,30 +86,44 @@ type NodePluginDescResp struct {
 	Name string `json:"name"`
 }
 
-func TransformNode(node *swarm.Node, detailed bool) *NodeResp {
-	isManager := node.Spec.Role == swarm.NodeRoleManager
-	resp := &NodeResp{
-		ID:           node.ID,
-		Name:         gofn.Coalesce(node.Spec.Name, "<unset>"),
-		Status:       docker.NodeStatus(node.Status.State),
-		Availability: docker.NodeAvailability(node.Spec.Availability),
-		Role:         docker.NodeRole(node.Spec.Role),
-		IsLeader:     isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader,
-		Hostname:     node.Description.Hostname,
-		Addr:         node.Status.Addr,
-		Platform: &NodePlatformResp{
-			Architecture: node.Description.Platform.Architecture,
-			OS:           node.Description.Platform.OS,
-		},
-		Resources: &NodeResources{
-			CPUs:        node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
-			Memory:      unit.DataSize(node.Description.Resources.MemoryBytes),
-			MemoryBytes: node.Description.Resources.MemoryBytes,
-		},
-		UpdateVer: int(node.Version.Index), //nolint:gosec
-		CreatedAt: node.CreatedAt,
-		UpdatedAt: node.UpdatedAt,
+func TransformNode(
+	setting *entity.Setting,
+	_ *entity.RefObjects,
+	refClusterObjects *entity.RefClusterObjects,
+	detailed bool,
+) (resp *NodeResp, err error) {
+	nodeEnt := setting.MustAsClusterNode()
+	if err = copier.Copy(&resp, nodeEnt); err != nil {
+		return nil, apperrors.New(err)
 	}
+
+	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+
+	node := refClusterObjects.RefNodes[dockerhelper.ParseID(setting.ID)]
+
+	resp.Name = gofn.Coalesce(node.Spec.Name, "<unset>")
+	resp.State = docker.NodeState(node.Status.State)
+	resp.Availability = docker.NodeAvailability(node.Spec.Availability)
+	resp.Role = docker.NodeRole(node.Spec.Role)
+	isManager := node.Spec.Role == swarm.NodeRoleManager
+	resp.IsLeader = isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader
+	resp.Hostname = node.Description.Hostname
+	resp.Addr = node.Status.Addr
+	resp.Platform = &NodePlatformResp{
+		Architecture: node.Description.Platform.Architecture,
+		OS:           node.Description.Platform.OS,
+	}
+	resp.Resources = &NodeResources{
+		CPUs:        node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
+		Memory:      unit.DataSize(node.Description.Resources.MemoryBytes),
+		MemoryBytes: node.Description.Resources.MemoryBytes,
+	}
+	resp.CreatedAt = node.CreatedAt
+	resp.UpdatedAt = node.UpdatedAt
+
 	if detailed {
 		resp.Labels = node.Spec.Labels
 		resp.EngineDesc = &NodeEngineDescResp{
@@ -127,7 +137,7 @@ func TransformNode(node *swarm.Node, detailed bool) *NodeResp {
 			}),
 		}
 	}
-	return resp
+	return resp, nil
 }
 
 func TransformNodeBase(node *swarm.Node) *NodeBaseResp {
@@ -136,9 +146,9 @@ func TransformNodeBase(node *swarm.Node) *NodeBaseResp {
 	}
 	isManager := node.Spec.Role == swarm.NodeRoleManager
 	return &NodeBaseResp{
-		ID:           node.ID,
+		ID:           dockerhelper.WrapNodeID(node.ID),
 		Name:         node.Spec.Name,
-		Status:       docker.NodeStatus(node.Status.State),
+		State:        docker.NodeState(node.Status.State),
 		Availability: docker.NodeAvailability(node.Spec.Availability),
 		Role:         docker.NodeRole(node.Spec.Role),
 		IsLeader:     isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader,

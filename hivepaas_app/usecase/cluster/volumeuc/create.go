@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -36,7 +37,6 @@ func (uc *UC) CreateVolume(
 		) error {
 			if req.Scope.IsProjectScope() {
 				req.Name = data.ScopeProject.Key + "_" + req.Name
-				volEntity.Name = req.Name
 			}
 			createResp, err := uc.createVolumeInDocker(ctx, req.VolumeBaseReq)
 			if err != nil {
@@ -47,8 +47,8 @@ func (uc *UC) CreateVolume(
 			if vol.ClusterVolume != nil {
 				volID = vol.ClusterVolume.ID
 			}
-			volEntity.VolumeID = volID
 
+			pData.Setting.ID = dockerhelper.WrapVolumeID(volID)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {

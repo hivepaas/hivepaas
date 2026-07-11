@@ -22,7 +22,7 @@ func (uc *UC) GetVolume(
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
-	err = uc.listVolumesInDocker(ctx, []*entity.Setting{resp.Data}, refClusterObjects)
+	err = uc.listVolumesInDocker(ctx, []*entity.Setting{resp.Data}, nil, refClusterObjects)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

@@ -3,9 +3,12 @@ package volumeuc
 import (
 	"context"
 
+	"github.com/moby/moby/api/types/volume"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -14,7 +17,15 @@ func (uc *UC) ListVolume(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *volumedto.ListVolumeReq,
-) (*volumedto.ListVolumeResp, error) {
+) (_ *volumedto.ListVolumeResp, err error) {
+	var currVols []volume.Volume
+	if req.Scope.IsGlobalScope() {
+		currVols, err = uc.clusterService.SyncVolumes(ctx, uc.DB)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
+	}
+
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
@@ -22,7 +33,7 @@ func (uc *UC) ListVolume(
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
-	err = uc.listVolumesInDocker(ctx, resp.Data, refClusterObjects)
+	err = uc.listVolumesInDocker(ctx, resp.Data, currVols, refClusterObjects)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -41,36 +52,27 @@ func (uc *UC) ListVolume(
 func (uc *UC) listVolumesInDocker(
 	ctx context.Context,
 	settings []*entity.Setting,
+	currVols []volume.Volume,
 	refClusterObjects *entity.RefClusterObjects,
 ) error {
-	volumes := make([]string, 0, len(settings))
-	for _, setting := range settings {
-		vol, err := setting.AsClusterVolume()
+	if currVols == nil {
+		volumes := make([]string, 0, len(settings))
+		for _, setting := range settings {
+			volumes = append(volumes, dockerhelper.ParseID(setting.ID))
+		}
+		if len(volumes) == 0 {
+			return nil
+		}
+
+		res, err := uc.dockerManager.VolumeListByIDs(ctx, volumes)
 		if err != nil {
 			return apperrors.New(err)
 		}
-		volumes = append(volumes, vol.VolumeID)
-	}
-	if len(volumes) == 0 {
-		return nil
+		currVols = res.Items
 	}
 
-	if len(volumes) == 1 {
-		inspectResp, err := uc.dockerManager.VolumeInspect(ctx, volumes[0])
-		if err != nil {
-			return apperrors.New(err)
-		}
-		refClusterObjects.RefVolumes[volumes[0]] = &inspectResp.Volume
-		return nil
-	}
-
-	res, err := uc.dockerManager.VolumeListByIDs(ctx, volumes)
-	if err != nil {
-		return apperrors.New(err)
-	}
-
-	for i := range res.Items {
-		vol := &res.Items[i]
+	for i := range currVols {
+		vol := &currVols[i]
 		volID := vol.Name
 		if vol.ClusterVolume != nil {
 			volID = vol.ClusterVolume.ID

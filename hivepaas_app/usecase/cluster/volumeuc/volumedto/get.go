@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -105,7 +106,7 @@ func TransformVolume(
 		return nil, apperrors.New(err)
 	}
 
-	vol := refClusterObjects.RefVolumes[volEnt.VolumeID]
+	vol := refClusterObjects.RefVolumes[dockerhelper.ParseID(setting.ID)]
 
 	resp.Driver = docker.VolumeDriver(vol.Driver)
 	resp.Mountpoint = vol.Mountpoint
@@ -115,7 +116,6 @@ func TransformVolume(
 	resp.CreatedAt = transformVolumeCreatedAt(vol.CreatedAt)
 	if vol.ClusterVolume != nil {
 		resp.ID = vol.ClusterVolume.ID
-		resp.UpdateVer = int(vol.ClusterVolume.Version.Index) //nolint:gosec
 	}
 	if vol.UsageData != nil {
 		resp.RefCount = vol.UsageData.RefCount

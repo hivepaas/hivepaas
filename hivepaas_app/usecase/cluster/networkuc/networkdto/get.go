@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -57,7 +58,7 @@ func TransformNetwork(
 		return nil, apperrors.New(err)
 	}
 
-	net := refClusterObjects.RefNetworks[netEnt.NetworkID]
+	net := refClusterObjects.RefNetworks[dockerhelper.ParseID(setting.ID)]
 
 	resp.Driver = net.Driver
 	resp.Internal = net.Internal

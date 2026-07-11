@@ -22,9 +22,7 @@ func (s *clusterVolumeParser) New() SettingData {
 }
 
 type ClusterVolume struct {
-	VolumeID string              `json:"volumeId"`
-	Name     string              `json:"name"`
-	Driver   docker.VolumeDriver `json:"driver"`
+	Driver docker.VolumeDriver `json:"driver"`
 }
 
 func (s *ClusterVolume) GetType() base.SettingType {

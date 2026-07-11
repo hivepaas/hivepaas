@@ -3,9 +3,12 @@ package networkuc
 import (
 	"context"
 
+	"github.com/moby/moby/api/types/network"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -14,7 +17,15 @@ func (uc *UC) ListNetwork(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *networkdto.ListNetworkReq,
-) (*networkdto.ListNetworkResp, error) {
+) (_ *networkdto.ListNetworkResp, err error) {
+	var currNets []network.Summary
+	if req.Scope.IsGlobalScope() {
+		currNets, err = uc.clusterService.SyncNetworks(ctx, uc.DB)
+		if err != nil {
+			return nil, apperrors.New(err)
+		}
+	}
+
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
@@ -22,7 +33,7 @@ func (uc *UC) ListNetwork(
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
-	err = uc.listNetworksInDocker(ctx, resp.Data, refClusterObjects)
+	err = uc.listNetworksInDocker(ctx, resp.Data, currNets, refClusterObjects)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -41,36 +52,27 @@ func (uc *UC) ListNetwork(
 func (uc *UC) listNetworksInDocker(
 	ctx context.Context,
 	settings []*entity.Setting,
+	currNets []network.Summary,
 	refClusterObjects *entity.RefClusterObjects,
 ) error {
-	networks := make([]string, 0, len(settings))
-	for _, setting := range settings {
-		net, err := setting.AsClusterNetwork()
+	if currNets == nil {
+		networks := make([]string, 0, len(settings))
+		for _, setting := range settings {
+			networks = append(networks, dockerhelper.ParseID(setting.ID))
+		}
+		if len(networks) == 0 {
+			return nil
+		}
+
+		res, err := uc.dockerManager.NetworkListByIDs(ctx, networks)
 		if err != nil {
 			return apperrors.New(err)
 		}
-		networks = append(networks, net.NetworkID)
-	}
-	if len(networks) == 0 {
-		return nil
+		currNets = res.Items
 	}
 
-	if len(networks) == 1 {
-		inspectResp, err := uc.dockerManager.NetworkInspect(ctx, networks[0])
-		if err != nil {
-			return apperrors.New(err)
-		}
-		refClusterObjects.RefNetworks[networks[0]] = &inspectResp.Network.Network
-		return nil
-	}
-
-	res, err := uc.dockerManager.NetworkListByIDs(ctx, networks)
-	if err != nil {
-		return apperrors.New(err)
-	}
-
-	for i := range res.Items {
-		net := &res.Items[i]
+	for i := range currNets {
+		net := &currNets[i]
 		refClusterObjects.RefNetworks[net.ID] = &net.Network
 	}
 	return nil

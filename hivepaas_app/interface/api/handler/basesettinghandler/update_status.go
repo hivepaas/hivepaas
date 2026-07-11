@@ -101,6 +101,10 @@ func (h *Handler) UpdateSettingStatus(
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ClusterNetworkUC.UpdateNetworkStatus(reqCtx, auth, r) }
 
+	case base.ResourceTypeClusterNode:
+		// NOTE: not implemented
+		err = apperrors.NewNotImplementedNT()
+
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewUpdateVolumeStatusReq()
 		r.Scope, r.ID = scope, itemID

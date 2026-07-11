@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
@@ -113,6 +114,11 @@ func (h *Handler) DeleteSetting(
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ClusterNetworkUC.DeleteNetwork(reqCtx, auth, r) }
 
+	case base.ResourceTypeClusterNode:
+		r := nodedto.NewDeleteNodeReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.ClusterNodeUC.DeleteNode(reqCtx, auth, r) }
+
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewDeleteVolumeReq()
 		r.Scope, r.ID = scope, itemID
@@ -192,6 +198,7 @@ func (h *Handler) DeleteSetting(
 		r := sslproviderdto.NewDeleteSSLProviderReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.SSLProviderUC.DeleteSSLProvider(reqCtx, auth, r) }
+
 	default:
 		// NOTE: not implemented
 		err = apperrors.NewNotImplementedNT()

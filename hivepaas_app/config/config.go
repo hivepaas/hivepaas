@@ -34,6 +34,7 @@ const (
 	RunModeApp          = "app"
 	RunModeWorker       = "worker"
 	RunModeAppAndWorker = "app+worker"
+	RunModeAgent        = "agent"
 	RunModeUpdater      = "updater"
 )
 

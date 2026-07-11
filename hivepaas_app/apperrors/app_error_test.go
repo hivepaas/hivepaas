@@ -77,7 +77,7 @@ func TestGetMessageID(t *testing.T) {
 		{
 			name:     "errors.Join containing wrapped message id",
 			err:      errors.Join(errors.New("ordinary error"), fmt.Errorf("wrap: %w", errors.New("ERR_NOT_FOUND"))),
-			expected: "wrap: ERR_NOT_FOUND",
+			expected: "ERR_NOT_FOUND",
 		},
 		{
 			name:     "errors.Join without message id",

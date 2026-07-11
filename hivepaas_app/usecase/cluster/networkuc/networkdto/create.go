@@ -41,9 +41,7 @@ func (req *CreateNetworkBaseReq) validate(field string) (res []vld.Validator) {
 }
 
 func (req *CreateNetworkBaseReq) ToEntity() *entity.ClusterNetwork {
-	return &entity.ClusterNetwork{
-		Name: req.Name,
-	}
+	return &entity.ClusterNetwork{}
 }
 
 func NewCreateNetworkReq() *CreateNetworkReq {
@@ -53,6 +51,7 @@ func NewCreateNetworkReq() *CreateNetworkReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateNetworkReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

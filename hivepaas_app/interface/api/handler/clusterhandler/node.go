@@ -10,13 +10,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
-// ListNode Lists cluster nodes
-// @Summary Lists cluster nodes
-// @Description Lists cluster nodes
+// ListNode Lists cluster node settings
+// @Summary Lists cluster node settings
+// @Description Lists cluster node settings
 // @Tags    cluster_nodes
 // @Produce json
 // @Id      listClusterNode
-// @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
@@ -26,163 +25,53 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /cluster/nodes [get]
 func (h *Handler) ListNode(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeRead, "")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := nodedto.NewListNodeReq()
-	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.nodeUC.ListNode(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
+	h.ListSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
 }
 
-// GetNode Gets node details
-// @Summary Gets node details
-// @Description Gets node details
+// GetNode Gets node setting details
+// @Summary Gets node setting details
+// @Description Gets node setting details
 // @Tags    cluster_nodes
 // @Produce json
 // @Id      getClusterNode
-// @Param   nodeID path string true "node ID"
+// @Param   itemID path string true "setting ID"
 // @Success 200 {object} nodedto.GetNodeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /cluster/nodes/{nodeID} [get]
+// @Router  /cluster/nodes/{itemID} [get]
 func (h *Handler) GetNode(ctx *gin.Context) {
-	auth, nodeID, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeRead, "nodeID")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := nodedto.NewGetNodeReq()
-	req.NodeID = nodeID
-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil { // to make sure Validate() to be called
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.nodeUC.GetNode(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
+	h.GetSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
 }
 
-// GetNodeInspection Gets node details
-// @Summary Gets node details
-// @Description Gets node details
-// @Tags    cluster_nodes
-// @Produce json
-// @Id      getClusterNodeInspection
-// @Param   nodeID path string true "node ID"
-// @Success 200 {object} nodedto.GetNodeInspectionResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /cluster/nodes/{nodeID}/inspect [get]
-func (h *Handler) GetNodeInspection(ctx *gin.Context) {
-	auth, nodeID, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeRead, "nodeID")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := nodedto.NewGetNodeInspectionReq()
-	req.NodeID = nodeID
-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil { // to make sure Validate() to be called
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.nodeUC.GetNodeInspection(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-
-// UpdateNode Updates a node
-// @Summary Updates a node
-// @Description Updates a node
+// UpdateNode Updates cluster node
+// @Summary Updates cluster node
+// @Description Updates cluster node
 // @Tags    cluster_nodes
 // @Produce json
 // @Id      updateClusterNode
-// @Param   nodeID path string true "node ID"
+// @Param   itemID path string true "setting ID"
 // @Param   body body nodedto.UpdateNodeReq true "request data"
 // @Success 200 {object} nodedto.UpdateNodeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /cluster/nodes/{nodeID} [put]
+// @Router  /cluster/nodes/{itemID} [put]
 func (h *Handler) UpdateNode(ctx *gin.Context) {
-	auth, nodeID, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeWrite, "nodeID")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := nodedto.NewUpdateNodeReq()
-	req.NodeID = nodeID
-	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.nodeUC.UpdateNode(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
+	h.UpdateSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
 }
 
-// DeleteNode Deletes a node
-// @Summary Deletes a node
-// @Description Deletes a node
+// DeleteNode Deletes node setting
+// @Summary Deletes node setting
+// @Description Deletes node setting
 // @Tags    cluster_nodes
 // @Produce json
 // @Id      deleteClusterNode
-// @Param   nodeID path string true "node ID"
-// @Param   force query bool false "`force=true/false`"
+// @Param   itemID path string true "setting ID"
 // @Success 200 {object} nodedto.DeleteNodeResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /cluster/nodes/{nodeID} [delete]
+// @Router  /cluster/nodes/{itemID} [delete]
 func (h *Handler) DeleteNode(ctx *gin.Context) {
-	auth, nodeID, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeDelete, "nodeID")
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := nodedto.NewDeleteNodeReq()
-	req.NodeID = nodeID
-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil { // to make sure Validate() to be called
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.nodeUC.DeleteNode(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
+	h.DeleteSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
 }
 
 // JoinNode Joins a node to the swarm

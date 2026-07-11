@@ -12,10 +12,9 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		nodeGroup := clusterGroup.Group("/nodes")
 		// Nodes
 		nodeGroup.GET("", clusterHandler.ListNode)
-		nodeGroup.GET("/:nodeID", clusterHandler.GetNode)
-		nodeGroup.GET("/:nodeID/inspect", clusterHandler.GetNodeInspection)
-		nodeGroup.PUT("/:nodeID", clusterHandler.UpdateNode)
-		nodeGroup.DELETE("/:nodeID", clusterHandler.DeleteNode)
+		nodeGroup.GET("/:itemID", clusterHandler.GetNode)
+		nodeGroup.PUT("/:itemID", clusterHandler.UpdateNode)
+		nodeGroup.DELETE("/:itemID", clusterHandler.DeleteNode)
 		// Node join
 		nodeGroup.POST("/join", clusterHandler.JoinNode)
 		nodeGroup.GET("/join-command", clusterHandler.GetNodeJoinCommand)

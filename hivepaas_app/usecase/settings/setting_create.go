@@ -3,6 +3,7 @@ package settings
 import (
 	"context"
 
+	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -20,6 +21,10 @@ type CreateSettingReq struct {
 	BaseSettingReq
 	AvailInProjects bool `json:"availableInProjects"`
 	Default         bool `json:"default"`
+}
+
+func (req *CreateSettingReq) Validate() (validators []vld.Validator) {
+	return
 }
 
 type CreateSettingResp struct {

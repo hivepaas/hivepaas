@@ -112,6 +112,10 @@ func (h *Handler) CreateSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ClusterNetworkUC.CreateNetwork(reqCtx, auth, r) }
 
+	case base.ResourceTypeClusterNode:
+		// NOTE: not implemented
+		err = apperrors.NewNotImplementedNT()
+
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewCreateVolumeReq()
 		r.Scope = scope
@@ -191,6 +195,14 @@ func (h *Handler) CreateSetting(
 		r := sslproviderdto.NewCreateSSLProviderReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.SSLProviderUC.CreateSSLProvider(reqCtx, auth, r) }
+
+	default:
+		// NOTE: not implemented
+		err = apperrors.NewNotImplementedNT()
+	}
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
 	}
 
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {

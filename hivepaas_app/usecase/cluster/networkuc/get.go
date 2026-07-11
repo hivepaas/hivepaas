@@ -22,7 +22,7 @@ func (uc *UC) GetNetwork(
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
-	err = uc.listNetworksInDocker(ctx, []*entity.Setting{resp.Data}, refClusterObjects)
+	err = uc.listNetworksInDocker(ctx, []*entity.Setting{resp.Data}, nil, refClusterObjects)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}

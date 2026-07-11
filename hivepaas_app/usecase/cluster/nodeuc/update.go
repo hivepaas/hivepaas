@@ -7,8 +7,10 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
 func (uc *UC) UpdateNode(
@@ -16,65 +18,43 @@ func (uc *UC) UpdateNode(
 	auth *basedto.Auth,
 	req *nodedto.UpdateNodeReq,
 ) (*nodedto.UpdateNodeResp, error) {
-	inspect, err := uc.dockerManager.NodeInspect(ctx, req.NodeID)
-	if err != nil {
-		return nil, apperrors.New(err)
-	}
-	node := &inspect.Node
+	req.Type = currentSettingType
+	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
+		PrepareUpdate: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.UpdateSettingData,
+			pData *settings.PersistingSettingData,
+		) error {
+			nodeID := dockerhelper.ParseID(data.Setting.ID)
+			inspect, err := uc.dockerManager.NodeInspect(ctx, nodeID)
+			if err != nil {
+				return apperrors.New(err)
+			}
+			node := &inspect.Node
+			spec := &node.Spec
 
-	err = uc.verifyNodeUpdateChange(ctx, req, node)
-	if err != nil {
-		return nil, apperrors.New(err)
-	}
+			if req.Name != "" {
+				spec.Annotations.Name = req.Name //nolint
+			}
+			spec.Labels = dockerhelper.ApplyUserLabels(spec.Labels, req.Labels)
+			if req.Role != "" {
+				spec.Role = swarm.NodeRole(req.Role)
+			}
+			if req.Availability != "" {
+				spec.Availability = swarm.NodeAvailability(req.Availability)
+			}
 
-	spec := &node.Spec
-
-	if req.Name != "" {
-		spec.Annotations.Name = req.Name //nolint
-	}
-	spec.Labels = dockerhelper.ApplyUserLabels(spec.Labels, req.Labels)
-	if req.Role != "" {
-		spec.Role = swarm.NodeRole(req.Role)
-	}
-	if req.Availability != "" {
-		spec.Availability = swarm.NodeAvailability(req.Availability)
-	}
-
-	_, err = uc.dockerManager.NodeUpdate(ctx, req.NodeID, &node.Version, spec)
+			_, err = uc.dockerManager.NodeUpdate(ctx, nodeID, &node.Version, spec)
+			if err != nil {
+				return apperrors.New(err)
+			}
+			return nil
+		},
+	})
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
 
 	return &nodedto.UpdateNodeResp{}, nil
-}
-
-func (uc *UC) verifyNodeUpdateChange(
-	ctx context.Context,
-	req *nodedto.UpdateNodeReq,
-	node *swarm.Node,
-) error {
-	if uint64(req.UpdateVer) != node.Version.Index { //nolint:gosec
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
-	}
-
-	spec := &node.Spec
-
-	roleDemoting := swarm.NodeRole(req.Role) == swarm.NodeRoleWorker && spec.Role == swarm.NodeRoleManager
-	availabilityLosing := swarm.NodeAvailability(req.Availability) != swarm.NodeAvailabilityActive &&
-		spec.Availability == swarm.NodeAvailabilityActive
-
-	if roleDemoting || availabilityLosing {
-		tasks, err := uc.hpAppService.GetHpAppTasks(ctx)
-		if err != nil {
-			return apperrors.New(err)
-		}
-		allNodes := make(map[string]*swarm.Task)
-		for i := range tasks {
-			allNodes[tasks[i].NodeID] = &tasks[i]
-		}
-		if len(allNodes) == 1 && allNodes[node.ID] != nil {
-			return apperrors.New(apperrors.ErrNodeRequiredByHivePaaSApp).WithDisplayLevelHigh()
-		}
-	}
-	return nil
 }

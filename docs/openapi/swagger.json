@@ -1097,16 +1097,9 @@
     },
     "/cluster/nodes" : {
       "get" : {
-        "description" : "Lists cluster nodes",
+        "description" : "Lists cluster node settings",
         "operationId" : "listClusterNode",
         "parameters" : [ {
-          "description" : "`status=<target>`",
-          "in" : "query",
-          "name" : "status",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
           "description" : "`search=<target> (support *)`",
           "in" : "query",
           "name" : "search",
@@ -1167,7 +1160,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Lists cluster nodes",
+        "summary" : "Lists cluster node settings",
         "tags" : [ "cluster_nodes" ]
       }
     },
@@ -1271,24 +1264,17 @@
         "tags" : [ "cluster_nodes" ]
       }
     },
-    "/cluster/nodes/{nodeID}" : {
+    "/cluster/nodes/{itemID}" : {
       "delete" : {
-        "description" : "Deletes a node",
+        "description" : "Deletes node setting",
         "operationId" : "deleteClusterNode",
         "parameters" : [ {
-          "description" : "node ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "nodeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
-          }
-        }, {
-          "description" : "`force=true/false`",
-          "in" : "query",
-          "name" : "force",
-          "schema" : {
-            "type" : "boolean"
           }
         } ],
         "responses" : {
@@ -1323,16 +1309,16 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Deletes a node",
+        "summary" : "Deletes node setting",
         "tags" : [ "cluster_nodes" ]
       },
       "get" : {
-        "description" : "Gets node details",
+        "description" : "Gets node setting details",
         "operationId" : "getClusterNode",
         "parameters" : [ {
-          "description" : "node ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "nodeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -1370,16 +1356,16 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Gets node details",
+        "summary" : "Gets node setting details",
         "tags" : [ "cluster_nodes" ]
       },
       "put" : {
-        "description" : "Updates a node",
+        "description" : "Updates cluster node",
         "operationId" : "updateClusterNode",
         "parameters" : [ {
-          "description" : "node ID",
+          "description" : "setting ID",
           "in" : "path",
-          "name" : "nodeID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -1428,58 +1414,9 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates a node",
+        "summary" : "Updates cluster node",
         "tags" : [ "cluster_nodes" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/cluster/nodes/{nodeID}/inspect" : {
-      "get" : {
-        "description" : "Gets node details",
-        "operationId" : "getClusterNodeInspection",
-        "parameters" : [ {
-          "description" : "node ID",
-          "in" : "path",
-          "name" : "nodeID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.GetNodeInspectionResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets node details",
-        "tags" : [ "cluster_nodes" ]
       }
     },
     "/cluster/volumes" : {
@@ -27735,7 +27672,7 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -27753,7 +27690,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -31121,18 +31058,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.GetNodeInspectionResp" : {
-        "properties" : {
-          "data" : {
-            "type" : "string"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.GetNodeJoinCommandDataResp" : {
         "properties" : {
           "command" : {
@@ -31246,11 +31171,11 @@
           "role" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeRole"
           },
-          "status" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeStatus"
+          "state" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeState"
           }
         },
-        "required" : [ "addr", "availability", "hostname", "id", "isLeader", "name", "role", "status" ],
+        "required" : [ "addr", "availability", "hostname", "id", "isLeader", "name", "role", "state" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.NodeEngineDescResp" : {
@@ -31321,11 +31246,20 @@
           "availability" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeAvailability"
           },
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
           "createdAt" : {
             "type" : "string"
           },
+          "default" : {
+            "type" : "boolean"
+          },
           "engineDesc" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.NodeEngineDescResp"
+          },
+          "expireAt" : {
+            "type" : "string"
           },
           "hostname" : {
             "type" : "string"
@@ -31333,8 +31267,14 @@
           "id" : {
             "type" : "string"
           },
+          "inherited" : {
+            "type" : "boolean"
+          },
           "isLeader" : {
             "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
           },
           "labels" : {
             "additionalProperties" : {
@@ -31354,8 +31294,17 @@
           "role" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeRole"
           },
+          "size" : {
+            "type" : "integer"
+          },
+          "state" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeState"
+          },
           "status" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeStatus"
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
           },
           "updateVer" : {
             "type" : "integer"
@@ -31364,13 +31313,19 @@
             "type" : "string"
           }
         },
-        "required" : [ "addr", "availability", "createdAt", "engineDesc", "hostname", "id", "isLeader", "labels", "name", "platform", "resources", "role", "status", "updateVer", "updatedAt" ],
+        "required" : [ "addr", "availability", "availableInProjects", "createdAt", "default", "engineDesc", "expireAt", "hostname", "id", "inherited", "isLeader", "kind", "labels", "name", "platform", "resources", "role", "size", "state", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.UpdateNodeReq" : {
         "properties" : {
           "availability" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_services_docker.NodeAvailability"
+          },
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
           },
           "labels" : {
             "additionalProperties" : {
@@ -31388,7 +31343,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availability", "labels", "name", "role", "updateVer" ],
+        "required" : [ "availability", "availableInProjects", "default", "labels", "name", "role", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_cluster_nodeuc_nodedto.UpdateNodeResp" : {
@@ -42733,7 +42688,7 @@
         "type" : "string",
         "x-enum-varnames" : [ "NodeRoleManager", "NodeRoleWorker" ]
       },
-      "github_com_hivepaas_hivepaas_services_docker.NodeStatus" : {
+      "github_com_hivepaas_hivepaas_services_docker.NodeState" : {
         "enum" : [ "unknown", "down", "ready", "disconnected" ],
         "type" : "string",
         "x-enum-varnames" : [ "NodeStatusUnknown", "NodeStatusDown", "NodeStatusReady", "NodeStatusDisconnected" ]
@@ -42809,9 +42764,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

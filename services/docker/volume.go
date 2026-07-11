@@ -73,7 +73,7 @@ func (m *manager) VolumeListByIDs(
 			return nil, apperrors.New(err)
 		}
 		if inspect != nil {
-			resp.Items = append(resp.Items, inspect.Volume)
+			resp.Items = []volume.Volume{inspect.Volume}
 		}
 		return resp, nil
 	}

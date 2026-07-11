@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accessiblebyprojectsuc"
@@ -44,6 +45,7 @@ type Handler struct {
 	OAuthUC                *oauthuc.UC
 	CloudStorageUC         *cloudstorageuc.UC
 	ClusterNetworkUC       *networkuc.UC
+	ClusterNodeUC          *nodeuc.UC
 	ClusterVolumeUC        *volumeuc.UC
 	SSHKeyUC               *sshkeyuc.UC
 	IMServiceUC            *imserviceuc.UC
@@ -81,6 +83,7 @@ func New(
 	oauthUC *oauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
 	clusterNetworkUC *networkuc.UC,
+	clusterNodeUC *nodeuc.UC,
 	clusterVolumeUC *volumeuc.UC,
 	sshKeyUC *sshkeyuc.UC,
 	imServiceUC *imserviceuc.UC,
@@ -117,6 +120,7 @@ func New(
 		OAuthUC:                oauthUC,
 		CloudStorageUC:         cloudStorageUC,
 		ClusterNetworkUC:       clusterNetworkUC,
+		ClusterNodeUC:          clusterNodeUC,
 		ClusterVolumeUC:        clusterVolumeUC,
 		SSHKeyUC:               sshKeyUC,
 		IMServiceUC:            imServiceUC,

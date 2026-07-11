@@ -20,6 +20,7 @@ func NewUpdateVolumeStatusReq() *UpdateVolumeStatusReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateVolumeStatusReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, req.UpdateSettingStatusReq.Validate()...)
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

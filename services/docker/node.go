@@ -2,24 +2,26 @@ package docker
 
 import (
 	"context"
+	"errors"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
-type NodeStatus string
+type NodeState string
 
 const (
-	NodeStatusUnknown      = NodeStatus(swarm.NodeStateUnknown)
-	NodeStatusDown         = NodeStatus(swarm.NodeStateDown)
-	NodeStatusReady        = NodeStatus(swarm.NodeStateReady)
-	NodeStatusDisconnected = NodeStatus(swarm.NodeStateDisconnected)
+	NodeStatusUnknown      = NodeState(swarm.NodeStateUnknown)
+	NodeStatusDown         = NodeState(swarm.NodeStateDown)
+	NodeStatusReady        = NodeState(swarm.NodeStateReady)
+	NodeStatusDisconnected = NodeState(swarm.NodeStateDisconnected)
 )
 
 var (
-	AllNodeStatuses = []NodeStatus{NodeStatusUnknown, NodeStatusDown, NodeStatusReady, NodeStatusDisconnected}
+	AllNodeStates = []NodeState{NodeStatusUnknown, NodeStatusDown, NodeStatusReady, NodeStatusDisconnected}
 )
 
 type NodeRole string
@@ -71,6 +73,42 @@ func (m *manager) NodeManagerList(
 		FilterAdd(&opts.Filters, "role", "manager")
 	})
 	return m.NodeList(ctx, options...)
+}
+
+func (m *manager) NodeListByIDs(
+	ctx context.Context,
+	nodeIDOrNames []string,
+	options ...NodeListOption,
+) (*client.NodeListResult, error) {
+	resp := &client.NodeListResult{}
+	if len(nodeIDOrNames) == 0 {
+		return resp, nil
+	}
+
+	if len(nodeIDOrNames) == 1 {
+		inspect, err := m.NodeInspect(ctx, nodeIDOrNames[0])
+		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+			return nil, apperrors.New(err)
+		}
+		if inspect != nil {
+			resp.Items = []swarm.Node{inspect.Node}
+		}
+		return resp, nil
+	}
+
+	listResp, err := m.NodeList(ctx, options...)
+	if err != nil {
+		return nil, apperrors.New(err)
+	}
+	for i := range listResp.Items {
+		node := &listResp.Items[i]
+		if gofn.Contain(nodeIDOrNames, node.ID) || gofn.Contain(nodeIDOrNames, node.Spec.Name) {
+			resp.Items = append(resp.Items, *node)
+			continue
+		}
+	}
+
+	return resp, nil
 }
 
 type NodeInspectOption func(*client.NodeInspectOptions)

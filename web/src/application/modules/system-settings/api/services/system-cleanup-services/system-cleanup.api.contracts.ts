@@ -19,7 +19,7 @@ export type SystemCleanup_UpdateOne_Payload = {
     schedule: {
         interval: string;
         cronExpr: string;
-        initialTime: Date | null;
+        initialTime?: Date;
     };
     dbObjectRetention: {
         enabled: boolean;

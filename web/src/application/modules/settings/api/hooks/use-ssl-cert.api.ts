@@ -7,6 +7,7 @@ import type {
     SslCert_DeleteOne_Req,
     SslCert_FindManyPaginated_Req,
     SslCert_FindOneById_Req,
+    SslCert_RenewOne_Req,
     SslCert_UpdateOne_Req,
     SslCert_UpdateStatus_Req,
 } from "~/settings/api/services/ssl-cert-services";
@@ -128,6 +129,23 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete SSL certificate",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                renewOne: async (data: SslCert_RenewOne_Req["data"]) => {
+                    const result = await api.settings.sslCert.renewOne({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to renew SSL certificate",
                                 error,
                             });
 

@@ -102,3 +102,9 @@ export type SslCert_DeleteOne_Req = ApiRequestBase<{
 }>;
 
 export type SslCert_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type SslCert_RenewOne_Req = ApiRequestBase<{
+    id: string;
+}>;
+
+export type SslCert_RenewOne_Res = ApiResponseBase<{ type: "success" }>;

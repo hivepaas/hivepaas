@@ -32,10 +32,19 @@ export const CreateOrEditSslCertFormSchema = z
         }),
     })
     .superRefine((value, ctx) => {
+        const requiresProvider = value.certType === ESslCertType.ZeroSSL || value.certType === ESslCertType.GoogleTrust;
         const requiresAcmeProvider =
             value.domain.trim().startsWith("*.") &&
             value.certType !== ESslCertType.Custom &&
             value.certType !== ESslCertType.SelfSigned;
+
+        if (requiresProvider && !value.provider?.id) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["provider"],
+                message: "SSL Provider is required",
+            });
+        }
 
         if (requiresAcmeProvider && !value.acmeProvider?.id) {
             ctx.addIssue({

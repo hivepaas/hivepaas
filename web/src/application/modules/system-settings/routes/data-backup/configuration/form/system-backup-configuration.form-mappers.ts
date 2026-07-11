@@ -11,7 +11,7 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
     scheduleMode: SystemBackupScheduleMode.Interval,
     scheduleInterval: "24h",
     scheduleCronExpr: "",
-    scheduleFrom: new Date(),
+    scheduleFrom: null,
     compressionFormat: ESystemBackupCompressionFormat.Gzip,
     encryptionFormat: ESystemBackupEncryptionFormat.None,
     encryptionSecret: "",

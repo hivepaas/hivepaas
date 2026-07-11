@@ -7,7 +7,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -86,7 +86,7 @@ export function SingleUserRoute() {
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >
-                <div className="flex justify-end">
+                <FormActionBar>
                     <PermissionTooltipAction
                         id={MODULE_IDS.User}
                         action="write"
@@ -102,7 +102,7 @@ export function SingleUserRoute() {
                             </Button>
                         )}
                     </PermissionTooltipAction>
-                </div>
+                </FormActionBar>
             </SingleUserForm>
         </div>
     );

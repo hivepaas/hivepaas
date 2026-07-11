@@ -1425,6 +1425,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.dataFiles.create.$pattern,
+                            lazy: async () => {
+                                const { AppDataFileCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppDataFileCreateRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$pattern,
                             lazy: async () => {
                                 const { AppConfigAvailabilityRoute } = await getLazyComponents();

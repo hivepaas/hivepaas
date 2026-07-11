@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, RotateCcw, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
@@ -18,6 +18,20 @@ function View({ scope, sslCert }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateSslCertStatusDialog();
+    const { mutate: renewSettingSslCert, isPending: isRenewingSetting } = SslCertCommands.useRenewOne({
+        onSuccess: () => {
+            toast.success("SSL certificate renewal started");
+            setOpen(false);
+        },
+    });
+
+    const { mutate: renewProjectSslCert, isPending: isRenewingProject } = ProjectSslCertCommands.useRenewOne({
+        onSuccess: () => {
+            toast.success("SSL certificate renewal started");
+            setOpen(false);
+        },
+    });
+
     const { mutate: deleteSettingSslCert, isPending: isDeletingSetting } = SslCertCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("SSL certificate deleted successfully");
@@ -33,7 +47,20 @@ function View({ scope, sslCert }: Props) {
     });
 
     const isDeleting = isDeletingSetting || isDeletingProject;
+    const isRenewing = isRenewingSetting || isRenewingProject;
     const isInheritedProject = isInheritedProjectSetting(scope, sslCert.inherited);
+
+    function handleRenew() {
+        if (scope.type === "project") {
+            renewProjectSslCert({
+                projectID: scope.projectId,
+                id: sslCert.id,
+            });
+            return;
+        }
+
+        renewSettingSslCert({ id: sslCert.id });
+    }
 
     function handleDelete() {
         if (scope.type === "project") {
@@ -80,6 +107,15 @@ function View({ scope, sslCert }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
+                        isLoading={isRenewing}
+                        onClick={handleRenew}
+                    >
+                        <RotateCcw className="mr-2 size-4" />
+                        Renew Now
+                    </SettingsScopeMenuButton>
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

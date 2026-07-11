@@ -9,6 +9,7 @@ import type {
     SslCert_DeleteOne_Res,
     SslCert_FindManyPaginated_Res,
     SslCert_FindOneById_Res,
+    SslCert_RenewOne_Res,
     SslCert_UpdateOne_Res,
     SslCert_UpdateStatus_Res,
 } from "./ssl-cert.api.contracts";
@@ -81,6 +82,15 @@ export class SslCertApiValidator {
     };
 
     deleteOne = (response: AxiosResponse): SslCert_DeleteOne_Res => {
+        parseApiResponse({
+            response,
+            schema: MetaOnlySchema,
+        });
+
+        return { data: { type: "success" } };
+    };
+
+    renewOne = (response: AxiosResponse): SslCert_RenewOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

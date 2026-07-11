@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 
 import { type ProfilePhotoPayload } from "@application/shared/api/services";
+import { FormActionBar } from "@application/shared/components";
 import { useProfileContext } from "@application/shared/context";
 import { ProfileCommands } from "@application/shared/data/commands";
 
@@ -75,7 +76,7 @@ export function ProfileRoute() {
                 onPhotoSubmit={handlePhotoSubmit}
                 isPhotoPending={isUpdatingProfilePhoto}
             >
-                <div className="flex justify-end">
+                <FormActionBar>
                     <Button
                         type="submit"
                         className="min-w-[100px]"
@@ -84,7 +85,7 @@ export function ProfileRoute() {
                     >
                         Save
                     </Button>
-                </div>
+                </FormActionBar>
             </ProfileForm>
         </div>
     );

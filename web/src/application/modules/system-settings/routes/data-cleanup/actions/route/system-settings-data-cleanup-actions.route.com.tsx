@@ -6,6 +6,7 @@ import { SystemCleanupCommands, SystemCleanupQueries } from "~/system-settings/d
 import type { SystemCleanupBuildCacheClearResult, SystemCleanupRepoCacheClearResult } from "~/system-settings/domain";
 import { ActionExecutePanel } from "~/system-settings/module-shared";
 
+import { FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
@@ -53,8 +54,13 @@ function getResultDialogProps(result: ClearCacheResult | null): { title: string;
     };
 }
 
-function CacheActionPanel({ children }: { children: ReactNode }) {
-    return <div className="rounded-lg border bg-background p-6">{children}</div>;
+function CacheActionPanel({ children, actions }: { children: ReactNode; actions: ReactNode }) {
+    return (
+        <div className="rounded-lg border bg-background">
+            <div className="p-6 flex flex-col gap-6">{children}</div>
+            <FormActionBar contentClassName="justify-between">{actions}</FormActionBar>
+        </div>
+    );
 }
 
 export function SystemSettingsDataCleanupActionsRoute() {
@@ -141,21 +147,18 @@ export function SystemSettingsDataCleanupActionsRoute() {
                     }}
                 />
 
-                <CacheActionPanel>
-                    <div className="flex flex-col items-start gap-6">
-                        <p className="text-base text-foreground">
-                            Using the repository cache can significantly reduce your application deployment time.
-                            However, it will consume system storage space.
-                        </p>
-
-                        <div className="flex min-h-9 flex-wrap items-center gap-x-10 gap-y-4">
-                            {hasQueriedRepoCache && (
-                                <>
-                                    <span>Total Files: {totalFiles}</span>
-                                    <span>Total Size: {totalSize}</span>
-                                </>
-                            )}
-
+                <CacheActionPanel
+                    actions={
+                        <>
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="px-0 text-primary underline-offset-4 hover:underline"
+                                isLoading={repoCacheQuery.isFetching}
+                                onClick={handleQueryRepoCache}
+                            >
+                                Query Repo Cache Info
+                            </Button>
                             {canClearRepoCache && (
                                 <PermissionTooltipAction
                                     id={MODULE_IDS.System}
@@ -174,27 +177,23 @@ export function SystemSettingsDataCleanupActionsRoute() {
                                     )}
                                 </PermissionTooltipAction>
                             )}
-
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="px-0 text-primary underline-offset-4 hover:underline"
-                                isLoading={repoCacheQuery.isFetching}
-                                onClick={handleQueryRepoCache}
-                            >
-                                Query Repo Cache Info
-                            </Button>
+                        </>
+                    }
+                >
+                    <p className="text-base text-foreground">
+                        Using the repository cache can significantly reduce your application deployment time. However,
+                        it will consume system storage space.
+                    </p>
+                    {hasQueriedRepoCache && (
+                        <div className="flex flex-wrap items-center gap-x-10 gap-y-2">
+                            <span>Total Files: {totalFiles}</span>
+                            <span>Total Size: {totalSize}</span>
                         </div>
-                    </div>
+                    )}
                 </CacheActionPanel>
 
-                <CacheActionPanel>
-                    <div className="flex flex-col items-start gap-6">
-                        <p className="text-base text-foreground">
-                            Docker uses the build cache to reduce image build time for subsequent builds. You can clear
-                            this cache to reclaim storage space.
-                        </p>
-
+                <CacheActionPanel
+                    actions={
                         <PermissionTooltipAction
                             id={MODULE_IDS.System}
                             action="write"
@@ -211,7 +210,12 @@ export function SystemSettingsDataCleanupActionsRoute() {
                                 </Button>
                             )}
                         </PermissionTooltipAction>
-                    </div>
+                    }
+                >
+                    <p className="text-base text-foreground">
+                        Docker uses the build cache to reduce image build time for subsequent builds. You can clear this
+                        cache to reclaim storage space.
+                    </p>
                 </CacheActionPanel>
             </div>
 

@@ -89,6 +89,7 @@ export {
     AppConfigFileCreateRoute,
     AppConfigFileEditRoute,
     AppDataFilesRoute,
+    AppDataFileCreateRoute,
     AppConfigAvailabilityRoute,
     AppConfigStorageRoute,
     AppConfigStorageListRoute,

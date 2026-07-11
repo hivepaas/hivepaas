@@ -22,7 +22,7 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
         schedule: {
             interval: values.scheduleMode === SystemBackupScheduleMode.Interval ? values.scheduleInterval : "",
             cronExpr: values.scheduleMode === SystemBackupScheduleMode.Cron ? values.scheduleCronExpr : "",
-            initialTime: values.scheduleFrom ?? null,
+            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
         },
         compression: {
             format: values.compressionFormat,

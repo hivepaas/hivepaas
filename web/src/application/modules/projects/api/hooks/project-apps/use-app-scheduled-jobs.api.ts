@@ -16,7 +16,7 @@ import type {
     AppScheduledJobs_UpdateStatus_Req,
 } from "~/projects/api/services";
 
-import { useApiErrorNotifications } from "@infrastructure/api";
+import { isFeatureDisabledException, useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
     return function useAppScheduledJobsApi() {
@@ -34,6 +34,13 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
+                            if (!isFeatureDisabledException(error)) {
+                                notifyError({
+                                    message: "Failed to load app scheduled jobs",
+                                    error,
+                                });
+                            }
+
                             throw error;
                         },
                     });
@@ -82,7 +89,7 @@ function createHook() {
                     });
                 },
             }),
-            [api],
+            [api, notifyError],
         );
 
         const mutations = useMemo(

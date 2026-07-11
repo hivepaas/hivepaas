@@ -1,8 +1,10 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    AppDataFiles_CreateOne_Res,
     AppDataFiles_FindManyPaginated_Res,
     AppDataFiles_GetDownloadUrl_Res,
+    AppDataFiles_UploadLocal_Res,
 } from "~/projects/api/services/project-apps-services/data-files";
 import { AppDataFileStorageType } from "~/projects/domain";
 
@@ -52,6 +54,18 @@ const GetDownloadUrlSchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
+const UploadLocalSchema = z.object({
+    data: z.array(AppDataFileSchema),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const CreateOneSchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 export class AppDataFilesApiValidator {
     findManyPaginated = (response: AxiosResponse): AppDataFiles_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
@@ -66,6 +80,21 @@ export class AppDataFilesApiValidator {
         return parseApiResponse({
             response,
             schema: GetDownloadUrlSchema,
+        });
+    };
+
+    uploadLocal = (response: AxiosResponse): AppDataFiles_UploadLocal_Res => {
+        const parsed = parseApiResponse({
+            response,
+            schema: UploadLocalSchema,
+        });
+        return { data: { files: parsed.data }, meta: parsed.meta };
+    };
+
+    createOne = (response: AxiosResponse): AppDataFiles_CreateOne_Res => {
+        return parseApiResponse({
+            response,
+            schema: CreateOneSchema,
         });
     };
 }

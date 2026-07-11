@@ -12,7 +12,7 @@ import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
-import { NodeStatusBadge } from "@application/modules/cluster/module-shared/components";
+import { NodeStateBadge } from "@application/modules/cluster/module-shared/components";
 
 import { SingleNodeFormSchema, type SingleNodeFormSchemaInput, type SingleNodeFormSchemaOutput } from "../schemas";
 import { type SingleNodeFormRef } from "../types";
@@ -116,7 +116,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
 
                         {/* Node State */}
                         <InfoBlock title="Node State">
-                            <NodeStatusBadge status={defaultValues.status} />
+                            <NodeStateBadge state={defaultValues.state} />
                         </InfoBlock>
 
                         {/* Role */}

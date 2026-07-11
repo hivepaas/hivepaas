@@ -6,7 +6,7 @@ import {
     type Nodes_FindOneById_Res,
     type Nodes_GetJoinNode_Res,
 } from "~/cluster/api/services/nodes-services/nodes/nodes.api.contracts";
-import { ENodeAvailability, ENodeRole, ENodeStatus } from "~/cluster/module-shared/enums";
+import { ENodeAvailability, ENodeRole, ENodeState } from "~/cluster/module-shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -19,7 +19,7 @@ const NodeSchema = z.object({
     labels: z.record(z.string(), z.string()).nullable(),
     hostname: z.string(),
     addr: z.string(),
-    status: z.nativeEnum(ENodeStatus),
+    state: z.nativeEnum(ENodeState),
     availability: z.nativeEnum(ENodeAvailability),
     role: z.nativeEnum(ENodeRole),
     isLeader: z.boolean(),
@@ -97,7 +97,7 @@ export class NodesApiValidator {
                 hostname: node.hostname,
                 addr: node.addr,
                 availability: node.availability,
-                status: node.status,
+                state: node.state,
                 role: node.role,
                 isLeader: node.isLeader,
                 platform: node.platform,
@@ -132,7 +132,7 @@ export class NodesApiValidator {
                 hostname: data.hostname,
                 addr: data.addr,
                 availability: data.availability,
-                status: data.status,
+                state: data.state,
                 role: data.role,
                 isLeader: data.isLeader,
                 platform: data.platform,

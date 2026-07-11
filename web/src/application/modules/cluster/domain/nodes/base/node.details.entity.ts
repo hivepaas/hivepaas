@@ -1,4 +1,4 @@
-import type { ENodeAvailability, ENodeStatus } from "~/cluster/module-shared/enums";
+import type { ENodeAvailability, ENodeState } from "~/cluster/module-shared/enums";
 
 import type { NodeBase } from "./node.base.entity";
 
@@ -6,7 +6,7 @@ export interface NodeDetails extends NodeBase {
     isLeader: boolean;
     labels: Record<string, string>;
     availability: ENodeAvailability;
-    status: ENodeStatus;
+    state: ENodeState;
     platform: {
         architecture: string;
         os: string;

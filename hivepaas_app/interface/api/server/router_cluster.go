@@ -18,6 +18,8 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		// Node join
 		nodeGroup.POST("/join", clusterHandler.JoinNode)
 		nodeGroup.GET("/join-command", clusterHandler.GetNodeJoinCommand)
+		// Set manager nodes
+		nodeGroup.POST("/set-managers", clusterHandler.SetManagerNodes)
 	}
 
 	{ // volume group

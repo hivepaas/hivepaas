@@ -139,3 +139,36 @@ func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// SetManagerNodes Sets manager nodes
+// @Summary Sets manager nodes
+// @Description Sets manager nodes
+// @Tags    cluster_nodes
+// @Produce json
+// @Id      setClusterManagerNodes
+// @Param   body body nodedto.SetManagerNodesReq true "request data"
+// @Success 200 {object} nodedto.SetManagerNodesResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /cluster/nodes/set-managers [post]
+func (h *Handler) SetManagerNodes(ctx *gin.Context) {
+	auth, _, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeWrite, "")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := nodedto.NewSetManagerNodesReq()
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.nodeUC.SetManagerNodes(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

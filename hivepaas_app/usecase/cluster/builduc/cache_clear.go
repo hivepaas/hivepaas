@@ -35,14 +35,14 @@ func (uc *UC) ClearBuildCache(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		cachesDeleted = resp.TaskOutput.ClusterCleanup.BuildCachesDeleted
 		spaceReclaimed = resp.TaskOutput.ClusterCleanup.SpaceReclaimed
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &builddto.ClearBuildCacheResp{

@@ -20,7 +20,7 @@ func (uc *UC) UpdateAppStatus(
 		appData := &updateAppData{}
 		err := uc.loadAppDataForUpdateStatus(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !appData.HasChanges {
 			return nil
@@ -28,12 +28,12 @@ func (uc *UC) UpdateAppStatus(
 
 		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, true)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.UpdateAppStatusResp{}, nil
@@ -50,10 +50,10 @@ func (uc *UC) loadAppDataForUpdateStatus(
 		bunex.SelectRelation("Project"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if app.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 	data.App = app
 	data.HasChanges = app.Status != req.Status

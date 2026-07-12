@@ -111,7 +111,7 @@ func (s *service) initDefaultSystemCleanup(
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{cleanupSetting, jobSetting})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

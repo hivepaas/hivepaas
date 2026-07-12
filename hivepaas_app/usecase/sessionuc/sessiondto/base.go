@@ -29,7 +29,7 @@ type UserResp struct {
 
 func TransformUser(user *entity.User) (resp *UserResp, err error) {
 	if err = copier.Copy(&resp, &user); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if user.TotpSecret != "" {
 		resp.MfaSecret = "********"

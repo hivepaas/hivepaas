@@ -111,7 +111,7 @@ func (s *Setting) parseData(structPtr SettingData) error {
 	}
 	err := json.Unmarshal(reflectutil.UnsafeStrToBytes(s.Data), structPtr)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	s.parsedData = structPtr
 	return nil
@@ -123,7 +123,7 @@ func (s *Setting) SetData(data SettingData) error {
 	}
 	b, err := json.Marshal(data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	s.Data = reflectutil.UnsafeBytesToStr(b)
 	s.parsedData = data
@@ -141,7 +141,7 @@ func (s *Setting) Parse() (SettingData, error) {
 func (s *Setting) GetRefObjectIDs() (*RefObjectIDs, error) {
 	settingData, err := s.Parse()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return nil, nil
@@ -167,7 +167,7 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 			return res, apperrors.NewMismatch("Setting type", s.Type)
 		}
 		if err := s.parseData(res); err != nil {
-			return res, apperrors.New(err)
+			return res, apperrors.Wrap(err)
 		}
 	}
 	return res, nil
@@ -179,7 +179,7 @@ func (s *Setting) CalcResLinks() ([]*ResLink, error) {
 	}
 	settingData, err := s.Parse()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return nil, nil
@@ -190,14 +190,14 @@ func (s *Setting) CalcResLinks() ([]*ResLink, error) {
 func (s *Setting) Migrate() (hasChange bool, err error) {
 	settingData, err := s.Parse()
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return false, nil
 	}
 	hasChange, err = settingData.Migrate(s)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	return hasChange, nil
 }
@@ -210,7 +210,7 @@ func (s *Setting) Copy(genID bool) (*Setting, error) {
 	}
 	_, err := cp.Parse()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return cp, nil
 }

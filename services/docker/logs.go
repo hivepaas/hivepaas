@@ -150,7 +150,7 @@ func parseLogs(
 				break
 			}
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -191,7 +191,7 @@ func parseLogs(
 				break
 			}
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -201,11 +201,11 @@ func parseLogs(
 			// Write the retrieved frame (without header)
 			nw, err := dstOfStdout.Write(frameData)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			// If the frame has not been fully written: error
 			if nw != frameSize {
-				return apperrors.New(io.ErrShortWrite)
+				return apperrors.Wrap(io.ErrShortWrite)
 			}
 		} else {
 			logFrame := &tasklog.LogFrame{
@@ -224,7 +224,7 @@ func parseLogs(
 		nr -= frameSize + stdWriterPrefixLen
 
 		if err = ctx.Err(); err != nil { // Context is done
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 }

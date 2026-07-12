@@ -20,7 +20,7 @@ func (uc *UC) RemoveMFATotp(
 	req *userdto.RemoveMFATotpReq,
 ) (*userdto.RemoveMFATotpResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -28,23 +28,23 @@ func (uc *UC) RemoveMFATotp(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if user.TotpSecret == "" {
 			return nil
 		}
 		if user.SecurityOption == base.UserSecurityEnforceSSO {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("user authentication method is enforce-sso")
 		}
 		if user.SecurityOption == base.UserSecurityPassword2FA {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("2FA is required by admin")
 		}
 
 		// Verify passcode
 		if !totp.VerifyPasscode(req.Passcode, user.TotpSecret) {
-			return apperrors.New(apperrors.ErrPasscodeMismatched)
+			return apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 		}
 
 		user.TotpSecret = ""
@@ -53,13 +53,13 @@ func (uc *UC) RemoveMFATotp(
 			bunex.UpdateColumns("updated_at", "totp_secret"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.RemoveMFATotpResp{}, nil

@@ -16,12 +16,12 @@ func (uc *UC) GetServiceSettings(
 ) (*traefiksettingsdto.GetServiceSettingsResp, error) {
 	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, nil, base.SettingTypeTraefikService, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := traefiksettingsdto.TransformServiceSettings(&traefiksettingsdto.ServiceSettingsTransformInput{
@@ -29,7 +29,7 @@ func (uc *UC) GetServiceSettings(
 		TraefikService: traefikSvc,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &traefiksettingsdto.GetServiceSettingsResp{

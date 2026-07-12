@@ -23,12 +23,12 @@ func (uc *UC) GetFile(
 
 	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID, opts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := filedto.TransformFile(file)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &filedto.GetFileResp{

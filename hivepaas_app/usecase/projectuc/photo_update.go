@@ -31,7 +31,7 @@ func (uc *UC) UpdateProjectPhoto(
 		profileData := &updateProjectPhotoData{}
 		err := uc.loadProjectPhotoDataForUpdate(ctx, db, req, profileData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectPhotoData{}
@@ -40,7 +40,7 @@ func (uc *UC) UpdateProjectPhoto(
 		return uc.persistProjectPhotoData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectdto.UpdateProjectPhotoResp{}, nil
@@ -68,7 +68,7 @@ func (uc *UC) loadProjectPhotoDataForUpdate(
 		bunex.SelectRelation("PhotoData"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 
@@ -126,19 +126,19 @@ func (uc *UC) persistProjectPhotoData(
 		bunex.UpdateColumns("updated_at", "photo", "photo_id"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.UpsertMulti(ctx, db, persistingData.UpsertingBinObjects,
 		entity.BinObjectUpsertingConflictCols, entity.BinObjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.DeleteByIDs(ctx, db, persistingData.HardDeletingBinObjectIDs,
 		bunex.DeleteWithForceDelete())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -33,10 +33,10 @@ func (uc *UC) TestAccessTokenConn(
 	case base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
 		fallthrough
 	default:
-		err = apperrors.New(apperrors.ErrTokenTypeUnsupported).WithParam("Type", req.Kind)
+		err = apperrors.Wrap(apperrors.ErrTokenTypeUnsupported).WithParam("Type", req.Kind)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &accesstokendto.TestAccessTokenConnResp{}, nil
@@ -48,11 +48,11 @@ func (uc *UC) testGithubTokenConn(
 ) error {
 	client, err := github.NewFromToken(req.Token)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, _, err = client.ListUserRepos(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -63,11 +63,11 @@ func (uc *UC) testGitlabTokenConn(
 ) error {
 	client, err := gitlab.NewFromToken(req.Token, req.BaseURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, _, err = client.ListAllProjects(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -78,11 +78,11 @@ func (uc *UC) testGiteaTokenConn(
 ) error {
 	client, err := gitea.NewFromToken(req.Token, req.BaseURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, _, err = client.ListAllRepos(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -97,18 +97,18 @@ func (uc *UC) testCloudflareTokenValid(
 			httpReq.Header.Set("Content-Type", "application/json")
 		})
 	if err != nil {
-		return apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	var cloudflareResp struct {
 		Success bool `json:"success"`
 	}
 	if err := json.Unmarshal(data, &cloudflareResp); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if !cloudflareResp.Success {
-		return apperrors.New(apperrors.ErrTokenInvalid).WithMsgLog(
+		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithMsgLog(
 			"Cloudflare token verification response success was false")
 	}
 

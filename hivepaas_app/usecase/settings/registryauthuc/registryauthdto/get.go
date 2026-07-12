@@ -53,12 +53,12 @@ func TransformRegistryAuth(
 ) (resp *RegistryAuthResp, err error) {
 	config := setting.MustAsRegistryAuth()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.SecretMasked = config.Password.IsEncrypted() || resp.Inherited

@@ -69,12 +69,12 @@ func TransformGithubApp(
 ) (resp *GithubAppResp, err error) {
 	config := setting.MustAsGithubApp()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Recalculate callbackURL for the github-app as it depends on the actual server address

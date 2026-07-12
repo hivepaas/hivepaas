@@ -36,7 +36,7 @@ func (uc *UC) CreatePreview(
 			},
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
@@ -45,13 +45,13 @@ func (uc *UC) CreatePreview(
 		_ = createResp.OnCleanup(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if createResp.DeploymentTask != nil {
 		err = uc.taskQueue.ScheduleTask(ctx, createResp.DeploymentTask)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

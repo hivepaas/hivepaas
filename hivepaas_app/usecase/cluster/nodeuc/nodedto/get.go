@@ -94,12 +94,12 @@ func TransformNode(
 ) (resp *NodeResp, err error) {
 	nodeEnt := setting.MustAsClusterNode()
 	if err = copier.Copy(&resp, nodeEnt); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	node := refClusterObjects.RefNodes[dockerhelper.ParseID(setting.ID)]

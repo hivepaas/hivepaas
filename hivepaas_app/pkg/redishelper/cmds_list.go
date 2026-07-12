@@ -21,11 +21,11 @@ func RPush[T any](
 	}
 	data, err := marshalSlice(values)
 	if err != nil {
-		return apperrors.New(err).WithMsgLog("failed to marshal value")
+		return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
 	}
 	_, err = cmder.RPush(ctx, key, data...).Result()
 	if err != nil {
-		return apperrors.New(err).WithMsgLog("failed to push values to a list")
+		return apperrors.Wrap(err).WithMsgLog("failed to push values to a list")
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func LRange[T any](
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return unmarshalStrSlice[T](data...)
 }
@@ -57,7 +57,7 @@ func BLPop(
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	result := make(map[string]string, len(strSlice)/2) //nolint:mnd
 	i := 0
@@ -79,7 +79,7 @@ func BLPopOne[T any](
 		if errors.Is(err, redis.Nil) {
 			return val, apperrors.NewNotFoundNT(key)
 		}
-		return val, apperrors.New(err)
+		return val, apperrors.Wrap(err)
 	}
 	return unmarshalStr[T](strSlice[1])
 }

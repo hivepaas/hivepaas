@@ -51,7 +51,7 @@ func (uc *UC) processWebhookEventPRComment(
 ) (err error) {
 	parsedURL, err := vcsurl.Parse(prCommentEvent.RepoURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	success, _ := uc.parsePRCommentCommand(prCommentEvent)
@@ -77,7 +77,7 @@ func (uc *UC) processWebhookEventPRComment(
 		bunex.SelectWhereIf(prCommentEvent.previewCmd == previewCmdCancel, "app.parent_id IS NOT NULL"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var wg sync.WaitGroup
@@ -135,7 +135,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, err := strconv.ParseBool(v)
 			if err != nil {
-				return false, apperrors.New(err)
+				return false, apperrors.Wrap(err)
 			}
 			commentEvent.previewDeployNoStart = boolVal
 		case (k == previewCmdDeployArgNoWait || k == "no-wait") && commentEvent.previewCmd == previewCmdDeploy:
@@ -145,7 +145,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, err := strconv.ParseBool(v)
 			if err != nil {
-				return false, apperrors.New(err)
+				return false, apperrors.Wrap(err)
 			}
 			commentEvent.previewDeployNoWait = boolVal
 		case k == previewCmdDeployArgSubdomain && commentEvent.previewCmd == previewCmdDeploy:

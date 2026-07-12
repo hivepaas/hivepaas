@@ -15,7 +15,7 @@ func (uc *UC) GetHpAppReleaseInfo(
 ) (*hpappdto.GetHpAppReleaseInfoResp, error) {
 	info, err := uc.hpAppService.GetAppReleaseInfo(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappdto.GetHpAppReleaseInfoResp{

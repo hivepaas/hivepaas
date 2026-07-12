@@ -50,7 +50,7 @@ func (s *service) GetNotificationForEvent(
 		}
 	}
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if setting == nil {
 		return nil, nil
@@ -60,7 +60,7 @@ func (s *service) GetNotificationForEvent(
 	refs, err := s.settingService.LoadReferenceObjects(ctx, db, scope, true,
 		false, setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	refObjects.AddRefObjects(refs)
 	refObjects.RefSettings[setting.ID] = setting
@@ -79,7 +79,7 @@ func (s *service) GetDefaultNotification(
 		bunex.SelectWhere("setting.is_default = TRUE"),
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if setting == nil {
 		return nil, nil
@@ -90,7 +90,7 @@ func (s *service) GetDefaultNotification(
 		refs, err := s.settingService.LoadReferenceObjects(ctx, db, scope, true,
 			errorIfRefObjectsUnavail, setting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		refObjects.AddRefObjects(refs)
 		if refObjects.RefSettings == nil {

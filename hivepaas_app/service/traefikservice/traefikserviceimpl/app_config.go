@@ -74,7 +74,7 @@ func (s *service) ApplyAppConfig(
 
 		for i, domain := range httpSettings.Domains {
 			if err := s.collectDomainConfig(app, domain, i, labels, traefikConfig, data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func (s *service) ApplyAppConfig(
 	if data.hasCerts {
 		err := s.writeAppConfigFile(data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	} else {
 		// Ensure file does not exist if no certs are needed
@@ -142,7 +142,7 @@ func (s *service) collectDomainConfig(
 
 	// Basic auth config
 	if err := s.createBasicAuthConfig(domain.BasicAuth, data.RefObjects, routerName, labels, &middlewares); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Client config
@@ -166,7 +166,7 @@ func (s *service) collectDomainConfig(
 	for pathIdx, pathCfg := range domain.Paths {
 		if err := s.collectPathConfig(domain, pathCfg, pathIdx, routerName, serviceName, middlewares,
 			labels, data); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -214,7 +214,7 @@ func (s *service) collectPathConfig(
 	// Basic auth config for path
 	if err := s.createBasicAuthConfig(pathCfg.BasicAuth, data.RefObjects, pathRouterName,
 		labels, &pathMiddlewares); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Client config for path
@@ -351,7 +351,7 @@ func (s *service) createBasicAuthConfig(
 		basicAuthConfig := s.MustAsBasicAuth()
 		password, err := basicAuthConfig.Password.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		hashedPasswd, err := htpasswd.HashPassword(password)
 		if err == nil {
@@ -489,12 +489,12 @@ func (s *service) writeAppConfigFile(
 ) error {
 	yamlData, err := yaml.Marshal(data.confData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = os.WriteFile(data.app.TraefikConfigPath(), yamlData, defaultConfFileMode)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -517,7 +517,7 @@ func (s *service) RemoveAppConfig(
 	// Clean file
 	err := os.Remove(app.TraefikConfigPath())
 	if err != nil && !os.IsNotExist(err) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

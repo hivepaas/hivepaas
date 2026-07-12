@@ -32,13 +32,13 @@ func (uc *UC) DownloadFile(
 	if needParseToken {
 		tokenClaims, err := uc.fileService.ParseDownloadToken(req.Token)
 		if err != nil {
-			return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+			return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 		}
 		if tokenClaims.FileID != req.ID {
-			return nil, apperrors.New(apperrors.ErrUnauthorized).WithMsgLog("file ID not match")
+			return nil, apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog("file ID not match")
 		}
 		if tokenClaims.RequireLogin && (auth == nil || auth.User.ID != tokenClaims.UserID) {
-			return nil, apperrors.New(apperrors.ErrUnauthorized).WithMsgLog("user ID not match")
+			return nil, apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog("user ID not match")
 		}
 	}
 
@@ -47,7 +47,7 @@ func (uc *UC) DownloadFile(
 		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if !file.IsActive() || file.Deleted {
@@ -81,7 +81,7 @@ func (uc *UC) downloadLocalFile(
 	filePath := filepath.Join(config.Current.AppPath, file.Path)
 	reader, err := os.Open(filePath)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	defer func() {
 		if err != nil {
@@ -115,14 +115,14 @@ func (uc *UC) downloadCloudFile(
 	case base.CloudStorageKindS3:
 		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 
 		objectKey := file.Path
 		if !usePresignURL {
 			s3Object, err := s3Client.GetObject(ctx, file.Bucket, objectKey)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			defer func() {
 				if err != nil {
@@ -144,7 +144,7 @@ func (uc *UC) downloadCloudFile(
 		presignURL, err := s3Client.PresignGetObject(ctx, file.Bucket, objectKey, file.Name, file.Mimetype,
 			req.ViewInline, expiration)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		respData.RedirectURL = presignURL
 		return &filedto.DownloadFileResp{Data: respData}, nil

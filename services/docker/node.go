@@ -88,7 +88,7 @@ func (m *manager) NodeListByIDs(
 	if len(nodeIDOrNames) == 1 {
 		inspect, err := m.NodeInspect(ctx, nodeIDOrNames[0])
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = []swarm.Node{inspect.Node}
@@ -98,7 +98,7 @@ func (m *manager) NodeListByIDs(
 
 	listResp, err := m.NodeList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		node := &listResp.Items[i]
@@ -145,7 +145,7 @@ func (m *manager) NodeUpdate(
 	if version == nil {
 		resp, err := m.NodeInspect(ctx, nodeID)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		version = &resp.Node.Version
 	}
@@ -192,7 +192,7 @@ func (m *manager) NodeCurrentID(ctx context.Context) (string, error) {
 	}
 	resp, err := m.SystemInfo(ctx)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	currentNodeID = resp.Info.Swarm.NodeID
 	return currentNodeID, nil

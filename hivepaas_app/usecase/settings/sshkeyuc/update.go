@@ -29,17 +29,17 @@ func (uc *UC) UpdateSSHKey(
 			pData *settings.PersistingSettingData,
 		) error {
 			if err := generateKey(sshKey); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
 			if err := pData.Setting.SetData(sshKey); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sshkeydto.UpdateSSHKeyResp{}, nil

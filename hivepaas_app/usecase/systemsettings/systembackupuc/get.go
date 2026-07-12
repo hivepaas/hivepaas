@@ -17,12 +17,12 @@ func (uc *UC) GetSystemBackup(
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := systembackupdto.TransformSystemBackup(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &systembackupdto.GetSystemBackupResp{

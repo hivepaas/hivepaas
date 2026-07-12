@@ -14,7 +14,7 @@ func (uc *UC) DeleteAllSessions(
 	// Invalidate the old token to make it unusable
 	err = uc.userTokenRepo.DelAll(ctx, req.User.AuthClaims.UserID)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to invalidate old token")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to invalidate old token")
 	}
 
 	return &sessiondto.DeleteAllSessionsResp{}, nil

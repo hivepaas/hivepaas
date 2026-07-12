@@ -23,7 +23,7 @@ func (uc *UC) UpdateSchedJobStatus(
 			data *settings.UpdateSettingStatusData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -35,13 +35,13 @@ func (uc *UC) UpdateSchedJobStatus(
 		) error {
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting, true)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.UpdateSchedJobStatusResp{}, nil

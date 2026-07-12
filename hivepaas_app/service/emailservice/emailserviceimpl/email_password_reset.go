@@ -19,20 +19,20 @@ func (s *service) SendMailPasswordReset(
 ) error {
 	template, err := s.GetTemplate(ctx, db, emailservice.TemplateNamePasswordReset)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	buf, bufDefer := bbpool.Small()
 	defer bufDefer(buf)
 	err = template.Execute(buf, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	subject := gofn.Coalesce(data.Subject, "[HivePaaS] Password reset")
 	err = email.SendMail(ctx, data.Email, data.Recipients, subject, buf.String())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -64,5 +64,5 @@ func NewInfra(err error) AppError {
 	case IsInfraUnauthorized(err):
 		infraErr = ErrInfraUnauthorized
 	}
-	return New(errors.Join(infraErr, err)).WithNTParam("Error", err.Error())
+	return Wrap(errors.Join(infraErr, err)).WithNTParam("Error", err.Error())
 }

@@ -23,7 +23,7 @@ func SendMail(
 		err = http.SendMail(ctx, email.HTTP, recipients, subject, content)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

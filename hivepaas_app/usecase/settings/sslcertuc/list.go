@@ -27,12 +27,12 @@ func (uc *UC) ListSSLCert(
 		ExtraLoadOpts: extraLoadOpts,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := sslcertdto.TransformSSLCerts(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sslcertdto.ListSSLCertResp{

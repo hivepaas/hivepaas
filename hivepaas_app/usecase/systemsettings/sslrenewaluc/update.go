@@ -67,7 +67,7 @@ func (uc *UC) UpdateSSLRenewal(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sslrenewaldto.UpdateSSLRenewalResp{}, nil
@@ -95,13 +95,13 @@ func (uc *UC) loadSettingData(
 		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Setting = renewalSetting
 
 	renewal, err := renewalSetting.AsSSLRenewal()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.JobScheduleChanges = !renewal.Schedule.Equal(&data.NewRenewal.Schedule)
 
@@ -112,7 +112,7 @@ func (uc *UC) loadSettingData(
 		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if jobSetting == nil {
 		timeNow := timeutil.NowUTC()
@@ -150,7 +150,7 @@ func (uc *UC) preparePersistingData(
 	persistingData.Setting.Status = req.Status
 	err := persistingData.Setting.SetData(updateData.NewRenewal)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Update renewal job
@@ -177,12 +177,12 @@ func (uc *UC) postPersisting(
 	// Persist the sched job updates
 	err := uc.SettingRepo.Update(ctx, db, persistingData.JobSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, updateData.JobSetting, updateData.JobScheduleChanges)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

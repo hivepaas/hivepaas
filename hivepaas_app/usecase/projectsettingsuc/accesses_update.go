@@ -23,7 +23,7 @@ func (uc *UC) UpdateUserAccesses(
 		data := &updateUserAccessesData{}
 		err := uc.loadUserAccessesForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectData{}
@@ -31,13 +31,13 @@ func (uc *UC) UpdateUserAccesses(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.UpdateUserAccessesResp{}, nil
@@ -61,7 +61,7 @@ func (uc *UC) loadUserAccessesForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 

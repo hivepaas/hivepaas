@@ -63,7 +63,7 @@ func (h *Handler) RequestResetPassword(ctx *gin.Context) {
 		return
 	}
 	if auth == nil || userID == auth.User.ID {
-		h.RenderError(ctx, apperrors.New(apperrors.ErrActionNotAllowed).
+		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("you are not allowed to reset your own password via this api"))
 		return
 	}

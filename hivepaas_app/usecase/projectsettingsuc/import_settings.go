@@ -24,7 +24,7 @@ func (uc *UC) ImportSettingsToProject(
 		data := &settingImportData{}
 		err := uc.loadSettingsForImport(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSettingImportData{}
@@ -32,13 +32,13 @@ func (uc *UC) ImportSettingsToProject(
 
 		err = uc.persistSettingImports(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.ImportSettingsToProjectResp{}, nil
@@ -64,14 +64,14 @@ func (uc *UC) loadSettingsForImport(
 		bunex.SelectFor("UPDATE OF project"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 
 	settingIDs := req.Settings.ToIDStringSlice()
 	settings, err := uc.settingRepo.ListByIDs(ctx, db, base.NewObjectScopeGlobal(), settingIDs, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Settings = settings
 
@@ -111,7 +111,7 @@ func (uc *UC) persistSettingImports(
 	err := uc.projectSharedSettingRepo.UpsertMulti(ctx, db, persistingData.ProjectSharedSettings,
 		entity.ProjectSharedSettingUpsertingConflictCols, entity.ProjectSharedSettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

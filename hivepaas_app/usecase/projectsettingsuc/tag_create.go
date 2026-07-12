@@ -22,7 +22,7 @@ func (uc *UC) CreateProjectTag(
 		tagData := &createProjectTagData{}
 		err := uc.loadProjectTagDataForAddNew(ctx, db, req, tagData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectData{}
@@ -32,7 +32,7 @@ func (uc *UC) CreateProjectTag(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.CreateProjectTagResp{}, nil
@@ -55,7 +55,7 @@ func (uc *UC) loadProjectTagDataForAddNew(
 		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 

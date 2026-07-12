@@ -31,7 +31,7 @@ func (repo *loginAttemptRepo) Get(
 ) (*cacheentity.LoginAttempt, error) {
 	resp, err := redishelper.Get[*cacheentity.LoginAttempt](ctx, repo.client, repo.formatKey(userID))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -44,7 +44,7 @@ func (repo *loginAttemptRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(userID), attempt, exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (repo *loginAttemptRepo) Set(
 func (repo *loginAttemptRepo) Del(ctx context.Context, userID string) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(userID))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

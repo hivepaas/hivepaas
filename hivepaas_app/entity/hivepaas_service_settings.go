@@ -64,7 +64,7 @@ func (s *HivePaaSService) Migrate(setting *Setting) (hasChange bool, err error) 
 		return false, nil
 	}
 	if setting.Version > CurrentHivePaaSServiceVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

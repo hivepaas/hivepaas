@@ -25,7 +25,7 @@ func (uc *UC) ListRepo(
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeGithubApp, base.SettingTypeAccessToken),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	switch setting.Type { //nolint:exhaustive
@@ -42,10 +42,10 @@ func (uc *UC) ListRepo(
 		case base.GitSourceBitbucket, base.GitSourceGogs:
 			fallthrough
 		default:
-			return nil, apperrors.New(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+			return nil, apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
 		}
 	default:
-		return nil, apperrors.New(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
 	}
 }
 
@@ -56,7 +56,7 @@ func (uc *UC) listGithubRepo(
 ) (*gitcredentialdto.ListRepoResp, error) {
 	client, err := github.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var repos []*gogithub.Repository
@@ -67,12 +67,12 @@ func (uc *UC) listGithubRepo(
 		repos, pagingMeta, err = client.ListUserRepos(ctx, &req.Paging)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGithubRepos(repos)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListRepoResp{
@@ -88,17 +88,17 @@ func (uc *UC) listGitlabRepo(
 ) (*gitcredentialdto.ListRepoResp, error) {
 	client, err := gitlab.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	projects, pagingMeta, err := client.ListProjects(ctx, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGitlabProjects(projects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListRepoResp{
@@ -114,17 +114,17 @@ func (uc *UC) listGiteaRepo(
 ) (*gitcredentialdto.ListRepoResp, error) {
 	client, err := gitea.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	repos, pagingMeta, err := client.ListRepos(ctx, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGiteaRepos(repos)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListRepoResp{

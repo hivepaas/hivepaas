@@ -18,7 +18,7 @@ func (uc *UC) UpdateStorageSettingsStatus(
 	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
 		&settings.UpdateUniqueSettingStatusData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &storagesettingsdto.UpdateStorageSettingsStatusResp{}, nil

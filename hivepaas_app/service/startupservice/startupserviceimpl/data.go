@@ -37,7 +37,7 @@ func (s *service) LoadHivePaaSServiceSetting(
 
 	setting, err := s.settingRepo.GetSingle(ctx, s.db, nil, base.SettingTypeHivePaaSService, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	gStartupData.HivePaaSServiceSetting = setting
 

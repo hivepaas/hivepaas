@@ -63,12 +63,12 @@ func (uc *BaseUC) UpdateSetting(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -77,24 +77,24 @@ func (uc *BaseUC) UpdateSetting(
 
 		if data.PrepareUpdate != nil {
 			if err := data.PrepareUpdate(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingUpdate(ctx, db, req, data, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -104,13 +104,13 @@ func (uc *BaseUC) UpdateSetting(
 			OldSetting: data.Setting,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &UpdateSettingResp{}, nil
@@ -124,13 +124,13 @@ func (uc *BaseUC) loadSettingForUpdate(
 ) (err error) {
 	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	} else {
 		loadOpts := []bunex.SelectQueryOption{
@@ -140,32 +140,32 @@ func (uc *BaseUC) loadSettingForUpdate(
 		setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 			false, loadOpts...)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.Setting = setting
 	}
 
 	setting := data.Setting
 	if req.UpdateVer != setting.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	if setting.ObjectID != req.Scope.MainObjectID() {
-		return apperrors.New(apperrors.ErrInheritedSettingNonUpdatable)
+		return apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
 	}
 
 	// If name changes, validate the new one
 	if data.VerifyingName != "" && !strings.EqualFold(setting.Name, data.VerifyingName) {
 		err = uc.checkNameConflict(ctx, db, &req.BaseSettingReq, data.VerifyingName)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
 	// Verify that the referenced settings exist
 	err = uc.checkRefObjectsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -197,13 +197,13 @@ func (uc *BaseUC) persistSettingUpdate(
 ) error {
 	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if !data.MultiDefaultAllowed && !data.Setting.Default && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

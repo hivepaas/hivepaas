@@ -31,7 +31,7 @@ func (c *Client) ListBranch(
 
 	output, resp, err := c.client.Branches.ListBranches(pid, listOpts, gogitlab.WithContext(ctx))
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: int(opts.Page * opts.PerPage),
@@ -59,7 +59,7 @@ func (c *Client) ListAllBranches(
 	for {
 		result, resp, err := client.Branches.ListBranches(pid, listOpts, gogitlab.WithContext(ctx))
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage {

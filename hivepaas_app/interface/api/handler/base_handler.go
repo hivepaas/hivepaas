@@ -220,7 +220,7 @@ func (h *BaseHandler) parseQuery(ctx *gin.Context, query any) error {
 
 	decoder, err := mapstructure.NewDecoder(config)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if err = decoder.Decode(mapQuery); err != nil {
 		return apperrors.NewArgumentInvalid("query").WithCause(err)
@@ -235,13 +235,13 @@ func (h *BaseHandler) parseQuery(ctx *gin.Context, query any) error {
 func (h *BaseHandler) ParseAndValidateRequest(ctx *gin.Context, reqStruct any, paging *basedto.Paging) error {
 	err := h.ParseRequest(ctx, reqStruct, paging)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Execute custom modifier for the request input
 	if modifier, ok := reqStruct.(basedto.ReqModifier); ok {
 		if err = modifier.ModifyRequest(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -279,7 +279,7 @@ func (h *BaseHandler) ParseRequest(ctx *gin.Context, reqStruct any, paging *base
 func (h *BaseHandler) ParseStringParam(ctx *gin.Context, paramName string) (string, error) {
 	idStr := ctx.Params.ByName(paramName)
 	if idStr == "" {
-		return "", apperrors.New(apperrors.ErrBadRequest).
+		return "", apperrors.Wrap(apperrors.ErrBadRequest).
 			WithMsgLog("require param `%s` of type string in URL", paramName)
 	}
 	return idStr, nil
@@ -289,7 +289,7 @@ func (h *BaseHandler) ParseStringParam(ctx *gin.Context, paramName string) (stri
 func (h *BaseHandler) ParseIntParam(ctx *gin.Context, paramName string) (int, error) {
 	value, err := strconv.ParseInt(ctx.Param(paramName), 10, 64) //nolint:mnd
 	if err != nil {
-		return 0, apperrors.New(apperrors.ErrBadRequest).WithCause(err).
+		return 0, apperrors.Wrap(apperrors.ErrBadRequest).WithCause(err).
 			WithMsgLog("require param `%s` of type int in URL", paramName)
 	}
 	return int(value), nil
@@ -299,7 +299,7 @@ func (h *BaseHandler) ParseIntParam(ctx *gin.Context, paramName string) (int, er
 func (h *BaseHandler) ParseUintParam(ctx *gin.Context, paramName string) (uint, error) {
 	value, err := strconv.ParseUint(ctx.Param(paramName), 10, 64) //nolint:mnd
 	if err != nil {
-		return 0, apperrors.New(apperrors.ErrBadRequest).WithCause(err).
+		return 0, apperrors.Wrap(apperrors.ErrBadRequest).WithCause(err).
 			WithMsgLog("require param `%s` of type uint in URL", paramName)
 	}
 	return uint(value), nil
@@ -309,13 +309,13 @@ func (h *BaseHandler) ParseUintParam(ctx *gin.Context, paramName string) (uint, 
 func (h *BaseHandler) ParseAndValidateJSONBody(ctx *gin.Context, reqStruct any) error {
 	err := h.ParseJSONBody(ctx, reqStruct)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Execute custom modifier for the request input
 	if modifier, ok := reqStruct.(basedto.ReqModifier); ok {
 		if err = modifier.ModifyRequest(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -337,10 +337,10 @@ func (h *BaseHandler) ParseJSONBody(ctx *gin.Context, reqStruct any) error {
 	if err := ctx.ShouldBindJSON(reqStruct); err != nil && buf.Len() > 0 {
 		if handler, ok := reqStruct.(basedto.ReqParsingErrorHandler); ok {
 			if newErr := handler.HandleParsingError(err); newErr != nil {
-				return apperrors.New(newErr)
+				return apperrors.Wrap(newErr)
 			}
 		}
-		return apperrors.New(apperrors.ErrBadRequest).WithCause(err)
+		return apperrors.Wrap(apperrors.ErrBadRequest).WithCause(err)
 	}
 
 	ctx.Request.Body = io.NopCloser(&buf)
@@ -373,7 +373,7 @@ func (h *BaseHandler) StreamAppLogs(
 	writeFrames := func(frames []*tasklog.LogFrame) error {
 		dataBytes, err := json.Marshal(frames)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return conn.WriteMessage(websocket.BinaryMessage, dataBytes)
 	}
@@ -417,7 +417,7 @@ func (h *BaseHandler) StreamAppLogs(
 func (h *BaseHandler) UpgradeWebsocket(ctx *gin.Context) (*websocket.Conn, error) {
 	conn, err := wsUpgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return conn, nil
 }
@@ -431,9 +431,9 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	err := ctx.Request.ParseMultipartForm(int64(cfg.RequestMaxSize))
 	if err != nil {
 		if errors.Is(err, multipart.ErrMessageTooLarge) {
-			return apperrors.New(apperrors.ErrRequestTooBig).WithParam("MaxSize", cfg.RequestMaxSize)
+			return apperrors.Wrap(apperrors.ErrRequestTooBig).WithParam("MaxSize", cfg.RequestMaxSize)
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// File type
@@ -458,7 +458,7 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	case base.FileTypeSchedJobOutput:
 		fallthrough
 	default:
-		return apperrors.New(apperrors.ErrFileTypeNotSupported).
+		return apperrors.Wrap(apperrors.ErrFileTypeNotSupported).
 			WithParam("SupportedTypes", []base.FileType{base.FileTypeBuildSource})
 	}
 	req.FileType = base.FileType(fileType)
@@ -469,61 +469,61 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	// Scope
 	scope := base.ObjectScopeType(ctx.PostForm("scope"))
 	if requiredScopes != nil && !gofn.Contain(requiredScopes, scope) {
-		return apperrors.New(apperrors.ErrFileScopeUnsupported).WithParam("Scope", scope)
+		return apperrors.Wrap(apperrors.ErrFileScopeUnsupported).WithParam("Scope", scope)
 	}
 
 	switch scope {
 	case base.ObjectScopeApp:
 		projectID, appID := ctx.PostForm("projectId"), ctx.PostForm("appId")
 		if projectID == "" || appID == "" {
-			return apperrors.New(apperrors.ErrParamMissing).WithParam("Name", "projectId or appId")
+			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId or appId")
 		}
 		req.Scope = base.NewObjectScopeApp(appID, projectID)
 	case base.ObjectScopeProject:
 		projectID := ctx.PostForm("projectId")
 		if projectID == "" {
-			return apperrors.New(apperrors.ErrParamMissing).WithParam("Name", "projectId")
+			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId")
 		}
 		req.Scope = base.NewObjectScopeProject(projectID)
 	case base.ObjectScopeUser:
 		userID := ctx.PostForm("userId")
 		if userID == "" {
-			return apperrors.New(apperrors.ErrParamMissing).WithParam("Name", "userId")
+			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "userId")
 		}
 		req.Scope = base.NewObjectScopeUser(userID)
 	case base.ObjectScopeGlobal, "global":
 		req.Scope = base.NewObjectScopeGlobal()
 	default:
-		return apperrors.New(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scope)
+		return apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scope)
 	}
 
 	// Storage (type and ID)
 	req.StorageType = base.FileStorageType(ctx.PostForm("storageType"))
 	if !gofn.Contain(base.AllFileStorageTypes, req.StorageType) {
-		return apperrors.New(apperrors.ErrStorageTypeUnsupported).WithParam("Type", req.StorageType)
+		return apperrors.Wrap(apperrors.ErrStorageTypeUnsupported).WithParam("Type", req.StorageType)
 	}
 	req.StorageID = ctx.PostForm("storageId")
 
 	// File items
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if maxFile > 0 && len(form.File["file"]) > maxFile {
-		return apperrors.New(apperrors.ErrTooMany).WithParam("Name", "Files").
+		return apperrors.Wrap(apperrors.ErrTooMany).WithParam("Name", "Files").
 			WithNTParam("MaxItem", maxFile)
 	}
 	allowAnyExt := gofn.Contain(fileExts, "*")
 	for _, formFile := range form.File["file"] {
 		if maxFileSize > 0 && formFile.Size > maxFileSize.Bytes() {
-			return apperrors.New(apperrors.ErrFileSizeTooBig).
+			return apperrors.Wrap(apperrors.ErrFileSizeTooBig).
 				WithNTParam("MaxSize", maxFileSize)
 		}
 		if !(allowAnyExt || gofn.Contain(fileExts, strings.ToLower(filepath.Ext(formFile.Filename)))) { //nolint
-			return apperrors.New(apperrors.ErrFileExtNotSupported).WithNTParam("SupportedExts", fileExts)
+			return apperrors.Wrap(apperrors.ErrFileExtNotSupported).WithNTParam("SupportedExts", fileExts)
 		}
 		if cfg.FileNameMaxLength > 0 && gofn.RuneLength(formFile.Filename) > cfg.FileNameMaxLength {
-			return apperrors.New(apperrors.ErrFileNameTooLong).WithNTParam("MaxNameLen", cfg.FileNameMaxLength)
+			return apperrors.Wrap(apperrors.ErrFileNameTooLong).WithNTParam("MaxNameLen", cfg.FileNameMaxLength)
 		}
 		req.Files = append(req.Files, formFile)
 	}

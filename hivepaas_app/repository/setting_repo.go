@@ -104,7 +104,7 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.O
 			app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
 				bunex.SelectColumns("project_id", "parent_id"))
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			scope.ParentAppID = app.ParentID
 			scope.ProjectID = app.ProjectID
@@ -131,7 +131,7 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.O
 		return nil, apperrors.NewNotFound("Setting").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if hasChange, _ := repo.updateExpiredSetting(ctx, db, setting); hasChange {
@@ -150,7 +150,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 		opts = repo.applyGlobalFilter(opts)
 		setting, err := repo.get(ctx, db, scope, opts...)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		return setting, nil
 	}
@@ -159,7 +159,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 	// then return the first matching one in the order of the scope upto global.
 	settings, _, err := repo.List(ctx, db, scope, nil, opts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, apperrors.NewNotFound("Setting")
@@ -216,7 +216,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.
 			app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
 				bunex.SelectColumns("project_id", "parent_id"))
 			if err != nil {
-				return nil, nil, apperrors.New(err)
+				return nil, nil, apperrors.Wrap(err)
 			}
 			scope.ParentAppID = app.ParentID
 			scope.ProjectID = app.ProjectID
@@ -245,7 +245,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -272,7 +272,7 @@ func (repo *settingRepo) ListByIDs(ctx context.Context, db database.IDB, scope *
 	opts = append(opts, bunex.SelectWhere("setting.id IN (?)", bun.List(ids)))
 	opts = repo.applyFilter(opts, "", "", requireActive)
 	settings, _, err := repo.List(ctx, db, scope, nil, opts...)
-	return settings, apperrors.New(err)
+	return settings, apperrors.Wrap(err)
 }
 
 func (repo *settingRepo) applyFilter(opts []bunex.SelectQueryOption, typ base.SettingType, id string,
@@ -375,7 +375,7 @@ func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scop
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if count > 1 {
 		return apperrors.NewAlreadyExist("Setting")
@@ -398,13 +398,13 @@ func (repo *settingRepo) InsertMulti(ctx context.Context, db database.IDB, setti
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Update res links for the settings
 	err = repo.updateSettingResLinks(ctx, db, settings)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -426,13 +426,13 @@ func (repo *settingRepo) UpsertMulti(ctx context.Context, db database.IDB, setti
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Update res links for the settings
 	err = repo.updateSettingResLinks(ctx, db, settings)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -445,13 +445,13 @@ func (repo *settingRepo) Update(ctx context.Context, db database.IDB, setting *e
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Update res links for the setting
 	err = repo.updateSettingResLinks(ctx, db, []*entity.Setting{setting})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -487,7 +487,7 @@ func (repo *settingRepo) UpdateClearDefaultFlag(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -517,7 +517,7 @@ func (repo *settingRepo) updateExpiredSettings(ctx context.Context, db database.
 
 	_, err = query.Exec(ctx)
 	if err != nil {
-		return hasChange, apperrors.New(err)
+		return hasChange, apperrors.Wrap(err)
 	}
 	return hasChange, nil
 }
@@ -535,7 +535,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 	for _, setting := range settings {
 		links, err := setting.CalcResLinks()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		newLinks = append(newLinks, links...)
 	}
@@ -547,7 +547,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 
 		_, err := query.Exec(ctx)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -558,7 +558,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 		Where("res_link.src_id IN (?)", bun.List(settingIDs))
 	err := selQuery.Scan(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	mapCurrLinks := make(map[string]*entity.ResLink, len(currLinks))
@@ -594,7 +594,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 
 		_, err = upsertQuery.Exec(ctx)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -613,7 +613,7 @@ func (repo *settingRepo) DeleteAllByObjects(ctx context.Context, db database.IDB
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -628,7 +628,7 @@ func (repo *settingRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

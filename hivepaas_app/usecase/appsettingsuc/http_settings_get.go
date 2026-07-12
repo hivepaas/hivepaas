@@ -24,7 +24,7 @@ func (uc *UC) GetAppHttpSettings(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
@@ -33,7 +33,7 @@ func (uc *UC) GetAppHttpSettings(
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.AppHttpSettingsTransformInput{
@@ -43,12 +43,12 @@ func (uc *UC) GetAppHttpSettings(
 
 	err = uc.loadAppHttpSettingsRefData(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformHttpSettings(input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppHttpSettingsResp{
@@ -68,7 +68,7 @@ func (uc *UC) loadAppHttpSettingsRefData(
 	app := input.App
 	appHttpSettings, err := input.HttpSettings.AsAppHttpSettings()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	settingIDs := appHttpSettings.GetRefObjectIDs().RefSettingIDs
 
@@ -76,7 +76,7 @@ func (uc *UC) loadAppHttpSettingsRefData(
 		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	for _, setting := range settings {
 		setting.CurrentObjectID = app.ID

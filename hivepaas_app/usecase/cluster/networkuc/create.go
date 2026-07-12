@@ -39,20 +39,20 @@ func (uc *UC) CreateNetwork(
 			}
 			createResp, err := uc.createNetworkInDocker(ctx, req.CreateNetworkBaseReq)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			pData.Setting.ID = dockerhelper.WrapNetworkID(createResp.ID)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = req.Driver
 			if err := pData.Setting.SetData(netEntity); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &networkdto.CreateNetworkResp{
@@ -66,7 +66,7 @@ func (uc *UC) createNetworkInDocker(
 ) (*client.NetworkCreateResult, error) {
 	_, err := uc.dockerManager.NetworkInspect(ctx, req.Name)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if err == nil {
 		return nil, apperrors.NewAlreadyExist("Cluster network")
@@ -83,7 +83,7 @@ func (uc *UC) createNetworkInDocker(
 		opts.Labels = req.Labels
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return createResp, nil

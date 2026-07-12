@@ -31,19 +31,19 @@ func (uc *UC) CreateConfigFile(
 				// Create a config in docker swarm
 				_, err := uc.ClusterService.CreateConfigForApp(ctx, db, data.ScopeApp, configFile)
 				if err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 			}
 
 			err := pData.Setting.SetData(configFile)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &configfiledto.CreateConfigFileResp{

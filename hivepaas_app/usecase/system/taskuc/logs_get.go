@@ -32,7 +32,7 @@ func (uc *UC) GetTaskLogs(
 		LogSessionTimeout:       taskLogSessionTimeout,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &taskdto.GetTaskLogsResp{

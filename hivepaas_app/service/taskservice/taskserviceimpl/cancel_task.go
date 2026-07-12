@@ -22,7 +22,7 @@ func (s *service) CancelTask(
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	if task != nil {
@@ -30,7 +30,7 @@ func (s *service) CancelTask(
 			return false, apperrors.NewNotFound("Task").WithMsgLog("unmatched task target id")
 		}
 		if !task.CanCancel() {
-			return false, apperrors.New(apperrors.ErrActionNotAllowedByStatus)
+			return false, apperrors.Wrap(apperrors.ErrActionNotAllowedByStatus)
 		}
 		task.Status = base.TaskStatusCanceled
 		task.UpdatedAt = timeutil.NowUTC()
@@ -38,7 +38,7 @@ func (s *service) CancelTask(
 			bunex.UpdateColumns("status", "updated_at"),
 		)
 		if err != nil {
-			return false, apperrors.New(err)
+			return false, apperrors.Wrap(err)
 		}
 		return true, nil
 	}
@@ -46,7 +46,7 @@ func (s *service) CancelTask(
 	// Task is in-progress, send `cancel` command to the task executor
 	err = s.CancelInProgressTask(ctx, taskID)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	return false, nil
@@ -60,14 +60,14 @@ func (s *service) CancelInProgressTask(
 	taskInfo, err := s.taskInfoRepo.Get(ctx, taskID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(apperrors.ErrUnavailable).
+			return apperrors.Wrap(apperrors.ErrUnavailable).
 				WithMsgLog("task info not found, please try again later")
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if taskInfo.ControlDisabled {
-		return apperrors.New(apperrors.ErrActionNotAllowed).
+		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("task controlling is disabled")
 	}
 
@@ -76,7 +76,7 @@ func (s *service) CancelInProgressTask(
 		Cmd: base.TaskCommandCancel,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

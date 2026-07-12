@@ -38,7 +38,7 @@ func AppManifestFlowComplete(
 	client := gogithub.NewClient(httpclient.DefaultClient)
 	appConfig, _, err := client.Apps.CompleteAppManifest(ctx, code)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return appConfig, nil
 }

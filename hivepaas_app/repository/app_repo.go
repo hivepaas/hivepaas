@@ -59,7 +59,7 @@ func (repo *appRepo) GetByID(ctx context.Context, db database.IDB, projectID, id
 		return nil, apperrors.NewNotFound("App").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return app, nil
 }
@@ -78,7 +78,7 @@ func (repo *appRepo) GetByName(ctx context.Context, db database.IDB, projectID, 
 		return nil, apperrors.NewNotFound("App").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return app, nil
 }
@@ -97,7 +97,7 @@ func (repo *appRepo) GetByKey(ctx context.Context, db database.IDB, projectID, k
 		return nil, apperrors.NewNotFound("App").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return app, nil
 }
@@ -118,7 +118,7 @@ func (repo *appRepo) List(ctx context.Context, db database.IDB, projectID string
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -148,7 +148,7 @@ func (repo *appRepo) ListByIDs(ctx context.Context, db database.IDB, projectID s
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return apps, nil
 }
@@ -169,7 +169,7 @@ func (repo *appRepo) UpsertMulti(ctx context.Context, db database.IDB, apps []*e
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (repo *appRepo) Update(ctx context.Context, db database.IDB, app *entity.Ap
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func (repo *appRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

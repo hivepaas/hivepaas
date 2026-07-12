@@ -28,13 +28,13 @@ func (uc *UC) UpdateNotification(
 		) error {
 			err := pData.Setting.SetData(notification)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &notificationdto.UpdateNotificationResp{}, nil

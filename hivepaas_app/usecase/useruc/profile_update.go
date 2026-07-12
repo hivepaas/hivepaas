@@ -30,14 +30,14 @@ func (uc *UC) UpdateProfile(
 	req *userdto.UpdateProfileReq,
 ) (*userdto.UpdateProfileResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		profileData := &userProfileData{}
 		err := uc.loadUserProfileData(ctx, db, auth, req, profileData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingUserProfileData{}
@@ -46,7 +46,7 @@ func (uc *UC) UpdateProfile(
 		return uc.persistUserProfileData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.UpdateProfileResp{}, nil
@@ -74,11 +74,11 @@ func (uc *UC) loadUserProfileData(
 		bunex.SelectRelationIf(req.Photo.IsChanged(), "PhotoData"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusActive {
-		return apperrors.New(apperrors.ErrActionNotAllowed).
+		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("user '%s' not active", user.Email)
 	}
 	data.User = user
@@ -87,10 +87,10 @@ func (uc *UC) loadUserProfileData(
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrUsernameUnavailable).
+			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -99,14 +99,14 @@ func (uc *UC) loadUserProfileData(
 	if req.Email != "" && req.Email != user.Email {
 		if user.Email != "" {
 			// When email of user exists, we don't allow changing
-			return apperrors.New(apperrors.ErrEmailChangeUnallowed)
+			return apperrors.Wrap(apperrors.ErrEmailChangeUnallowed)
 		}
 		conflictUser, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrEmailUnavailable).
+			return apperrors.Wrap(apperrors.ErrEmailUnavailable).
 				WithMsgLog("email '%s' already exists", req.Email)
 		}
 	}
@@ -192,19 +192,19 @@ func (uc *UC) persistUserProfileData(
 ) error {
 	err := uc.userRepo.Update(ctx, db, persistingData.UpdatingUser)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.UpsertMulti(ctx, db, persistingData.UpsertingBinObjects,
 		entity.BinObjectUpsertingConflictCols, entity.BinObjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.DeleteByIDs(ctx, db, persistingData.HardDeletingBinObjectIDs,
 		bunex.DeleteWithForceDelete())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

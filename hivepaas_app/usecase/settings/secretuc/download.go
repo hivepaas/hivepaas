@@ -21,26 +21,26 @@ func (uc *UC) DownloadSecret(
 ) (*secretdto.DownloadSecretResp, error) {
 	tokenClaims, err := uc.FileService.ParseDownloadToken(req.Token)
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithMsgLog("failed to parse download token")
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithMsgLog("failed to parse download token")
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if resp.Data.ID != tokenClaims.FileID {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).
 			WithMsgLog("setting ID mismatches the ID in the token")
 	}
 
 	secret, err := resp.Data.AsSecret()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	data, err := secret.ValueAsBytes()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	contentType := gofn.If(secret.Base64, "application/octet-stream", "text/plain")
 	extraHeaders := map[string]string{

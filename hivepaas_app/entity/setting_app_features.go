@@ -56,7 +56,7 @@ func (s *AppFeatureSettings) Migrate(setting *Setting) (hasChange bool, err erro
 		return false, nil
 	}
 	if setting.Version > CurrentAppFeatureSettingsVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

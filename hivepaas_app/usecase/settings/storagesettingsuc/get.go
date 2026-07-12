@@ -17,7 +17,7 @@ func (uc *UC) GetStorageSettings(
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &storagesettingsdto.StorageSettingsTransformInput{
@@ -31,7 +31,7 @@ func (uc *UC) GetStorageSettings(
 		volResp, err := uc.dockerManager.VolumeListByIDs(ctx,
 			storageSetting.ClusterVolumeSettings.Volumes.ToIDStringSlice())
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		for i := range volResp.Items {
 			input.Volumes = append(input.Volumes, &volResp.Items[i])
@@ -40,7 +40,7 @@ func (uc *UC) GetStorageSettings(
 
 	respData, err := storagesettingsdto.TransformStorageSettings(input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &storagesettingsdto.GetStorageSettingsResp{

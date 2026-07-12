@@ -30,7 +30,7 @@ func (c *Client) ListRepos(
 
 	output, resp, err := c.client.ListMyRepos(listOpts)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PageSize,
@@ -57,7 +57,7 @@ func (c *Client) ListAllRepos(
 	for {
 		result, resp, err := client.ListMyRepos(listOpts)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage {

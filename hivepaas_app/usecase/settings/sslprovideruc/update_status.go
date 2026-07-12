@@ -17,7 +17,7 @@ func (uc *UC) UpdateSSLProviderStatus(
 	req.Type = currentSettingType
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sslproviderdto.UpdateSSLProviderStatusResp{}, nil

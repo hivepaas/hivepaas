@@ -27,7 +27,7 @@ func (uc *UC) UpdateSecret(
 		) error {
 			oldSecret, err := pData.Setting.AsSecret()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			if oldSecret != nil {
 				updatedSecret.Key = oldSecret.Key // when update, keep the old KEY of the secret
@@ -40,22 +40,22 @@ func (uc *UC) UpdateSecret(
 				// Update the related secrets in docker swarm
 				err := uc.ClusterService.UpdateSecretForApp(ctx, db, data.ScopeApp, oldSecret, updatedSecret)
 				if err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 			}
 
 			if err = pData.Setting.SetData(updatedSecret); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			pData.Setting.Size, err = updatedSecret.ValueSize()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &secretdto.UpdateSecretResp{}, nil

@@ -29,7 +29,7 @@ func (repo *userTokenRepo) Exist(ctx context.Context, userID, uid string) error 
 	key := repo.formatKey(userID, uid)
 	count, err := repo.client.Exists(ctx, key).Result()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if count == 0 {
 		return apperrors.NewNotFoundNT(key)
@@ -40,7 +40,7 @@ func (repo *userTokenRepo) Exist(ctx context.Context, userID, uid string) error 
 func (repo *userTokenRepo) Set(ctx context.Context, userID, uid string, exp time.Duration) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(userID, uid), "", exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -48,7 +48,7 @@ func (repo *userTokenRepo) Set(ctx context.Context, userID, uid string, exp time
 func (repo *userTokenRepo) Del(ctx context.Context, userID, uid string) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(userID, uid))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -56,14 +56,14 @@ func (repo *userTokenRepo) Del(ctx context.Context, userID, uid string) error {
 func (repo *userTokenRepo) DelAll(ctx context.Context, userID string) error {
 	keys, err := redishelper.ScanKeys(ctx, repo.client, repo.formatKey(userID, "*"))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if len(keys) == 0 {
 		return nil
 	}
 	err = redishelper.Del(ctx, repo.client, keys...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

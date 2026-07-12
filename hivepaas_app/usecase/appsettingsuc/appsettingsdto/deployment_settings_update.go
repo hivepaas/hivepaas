@@ -40,7 +40,7 @@ type DeploymentSettingsReq struct {
 func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, error) {
 	repoSourceEntity, err := req.RepoSource.ToEntity()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &entity.AppDeploymentSettings{
 		ImageSource:  req.ImageSource.ToEntity(),
@@ -110,7 +110,7 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 	}
 	parsedRepoURL, err := vcsurl.Parse(req.RepoURL)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	repoID := parsedRepoURL.ID
 

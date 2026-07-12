@@ -49,7 +49,7 @@ func (s *GithubApp) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentGithubAppVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -63,11 +63,11 @@ func (s *GithubApp) Migrate(setting *Setting) (hasChange bool, err error) {
 func (s *GithubApp) Decrypt() error {
 	_, err := s.ClientSecret.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, err = s.PrivateKey.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

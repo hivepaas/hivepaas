@@ -19,11 +19,11 @@ func (uc *UC) HandleRepoWebhook(
 
 	data := &handleRepoWebhookData{}
 	if err := uc.loadWebhookSettings(ctx, db, req, data); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if err := uc.processRepoWebhook(ctx, db, req, data); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &webhookdto.HandleRepoWebhookResp{}, nil
@@ -50,11 +50,11 @@ func (uc *UC) loadWebhookSettings(
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeRepoWebhook, base.SettingTypeGithubApp),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, err = setting.AsRepoWebhook()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.WebhookSetting = setting
 	return nil
@@ -80,10 +80,10 @@ func (uc *UC) processRepoWebhook(
 	case base.WebhookKindGogs:
 		err = uc.parseGogsWebhook(req.Request, webhook.Secret, eventData)
 	default:
-		return apperrors.New(apperrors.ErrWebhookTypeUnsupported).WithParam("Type", webhook.Kind)
+		return apperrors.Wrap(apperrors.ErrWebhookTypeUnsupported).WithParam("Type", webhook.Kind)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	switch {
@@ -97,7 +97,7 @@ func (uc *UC) processRepoWebhook(
 		err = uc.processWebhookEventPRSynchronized(ctx, db, eventData.PRSynchronized, data)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

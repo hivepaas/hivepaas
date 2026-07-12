@@ -133,11 +133,11 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	}
 
 	if err = copier.Copy(&resp, input.HttpSettings); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	appHttpSettings := input.HttpSettings.MustAsAppHttpSettings()
 	if err = copier.Copy(&resp, appHttpSettings); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	for _, domain := range resp.Domains {

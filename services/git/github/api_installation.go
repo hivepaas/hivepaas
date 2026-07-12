@@ -17,7 +17,7 @@ func (c *Client) ListInstallations(
 	options ...ListInstallationOption,
 ) ([]*gogithub.Installation, *basedto.PagingMeta, error) {
 	if !c.IsAppClient() {
-		return nil, nil, apperrors.New(ErrGithubAppClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -30,7 +30,7 @@ func (c *Client) ListInstallations(
 
 	output, _, err := c.appClient.Apps.ListInstallations(ctx, opts)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PerPage,
@@ -45,7 +45,7 @@ func (c *Client) ListAllInstallations(
 	options ...ListInstallationOption,
 ) ([]*gogithub.Installation, *basedto.PagingMeta, error) {
 	if !c.IsAppClient() {
-		return nil, nil, apperrors.New(ErrGithubAppClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -58,7 +58,7 @@ func (c *Client) ListAllInstallations(
 	for {
 		result, resp, err := client.Apps.ListInstallations(ctx, opts)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage || resp.Rate.Remaining <= 0 {

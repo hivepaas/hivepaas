@@ -19,7 +19,7 @@ func NewTestRegistryAuthConnReq() *TestRegistryAuthConnReq {
 func (req *TestRegistryAuthConnReq) ModifyRequest() error {
 	err := req.modifyRequest()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	// NOTE: make sure req.Name is not empty to not fail the validation
 	req.Name = gofn.Coalesce(req.Name, "x")

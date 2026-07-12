@@ -34,14 +34,14 @@ func (s *service) GetAcmeClient(
 			acmeCfg.EABKid = provider.ZeroSSL.EABKid
 			acmeCfg.EABHmacKey, err = provider.ZeroSSL.EABHmacKey.GetPlain()
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 		case base.SSLCertTypeGoogleTrust:
 			acmeCfg.CACode = lego.CodeGoogleTrust
 			acmeCfg.EABKid = provider.GoogleTrust.EABKid
 			acmeCfg.EABHmacKey, err = provider.GoogleTrust.EABHmacKey.GetPlain()
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 		case base.SSLCertTypeSelfSigned, base.SSLCertTypeCustom:
 			// Do nothing
@@ -59,7 +59,7 @@ func (s *service) GetAcmeClient(
 		acmeCfg.DNS01Provider, err = acme.NewDNS01Provider(base.AcmeDnsProvider(acmeProviderSetting.Kind),
 			acmeDnsProvider)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -67,13 +67,13 @@ func (s *service) GetAcmeClient(
 	if acmeCfg.DNS01Provider == nil {
 		acmeCfg.HTTP01Provider, err = acme.NewHTTP01Provider(config.Current.DataPathSslAcme().AbsPath())
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	acmeClient, err := acme.NewClient(acmeCfg)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return acmeClient, nil

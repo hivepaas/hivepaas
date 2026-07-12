@@ -73,7 +73,7 @@ func (repo *aclPermissionRepo) ListByResources(ctx context.Context, db database.
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return permissions, nil
 }
@@ -89,7 +89,7 @@ func (repo *aclPermissionRepo) ListByUsers(ctx context.Context, db database.IDB,
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return permissions, nil
 }
@@ -107,7 +107,7 @@ func (repo *aclPermissionRepo) List(ctx context.Context, db database.IDB, paging
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -134,7 +134,7 @@ func (repo *aclPermissionRepo) UpsertMulti(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -175,7 +175,7 @@ func (repo *aclPermissionRepo) DeleteByResources(ctx context.Context, db databas
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -192,7 +192,7 @@ func (repo *aclPermissionRepo) DeleteBySubjects(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -207,7 +207,7 @@ func (repo *aclPermissionRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

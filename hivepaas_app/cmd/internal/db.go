@@ -17,7 +17,7 @@ func InitDBConnection(lc fx.Lifecycle, db *database.DB, logger logging.Logger) {
 			if err := db.Ping(); err != nil {
 				logger.Errorf("failed to use connection %v", err.Error())
 
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			return nil

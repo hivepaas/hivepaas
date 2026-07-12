@@ -35,7 +35,7 @@ func (repo *githubAppManifestRepo) Get(
 ) (*cacheentity.GithubAppManifest, error) {
 	resp, err := redishelper.Get[*cacheentity.GithubAppManifest](ctx, repo.client, repo.formatKey(settingID))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -48,7 +48,7 @@ func (repo *githubAppManifestRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(settingID), manifest, exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ func (repo *githubAppManifestRepo) Del(
 ) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(settingID))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

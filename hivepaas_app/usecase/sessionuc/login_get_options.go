@@ -28,7 +28,7 @@ func (uc *UC) GetLoginOptions(
 		bunex.SelectOrder("kind"),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var resp []*sessiondto.LoginOptionResp

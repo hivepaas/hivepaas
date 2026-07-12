@@ -17,7 +17,7 @@ func (uc *UC) parseBitbucketWebhook(
 ) error {
 	hook, err := bitbucket.New(bitbucket.Options.UUID(secret))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, bitbucket.RepoPushEvent, bitbucket.PullRequestCommentCreatedEvent,
 		bitbucket.PullRequestMergedEvent, bitbucket.PullRequestDeclinedEvent)
@@ -25,7 +25,7 @@ func (uc *UC) parseBitbucketWebhook(
 		if errors.Is(err, bitbucket.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

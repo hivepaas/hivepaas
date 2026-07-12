@@ -44,7 +44,7 @@ func (repo *taskLogRepo) GetByID(ctx context.Context, db database.IDB, id string
 		return nil, apperrors.NewNotFound("TaskLog").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return log, nil
 }
@@ -68,7 +68,7 @@ func (repo *taskLogRepo) List(ctx context.Context, db database.IDB, taskID, targ
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -98,7 +98,7 @@ func (repo *taskLogRepo) InsertMulti(ctx context.Context, db database.IDB, logs 
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (repo *taskLogRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

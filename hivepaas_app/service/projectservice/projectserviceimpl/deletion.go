@@ -18,7 +18,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 		wg.Go(func() {
 			_ = s.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
 				if err := s.appService.DeleteApp(ctx, db, app); err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 				return nil
 			})
@@ -33,51 +33,51 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	// ACL permissions having the project ID as subject ID
 	err := s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeProject, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Project tags
 	err = s.projectTagRepo.DeleteAllByProjects(ctx, db, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Project files
 	err = s.fileRepo.DeleteAllByObjects(ctx, db, base.ObjectScopeProject, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Resource links
 	err = s.resLinkRepo.DeleteAllBySourceIDs(ctx, db, base.ResourceTypeProject, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Settings
 	err = s.settingRepo.DeleteAllByObjects(ctx, db, base.ObjectScopeProject, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Tasks
 	err = s.taskRepo.DeleteAllByProjects(ctx, db, projectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Project photo
 	if project.PhotoID != "" {
 		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{project.PhotoID})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
 	// Remove all project local networks
 	err = s.networkService.RemoveAllProjectNetworks(ctx, db, project)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

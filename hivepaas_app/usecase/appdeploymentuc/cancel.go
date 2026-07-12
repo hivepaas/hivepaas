@@ -26,12 +26,12 @@ func (uc *UC) CancelDeployment(
 			bunex.SelectFor("UPDATE OF deployment SKIP LOCKED"),
 		)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if deployment != nil {
 			if !deployment.CanCancel() {
-				return apperrors.New(apperrors.ErrActionNotAllowedByStatus)
+				return apperrors.Wrap(apperrors.ErrActionNotAllowedByStatus)
 			}
 			deployment.Status = base.DeploymentStatusCanceled
 			deployment.UpdatedAt = timeutil.NowUTC()
@@ -39,7 +39,7 @@ func (uc *UC) CancelDeployment(
 				bunex.UpdateColumns("status", "updated_at"),
 			)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			canceled = true
 			return nil
@@ -49,10 +49,10 @@ func (uc *UC) CancelDeployment(
 		deploymentInfo, err := uc.deploymentInfoRepo.Get(ctx, req.DeploymentID)
 		if err != nil {
 			if errors.Is(err, apperrors.ErrNotFound) {
-				return apperrors.New(apperrors.ErrUnavailable).
+				return apperrors.Wrap(apperrors.ErrUnavailable).
 					WithMsgLog("deployment info not found, please try again later")
 			}
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.taskControlRepo.Push(ctx, deploymentInfo.TaskID, &cacheentity.TaskControl{
@@ -60,13 +60,13 @@ func (uc *UC) CancelDeployment(
 			Cmd: base.TaskCommandCancel,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdeploymentdto.CancelDeploymentResp{

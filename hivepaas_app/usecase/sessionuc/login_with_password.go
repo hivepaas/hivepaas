@@ -50,7 +50,7 @@ func (uc *UC) LoginWithPassword(
 		// If the sending trusted device matches the data in DB
 		trustedDevice, err := uc.loginTrustedDeviceRepo.GetByUserAndDevice(ctx, uc.db, dbUser.ID, req.TrustedDeviceID)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if trustedDevice != nil && timeNow.Sub(trustedDevice.UpdatedAt) < config.Current.Session.DeviceTrustedPeriod {
 			passcodeRequired = false
@@ -62,7 +62,7 @@ func (uc *UC) LoginWithPassword(
 		mfaType := base.MFATypeTOTP
 		mfaToken, err := uc.userService.GenerateMFAToken(dbUser.ID, mfaType, req.TrustedDeviceID)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 
 		return &sessiondto.LoginWithPasswordResp{
@@ -77,7 +77,7 @@ func (uc *UC) LoginWithPassword(
 	// Create a new session as login succeeds
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var nextStep string
@@ -100,13 +100,13 @@ func (uc *UC) passwordCheck(
 ) error {
 	attempt, err := uc.allowPasswordLoginAtTheMoment(ctx, dbUser)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.userService.VerifyPassword(dbUser, req.Password)
 	_ = uc.savePasswordCheckingStatus(ctx, dbUser, attempt, err == nil)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -118,7 +118,7 @@ func (uc *UC) allowPasswordLoginAtTheMoment(
 	dbUser *entity.User,
 ) (*cacheentity.LoginAttempt, error) {
 	if dbUser.SecurityOption == base.UserSecurityEnforceSSO {
-		return nil, apperrors.New(apperrors.ErrSSORequired)
+		return nil, apperrors.Wrap(apperrors.ErrSSORequired)
 	}
 
 	attempt, err := uc.cacheLoginAttemptRepo.Get(ctx, dbUser.ID)
@@ -126,7 +126,7 @@ func (uc *UC) allowPasswordLoginAtTheMoment(
 		if errors.Is(err, apperrors.ErrNotFound) {
 			return nil, nil
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if attempt == nil || attempt.Fails < maxPasswordFailsInARow {
 		return attempt, nil
@@ -139,7 +139,7 @@ func (uc *UC) allowPasswordLoginAtTheMoment(
 		return attempt, nil
 	}
 	waitingDuration := int((minWaitingDuration - durationFromFirstFail).Seconds())
-	return nil, apperrors.New(apperrors.ErrTooManyLoginFailures).WithParam("WaitDuration", waitingDuration)
+	return nil, apperrors.Wrap(apperrors.ErrTooManyLoginFailures).WithParam("WaitDuration", waitingDuration)
 }
 
 // savePasswordCheckingStatus saves password checking status including the number of failures
@@ -154,7 +154,7 @@ func (uc *UC) savePasswordCheckingStatus(
 		if attempt != nil {
 			err := uc.cacheLoginAttemptRepo.Del(ctx, dbUser.ID)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 		return nil
@@ -170,7 +170,7 @@ func (uc *UC) savePasswordCheckingStatus(
 	}
 	err := uc.cacheLoginAttemptRepo.Set(ctx, dbUser.ID, attempt, loginAttemptExp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (uc *UC) wrapSensitiveError(err error) error {
 	if errors.Is(err, apperrors.ErrNotFound) || errors.Is(err, apperrors.ErrMismatch) ||
 		errors.Is(err, apperrors.ErrValueInvalid) {
 		// Notes that the `cause` only shows up in dev env, not in production
-		return apperrors.New(apperrors.ErrLoginInputInvalid).WithCause(err)
+		return apperrors.Wrap(apperrors.ErrLoginInputInvalid).WithCause(err)
 	}
-	return apperrors.New(err)
+	return apperrors.Wrap(err)
 }

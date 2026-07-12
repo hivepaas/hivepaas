@@ -42,7 +42,7 @@ func (s *BasicAuth) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentBasicAuthVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -56,7 +56,7 @@ func (s *BasicAuth) Migrate(setting *Setting) (hasChange bool, err error) {
 func (s *BasicAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

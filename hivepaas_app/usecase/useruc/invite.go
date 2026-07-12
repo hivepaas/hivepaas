@@ -32,7 +32,7 @@ func (uc *UC) InviteUser(
 	inviteData := &userInviteData{}
 	err := uc.loadUserInviteData(ctx, uc.db, req, inviteData)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	persistingData := &userservice.PersistingUserData{}
@@ -42,7 +42,7 @@ func (uc *UC) InviteUser(
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if req.SendInviteEmail {
@@ -56,7 +56,7 @@ func (uc *UC) InviteUser(
 			UserSignupLink: inviteData.InviteLink,
 		})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -82,7 +82,7 @@ func (uc *UC) loadUserInviteData(
 ) error {
 	user, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if user != nil && user.Status != base.UserStatusPending {
 		return apperrors.NewAlreadyExist("User").
@@ -92,11 +92,11 @@ func (uc *UC) loadUserInviteData(
 	if req.SendInviteEmail {
 		emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		email, err := emailSetting.AsEmail()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.SystemEmail = email
 	}
@@ -106,7 +106,7 @@ func (uc *UC) loadUserInviteData(
 	// If the username is not available, append some random chars
 	conflictUser, err := uc.userRepo.GetByUsername(ctx, db, username)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if conflictUser != nil {
 		username += fmt.Sprintf("-%d", 1000+rand.Intn(9000)) //nolint
@@ -129,7 +129,7 @@ func (uc *UC) loadUserInviteData(
 	// Generate invite token
 	inviteToken, err := uc.userService.GenerateUserInviteToken(user.ID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.InviteLink = config.Current.DashboardUserSignupURL(inviteToken)
 

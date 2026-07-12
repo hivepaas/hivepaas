@@ -27,7 +27,7 @@ func (uc *UC) TestSendInstantMsg(
 			req.TestMsg, "")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &imservicedto.TestSendInstantMsgResp{}, nil

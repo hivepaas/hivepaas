@@ -18,18 +18,18 @@ func (uc *UC) BeginUserSignup(
 ) (*userdto.BeginUserSignupResp, error) {
 	inviteToken, err := uc.userService.ParseUserInviteToken(req.InviteToken)
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	user, err := uc.userRepo.GetByID(ctx, uc.db, inviteToken.UserID,
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusPending {
-		return nil, apperrors.New(apperrors.ErrActionNotAllowed).
+		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("user '%s' not require signup", user.Email)
 	}
 
@@ -47,7 +47,7 @@ func (uc *UC) BeginUserSignup(
 	if user.SecurityOption == base.UserSecurityPassword2FA {
 		secret, qrCode, err := totp.GenerateSecretAndQRCode(qrCodeImageSize)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp.MFATotpSecret = secret
 		resp.QRCode = &userdto.MFATotpQRCodeResp{

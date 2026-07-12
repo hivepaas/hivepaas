@@ -22,10 +22,10 @@ func (uc *UC) BeginReprovisionGithubApp(
 ) (*githubappdto.BeginReprovisionGithubAppResp, error) {
 	appSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.ID, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if appSetting.UpdateVer != req.UpdateVer {
-		return nil, apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return nil, apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	cfg := config.Current
@@ -73,7 +73,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
-		return nil, apperrors.New(apperrors.ErrObjectScopeInvalid).
+		return nil, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).
 			WithParam("Scope", req.Scope.ScopeType())
 	}
 
@@ -86,7 +86,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 
 	err = uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.BeginReprovisionGithubAppResp{

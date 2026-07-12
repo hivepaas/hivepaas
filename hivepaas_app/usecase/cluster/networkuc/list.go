@@ -22,25 +22,25 @@ func (uc *UC) ListNetwork(
 	if req.Scope.IsGlobalScope() {
 		currNets, err = uc.clusterService.SyncNetworks(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNetworksInDocker(ctx, resp.Data, currNets, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := networkdto.TransformNetworks(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &networkdto.ListNetworkResp{
@@ -66,7 +66,7 @@ func (uc *UC) listNetworksInDocker(
 
 		res, err := uc.dockerManager.NetworkListByIDs(ctx, networks)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		currNets = res.Items
 	}

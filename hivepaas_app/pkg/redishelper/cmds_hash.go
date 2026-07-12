@@ -20,7 +20,7 @@ func HGet[T any](
 		if errors.Is(err, redis.Nil) {
 			return value, apperrors.NewNotFoundNT(key).WithCause(err)
 		}
-		return value, apperrors.New(err)
+		return value, apperrors.Wrap(err)
 	}
 	return unmarshalStr[T](data)
 }
@@ -36,7 +36,7 @@ func HMGet[T any](
 	}
 	data, err := cmder.HMGet(ctx, key, fields...).Result()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return unmarshalSlice[T](data...)
 }
@@ -51,7 +51,7 @@ func HGetAll[T any](
 		if errors.Is(err, redis.Nil) {
 			return nil, apperrors.NewNotFoundNT(key).WithCause(err)
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return unmarshalStrMap[T](data)
 }
@@ -79,15 +79,15 @@ func HMSet[T any](
 	}
 	data, err := marshalKVSlices(fields, values)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if _, err := cmder.HSet(ctx, key, data...).Result(); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if expiration > 0 {
 		if _, err := cmder.HExpire(ctx, key, expiration, fields...).Result(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -104,7 +104,7 @@ func HDel(
 	}
 	_, err := cmder.HDel(ctx, key, fields...).Result()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -118,7 +118,7 @@ func HExpire(
 ) error {
 	_, err := cmder.HExpire(ctx, key, exp, fields...).Result()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

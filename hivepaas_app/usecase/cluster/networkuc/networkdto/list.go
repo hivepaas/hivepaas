@@ -44,7 +44,7 @@ func TransformNetworks(
 	for _, setting := range settings {
 		item, err := TransformNetwork(setting, refObjects, refClusterObjects)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

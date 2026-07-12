@@ -83,7 +83,7 @@ func TransformNetworkSettings(
 
 	resp.NetworkAttachments, err = TransformNetworkAttachments(spec.TaskTemplate.Networks, refObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.HostsFileEntries = TransformHostsFileEntries(spec.TaskTemplate.ContainerSpec.Hosts)
 	resp.DNSConfig = TransformDNSConfig(spec.TaskTemplate.ContainerSpec.DNSConfig)

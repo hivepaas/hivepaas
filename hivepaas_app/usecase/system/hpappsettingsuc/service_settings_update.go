@@ -34,7 +34,7 @@ func (uc *UC) UpdateServiceSettings(
 		data = &updateServiceSettingsData{}
 		err := uc.loadServiceSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSettingsData{}
@@ -42,13 +42,13 @@ func (uc *UC) UpdateServiceSettings(
 
 		err = uc.persistSettingsData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if data.workerSvcChanges {
@@ -82,7 +82,7 @@ func (uc *UC) UpdateServiceSettings(
 	}
 
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappsettingsdto.UpdateServiceSettingsResp{}, nil
@@ -109,12 +109,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Setting = setting
 
 	if setting != nil && setting.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	newSettings := req.ToEntity()
@@ -122,18 +122,18 @@ func (uc *UC) loadServiceSettingsForUpdate(
 
 	currSettings, err := data.Setting.AsHivePaaSService()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	mainAppSvc, err := uc.hpAppService.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.MainService = mainAppSvc
 
 	workerSvc, err := uc.hpAppService.GetHpWorkerSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.WorkerService = workerSvc
 
@@ -156,12 +156,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 		// Make sure there is no task in-progress
 		_, err = uc.taskService.LockAllPendingTasks(ctx, db, time.Second*10) //nolint:mnd
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		// Stop all workers from taking new jobs
 		err = uc.taskQueue.StopAllSchedulers()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.taskQueueStopped = true
 	}
@@ -183,7 +183,7 @@ func (uc *UC) applyServiceSettingsToMainService(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, mainAppSvc.ID, &mainAppSvc.Version, &mainAppSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -203,7 +203,7 @@ func (uc *UC) applyServiceSettingsToWorkerService(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -232,7 +232,7 @@ func (uc *UC) persistSettingsData(
 	err := uc.settingRepo.UpsertMulti(ctx, db, persistingData.Settings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

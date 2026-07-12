@@ -31,7 +31,7 @@ func (uc *UC) UpdateAppEnvVars(
 		data = &updateAppEnvVarsData{}
 		err := uc.loadAppEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData = &persistingAppData{}
@@ -39,17 +39,17 @@ func (uc *UC) UpdateAppEnvVars(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppEnvVars(ctx, db, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppEnvVarsResp{}, nil
@@ -75,13 +75,13 @@ func (uc *UC) loadAppEnvVarsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 	data.EnvVarsSetting = app.GetSettingByType(base.SettingTypeEnvVar)
 
 	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func (uc *UC) applyAppEnvVars(
 	app := data.App
 	envs, _, err := uc.envVarService.BuildAppEnvVars(ctx, db, app, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	envVars := make([]string, 0, len(envs))
@@ -144,13 +144,13 @@ func (uc *UC) applyAppEnvVars(
 	}
 
 	if len(errors) > 0 {
-		return apperrors.New(apperrors.ErrEnvVarContainInvalidReference).WithDisplayLevelHigh().
+		return apperrors.Wrap(apperrors.ErrEnvVarContainInvalidReference).WithDisplayLevelHigh().
 			WithExtraDetail("%s", strings.Join(errors, "\n"))
 	}
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if service.Spec.TaskTemplate.ContainerSpec == nil {
@@ -160,7 +160,7 @@ func (uc *UC) applyAppEnvVars(
 
 	_, err = uc.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

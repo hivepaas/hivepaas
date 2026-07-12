@@ -37,7 +37,7 @@ func (repo *dataMigrationRepo) GetLatest(ctx context.Context, db database.IDB,
 		return nil, apperrors.NewNotFound("DataMigration").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return dataMigration, nil
 }
@@ -49,7 +49,7 @@ func (repo *dataMigrationRepo) Insert(ctx context.Context, db database.IDB, data
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

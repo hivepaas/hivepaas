@@ -18,19 +18,19 @@ const (
 func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
 	data, err := httputil.HTTPGet(ctx, urlAppReleaseInfo)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	info := &hpappservice.AppReleaseInfo{}
 	err = json.Unmarshal(data, info)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if info.Stable != nil && info.Stable.AppVersion != "" {
 		cmp, err := version.CmpStr(info.Stable.AppVersion, base.StableVersion.AppVersion)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		info.Stable.CanUpdate = cmp > 0
 	}
@@ -38,7 +38,7 @@ func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppRelea
 	if info.Beta != nil && info.Beta.AppVersion != "" {
 		cmp, err := version.CmpStr(info.Beta.AppVersion, base.BetaVersion.AppVersion)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		info.Beta.CanUpdate = cmp > 0
 	}

@@ -35,7 +35,7 @@ func (m *manager) ContainerExec(
 
 	_, err := m.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	createResp, err := m.client.ExecCreate(ctx, containerID, opts)
@@ -44,7 +44,7 @@ func (m *manager) ContainerExec(
 	}
 	execID := createResp.ID
 	if execID == "" {
-		return nil, nil, nil, apperrors.New(apperrors.ErrInfraInternal)
+		return nil, nil, nil, apperrors.Wrap(apperrors.ErrInfraInternal)
 	}
 
 	attachResp, err := m.client.ExecAttach(ctx, execID, client.ExecAttachOptions{
@@ -74,7 +74,7 @@ func (m *manager) ContainerExecWait(
 ) (*client.ExecInspectResult, []*tasklog.LogFrame, error) {
 	createResp, attachResp, _, err := m.ContainerExec(ctx, containerID, options...)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	logChan, _ := StartScanningLog(ctx, io.NopCloser(attachResp.Reader), WithParseLogHeader(false))
@@ -87,7 +87,7 @@ func (m *manager) ContainerExecWait(
 
 	inspectResp, err := m.ContainerExecInspect(ctx, createResp.ID)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	return inspectResp, logs, nil

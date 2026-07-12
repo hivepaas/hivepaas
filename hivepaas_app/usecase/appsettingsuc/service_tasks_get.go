@@ -19,22 +19,22 @@ func (uc *UC) GetAppServiceTasks(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	listResp, err := uc.dockerManager.ServiceTaskList(ctx, app.ServiceID, req.States)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	nodeListResp, err := uc.dockerManager.NodeList(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformServiceTasks(listResp.Items, nodeListResp.Items)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppServiceTasksResp{

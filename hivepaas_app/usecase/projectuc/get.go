@@ -30,7 +30,7 @@ func (uc *UC) GetProject(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Loads all accesses of the project
@@ -43,14 +43,14 @@ func (uc *UC) GetProject(
 			Action:         base.ActionTypeRead,
 		})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		project.Accesses = uc.permissionManager.MergeObjectAccessesBySubjectID(objPerms, modPerms)
 	}
 
 	resp, err := projectdto.TransformProject(project)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectdto.GetProjectResp{

@@ -18,18 +18,18 @@ func (uc *UC) GetVolume(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listVolumesInDocker(ctx, []*entity.Setting{resp.Data}, nil, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := volumedto.TransformVolume(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &volumedto.GetVolumeResp{

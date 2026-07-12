@@ -46,7 +46,7 @@ func (s *service) CreatePreview(
 
 	err = s.loadAppDataForCreatingPreview(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	copyResp, err := s.appCopyService.CopyApp(ctx, db, &appcopyservice.AppCopyReq{
@@ -65,17 +65,17 @@ func (s *service) CreatePreview(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.createDeploymentAndTask(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.persistAppPreviewData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &apppreviewservice.CreatePreviewResp{
@@ -102,11 +102,11 @@ func (s *service) loadAppDataForCreatingPreview(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	// The app must not be a child app
 	if app.ParentID != "" {
-		return apperrors.New(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
 	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
@@ -115,7 +115,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	}
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || deploymentSettings.RepoSource == nil {
-		return apperrors.New(apperrors.ErrDeploymentMethodRepoRequired)
+		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 
 	data.App = app
@@ -142,7 +142,7 @@ func (s *service) loadAppDataForCreatingPreview(
 
 	previewApp, err := s.GetPreview(ctx, db, app.ID, data.CalcRepoRef, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if previewApp != nil {
 		return apperrors.NewAlreadyExist("Preview app")
@@ -231,7 +231,7 @@ func (s *service) onCopyHttpSetting(
 	// Make sure all domains used by the app are not hold by any other app
 	err := s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{data.PreviewApp.ID})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	setting.MustSetData(httpSettings)
@@ -265,17 +265,17 @@ func (s *service) createDeploymentAndTask(
 	deployment, deploymentTask, err := s.appDeploymentService.CreateDeploymentAndTask(
 		previewApp, data.DeploymentSettings)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.OnInitDeployment != nil {
 		if err = data.OnInitDeployment(deployment); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if data.OnDeploymentTask != nil {
 		if err = data.OnDeploymentTask(deploymentTask); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -292,13 +292,13 @@ func (s *service) persistAppPreviewData(
 	err = s.deploymentRepo.Upsert(ctx, db, data.Deployment,
 		entity.DeploymentUpsertingConflictCols, entity.DeploymentUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.taskRepo.Upsert(ctx, db, data.DeploymentTask,
 		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

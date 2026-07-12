@@ -17,7 +17,7 @@ func (uc *UC) TestSendMail(
 	conf := req.ToEntity()
 	err = email.SendMail(ctx, conf, []string{req.TestRecipient}, req.TestSubject, req.TestContent)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &emaildto.TestSendMailResp{}, nil
 }

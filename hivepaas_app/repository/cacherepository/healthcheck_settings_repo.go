@@ -33,7 +33,7 @@ func (repo *healthcheckSettingsRepo) Get(
 ) (*cacheentity.HealthcheckSettings, error) {
 	resp, err := redishelper.Get[*cacheentity.HealthcheckSettings](ctx, repo.client, healthCheckSettingsKey)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -45,7 +45,7 @@ func (repo *healthcheckSettingsRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, healthCheckSettingsKey, settings, exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func (repo *healthcheckSettingsRepo) Del(
 ) error {
 	err := redishelper.Del(ctx, repo.client, healthCheckSettingsKey)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

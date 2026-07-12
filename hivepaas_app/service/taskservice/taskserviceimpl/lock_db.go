@@ -31,7 +31,7 @@ func (s *service) tryCreateDBLock(
 	try int,
 ) (*entity.Lock, error) {
 	if try >= maxTryLock {
-		return nil, apperrors.New(apperrors.ErrActionFailed)
+		return nil, apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 	if selectFor == "" {
 		selectFor = "UPDATE"
@@ -40,7 +40,7 @@ func (s *service) tryCreateDBLock(
 		bunex.SelectFor(selectFor),
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if lock != nil {
@@ -51,7 +51,7 @@ func (s *service) tryCreateDBLock(
 	lock = &entity.Lock{ID: id}
 	err = s.lockRepo.Upsert(ctx, s.db, lock, entity.LockUpsertingConflictCols, entity.LockUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	try++

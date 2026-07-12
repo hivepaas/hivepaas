@@ -18,18 +18,18 @@ func (uc *UC) GetNetwork(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNetworksInDocker(ctx, []*entity.Setting{resp.Data}, nil, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := networkdto.TransformNetwork(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &networkdto.GetNetworkResp{

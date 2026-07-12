@@ -17,13 +17,13 @@ func (uc *UC) GetConfigFile(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.Data.MustAsConfigFile()
 	respData, err := configfiledto.TransformConfigFile(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &configfiledto.GetConfigFileResp{

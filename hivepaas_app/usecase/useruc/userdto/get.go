@@ -59,7 +59,7 @@ type UserResp struct {
 func TransformUserDetails(user *entity.User) (resp *UserDetailsResp, err error) {
 	userResp, err := TransformUser(user)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp = &UserDetailsResp{
 		UserResp: userResp,

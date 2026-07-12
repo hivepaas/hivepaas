@@ -22,14 +22,14 @@ func (uc *UC) UpdateUser(
 	req *userdto.UpdateUserReq,
 ) (*userdto.UpdateUserResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		userData := &userUpdateData{}
 		err := uc.loadUserDataForUpdate(ctx, db, auth, req, userData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &userservice.PersistingUserData{}
@@ -38,13 +38,13 @@ func (uc *UC) UpdateUser(
 		// Revoke target user's JWT, user needs to re-login
 		err = uc.userTokenRepo.DelAll(ctx, req.ID)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.UpdateUserResp{}, nil
@@ -65,7 +65,7 @@ func (uc *UC) loadUserDataForUpdate(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.User = user
 
@@ -73,10 +73,10 @@ func (uc *UC) loadUserDataForUpdate(
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrUsernameUnavailable).
+			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -85,17 +85,17 @@ func (uc *UC) loadUserDataForUpdate(
 	if req.Email != "" && req.Email != user.Email {
 		conflictUser, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrEmailUnavailable).
+			return apperrors.Wrap(apperrors.ErrEmailUnavailable).
 				WithMsgLog("email '%s' already exists", req.Email)
 		}
 	}
 
 	if req.Role != nil {
 		if base.RoleCmp(auth.User.Role, *req.Role) < 0 {
-			return apperrors.New(apperrors.ErrForbidden).
+			return apperrors.Wrap(apperrors.ErrForbidden).
 				WithMsgLog("you are not allowed to set a role higher than yours")
 		}
 	}

@@ -24,13 +24,13 @@ func (uc *UC) CreateOAuthSession(
 	oauthUser := req.User
 	email := oauthUser.Email
 	if email == "" {
-		return nil, apperrors.New(apperrors.ErrInternal).
+		return nil, apperrors.Wrap(apperrors.ErrInternal).
 			WithMsgLog("unable to create oauth session, email is not returned from provider")
 	}
 
 	dbUser, err := uc.userRepo.GetByEmail(ctx, uc.db, email)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Make synchronization as info of user may be changed in the IdP system
@@ -52,12 +52,12 @@ func (uc *UC) CreateOAuthSession(
 	// Saves the user
 	err = uc.userRepo.Update(ctx, uc.db, dbUser, bunex.UpdateColumns(gofn.MapKeys(updateCols)...))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	sessionResp, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sessiondto.CreateOAuthSessionResp{

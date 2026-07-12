@@ -22,22 +22,22 @@ func (uc *UC) ExecuteSystemCleanup(
 	req.Type = currentSettingType
 	_, jobSetting, err := uc.getCleanupSettingAndJob(ctx, uc.DB, req.Scope, true, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.taskRepo.Insert(ctx, uc.DB, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.taskQueue.ScheduleTask(ctx, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &systemcleanupdto.ExecuteSystemCleanupResp{
@@ -56,7 +56,7 @@ func (uc *UC) getCleanupSettingAndJob(
 ) (cleanup *entity.Setting, job *entity.Setting, err error) {
 	cleanup, err = uc.SettingRepo.GetSingle(ctx, db, scope, currentSettingType, requireSettingActive)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	// Load sched job of the cleanup
@@ -64,7 +64,7 @@ func (uc *UC) getCleanupSettingAndJob(
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", cleanup.ID),
 	)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	return cleanup, job, nil

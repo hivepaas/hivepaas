@@ -44,13 +44,13 @@ func TransformRepoWebhook(
 ) (resp *RepoWebhookResp, err error) {
 	conf := setting.MustAsRepoWebhook()
 	if err = copier.Copy(&resp, conf); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Kind = base.WebhookKind(setting.Kind)
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Computed field

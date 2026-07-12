@@ -29,7 +29,7 @@ func (uc *UC) UpdateProjectEnvVars(
 		data = &updateProjectEnvVarsData{}
 		err := uc.loadProjectEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData = &persistingProjectData{}
@@ -42,13 +42,13 @@ func (uc *UC) UpdateProjectEnvVars(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.UpdateProjectEnvVarsResp{}, nil
@@ -73,13 +73,13 @@ func (uc *UC) loadProjectEnvVarsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 	data.EnvVarsSetting = project.GetSettingByType(base.SettingTypeEnvVar)
 
 	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	return nil

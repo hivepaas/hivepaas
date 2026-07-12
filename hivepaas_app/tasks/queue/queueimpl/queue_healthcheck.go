@@ -41,7 +41,7 @@ func (q *taskQueue) doHealthcheck(
 	baseData := &queue.HealthcheckExecData{}
 	jobSettings, err := q.loadHealthcheckData(ctx, q.db, baseData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if len(jobSettings) == 0 {
 		return nil
@@ -90,7 +90,7 @@ func (q *taskQueue) doHealthcheck(
 	err = q.taskRepo.UpsertMulti(ctx, q.db, savingTasks,
 		entity.TaskUpsertingConflictColsByUK, nil)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (q *taskQueue) doHealthcheckItem(
 	lockKey := fmt.Sprintf(taskHealthcheckLockKey, healthcheckData.HealthcheckSetting.ID)
 	success, releaser, err := q.taskService.CreateRedisLock(ctx, lockKey, time.Minute)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if !success {
 		return nil
@@ -116,7 +116,7 @@ func (q *taskQueue) doHealthcheckItem(
 	if healthcheck.SaveResultTasks {
 		*savingTasks = append(*savingTasks, healthcheckData.Task)
 	}
-	return apperrors.New(err)
+	return apperrors.Wrap(err)
 }
 
 func (q *taskQueue) loadHealthcheckData(
@@ -131,14 +131,14 @@ func (q *taskQueue) loadHealthcheckData(
 		if errors.Is(err, apperrors.ErrNotFound) {
 			queryDB = true
 		} else {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	if queryDB {
 		healthcheckSettings, err = q.loadHealthcheckDataFromDB(ctx, db)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 	if healthcheckSettings == nil {
@@ -161,7 +161,7 @@ func (q *taskQueue) loadHealthcheckData(
 	// Load history notification events
 	taskData.NotifEventMap, err = q.healthcheckNotifEventRepo.GetAll(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	taskData.RefObjects = healthcheckSettings.RefObjects
@@ -187,7 +187,7 @@ func (q *taskQueue) loadHealthcheckDataFromDB(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var validHealthchecks []*entity.Setting
@@ -211,7 +211,7 @@ func (q *taskQueue) loadHealthcheckDataFromDB(
 	refObjects, err := q.settingService.LoadReferenceObjects(ctx, db, nil,
 		true, false, validHealthchecks...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	healthcheckSettings := &cacheentity.HealthcheckSettings{
@@ -222,7 +222,7 @@ func (q *taskQueue) loadHealthcheckDataFromDB(
 	// Put data in cache
 	err = q.healthcheckSettingsRepo.Set(ctx, healthcheckSettings, cacheHealthcheckSettingsExp)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return healthcheckSettings, nil

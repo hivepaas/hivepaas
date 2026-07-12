@@ -39,7 +39,7 @@ func (e *Executor) sendNotification(
 	notification, err := e.notificationService.GetNotificationForEvent(ctx, db,
 		scope, notifConfig, isSucceeded, data.RefObjects)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -56,7 +56,7 @@ func (e *Executor) sendNotification(
 		TemplateData:    data.NotifMsgData,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -37,7 +37,7 @@ func TransformSysErrors(appErrors []*entity.SysError) (resp []*SysErrorResp, err
 	for _, appError := range appErrors {
 		item, err := TransformSysError(appError)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

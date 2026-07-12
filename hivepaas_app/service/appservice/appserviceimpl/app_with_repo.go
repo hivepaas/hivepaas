@@ -35,7 +35,7 @@ func (s *service) FindAppsMatchingRepository(
 
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil, settingListOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil
@@ -62,7 +62,7 @@ func (s *service) FindAppsMatchingRepository(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, appListOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(apps) == 0 {
 		return nil, nil

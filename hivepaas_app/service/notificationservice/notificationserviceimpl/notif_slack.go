@@ -15,11 +15,11 @@ func (s *service) slackSendMsg(
 ) error {
 	webhookURL, err := setting.Webhook.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	err = slack.NewClient().PostWebhook(ctx, webhookURL, "", msg)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

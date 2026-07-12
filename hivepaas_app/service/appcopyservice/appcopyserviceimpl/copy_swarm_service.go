@@ -20,7 +20,7 @@ func (s *service) copySwarmService(
 	targetApp := data.TargetApp
 	srcSvcRes, err := s.dockerManager.ServiceInspect(ctx, data.SrcApp.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	srcSvc := &srcSvcRes.Service
 	data.SrcService = srcSvc
@@ -57,15 +57,15 @@ func (s *service) copySwarmService(
 	// Update network attachments
 	globalNetID, err := s.networkService.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.SrcProject, data.SrcApp.Env)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, data.TargetApp.Env)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	var newNetAttachments []swarm.NetworkAttachmentConfig
 	localNetAdded := false
@@ -97,7 +97,7 @@ func (s *service) copySwarmService(
 
 	err = data.OnCopyService(targetSvc, srcSvc)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -130,10 +130,10 @@ func (s *service) createSwarmService(
 	// Create a service in docker for the app
 	res, err := s.dockerManager.ServiceCreate(ctx, &data.TargetService.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if res.ID == "" { // should never happen
-		return apperrors.New(apperrors.ErrInfraInternal).
+		return apperrors.Wrap(apperrors.ErrInfraInternal).
 			WithNTParam("Error", "empty service ID returned")
 	}
 	data.TargetApp.ServiceID = res.ID
@@ -147,7 +147,7 @@ func (s *service) applyFinalContainerSettings(
 ) error {
 	inspect, err := s.dockerManager.ServiceInspect(ctx, data.TargetApp.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	service := &inspect.Service
 
@@ -161,7 +161,7 @@ func (s *service) applyFinalContainerSettings(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

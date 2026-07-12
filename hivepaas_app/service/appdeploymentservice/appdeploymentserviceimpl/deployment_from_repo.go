@@ -46,7 +46,7 @@ func (s *service) deployFromRepo(
 	// 0. Prepare
 	err := s.repoDeployStepPrepare(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.IsTaskCanceled() {
@@ -56,7 +56,7 @@ func (s *service) deployFromRepo(
 	// 1. Repo checkout
 	err = s.repoDeployStepSourceCheckout(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.IsTaskCanceled() {
@@ -66,7 +66,7 @@ func (s *service) deployFromRepo(
 	// 2. Build image
 	err = s.repoDeployStepImageBuild(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.IsTaskCanceled() {
@@ -79,7 +79,7 @@ func (s *service) deployFromRepo(
 
 	shouldContinue, err := s.lockDockerServiceForDeployment(ctx, db, data.appDeploymentData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if !shouldContinue {
 		data.DeploymentCanceled = true
@@ -89,19 +89,19 @@ func (s *service) deployFromRepo(
 	// 3. Pre-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 4. Apply image to service
 	err = s.repoDeployStepServiceApply(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 5. Post-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func (s *service) repoDeployStepSourceCheckout(
 
 	checkoutResp, err := s.repoCheckoutService.Checkout(ctx, checkoutReq)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	repoSource.CommitHash = checkoutResp.CommitHash
@@ -168,7 +168,7 @@ func (s *service) repoDeployStepImageBuild(
 
 	buildResp, err := s.imageBuildService.ImageBuild(ctx, db, buildReq)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	data.DeploymentOutput.ImageTags = buildResp.ImageTags
@@ -192,13 +192,13 @@ func (s *service) repoDeployStepServiceApply(
 		regAuth := data.RefObjects.RefSettings[repoSource.PushToRegistry.ID]
 		regAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
 	inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	service := &inspect.Service
 	spec := &service.Spec
@@ -212,7 +212,7 @@ func (s *service) repoDeployStepServiceApply(
 			options.EncodedRegistryAuth = regAuthHeader
 		})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -226,7 +226,7 @@ func (s *service) repoDeployStepPrepare(
 	// Creates temp dir and checkout dir
 	data.TempDir, err = fileutil.CreateTempDir(base.BaseTempDirDefault, "*", 0)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.TempDir, _ = filepath.Abs(data.TempDir)
 	data.CheckoutDir = filepath.Join(data.TempDir, "checkout")
@@ -234,7 +234,7 @@ func (s *service) repoDeployStepPrepare(
 	// Load build settings
 	err = s.loadImageBuildSettings(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

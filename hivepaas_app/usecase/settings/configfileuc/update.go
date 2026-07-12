@@ -27,7 +27,7 @@ func (uc *UC) UpdateConfigFile(
 		) error {
 			oldConfigFile, err := pData.Setting.AsConfigFile()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			if oldConfigFile != nil {
 				updatedConfigFile.Name = oldConfigFile.Name // when update, keep the old NAME of the config
@@ -40,18 +40,18 @@ func (uc *UC) UpdateConfigFile(
 				// Update the related configs in docker swarm
 				err := uc.ClusterService.UpdateConfigForApp(ctx, db, data.ScopeApp, oldConfigFile, updatedConfigFile)
 				if err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 			}
 
 			if err = pData.Setting.SetData(updatedConfigFile); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &configfiledto.UpdateConfigFileResp{}, nil

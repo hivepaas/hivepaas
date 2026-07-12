@@ -23,7 +23,7 @@ func (uc *UC) GetAppDeploymentSettings(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
@@ -32,7 +32,7 @@ func (uc *UC) GetAppDeploymentSettings(
 		bunex.SelectWhere("setting.object_id = ?", app.ID), // load app direct settings
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.AppDeploymentSettingsTransformInput{
@@ -41,12 +41,12 @@ func (uc *UC) GetAppDeploymentSettings(
 	}
 	err = uc.loadAppDeploymentSettingsRefData(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformDeploymentSettings(input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppDeploymentSettingsResp{
@@ -62,7 +62,7 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	app := input.App
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	input.ServiceSpec = &service.Spec
 
@@ -74,7 +74,7 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	refObjects, err := uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetObjectScope(),
 		true, false, refIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	for _, setting := range refObjects.RefSettings {
 		setting.CurrentObjectID = app.ID

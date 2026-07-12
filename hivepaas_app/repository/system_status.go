@@ -36,7 +36,7 @@ func (repo *systemStatusRepo) Get(ctx context.Context, db database.IDB,
 		return nil, apperrors.NewNotFound("SystemStatus").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return systemStatus, nil
 }
@@ -49,7 +49,7 @@ func (repo *systemStatusRepo) Upsert(ctx context.Context, db database.IDB, syste
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

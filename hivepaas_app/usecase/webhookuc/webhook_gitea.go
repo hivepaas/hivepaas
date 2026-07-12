@@ -16,7 +16,7 @@ func (uc *UC) parseGiteaWebhook(
 ) error {
 	hook, err := gitea.New(gitea.Options.Secret(secret))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, gitea.PushEvent, gitea.IssueCommentEvent,
 		gitea.PullRequestCommentEvent, gitea.PullRequestEvent)
@@ -24,7 +24,7 @@ func (uc *UC) parseGiteaWebhook(
 		if errors.Is(err, gitea.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

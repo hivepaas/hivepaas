@@ -50,12 +50,12 @@ func TransformNetwork(
 ) (resp *NetworkResp, err error) {
 	netEnt := setting.MustAsClusterNetwork()
 	if err = copier.Copy(&resp, netEnt); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	net := refClusterObjects.RefNetworks[dockerhelper.ParseID(setting.ID)]

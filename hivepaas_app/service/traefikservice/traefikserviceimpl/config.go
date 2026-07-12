@@ -15,11 +15,11 @@ func (s *service) ReloadTraefikConfig(ctx context.Context, restartServiceOnFailu
 		return nil
 	}
 	if !restartServiceOnFailure {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	err = s.RestartTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -27,12 +27,12 @@ func (s *service) ReloadTraefikConfig(ctx context.Context, restartServiceOnFailu
 func (s *service) reloadTraefikConfig(ctx context.Context) error {
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasTraefikServiceName, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	resp, err := s.dockerManager.ServiceContainerList(ctx, service.ID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	containers := resp.Items
@@ -46,7 +46,7 @@ func (s *service) reloadTraefikConfig(ctx context.Context) error {
 
 	errMap := s.dockerManager.ContainerKillMulti(ctx, containerIDs, "SIGHUP")
 	for _, err := range errMap {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

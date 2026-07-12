@@ -25,7 +25,7 @@ func (s *service) applySwarmSecrets(
 	}
 	data.TargetSecrets, err = s.clusterService.CreateSecretsForApp(ctx, db, app, secretItems)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

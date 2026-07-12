@@ -29,7 +29,7 @@ func (uc *UC) processWebhookEventPRSynchronized(
 ) error {
 	parsedURL, err := vcsurl.Parse(event.RepoURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	webhook := data.WebhookSetting.MustAsRepoWebhook()
@@ -44,7 +44,7 @@ func (uc *UC) processWebhookEventPRSynchronized(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var wg sync.WaitGroup

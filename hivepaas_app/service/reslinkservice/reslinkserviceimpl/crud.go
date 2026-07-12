@@ -29,7 +29,7 @@ func (s *service) SetLinks(
 		bunex.SelectWhere("res_link.dst_type = ?", dstType),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Calculate links update
@@ -70,7 +70,7 @@ func (s *service) SetLinks(
 	err = s.resLinkRepo.UpsertMulti(ctx, db, upsertingLinks,
 		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -112,7 +112,7 @@ func (s *service) AddLinks(
 	err := s.resLinkRepo.UpsertMulti(ctx, db, newLinks,
 		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (s *service) RemoveLinks(
 		bunex.DeleteWhereIn("res_link.dst_id IN (?)", dstIDs...),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

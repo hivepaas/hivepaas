@@ -37,13 +37,13 @@ func (uc *UC) CreateRepoWebhook(
 			}
 			err := pData.Setting.SetData(webhookData)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &repowebhookdto.CreateRepoWebhookResp{

@@ -29,7 +29,7 @@ func (uc *UC) UpdateAppContainerSettings(
 		data := &updateAppContainerSettingsData{}
 		err := uc.loadAppContainerSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -37,17 +37,17 @@ func (uc *UC) UpdateAppContainerSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppContainerSettings(ctx, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppContainerSettingsResp{}, nil
@@ -72,18 +72,18 @@ func (uc *UC) loadAppContainerSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	return nil
@@ -244,7 +244,7 @@ func (uc *UC) applyAppContainerSettings(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

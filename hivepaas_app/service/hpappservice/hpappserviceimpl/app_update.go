@@ -36,10 +36,10 @@ func (s *service) UpdateSystemVersion(
 		bunex.SelectColumns("id"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if len(tasks) > 0 {
-		return apperrors.New(apperrors.ErrTooMany).WithParam("Name", "Update requests").
+		return apperrors.Wrap(apperrors.ErrTooMany).WithParam("Name", "Update requests").
 			WithNTParam("MaxItem", 1)
 	}
 
@@ -62,17 +62,17 @@ func (s *service) UpdateSystemVersion(
 
 	err = s.taskRepo.Insert(ctx, db, task)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Start the updater service
 	updaterSvc, err := s.GetHpUpdaterSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	appSvc, err := s.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	updaterSvc.Spec.TaskTemplate.ContainerSpec.Image = targetVersion.AppImage
@@ -83,7 +83,7 @@ func (s *service) UpdateSystemVersion(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, updaterSvc.ID, &updaterSvc.Version, &updaterSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

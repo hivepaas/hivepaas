@@ -18,7 +18,7 @@ func (s *service) applySchedJobSettings(
 
 	err := s.taskQueue.ScheduleTasksForSchedJobs(ctx, db, jobSettings, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

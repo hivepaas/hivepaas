@@ -17,12 +17,12 @@ func (uc *UC) GetHealthcheck(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := healthcheckdto.TransformHealthcheck(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &healthcheckdto.GetHealthcheckResp{

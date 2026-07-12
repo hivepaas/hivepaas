@@ -46,17 +46,17 @@ func (s *service) SchedJobExec(
 
 	cmd, err := s.calcCommand(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	env, err := s.calcCommandEnv(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	stdoutWriter, err := s.initOutputWriter(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	defer s.cleanup(err, data)
@@ -86,7 +86,7 @@ func (s *service) SchedJobExec(
 
 	err = s.finalize(ctx, db, err, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobexecservice.SchedJobExecResp{}, nil

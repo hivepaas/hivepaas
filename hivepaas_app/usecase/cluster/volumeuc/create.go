@@ -40,7 +40,7 @@ func (uc *UC) CreateVolume(
 			}
 			createResp, err := uc.createVolumeInDocker(ctx, req.VolumeBaseReq)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
 			volID := vol.Name
@@ -52,13 +52,13 @@ func (uc *UC) CreateVolume(
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &volumedto.CreateVolumeResp{
@@ -72,7 +72,7 @@ func (uc *UC) createVolumeInDocker(
 ) (*client.VolumeCreateResult, error) {
 	_, err := uc.dockerManager.VolumeInspect(ctx, req.Name)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if err == nil {
 		return nil, apperrors.NewAlreadyExist("Cluster volume")
@@ -136,7 +136,7 @@ func (uc *UC) createVolumeInDocker(
 		opts.Name = req.Name
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return createResp, nil
 }

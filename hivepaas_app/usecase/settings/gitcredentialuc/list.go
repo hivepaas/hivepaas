@@ -50,7 +50,7 @@ func (uc *UC) ListGitCredential(
 
 	settings, pagingMeta, err := uc.SettingRepo.List(ctx, uc.DB, req.Scope, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -60,12 +60,12 @@ func (uc *UC) ListGitCredential(
 	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true,
 		false, settings...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := gitcredentialdto.TransformGitCredentials(settings, refObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListGitCredentialResp{

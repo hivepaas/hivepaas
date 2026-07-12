@@ -41,7 +41,7 @@ func (uc *UC) UpdateAppStorageSettings(
 		data := &updateAppStorageSettingsData{}
 		err := uc.loadAppStorageSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -49,17 +49,17 @@ func (uc *UC) UpdateAppStorageSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppStorageSettings(ctx, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppStorageSettingsResp{}, nil
@@ -87,19 +87,19 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 	data.Project = app.Project
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	// Calculate mount keys of existing mounts to distinguish new changes
@@ -113,13 +113,13 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	storageSetting, err := uc.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.StorageSettings = storageSetting.MustAsStorageSettings()
 
 	for _, reqMnt := range req.Mounts {
 		if !gofn.Contain(supportedMountTypes, reqMnt.Type) {
-			return apperrors.New(apperrors.ErrMountTypeUnsupported).WithParam("Type", reqMnt.Type)
+			return apperrors.Wrap(apperrors.ErrMountTypeUnsupported).WithParam("Type", reqMnt.Type)
 		}
 		switch reqMnt.Type {
 		case mount.TypeBind:
@@ -131,10 +131,10 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		case mount.TypeTmpfs:
 			err = uc.validateStorageSettingsTmpfsMount(reqMnt, data)
 		case mount.TypeNamedPipe, mount.TypeImage:
-			return apperrors.New(apperrors.ErrMountTypeUnsupported).WithParam("Type", reqMnt.Type)
+			return apperrors.Wrap(apperrors.ErrMountTypeUnsupported).WithParam("Type", reqMnt.Type)
 		}
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -231,13 +231,13 @@ func (uc *UC) validateStorageSettingsBindMount(
 
 	bindSettings := data.StorageSettings.BindSettings
 	if bindSettings == nil || !bindSettings.Enabled {
-		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Bind settings")
+		return apperrors.Wrap(apperrors.ErrUnconfigured).WithParam("Name", "Bind settings")
 	}
 
 	if len(bindSettings.BaseDirs) > 0 {
 		contain, _ := fileutil.PathContain(bindSettings.BaseDirs, mnt.BindOptions.BaseDir)
 		if !contain {
-			return apperrors.New(apperrors.ErrSettingViolation).
+			return apperrors.Wrap(apperrors.ErrSettingViolation).
 				WithParam("Name", fmt.Sprintf("Use of base dir '%v'", mnt.BindOptions.BaseDir))
 		}
 	}
@@ -246,7 +246,7 @@ func (uc *UC) validateStorageSettingsBindMount(
 	if subpathRequired != "" {
 		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.BindOptions.Subpath)
 		if !isSubpath {
-			return apperrors.New(apperrors.ErrSettingViolation).
+			return apperrors.Wrap(apperrors.ErrSettingViolation).
 				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.BindOptions.Subpath))
 		}
 	}
@@ -265,12 +265,12 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 
 	volumeSettings := data.StorageSettings.VolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
-		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Volume settings")
+		return apperrors.Wrap(apperrors.ErrUnconfigured).WithParam("Name", "Volume settings")
 	}
 
 	if len(volumeSettings.Volumes) > 0 &&
 		!gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.VolumeOptions.Volume) {
-		return apperrors.New(apperrors.ErrSettingViolation).
+		return apperrors.Wrap(apperrors.ErrSettingViolation).
 			WithParam("Name", fmt.Sprintf("Use of volume '%v'", mnt.VolumeOptions.Volume))
 	}
 
@@ -278,7 +278,7 @@ func (uc *UC) validateStorageSettingsVolumeMount(
 	if subpathRequired != "" {
 		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.VolumeOptions.Subpath)
 		if !isSubpath {
-			return apperrors.New(apperrors.ErrSettingViolation).
+			return apperrors.Wrap(apperrors.ErrSettingViolation).
 				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.VolumeOptions.Subpath))
 		}
 	}
@@ -297,12 +297,12 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 
 	volumeSettings := data.StorageSettings.ClusterVolumeSettings
 	if volumeSettings == nil || !volumeSettings.Enabled {
-		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Cluster volume settings")
+		return apperrors.Wrap(apperrors.ErrUnconfigured).WithParam("Name", "Cluster volume settings")
 	}
 
 	if len(volumeSettings.Volumes) > 0 &&
 		!gofn.Contain(volumeSettings.Volumes.ToIDStringSlice(), mnt.ClusterOptions.Volume) {
-		return apperrors.New(apperrors.ErrSettingViolation).
+		return apperrors.Wrap(apperrors.ErrSettingViolation).
 			WithParam("Name", fmt.Sprintf("Use of volume '%v'", mnt.ClusterOptions.Volume))
 	}
 
@@ -310,7 +310,7 @@ func (uc *UC) validateStorageSettingsClusterVolumeMount(
 	if subpathRequired != "" {
 		isSubpath, _ := fileutil.IsEqualOrSubpath(subpathRequired, mnt.ClusterOptions.Subpath)
 		if !isSubpath {
-			return apperrors.New(apperrors.ErrSettingViolation).
+			return apperrors.Wrap(apperrors.ErrSettingViolation).
 				WithParam("Name", fmt.Sprintf("Use of subpath '%v'", mnt.ClusterOptions.Subpath))
 		}
 	}
@@ -329,7 +329,7 @@ func (uc *UC) validateStorageSettingsTmpfsMount(
 
 	tmpfsSettings := data.StorageSettings.TmpfsSettings
 	if tmpfsSettings == nil || !tmpfsSettings.Enabled {
-		return apperrors.New(apperrors.ErrUnconfigured).WithParam("Name", "Tmpfs settings")
+		return apperrors.Wrap(apperrors.ErrUnconfigured).WithParam("Name", "Tmpfs settings")
 	}
 
 	var size int64
@@ -337,7 +337,7 @@ func (uc *UC) validateStorageSettingsTmpfsMount(
 		size = int64(mnt.TmpfsOptions.Size)
 	}
 	if tmpfsSettings.MaxSize > 0 && size > int64(tmpfsSettings.MaxSize) {
-		return apperrors.New(apperrors.ErrSettingViolation).
+		return apperrors.Wrap(apperrors.ErrSettingViolation).
 			WithParam("Name", fmt.Sprintf("Tmpfs size '%v'", size))
 	}
 
@@ -482,7 +482,7 @@ func (uc *UC) applyAppStorageSettings(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

@@ -141,12 +141,12 @@ func installationInitDevProjects(
 
 	projectA, err := projectRepo.GetByKey(ctx, db, "project_a")
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	_, _, _, err = projectService.SyncProject(ctx, db, projectA) //nolint:dogsled
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

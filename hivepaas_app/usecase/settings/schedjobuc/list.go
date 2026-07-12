@@ -23,18 +23,18 @@ func (uc *UC) ListSchedJob(
 			data *settings.ListSettingData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := schedjobdto.TransformSchedJobs(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.ListSchedJobResp{

@@ -88,7 +88,7 @@ func (c *Consumer) getData(
 ) (frames []*LogFrame, err error) {
 	frames, err = redishelper.LRange[*LogFrame](ctx, c.redisClient, c.key, *frameIndex, -1)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	*frameIndex += int64(len(frames))
 	return frames, nil
@@ -100,7 +100,7 @@ func (c *Consumer) GetAllData(
 	frameIndex := int64(0)
 	frames, err := c.getData(ctx, &frameIndex)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return frames, nil
 }

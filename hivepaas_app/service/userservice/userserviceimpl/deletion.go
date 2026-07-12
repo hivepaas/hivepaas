@@ -13,7 +13,7 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 	// Revoke target user's JWT, user can't access with the old token
 	err := s.userTokenRepo.DelAll(ctx, user.ID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Delete ref resources in DB
@@ -22,38 +22,38 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 	// ACL permissions having the user ID as subject ID
 	err = s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// User files
 	err = s.fileRepo.DeleteAllByObjects(ctx, db, base.ObjectScopeUser, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Resource links
 	err = s.resLinkRepo.DeleteAllBySourceIDs(ctx, db, base.ResourceTypeUser, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Settings
 	err = s.settingRepo.DeleteAllByObjects(ctx, db, base.ObjectScopeUser, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Tasks
 	err = s.taskRepo.DeleteAllByUsers(ctx, db, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// User photo
 	if user.PhotoID != "" {
 		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{user.PhotoID})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

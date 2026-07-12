@@ -23,17 +23,17 @@ func (s *service) ExecuteInTx(
 			bunex.SelectWhereIf(requireUpdateVerMatch, "app.update_ver = ?", app.UpdateVer))
 		if err != nil {
 			if requireUpdateVerMatch && errors.Is(err, apperrors.ErrNotFound) {
-				return apperrors.New(apperrors.ErrUpdateVerMismatched)
+				return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 			}
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if err = fn(db); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

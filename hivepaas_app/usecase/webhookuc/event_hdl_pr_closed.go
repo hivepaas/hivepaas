@@ -28,7 +28,7 @@ func (uc *UC) processWebhookEventPRClosed(
 ) (err error) {
 	parsedURL, err := vcsurl.Parse(prClosedEvent.RepoURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var expectedRef string
@@ -48,7 +48,7 @@ func (uc *UC) processWebhookEventPRClosed(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var wg sync.WaitGroup

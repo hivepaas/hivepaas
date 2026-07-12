@@ -51,7 +51,7 @@ func (q *taskQueue) executeTask(
 	err := transaction.Execute(ctx, q.db, func(db database.Tx) (err error) {
 		task, err := q.loadTask(ctx, db, taskID)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if task == nil {
 			return nil
@@ -88,7 +88,7 @@ func (q *taskQueue) executeTask(
 		}
 		err = q.taskInfoRepo.Set(ctx, task.ID, taskInfo, taskInfoCacheExp)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		var execErr error
@@ -158,7 +158,7 @@ func (q *taskQueue) loadTask(
 		if errors.Is(err, apperrors.ErrNotFound) { // task not found, it's not error
 			return nil, nil
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Task's target object must be active

@@ -23,7 +23,7 @@ func (cli *checkoutCli) gitCliPullLfs(
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

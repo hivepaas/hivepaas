@@ -42,7 +42,7 @@ func (s *RepoWebhook) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentRepoWebhookVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -62,7 +62,7 @@ func (s *Setting) AsRepoWebhook() (*RepoWebhook, error) {
 	if s.Type == base.SettingTypeGithubApp {
 		ghApp, err := s.AsGithubApp()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		return ghApp.ConvertAsRepoWebhook(), nil
 	}

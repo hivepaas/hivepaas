@@ -53,7 +53,7 @@ func (s *service) calcBuildEnvVars(
 ) (map[string]*string, error) {
 	envVars, refSecrets, err := s.envVarService.BuildAppEnvVars(ctx, db, data.App, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if data.LogStore != nil && len(refSecrets) > 0 {
@@ -61,7 +61,7 @@ func (s *service) calcBuildEnvVars(
 		for _, secret := range refSecrets {
 			plainSecret, err := secret.Value.GetPlain()
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			secrets = append(secrets, plainSecret)
 		}
@@ -86,18 +86,18 @@ func (s *service) calcBuildRegistryAuths(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	result := make(map[string]registry.AuthConfig, len(settings))
 	for _, setting := range settings {
 		regAuth, err := setting.AsRegistryAuth()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		password, err := regAuth.Password.GetPlain()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		result[regAuth.Address] = registry.AuthConfig{
 			Username:      regAuth.Username,

@@ -23,27 +23,27 @@ func (uc *UC) BeginMFATotpSetup(
 ) (*userdto.BeginMFATotpSetupResp, error) {
 	user, err := uc.userRepo.GetByID(ctx, uc.db, auth.User.ID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if user.SecurityOption == base.UserSecurityEnforceSSO {
-		return nil, apperrors.New(apperrors.ErrActionNotAllowed).
+		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("user authentication method is enforce-sso")
 	}
 
 	// Verify current passcode if 2FA is enabled on user
 	if user.TotpSecret != "" && !totp.VerifyPasscode(req.CurrentPasscode, user.TotpSecret) {
-		return nil, apperrors.New(apperrors.ErrPasscodeMismatched)
+		return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 	}
 
 	secret, qrCode, err := totp.GenerateSecretAndQRCode(qrCodeImageSize)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	totpToken, err := uc.userService.GenerateMFATotpSetupToken(user.ID, secret)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.BeginMFATotpSetupResp{

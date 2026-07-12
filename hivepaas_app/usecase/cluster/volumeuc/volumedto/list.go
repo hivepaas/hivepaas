@@ -44,7 +44,7 @@ func TransformVolumes(
 	for _, setting := range settings {
 		item, err := TransformVolume(setting, refObjects, refClusterObjects)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

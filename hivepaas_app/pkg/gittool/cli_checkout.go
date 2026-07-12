@@ -26,7 +26,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		out, err := cmd.CombinedOutput()
 		addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 
 		// Make sure the commit belongs to the branch (skip for Pull Requests)
@@ -38,7 +38,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 			out, err = cmd.CombinedOutput()
 			addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 		}
 	} else {
@@ -51,7 +51,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		out, err := cmd.CombinedOutput()
 		addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -68,16 +68,16 @@ func (cli *checkoutCli) checkoutTargetCommit(
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	head, err := repo.Head()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	commit, err = repo.CommitObject(head.Hash())
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return commit, nil
 }

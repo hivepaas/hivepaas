@@ -39,7 +39,7 @@ func (s *service) BuildCommandEnv(
 	res, usedSecrets, err = s.envVarService.ProcessEnvRefs(ctx, db, app, envVars,
 		false, loadSecrets, false)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return res, usedSecrets, nil
 }

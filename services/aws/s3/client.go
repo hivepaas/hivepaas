@@ -36,7 +36,7 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	s3Client := s3.NewFromConfig(awsCfg, func(opts *s3.Options) {
@@ -57,15 +57,15 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 
 func NewClientFromSetting(ctx context.Context, storageSetting *entity.Setting) (*Client, error) {
 	if storageSetting.Type != base.SettingTypeCloudStorage || storageSetting.Kind != string(base.CloudStorageKindS3) {
-		return nil, apperrors.New(apperrors.ErrSettingTypeUnsupported).WithParam("Name", storageSetting.Type)
+		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", storageSetting.Type)
 	}
 	storage, err := storageSetting.AsCloudStorage()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	secretKey, err := storage.S3.SecretKey.GetPlain()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return NewClient(ctx, &Config{
 		AccessKeyID:     storage.S3.AccessKeyID,
@@ -81,7 +81,7 @@ func (client *Client) HeadBucket(ctx context.Context) (*s3.HeadBucketOutput, err
 		Bucket: aws.String(client.Config.Bucket),
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return result, nil
 }

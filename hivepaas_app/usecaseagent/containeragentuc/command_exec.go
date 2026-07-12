@@ -17,11 +17,11 @@ func (uc *UC) ExecuteCommand(
 	// 1. Receive the initial configuration message
 	req, err := stream.Recv()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	cfgMsg := req.Config
 	if cfgMsg == nil {
-		return apperrors.New(apperrors.ErrBadRequest).WithExtraDetail("first message must be ContainerCommandExecConfig")
+		return apperrors.Wrap(apperrors.ErrBadRequest).WithExtraDetail("first message must be ContainerCommandExecConfig")
 	}
 
 	uc.logger.Infof("ContainerCommandExec started in container: %s, cmd: %v",
@@ -49,7 +49,7 @@ func (uc *UC) ExecuteCommand(
 		cfgMsg.ContainerID, execOptions)
 	if err != nil {
 		uc.logger.Errorf("Failed to initialize container exec: %v", err)
-		return apperrors.New(apperrors.ErrInternal).WithCause(err).WithExtraDetail("Docker exec failed")
+		return apperrors.Wrap(apperrors.ErrInternal).WithCause(err).WithExtraDetail("Docker exec failed")
 	}
 	defer attachResp.Close()
 
@@ -123,7 +123,7 @@ func (w *streamWriter) Write(p []byte) (n int, err error) {
 	}
 
 	if sendErr := w.stream.Send(&resp); sendErr != nil {
-		return 0, apperrors.New(sendErr)
+		return 0, apperrors.Wrap(sendErr)
 	}
 	return len(p), nil
 }

@@ -17,17 +17,17 @@ func (uc *UC) RenewSSLCert(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	setting := resp.Data
 	if setting.ObjectID != setting.CurrentObjectID {
-		return nil, apperrors.New(apperrors.ErrInheritedSettingNonUpdatable)
+		return nil, apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
 	}
 
 	_, err = uc.sslService.ObtainCert(ctx, setting, resp.RefObjects, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sslcertdto.RenewSSLCertResp{}, nil

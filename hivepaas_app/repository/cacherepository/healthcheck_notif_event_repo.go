@@ -33,7 +33,7 @@ func (repo *healthcheckNotifEventRepo) GetAll(
 ) (map[string]*cacheentity.HealthcheckNotifEvent, error) {
 	resp, err := redishelper.HGetAll[*cacheentity.HealthcheckNotifEvent](ctx, repo.client, healthCheckNotifEventMapKey)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -46,7 +46,7 @@ func (repo *healthcheckNotifEventRepo) Set(
 ) error {
 	err := redishelper.HSet(ctx, repo.client, healthCheckNotifEventMapKey, id, notifEvent, exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -57,7 +57,7 @@ func (repo *healthcheckNotifEventRepo) Del(
 ) error {
 	err := redishelper.Del(ctx, repo.client, id)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

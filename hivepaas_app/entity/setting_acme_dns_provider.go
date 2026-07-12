@@ -127,7 +127,7 @@ func (s *AcmeDnsProvider) Migrate(setting *Setting) (hasChange bool, err error) 
 		return false, nil
 	}
 	if setting.Version > CurrentAcmeDnsProviderVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -143,73 +143,73 @@ func (s *AcmeDnsProvider) Decrypt() error {
 	if s.Azure != nil {
 		_, err := s.Azure.ClientSecret.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.BaiduCloud != nil {
 		_, err := s.BaiduCloud.SecretKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Cloudflare != nil {
 		_, err := s.Cloudflare.AuthToken.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.DigitalOcean != nil {
 		_, err := s.DigitalOcean.AuthToken.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.GCloud != nil {
 		_, err := s.GCloud.ServiceAccount.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.GoDaddy != nil {
 		_, err := s.GoDaddy.APISecret.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Hetzner != nil {
 		_, err := s.Hetzner.APIToken.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.HuaweiCloud != nil {
 		_, err := s.HuaweiCloud.SecretKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Namecheap != nil {
 		_, err := s.Namecheap.APIKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.RFC2136 != nil {
 		_, err := s.RFC2136.TSIGSecret.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Route53 != nil {
 		_, err := s.Route53.SecretAccessKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.TencentCloud != nil {
 		_, err := s.TencentCloud.SecretKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

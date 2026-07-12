@@ -23,18 +23,18 @@ func (uc *UC) GetSchedJob(
 			data *settings.GetSettingData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := schedjobdto.TransformSchedJob(resp.Data, resp.RefObjects, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.GetSchedJobResp{

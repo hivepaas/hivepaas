@@ -32,7 +32,7 @@ func (p *manager) CheckAccess(
 	// Special project/app access check
 	hasPerm, err = p.checkProjectAccess(ctx, db, check)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	if hasPerm {
 		return true, nil
@@ -40,7 +40,7 @@ func (p *manager) CheckAccess(
 
 	modPerms, parentPerms, objPerms, err := p.loadPermissions(ctx, db, check)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	defer func() {
 		// When user has no permission on the given resource, collect IDs of all other resources user has permission on.
@@ -102,7 +102,7 @@ func (p *manager) checkProjectAccess(
 
 	project, err := p.projectRepo.GetByIDAndOwner(ctx, db, projectID, check.SubjectID)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	if project == nil {
@@ -145,7 +145,7 @@ func (p *manager) loadPermissions(
 
 	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, resources, opts...)
 	if err != nil || len(perms) == 0 {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	for _, perm := range perms {
@@ -205,7 +205,7 @@ func (p *manager) LoadObjectAccesses(
 
 	modPerms, parentPerms, objPerms, err := p.loadPermissions(ctx, db, check, loadOpts...)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	objPermMap := make(map[string]struct{})

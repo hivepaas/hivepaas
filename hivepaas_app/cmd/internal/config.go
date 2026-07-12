@@ -25,12 +25,12 @@ func InitConfig(lc fx.Lifecycle, cfg *config.Config, logger logging.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			if err := validateConfig(cfg, logger); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			exportEnvVars(cfg, logger)
 			exportDevEnvVars(cfg)
 			if err := createSystemDataDirs(cfg, logger); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			// Register the channel to receive SIGHUP signal
@@ -127,7 +127,7 @@ func createSystemDataDirs(cfg *config.Config, logger logging.Logger) error {
 		err := os.MkdirAll(path, mode)
 		if err != nil {
 			logger.Errorf("failed to create data dir %s: %v", path, err)
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

@@ -77,7 +77,7 @@ type ProjectBaseResp struct {
 
 func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
 	if err = copier.Copy(&resp, &project); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Envs = TransformProjectEnvs(project.Settings)
 	resp.Tags = gofn.MapSlice(project.Tags, func(t *entity.ProjectTag) string { return t.Tag })

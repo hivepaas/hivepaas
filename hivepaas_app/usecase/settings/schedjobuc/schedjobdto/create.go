@@ -88,14 +88,14 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 		req.Command.Name = "-"
 		req.Command.Kind = ""
 		if err := req.Command.ModifyRequest(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
 		req.CommandOutput.PipeToApp.Command.Name = "-"
 		req.CommandOutput.PipeToApp.Command.Kind = ""
 		if err := req.CommandOutput.PipeToApp.Command.ModifyRequest(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

@@ -22,7 +22,7 @@ func (uc *UC) DeleteProject(
 		projectData := &deleteProjectData{}
 		err := uc.loadProjectDataForDelete(ctx, db, req, projectData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectData{}
@@ -30,19 +30,19 @@ func (uc *UC) DeleteProject(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		// Remove project and its app in infra
 		err = uc.projectService.DeleteProject(ctx, db, projectData.Project)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectdto.DeleteProjectResp{}, nil
@@ -65,7 +65,7 @@ func (uc *UC) loadProjectDataForDelete(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Project = project
 

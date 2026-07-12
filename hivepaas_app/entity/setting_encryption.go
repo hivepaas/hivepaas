@@ -26,7 +26,7 @@ func (s *EncryptedField) MarshalJSON() (res []byte, err error) {
 	if config.Current.Secret != "" {
 		encrypted, err = s.encrypt()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		encrypted = s.encrypted
@@ -53,7 +53,7 @@ func (s *EncryptedField) IsEncrypted() bool {
 func (s *EncryptedField) GetPlain() (string, error) {
 	decrypted, err := s.decrypt()
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return decrypted, nil
 }
@@ -61,7 +61,7 @@ func (s *EncryptedField) GetPlain() (string, error) {
 func (s *EncryptedField) GetEncrypted() (string, error) {
 	encrypted, err := s.encrypt()
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return encrypted, nil
 }
@@ -79,11 +79,11 @@ func (s *EncryptedField) Set(value string) {
 func (s *EncryptedField) Equal(enc *EncryptedField) (bool, error) {
 	v1, err := s.GetPlain()
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	v2, err := enc.GetPlain()
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	return v1 == v2, nil
 }
@@ -98,7 +98,7 @@ func (s *EncryptedField) encrypt() (string, error) {
 	}
 	encrypted, err := cryptoutil.EncryptBase64(s.decrypted, defaultSaltLen, config.Current.Secret)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	s.encrypted = encrypted
 	return encrypted, nil
@@ -114,7 +114,7 @@ func (s *EncryptedField) decrypt() (string, error) {
 	}
 	decrypted, err := cryptoutil.DecryptBase64(s.encrypted, config.Current.Secret)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	s.decrypted = decrypted
 	return decrypted, nil

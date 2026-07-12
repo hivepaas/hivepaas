@@ -17,7 +17,7 @@ func (s *service) loadImageBuildSettings(
 	setting, err := s.settingRepo.GetSingle(ctx, db, data.Project.GetObjectScope(),
 		base.SettingTypeImageBuildSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if setting != nil {
 		data.ImageBuildSettings = setting.MustAsImageBuildSettings()

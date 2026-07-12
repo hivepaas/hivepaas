@@ -63,12 +63,12 @@ func TransformCloudStorage(
 ) (resp *CloudStorageResp, err error) {
 	config := setting.MustAsCloudStorage()
 	if err = copier.Copy(&resp, &config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.SecretMasked = resp.Inherited || (config.S3 != nil && config.S3.SecretKey.IsEncrypted())

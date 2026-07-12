@@ -18,7 +18,7 @@ func (uc *UC) ListOAuth(
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &oauthdto.OAuthTransformInput{
@@ -27,7 +27,7 @@ func (uc *UC) ListOAuth(
 	}
 	respData, err := oauthdto.TransformOAuths(resp.Data, input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &oauthdto.ListOAuthResp{

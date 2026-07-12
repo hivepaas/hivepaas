@@ -32,12 +32,12 @@ func (uc *UC) BeginGithubAppManifestFlowCreation(
 ) (*githubappdto.BeginGithubAppManifestFlowCreationResp, error) {
 	manifestCache, err := uc.cacheAppManifestRepo.Get(ctx, req.SettingID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	manifestJSON, err := json.Marshal(manifestCache.Manifest)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	githubApp := manifestCache.GithubApp.MustAsGithubApp()
@@ -59,7 +59,7 @@ func (uc *UC) BeginGithubAppManifestFlowCreation(
 	tmpl := template.Must(template.New("redirect").Parse(redirectPage))
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.BeginGithubAppManifestFlowCreationResp{

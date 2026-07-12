@@ -35,12 +35,12 @@ func (uc *UC) ListSysError(
 
 	settings, paging, err := uc.appErrorRepo.List(ctx, uc.db, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := syserrordto.TransformSysErrors(settings)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &syserrordto.ListSysErrorResp{

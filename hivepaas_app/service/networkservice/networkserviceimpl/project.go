@@ -35,7 +35,7 @@ func (s *service) GetOrCreateProjectNetwork(
 	netName := s.GetProjectNetworkName(project, env)
 	inspect, err := s.dockerManager.NetworkInspect(ctx, netName)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	if inspect == nil { // not found, create one
@@ -49,12 +49,12 @@ func (s *service) GetOrCreateProjectNetwork(
 				}
 			})
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		// Inspect again
 		inspect, err = s.dockerManager.NetworkInspect(ctx, netName)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -62,7 +62,7 @@ func (s *service) GetOrCreateProjectNetwork(
 		base.SettingTypeClusterNetwork, netName, true,
 	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	hasChange := false
 	if setting == nil {
@@ -88,14 +88,14 @@ func (s *service) GetOrCreateProjectNetwork(
 		setting.Name = inspect.Network.Name
 	}
 	if err = setting.SetData(&entity.ClusterNetwork{}); err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	if hasChange {
 		err = s.settingRepo.Upsert(ctx, db, setting,
 			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -112,7 +112,7 @@ func (s *service) ListProjectNetworks(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil, nil
@@ -125,7 +125,7 @@ func (s *service) ListProjectNetworks(
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	networks = make(map[string]*network.Summary, len(settings))
@@ -148,7 +148,7 @@ func (s *service) RemoveAllProjectNetworks(
 ) error {
 	settings, networks, err := s.ListProjectNetworks(ctx, db, project)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -163,7 +163,7 @@ func (s *service) RemoveAllProjectNetworks(
 		err = errors.Join(err, e)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

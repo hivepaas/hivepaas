@@ -28,7 +28,7 @@ func (s *service) WriteCertFiles(
 	certDir := config.Current.DataPathSslCerts().AbsPath()
 	err := os.MkdirAll(certDir, certDirFileMode)
 	if err != nil {
-		return apperrors.New(err).WithMsgLog("failed to create directory to save cert files")
+		return apperrors.Wrap(err).WithMsgLog("failed to create directory to save cert files")
 	}
 
 	for _, setting := range settings {
@@ -47,13 +47,13 @@ func (s *service) WriteCertFiles(
 		certBytes := reflectutil.UnsafeStrToBytes(sslCert.Certificate)
 		privateKey, err := sslCert.PrivateKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		keyBytes := reflectutil.UnsafeStrToBytes(privateKey)
 
 		err = fileutil.WriteCerts(certBytes, keyBytes, certDir, certFile, keyFile, true)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -76,12 +76,12 @@ func (s *service) DeleteCertFiles(
 
 		err := os.Remove(filepath.Join(certDir, certFile))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = os.Remove(filepath.Join(certDir, keyFile))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

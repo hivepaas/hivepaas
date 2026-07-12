@@ -17,17 +17,17 @@ func (uc *UC) ListAppInstallation(
 ) (*githubappdto.ListAppInstallationResp, error) {
 	client, err := github.NewFromApp(req.GhAppID, req.GhInstallationID, reflectutil.UnsafeStrToBytes(req.PrivateKey))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	installations, pagingMeta, err := client.ListInstallations(ctx, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := githubappdto.TransformAppInstallations(installations)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.ListAppInstallationResp{

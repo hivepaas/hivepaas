@@ -56,7 +56,7 @@ func (s *IMService) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentIMServiceVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -71,19 +71,19 @@ func (s *IMService) Decrypt() error {
 	if s.Slack != nil {
 		_, err := s.Slack.Webhook.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Discord != nil {
 		_, err := s.Discord.Webhook.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.Telegram != nil {
 		_, err := s.Telegram.BotToken.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

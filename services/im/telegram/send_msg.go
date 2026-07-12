@@ -27,23 +27,23 @@ func (c *Client) SendMessage(ctx context.Context, botToken, chatID, text, parseM
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.getHttpClient().Do(req)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 { //nolint:mnd
-		return apperrors.New(apperrors.ErrHTTPRequestFailed).WithParam("StatusCode", resp.StatusCode)
+		return apperrors.Wrap(apperrors.ErrHTTPRequestFailed).WithParam("StatusCode", resp.StatusCode)
 	}
 
 	return nil

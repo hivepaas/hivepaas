@@ -30,7 +30,7 @@ func ArgQuote(arg string) string {
 func CmdSplit(cmd string) ([]string, error) {
 	res, err := shellquote.Split(cmd)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return res, nil
 }

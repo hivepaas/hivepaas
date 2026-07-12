@@ -53,7 +53,7 @@ func (s *service) initOutputWriter(
 	if cmdOutput.PipeToApp != nil {
 		return s.initOutputWriterToApp(ctx, data)
 	}
-	return nil, apperrors.New(apperrors.ErrSettingMissing).
+	return nil, apperrors.Wrap(apperrors.ErrSettingMissing).
 		WithParam("Name", "command output")
 }
 
@@ -74,12 +74,12 @@ func (s *service) finalize(
 		}
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.File != nil {
 		if err = s.fileRepo.Insert(ctx, db, data.File); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

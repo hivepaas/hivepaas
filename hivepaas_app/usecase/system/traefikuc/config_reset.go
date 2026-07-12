@@ -15,7 +15,7 @@ func (uc *UC) ResetTraefikConfig(
 ) (*traefikdto.ResetTraefikConfigResp, error) {
 	err := uc.traefikService.ResetTraefikConfig(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &traefikdto.ResetTraefikConfigResp{}, nil

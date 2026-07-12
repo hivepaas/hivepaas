@@ -72,7 +72,7 @@ func (s *Email) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentEmailVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -87,13 +87,13 @@ func (s *Email) Decrypt() error {
 	if s.SMTP != nil {
 		_, err := s.SMTP.Password.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.HTTP != nil {
 		_, err := s.HTTP.Password.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

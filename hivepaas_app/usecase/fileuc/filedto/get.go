@@ -56,7 +56,7 @@ type FileResp struct {
 
 func TransformFile(file *entity.File) (resp *FileResp, err error) {
 	if err = copier.Copy(&resp, file); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.SizeBytes = file.Size

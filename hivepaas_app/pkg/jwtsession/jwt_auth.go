@@ -20,7 +20,7 @@ func GenerateAccessToken(authClaims *AuthClaims) (string, error) {
 	authClaims.IsRefresh = false
 	token, err := GenerateToken(authClaims, accessTokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return token, nil
 }
@@ -30,7 +30,7 @@ func GenerateRefreshToken(authClaims *AuthClaims) (string, error) {
 	authClaims.IsRefresh = true
 	token, err := GenerateToken(authClaims, refreshTokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return token, nil
 }

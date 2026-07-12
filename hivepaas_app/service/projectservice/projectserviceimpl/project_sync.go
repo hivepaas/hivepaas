@@ -24,7 +24,7 @@ func (s *service) SyncProject(
 	// Loads all apps in project
 	apps, _, err := s.appRepo.List(ctx, db, project.ID, nil)
 	if err != nil {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	appMapByKey := make(map[string]*entity.App, len(apps))
@@ -35,7 +35,7 @@ func (s *service) SyncProject(
 	// Loads all swarm services from docker having the namespace label as project key
 	listResp, err := s.dockerManager.ServiceListByStack(ctx, project.Key)
 	if err != nil {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 	services = listResp.Items
 
@@ -82,7 +82,7 @@ func (s *service) SyncProject(
 	err = s.appRepo.UpsertMulti(ctx, db, gofn.Concat(newApps, updateApps),
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)
 	if err != nil {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	return newApps, updateApps, services, nil

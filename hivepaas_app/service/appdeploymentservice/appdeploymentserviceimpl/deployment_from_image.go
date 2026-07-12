@@ -34,7 +34,7 @@ func (s *service) deployFromImage(
 	// 1. Pull image from the registry
 	err := s.imageDeployStepImagePull(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.IsTaskCanceled() {
@@ -47,7 +47,7 @@ func (s *service) deployFromImage(
 
 	shouldContinue, err := s.lockDockerServiceForDeployment(ctx, db, data.appDeploymentData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if !shouldContinue {
 		data.DeploymentCanceled = true
@@ -57,19 +57,19 @@ func (s *service) deployFromImage(
 	// 2. Pre-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 3. Apply image to service
 	err = s.imageDeployStepServiceApply(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 4. Post-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -89,7 +89,7 @@ func (s *service) imageDeployStepImagePull(
 		regAuth := data.RefObjects.RefSettings[imageSource.RegistryAuth.ID]
 		data.RegAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func (s *service) imageDeployStepImagePull(
 		options.RegistryAuth = data.RegAuthHeader
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	logsChan, _ := docker.StartScanningJSONMsg(ctx, logsReader, batchrecvchan.Options{})
@@ -114,7 +114,7 @@ func (s *service) imageDeployStepImagePull(
 		}
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func (s *service) imageDeployStepServiceApply(
 
 	inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	service := &inspect.Service
@@ -148,7 +148,7 @@ func (s *service) imageDeployStepServiceApply(
 			options.EncodedRegistryAuth = data.RegAuthHeader
 		})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Save the used image in the output

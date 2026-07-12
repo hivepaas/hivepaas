@@ -18,7 +18,7 @@ func (uc *UC) ResetPassword(
 ) (*userdto.ResetPasswordResp, error) {
 	tokenClaims, err := uc.userService.ParsePasswordResetToken(req.Token)
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -26,15 +26,15 @@ func (uc *UC) ResetPassword(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if user.IsDemoUser() {
-			return apperrors.New(apperrors.ErrUserDemoUnauthorized)
+			return apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 		}
 
 		err = uc.userService.ChangePassword(user, req.Password, userservice.SkipCheckingCurrentPassword)
 		if err != nil {
-			return apperrors.New(err).WithMsgLog("failed to change password")
+			return apperrors.Wrap(err).WithMsgLog("failed to change password")
 		}
 
 		user.UpdatedAt = timeutil.NowUTC()
@@ -42,13 +42,13 @@ func (uc *UC) ResetPassword(
 			bunex.UpdateColumns("updated_at", "password"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.ResetPasswordResp{}, nil

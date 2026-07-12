@@ -42,7 +42,7 @@ func (s *service) loadRepoCache(
 		if err != nil || recover() != nil {
 			data.RepoCacheLoaded = false
 			if err = s.resetCheckoutDir(data); err != nil {
-				err = apperrors.New(err)
+				err = apperrors.Wrap(err)
 			} else {
 				err = nil
 			}
@@ -63,7 +63,7 @@ func (s *service) loadRepoCache(
 			bunex.SelectWhere("file.object_id = ?", data.Project.ID),
 		)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if file == nil || file.StorageType != base.FileStorageLocal {
 			return nil
@@ -78,7 +78,7 @@ func (s *service) loadRepoCache(
 
 		errStr, err := filearchiver.Decompress(filePath, data.CheckoutDir, filearchiver.ArchiveFormatAuto)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		s.addCmdOutToLogs(ctx, errStr, err != nil, data.LogStore)
 
@@ -86,7 +86,7 @@ func (s *service) loadRepoCache(
 		return nil
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -162,13 +162,13 @@ func (s *service) saveRepoCache(
 	errStr, err := filearchiver.Compress(data.CheckoutDir, newFilePath,
 		repoCacheArchiveFormat, repoCacheArchiveCompressionLevel)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	s.addCmdOutToLogs(ctx, errStr, err != nil, data.LogStore)
 
 	newCacheFileInfo, err := os.Stat(newFilePath)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	newCacheFile.Size = newCacheFileInfo.Size()
 
@@ -181,7 +181,7 @@ func (s *service) saveRepoCache(
 			bunex.SelectWhere("file.object_id = ?", data.Project.ID),
 		)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if file != nil && (file.ID != newCacheFile.ID || file.UpdateVer != newCacheFile.UpdateVer) {
 			return nil
@@ -191,14 +191,14 @@ func (s *service) saveRepoCache(
 		err = s.fileRepo.Upsert(ctx, db, newCacheFile,
 			entity.FileUpsertingConflictCols, entity.FileUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		fileEntitySaved = true
 		return nil
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -30,7 +30,7 @@ func (uc *UC) GetDeploymentLogs(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	task := gofn.FirstOr(deployment.Tasks, nil)
@@ -49,7 +49,7 @@ func (uc *UC) GetDeploymentLogs(
 		LogSessionTimeout:       deploymentLogSessionTimeout,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdeploymentdto.GetDeploymentLogsResp{

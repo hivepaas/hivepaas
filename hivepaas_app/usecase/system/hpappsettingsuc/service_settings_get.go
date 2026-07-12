@@ -16,16 +16,16 @@ func (uc *UC) GetServiceSettings(
 ) (*hpappsettingsdto.GetServiceSettingsResp, error) {
 	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, nil, base.SettingTypeHivePaaSService, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	mainSvc, err := uc.hpAppService.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	workerSvc, err := uc.hpAppService.GetHpWorkerSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := hpappsettingsdto.TransformServiceSettings(&hpappsettingsdto.ServiceSettingsTransformInput{
@@ -34,7 +34,7 @@ func (uc *UC) GetServiceSettings(
 		WorkerService: workerSvc,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappsettingsdto.GetServiceSettingsResp{

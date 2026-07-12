@@ -40,13 +40,13 @@ func (uc *BaseUC) GetUniqueSetting(
 
 	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type, false,
 		data.ExtraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.MainObjectID()
@@ -54,7 +54,7 @@ func (uc *BaseUC) GetUniqueSetting(
 
 	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true, false, setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &GetUniqueSettingResp{

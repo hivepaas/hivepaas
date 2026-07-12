@@ -54,7 +54,7 @@ func TransformDeployments(
 	for _, deployment := range deployments {
 		item, err := TransformDeployment(deployment, input)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

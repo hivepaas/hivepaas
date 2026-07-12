@@ -65,7 +65,7 @@ func (s *service) pullImage(
 
 	logsReader, err := s.dockerManager.ImagePull(ctx, image)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	logsChan, _ := docker.StartScanningJSONMsg(ctx, logsReader, batchrecvchan.Options{})
@@ -82,7 +82,7 @@ func (s *service) pullImage(
 		}
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

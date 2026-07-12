@@ -78,7 +78,7 @@ func (q *taskQueue) Start() (err error) {
 	ctx := context.Background()
 	lpSetting, err := q.startupService.LoadHivePaaSServiceSetting(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	lpSettings := lpSetting.MustAsHivePaaSService()
 
@@ -104,7 +104,7 @@ func (q *taskQueue) Start() (err error) {
 			HealthcheckFunc:         q.doHealthcheck,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		go func() {
@@ -118,7 +118,7 @@ func (q *taskQueue) Start() (err error) {
 	q.logger.Infof("starting task queue client...")
 	q.client, err = gocronqueue.NewClient(q.redisClient, q.logger)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -129,13 +129,13 @@ func (q *taskQueue) Shutdown() error {
 	if q.server != nil {
 		if err := q.server.Shutdown(); err != nil {
 			q.logger.Errorf("failed to start task queue server: %v", err)
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if q.client != nil {
 		if err := q.client.Close(); err != nil {
 			q.logger.Errorf("failed to stop task queue client: %v", err)
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -144,11 +144,11 @@ func (q *taskQueue) Shutdown() error {
 func (q *taskQueue) StartScheduler() error {
 	if q.server == nil {
 		q.logger.Error("task queue server is not running")
-		return apperrors.New(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
+		return apperrors.Wrap(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
 	}
 	if err := q.server.StartScheduler(); err != nil {
 		q.logger.Errorf("failed to start scheduler in task queue server: %v", err)
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -157,7 +157,7 @@ func (q *taskQueue) StartAllSchedulers() error {
 	if q.client != nil {
 		if err := q.client.StartScheduler(context.Background()); err != nil {
 			q.logger.Errorf("failed to send start scheduler message to servers: %v", err)
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if q.server != nil {
@@ -169,11 +169,11 @@ func (q *taskQueue) StartAllSchedulers() error {
 func (q *taskQueue) StopScheduler() error {
 	if q.server == nil {
 		q.logger.Error("task queue server is not running")
-		return apperrors.New(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
+		return apperrors.Wrap(apperrors.ErrUnavailable).WithParam("Name", "Task queue server")
 	}
 	if err := q.server.StopScheduler(); err != nil {
 		q.logger.Errorf("failed to stop scheduler in task queue server: %v", err)
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -182,7 +182,7 @@ func (q *taskQueue) StopAllSchedulers() error {
 	if q.client != nil {
 		if err := q.client.StopScheduler(context.Background()); err != nil {
 			q.logger.Errorf("failed to send stop scheduler message to servers: %v", err)
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if q.server != nil {

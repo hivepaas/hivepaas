@@ -194,13 +194,13 @@ func TransformAcmeDnsProvider(
 ) (resp *AcmeDnsProviderResp, err error) {
 	config := setting.MustAsAcmeDnsProvider()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Kind = base.AcmeDnsProvider(setting.Kind)
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	switch {

@@ -36,7 +36,7 @@ func (c *Client) StartScheduler(ctx context.Context) error {
 		StartScheduler: true,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func (c *Client) StopScheduler(ctx context.Context) error {
 		StopScheduler: true,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 		SchedTasks: tasks,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (c *Client) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
 		UnschedTaskIDs: taskIDs,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

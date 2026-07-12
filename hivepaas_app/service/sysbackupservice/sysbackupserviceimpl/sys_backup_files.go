@@ -47,7 +47,7 @@ func (s *service) sysBackupFiles(
 		targetDirPath := model.TargetDirPath
 		entries, err := os.ReadDir(dirPath)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		for _, entry := range entries {
 			if entry.IsDir() {
@@ -56,27 +56,27 @@ func (s *service) sysBackupFiles(
 			fileName := entry.Name()
 			fileInfo, err := entry.Info()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			header, err := tar.FileInfoHeader(fileInfo, "")
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			header.Name = filepath.ToSlash(filepath.Join(targetDirPath, fileName))
 
 			if err := tarW.WriteHeader(header); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			file, err := os.Open(filepath.Join(dirPath, fileName))
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			if _, err := io.Copy(tarW, file); err != nil {
 				file.Close()
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			file.Close()
 		}

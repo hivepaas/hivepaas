@@ -32,7 +32,7 @@ func Compress(
 	if format == "" {
 		format = DetectArchiveFormat(destFilename)
 		if format == "" {
-			err = apperrors.New(apperrors.ErrUnrecognized).WithParam("Name", "Archive format")
+			err = apperrors.Wrap(apperrors.ErrUnrecognized).WithParam("Name", "Archive format")
 			return err.Error(), err
 		}
 	}
@@ -62,7 +62,7 @@ func Compress(
 		fallthrough
 
 	default:
-		err = apperrors.New(apperrors.ErrArchiveFormatUnsupported).WithParam("Format", format)
+		err = apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).WithParam("Format", format)
 		return err.Error(), err
 	}
 }
@@ -99,7 +99,7 @@ func CompressTarGz(
 
 	pipe, err := tarCmd.StdoutPipe()
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	gzipCmd.Stdin = pipe
 	gzipCmd.Stdout = outFile
@@ -163,7 +163,7 @@ func CompressTarLz4(
 
 	pipe, err := tarCmd.StdoutPipe()
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	lz4Cmd.Stdin = pipe
 	lz4Cmd.Stdout = outFile
@@ -227,7 +227,7 @@ func CompressTarZstd(
 
 	pipe, err := tarCmd.StdoutPipe()
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	zstdCmd.Stdin = pipe
 	zstdCmd.Stdout = outFile

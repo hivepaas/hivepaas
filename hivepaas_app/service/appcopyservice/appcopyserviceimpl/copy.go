@@ -57,57 +57,57 @@ func (s *service) CopyApp(
 
 	err = s.copyApp(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.copyAppSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.copySwarmService(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.createSwarmService(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.persistAppData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applyEnvVars(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applySwarmConfigFiles(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applySwarmSecrets(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applyAppHttpSettings(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applySchedJobSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.applyFinalContainerSettings(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.TargetApp = data.TargetApp
@@ -136,7 +136,7 @@ func (s *service) copyApp(
 
 	err = data.OnCopyApp(targetApp, data.SrcApp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	targetApp.LocalKey = slugify.SlugifyAsKey(targetApp.Name)
@@ -153,7 +153,7 @@ func (s *service) copyApp(
 	// App keys must be unique globally
 	conflictApp, err := s.appRepo.GetByKey(ctx, db, "", targetApp.Key, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if conflictApp != nil {
 		return apperrors.NewAlreadyExist("App").
@@ -163,7 +163,7 @@ func (s *service) copyApp(
 	// Create local network for the app to attach
 	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, targetApp.Env)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -179,14 +179,14 @@ func (s *service) copyAppSettings(
 		bunex.SelectWhere("setting.object_id = ?", data.SrcApp.ID),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	targetApp := data.TargetApp
 	for _, setting := range appSettings {
 		cpSetting, err := setting.Copy(true)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		cpSetting.ObjectID = targetApp.ID
 		cpSetting.CreatedAt = data.TimeNow
@@ -194,7 +194,7 @@ func (s *service) copyAppSettings(
 		cpSetting.UpdateVer = 0
 		st, err := data.OnCopySetting(targetApp, cpSetting)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if st != nil {
 			data.CopiedSettings = append(data.CopiedSettings, st)
@@ -220,13 +220,13 @@ func (s *service) copyAppSettings(
 		// Verify domains are allowed in project
 		err = s.domainService.VerifyProjectDomains(ctx, db, targetApp.ProjectID, activeDomains)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		// Make sure all domains used by the app are not hold by any other app
 		err = s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{targetApp.ID})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -242,20 +242,20 @@ func (s *service) persistAppData(
 	err = s.appRepo.Upsert(ctx, db, app,
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.settingRepo.UpsertMulti(ctx, db, data.CopiedSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Loads all ref objects of the settings
 	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, app.GetObjectScope(),
 		true, true, app.Settings...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

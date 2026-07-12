@@ -10,7 +10,7 @@ import (
 func NewHTTP01Provider(webrootDir string) (provider challenge.Provider, err error) {
 	http01Provider, err := webroot.NewHTTPProvider(webrootDir)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to create http-01 provider for webroot")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to create http-01 provider for webroot")
 	}
 	return http01Provider, nil
 }

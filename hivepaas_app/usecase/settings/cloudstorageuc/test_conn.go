@@ -32,7 +32,7 @@ func (uc *UC) testCloudStorageS3Conn(
 	storage := req.ToEntity()
 	secretKey, err := storage.S3.SecretKey.GetPlain()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	s3Client, err := s3.NewClient(ctx, &s3.Config{
 		AccessKeyID:     storage.S3.AccessKeyID,
@@ -42,12 +42,12 @@ func (uc *UC) testCloudStorageS3Conn(
 		Bucket:          req.S3.Bucket,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	_, err = s3Client.HeadBucket(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &cloudstoragedto.TestCloudStorageConnResp{}, nil

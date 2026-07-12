@@ -15,10 +15,10 @@ func (s *service) resetCheckoutDir(
 	data *repoCheckoutData,
 ) error {
 	if err := os.RemoveAll(data.CheckoutDir); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if err := os.MkdirAll(data.CheckoutDir, base.DirModeDefault); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

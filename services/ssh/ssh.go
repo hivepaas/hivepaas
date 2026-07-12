@@ -38,7 +38,7 @@ func Execute(ctx context.Context, input *CommandInput) (output string, err error
 		signer, err = ssh.ParsePrivateKey([]byte(input.PrivateKey))
 	}
 	if err != nil {
-		return "", apperrors.New(err).WithMsgLog("failed to parse private key")
+		return "", apperrors.Wrap(err).WithMsgLog("failed to parse private key")
 	}
 
 	config := &ssh.ClientConfig{
@@ -54,14 +54,14 @@ func Execute(ctx context.Context, input *CommandInput) (output string, err error
 	// Connect to the remote server
 	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", input.Host, input.Port), config)
 	if err != nil {
-		return "", apperrors.New(err).WithMsgLog("failed to dial ssh")
+		return "", apperrors.Wrap(err).WithMsgLog("failed to dial ssh")
 	}
 	defer client.Close()
 
 	// Create a new session
 	session, err := client.NewSession()
 	if err != nil {
-		return "", apperrors.New(err).WithMsgLog("failed to create session")
+		return "", apperrors.Wrap(err).WithMsgLog("failed to create session")
 	}
 	defer session.Close()
 
@@ -70,7 +70,7 @@ func Execute(ctx context.Context, input *CommandInput) (output string, err error
 		// Run the command and get combined output
 		outBytes, err := session.CombinedOutput(input.Command)
 		if err != nil {
-			return "", apperrors.New(err).WithMsgLog("failed to execute command")
+			return "", apperrors.Wrap(err).WithMsgLog("failed to execute command")
 		}
 		return string(outBytes), nil
 	}
@@ -94,10 +94,10 @@ func Execute(ctx context.Context, input *CommandInput) (output string, err error
 		// Timeout
 		// You might want to send a signal to the remote process to terminate it gracefully,
 		// though this can be complex with standard SSH sessions.
-		return "", apperrors.New(ErrExecutionTimeout)
+		return "", apperrors.Wrap(ErrExecutionTimeout)
 	case outputData := <-done:
 		if outputData.Error != nil {
-			return "", apperrors.New(outputData.Error).WithMsgLog("failed to execute command")
+			return "", apperrors.Wrap(outputData.Error).WithMsgLog("failed to execute command")
 		} else {
 			return outputData.Output, nil
 		}

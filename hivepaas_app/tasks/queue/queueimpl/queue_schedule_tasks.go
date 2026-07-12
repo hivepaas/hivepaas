@@ -41,7 +41,7 @@ func (q *taskQueue) findSchedulingTasks(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(tasks) == 0 {
 		return nil, nil

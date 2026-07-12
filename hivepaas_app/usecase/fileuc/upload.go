@@ -19,7 +19,7 @@ func (uc *UC) Upload(
 		baseFileData: &baseFileData{},
 	}
 	if err := uc.loadUploadData(ctx, uc.db, req, uploadData); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	uploadReq := &fileservice.UploadReq{
@@ -43,7 +43,7 @@ func (uc *UC) Upload(
 	for _, file := range req.Files {
 		f, err := file.Open()
 		if err != nil {
-			return nil, apperrors.New(err).WithMsgLog("failed to open file: %s", file.Filename)
+			return nil, apperrors.Wrap(err).WithMsgLog("failed to open file: %s", file.Filename)
 		}
 		uploadReq.Items = append(uploadReq.Items, &fileservice.UploadItemReq{
 			FilePath: file.Filename,
@@ -54,12 +54,12 @@ func (uc *UC) Upload(
 
 	uploadResp, err := uc.fileService.Upload(ctx, uc.db, uploadReq)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to upload files")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to upload files")
 	}
 
 	resp, err := filedto.TransformFiles(uploadResp.Files)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &filedto.UploadResp{
@@ -79,7 +79,7 @@ func (uc *UC) loadUploadData(
 ) (err error) {
 	err = uc.loadScopeData(ctx, db, req.Scope, data.baseFileData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

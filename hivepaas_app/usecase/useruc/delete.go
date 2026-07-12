@@ -24,7 +24,7 @@ func (uc *UC) DeleteUser(
 		userData := &deleteUserData{}
 		err := uc.loadUserDataForDelete(ctx, db, auth, req, userData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &userservice.PersistingUserData{}
@@ -32,13 +32,13 @@ func (uc *UC) DeleteUser(
 
 		err = uc.userService.DeleteUser(ctx, db, userData.User)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.DeleteUserResp{}, nil
@@ -59,13 +59,13 @@ func (uc *UC) loadUserDataForDelete(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.User = user
 
 	if user.Role == base.UserRoleAdmin {
 		if auth.User.Role != base.UserRoleAdmin {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("member user cannot delete admin user")
 		}
 
@@ -78,10 +78,10 @@ func (uc *UC) loadUserDataForDelete(
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if len(otherAdmins) == 0 {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("cannot delete the last admin user")
 		}
 	}

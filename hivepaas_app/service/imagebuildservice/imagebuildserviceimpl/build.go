@@ -44,17 +44,17 @@ func (s *service) ImageBuild(
 
 	err = s.doImageBuild(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.doImagePush(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, err
@@ -77,30 +77,30 @@ func (s *service) doImageBuild(
 
 	imageTags, err := s.calcBuildImageTags(repoSource.ImageTags, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Resp.ImageTags = imageTags
 
 	envVars, err := s.calcBuildEnvVars(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	authConfigs, err := s.calcBuildRegistryAuths(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Create tar archive for the source code
 	tar, err := archive.TarWithOptions(data.CheckoutDir, &archive.TarOptions{})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	defer tar.Close()
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Build the image
@@ -131,7 +131,7 @@ func (s *service) doImageBuild(
 		}
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	logsChan, _ := docker.StartScanningJSONMsg(ctx, resp.Body, batchrecvchan.Options{})
@@ -148,7 +148,7 @@ func (s *service) doImageBuild(
 		}
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -171,7 +171,7 @@ func (s *service) doImagePush(
 		regAuth := data.RefObjects.RefSettings[repoSource.PushToRegistry.ID]
 		regAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -183,7 +183,7 @@ func (s *service) doImagePush(
 			options.RegistryAuth = regAuthHeader
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		logsChan, _ := docker.StartScanningJSONMsg(ctx, logsReader, batchrecvchan.Options{})
@@ -200,7 +200,7 @@ func (s *service) doImagePush(
 			}
 		}
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

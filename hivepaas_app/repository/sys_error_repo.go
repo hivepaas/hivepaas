@@ -48,7 +48,7 @@ func (repo *sysErrorRepo) GetByID(ctx context.Context, db database.IDB, id strin
 		return nil, apperrors.NewNotFound("SysError").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return sysError, nil
 }
@@ -66,7 +66,7 @@ func (repo *sysErrorRepo) List(ctx context.Context, db database.IDB, paging *bas
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -96,7 +96,7 @@ func (repo *sysErrorRepo) InsertMulti(ctx context.Context, db database.IDB, sysE
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func (repo *sysErrorRepo) DeleteMulti(ctx context.Context, db database.IDB, sysE
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func (repo *sysErrorRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

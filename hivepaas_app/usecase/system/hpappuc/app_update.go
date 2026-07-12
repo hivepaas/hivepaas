@@ -23,7 +23,7 @@ func (uc *UC) UpdateHpApp(
 ) (*hpappdto.UpdateHpAppResp, error) {
 	info, err := uc.hpAppService.GetAppReleaseInfo(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var targetVersion *base.ReleaseInfo
@@ -33,7 +33,7 @@ func (uc *UC) UpdateHpApp(
 	case info.Beta != nil && info.Beta.AppVersion == req.TargetVersion:
 		targetVersion = &info.Beta.ReleaseInfo
 	default:
-		return nil, apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return nil, apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -41,16 +41,16 @@ func (uc *UC) UpdateHpApp(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		err = uc.hpAppService.UpdateSystemVersion(ctx, db, targetVersion)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappdto.UpdateHpAppResp{}, nil

@@ -18,7 +18,7 @@ func (uc *UC) UpdateAppFeatureSettingsStatus(
 	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
 		&settings.UpdateUniqueSettingStatusData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appfeaturesettingsdto.UpdateAppFeatureSettingsStatusResp{}, nil

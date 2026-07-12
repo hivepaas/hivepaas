@@ -29,7 +29,7 @@ func (uc *UC) JoinNode(
 	data := &joinNodeData{}
 	err := uc.loadJoinNodeData(ctx, uc.db, req, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	cmdCtx, cancelFunc := context.WithTimeout(ctx, executionTimeout)
@@ -40,11 +40,11 @@ func (uc *UC) JoinNode(
 
 	privateKey, err := data.SSHKey.PrivateKey.GetPlain()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	passphrase, err := data.SSHKey.Passphrase.GetPlain()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	output, err := ssh.Execute(cmdCtx, &ssh.CommandInput{
@@ -56,7 +56,7 @@ func (uc *UC) JoinNode(
 		Command:    command,
 	})
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrInfraActionFailed).WithParam("Error", err.Error())
+		return nil, apperrors.Wrap(apperrors.ErrInfraActionFailed).WithParam("Error", err.Error())
 	}
 
 	return &nodedto.JoinNodeResp{
@@ -81,20 +81,20 @@ func (uc *UC) loadJoinNodeData(
 	sshKeySetting, err := uc.SettingRepo.GetByID(ctx, db, base.NewObjectScopeGlobal(), base.SettingTypeSSHKey,
 		req.SSHKey.ID, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.SSHKey = sshKeySetting.MustAsSSHKey()
 
 	// Find join token from the cluster
 	inspect, err := uc.dockerManager.SwarmInspect(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	theSwarm := &inspect.Swarm
 
 	joinToken := gofn.If(req.JoinAsManager, theSwarm.JoinTokens.Manager, theSwarm.JoinTokens.Worker)
 	if joinToken == "" {
-		return apperrors.New(apperrors.ErrInfraInternal).
+		return apperrors.Wrap(apperrors.ErrInfraInternal).
 			WithNTParam("Error", "join token is not found")
 	}
 	data.JoinToken = joinToken
@@ -102,7 +102,7 @@ func (uc *UC) loadJoinNodeData(
 	// List all manager nodes to get the addr to join new node
 	listResp, err := uc.dockerManager.NodeManagerList(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	managerNodes := listResp.Items
 
@@ -118,7 +118,7 @@ func (uc *UC) loadJoinNodeData(
 	}
 	data.PreferManagerAddr = gofn.Coalesce(leaderAddr, managerAddr)
 	if data.PreferManagerAddr == "" {
-		return apperrors.New(apperrors.ErrInfraInternal).
+		return apperrors.Wrap(apperrors.ErrInfraInternal).
 			WithNTParam("Error", "active manager node not found")
 	}
 

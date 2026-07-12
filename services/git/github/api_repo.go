@@ -14,7 +14,7 @@ func (c *Client) ListAppRepos(
 	paging *basedto.Paging,
 ) ([]*gogithub.Repository, *basedto.PagingMeta, error) {
 	if !c.IsAppClient() {
-		return nil, nil, apperrors.New(ErrGithubAppClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -24,7 +24,7 @@ func (c *Client) ListAppRepos(
 
 	output, _, err := c.client.Apps.ListRepos(ctx, opts)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return output.Repositories, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PerPage,
@@ -38,7 +38,7 @@ func (c *Client) ListAllAppRepos(
 	paging *basedto.Paging,
 ) ([]*gogithub.Repository, *basedto.PagingMeta, error) {
 	if !c.IsAppClient() {
-		return nil, nil, apperrors.New(ErrGithubAppClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -47,7 +47,7 @@ func (c *Client) ListAllAppRepos(
 	for {
 		result, resp, err := client.Apps.ListRepos(ctx, opts)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		output = append(output, result.Repositories...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage || resp.Rate.Remaining <= 0 {
@@ -77,7 +77,7 @@ func (c *Client) ListUserRepos(
 	options ...ListUserRepoOption,
 ) ([]*gogithub.Repository, *basedto.PagingMeta, error) {
 	if !c.IsTokenClient() {
-		return nil, nil, apperrors.New(ErrGithubTokenClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubTokenClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -94,7 +94,7 @@ func (c *Client) ListUserRepos(
 
 	output, _, err := c.client.Repositories.ListByAuthenticatedUser(ctx, listOpts)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PerPage,
@@ -109,7 +109,7 @@ func (c *Client) ListAllUserRepos(
 	options ...ListUserRepoOption,
 ) ([]*gogithub.Repository, *basedto.PagingMeta, error) {
 	if !c.IsTokenClient() {
-		return nil, nil, apperrors.New(ErrGithubTokenClientRequired)
+		return nil, nil, apperrors.Wrap(ErrGithubTokenClientRequired)
 	}
 
 	opts, maxItems := createListOpts(paging)
@@ -125,7 +125,7 @@ func (c *Client) ListAllUserRepos(
 	for {
 		result, resp, err := client.Repositories.ListByAuthenticatedUser(ctx, listOpts)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage || resp.Rate.Remaining <= 0 {

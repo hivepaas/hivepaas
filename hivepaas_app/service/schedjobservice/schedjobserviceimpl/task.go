@@ -18,7 +18,7 @@ func (s *service) CreateSchedJobTask(
 ) (*entity.Task, error) {
 	schedJob, err := jobSetting.AsSchedJob()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &entity.Task{

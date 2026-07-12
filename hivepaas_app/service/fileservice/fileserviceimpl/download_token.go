@@ -20,7 +20,7 @@ func (s *service) GenerateDownloadToken(
 		RequireLogin: requireLogin,
 	}, expiration)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return fileToken, nil
 }
@@ -28,7 +28,7 @@ func (s *service) GenerateDownloadToken(
 func (s *service) ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error) {
 	tokenClaims := &appentity.FileDownloadTokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	return tokenClaims, nil
 }

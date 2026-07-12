@@ -29,7 +29,7 @@ func (uc *UC) UpdateNode(
 			nodeID := dockerhelper.ParseID(data.Setting.ID)
 			inspect, err := uc.dockerManager.NodeInspect(ctx, nodeID)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			node := &inspect.Node
 			spec := &node.Spec
@@ -47,13 +47,13 @@ func (uc *UC) UpdateNode(
 
 			_, err = uc.dockerManager.NodeUpdate(ctx, nodeID, &node.Version, spec)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &nodedto.UpdateNodeResp{}, nil

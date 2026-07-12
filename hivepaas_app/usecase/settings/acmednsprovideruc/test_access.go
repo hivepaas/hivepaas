@@ -16,7 +16,7 @@ func (uc *UC) TestProviderAccess(
 ) (*acmednsproviderdto.TestProviderAccessResp, error) {
 	err := acme.DNS01ProviderTestAccess(ctx, req.Kind, req.ToEntity(), req.TestDomain)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &acmednsproviderdto.TestProviderAccessResp{}, nil
 }

@@ -22,7 +22,7 @@ func InitTaskQueue(
 			logger.Infof("initializing task queue...")
 			if err := taskQueue.Start(); err != nil {
 				logger.Errorf("failed to initialize task queue: %v", err)
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -30,7 +30,7 @@ func InitTaskQueue(
 			logger.Info("stopping task queue ...")
 			if err := taskQueue.Shutdown(); err != nil {
 				logger.Errorf("failed to stop task queue: %v", err)
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},

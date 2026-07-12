@@ -23,7 +23,7 @@ func (s *service) InitRootProject(
 ) (postInitFunc func() error, err error) {
 	project, err := s.projectRepo.GetByKey(ctx, db, base.HivepaasProjectKey)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if project == nil {
 		timeNow := timeutil.NowUTC()
@@ -45,7 +45,7 @@ func (s *service) InitRootProject(
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if len(users) > 0 {
 			project.OwnerID = users[0].ID
@@ -55,12 +55,12 @@ func (s *service) InitRootProject(
 	err = s.projectRepo.Upsert(ctx, db, project,
 		entity.ProjectUpsertingConflictCols, entity.ProjectUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	newApps, _, services, err := s.SyncProject(ctx, db, project)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var updatingServices []*swarm.Service
@@ -80,7 +80,7 @@ func (s *service) InitRootProject(
 			shouldUpdateService, err = s.initRootProjectTraefikApp(ctx, db, app, svc)
 		}
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if shouldUpdateService {
 			updatingServices = append(updatingServices, svc)
@@ -91,10 +91,10 @@ func (s *service) InitRootProject(
 		for _, svc := range updatingServices {
 			err := gofn.ExecRetry(func() error {
 				_, err := s.dockerManager.ServiceUpdate(ctx, svc.ID, &svc.Version, &svc.Spec)
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}, 2, time.Second*5) //nolint
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 		return nil

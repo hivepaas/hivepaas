@@ -59,7 +59,7 @@ func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 		basesettinghandler.CreateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to create API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.New(apperrors.ErrForbidden).
+				return apperrors.Wrap(apperrors.ErrForbidden).
 					WithMsgLog("not allow to create API key by using API key session")
 			}
 			return nil
@@ -83,7 +83,7 @@ func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
 		basesettinghandler.UpdateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to update API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.New(apperrors.ErrForbidden).
+				return apperrors.Wrap(apperrors.ErrForbidden).
 					WithMsgLog("not allow to update API key by using API key session")
 			}
 			return nil
@@ -106,7 +106,7 @@ func (h *Handler) DeleteAPIKey(ctx *gin.Context) {
 		basesettinghandler.DeleteSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to delete API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.New(apperrors.ErrForbidden).
+				return apperrors.Wrap(apperrors.ErrForbidden).
 					WithMsgLog("not allow to delete API key by using API key session")
 			}
 			return nil

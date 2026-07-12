@@ -30,7 +30,7 @@ func (s *service) lockDockerServiceForDeployment(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to create a lock for the app service",
 			tasklog.TsNow))
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	// Now, we have the lock, need to check either this deployment should continue or stop.
@@ -43,7 +43,7 @@ func (s *service) lockDockerServiceForDeployment(
 		bunex.SelectColumns("id"),
 	)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	return len(newerDeployments) == 0, nil

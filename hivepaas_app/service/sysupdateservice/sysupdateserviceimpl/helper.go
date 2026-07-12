@@ -22,7 +22,7 @@ func (s *service) scaleServiceReplicas(
 	service.Spec.Mode.Replicated.Replicas = &replicas
 	_, err := s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

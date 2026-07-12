@@ -28,7 +28,7 @@ func (uc *UC) UpdateAppHttpSettings(
 		data := &updateAppHttpSettingsData{}
 		err := uc.loadAppHttpSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -36,17 +36,17 @@ func (uc *UC) UpdateAppHttpSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppHttpSettings(ctx, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppHttpSettingsResp{}, nil
@@ -74,13 +74,13 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppHttp)
 
 	if data.HttpSetting != nil && data.HttpSetting.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	newHttpSettings := req.ToEntity()
@@ -90,7 +90,7 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 	data.RefObjects, err = uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetObjectScope(),
 		true, true, newHttpSettings.GetRefObjectIDs())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
@@ -99,13 +99,13 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Make sure all domains used by the app are not hold by any other app
 	err = uc.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{app.ID})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -145,7 +145,7 @@ func (uc *UC) applyAppHttpSettings(
 ) error {
 	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	mapSslSettings := map[string]*entity.Setting{}
@@ -156,12 +156,12 @@ func (uc *UC) applyAppHttpSettings(
 	}
 	err = uc.sslService.WriteCertFiles(false, gofn.MapValues(mapSslSettings)...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	inspect, err := uc.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	service := &inspect.Service
 
@@ -170,17 +170,17 @@ func (uc *UC) applyAppHttpSettings(
 		RefObjects:   data.RefObjects,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, data.App, service, data.HttpSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

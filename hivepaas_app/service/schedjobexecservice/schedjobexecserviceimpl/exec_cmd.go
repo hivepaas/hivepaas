@@ -22,7 +22,7 @@ func (s *service) calcCommandHelper(
 	if command == nil || (command.Command == "" && command.Script == "") { // can't continue if this happens
 		_ = logStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command/script is empty, aborted", tasklog.TsNow))
-		return nil, apperrors.New(apperrors.ErrInternal).WithMsgLog("schedule job command/script is empty")
+		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("schedule job command/script is empty")
 	}
 
 	if command.Script != "" {
@@ -50,7 +50,7 @@ func (s *service) calcCommandHelper(
 	} else {
 		cmd, err = executil.CmdSplit(command.Command)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 	return cmd, nil
@@ -63,7 +63,7 @@ func (s *service) calcCommand(
 	cmd, err = s.calcCommandHelper(ctx, data.SchedJob.Command, data.Task.ID, data.LogStore)
 	if err != nil {
 		data.TaskNonRetryable = true
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return cmd, nil
 }

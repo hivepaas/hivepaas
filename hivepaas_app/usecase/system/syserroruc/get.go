@@ -15,12 +15,12 @@ func (uc *UC) GetSysError(
 ) (*syserrordto.GetSysErrorResp, error) {
 	appErr, err := uc.appErrorRepo.GetByID(ctx, uc.db, req.ID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := syserrordto.TransformSysError(appErr)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &syserrordto.GetSysErrorResp{

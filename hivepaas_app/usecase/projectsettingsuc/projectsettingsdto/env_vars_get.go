@@ -45,7 +45,7 @@ func TransformEnvVars(setting *entity.Setting) (resp *EnvVarsResp, err error) {
 
 	envVars, err := setting.AsEnvVars()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if envVars != nil {
 		for _, v := range envVars.Data {

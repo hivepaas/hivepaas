@@ -21,18 +21,18 @@ func (uc *UC) GetAppNetworkSettings(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// TODO: query only networks used in the service
 	listResp, err := uc.dockerManager.NetworkList(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	networks := listResp.Items
 	refObjects := &appsettingsdto.InfraRefObjects{
@@ -44,7 +44,7 @@ func (uc *UC) GetAppNetworkSettings(
 
 	resp, err := appsettingsdto.TransformNetworkSettings(service, refObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppNetworkSettingsResp{

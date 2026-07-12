@@ -26,7 +26,7 @@ func (uc *UC) GetDownloadToken(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	expiration := req.Expiration.ToDuration()
@@ -35,7 +35,7 @@ func (uc *UC) GetDownloadToken(
 	}
 	token, err := uc.FileService.GenerateDownloadToken(auth.User.ID, resp.Data.ID, false, expiration)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &configfiledto.GetDownloadTokenResp{

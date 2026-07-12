@@ -64,12 +64,12 @@ func TransformCommandTemplate(
 ) (resp *CommandTemplateResp, err error) {
 	config := setting.MustAsCommandTemplate()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, nil

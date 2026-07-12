@@ -32,7 +32,7 @@ func (s *service) NotifyForTaskResult(
 
 	err = s.loadDefaultNotificationSourceSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	currEvent := gofn.If(data.ActionSucceeded, "success", "failure")
@@ -76,7 +76,7 @@ func (s *service) NotifyForTaskResult(
 
 	err = gofn.ExecTasks(ctx, 0, execFuncs...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -126,7 +126,7 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		bunex.SelectWhere("setting.is_default IS TRUE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	findFunc := func(typ base.SettingType, kind *string) *entity.Setting {
@@ -202,7 +202,7 @@ func (s *service) notifyForTaskResultViaEmail(
 	userMap, err := s.userService.LoadNotificationUsers(ctx, db, data.ScopeProject,
 		viaEmail.ToProjectMembers, viaEmail.ToProjectOwners, viaEmail.ToAllAdmins)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	userEmails := make([]string, 0, len(userMap))
@@ -218,14 +218,14 @@ func (s *service) notifyForTaskResultViaEmail(
 
 	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeEmail, data.TemplateName)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	buf, bufDefer := bbpool.Small()
 	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	subject := data.TemplateData.GetTitle()
@@ -235,7 +235,7 @@ func (s *service) notifyForTaskResultViaEmail(
 
 	err = email.SendMail(ctx, emailAcc, userEmails, subject, buf.String())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -261,19 +261,19 @@ func (s *service) notifyForTaskResultViaSlack(
 
 	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeSlack, data.TemplateName)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	buf, bufDefer := bbpool.Small()
 	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.slackSendMsg(ctx, imService.Slack, buf.String())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -299,19 +299,19 @@ func (s *service) notifyForTaskResultViaDiscord(
 
 	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeDiscord, data.TemplateName)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	buf, bufDefer := bbpool.Small()
 	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.discordSendMsg(ctx, imService.Discord, buf.String())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -337,19 +337,19 @@ func (s *service) notifyForTaskResultViaTelegram(
 
 	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeTelegram, data.TemplateName)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	buf, bufDefer := bbpool.Small()
 	defer bufDefer(buf)
 	err = template.Execute(buf, data.TemplateData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.telegramSendMsg(ctx, imService.Telegram, buf.String())
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

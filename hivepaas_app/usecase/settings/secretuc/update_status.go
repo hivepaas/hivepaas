@@ -33,7 +33,7 @@ func (uc *UC) UpdateSecretStatus(
 					err = uc.ClusterService.DeleteSecretForApp(ctx, db, data.ScopeApp, secret)
 				}
 				if err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 				pData.Setting.MustSetData(secret)
 			}
@@ -41,7 +41,7 @@ func (uc *UC) UpdateSecretStatus(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &secretdto.UpdateSecretStatusResp{}, nil

@@ -34,35 +34,35 @@ func New(
 func (h *Handler) GetCurrentUser(ctx *gin.Context) (*basedto.User, error) {
 	token, err := h.getAuthToken(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if token != "" {
 		user, err := h.sessionUC.GetCurrentUserByJWT(h.RequestCtx(ctx), token)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		return user, nil
 	}
 
 	keyID, secret, err := h.getAuthAPIKey(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if keyID != "" && secret != "" {
 		user, err := h.sessionUC.GetCurrentUserByAPIKey(h.RequestCtx(ctx), keyID, secret)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		return user, nil
 	}
 
-	return nil, apperrors.New(apperrors.ErrNoSession)
+	return nil, apperrors.Wrap(apperrors.ErrNoSession)
 }
 
 func (h *Handler) GetCurrentUserByToken(ctx *gin.Context, token string) (*basedto.User, error) {
 	user, err := h.sessionUC.GetCurrentUserByJWT(h.RequestCtx(ctx), token)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return user, nil
@@ -71,13 +71,13 @@ func (h *Handler) GetCurrentUserByToken(ctx *gin.Context, token string) (*basedt
 func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck *permission.AccessCheck) (*basedto.Auth, error) {
 	auth, err := h.getCurrentAuth(ctx)
 	if err != nil {
-		return auth, apperrors.New(err) // NOTE: on error, still return `auth`
+		return auth, apperrors.Wrap(err) // NOTE: on error, still return `auth`
 	}
 
 	if err = h.sessionUC.VerifyAuth(ctx, auth, accessCheck); err != nil {
 		// NOTE: even on error, we still return the `auth` object so the client code
 		// still can be able to check permission with another method.
-		return auth, apperrors.New(err)
+		return auth, apperrors.Wrap(err)
 	}
 
 	return auth, nil
@@ -86,29 +86,29 @@ func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck *permission.Acces
 func (h *Handler) getCurrentAuth(ctx *gin.Context) (*basedto.Auth, error) {
 	token, err := h.getAuthToken(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if token != "" {
 		auth, err := h.sessionUC.GetCurrentAuthByJWT(h.RequestCtx(ctx), token)
 		if err != nil {
-			return auth, apperrors.New(err) // NOTE: on error, still return `auth`
+			return auth, apperrors.Wrap(err) // NOTE: on error, still return `auth`
 		}
 		return auth, nil
 	}
 
 	keyID, secret, err := h.getAuthAPIKey(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if keyID != "" && secret != "" {
 		auth, err := h.sessionUC.GetCurrentAuthByAPIKey(h.RequestCtx(ctx), keyID, secret)
 		if err != nil {
-			return auth, apperrors.New(err) // NOTE: on error, still return `auth`
+			return auth, apperrors.Wrap(err) // NOTE: on error, still return `auth`
 		}
 		return auth, nil
 	}
 
-	return nil, apperrors.New(apperrors.ErrNoSession)
+	return nil, apperrors.Wrap(apperrors.ErrNoSession)
 }
 
 // getAuthToken gets token from request header `Authorization`.
@@ -118,7 +118,7 @@ func (h *Handler) getAuthToken(ctx *gin.Context) (token string, err error) {
 	if authHeader != "" {
 		tokenParts := strings.SplitN(authHeader, " ", 2) //nolint:mnd
 		if len(tokenParts) != 2 || tokenParts[1] == "" {
-			return "", apperrors.New(apperrors.ErrSessionJWTInvalid)
+			return "", apperrors.Wrap(apperrors.ErrSessionJWTInvalid)
 		}
 		return tokenParts[1], nil
 	}
@@ -145,7 +145,7 @@ func (h *Handler) getAuthAPIKey(ctx *gin.Context) (keyID, secret string, err err
 		return "", "", nil
 	}
 	if keyID == "" || secret == "" {
-		return "", "", apperrors.New(apperrors.ErrSessionAPIKeyInvalid)
+		return "", "", apperrors.Wrap(apperrors.ErrSessionAPIKeyInvalid)
 	}
 	return keyID, secret, nil
 }

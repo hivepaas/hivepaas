@@ -20,12 +20,12 @@ func (uc *UC) CompleteMFATotpSetup(
 	req *userdto.CompleteMFATotpSetupReq,
 ) (*userdto.CompleteMFATotpSetupResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 	}
 
 	mfaTokenClaims, err := uc.userService.ParseMFATotpSetupToken(req.TotpToken)
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -33,16 +33,16 @@ func (uc *UC) CompleteMFATotpSetup(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if user.SecurityOption == base.UserSecurityEnforceSSO {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("user authentication method is enforce-sso")
 		}
 
 		// Verify passcode
 		if !totp.VerifyPasscode(req.Passcode, mfaTokenClaims.Secret) {
-			return apperrors.New(apperrors.ErrPasscodeMismatched)
+			return apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 		}
 
 		user.TotpSecret = mfaTokenClaims.Secret
@@ -54,13 +54,13 @@ func (uc *UC) CompleteMFATotpSetup(
 			bunex.UpdateColumns("updated_at", "totp_secret", "status"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.CompleteMFATotpSetupResp{}, nil

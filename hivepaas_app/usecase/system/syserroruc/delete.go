@@ -21,7 +21,7 @@ func (uc *UC) DeleteSysError(
 		errData := &deleteSysErrorData{}
 		err := uc.loadSysErrorDataForDelete(ctx, db, req, errData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSysErrorData{}
@@ -30,7 +30,7 @@ func (uc *UC) DeleteSysError(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &syserrordto.DeleteSysErrorResp{}, nil
@@ -50,7 +50,7 @@ func (uc *UC) loadSysErrorDataForDelete(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.SysError = appError
 

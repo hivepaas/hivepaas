@@ -31,16 +31,16 @@ type DeployAppReq struct {
 func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 	setting.ActiveMethod = gofn.Coalesce(req.ActiveMethod, setting.ActiveMethod)
 	if setting.ActiveMethod == "" {
-		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
+		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
 	}
 	switch setting.ActiveMethod {
 	case base.DeploymentMethodImage:
 		if err := req.ImageSource.ApplyTo(setting.ImageSource); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	case base.DeploymentMethodRepo:
 		if err := req.RepoSource.ApplyTo(setting.RepoSource); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -52,7 +52,7 @@ type DeploymentImageSourceReq struct {
 
 func (req *DeploymentImageSourceReq) ApplyTo(setting *entity.DeploymentImageSource) error {
 	if setting == nil || setting.Image == "" {
-		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
+		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
 	}
 	if req != nil {
 		if req.ImageTag != "" {
@@ -84,7 +84,7 @@ type DeploymentRepoSourceReq struct {
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
 	if setting == nil || setting.RepoURL == "" {
-		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
+		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
 	}
 	if req != nil {
 		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
@@ -102,7 +102,7 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 		}
 	}
 	if setting.RepoRef == "" {
-		return apperrors.New(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoRef")
+		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoRef")
 	}
 	return nil
 }

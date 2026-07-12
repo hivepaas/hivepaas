@@ -47,7 +47,7 @@ func (s *service) Checkout(
 
 	err = s.doCheckout(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, err
@@ -61,14 +61,14 @@ func (s *service) doCheckout(
 
 	err = s.checkoutPrepare(data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// NOTE: currently supports repo of git type only
 	if repoSource.RepoType != base.RepoTypeGit {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout source: "+
 			"unsupported repository type: "+string(repoSource.RepoType), tasklog.TsNow))
-		return apperrors.New(apperrors.ErrRepoTypeUnsupported).WithParam("Type", repoSource.RepoType)
+		return apperrors.Wrap(apperrors.ErrRepoTypeUnsupported).WithParam("Type", repoSource.RepoType)
 	}
 
 	s.addStepStartLog(ctx, data, "Start cloning Git repository...")
@@ -76,12 +76,12 @@ func (s *service) doCheckout(
 
 	err = s.loadRepoCache(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	checkoutOptions := &gittool.CheckoutOptions{
@@ -108,7 +108,7 @@ func (s *service) doCheckout(
 		}
 		if checkoutOptions.CacheLoaded {
 			if err := s.resetCheckoutDir(data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Failed to checkout repository with error: "+
 				err.Error()+". Try to do a fresh clone (not using cache)...", tasklog.TsNow))
@@ -118,7 +118,7 @@ func (s *service) doCheckout(
 		}
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout repository with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	data.CheckoutDuration = time.Since(checkoutStart)
@@ -129,7 +129,7 @@ func (s *service) doCheckout(
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Cache the latest repo source if satisfied our condition
@@ -141,7 +141,7 @@ func (s *service) doCheckout(
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Remove .git dir within the source dir before building image
@@ -170,7 +170,7 @@ func (s *service) checkoutPrepare(
 	}
 	err = os.MkdirAll(data.CheckoutDir, base.DirModeDefault)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

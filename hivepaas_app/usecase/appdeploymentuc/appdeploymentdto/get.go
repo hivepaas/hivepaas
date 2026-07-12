@@ -74,7 +74,7 @@ func TransformDeployment(
 	input *DeploymentTransformInput,
 ) (resp *DeploymentResp, err error) {
 	if err = copier.Copy(&resp, &deployment); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	deploymentInfo := input.DeploymentInfoMap[deployment.ID]

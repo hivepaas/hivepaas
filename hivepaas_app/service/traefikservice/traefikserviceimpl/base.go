@@ -12,7 +12,7 @@ import (
 func (s *service) GetTraefikSwarmService(ctx context.Context) (*swarm.Service, error) {
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasTraefikServiceName, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return service, nil
 }
@@ -20,13 +20,13 @@ func (s *service) GetTraefikSwarmService(ctx context.Context) (*swarm.Service, e
 func (s *service) RestartTraefikSwarmService(ctx context.Context) error {
 	service, err := s.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	service.Spec.TaskTemplate.ForceUpdate++
 	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

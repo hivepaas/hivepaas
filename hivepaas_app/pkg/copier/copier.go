@@ -12,7 +12,7 @@ func Copy(dst, src any) error {
 
 func CopyAs[T any](entity T) (copied T, err error) {
 	if err = deepcopy.Copy(&copied, &entity); err != nil {
-		return copied, apperrors.New(err)
+		return copied, apperrors.Wrap(err)
 	}
 	return copied, nil
 }

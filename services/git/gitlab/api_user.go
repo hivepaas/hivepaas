@@ -12,7 +12,7 @@ func (c *Client) GetCurrentUser() (*gogitlab.User, error) {
 	}
 	user, _, err := c.client.Users.CurrentUser()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	c.currentUser = user
 	return user, nil

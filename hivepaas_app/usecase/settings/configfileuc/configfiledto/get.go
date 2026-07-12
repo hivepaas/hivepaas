@@ -54,13 +54,13 @@ func TransformConfigFile(
 ) (resp *ConfigFileResp, err error) {
 	configFile := setting.MustAsConfigFile()
 	if err = copier.Copy(&resp, &configFile); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Name = setting.Name
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

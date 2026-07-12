@@ -25,10 +25,10 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 		docker.FilterAdd(&opts.Filters, "desired-state", string(swarm.TaskStateRunning))
 	})
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	if len(resp.Items) == 0 {
-		return "", apperrors.New(apperrors.ErrInfraNotFound).
+		return "", apperrors.Wrap(apperrors.ErrInfraNotFound).
 			WithMsgLog("no running agent task found on node %s", nodeID)
 	}
 
@@ -46,7 +46,7 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 	}
 
 	if targetIP == "" {
-		return "", apperrors.New(apperrors.ErrInfraNotFound).
+		return "", apperrors.Wrap(apperrors.ErrInfraNotFound).
 			WithMsgLog("agent task on node %s is not connected to network %s", nodeID, base.NetworkHivepaasLocal)
 	}
 

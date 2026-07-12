@@ -22,7 +22,7 @@ func (s *service) initOutputWriterToApp(
 		return nil, apperrors.NewNotFound("Target app")
 	}
 	if targetApp.Status != base.AppStatusActive {
-		return nil, apperrors.New(apperrors.ErrAppInactive)
+		return nil, apperrors.Wrap(apperrors.ErrAppInactive)
 	}
 
 	targetProject := data.Project
@@ -30,7 +30,7 @@ func (s *service) initOutputWriterToApp(
 		targetProject = targetApp.Project
 	}
 	if targetProject.Status != base.ProjectStatusActive {
-		return nil, apperrors.New(apperrors.ErrProjectInactive)
+		return nil, apperrors.Wrap(apperrors.ErrProjectInactive)
 	}
 
 	pr, pw := io.Pipe()

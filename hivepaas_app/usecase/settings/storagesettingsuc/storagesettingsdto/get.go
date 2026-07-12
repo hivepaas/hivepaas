@@ -79,7 +79,7 @@ func TransformStorageSettings(
 ) (resp *StorageSettingsResp, err error) {
 	config := input.Setting.MustAsStorageSettings()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if resp.BindSettings != nil {
@@ -125,7 +125,7 @@ func TransformStorageSettings(
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(input.Setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, nil

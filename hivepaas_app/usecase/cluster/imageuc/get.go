@@ -15,7 +15,7 @@ func (uc *UC) GetImage(
 ) (*imagedto.GetImageResp, error) {
 	inspect, err := uc.dockerManager.ImageInspect(ctx, req.ImageID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &imagedto.GetImageResp{

@@ -28,17 +28,17 @@ func (uc *UC) UpdateGithubApp(
 		) error {
 			err := uc.installGithubAppWebhook(ctx, pData.Setting.ID, githubApp, true)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			err = pData.Setting.SetData(githubApp)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.UpdateGithubAppResp{}, nil

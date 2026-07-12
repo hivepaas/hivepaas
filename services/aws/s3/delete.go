@@ -22,10 +22,10 @@ func (client *Client) DeleteObject(ctx context.Context, bucketName string, objec
 		// this code is similar to the official sample in the above page.
 		var noKey *types.NoSuchKey
 		if errors.As(err, &noKey) {
-			return apperrors.New(apperrors.ErrNotFound).
+			return apperrors.Wrap(apperrors.ErrNotFound).
 				WithMsgLog("object %s does not exist in bucket %s", objectKey, bucketName)
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

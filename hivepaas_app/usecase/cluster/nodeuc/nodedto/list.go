@@ -45,7 +45,7 @@ func TransformNodes(
 	for _, setting := range settings {
 		item, err := TransformNode(setting, refObjects, refClusterObjects, detailed)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

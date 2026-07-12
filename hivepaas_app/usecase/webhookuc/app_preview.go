@@ -50,12 +50,12 @@ func (uc *UC) createAppPreview(
 			},
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		// Ensure app valid when we complete creating the preview
 		err = uc.ensureAppActive(ctx, db, app, false, false)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
@@ -63,7 +63,7 @@ func (uc *UC) createAppPreview(
 		_ = createResp.OnCleanup(err)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if createResp != nil && createResp.DeploymentTask != nil {
 		_ = uc.taskQueue.ScheduleTask(ctx, createResp.DeploymentTask)
@@ -85,7 +85,7 @@ func (uc *UC) deleteAppPreview(
 	}
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
 		deploymentSettings.RepoSource == nil || deploymentSettings.RepoSource.RepoRef != expectedRef {
@@ -94,12 +94,12 @@ func (uc *UC) deleteAppPreview(
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		if err = uc.appService.DeleteApp(ctx, db, app); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

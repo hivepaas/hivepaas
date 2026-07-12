@@ -25,7 +25,7 @@ func (uc *UC) DeleteAppTags(
 		tagData := &deleteAppTagData{}
 		err := uc.loadAppTagDataForDelete(ctx, db, req, tagData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -34,7 +34,7 @@ func (uc *UC) DeleteAppTags(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.DeleteAppTagsResp{}, nil
@@ -59,7 +59,7 @@ func (uc *UC) loadAppTagDataForDelete(
 		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 

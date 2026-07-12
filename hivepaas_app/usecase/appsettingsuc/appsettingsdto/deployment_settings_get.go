@@ -94,11 +94,11 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 	var appDeploymentSettings *entity.AppDeploymentSettings
 	if input.DeploymentSettings != nil {
 		if err = copier.Copy(&resp, input.DeploymentSettings); err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		appDeploymentSettings = input.DeploymentSettings.MustAsAppDeploymentSettings()
 		if err = copier.Copy(&resp, appDeploymentSettings); err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

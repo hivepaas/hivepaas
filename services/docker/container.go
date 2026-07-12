@@ -64,7 +64,7 @@ func (m *manager) ContainerInspectMulti(
 	if len(containerIDs) == 1 {
 		resp, err := m.ContainerInspect(ctx, containerIDs[0], options...)
 		if err != nil {
-			return nil, map[string]error{containerIDs[0]: apperrors.New(err)}
+			return nil, map[string]error{containerIDs[0]: apperrors.Wrap(err)}
 		}
 		return map[string]*client.ContainerInspectResult{containerIDs[0]: resp}, nil
 	}
@@ -78,7 +78,7 @@ func (m *manager) ContainerInspectMulti(
 			resp, err := m.ContainerInspect(ctx, containerID, options...)
 			mu.Lock()
 			if err != nil {
-				allErrors[containerID] = apperrors.New(err)
+				allErrors[containerID] = apperrors.Wrap(err)
 			} else {
 				allResults[containerID] = resp
 			}
@@ -137,7 +137,7 @@ func (m *manager) ContainerRestartMulti(
 	if len(containerIDs) == 1 {
 		_, err := m.ContainerRestart(ctx, containerIDs[0], options...)
 		if err != nil {
-			return map[string]error{containerIDs[0]: apperrors.New(err)}
+			return map[string]error{containerIDs[0]: apperrors.Wrap(err)}
 		}
 		return nil
 	}
@@ -150,7 +150,7 @@ func (m *manager) ContainerRestartMulti(
 			_, err := m.ContainerRestart(ctx, containerID, options...)
 			if err != nil {
 				mu.Lock()
-				allErrors[containerID] = apperrors.New(err)
+				allErrors[containerID] = apperrors.Wrap(err)
 				mu.Unlock()
 			}
 		})
@@ -188,7 +188,7 @@ func (m *manager) ContainerKillMulti(
 	if len(containerIDs) == 1 {
 		_, err := m.ContainerKill(ctx, containerIDs[0], signal, options...)
 		if err != nil {
-			return map[string]error{containerIDs[0]: apperrors.New(err)}
+			return map[string]error{containerIDs[0]: apperrors.Wrap(err)}
 		}
 		return nil
 	}
@@ -201,7 +201,7 @@ func (m *manager) ContainerKillMulti(
 			_, err := m.ContainerKill(ctx, containerID, signal, options...)
 			if err != nil {
 				mu.Lock()
-				allErrors[containerID] = apperrors.New(err)
+				allErrors[containerID] = apperrors.Wrap(err)
 				mu.Unlock()
 			}
 		})

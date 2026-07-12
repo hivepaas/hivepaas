@@ -63,7 +63,7 @@ func (repo *fileRepo) GetByID(ctx context.Context, db database.IDB, id string,
 		return nil, apperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -79,7 +79,7 @@ func (repo *fileRepo) GetByName(ctx context.Context, db database.IDB, name strin
 		return nil, apperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -95,7 +95,7 @@ func (repo *fileRepo) GetByKey(ctx context.Context, db database.IDB, key string,
 		return nil, apperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -113,7 +113,7 @@ func (repo *fileRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -140,7 +140,7 @@ func (repo *fileRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return files, nil
 }
@@ -160,7 +160,7 @@ func (repo *fileRepo) InsertMulti(ctx context.Context, db database.IDB, files []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (repo *fileRepo) UpsertMulti(ctx context.Context, db database.IDB, files []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -193,7 +193,7 @@ func (repo *fileRepo) Update(ctx context.Context, db database.IDB, file *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -210,7 +210,7 @@ func (repo *fileRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -225,7 +225,7 @@ func (repo *fileRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

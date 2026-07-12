@@ -18,7 +18,7 @@ func (uc *UC) UpdateNetwork(
 	// NOTE: only allow updating `availInProjects` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &networkdto.UpdateNetworkResp{}, nil

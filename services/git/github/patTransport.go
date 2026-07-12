@@ -25,7 +25,7 @@ func (t *PatTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	resp, err := t.tr.RoundTrip(req)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

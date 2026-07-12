@@ -33,7 +33,7 @@ func (uc *UC) UpdateServiceSettings(
 		data = &updateServiceSettingsData{}
 		err := uc.loadServiceSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSettingsData{}
@@ -41,7 +41,7 @@ func (uc *UC) UpdateServiceSettings(
 
 		err = uc.persistSettingsData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.traefikSvcChanges {
@@ -49,14 +49,14 @@ func (uc *UC) UpdateServiceSettings(
 				return uc.applyServiceSettingsToTraefikService(ctx, data)
 			}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &traefiksettingsdto.UpdateServiceSettingsResp{}, nil
@@ -80,12 +80,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Setting = setting
 
 	if setting != nil && setting.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	newSettings := req.ToEntity()
@@ -93,12 +93,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 
 	currSettings, err := data.Setting.AsTraefikService()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.TraefikService = traefikSvc
 
@@ -122,7 +122,7 @@ func (uc *UC) applyServiceSettingsToTraefikService(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, traefikService.ID, &traefikService.Version, &traefikService.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -151,7 +151,7 @@ func (uc *UC) persistSettingsData(
 	err := uc.settingRepo.UpsertMulti(ctx, db, persistingData.Settings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

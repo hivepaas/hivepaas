@@ -26,7 +26,7 @@ func (uc *UC) UpdateProject(
 		projectData := &updateProjectData{}
 		err := uc.loadProjectDataForUpdate(ctx, db, auth, req, projectData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !projectData.HasChanges {
 			return nil
@@ -38,7 +38,7 @@ func (uc *UC) UpdateProject(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &projectdto.UpdateProjectResp{}, nil
@@ -64,10 +64,10 @@ func (uc *UC) loadProjectDataForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if project.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 	data.Project = project
 
@@ -78,7 +78,7 @@ func (uc *UC) loadProjectDataForUpdate(
 	if !strings.EqualFold(req.Name, project.Name) {
 		conflictProject, err := uc.projectRepo.GetByName(ctx, db, req.Name, bunex.SelectColumns("id"))
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictProject != nil {
 			return apperrors.NewAlreadyExist("Project").
@@ -95,10 +95,10 @@ func (uc *UC) loadProjectDataForUpdate(
 			Action:         base.ActionTypeWrite,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !hasPerm {
-			return apperrors.New(apperrors.ErrUnauthorized)
+			return apperrors.Wrap(apperrors.ErrUnauthorized)
 		}
 	}
 
@@ -106,7 +106,7 @@ func (uc *UC) loadProjectDataForUpdate(
 	if req.Owner.ID != "" && req.Owner.ID != project.OwnerID {
 		_, err = uc.userService.LoadUser(ctx, db, req.Owner.ID)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

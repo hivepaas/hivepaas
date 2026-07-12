@@ -54,7 +54,7 @@ func TransformGithubBranch(br *github.Branch) (resp *BranchResp, err error) {
 func TransformGithubBranches(branches []*github.Branch) ([]*BranchResp, error) {
 	resp, err := basedto.TransformObjectSlice(branches, TransformGithubBranch)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -73,7 +73,7 @@ func TransformGitlabBranch(br *gogitlab.Branch) (resp *BranchResp, err error) {
 func TransformGitlabBranches(branches []*gogitlab.Branch) ([]*BranchResp, error) {
 	resp, err := basedto.TransformObjectSlice(branches, TransformGitlabBranch)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -92,7 +92,7 @@ func TransformGiteaBranch(br *gogitea.Branch) (resp *BranchResp, err error) {
 func TransformGiteaBranches(branches []*gogitea.Branch) ([]*BranchResp, error) {
 	resp, err := basedto.TransformObjectSlice(branches, TransformGiteaBranch)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

@@ -41,7 +41,7 @@ func (s *service) sysBackupSaveResultInStorage(
 	case base.CloudStorageKindS3:
 		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		storageName = "AWS S3"
 		storageBucket = s3Client.Config.Bucket
@@ -50,13 +50,13 @@ func (s *service) sysBackupSaveResultInStorage(
 				0, 0, input)
 		}
 	default:
-		return apperrors.New(apperrors.ErrStorageTypeUnsupported).WithParam("Type", storageSetting.Kind)
+		return apperrors.Wrap(apperrors.ErrStorageTypeUnsupported).WithParam("Type", storageSetting.Kind)
 	}
 
 	targetFilePath := filepath.Join(data.SysBackupSettings.CloudStorage.DestinationDir, data.OutFileName)
 	backupFile, err := os.Open(data.OutFilePath)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	defer backupFile.Close()
 
@@ -69,7 +69,7 @@ func (s *service) sysBackupSaveResultInStorage(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
 			"Failed to upload backup file to "+storageName+" with error: "+err.Error(), tasklog.TsNow))
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup file uploaded to "+storageName+
 		" in "+time.Since(start).String(), tasklog.TsNow))
@@ -96,7 +96,7 @@ func (s *service) sysBackupSaveResultInStorage(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

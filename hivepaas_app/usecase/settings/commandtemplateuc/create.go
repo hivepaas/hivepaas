@@ -30,13 +30,13 @@ func (uc *UC) CreateCommandTemplate(
 			pData.Setting.Kind = string(req.Kind)
 			err := pData.Setting.SetData(cmdTemplate)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &commandtemplatedto.CreateCommandTemplateResp{

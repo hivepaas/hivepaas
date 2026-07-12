@@ -56,7 +56,7 @@ func (s *service) initDefaultImageBuildSettings(
 	// Calculate the best values for resource settings
 	listResp, err := s.dockerManager.NodeManagerList(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	//nolint
 	if leaderNode, found := gofn.FindPtr(listResp.Items, func(n *swarm.Node) bool {
@@ -75,7 +75,7 @@ func (s *service) initDefaultImageBuildSettings(
 
 	err = s.settingRepo.Insert(ctx, db, imageBuildSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

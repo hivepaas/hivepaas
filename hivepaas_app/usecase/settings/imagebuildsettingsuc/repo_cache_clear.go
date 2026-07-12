@@ -35,14 +35,14 @@ func (uc *UC) ClearRepoCache(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		filesDeleted = resp.TaskOutput.CacheCleanup.RepoCacheFilesDeleted
 		spaceReclaimed = resp.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &imagebuildsettingsdto.ClearRepoCacheResp{

@@ -26,7 +26,7 @@ func (uc *UC) GetFileDownloadURL(
 
 	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID, opts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := uc.fileService.GetDownloadURL(ctx, uc.db, auth, &fileservice.GetDownloadURLReq{
@@ -37,7 +37,7 @@ func (uc *UC) GetFileDownloadURL(
 		ViewInline:   req.ViewInline,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &filedto.GetFileDownloadURLResp{

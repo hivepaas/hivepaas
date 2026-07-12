@@ -15,7 +15,7 @@ func (s *service) calcCommandEnv(
 	schedJob := data.SchedJobSetting.MustAsSchedJob()
 	envVars, refSecrets, err := s.schedJobService.BuildCommandEnv(ctx, db, data.App, schedJob)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	env = make([]string, 0, len(envVars))
@@ -28,7 +28,7 @@ func (s *service) calcCommandEnv(
 		for _, secret := range refSecrets {
 			plainSecret, err := secret.Value.GetPlain()
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			secrets = append(secrets, plainSecret)
 		}

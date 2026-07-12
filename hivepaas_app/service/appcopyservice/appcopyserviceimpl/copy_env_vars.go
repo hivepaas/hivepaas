@@ -16,7 +16,7 @@ func (s *service) applyEnvVars(
 	app := data.TargetApp
 	envs, _, err := s.envVarService.BuildAppEnvVars(ctx, db, app, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	envVars := make([]string, 0, len(envs))
@@ -27,19 +27,19 @@ func (s *service) applyEnvVars(
 	}
 
 	if len(errs) > 0 {
-		return apperrors.New(apperrors.ErrEnvVarContainInvalidReference).WithDisplayLevelHigh().
+		return apperrors.Wrap(apperrors.ErrEnvVarContainInvalidReference).WithDisplayLevelHigh().
 			WithExtraDetail("%s", strings.Join(errs, "\n"))
 	}
 
 	service, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	service.Spec.TaskTemplate.ContainerSpec.Env = envVars
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

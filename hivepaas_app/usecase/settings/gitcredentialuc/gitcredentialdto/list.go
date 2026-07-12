@@ -47,7 +47,7 @@ func TransformGitCredentials(
 	for _, setting := range settings {
 		item, err := TransformGitCredential(setting, refObjects)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}
@@ -61,7 +61,7 @@ func TransformGitCredential(
 	resp = &GitCredentialResp{}
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

@@ -30,7 +30,7 @@ func (uc *UC) GetRepoCacheInfo(
 
 	files, _, err := uc.FileRepo.List(ctx, uc.DB, nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &imagebuildsettingsdto.GetRepoCacheInfoResp{

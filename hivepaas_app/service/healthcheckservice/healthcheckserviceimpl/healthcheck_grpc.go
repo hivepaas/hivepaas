@@ -36,19 +36,19 @@ func (s *service) doHealthcheckGRPC(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		defer conn.Close()
 
 		healthClient := grpc_health_v1.NewHealthClient(conn)
 		resp, err := healthClient.Check(reqCtx, &grpc_health_v1.HealthCheckRequest{Service: healthchk.Service})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		data.Output.GRPC.ReturnStatus = base.HealthcheckGRPCStatus(resp.Status)
 		if healthchk.ReturnStatus != base.HealthcheckGRPCStatus(resp.Status) {
-			return apperrors.New(apperrors.ErrActionFailed)
+			return apperrors.Wrap(apperrors.ErrActionFailed)
 		}
 
 	default:

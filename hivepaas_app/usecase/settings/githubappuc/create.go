@@ -38,17 +38,17 @@ func (uc *UC) CreateGithubApp(
 			pData.Setting.Kind = string(base.SettingTypeGithubApp)
 			err := uc.installGithubAppWebhook(ctx, pData.Setting.ID, githubApp, false)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			err = pData.Setting.SetData(githubApp)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.CreateGithubAppResp{
@@ -78,20 +78,20 @@ func (uc *UC) installGithubAppWebhook(
 
 	privateKey, err := githubApp.PrivateKey.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	client, err := github.NewFromApp(githubApp.AppID, githubApp.InstallationID,
 		reflectutil.UnsafeStrToBytes(privateKey))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	shouldSet := true
 	if !update {
 		hook, err := client.GetAppHookConfig(ctx)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		shouldSet = gofn.PtrValueOrEmpty(hook.URL) != githubApp.WebhookURL
 	}
@@ -102,7 +102,7 @@ func (uc *UC) installGithubAppWebhook(
 			opts.URL = &githubApp.WebhookURL
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

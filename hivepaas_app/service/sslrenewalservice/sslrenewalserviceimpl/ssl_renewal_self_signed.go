@@ -27,7 +27,7 @@ func (s *service) sslRenewSelfSignedCert(
 	certBytes, keyBytes, err := s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: sslCert.Domain}, sslCert.KeyType,
 		notBefore, notAfter, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	sslCert.Certificate = reflectutil.UnsafeBytesToStr(certBytes)
@@ -38,7 +38,7 @@ func (s *service) sslRenewSelfSignedCert(
 
 	err = sslSetting.SetData(sslCert)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

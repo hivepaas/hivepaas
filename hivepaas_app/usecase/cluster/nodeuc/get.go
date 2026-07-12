@@ -18,18 +18,18 @@ func (uc *UC) GetNode(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNodesInDocker(ctx, []*entity.Setting{resp.Data}, nil, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := nodedto.TransformNode(resp.Data, resp.RefObjects, refClusterObjects, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &nodedto.GetNodeResp{

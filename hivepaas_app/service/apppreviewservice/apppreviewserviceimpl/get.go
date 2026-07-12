@@ -28,7 +28,7 @@ func (s *service) GetPreview(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	for _, app := range apps {
@@ -52,7 +52,7 @@ func (s *service) GetPreviews(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return apps, nil
 }

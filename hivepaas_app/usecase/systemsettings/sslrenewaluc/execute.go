@@ -22,12 +22,12 @@ func (uc *UC) ExecuteSSLRenewal(
 	req.Type = currentSettingType
 	_, jobSetting, err := uc.getRenewalSettingAndJob(ctx, uc.DB, req.Scope, true, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// If no specific settings to be sent, we will try to renew all renewable SSLs
@@ -39,12 +39,12 @@ func (uc *UC) ExecuteSSLRenewal(
 
 	err = uc.taskRepo.Insert(ctx, uc.DB, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.taskQueue.ScheduleTask(ctx, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sslrenewaldto.ExecuteSSLRenewalResp{
@@ -63,7 +63,7 @@ func (uc *UC) getRenewalSettingAndJob(
 ) (cleanup *entity.Setting, job *entity.Setting, err error) {
 	cleanup, err = uc.SettingRepo.GetSingle(ctx, db, scope, currentSettingType, requireSettingActive)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	// Load sched job of the renewal
@@ -71,7 +71,7 @@ func (uc *UC) getRenewalSettingAndJob(
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", cleanup.ID),
 	)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	return cleanup, job, nil

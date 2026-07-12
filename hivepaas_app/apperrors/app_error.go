@@ -350,7 +350,7 @@ func notifyTranslationMissing(e error, _ translation.Lang) {
 	logging.Errorf("%s", errMsg)
 }
 
-func New(err error) AppError {
+func Wrap(err error) AppError {
 	if err == nil {
 		return nil
 	}

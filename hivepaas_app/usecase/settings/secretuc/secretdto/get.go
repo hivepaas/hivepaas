@@ -54,13 +54,13 @@ func TransformSecret(
 ) (resp *SecretResp, err error) {
 	secret := setting.MustAsSecret()
 	if err = copier.Copy(&resp, &secret); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Key = setting.Name
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

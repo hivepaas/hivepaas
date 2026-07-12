@@ -16,7 +16,7 @@ func (uc *UC) GenerateSSHKey(
 ) (_ *sshkeydto.GenerateSSHKeyResp, err error) {
 	privKey, pubKey, err := sshutil.GenerateKey(req.KeyType, req.Passphrase)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sshkeydto.GenerateSSHKeyResp{

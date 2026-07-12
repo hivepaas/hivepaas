@@ -19,17 +19,17 @@ func (uc *UC) GetAppResourceSettings(
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformResourceSettings(service)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppResourceSettingsResp{

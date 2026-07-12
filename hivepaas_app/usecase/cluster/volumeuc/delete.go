@@ -27,14 +27,14 @@ func (uc *UC) DeleteVolume(
 			if data.Setting.ObjectID == req.Scope.MainObjectID() {
 				_, err := uc.dockerManager.VolumeRemove(ctx, dockerhelper.ParseID(data.Setting.ID), true)
 				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &volumedto.DeleteVolumeResp{}, nil

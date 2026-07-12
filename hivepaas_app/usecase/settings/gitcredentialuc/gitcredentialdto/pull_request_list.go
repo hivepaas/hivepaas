@@ -83,7 +83,7 @@ func TransformGithubPullRequest(pr *github.PullRequest) (resp *PullRequestResp, 
 func TransformGithubPullRequests(prs []*github.PullRequest) ([]*PullRequestResp, error) {
 	resp, err := basedto.TransformObjectSlice(prs, TransformGithubPullRequest)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -114,7 +114,7 @@ func TransformGitlabMergeRequest(mr *gogitlab.BasicMergeRequest) (resp *PullRequ
 func TransformGitlabMergeRequests(mrs []*gogitlab.BasicMergeRequest) ([]*PullRequestResp, error) {
 	resp, err := basedto.TransformObjectSlice(mrs, TransformGitlabMergeRequest)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -147,7 +147,7 @@ func TransformGiteaPullRequest(pr *gogitea.PullRequest) (resp *PullRequestResp, 
 func TransformGiteaPullRequests(prs []*gogitea.PullRequest) ([]*PullRequestResp, error) {
 	resp, err := basedto.TransformObjectSlice(prs, TransformGiteaPullRequest)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

@@ -18,7 +18,7 @@ func (uc *UC) GetSchedJobTask(
 	req.Type = currentSettingType
 	jobSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.JobID, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	getResp, err := uc.taskService.GetTask(ctx, uc.DB, &taskservice.GetTaskReq{
@@ -26,12 +26,12 @@ func (uc *UC) GetSchedJobTask(
 		TargetID: jobSetting.ID,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTask(getResp.Task, getResp.TaskInfo)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.GetSchedJobTaskResp{

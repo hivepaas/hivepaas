@@ -66,7 +66,7 @@ func (e *Executor) execute(
 		HealthcheckExecData: execData,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

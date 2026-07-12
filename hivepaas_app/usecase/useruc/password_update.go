@@ -19,7 +19,7 @@ func (uc *UC) UpdatePassword(
 	req *userdto.UpdatePasswordReq,
 ) (*userdto.UpdatePasswordResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.New(apperrors.ErrUserDemoUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -27,17 +27,17 @@ func (uc *UC) UpdatePassword(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if user.SecurityOption == base.UserSecurityEnforceSSO {
-			return apperrors.New(apperrors.ErrActionNotAllowed).
+			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 				WithMsgLog("user authentication method is enforce-sso")
 		}
 
 		err = uc.userService.ChangePassword(user, req.NewPassword, req.CurrentPassword)
 		if err != nil {
-			return apperrors.New(err).WithMsgLog("failed to change password")
+			return apperrors.Wrap(err).WithMsgLog("failed to change password")
 		}
 
 		user.UpdatedAt = timeutil.NowUTC()
@@ -45,13 +45,13 @@ func (uc *UC) UpdatePassword(
 			bunex.UpdateColumns("updated_at", "password"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.UpdatePasswordResp{}, nil

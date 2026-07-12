@@ -70,7 +70,7 @@ func (h *Handler) Download(
 		req, ucFunc = r, func() (*settings.BaseDownloadDataResp, error) {
 			resp, err := h.ConfigFileUC.DownloadConfigFile(reqCtx, auth, r)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			return resp.Data.BaseDownloadDataResp, nil
 		}
@@ -81,7 +81,7 @@ func (h *Handler) Download(
 		req, ucFunc = r, func() (*settings.BaseDownloadDataResp, error) {
 			resp, err := h.SecretUC.DownloadSecret(reqCtx, auth, r)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			return resp.Data.BaseDownloadDataResp, nil
 		}

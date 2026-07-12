@@ -31,7 +31,7 @@ func (uc *UC) UpdateAppResourceSettings(
 		data := &updateAppResourceSettingsData{}
 		err := uc.loadAppResourceSettingsForUpdate(ctx, db, auth, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -39,17 +39,17 @@ func (uc *UC) UpdateAppResourceSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppResourceSettings(ctx, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppResourceSettingsResp{}, nil
@@ -75,18 +75,18 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	currCaps := appsettingsdto.TransformCapabilities(service.Spec.TaskTemplate.ContainerSpec)
@@ -96,10 +96,10 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 			Action:         base.ActionTypeWrite,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !hasPerm {
-			return apperrors.New(apperrors.ErrUnauthorized).WithMsgLog(
+			return apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog(
 				"changing capabilities requires Write permission on Cluster module")
 		}
 	}
@@ -252,7 +252,7 @@ func (uc *UC) applyAppResourceSettings(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

@@ -48,7 +48,7 @@ func (repo *projectSharedSettingRepo) Get(ctx context.Context, db database.IDB, 
 		return nil, apperrors.NewNotFound("ProjectSharedSetting").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return projectSharedSetting, nil
 }
@@ -66,7 +66,7 @@ func (repo *projectSharedSettingRepo) List(ctx context.Context, db database.IDB,
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -94,7 +94,7 @@ func (repo *projectSharedSettingRepo) UpsertMulti(ctx context.Context, db databa
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (repo *projectSharedSettingRepo) Update(ctx context.Context, db database.ID
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func (repo *projectSharedSettingRepo) DeleteAllBySetting(ctx context.Context, db
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -134,7 +134,7 @@ func (repo *projectSharedSettingRepo) DeleteHard(ctx context.Context, db databas
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

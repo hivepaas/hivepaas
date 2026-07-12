@@ -49,7 +49,7 @@ func (repo *lockRepo) GetByID(ctx context.Context, db database.IDB, id string,
 		return nil, apperrors.NewNotFound("Lock").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return lock, nil
 }
@@ -67,7 +67,7 @@ func (repo *lockRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -90,7 +90,7 @@ func (repo *lockRepo) Insert(ctx context.Context, db database.IDB, lock *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -111,7 +111,7 @@ func (repo *lockRepo) UpsertMulti(ctx context.Context, db database.IDB, locks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -127,7 +127,7 @@ func (repo *lockRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids []st
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

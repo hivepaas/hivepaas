@@ -22,7 +22,7 @@ func (uc *UC) GetAccessibleByProjects(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &accessiblebyprojectsdto.GetAccessibleByProjectsResp{

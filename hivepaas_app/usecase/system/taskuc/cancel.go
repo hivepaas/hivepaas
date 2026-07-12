@@ -19,12 +19,12 @@ func (uc *UC) CancelTask(
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		canceled, err = uc.taskService.CancelTask(ctx, db, req.ID, nil)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &taskdto.CancelTaskResp{

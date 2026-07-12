@@ -45,7 +45,7 @@ type SysErrorResp struct {
 
 func TransformSysError(appErr *entity.SysError) (resp *SysErrorResp, err error) {
 	if err = copier.Copy(&resp, &appErr); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

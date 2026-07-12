@@ -26,28 +26,28 @@ func (uc *UC) ExecuteSchedJob(
 			data *settings.GetSettingData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	task, err := uc.schedJobService.CreateSchedJobTask(resp.Data, time.Time{}, timeutil.NowUTC())
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.taskRepo.Insert(ctx, uc.DB, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.taskQueue.ScheduleTask(ctx, task)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.ExecuteSchedJobResp{

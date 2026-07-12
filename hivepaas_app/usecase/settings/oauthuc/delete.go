@@ -17,7 +17,7 @@ func (uc *UC) DeleteOAuth(
 	req.Type = currentSettingType
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &oauthdto.DeleteOAuthResp{}, nil

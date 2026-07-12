@@ -24,7 +24,7 @@ func (client *Client) GetObject(
 		Key:    aws.String(objectKey),
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return result, nil
 }
@@ -53,7 +53,7 @@ func (client *Client) PresignGetObject(
 		opts.Expires = expiration
 	})
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return request.URL, nil
 }
@@ -68,7 +68,7 @@ func (client *Client) HeadObject(
 		Key:    aws.String(objectKey),
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return result, nil
 }

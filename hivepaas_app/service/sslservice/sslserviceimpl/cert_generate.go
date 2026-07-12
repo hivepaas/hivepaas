@@ -44,7 +44,7 @@ func (s *service) GenerateCertAsPEM(
 			apperrors.ErrUnsupported, keyType)
 	}
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature

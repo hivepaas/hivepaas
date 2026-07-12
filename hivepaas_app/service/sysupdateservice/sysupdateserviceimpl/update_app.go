@@ -25,7 +25,7 @@ func (s *service) scaleMainAppService(
 ) error {
 	mainAppSvc, err := s.hpAppService.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if data.CurrentAppReplicas == nil {
 		data.CurrentAppReplicas = mainAppSvc.Spec.Mode.Replicated.Replicas
@@ -36,7 +36,7 @@ func (s *service) scaleMainAppService(
 
 	err = s.scaleServiceReplicas(ctx, mainAppSvc, replicas)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -48,7 +48,7 @@ func (s *service) scaleWorkerService(
 ) error {
 	workerSvc, err := s.hpAppService.GetHpWorkerSwarmService(ctx)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if workerSvc == nil {
 		return nil
@@ -63,7 +63,7 @@ func (s *service) scaleWorkerService(
 
 	err = s.scaleServiceReplicas(ctx, workerSvc, replicas)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -89,7 +89,7 @@ func (s *service) updateMainAppService(
 
 	appSvc, err := s.hpAppService.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	appSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.AppImage
@@ -97,18 +97,18 @@ func (s *service) updateMainAppService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
 	appSvc, err = s.dockerManager.ServiceUpdateWait(ctx, appSvc.ID, mainAppServiceUpdateCheckInterval)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if appSvc.UpdateStatus != nil && appSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service hivepaas is rolled back",
 			tasklog.TsNow))
-		return apperrors.New(apperrors.ErrActionFailed)
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (s *service) updateWorkerService(
 
 	workerSvc, err := s.hpAppService.GetHpWorkerSwarmService(ctx)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if workerSvc == nil {
 		return nil
@@ -146,18 +146,18 @@ func (s *service) updateWorkerService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
 	workerSvc, err = s.dockerManager.ServiceUpdateWait(ctx, workerSvc.ID, workerServiceUpdateCheckInterval)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if workerSvc.UpdateStatus != nil && workerSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service hivepaas worker is rolled back",
 			tasklog.TsNow))
-		return apperrors.New(apperrors.ErrActionFailed)
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil

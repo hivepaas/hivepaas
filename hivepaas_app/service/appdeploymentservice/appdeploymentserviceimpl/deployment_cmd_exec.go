@@ -86,7 +86,7 @@ func (s *service) deployStepExecCmd(
 		},
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

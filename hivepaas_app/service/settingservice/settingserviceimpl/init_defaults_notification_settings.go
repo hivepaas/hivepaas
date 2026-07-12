@@ -34,7 +34,7 @@ func (s *service) initDefaultNotificationSettings(
 
 	err = s.settingRepo.Insert(ctx, db, notifSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

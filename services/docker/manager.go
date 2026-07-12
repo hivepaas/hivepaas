@@ -221,7 +221,7 @@ func (m *manager) Close() error {
 func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager, error) {
 	currNodeID, err := m.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if currNodeID == nodeID {
 		return m, nil
@@ -233,10 +233,10 @@ func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager,
 		FilterAdd(&opts.Filters, "desired-state", string(swarm.TaskStateRunning))
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(resp.Items) == 0 {
-		return nil, apperrors.New(apperrors.ErrInfraNotFound).
+		return nil, apperrors.Wrap(apperrors.ErrInfraNotFound).
 			WithMsgLog("no running docker proxy task found on node %s", nodeID)
 	}
 
@@ -254,7 +254,7 @@ func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager,
 	}
 
 	if targetIP == "" {
-		return nil, apperrors.New(apperrors.ErrInfraNotFound).
+		return nil, apperrors.Wrap(apperrors.ErrInfraNotFound).
 			WithMsgLog("docker proxy task on node %s is not connected to network %s", nodeID, base.NetworkDockerProxy)
 	}
 

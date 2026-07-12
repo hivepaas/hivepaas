@@ -32,7 +32,7 @@ func (s *service) LoadNotificationUsers(
 			Action:       base.ActionTypeRead,
 		})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		for _, access := range s.permissionManager.MergeObjectAccessesBySubjectID(objPerms, modPerms) {
 			userIDs = append(userIDs, access.SubjectID)
@@ -48,7 +48,7 @@ func (s *service) LoadNotificationUsers(
 		bunex.SelectWhereOrIf(loadAdmins, "\"user\".role = ?", base.UserRoleAdmin),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return userMap, nil

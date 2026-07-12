@@ -15,7 +15,7 @@ func (uc *UC) ReloadTraefikConfig(
 ) (*traefikdto.ReloadTraefikConfigResp, error) {
 	err := uc.traefikService.ReloadTraefikConfig(ctx, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &traefikdto.ReloadTraefikConfigResp{}, nil

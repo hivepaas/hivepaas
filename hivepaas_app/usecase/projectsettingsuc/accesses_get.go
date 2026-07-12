@@ -24,7 +24,7 @@ func (uc *UC) GetUserAccesses(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	objPerms, modPerms, err := uc.permissionManager.LoadObjectAccesses(ctx, uc.db, &permission.AccessCheck{
@@ -35,7 +35,7 @@ func (uc *UC) GetUserAccesses(
 		Action:         base.ActionTypeRead,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp := projectsettingsdto.TransformUserAccesses(&projectsettingsdto.UserAccessesTransformInput{

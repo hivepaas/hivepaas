@@ -19,7 +19,7 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.projectService.PersistProjectData(ctx, db, &persistingData.PersistingProjectData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

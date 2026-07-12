@@ -122,7 +122,7 @@ func (s *AppDeploymentSettings) Migrate(setting *Setting) (hasChange bool, err e
 		return false, nil
 	}
 	if setting.Version > CurrentAppDeploymentSettingsVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

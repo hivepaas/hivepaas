@@ -59,12 +59,12 @@ func TransformSSHKey(
 ) (resp *SSHKeyResp, err error) {
 	sshKey := setting.MustAsSSHKey()
 	if err = copier.Copy(&resp, &sshKey); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.SecretMasked = sshKey.PrivateKey.IsEncrypted() || resp.Inherited

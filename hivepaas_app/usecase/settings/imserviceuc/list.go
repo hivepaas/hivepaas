@@ -17,12 +17,12 @@ func (uc *UC) ListIMService(
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := imservicedto.TransformIMServices(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &imservicedto.ListIMServiceResp{

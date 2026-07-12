@@ -53,12 +53,12 @@ func (uc *BaseUC) ListSetting(
 
 	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if data.AfterLoading != nil {
 		if err = data.AfterLoading(ctx, db, data); err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (uc *BaseUC) ListSetting(
 
 	settings, paging, err := uc.SettingRepo.List(ctx, db, req.Scope, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -100,7 +100,7 @@ func (uc *BaseUC) ListSetting(
 		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true,
 			false, settings...)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

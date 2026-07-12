@@ -87,7 +87,7 @@ func (s *service) initDefaultSystemBackup(
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{backupSetting, jobSetting})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

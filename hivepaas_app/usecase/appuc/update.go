@@ -26,7 +26,7 @@ func (uc *UC) UpdateApp(
 		appData := &updateAppData{}
 		err := uc.loadAppDataForUpdate(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !appData.HasChanges {
 			return nil
@@ -38,7 +38,7 @@ func (uc *UC) UpdateApp(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.UpdateAppResp{}, nil
@@ -61,10 +61,10 @@ func (uc *UC) loadAppDataForUpdate(
 		bunex.SelectRelation("Project"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if app.UpdateVer != req.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 	data.App = app
 
@@ -75,7 +75,7 @@ func (uc *UC) loadAppDataForUpdate(
 	if !strings.EqualFold(req.Name, app.Name) {
 		conflictApp, err := uc.appRepo.GetByName(ctx, db, req.ProjectID, req.Name, bunex.SelectColumns("id"))
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictApp != nil {
 			return apperrors.NewAlreadyExist("App").

@@ -61,7 +61,7 @@ func (repo *userRepo) GetByID(ctx context.Context, db database.IDB, id string,
 		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user id: %s", id)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -81,7 +81,7 @@ func (repo *userRepo) GetByUsernameOrEmail(ctx context.Context, db database.IDB,
 			WithMsgLog("user name: %s, email: %s", username, email)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -97,7 +97,7 @@ func (repo *userRepo) GetByUsername(ctx context.Context, db database.IDB, userna
 		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user name: %s", username)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -113,7 +113,7 @@ func (repo *userRepo) GetByEmail(ctx context.Context, db database.IDB, email str
 		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user email: %s", email)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -131,7 +131,7 @@ func (repo *userRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -159,7 +159,7 @@ func (repo *userRepo) ListByEmails(ctx context.Context, db database.IDB, emails 
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("user emails: %v", emails)
+		return nil, apperrors.Wrap(err).WithMsgLog("user emails: %v", emails)
 	}
 	return users, nil
 }
@@ -175,7 +175,7 @@ func (repo *userRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("user ids: %v", ids)
+		return nil, apperrors.Wrap(err).WithMsgLog("user ids: %v", ids)
 	}
 	return users, nil
 }
@@ -185,7 +185,7 @@ func (repo *userRepo) Insert(ctx context.Context, db database.IDB, user *entity.
 	if user.ID == "" {
 		newID, err := ulid.NewStringULID()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		user.ID = newID
 	}
@@ -195,7 +195,7 @@ func (repo *userRepo) Insert(ctx context.Context, db database.IDB, user *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -216,7 +216,7 @@ func (repo *userRepo) UpsertMulti(ctx context.Context, db database.IDB, users []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -228,7 +228,7 @@ func (repo *userRepo) Update(ctx context.Context, db database.IDB, user *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -243,7 +243,7 @@ func (repo *userRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

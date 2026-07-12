@@ -43,7 +43,7 @@ func TransformSecrets(
 	for _, setting := range settings {
 		item, err := TransformSecret(setting, refObjects)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

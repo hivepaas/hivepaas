@@ -55,7 +55,7 @@ func (uc *UC) ListAppBase(
 
 	apps, pagingMeta, err := uc.appRepo.List(ctx, uc.db, req.ProjectID, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.ListAppBaseResp{

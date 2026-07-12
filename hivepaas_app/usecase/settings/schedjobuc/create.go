@@ -33,14 +33,14 @@ func (uc *UC) CreateSchedJob(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			pData.Setting.Kind = string(schedJob.JobType)
 			if err := pData.Setting.SetData(schedJob); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -52,13 +52,13 @@ func (uc *UC) CreateSchedJob(
 		) error {
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, pData.Setting, false)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.CreateSchedJobResp{
@@ -85,7 +85,7 @@ func (uc *UC) checkPermissionPipeToApp(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// If command output is piped to another app, need to check permission
@@ -98,10 +98,10 @@ func (uc *UC) checkPermissionPipeToApp(
 		Action:             base.ActionTypeWrite,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if !hasPerm {
-		return apperrors.New(apperrors.ErrUnauthorized)
+		return apperrors.Wrap(apperrors.ErrUnauthorized)
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ func (uc *UC) isSchedJobFeatureEnabledInApp(
 	featureSetting, err := uc.SettingRepo.GetSingle(ctx, db, app.GetObjectScope(),
 		base.SettingTypeAppFeatures, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	var featureSettings *entity.AppFeatureSettings
 	if featureSetting != nil {
@@ -127,7 +127,7 @@ func (uc *UC) isSchedJobFeatureEnabledInApp(
 		entity.InitAppFeatureSettingsDefault(featureSettings)
 	}
 	if featureSettings.SchedJobSettings != nil && !featureSettings.SchedJobSettings.Enabled {
-		return apperrors.New(apperrors.ErrFeatureDisabled).WithParam("Name", "scheduled-job")
+		return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "scheduled-job")
 	}
 	return nil
 }

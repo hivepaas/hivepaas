@@ -22,14 +22,14 @@ func (uc *UC) LockTask(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		time.Sleep(req.Duration.ToDuration())
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &devhelperdto.LockTaskResp{}, nil

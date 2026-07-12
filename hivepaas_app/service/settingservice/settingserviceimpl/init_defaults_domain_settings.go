@@ -54,7 +54,7 @@ func (s *service) initDefaultDomainSettings(
 
 	err = s.settingRepo.Insert(ctx, db, domainSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -39,7 +39,7 @@ type AppInstallationResp struct {
 
 func TransformAppInstallation(installation *github.Installation) (resp *AppInstallationResp, err error) {
 	if err = copier.Copy(&resp, &installation); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -47,7 +47,7 @@ func TransformAppInstallation(installation *github.Installation) (resp *AppInsta
 func TransformAppInstallations(installations []*github.Installation) ([]*AppInstallationResp, error) {
 	resp, err := basedto.TransformObjectSlice(installations, TransformAppInstallation)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

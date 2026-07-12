@@ -98,18 +98,18 @@ func TransformSchedJob(
 ) (resp *SchedJobResp, err error) {
 	job := setting.MustAsSchedJob()
 	if err = copier.Copy(&resp, job); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if job.App.ID != "" {
 		refApp := refObjects.RefApps[job.App.ID]
 		if err = copier.Copy(&resp.App, refApp); err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		resp.App = nil
@@ -123,7 +123,7 @@ func TransformSchedJob(
 			targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
 			cmdOutputResp.SaveToFile.Storage, err = settings.TransformSettingBase(targetStorage)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 		} else {
 			cmdOutputResp.SaveToFile = nil
@@ -133,7 +133,7 @@ func TransformSchedJob(
 			targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
 			cmdOutputResp.PipeToApp.TargetApp, err = appdto.TransformApp(targetApp, nil)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 		} else {
 			cmdOutputResp.PipeToApp = nil

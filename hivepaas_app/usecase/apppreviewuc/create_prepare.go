@@ -26,7 +26,7 @@ func (uc *UC) PrepareCreatePreview(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
@@ -36,13 +36,13 @@ func (uc *UC) PrepareCreatePreview(
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	repoSource := deploymentSettings.RepoSource
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || repoSource == nil {
-		return nil, apperrors.New(apperrors.ErrDeploymentMethodRepoRequired)
+		return nil, apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 
 	refObjects, err := uc.settingService.LoadReferenceObjects(ctx, uc.db, app.GetObjectScope(),
 		true, true, app.Settings...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData := &apppreviewdto.PrepareCreatePreviewDataResp{

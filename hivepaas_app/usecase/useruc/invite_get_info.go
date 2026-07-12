@@ -16,7 +16,7 @@ func (uc *UC) GetUserInviteInfo(
 ) (*userdto.GetUserInviteInfoResp, error) {
 	emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.GetUserInviteInfoResp{

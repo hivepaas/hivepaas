@@ -67,7 +67,7 @@ func (s *ImageBuildSettings) Migrate(setting *Setting) (hasChange bool, err erro
 		return false, nil
 	}
 	if setting.Version > CurrentImageBuildSettingsVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

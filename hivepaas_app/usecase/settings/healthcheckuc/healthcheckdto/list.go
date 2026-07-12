@@ -43,7 +43,7 @@ func TransformHealthchecks(
 	for _, setting := range settings {
 		item, err := TransformHealthcheck(setting, refObjects)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

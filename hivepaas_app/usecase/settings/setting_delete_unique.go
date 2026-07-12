@@ -47,12 +47,12 @@ func (uc *BaseUC) DeleteUniqueSetting(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadUniqueSettingForDeletion(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -60,31 +60,31 @@ func (uc *BaseUC) DeleteUniqueSetting(
 		uc.prepareUniqueSettingDeletion(req, data, persistingData)
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingDeletion(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		// Fire delete event
 		err = uc.SettingService.OnDelete(ctx, db, &settingservice.DeleteEvent{Setting: persistingData.Setting})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &DeleteUniqueSettingResp{}, nil
@@ -98,7 +98,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 ) (err error) {
 	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	loadOpts := []bunex.SelectQueryOption{
@@ -108,7 +108,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 
 	setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type, false, loadOpts...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Setting = setting
 
@@ -116,7 +116,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	if setting.ObjectID == "" && req.Scope.IsProjectScope() {
 		data.ProjectSharedSetting, err = uc.ProjectSharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, setting.ID)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

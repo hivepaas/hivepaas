@@ -22,25 +22,25 @@ func (uc *UC) ListVolume(
 	if req.Scope.IsGlobalScope() {
 		currVols, err = uc.clusterService.SyncVolumes(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listVolumesInDocker(ctx, resp.Data, currVols, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := volumedto.TransformVolumes(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &volumedto.ListVolumeResp{
@@ -66,7 +66,7 @@ func (uc *UC) listVolumesInDocker(
 
 		res, err := uc.dockerManager.VolumeListByIDs(ctx, volumes)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		currVols = res.Items
 	}

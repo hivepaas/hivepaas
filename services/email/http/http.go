@@ -27,7 +27,7 @@ func SendMail(
 ) (err error) {
 	password, err := conf.Password.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var req *http.Request
@@ -62,12 +62,12 @@ func SendMail(
 
 			dataBytes, err := json.Marshal(bodyMap)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 
 			req, err = http.NewRequest(string(conf.Method), conf.Endpoint, bytes.NewBuffer(dataBytes))
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		} else {
 			contentType = gofn.Coalesce(contentType, "application/x-www-form-urlencoded")
@@ -84,7 +84,7 @@ func SendMail(
 
 			req, err = http.NewRequest(string(conf.Method), conf.Endpoint, strings.NewReader(formValues.Encode()))
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -93,7 +93,7 @@ func SendMail(
 	case base.HTTPMethodGet:
 		req, err = http.NewRequest(string(conf.Method), conf.Endpoint, nil)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		q := req.URL.Query()
@@ -125,7 +125,7 @@ func SendMail(
 
 	resp, err := httpclient.DefaultClient.Do(req)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	defer resp.Body.Close()
 

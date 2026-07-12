@@ -34,7 +34,7 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 ) (*githubappdto.HandleGithubAppManifestFlowProgressResp, error) {
 	manifestCache, err := uc.cacheAppManifestRepo.Get(ctx, req.SettingID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if req.State != manifestCache.State {
@@ -43,7 +43,7 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 
 	appConfig, err := github.AppManifestFlowComplete(ctx, req.Code)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	appSetting := manifestCache.GithubApp
@@ -57,7 +57,7 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 
 	err = uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var redirectURL string
@@ -83,7 +83,7 @@ func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 ) (*githubappdto.HandleGithubAppManifestFlowProgressResp, error) {
 	manifestCache, err := uc.cacheAppManifestRepo.Get(ctx, req.SettingID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// TODO: query installation list of the app and validate this one
@@ -97,21 +97,21 @@ func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 		// Loads the setting from DB to check update version matching
 		dbSetting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, "", appSetting.ID, false)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if dbSetting.UpdateVer != appSetting.UpdateVer {
-			return nil, apperrors.New(apperrors.ErrUpdateVerMismatched)
+			return nil, apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 		}
 
 		appSetting.UpdateVer++
 		err = uc.SettingRepo.Update(ctx, uc.DB, appSetting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		err = uc.SettingRepo.Insert(ctx, uc.DB, appSetting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

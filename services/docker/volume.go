@@ -70,7 +70,7 @@ func (m *manager) VolumeListByIDs(
 	if len(volumeIDOrNames) == 1 {
 		inspect, err := m.VolumeInspect(ctx, volumeIDOrNames[0])
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = []volume.Volume{inspect.Volume}
@@ -80,7 +80,7 @@ func (m *manager) VolumeListByIDs(
 
 	listResp, err := m.VolumeList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		vol := &listResp.Items[i]
@@ -131,7 +131,7 @@ func (m *manager) VolumeUpdate(
 	if version == nil {
 		resp, err := m.VolumeInspect(ctx, volumeID)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		version = &resp.Volume.ClusterVolume.Version
 	}

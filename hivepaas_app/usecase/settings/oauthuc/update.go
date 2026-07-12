@@ -31,13 +31,13 @@ func (uc *UC) UpdateOAuth(
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
 			err := pData.Setting.SetData(oauth)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &oauthdto.UpdateOAuthResp{}, nil

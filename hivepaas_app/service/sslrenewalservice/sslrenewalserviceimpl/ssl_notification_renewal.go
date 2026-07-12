@@ -22,7 +22,7 @@ func (s *service) sslNotifyForRenewal(
 	isSucceeded := item.RenewalError == nil
 	notification, err := s.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -39,7 +39,7 @@ func (s *service) sslNotifyForRenewal(
 		TemplateData:    item.RenewalNotifMsgData,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

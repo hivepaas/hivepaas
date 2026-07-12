@@ -32,10 +32,10 @@ func (uc *UC) GetApp(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if app.ProjectID != req.ProjectID {
-		return nil, apperrors.New(apperrors.ErrUnauthorized)
+		return nil, apperrors.Wrap(apperrors.ErrUnauthorized)
 	}
 
 	transformationInput := &appdto.AppTransformationInput{}
@@ -43,14 +43,14 @@ func (uc *UC) GetApp(
 	if req.GetStats {
 		serviceMap, err := uc.loadAppSwarmServices(ctx, app.Project.Key, []*entity.App{app})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		transformationInput.SwarmServiceMap = serviceMap
 	}
 
 	resp, err := appdto.TransformApp(app, transformationInput)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.GetAppResp{

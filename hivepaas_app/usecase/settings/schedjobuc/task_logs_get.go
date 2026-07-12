@@ -29,7 +29,7 @@ func (uc *UC) GetSchedJobTaskLogs(
 		bunex.SelectRelation("Tasks", bunex.SelectWhere("task.id = ?", req.TaskID)),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	task := gofn.FirstOr(jobSetting.Tasks, nil)
@@ -48,7 +48,7 @@ func (uc *UC) GetSchedJobTaskLogs(
 		LogSessionTimeout:       taskLogSessionTimeout,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.GetSchedJobTaskLogsResp{

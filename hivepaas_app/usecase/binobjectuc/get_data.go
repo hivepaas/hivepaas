@@ -27,7 +27,7 @@ func (uc *UC) GetBinObjectData(
 		bunex.SelectWhere("bin_object.status = ?", base.BinObjectStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	extraHeaders := map[string]string{}

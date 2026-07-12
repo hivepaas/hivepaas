@@ -18,7 +18,7 @@ func (s *service) OnUpdate(
 	if event.Setting.IsTypeIn(base.SettingTypeHealthcheck, base.SettingTypeIMService, base.SettingTypeEmail) {
 		err = s.healthcheckSettingsRepo.Del(ctx)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

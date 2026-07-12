@@ -43,7 +43,7 @@ func (c *Cache) Get(key string) (any, error) {
 func (c *Cache) GetStr(key string) (string, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	v, ok := val.(string)
 	if !ok {
@@ -55,7 +55,7 @@ func (c *Cache) GetStr(key string) (string, error) {
 func (c *Cache) GetInt(key string) (int, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return 0, apperrors.New(err)
+		return 0, apperrors.Wrap(err)
 	}
 	v, ok := val.(int)
 	if !ok {
@@ -67,7 +67,7 @@ func (c *Cache) GetInt(key string) (int, error) {
 func (c *Cache) GetBool(key string) (bool, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	v, ok := val.(bool)
 	if !ok {

@@ -27,7 +27,7 @@ func (uc *UC) RestartHpApp(
 
 	err := errors.Join(errMain, errDb, errCache)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappdto.RestartHpAppResp{}, nil

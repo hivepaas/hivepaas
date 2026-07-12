@@ -12,12 +12,12 @@ func (c *Client) GetAppHookConfig(
 	ctx context.Context,
 ) (*gogithub.HookConfig, error) {
 	if !c.IsAppClient() {
-		return nil, apperrors.New(ErrGithubAppClientRequired)
+		return nil, apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	output, _, err := c.appClient.Apps.GetHookConfig(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return output, nil
 }
@@ -29,7 +29,7 @@ func (c *Client) UpdateAppHookConfig(
 	options ...UpdateAppHookOption,
 ) error {
 	if !c.IsAppClient() {
-		return apperrors.New(ErrGithubAppClientRequired)
+		return apperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts := &gogithub.HookConfig{}
@@ -39,7 +39,7 @@ func (c *Client) UpdateAppHookConfig(
 
 	_, _, err := c.appClient.Apps.UpdateHookConfig(ctx, opts)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

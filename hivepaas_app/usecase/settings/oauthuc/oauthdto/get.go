@@ -63,12 +63,12 @@ func TransformOAuth(
 ) (resp *OAuthResp, err error) {
 	config := setting.MustAsOAuth()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Recalculate callbackURL for the oauth as it depends on the actual server address

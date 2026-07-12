@@ -15,11 +15,11 @@ func (s *service) telegramSendMsg(
 ) error {
 	botToken, err := setting.BotToken.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	err = telegram.NewClient().SendMessage(ctx, botToken, setting.ChatID, msg, "HTML")
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

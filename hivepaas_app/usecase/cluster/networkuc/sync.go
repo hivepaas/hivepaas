@@ -15,7 +15,7 @@ func (uc *UC) SyncNetwork(
 ) (*networkdto.SyncNetworkResp, error) {
 	_, err := uc.clusterService.SyncNetworks(ctx, uc.DB)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &networkdto.SyncNetworkResp{}, nil
 }

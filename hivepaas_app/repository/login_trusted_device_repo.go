@@ -49,7 +49,7 @@ func (repo *loginTrustedDeviceRepo) GetByUserAndDevice(
 			WithMsgLog("user id: %s, device id: %s", userID, deviceID)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return trustedDevice, nil
 }
@@ -72,7 +72,7 @@ func (repo *loginTrustedDeviceRepo) UpsertMulti(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func (repo *loginTrustedDeviceRepo) DeleteHard(ctx context.Context, db database.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

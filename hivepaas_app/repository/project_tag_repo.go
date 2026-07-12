@@ -44,7 +44,7 @@ func (repo *projectTagRepo) List(ctx context.Context, db database.IDB, paging *b
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -71,7 +71,7 @@ func (repo *projectTagRepo) UpsertMulti(ctx context.Context, db database.IDB, pr
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func (repo *projectTagRepo) DeleteAllByProjects(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ func (repo *projectTagRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

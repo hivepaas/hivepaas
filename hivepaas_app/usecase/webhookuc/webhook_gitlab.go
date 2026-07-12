@@ -21,14 +21,14 @@ func (uc *UC) parseGitlabWebhook(
 ) error {
 	hook, err := gitlab.New(gitlab.Options.Secret(secret))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, gitlab.PushEvents, gitlab.CommentEvents, gitlab.MergeRequestEvents)
 	if err != nil {
 		if errors.Is(err, gitlab.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

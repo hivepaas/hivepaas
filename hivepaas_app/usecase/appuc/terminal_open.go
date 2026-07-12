@@ -28,7 +28,7 @@ func (uc *UC) OpenTerminal(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
 		return nil, apperrors.NewUnavailable("App service").
@@ -53,7 +53,7 @@ func (uc *UC) OpenTerminal(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.OpenTerminalResp{

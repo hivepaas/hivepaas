@@ -23,7 +23,7 @@ func (uc *UC) GetTerminalInfo(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
 		return nil, apperrors.NewUnavailable("App service").

@@ -60,7 +60,7 @@ type TaskTargetJobResp struct {
 
 func TransformTask(task *entity.Task, taskInfo *cacheentity.TaskInfo) (resp *TaskResp, err error) {
 	if err = copier.Copy(&resp, &task); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if taskInfo != nil {
 		resp.Status = taskInfo.Status

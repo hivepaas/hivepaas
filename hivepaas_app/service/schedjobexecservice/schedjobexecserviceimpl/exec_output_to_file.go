@@ -34,7 +34,7 @@ func (s *service) initOutputWriterToFile(
 
 	err = s.initOutputFile(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var baseWriter io.WriteCloser
@@ -60,7 +60,7 @@ func (s *service) initOutputWriterToFile(
 		destFilePath := filepath.Join(config.Current.AppPath, data.File.Path)
 		f, err := os.Create(destFilePath)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		baseWriter = &writeCloserWrapper{
 			Writer: &countingWriter{w: f, n: &data.File.Size},
@@ -79,7 +79,7 @@ func (s *service) initOutputWriterToFile(
 		encSecret, err := saveToFile.EncryptionSecret.GetPlain()
 		if err != nil {
 			_ = baseWriter.Close()
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if encSecret == "" {
 			_ = baseWriter.Close()
@@ -88,12 +88,12 @@ func (s *service) initOutputWriterToFile(
 		recipient, err := age.NewScryptRecipient(encSecret)
 		if err != nil {
 			_ = baseWriter.Close()
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		encW, err = age.Encrypt(writer, recipient)
 		if err != nil {
 			_ = baseWriter.Close()
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		writer = encW
 	}
@@ -109,7 +109,7 @@ func (s *service) initOutputWriterToFile(
 		zstdW, err := zstd.NewWriter(writer)
 		if err != nil {
 			_ = baseWriter.Close()
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		compW = zstdW
 		writer = compW
@@ -146,7 +146,7 @@ func (s *service) initOutputFile(
 
 	fileName, err := s.getOutputFileName(data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	data.File = &entity.File{
@@ -173,7 +173,7 @@ func (s *service) initOutputFile(
 		}
 		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		data.File.StorageType = base.FileStorageCloud
@@ -212,7 +212,7 @@ func (s *service) getOutputFileName(
 		finalFileName += ".zst"
 	case base.FileCompressionNone: // Do nothing
 	default:
-		return "", apperrors.New(apperrors.ErrArchiveFormatUnsupported).
+		return "", apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", cmdOutput.CompressionFormat)
 	}
 
@@ -221,7 +221,7 @@ func (s *service) getOutputFileName(
 		finalFileName += ".age"
 	case base.FileEncryptionNone: // Do nothing
 	default:
-		return "", apperrors.New(apperrors.ErrEncryptionFormatUnsupported).
+		return "", apperrors.Wrap(apperrors.ErrEncryptionFormatUnsupported).
 			WithParam("Format", cmdOutput.EncryptionFormat)
 	}
 

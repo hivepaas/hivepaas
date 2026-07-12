@@ -27,7 +27,7 @@ func (s *service) LoadProject(
 
 	project, err := s.projectRepo.GetByID(ctx, db, projectID, loadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return project, nil
@@ -53,13 +53,13 @@ func (s *service) LoadProjects(
 
 	projects, err := s.projectRepo.ListByIDs(ctx, db, projectIDs, loadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	projectMap := entityutil.SliceToIDMap(projects)
 	for _, id := range projectIDs {
 		if _, exist := projectMap[id]; !exist {
-			return nil, apperrors.New(apperrors.ErrProjectNotFound).WithParam("Name", id)
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", id)
 		}
 	}
 

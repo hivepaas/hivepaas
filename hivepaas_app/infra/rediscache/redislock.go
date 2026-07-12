@@ -49,7 +49,7 @@ func (rl *lock) Do(
 
 	mutex := rl.redsync.NewMutex(name, opts...)
 	if err := mutex.LockContext(ctx); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	defer mutex.UnlockContext(ctx) //nolint:errcheck
 

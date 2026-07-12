@@ -30,16 +30,16 @@ func (s *service) ObtainCert(
 		// No need to init as it's custom by user
 		return false, nil
 	default:
-		return false, apperrors.New(apperrors.ErrSSLTypeUnsupported).WithParam("Type", sslCert.CertType)
+		return false, apperrors.Wrap(apperrors.ErrSSLTypeUnsupported).WithParam("Type", sslCert.CertType)
 	}
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	if updated && writeFiles {
 		err = s.WriteCertFiles(true, sslSetting)
 		if err != nil {
-			return true, apperrors.New(err)
+			return true, apperrors.Wrap(err)
 		}
 	}
 
@@ -53,14 +53,14 @@ func (s *service) obtainCertByAcme(
 ) (updated bool, err error) {
 	acmeClient, err := s.GetAcmeClient(sslSetting, refObjects)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	sslCert := sslSetting.MustAsSSLCert()
 	keyType := gofn.Coalesce(sslCert.KeyType, base.SSLKeyTypeDefault)
 	certificates, renewalInfo, err := acmeClient.ObtainCertificateWithDetails(ctx, []string{sslCert.Domain}, keyType)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	sslCert.Certificate = string(certificates.Certificate)
@@ -70,7 +70,7 @@ func (s *service) obtainCertByAcme(
 	}
 	x509Cert, err := certcrypto.ParsePEMCertificate(certificates.Certificate)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	sslCert.ExpireAt = x509Cert.NotAfter.UTC()
 	sslCert.ValidPeriod = timeutil.Duration(sslCert.ExpireAt.Sub(timeutil.NowUTC()))
@@ -92,7 +92,7 @@ func (s *service) obtainCertSelfSigned(
 	certBytes, keyBytes, err := s.GenerateCertAsPEM(&pkix.Name{CommonName: sslCert.Domain}, sslCert.KeyType,
 		notBefore, notAfter, false)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	sslCert.Certificate = reflectutil.UnsafeBytesToStr(certBytes)

@@ -63,17 +63,17 @@ func (s *service) SysUpdate(
 	// Stop only services which need to be stopped (main app and workers)
 	err = s.stopServices(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.onBeforeSystemUpdate(ctx, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = s.updateSystem(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -86,13 +86,13 @@ func (s *service) stopServices(
 	// 1. Scale down the main app to zero instance
 	err = s.scaleMainAppService(ctx, 0, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 2. Scale down the workers to zero instance
 	err = s.scaleWorkerService(ctx, 0, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func (s *service) onAfterSystemUpdate(
 	if data.CurrentAppReplicas != nil && *data.CurrentAppReplicas > 0 {
 		err = s.scaleMainAppService(ctx, *data.CurrentAppReplicas, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -129,7 +129,7 @@ func (s *service) onAfterSystemUpdate(
 	if data.CurrentWorkerReplicas != nil && *data.CurrentWorkerReplicas > 0 {
 		err = s.scaleWorkerService(ctx, *data.CurrentWorkerReplicas, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
@@ -146,31 +146,31 @@ func (s *service) updateSystem(
 	// 1. Update DB
 	err = s.updateDbService(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 2. Update redis
 	err = s.updateRedisService(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 3. Update traefik
 	err = s.updateTraefikService(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 4. Update main app then bring it back
 	err = s.updateMainAppService(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// 5. Update worker then bring it back
 	err = s.updateWorkerService(ctx, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return err

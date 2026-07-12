@@ -36,7 +36,7 @@ func (repo *taskInfoRepo) Get(
 ) (*cacheentity.TaskInfo, error) {
 	resp, err := redishelper.Get[*cacheentity.TaskInfo](ctx, repo.client, repo.formatKey(taskID))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -60,7 +60,7 @@ func (repo *taskInfoRepo) GetAll(
 ) (map[string]*cacheentity.TaskInfo, error) {
 	keys, err := redishelper.ScanKeys(ctx, repo.client, repo.formatKey("*"))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(keys) == 0 {
 		return nil, nil
@@ -74,7 +74,7 @@ func (repo *taskInfoRepo) mGet(
 ) (map[string]*cacheentity.TaskInfo, error) {
 	resp, err := redishelper.MGet[*cacheentity.TaskInfo](ctx, repo.client, keys...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	result := make(map[string]*cacheentity.TaskInfo, len(resp))
 	for _, info := range resp {
@@ -93,7 +93,7 @@ func (repo *taskInfoRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(taskID), taskInfo, exp)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -105,7 +105,7 @@ func (repo *taskInfoRepo) Update(
 ) error {
 	err := redishelper.SetXX(ctx, repo.client, repo.formatKey(taskID), taskInfo, redis.KeepTTL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (repo *taskInfoRepo) Update(
 func (repo *taskInfoRepo) Del(ctx context.Context, taskID string) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(taskID))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

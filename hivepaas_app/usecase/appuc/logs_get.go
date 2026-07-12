@@ -38,7 +38,7 @@ func (uc *UC) GetAppLogs(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
 		return nil, apperrors.NewUnavailable("App service").
@@ -72,10 +72,10 @@ func (uc *UC) GetAppLogs(
 		// Validate task belongs to the service
 		taskInspect, err := uc.dockerManager.TaskInspect(ctx, req.TaskID)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if taskInspect.Task.ServiceID != serviceID {
-			return nil, apperrors.New(apperrors.ErrUnavailable).
+			return nil, apperrors.Wrap(apperrors.ErrUnavailable).
 				WithMsgLog("task doesn't belong to service")
 		}
 
@@ -95,7 +95,7 @@ func (uc *UC) GetAppLogs(
 			}
 		})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		logsReader, err = uc.dockerManager.ServiceLogs(ctx, serviceID, func(opts *client.ServiceLogsOptions) {
@@ -114,7 +114,7 @@ func (uc *UC) GetAppLogs(
 			}
 		})
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

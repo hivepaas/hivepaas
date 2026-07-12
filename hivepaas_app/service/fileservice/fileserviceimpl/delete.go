@@ -30,7 +30,7 @@ func (s *service) DeleteFileData(
 		err = s.deleteCloudFile(ctx, req)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &fileservice.DeleteDataResp{}, nil
 }
@@ -44,12 +44,12 @@ func (s *service) deleteLocalFile(
 	err := gofn.ExecRetryCtx(ctx, func() error {
 		err := os.Remove(filePath)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	}, req.RetryMax, req.RetryDelay)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -67,19 +67,19 @@ func (s *service) deleteCloudFile(
 	case base.CloudStorageKindS3:
 		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		// TODO: create an async task for deleting the file later
 		err = gofn.ExecRetryCtx(ctx, func() error {
 			err = s3Client.DeleteObject(ctx, file.Bucket, file.Path)
 			if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		}, req.RetryMax, req.RetryDelay)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil

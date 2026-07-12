@@ -20,7 +20,7 @@ func Recovery(cfg *config.Config) gin.HandlerFunc {
 	}
 
 	return gin.CustomRecoveryWithWriter(writer, func(ctx *gin.Context, recover any) {
-		err := apperrors.New(apperrors.ErrInternal).
+		err := apperrors.Wrap(apperrors.ErrInternal).
 			WithMsgLog("recovered from panic: %v", recover)
 		(&handler.BaseHandler{}).RenderError(ctx, err)
 		ctx.Abort()

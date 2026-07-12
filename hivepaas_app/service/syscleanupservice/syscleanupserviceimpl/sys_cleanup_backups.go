@@ -68,7 +68,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	for _, file := range deletingFiles {
@@ -78,7 +78,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
 		[]string{"deleted_at"}) //nolint:goconst
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Delete real files in local
@@ -124,7 +124,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 		bunex.SelectRelation("Storage"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	for _, file := range deletingFiles {
@@ -134,7 +134,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.SettingUpsertingConflictCols,
 		[]string{"deleted_at"})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Delete real files in cloud
@@ -153,7 +153,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 		case base.CloudStorageKindS3:
 			s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 			if err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			delFunc = func(file *entity.File) error {
 				return s3Client.DeleteObject(ctx, file.Bucket, file.Path)

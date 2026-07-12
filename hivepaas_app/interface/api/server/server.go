@@ -92,7 +92,7 @@ func (s *HTTPServer) Start() error {
 
 	err := s.ListenAndServe()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -103,7 +103,7 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	}
 	err := s.Shutdown(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

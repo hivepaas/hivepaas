@@ -21,7 +21,7 @@ func (s *service) SyncVolumes(
 	// 1. Scan docker to get list of volumes
 	volList, err := s.dockerManager.VolumeList(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	currentSettingType := base.SettingTypeClusterVolume
@@ -32,7 +32,7 @@ func (s *service) SyncVolumes(
 		bunex.SelectWhere("setting.type = ?", currentSettingType),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	existingVols := make(map[string]*entity.Setting, len(dbSettings))
@@ -62,7 +62,7 @@ func (s *service) SyncVolumes(
 			}
 			volEntity := &entity.ClusterVolume{}
 			if err := setting.SetData(volEntity); err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			updatingSettings = append(updatingSettings, setting)
 			continue
@@ -94,7 +94,7 @@ func (s *service) SyncVolumes(
 	err = s.settingRepo.UpsertMulti(ctx, db, updatingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return volList.Items, nil

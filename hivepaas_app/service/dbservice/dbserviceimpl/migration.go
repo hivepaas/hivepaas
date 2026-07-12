@@ -20,10 +20,10 @@ func (s *service) MigrateData(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if migration == nil {
-			return apperrors.New(apperrors.ErrInternal).WithMsgLog("no data migration found")
+			return apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("no data migration found")
 		}
 		if migration.ID >= base.CurrentVersion { // no need migration
 			return nil
@@ -31,7 +31,7 @@ func (s *service) MigrateData(
 
 		err = s.migrateSettings(ctx, db)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		// Migration finishes
@@ -40,13 +40,13 @@ func (s *service) MigrateData(
 		}
 		err = s.dataMigrationRepo.Insert(ctx, db, newMigration)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -64,7 +64,7 @@ func (s *service) migrateSettings(
 			bunex.SelectLimit(limit),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if len(settings) == 0 {
 			break
@@ -75,7 +75,7 @@ func (s *service) migrateSettings(
 		for _, setting := range settings {
 			hasChange, err := setting.Migrate()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			if hasChange {
 				updatedSettings = append(updatedSettings, setting)
@@ -85,7 +85,7 @@ func (s *service) migrateSettings(
 		err = s.settingRepo.UpsertMulti(ctx, db, updatedSettings,
 			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

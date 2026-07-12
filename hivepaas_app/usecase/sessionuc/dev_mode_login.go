@@ -13,12 +13,12 @@ func (uc *UC) DevModeLogin(
 ) (*sessiondto.DevModeLoginResp, error) {
 	user, err := uc.userRepo.GetByID(ctx, uc.db, req.UserID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: user})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sessiondto.DevModeLoginResp{

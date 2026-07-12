@@ -27,14 +27,14 @@ func (uc *UC) DeleteNetwork(
 			if data.Setting.ObjectID == req.Scope.MainObjectID() {
 				_, err := uc.dockerManager.NetworkRemove(ctx, dockerhelper.ParseID(data.Setting.ID))
 				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &networkdto.DeleteNetworkResp{}, nil

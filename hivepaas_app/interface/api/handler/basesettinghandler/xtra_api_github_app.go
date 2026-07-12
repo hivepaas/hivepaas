@@ -29,7 +29,7 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.New(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {
@@ -134,7 +134,7 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.New(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {

@@ -18,7 +18,7 @@ func (uc *UC) ListHealthcheckTask(
 	req.Type = currentSettingType
 	jobSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.JobID, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	listResp, err := uc.taskService.ListTask(ctx, uc.DB, &taskservice.ListTaskReq{
@@ -28,12 +28,12 @@ func (uc *UC) ListHealthcheckTask(
 		Paging:    req.Paging,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTasks(listResp.Tasks, listResp.TaskInfoMap)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &healthcheckdto.ListHealthcheckTaskResp{

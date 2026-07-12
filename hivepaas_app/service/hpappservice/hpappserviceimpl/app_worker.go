@@ -12,7 +12,7 @@ import (
 func (s *service) GetHpWorkerSwarmService(ctx context.Context) (*swarm.Service, error) {
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasWorkerServiceName, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return service, nil
 }
@@ -20,13 +20,13 @@ func (s *service) GetHpWorkerSwarmService(ctx context.Context) (*swarm.Service, 
 func (s *service) RestartHpWorkerSwarmService(ctx context.Context) error {
 	service, err := s.GetHpWorkerSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	service.Spec.TaskTemplate.ForceUpdate++
 	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

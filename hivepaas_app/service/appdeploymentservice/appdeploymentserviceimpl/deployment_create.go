@@ -44,7 +44,7 @@ func (s *service) CreateDeploymentAndTask(
 		Deployment: entity.ObjectID{ID: deployment.ID},
 	})
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	return deployment, deploymentTask, nil

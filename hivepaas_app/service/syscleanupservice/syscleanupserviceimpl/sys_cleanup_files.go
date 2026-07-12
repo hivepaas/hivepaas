@@ -54,7 +54,7 @@ func (s *service) sysCleanupTempFiles(
 			if os.IsNotExist(err) {
 				return nil
 			}
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		for _, entry := range entries {

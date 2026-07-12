@@ -130,7 +130,7 @@ func (s *service) initRootProjectMainApp(
 	// Insert the settings into DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbHttpSetting, dbEnvVarsSetting})
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 
 	return shouldUpdateService, nil

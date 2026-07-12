@@ -25,7 +25,7 @@ type grpcContainerServiceClient struct {
 func (c *grpcContainerServiceClient) Close() error {
 	if c.conn != nil {
 		if err := c.conn.Close(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -37,7 +37,7 @@ func (c *grpcContainerServiceClient) ContainerExec(ctx context.Context) (*Contai
 	stream, err := c.protoClient.ContainerExec(ctx)
 	if err != nil {
 		cancelFunc()
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	execStream := &ContainerExecStream{
@@ -55,7 +55,7 @@ func NewContainerServiceClient(
 ) (ContainerServiceClient, error) {
 	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &grpcContainerServiceClient{
 		conn:        conn,

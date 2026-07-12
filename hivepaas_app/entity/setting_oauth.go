@@ -48,7 +48,7 @@ func (s *OAuth) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentOAuthVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -62,7 +62,7 @@ func (s *OAuth) Migrate(setting *Setting) (hasChange bool, err error) {
 func (s *OAuth) Decrypt() error {
 	_, err := s.ClientSecret.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (s *Setting) AsOAuth() (*OAuth, error) {
 	if s.Type == base.SettingTypeGithubApp {
 		ghApp, err := s.AsGithubApp()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		return ghApp.ConvertAsOAuth(), nil
 	}

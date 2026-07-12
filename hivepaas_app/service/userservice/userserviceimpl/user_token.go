@@ -26,7 +26,7 @@ func (s *service) GenerateMFAToken(userID string, mfaType base.MFAType, trustedD
 		TrustedDeviceID: trustedDeviceID,
 	}, MFATokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return mfaToken, nil
 }
@@ -34,10 +34,10 @@ func (s *service) GenerateMFAToken(userID string, mfaType base.MFAType, trustedD
 func (s *service) ParseMFAToken(token string) (*appentity.MFATokenClaims, error) {
 	tokenClaims := &appentity.MFATokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "mfa" {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil
 }
@@ -50,7 +50,7 @@ func (s *service) GenerateMFATotpSetupToken(userID string, toptSecret string) (s
 		Secret: toptSecret,
 	}, MFATotpSetupTokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return mfaToken, nil
 }
@@ -58,10 +58,10 @@ func (s *service) GenerateMFATotpSetupToken(userID string, toptSecret string) (s
 func (s *service) ParseMFATotpSetupToken(token string) (*appentity.MFATotpSetupTokenClaims, error) {
 	tokenClaims := &appentity.MFATotpSetupTokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "mfa-setup" {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil
 }
@@ -73,7 +73,7 @@ func (s *service) GenerateUserInviteToken(userID string) (string, error) {
 		UserID: userID,
 	}, UserInviteTokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return token, nil
 }
@@ -81,10 +81,10 @@ func (s *service) GenerateUserInviteToken(userID string) (string, error) {
 func (s *service) ParseUserInviteToken(token string) (*appentity.UserInviteTokenClaims, error) {
 	tokenClaims := &appentity.UserInviteTokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "user-invite" {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil
 }
@@ -96,7 +96,7 @@ func (s *service) GeneratePasswordResetToken(userID string) (string, error) {
 		UserID: userID,
 	}, PasswordResetTokenExp)
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	return token, nil
 }
@@ -104,10 +104,10 @@ func (s *service) GeneratePasswordResetToken(userID string) (string, error) {
 func (s *service) ParsePasswordResetToken(token string) (*appentity.PasswordResetTokenClaims, error) {
 	tokenClaims := &appentity.PasswordResetTokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 	if tokenClaims.Kind != "pwd-reset" {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid)
 	}
 	return tokenClaims, nil
 }

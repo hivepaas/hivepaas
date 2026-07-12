@@ -46,7 +46,7 @@ func TransformFiles(files []*entity.File) (resp []*FileResp, err error) {
 	for _, file := range files {
 		item, err := TransformFile(file)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

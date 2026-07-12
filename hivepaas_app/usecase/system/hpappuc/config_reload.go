@@ -15,7 +15,7 @@ func (uc *UC) ReloadHpAppConfig(
 ) (*hpappdto.ReloadHpAppConfigResp, error) {
 	err := uc.hpAppService.ReloadHpAppConfig(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &hpappdto.ReloadHpAppConfigResp{}, nil

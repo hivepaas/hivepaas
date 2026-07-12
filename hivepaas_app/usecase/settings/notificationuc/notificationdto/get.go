@@ -73,12 +73,12 @@ func TransformNotification(
 ) (resp *NotificationResp, err error) {
 	config := setting.MustAsNotification()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if resp.ViaEmail != nil && resp.ViaEmail.Sender != nil {

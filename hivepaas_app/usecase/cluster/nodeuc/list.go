@@ -22,25 +22,25 @@ func (uc *UC) ListNode(
 	if req.Scope.IsGlobalScope() {
 		currNodes, err = uc.clusterService.SyncNodes(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNodesInDocker(ctx, resp.Data, currNodes, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	respData, err := nodedto.TransformNodes(resp.Data, resp.RefObjects, refClusterObjects, false)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &nodedto.ListNodeResp{
@@ -66,7 +66,7 @@ func (uc *UC) listNodesInDocker(
 
 		res, err := uc.dockerManager.NodeListByIDs(ctx, nodes)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		currNodes = res.Items
 	}

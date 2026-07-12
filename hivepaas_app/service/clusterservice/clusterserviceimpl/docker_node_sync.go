@@ -21,7 +21,7 @@ func (s *service) SyncNodes(
 	// 1. Scan docker to get list of nodes
 	nodeList, err := s.dockerManager.NodeList(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	currentSettingType := base.SettingTypeClusterNode
@@ -32,7 +32,7 @@ func (s *service) SyncNodes(
 		bunex.SelectWhere("setting.type = ?", currentSettingType),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	existingNodes := make(map[string]*entity.Setting, len(dbSettings))
@@ -58,7 +58,7 @@ func (s *service) SyncNodes(
 			}
 			nodeEntity := &entity.ClusterNode{}
 			if err := setting.SetData(nodeEntity); err != nil {
-				return nil, apperrors.New(err)
+				return nil, apperrors.Wrap(err)
 			}
 			updatingSettings = append(updatingSettings, setting)
 			continue
@@ -90,7 +90,7 @@ func (s *service) SyncNodes(
 	err = s.settingRepo.UpsertMulti(ctx, db, updatingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return nodeList.Items, nil

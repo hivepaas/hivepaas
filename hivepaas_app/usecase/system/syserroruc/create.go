@@ -23,7 +23,7 @@ func (uc *UC) CreateSysError(
 
 	err := uc.persistData(ctx, uc.db, persistingData)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	createdItem := persistingData.InsertingSysErrors[0]
@@ -62,11 +62,11 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.appErrorRepo.DeleteMulti(ctx, db, persistingData.DeletingSysErrors)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	err = uc.appErrorRepo.InsertMulti(ctx, db, persistingData.InsertingSysErrors)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

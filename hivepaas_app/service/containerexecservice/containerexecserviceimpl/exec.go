@@ -53,7 +53,7 @@ func (s *service) containerExec(
 
 	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	svcMode := &inspectResp.Service.Spec.Mode
 	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
@@ -66,7 +66,7 @@ func (s *service) containerExec(
 		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
 		nil)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if task == nil {
 		_ = logStore.Add(ctx, tasklog.NewWarnFrame(
@@ -76,7 +76,7 @@ func (s *service) containerExec(
 
 	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	isRemote := task.NodeID != "" && task.NodeID != currNodeID
@@ -112,7 +112,7 @@ func (s *service) containerExec(
 				"Execution failed to start in node %s, retrying...", execHelper.targetNodeID), tasklog.TsNow))
 			return s.containerExec(ctx, req, retry+1)
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.ExecStarted = true
@@ -140,12 +140,12 @@ func (s *service) containerExec(
 
 	exitCode, err := execHelper.GetExecExitCode(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if exitCode != 0 {
 		_ = logStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(
 			"Command execution failed with exit code: %v", exitCode), tasklog.TsNow))
-		return nil, apperrors.New(apperrors.ErrInfraActionFailed)
+		return nil, apperrors.Wrap(apperrors.ErrInfraActionFailed)
 	}
 
 	return resp, nil
@@ -191,7 +191,7 @@ func (h *containerExecHelper) ExecCreate(
 				h.isTTY = opts.TTY || opts.ConsoleSize.Width > 0 && opts.ConsoleSize.Height > 0
 			})
 		if err != nil {
-			return nil, nil, nil, apperrors.New(err)
+			return nil, nil, nil, apperrors.Wrap(err)
 		}
 		h.createResult = createRes
 		h.attachResult = attachRes
@@ -204,25 +204,25 @@ func (h *containerExecHelper) ExecCreate(
 		if err != nil {
 			_ = h.logStore.Add(ctx, tasklog.NewWarnFrame(
 				fmt.Sprintf("Failed to get IP of agent for node %s: %v", h.targetNodeID, err), tasklog.TsNow))
-			return nil, nil, nil, apperrors.New(err)
+			return nil, nil, nil, apperrors.Wrap(err)
 		}
 
 		h.agentClient, err = containerservice.NewContainerServiceClient(agentAddr)
 		if err != nil {
 			_ = h.logStore.Add(ctx, tasklog.NewWarnFrame(
 				fmt.Sprintf("Failed to connect to agent at %s: %v", agentAddr, err), tasklog.TsNow))
-			return nil, nil, nil, apperrors.New(err)
+			return nil, nil, nil, apperrors.Wrap(err)
 		}
 
 		h.remoteStream, err = h.agentClient.ContainerExec(ctx)
 		if err != nil {
-			return nil, nil, nil, apperrors.New(err)
+			return nil, nil, nil, apperrors.Wrap(err)
 		}
 	}
 
 	err = h.remoteStream.SendExecCreate(containerID, req.ExecOptions)
 	if err != nil {
-		return nil, nil, nil, apperrors.New(err)
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	h.createResult = &client.ExecCreateResult{ID: "remote"}
@@ -237,11 +237,11 @@ func (h *containerExecHelper) ExecResize(
 	// Local exec
 	if h.dockerClient != nil {
 		_, err := h.dockerClient.ContainerExecResize(ctx, h.createResult.ID, width, height)
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Remote exec
-	return apperrors.New(h.remoteStream.SendResize(width, height))
+	return apperrors.Wrap(h.remoteStream.SendResize(width, height))
 }
 
 func (h *containerExecHelper) GetExecExitCode(
@@ -251,7 +251,7 @@ func (h *containerExecHelper) GetExecExitCode(
 	if h.dockerClient != nil {
 		execInfo, err := h.dockerClient.ContainerExecInspect(ctx, h.createResult.ID)
 		if err != nil {
-			return 0, apperrors.New(err)
+			return 0, apperrors.Wrap(err)
 		}
 		return execInfo.ExitCode, nil
 	}
@@ -259,7 +259,7 @@ func (h *containerExecHelper) GetExecExitCode(
 	// Remote exec
 	exitCode, ok := h.remoteStream.GetExitCode()
 	if !ok {
-		return 0, apperrors.New(apperrors.ErrGRPCRequestFailed).
+		return 0, apperrors.Wrap(apperrors.ErrGRPCRequestFailed).
 			WithParam("Error", "stream closed without exit code")
 	}
 	return int(exitCode), nil

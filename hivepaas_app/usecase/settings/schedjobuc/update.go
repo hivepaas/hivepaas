@@ -23,11 +23,11 @@ func (uc *UC) UpdateSchedJob(
 		VerifyingRefIDs: newJob.GetRefObjectIDs(),
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			job, err := data.Setting.AsSchedJob()
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			scheduleChanges = !job.Schedule.Equal(newJob.Schedule)
 			return nil
@@ -39,12 +39,12 @@ func (uc *UC) UpdateSchedJob(
 			pData *settings.PersistingSettingData,
 		) error {
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			pData.Setting.Kind = string(newJob.JobType)
 			err := pData.Setting.SetData(newJob)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -56,13 +56,13 @@ func (uc *UC) UpdateSchedJob(
 		) error {
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting, scheduleChanges)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &schedjobdto.UpdateSchedJobResp{}, nil

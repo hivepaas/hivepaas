@@ -28,13 +28,13 @@ func (uc *UC) UpdateAcmeDnsProvider(
 		) error {
 			pData.Setting.Kind = string(req.Kind)
 			if err := pData.Setting.SetData(acmeDnsProvider); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &acmednsproviderdto.UpdateAcmeDnsProviderResp{}, nil

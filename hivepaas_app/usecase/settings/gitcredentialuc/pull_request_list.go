@@ -25,7 +25,7 @@ func (uc *UC) ListPullRequest(
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeGithubApp, base.SettingTypeAccessToken),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	switch setting.Type { //nolint:exhaustive
@@ -42,10 +42,10 @@ func (uc *UC) ListPullRequest(
 		case base.GitSourceBitbucket, base.GitSourceGogs:
 			fallthrough
 		default:
-			return nil, apperrors.New(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+			return nil, apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
 		}
 	default:
-		return nil, apperrors.New(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
 	}
 }
 
@@ -56,7 +56,7 @@ func (uc *UC) listGithubPullRequest(
 ) (*gitcredentialdto.ListPullRequestResp, error) {
 	client, err := github.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// If setting is a github-app, we get `owner` from the setting
@@ -70,12 +70,12 @@ func (uc *UC) listGithubPullRequest(
 
 	prs, pagingMeta, err := client.ListPullRequest(ctx, req.Owner, req.Repo, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGithubPullRequests(prs)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListPullRequestResp{
@@ -91,17 +91,17 @@ func (uc *UC) listGitlabPullRequest(
 ) (*gitcredentialdto.ListPullRequestResp, error) {
 	client, err := gitlab.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	mrs, pagingMeta, err := client.ListPullRequest(ctx, req.Owner+"/"+req.Repo, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGitlabMergeRequests(mrs)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListPullRequestResp{
@@ -117,17 +117,17 @@ func (uc *UC) listGiteaPullRequest(
 ) (*gitcredentialdto.ListPullRequestResp, error) {
 	client, err := gitea.NewFromSetting(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	prs, pagingMeta, err := client.ListPullRequest(ctx, req.Owner, req.Repo, &req.Paging)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := gitcredentialdto.TransformGiteaPullRequests(prs)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListPullRequestResp{

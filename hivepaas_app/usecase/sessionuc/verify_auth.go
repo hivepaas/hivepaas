@@ -14,7 +14,7 @@ func (uc *UC) VerifyAuth(
 	accessCheck *permission.AccessCheck,
 ) error {
 	if auth.User.AuthClaims.IsRefresh {
-		return apperrors.New(apperrors.ErrForbidden).
+		return apperrors.Wrap(apperrors.ErrForbidden).
 			WithMsgLog("refresh token is not allowed")
 	}
 	if accessCheck == nil {
@@ -38,19 +38,19 @@ func (uc *UC) VerifyAuth(
 		}
 		if !allowed {
 			if auth.User.IsDemoUser() { // Special case: demo user
-				return apperrors.New(apperrors.ErrUserDemoUnauthorized)
+				return apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
 			}
-			return apperrors.New(apperrors.ErrUnauthorized).
+			return apperrors.Wrap(apperrors.ErrUnauthorized).
 				WithMsgLog("requested action is not allowed by session settings")
 		}
 	}
 
 	hasPerm, err := uc.permissionManager.CheckAccess(ctx, uc.db, auth, accessCheck)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if !hasPerm {
-		return apperrors.New(apperrors.ErrUnauthorized)
+		return apperrors.Wrap(apperrors.ErrUnauthorized)
 	}
 	return nil
 }

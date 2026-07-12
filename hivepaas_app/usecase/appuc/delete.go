@@ -21,19 +21,19 @@ func (uc *UC) DeleteApp(
 			bunex.SelectFor("UPDATE OF app"),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		// Remove app and its data from the infra
 		err = uc.appService.DeleteApp(ctx, db, app)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.DeleteAppResp{}, nil

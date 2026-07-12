@@ -24,7 +24,7 @@ func (uc *UC) UpdateAccessibleByProjects(
 		data := &updateAccessibleByProjectsData{}
 		err := uc.loadAccessibleByProjectsData(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if !data.HasChanges {
 			return nil
@@ -36,7 +36,7 @@ func (uc *UC) UpdateAccessibleByProjects(
 		return uc.persistAccessibleByProjectsData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &accessiblebyprojectsdto.UpdateAccessibleByProjectsResp{}, nil
@@ -63,7 +63,7 @@ func (uc *UC) loadAccessibleByProjectsData(
 		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	currProjectIDMap := make(map[string]struct{}, len(setting.AccessibleByProjects))
@@ -78,7 +78,7 @@ func (uc *UC) loadAccessibleByProjectsData(
 	// Make sure all projects exist
 	_, err = uc.ProjectService.LoadProjects(ctx, db, gofn.MapKeys(newProjectIDMap), true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Projects in the current list, but not in the updating list, will be removed
@@ -126,7 +126,7 @@ func (uc *UC) persistAccessibleByProjectsData(
 	err := uc.ProjectSharedSettingRepo.UpsertMulti(ctx, db, persistingData.UpsertingSharedSettings,
 		entity.ProjectSharedSettingUpsertingConflictCols, entity.ProjectSharedSettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

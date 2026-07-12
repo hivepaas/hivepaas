@@ -46,19 +46,19 @@ func (uc *BaseUC) GetSetting(
 
 	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if data.AfterLoading != nil {
 		if err = data.AfterLoading(ctx, db, data); err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 		false, data.ExtraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.MainObjectID()
@@ -69,7 +69,7 @@ func (uc *BaseUC) GetSetting(
 		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
 			true, false, setting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
@@ -89,7 +89,7 @@ func (uc *BaseUC) GetSettingByID(
 ) (*entity.Setting, error) {
 	setting, err := uc.loadSettingByID(ctx, db, req, id, requireActive, extraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.MainObjectID()

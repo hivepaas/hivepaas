@@ -42,7 +42,7 @@ func (e *Executor) sendNotification(
 	notification, err := e.notificationService.GetNotificationForEvent(ctx, db,
 		scope, notifConfig.BaseEventNotification, data.Task.IsDone(), data.RefObjects)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -70,7 +70,7 @@ func (e *Executor) sendNotification(
 
 	resp, err := e.notificationService.NotifyForTaskResult(ctx, db, req)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Update notification events in redis

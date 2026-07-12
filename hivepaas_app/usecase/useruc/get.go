@@ -26,12 +26,12 @@ func (uc *UC) GetUser(
 
 	user, err := uc.userRepo.GetByID(ctx, uc.db, req.ID, loadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := userdto.TransformUserDetails(user)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.GetUserResp{

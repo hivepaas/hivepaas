@@ -34,7 +34,7 @@ func (s *service) CreateSecretsForApp(
 	for _, secret := range secrets {
 		ref, err := s.createSwarmSecret(ctx, db, app, secret)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		refs = append(refs, ref)
 	}
@@ -49,7 +49,7 @@ func (s *service) CreateSecretForApp(
 ) (*entity.SwarmSecretRef, error) {
 	refs, err := s.CreateSecretsForApp(ctx, db, app, []*entity.Secret{secret})
 	ref, _ := gofn.First(refs)
-	return ref, apperrors.New(err)
+	return ref, apperrors.Wrap(err)
 }
 
 func (s *service) createSwarmSecret(
@@ -72,7 +72,7 @@ func (s *service) createSwarmSecret(
 	secretName := app.LocalKey + "_" + strings.ToLower(secret.Key)
 	secretBytes, err := secret.ValueAsBytes()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	secretResp, err := s.dockerManager.SecretCreate(ctx, secretName, secretBytes,
@@ -88,7 +88,7 @@ func (s *service) createSwarmSecret(
 				return s.createSwarmSecret(ctx, db, app, secret)
 			}
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	swarmRef.SecretID = secretResp.ID
 	swarmRef.SecretName = secretName
@@ -107,7 +107,7 @@ func (s *service) addSwarmSecretsToService(
 
 	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	swarmSvc := &inspect.Service
 	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
@@ -137,7 +137,7 @@ func (s *service) addSwarmSecretsToService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &swarmSvc.Version, &swarmSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps
@@ -146,12 +146,12 @@ func (s *service) addSwarmSecretsToService(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.addSwarmSecretsToService(ctx, db, childApp, refs)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 	}
@@ -172,7 +172,7 @@ func (s *service) DeleteSecretForApp(
 	// Remove the secret from the swarm service of the app
 	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, secret.SwarmRef)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the secret from the child apps
@@ -181,12 +181,12 @@ func (s *service) DeleteSecretForApp(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.DeleteSecretForApp(ctx, db, childApp, secret)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 	} else {
@@ -194,13 +194,13 @@ func (s *service) DeleteSecretForApp(
 		inheritedSecretSetting, err := s.settingRepo.GetByName(ctx, db, base.NewObjectScopeApp(app.ParentID, app.ProjectID),
 			base.SettingTypeSecret, secret.Key, false)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if inheritedSecretSetting != nil {
 			err = s.addSwarmSecretsToService(ctx, db, app,
 				[]*entity.SwarmSecretRef{inheritedSecretSetting.MustAsSecret().SwarmRef})
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func (s *service) DeleteSecretForApp(
 	// Now delete the secret
 	_, err = s.dockerManager.SecretRemove(ctx, secret.SwarmRef.SecretID)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	secret.SwarmRef.SecretID = ""
 	secret.SwarmRef.SecretName = ""
@@ -225,13 +225,13 @@ func (s *service) UpdateSecretForApp(
 	// Remove the old secret from services then delete it from the swarm
 	err = s.DeleteSecretForApp(ctx, db, app, oldSecret)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Create a secret in the swarm then add it to the services
 	_, err = s.CreateSecretForApp(ctx, db, app, newSecret)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -248,7 +248,7 @@ func (s *service) removeSwarmSecretFromService(
 
 	inspect, err := s.dockerManager.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	swarmSvc := &inspect.Service
 
@@ -268,7 +268,7 @@ func (s *service) removeSwarmSecretFromService(
 	swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets = updateSecrets
 	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -288,7 +288,7 @@ func (s *service) deleteOrphanSwarmSecret(
 		if errors.Is(err, apperrors.ErrNotFound) {
 			return nil
 		}
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	orphanSwarmSec := &inspect.Secret
 
@@ -301,7 +301,7 @@ func (s *service) deleteOrphanSwarmSecret(
 	// Remove the secret from the swarm service of the app
 	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, orphanSwarmRef)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the secret from the child apps
@@ -310,12 +310,12 @@ func (s *service) deleteOrphanSwarmSecret(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, orphanSwarmRef)
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 	}
@@ -323,7 +323,7 @@ func (s *service) deleteOrphanSwarmSecret(
 	// Now delete the secret
 	_, err = s.dockerManager.SecretRemove(ctx, orphanSwarmSec.ID)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -344,7 +344,7 @@ func (s *service) SecretRemove(
 			if errors.Is(err, apperrors.ErrNotFound) {
 				return nil
 			}
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -358,7 +358,7 @@ func (s *service) SecretRemove(
 	}
 	if err != nil {
 		// TODO: create a cleanup task
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

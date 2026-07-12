@@ -30,28 +30,28 @@ func (uc *UC) UpdateAppNetworkSettings(
 		data := &updateAppNetworkSettingsData{}
 		err := uc.loadAppNetworkSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
 		err = uc.prepareUpdatingAppNetworkSettings(req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		err = uc.applyAppNetworkSettings(ctx, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppNetworkSettingsResp{}, nil
@@ -77,34 +77,34 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	// Loads project local network
 	_, data.LocalNetwork, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, app.Project, app.Env)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Setting networks must be available in the project
 	_, projectNets, err := uc.networkService.ListProjectNetworks(ctx, db, app.Project)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	for _, newNet := range req.NetworkAttachments {
 		if _, ok := projectNets[dockerhelper.ParseID(newNet.ID)]; !ok {
-			return apperrors.New(apperrors.ErrProjectNetworkUnavailable).
+			return apperrors.Wrap(apperrors.ErrProjectNetworkUnavailable).
 				WithParam("Name", gofn.Coalesce(newNet.Name, newNet.ID))
 		}
 	}
@@ -119,7 +119,7 @@ func (uc *UC) prepareUpdatingAppNetworkSettings(
 	uc.prepareUpdatingAppNetworkAttachments(req, data)
 	uc.prepareUpdatingAppHostsFileEntries(req, data)
 	if err := uc.prepareUpdatingAppDNSConfig(req, data); err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	uc.prepareUpdatingAppEndpointSpec(req, data)
 	return nil
@@ -223,7 +223,7 @@ func (uc *UC) prepareUpdatingAppDNSConfig(
 	for _, addr := range req.DNSConfig.Nameservers {
 		netAddr, err := netip.ParseAddr(addr)
 		if err != nil {
-			return apperrors.New(apperrors.ErrAddressInvalid).WithParam("Address", addr)
+			return apperrors.Wrap(apperrors.ErrAddressInvalid).WithParam("Address", addr)
 		}
 		containerSpec.DNSConfig.Nameservers = append(containerSpec.DNSConfig.Nameservers, netAddr)
 	}
@@ -240,7 +240,7 @@ func (uc *UC) applyAppNetworkSettings(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

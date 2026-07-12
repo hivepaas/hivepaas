@@ -26,14 +26,14 @@ func (uc *UC) processWebhookEventPush(
 ) (err error) {
 	parsedURL, err := vcsurl.Parse(pushEvent.RepoURL)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	apps, err := uc.appService.FindAppsMatchingRepository(ctx, db, parsedURL.ID, pushEvent.RepoRef,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	var wg sync.WaitGroup
 	for _, app := range apps {

@@ -35,12 +35,12 @@ func (c *Client) getHttpClient() *http.Client {
 func parseWebhookURL(webhook string) (webhookID, token string, err error) {
 	dcUrl, err := url.Parse(webhook)
 	if err != nil {
-		return "", "", apperrors.New(err)
+		return "", "", apperrors.Wrap(err)
 	}
 	parts := strings.Split(dcUrl.Path, "/")
 	if len(parts) > 2 { //nolint:mnd
 		return parts[len(parts)-2], parts[len(parts)-1], nil
 	}
-	return "", "", apperrors.New(apperrors.ErrArgumentInvalid).
+	return "", "", apperrors.Wrap(apperrors.ErrArgumentInvalid).
 		WithMsgLog("unabled to parse webhook URL")
 }

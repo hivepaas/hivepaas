@@ -18,7 +18,7 @@ func (uc *UC) ListGithubApp(
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &githubappdto.GithubAppTransformInput{
@@ -27,7 +27,7 @@ func (uc *UC) ListGithubApp(
 	}
 	respData, err := githubappdto.TransformGithubApps(resp.Data, input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &githubappdto.ListGithubAppResp{

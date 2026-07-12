@@ -28,7 +28,7 @@ type GetMeDataResp struct {
 func TransformUserDetails(user *entity.User) (resp *userdto.UserDetailsResp, err error) {
 	resp, err = userdto.TransformUserDetails(user)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }

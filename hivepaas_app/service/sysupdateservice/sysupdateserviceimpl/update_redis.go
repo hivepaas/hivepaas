@@ -40,7 +40,7 @@ func (s *service) updateRedisService(
 
 	redisSvc, err := s.hpAppService.GetHpCacheSwarmService(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	redisSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.RedisImage
@@ -53,18 +53,18 @@ func (s *service) updateRedisService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, redisSvc.ID, &redisSvc.Version, &redisSvc.Spec)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
 	redisSvc, err = s.dockerManager.ServiceUpdateWait(ctx, redisSvc.ID, redisServiceUpdateCheckInterval)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if redisSvc.UpdateStatus != nil && redisSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service redis is rolled back",
 			tasklog.TsNow))
-		return apperrors.New(apperrors.ErrActionFailed)
+		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
 	return nil

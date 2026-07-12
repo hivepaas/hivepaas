@@ -33,7 +33,7 @@ func (uc *UC) UpdateConfigFileStatus(
 					err = uc.ClusterService.DeleteConfigForApp(ctx, db, data.ScopeApp, configFile)
 				}
 				if err != nil {
-					return apperrors.New(err)
+					return apperrors.Wrap(err)
 				}
 				pData.Setting.MustSetData(configFile)
 			}
@@ -41,7 +41,7 @@ func (uc *UC) UpdateConfigFileStatus(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &configfiledto.UpdateConfigFileStatusResp{}, nil

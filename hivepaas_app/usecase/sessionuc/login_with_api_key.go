@@ -31,7 +31,7 @@ func (uc *UC) LoginWithAPIKey(
 
 	dbUser, err := uc.userService.LoadUser(ctx, uc.db, actingUserID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Create a new session as login succeeds
@@ -41,7 +41,7 @@ func (uc *UC) LoginWithAPIKey(
 		AccessAction: apiKey.AccessAction,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sessiondto.LoginWithAPIKeyResp{

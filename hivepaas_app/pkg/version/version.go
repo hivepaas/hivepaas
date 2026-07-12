@@ -70,11 +70,11 @@ func Cmp(v1, v2 *Version) int {
 func CmpStr(s1, s2 string) (int, error) {
 	v1, err := Parse(s1)
 	if err != nil {
-		return 0, apperrors.New(err)
+		return 0, apperrors.Wrap(err)
 	}
 	v2, err := Parse(s2)
 	if err != nil {
-		return 0, apperrors.New(err)
+		return 0, apperrors.Wrap(err)
 	}
 	return Cmp(v1, v2), nil
 }

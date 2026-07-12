@@ -66,7 +66,7 @@ func (s *service) initDefaultStorageSettings(
 
 	err = s.settingRepo.Insert(ctx, db, storageSetting)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

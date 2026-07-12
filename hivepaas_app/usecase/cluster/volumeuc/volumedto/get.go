@@ -98,12 +98,12 @@ func TransformVolume(
 ) (resp *VolumeResp, err error) {
 	volEnt := setting.MustAsClusterVolume()
 	if err = copier.Copy(&resp, volEnt); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	vol := refClusterObjects.RefVolumes[dockerhelper.ParseID(setting.ID)]

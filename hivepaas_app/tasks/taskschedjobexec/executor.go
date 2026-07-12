@@ -98,7 +98,7 @@ func (e *Executor) execute(
 
 	err = e.loadSchedJobData(ctx, db, data)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	defer func() {
@@ -116,7 +116,7 @@ func (e *Executor) execute(
 			App:             data.App,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
@@ -132,7 +132,7 @@ func (e *Executor) execute(
 		cleanupReq.SetCleanupFlagsDefault()
 		resp, err := e.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
@@ -146,7 +146,7 @@ func (e *Executor) execute(
 			SysBackupSettings: setting.MustAsSystemBackup(),
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
@@ -161,7 +161,7 @@ func (e *Executor) execute(
 			RenewalSettings:   setting.MustAsSSLRenewal(),
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 	}
@@ -180,7 +180,7 @@ func (e *Executor) loadSchedJobData(
 	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope,
 		true, false, data.SchedJob)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	data.AddRefObjects(refObjects)
 
@@ -218,7 +218,7 @@ func (e *Executor) saveLogs(
 
 	logFrames, err := logStore.GetData(ctx, 0)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_ = logStore.Reset() //nolint
 
@@ -245,7 +245,7 @@ func (e *Executor) saveLogFramesToDB(
 		}
 		err := e.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

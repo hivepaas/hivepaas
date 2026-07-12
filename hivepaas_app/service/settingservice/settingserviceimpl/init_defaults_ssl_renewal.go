@@ -76,7 +76,7 @@ func (s *service) initDefaultSSLRenewal(
 	// Save the objects in DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{renewalSetting, jobSetting})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

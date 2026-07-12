@@ -29,7 +29,7 @@ func (uc *UC) DeleteFile(
 
 		file, err := uc.fileRepo.GetByID(ctx, db, req.ID, opts...)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if req.DeletePermanently {
@@ -38,7 +38,7 @@ func (uc *UC) DeleteFile(
 				RetryMax: 2, //nolint:mnd
 			})
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -46,12 +46,12 @@ func (uc *UC) DeleteFile(
 		file.Deleted = true
 		err = uc.fileRepo.Update(ctx, db, file, bunex.UpdateColumns("deleted", "deleted_at"))
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &filedto.DeleteFileResp{}, nil

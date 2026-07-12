@@ -72,7 +72,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 		case base.ObjectScopeGlobal, base.ObjectScopeUser:
 			fallthrough
 		default:
-			return nil, apperrors.New(apperrors.ErrUnsupported).WithParam("Name", "Scope")
+			return nil, apperrors.Wrap(apperrors.ErrUnsupported).WithParam("Name", "Scope")
 		}
 	case base.FileTypeBuildSource:
 		accessCheck = &permission.AccessCheck{
@@ -88,13 +88,13 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 	case base.FileTypeSchedJobOutput:
 		fallthrough
 	default:
-		return nil, apperrors.New(apperrors.ErrFileTypeNotSupported).
+		return nil, apperrors.Wrap(apperrors.ErrFileTypeNotSupported).
 			WithParam("SupportedTypes", []base.FileType{base.FileTypeBuildSource})
 	}
 
 	auth, err = h.authHandler.GetCurrentAuth(ctx, accessCheck)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return auth, nil
 }

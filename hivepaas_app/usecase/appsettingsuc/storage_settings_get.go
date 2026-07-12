@@ -26,7 +26,7 @@ func (uc *UC) GetAppStorageSettings(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.StorageSettingsTransformInput{
@@ -36,7 +36,7 @@ func (uc *UC) GetAppStorageSettings(
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	input.Service = service
 
@@ -51,7 +51,7 @@ func (uc *UC) GetAppStorageSettings(
 	storageSetting, err := uc.settingRepo.GetSingle(ctx, uc.db, base.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	input.Setting = storageSetting
 
@@ -61,7 +61,7 @@ func (uc *UC) GetAppStorageSettings(
 		volResp, err := uc.dockerManager.VolumeListByIDs(ctx,
 			storageSettings.ClusterVolumeSettings.Volumes.ToIDStringSlice())
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		for i := range volResp.Items {
 			input.Volumes = append(input.Volumes, &volResp.Items[i])
@@ -70,7 +70,7 @@ func (uc *UC) GetAppStorageSettings(
 
 	resp, err := appsettingsdto.TransformStorageSettings(input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppStorageSettingsResp{

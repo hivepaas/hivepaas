@@ -34,7 +34,7 @@ func (s *service) GetTemplate(
 		tpl, err = template.ParseFiles("config/email/templates/user_invite.html")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	templateMap[name] = tpl
 

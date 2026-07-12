@@ -21,12 +21,12 @@ func (uc *UC) LoginWithPasscode(
 ) (resp *sessiondto.LoginWithPasscodeResp, err error) {
 	mfaTokenClaims, err := uc.userService.ParseMFAToken(req.MFAToken)
 	if err != nil {
-		return nil, apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	dbUser, err := uc.userRepo.GetByID(ctx, uc.db, mfaTokenClaims.UserID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Verify passcode TOTP
@@ -34,24 +34,24 @@ func (uc *UC) LoginWithPasscode(
 		passcode, err := uc.cacheMfaPasscodeRepo.Get(ctx, mfaTokenClaims.UserID)
 		if err != nil {
 			if errors.Is(err, apperrors.ErrNotFound) {
-				return nil, apperrors.New(apperrors.ErrPasscodeMismatched).
+				return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched).
 					WithMsgLog("need to login with password first")
 			}
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if passcode.Attempts >= passcodeMaxAttempts {
 			_ = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID)
-			return nil, apperrors.New(apperrors.ErrTooManyPasscodeAttempts).
+			return nil, apperrors.Wrap(apperrors.ErrTooManyPasscodeAttempts).
 				WithMsgLog("too many passcode attempts: %d", passcode.Attempts)
 		}
 		// Increase the attempts
 		_ = uc.cacheMfaPasscodeRepo.IncrAttempts(ctx, mfaTokenClaims.UserID, passcode)
-		return nil, apperrors.New(apperrors.ErrPasscodeMismatched)
+		return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 	}
 
 	// Removes the passcode in redis
 	if err = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Save trusted device if needs to
@@ -66,14 +66,14 @@ func (uc *UC) LoginWithPasscode(
 		err = uc.loginTrustedDeviceRepo.Upsert(ctx, uc.db, trustedDevice,
 			entity.LoginTrustedDeviceUpsertingConflictCols, entity.LoginTrustedDeviceUpsertingUpdateCols)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	// Create a new session as login succeeds
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sessiondto.LoginWithPasscodeResp{

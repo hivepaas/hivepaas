@@ -67,19 +67,19 @@ func TransformSSLCert(
 ) (resp *SSLCertResp, err error) {
 	config := setting.MustAsSSLCert()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if config.Provider.ID != "" {
 		providerSetting := refObjects.RefSettings[config.Provider.ID]
 		resp.Provider, err = settings.TransformSettingBase(providerSetting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		resp.Provider = nil
@@ -89,7 +89,7 @@ func TransformSSLCert(
 		providerSetting := refObjects.RefSettings[config.AcmeProvider.ID]
 		resp.AcmeProvider, err = settings.TransformSettingBase(providerSetting)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		resp.AcmeProvider = nil
@@ -111,7 +111,7 @@ func TransformSSLCertBasic(
 ) (*SSLCertResp, error) {
 	resp, err := TransformSSLCert(setting, refObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.Certificate = maskedSecret
 	resp.PrivateKey = maskedSecret

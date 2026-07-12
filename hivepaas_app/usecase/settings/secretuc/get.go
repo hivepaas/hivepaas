@@ -17,7 +17,7 @@ func (uc *UC) GetSecret(
 	req.Type = currentSettingType
 	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// NOTE: we never return decrypted data to users
@@ -25,7 +25,7 @@ func (uc *UC) GetSecret(
 	resp.Data.MustAsSecret()
 	respData, err := secretdto.TransformSecret(resp.Data, resp.RefObjects)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &secretdto.GetSecretResp{

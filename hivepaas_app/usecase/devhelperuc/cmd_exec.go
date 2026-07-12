@@ -21,7 +21,7 @@ func (uc *UC) ExecuteCmd(
 	if req.Cmd != "" {
 		cmdArray, err = executil.CmdSplit(req.Cmd)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

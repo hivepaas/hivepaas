@@ -18,20 +18,20 @@ func (uc *UC) GetDeployment(
 ) (*appdeploymentdto.GetDeploymentResp, error) {
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var deploymentInfo *cacheentity.DeploymentInfo
 	if deployment.IsNotStarted() || deployment.IsInProgress() {
 		deploymentInfo, err = uc.deploymentInfoRepo.Get(ctx, deployment.ID)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	triggerUserMap, err := uc.loadDeploymentTriggerUsers(ctx, uc.db, []*entity.Deployment{deployment})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	input := &appdeploymentdto.DeploymentTransformInput{
@@ -43,7 +43,7 @@ func (uc *UC) GetDeployment(
 
 	resp, err := appdeploymentdto.TransformDeployment(deployment, input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdeploymentdto.GetDeploymentResp{

@@ -52,7 +52,7 @@ func (m *manager) NetworkListByIDs(
 	if len(networkIDOrNames) == 1 {
 		inspect, err := m.NetworkInspect(ctx, networkIDOrNames[0])
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = append(resp.Items, network.Summary{Network: inspect.Network.Network})
@@ -62,7 +62,7 @@ func (m *manager) NetworkListByIDs(
 
 	listResp, err := m.NetworkList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		net := &listResp.Items[i]

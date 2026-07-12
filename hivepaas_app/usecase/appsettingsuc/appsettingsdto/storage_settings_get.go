@@ -118,12 +118,12 @@ func TransformStorageSettings(
 			Volumes: input.Volumes,
 		})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.Mounts, err = TransformStorageMounts(input, resp.Settings)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -137,7 +137,7 @@ func TransformStorageMounts(
 	for _, mnt := range input.ReturningMounts {
 		itemResp, err := TransformStorageMount(storageSettings, mnt)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		resp = append(resp, itemResp)
 	}
@@ -149,7 +149,7 @@ func TransformStorageMount(
 	mnt *mount.Mount,
 ) (resp *Mount, err error) {
 	if err = copier.Copy(&resp, mnt); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	switch mnt.Type {

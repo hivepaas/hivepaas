@@ -39,7 +39,7 @@ func (s *service) sysBackupSaveResultInLocal(
 		data.OutFileName += ".zst"
 	case base.FileCompressionNone: // Do nothing
 	default:
-		return apperrors.New(apperrors.ErrArchiveFormatUnsupported).
+		return apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Compression.Format)
 	}
 
@@ -48,7 +48,7 @@ func (s *service) sysBackupSaveResultInLocal(
 		data.OutFileName += ".age"
 	case base.FileEncryptionNone: // Do nothing
 	default:
-		return apperrors.New(apperrors.ErrEncryptionFormatUnsupported).
+		return apperrors.Wrap(apperrors.ErrEncryptionFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Encryption.Format)
 	}
 
@@ -57,7 +57,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Failed to save backup data in file with error: "+err.Error(), tasklog.TsNow))
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Save file details in to DB
@@ -75,7 +75,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	}
 	localFileInfo, err := os.Stat(data.OutFilePath)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	localFile.Size = localFileInfo.Size()
 	data.LocalOutFile = localFile
@@ -84,7 +84,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup data saved into file: "+data.OutFileName,

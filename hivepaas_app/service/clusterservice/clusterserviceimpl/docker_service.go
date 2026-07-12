@@ -31,7 +31,7 @@ func (s *service) ServiceInspect(
 
 	resp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &resp.Service, nil
@@ -49,7 +49,7 @@ func (s *service) ServiceUpdate(
 	}
 	resp, err := s.dockerManager.ServiceUpdate(ctx, serviceID, version, service, options...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -69,7 +69,7 @@ func (s *service) ServiceRemove(
 			if errors.Is(err, apperrors.ErrNotFound) {
 				return nil
 			}
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -83,7 +83,7 @@ func (s *service) ServiceRemove(
 	}
 	if err != nil {
 		// TODO: create a cleanup task
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

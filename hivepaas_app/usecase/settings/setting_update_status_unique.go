@@ -51,12 +51,12 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadUniqueSettingForUpdateStatus(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -64,18 +64,18 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 		uc.prepareUniqueSettingStatusUpdate(req, data, persistingData)
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistUniqueSettingStatusUpdate(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -85,13 +85,13 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 			OldSetting: data.Setting,
 		})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &UpdateUniqueSettingStatusResp{}, nil
@@ -105,13 +105,13 @@ func (uc *BaseUC) loadUniqueSettingForUpdateStatus(
 ) (err error) {
 	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	} else {
 		loadOpts := []bunex.SelectQueryOption{
@@ -122,18 +122,18 @@ func (uc *BaseUC) loadUniqueSettingForUpdateStatus(
 		setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type,
 			false, loadOpts...)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.Setting = setting
 	}
 
 	setting := data.Setting
 	if req.UpdateVer != setting.UpdateVer {
-		return apperrors.New(apperrors.ErrUpdateVerMismatched)
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
 	if setting.ObjectID != req.Scope.MainObjectID() {
-		return apperrors.New(apperrors.ErrInheritedSettingNonUpdatable)
+		return apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
 	}
 
 	return nil
@@ -175,7 +175,7 @@ func (uc *BaseUC) persistUniqueSettingStatusUpdate(
 		bunex.UpdateColumns("update_ver", "updated_at", "status", "expire_at", "avail_in_projects", "is_default"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

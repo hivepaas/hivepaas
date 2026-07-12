@@ -42,7 +42,7 @@ func (uc *UC) CreateApp(
 		appData = &createAppData{}
 		err := uc.loadAppData(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData = &persistingAppData{}
@@ -53,10 +53,10 @@ func (uc *UC) CreateApp(
 		// Create a service in docker for the app
 		res, err := uc.dockerManager.ServiceCreate(ctx, appData.ServiceSpec)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if res.ID == "" { // should never happen
-			return apperrors.New(apperrors.ErrInfraInternal).
+			return apperrors.Wrap(apperrors.ErrInfraInternal).
 				WithNTParam("Error", "empty service ID returned")
 		}
 		createdApp.ServiceID = res.ID
@@ -68,7 +68,7 @@ func (uc *UC) CreateApp(
 		if createdApp != nil && createdApp.ServiceID != "" {
 			_ = uc.clusterService.ServiceRemove(ctx, createdApp.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
 		}
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.CreateAppResp{
@@ -95,10 +95,10 @@ func (uc *UC) loadAppData(
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if project.Status != base.ProjectStatusActive {
-		return apperrors.New(apperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
+		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
 	}
 	data.Project = project
 
@@ -113,7 +113,7 @@ func (uc *UC) loadAppData(
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByKey(ctx, db, "", data.AppKey, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if conflictApp != nil {
 		return apperrors.NewAlreadyExist("App").
@@ -123,7 +123,7 @@ func (uc *UC) loadAppData(
 	// Create local network for the app to attach
 	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, req.Env)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -270,7 +270,7 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.appService.PersistAppData(ctx, db, &persistingData.PersistingAppData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

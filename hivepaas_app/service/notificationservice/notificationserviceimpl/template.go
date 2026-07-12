@@ -59,7 +59,7 @@ func (s *service) GetTemplate(
 		tpl, err = s.loadTelegramTemplate(ctx, db, name)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	mapTplByName[name] = tpl
 
@@ -86,7 +86,7 @@ func (s *service) loadEmailTemplate(
 		tpl, err = htmltemplate.ParseFiles(emailTemplateDir + "system_update_notification.html")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -112,7 +112,7 @@ func (s *service) loadSlackTemplate(
 		tpl, err = texttemplate.ParseFiles(slackTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -138,7 +138,7 @@ func (s *service) loadDiscordTemplate(
 		tpl, err = texttemplate.ParseFiles(discordTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -164,7 +164,7 @@ func (s *service) loadTelegramTemplate(
 		tpl, err = htmltemplate.ParseFiles(telegramTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return tpl, nil

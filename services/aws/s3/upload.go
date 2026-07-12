@@ -28,7 +28,7 @@ func (client *Client) Upload(
 		ContentType: aws.String(defaultContentType),
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (client *Client) UploadEx(
 		ContentType: aws.String(defaultContentType),
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

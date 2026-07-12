@@ -112,31 +112,31 @@ func (s *service) sysCleanupDB(
 	// Hard delete all old deleted objects from the DB
 	err = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old tasks and their logs from the DB
 	err = s.sysCleanupDBOldTasks(ctx, db, retentionSetting, timeNow)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old deployments from the DB
 	err = s.sysCleanupDBOldDeployments(ctx, db, retentionSetting, timeNow)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old sys-errors from the DB
 	err = s.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Hard delete all old locks from the DB
 	err = s.sysCleanupDBOldLocks(ctx, db, timeNow)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -169,7 +169,7 @@ func (s *service) sysCleanupDBOldDeletedObjects(
 	}
 	err = errors.Join(errs...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -192,14 +192,14 @@ func (s *service) sysCleanupDBOldTasks(
 		//	"tasks.updated_at < ?)", oldestTs),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.taskRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -221,7 +221,7 @@ func (s *service) sysCleanupDBOldDeployments(
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -243,7 +243,7 @@ func (s *service) sysCleanupDBOldSysErrors(
 		bunex.DeleteWhere("created_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -262,12 +262,12 @@ func (s *service) sysCleanupDBOldLocks(
 		bunex.SelectFor("UPDATE SKIP LOCKED"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	err = s.lockRepo.DeleteByIDs(ctx, db, entityutil.ExtractIDs(deletingLocks))
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

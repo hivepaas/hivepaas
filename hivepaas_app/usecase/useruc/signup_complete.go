@@ -24,7 +24,7 @@ func (uc *UC) CompleteUserSignup(
 		signupData := &userSignupData{}
 		err := uc.loadUserSignupData(ctx, db, req, signupData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingUserSignupData{}
@@ -35,7 +35,7 @@ func (uc *UC) CompleteUserSignup(
 		return uc.persistUserSignupData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &userdto.CompleteUserSignupResp{}, nil
@@ -57,7 +57,7 @@ func (uc *UC) loadUserSignupData(
 ) error {
 	inviteToken, err := uc.userService.ParseUserInviteToken(req.InviteToken)
 	if err != nil {
-		return apperrors.New(apperrors.ErrTokenInvalid).WithCause(err)
+		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	user, err := uc.userRepo.GetByID(ctx, db, inviteToken.UserID,
@@ -65,11 +65,11 @@ func (uc *UC) loadUserSignupData(
 		bunex.SelectRelationIf(req.Photo.IsChanged(), "PhotoData"),
 	)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusPending {
-		return apperrors.New(apperrors.ErrActionNotAllowed).
+		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("user '%s' not require signup", user.Email)
 	}
 	data.User = user
@@ -78,10 +78,10 @@ func (uc *UC) loadUserSignupData(
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.New(apperrors.ErrUsernameUnavailable).
+			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -111,7 +111,7 @@ func (uc *UC) preparePersistingUserSignupData(
 		}
 		err := uc.userService.ChangePassword(user, req.Password, userservice.SkipCheckingCurrentPassword)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if user.SecurityOption == base.UserSecurityPassword2FA {
@@ -120,7 +120,7 @@ func (uc *UC) preparePersistingUserSignupData(
 				WithMsgLog("passcode and totp secret are required")
 		}
 		if !totp.VerifyPasscode(req.Passcode, req.MFATotpSecret) {
-			return apperrors.New(apperrors.ErrPasscodeMismatched)
+			return apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 		}
 		user.TotpSecret = req.MFATotpSecret
 	}

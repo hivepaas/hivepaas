@@ -17,7 +17,7 @@ func (p *manager) UpdateACLPermissions(
 	err := p.aclPermissionRepo.UpsertMulti(ctx, db, perms,
 		entity.ACLPermissionUpsertingConflictCols, entity.ACLPermissionUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func (p *manager) RemoveACLPermissions(
 ) error {
 	err := p.aclPermissionRepo.DeleteByResources(ctx, db, perms)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -42,7 +42,7 @@ func (p *manager) RemoveACLPermissionsBySubjects(
 ) error {
 	err := p.aclPermissionRepo.DeleteBySubjects(ctx, db, subjectType, subjectIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -54,7 +54,7 @@ func (p *manager) RemoveACLPermissionsOfUsers(
 ) error {
 	err := p.aclPermissionRepo.DeleteBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

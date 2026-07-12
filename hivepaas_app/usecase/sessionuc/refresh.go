@@ -14,18 +14,18 @@ func (uc *UC) RefreshSession(
 ) (resp *sessiondto.RefreshSessionResp, err error) {
 	// JWT token must be refresh token
 	if !user.AuthClaims.IsRefresh {
-		return nil, apperrors.New(apperrors.ErrSessionRefreshTokenRequired)
+		return nil, apperrors.Wrap(apperrors.ErrSessionRefreshTokenRequired)
 	}
 
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: user.User})
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to create session")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to create session")
 	}
 
 	// Invalidate the old token to make it unusable
 	err = uc.userTokenRepo.Del(ctx, user.AuthClaims.UserID, user.AuthClaims.UID)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to invalidate old token")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to invalidate old token")
 	}
 
 	return &sessiondto.RefreshSessionResp{

@@ -16,7 +16,7 @@ func (s *service) PersistClusterData(ctx context.Context, db database.IDB,
 	err := s.settingRepo.UpsertMulti(ctx, db, persistingData.UpsertingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

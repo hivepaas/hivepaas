@@ -26,7 +26,7 @@ func (s *service) notifyForDeployment(
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		data.App.GetObjectScope(), notifConfig, data.Deployment.IsDone(), data.RefObjects)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -43,7 +43,7 @@ func (s *service) notifyForDeployment(
 		TemplateData:    data.NotifMsgData,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

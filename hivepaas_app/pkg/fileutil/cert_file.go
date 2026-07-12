@@ -17,7 +17,7 @@ const (
 func WriteCerts(cert, privateKey []byte, saveDir, certFile, keyFile string, overwrite bool) (err error) {
 	err = os.MkdirAll(saveDir, certDirFileMode)
 	if err != nil {
-		return apperrors.New(err).WithMsgLog("failed to create directory to save ssl certificate")
+		return apperrors.Wrap(err).WithMsgLog("failed to create directory to save ssl certificate")
 	}
 
 	certPath := filepath.Join(saveDir, certFile)
@@ -41,7 +41,7 @@ func WriteCerts(cert, privateKey []byte, saveDir, certFile, keyFile string, over
 		if overwrite || !gofn.Head(FileExists(certPath, true)) {
 			err = os.WriteFile(certPath, cert, certFileMode)
 			if err != nil {
-				return apperrors.New(err).WithMsgLog("failed to write cert file to %s", certPath)
+				return apperrors.Wrap(err).WithMsgLog("failed to write cert file to %s", certPath)
 			}
 			writtenCert = true
 		}
@@ -50,7 +50,7 @@ func WriteCerts(cert, privateKey []byte, saveDir, certFile, keyFile string, over
 		if overwrite || !gofn.Head(FileExists(keyPath, true)) {
 			err = os.WriteFile(keyPath, privateKey, certFileMode)
 			if err != nil {
-				return apperrors.New(err).WithMsgLog("failed to write key file to %s", keyPath)
+				return apperrors.Wrap(err).WithMsgLog("failed to write key file to %s", keyPath)
 			}
 			writtenKey = true
 		}

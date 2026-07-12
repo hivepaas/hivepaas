@@ -9,7 +9,7 @@ import (
 func (s *service) IsMultiNode(ctx context.Context) (bool, error) {
 	resp, err := s.dockerManager.SystemInfo(ctx)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	return resp.Info.Swarm.Nodes > 1, nil
 }

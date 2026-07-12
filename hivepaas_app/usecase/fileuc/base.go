@@ -32,7 +32,7 @@ func (uc *UC) loadScopeData(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeApp:
@@ -47,14 +47,14 @@ func (uc *UC) loadScopeData(
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		data.ScopeProject = data.ScopeApp.Project
 
 	case base.ObjectScopeUser:
 		data.ScopeUser, err = uc.userService.LoadUserEx(ctx, db, scope.UserID, requireActive)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

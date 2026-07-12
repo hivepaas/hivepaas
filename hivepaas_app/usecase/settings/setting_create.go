@@ -59,12 +59,12 @@ func (uc *BaseUC) CreateSetting(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForCreation(ctx, db, req, data)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
@@ -73,37 +73,37 @@ func (uc *BaseUC) CreateSetting(
 
 		if data.PrepareCreation != nil {
 			if err := data.PrepareCreation(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingCreation(ctx, db, req, data, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 		}
 
 		// Fire create event
 		err = uc.SettingService.OnCreate(ctx, db, &settingservice.CreateEvent{Setting: persistingData.Setting})
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &CreateSettingResp{
@@ -119,21 +119,21 @@ func (uc *BaseUC) loadSettingForCreation(
 ) error {
 	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Verify that the name is available to use
 	if data.VerifyingName != "" {
 		err := uc.checkNameConflict(ctx, db, &req.BaseSettingReq, data.VerifyingName)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 
 	// Verify that the referenced objects exist
 	err = uc.checkRefObjectsExistence(ctx, db, &req.BaseSettingReq, data.VerifyingRefIDs, true)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil
@@ -171,13 +171,13 @@ func (uc *BaseUC) persistSettingCreation(
 	err := uc.SettingRepo.Upsert(ctx, db, persistingData.Setting,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	if !data.MultiDefaultAllowed && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 

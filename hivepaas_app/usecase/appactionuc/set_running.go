@@ -21,12 +21,12 @@ func (uc *UC) SetAppRunning(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.appService.SetAppRunning(ctx, app, req.Running)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appactiondto.SetAppRunningResp{}, nil

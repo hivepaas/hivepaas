@@ -15,11 +15,11 @@ func (s *service) discordSendMsg(
 ) error {
 	webhookURL, err := setting.Webhook.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	_, err = discord.NewClient().WebhookExecute(ctx, webhookURL, true, msg)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

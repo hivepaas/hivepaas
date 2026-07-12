@@ -70,7 +70,7 @@ func NewServer(config *Config) (*Server, error) {
 		gocron.WithLimitConcurrentJobs(uint(config.Concurrency), gocron.LimitModeWait),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return &Server{
 		scheduler: scheduler,
@@ -241,7 +241,7 @@ func (s *Server) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 	for _, task := range tasks {
 		err := s.scheduleTask(task, task.ShouldRunAt())
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -268,7 +268,7 @@ func (s *Server) scheduleTask(task *entity.Task, runAt time.Time) error {
 	)
 	if err != nil {
 		s.config.Logger.Errorf("failed to schedule task %s: %v", task.ID, err)
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	s.addJob(task, job, runAt)
 	return nil
@@ -301,7 +301,7 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 		if priorityJob != nil {
 			err := s.scheduleTask(task, priorityJob.RunAt.Add(taskLowPriorityDelay))
 			if err != nil {
-				return apperrors.New(err)
+				return apperrors.Wrap(err)
 			}
 			return nil
 		}
@@ -326,7 +326,7 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 			rescheduled = true
 		}
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -390,7 +390,7 @@ func (s *Server) Shutdown() error {
 	if s.scheduler != nil {
 		err := s.scheduler.Shutdown()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -406,7 +406,7 @@ func (s *Server) StartScheduler() error {
 func (s *Server) StopScheduler() error {
 	if s.scheduler != nil {
 		if err := s.scheduler.StopJobs(); err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

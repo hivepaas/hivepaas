@@ -25,24 +25,24 @@ func (uc *UC) LoginPasswordForgot(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	if user.SecurityOption == base.UserSecurityEnforceSSO {
-		return nil, apperrors.New(apperrors.ErrActionNotAllowed).
+		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
 			WithMsgLog("user authentication method is enforce-sso")
 	}
 
 	token, err := uc.userService.GeneratePasswordResetToken(user.ID)
 	if err != nil {
-		return nil, apperrors.New(err).WithMsgLog("failed to generate password reset token")
+		return nil, apperrors.Wrap(err).WithMsgLog("failed to generate password reset token")
 	}
 
 	resetLink := config.Current.DashboardPasswordResetURL(user.ID, token)
 
 	email, err := emailSetting.AsEmail()
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	err = uc.emailService.SendMailPasswordReset(ctx, uc.db, &emailservice.EmailDataPasswordReset{
@@ -54,7 +54,7 @@ func (uc *UC) LoginPasswordForgot(
 		ResetPasswordLink: resetLink,
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &sessiondto.LoginPasswordForgotResp{}, nil

@@ -43,7 +43,7 @@ func (s *AccessToken) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentAccessTokenVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -57,7 +57,7 @@ func (s *AccessToken) Migrate(setting *Setting) (hasChange bool, err error) {
 func (s *AccessToken) Decrypt() error {
 	_, err := s.Token.GetPlain()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

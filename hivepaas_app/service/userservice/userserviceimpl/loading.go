@@ -21,7 +21,7 @@ func (s *service) LoadUser(
 ) (*entity.User, error) {
 	userMap, err := s.LoadUsers(ctx, db, []string{userID}, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(userMap) == 0 {
 		return nil, apperrors.NewNotFound("User")
@@ -37,7 +37,7 @@ func (s *service) LoadUserEx(
 ) (*entity.User, error) {
 	userMap, err := s.LoadUsers(ctx, db, []string{userID}, errorIfUnavail)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(userMap) == 0 {
 		return nil, apperrors.NewNotFound("User")
@@ -60,13 +60,13 @@ func (s *service) LoadUsers(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	userMap := entityutil.SliceToIDMap(users)
 
 	resultMap, err := s.collectAvailUsers(userMap, userIDs, errorIfUnavail)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resultMap, nil
@@ -79,7 +79,7 @@ func (s *service) LoadUserByEmail(
 ) (*entity.User, error) {
 	userMap, err := s.LoadUsersByEmails(ctx, db, []string{email}, true)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(userMap) == 0 {
 		return nil, apperrors.NewNotFound("User")
@@ -102,7 +102,7 @@ func (s *service) LoadUsersByEmails(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	userMap := make(map[string]*entity.User, len(users))
 	for _, user := range users {
@@ -111,7 +111,7 @@ func (s *service) LoadUsersByEmails(
 
 	resultMap, err := s.collectAvailUsers(userMap, lowercaseEmails, errorIfUnavail)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resultMap, nil
@@ -134,21 +134,21 @@ func (s *service) collectAvailUsers(
 		}
 		if user.Status != base.UserStatusActive {
 			if errorIfUnavail {
-				return nil, apperrors.New(apperrors.ErrUserUnavailable).
+				return nil, apperrors.Wrap(apperrors.ErrUserUnavailable).
 					WithMsgLog("user '%s' is not active", userKey)
 			}
 			continue
 		}
 		if user.IsAccessExpired() {
 			if errorIfUnavail {
-				return nil, apperrors.New(apperrors.ErrUserUnavailable).
+				return nil, apperrors.Wrap(apperrors.ErrUserUnavailable).
 					WithMsgLog("user '%s' has access expired at: %v", userKey, user.AccessExpireAt)
 			}
 			continue
 		}
 		if user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
 			if errorIfUnavail {
-				return nil, apperrors.New(apperrors.ErrUserNotCompleteMFASetup).
+				return nil, apperrors.Wrap(apperrors.ErrUserNotCompleteMFASetup).
 					WithMsgLog("user '%s' hasn't completed the MFA setup", userKey)
 			}
 			continue
@@ -167,7 +167,7 @@ func (s *service) LoadUsersEx(
 ) (map[string]*entity.User, error) {
 	users, _, err := s.userRepo.List(ctx, db, nil, loadOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	userMap := entityutil.SliceToIDMap(users)
@@ -175,7 +175,7 @@ func (s *service) LoadUsersEx(
 
 	resultMap, err := s.collectAvailUsers(userMap, userIDs, errorIfUnavail)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return resultMap, nil

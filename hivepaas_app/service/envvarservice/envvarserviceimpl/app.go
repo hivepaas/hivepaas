@@ -24,7 +24,7 @@ func (s *service) BuildAppEnvVars(
 ) (res []*envvarservice.EnvVar, usedSecrets []*entity.Secret, err error) {
 	vars, secrets, err := s.LoadAppEnvVarsAndSecrets(ctx, db, app, true, true, buildPhase)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	// App inherits ENV vars in order from the parent app, then the project, and then from global
@@ -63,7 +63,7 @@ func (s *service) ProcessEnvRefs(
 	}
 	vars, secrets, err := s.LoadAppEnvVarsAndSecrets(ctx, db, app, loadEnvVars, loadSecrets, buildPhase)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	// Construct result
@@ -175,7 +175,7 @@ func (s *service) LoadAppEnvVarsAndSecrets(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	if len(settings) == 0 {

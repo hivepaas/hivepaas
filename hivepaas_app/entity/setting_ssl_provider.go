@@ -60,7 +60,7 @@ func (s *SSLProvider) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentSSLProviderVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
@@ -75,13 +75,13 @@ func (s *SSLProvider) Decrypt() error {
 	if s.ZeroSSL != nil {
 		_, err := s.ZeroSSL.EABHmacKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	if s.GoogleTrust != nil {
 		_, err := s.GoogleTrust.EABHmacKey.GetPlain()
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 	}
 	return nil

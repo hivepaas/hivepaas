@@ -70,7 +70,7 @@ func (s *SchedJobSchedule) IsValid() error {
 		}
 		_, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -105,7 +105,7 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	}
 	sched, err := cronParser.Parse(s.CronExpr)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return sched, nil
 }
@@ -141,7 +141,7 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	if s.CronExpr != "" { //nolint:nestif
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
@@ -193,7 +193,7 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	if s.CronExpr != "" { //nolint:nestif
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
@@ -270,7 +270,7 @@ func (s *SchedJob) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentSchedJobVersion {
-		return false, apperrors.New(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

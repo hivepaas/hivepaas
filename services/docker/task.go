@@ -109,7 +109,7 @@ func (m *manager) serviceTaskGetRunning(
 	}
 	listResp, err := m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
-		return nil, nil, apperrors.New(err)
+		return nil, nil, apperrors.Wrap(err)
 	}
 
 	timeNow := time.Now()

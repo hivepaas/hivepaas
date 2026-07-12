@@ -15,7 +15,7 @@ func (cli *checkoutCli) clone(
 ) (err error) {
 	err = os.MkdirAll(cli.opts.CheckoutDir, base.DirModeDefault)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var cmd *exec.Cmd
@@ -34,7 +34,7 @@ func (cli *checkoutCli) clone(
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

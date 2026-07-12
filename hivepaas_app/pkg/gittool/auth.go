@@ -35,11 +35,11 @@ func calcGitAuthMethod(
 	case base.SettingTypeGithubApp:
 		client, err := github.NewFromSetting(gitCreds)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		token, err := client.CreateAppToken(ctx)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		auth = &http.BasicAuth{
 			Username: "default", // this can be anything except an empty string
@@ -49,7 +49,7 @@ func calcGitAuthMethod(
 	case base.SettingTypeAccessToken:
 		token, err := gitCreds.MustAsAccessToken().Token.GetPlain()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		auth = &http.BasicAuth{
 			Username: "default", // this can be anything except an empty string
@@ -60,15 +60,15 @@ func calcGitAuthMethod(
 		sshKey := gitCreds.MustAsSSHKey()
 		privateKey, err := sshKey.PrivateKey.GetPlain()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		passphrase, err := sshKey.Passphrase.GetPlain()
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		authRaw, err := ssh.NewPublicKeys("git", reflectutil.UnsafeStrToBytes(privateKey), passphrase)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		auth = &authSSHKey{
 			PublicKeys: authRaw,
@@ -81,7 +81,7 @@ func calcGitAuthMethod(
 func writeSshKeyFile(baseDir string, pemBytes []byte) (sshKeyFile string, err error) {
 	fh, err := os.CreateTemp(baseDir, "git-ssh-*")
 	if err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 	defer fh.Close()
 
@@ -89,16 +89,16 @@ func writeSshKeyFile(baseDir string, pemBytes []byte) (sshKeyFile string, err er
 	sshKeyFile = fh.Name()
 
 	if err := os.Chmod(sshKeyFile, sshKeyFileMode); err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 
 	if _, err := fh.Write(pemBytes); err != nil {
-		return "", apperrors.New(err)
+		return "", apperrors.Wrap(err)
 	}
 
 	if pemBytes[len(pemBytes)-1] != '\n' {
 		if _, err := fh.Write([]byte("\n")); err != nil {
-			return "", apperrors.New(err)
+			return "", apperrors.Wrap(err)
 		}
 	}
 

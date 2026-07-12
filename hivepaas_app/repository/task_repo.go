@@ -65,7 +65,7 @@ func (repo *taskRepo) GetByID(ctx context.Context, db database.IDB, typ base.Tas
 		return nil, apperrors.NewNotFound("Task").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return task, nil
 }
@@ -86,7 +86,7 @@ func (repo *taskRepo) List(ctx context.Context, db database.IDB, targetID string
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -112,7 +112,7 @@ func (repo *taskRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return tasks, nil
 }
@@ -132,7 +132,7 @@ func (repo *taskRepo) InsertMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -153,7 +153,7 @@ func (repo *taskRepo) UpsertMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -165,7 +165,7 @@ func (repo *taskRepo) Update(ctx context.Context, db database.IDB, task *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func (repo *taskRepo) UpdateMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func (repo *taskRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appI
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -211,7 +211,7 @@ func (repo *taskRepo) DeleteAllByProjects(ctx context.Context, db database.IDB, 
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -227,7 +227,7 @@ func (repo *taskRepo) DeleteAllByUsers(ctx context.Context, db database.IDB, use
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -242,7 +242,7 @@ func (repo *taskRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

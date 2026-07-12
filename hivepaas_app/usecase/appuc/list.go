@@ -71,7 +71,7 @@ func (uc *UC) ListApp(
 
 	apps, paging, err := uc.appRepo.List(ctx, uc.db, req.ProjectID, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	transformationInput := &appdto.AppTransformationInput{}
@@ -79,14 +79,14 @@ func (uc *UC) ListApp(
 	if req.GetStats && len(apps) > 0 {
 		serviceMap, err := uc.loadAppSwarmServices(ctx, apps[0].Project.Key, apps)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		transformationInput.SwarmServiceMap = serviceMap
 	}
 
 	resp, err := appdto.TransformApps(apps, transformationInput)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appdto.ListAppResp{
@@ -108,7 +108,7 @@ func (uc *UC) loadAppSwarmServices(
 		}
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	services := listResp.Items

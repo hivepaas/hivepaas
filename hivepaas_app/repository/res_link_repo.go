@@ -61,7 +61,7 @@ func (repo *resLinkRepo) Get(ctx context.Context, db database.IDB, srcType base.
 		return nil, apperrors.NewNotFound("ResLink").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return resLink, nil
 }
@@ -79,7 +79,7 @@ func (repo *resLinkRepo) List(ctx context.Context, db database.IDB, paging *base
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.New(err)
+			return nil, nil, apperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -109,7 +109,7 @@ func (repo *resLinkRepo) InsertMulti(ctx context.Context, db database.IDB, resLi
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (repo *resLinkRepo) UpsertMulti(ctx context.Context, db database.IDB, resLi
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ func (repo *resLinkRepo) DeleteAllBySourceIDs(ctx context.Context, db database.I
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -162,7 +162,7 @@ func (repo *resLinkRepo) DeleteHard(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

@@ -20,5 +20,5 @@ func wrapPaginationError(err error, paging *basedto.Paging) error {
 	if paging != nil && len(paging.Sort) > 0 && bunex.IsErrorColumnNotExist(err) {
 		return apperrors.NewArgumentInvalidNT("sort").WithCause(err)
 	}
-	return apperrors.New(err)
+	return apperrors.Wrap(err)
 }

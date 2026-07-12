@@ -24,15 +24,15 @@ func (uc *UC) createAppDeployment(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err := uc.ensureAppActive(ctx, db, app, false, true)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		err = uc.createAppDeploymentByChangeID(ctx, db, app, changeID, webhookID, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		err = uc.appService.PersistAppData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.New(err)
+			return apperrors.Wrap(err)
 		}
 		return nil
 	})
@@ -40,7 +40,7 @@ func (uc *UC) createAppDeployment(
 		_ = uc.taskQueue.ScheduleTask(ctx, persistingData.UpsertingTasks...)
 	}
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 ) error {
 	hasDeployment, err := uc.hasAppDeploymentByChangeID(ctx, db, app, changeID)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if hasDeployment {
 		return nil
@@ -64,7 +64,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if deploymentSettings.RepoSource != nil && deploymentSettings.RepoSource.CommitHash != "" {
 		deploymentSettings.RepoSource.CommitHash = ""
@@ -76,7 +76,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 
 	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	// Override target commit hash
 	deployment.Settings.RepoSource.CommitHash = changeID
@@ -109,7 +109,7 @@ func (uc *UC) getAppDeploymentByChangeID(
 		bunex.SelectWhere("deployment.trigger->>'changeId' = ?", changeID),
 	)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	if len(deployments) == 0 {
 		return nil, nil
@@ -125,7 +125,7 @@ func (uc *UC) hasAppDeploymentByChangeID(
 ) (bool, error) {
 	deployment, err := uc.getAppDeploymentByChangeID(ctx, db, app, changeID)
 	if err != nil {
-		return false, apperrors.New(err)
+		return false, apperrors.Wrap(err)
 	}
 	return deployment != nil, nil
 }
@@ -151,7 +151,7 @@ func (uc *UC) ensureAppActive(
 	}
 	_, err := uc.appRepo.GetByID(ctx, db, "", app.ID, qryOpts...)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

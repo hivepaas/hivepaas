@@ -20,7 +20,7 @@ func (uc *UC) GetNodeJoinCommand(
 	data := &joinNodeCommandData{}
 	err := uc.loadGetNodeJoinCommandData(ctx, req, data)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	command := fmt.Sprintf("docker swarm join --token %s %s", data.JoinToken, data.PreferManagerAddr)
@@ -44,13 +44,13 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	// Find join token from the cluster
 	inspect, err := uc.dockerManager.SwarmInspect(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	theSwarm := &inspect.Swarm
 
 	joinToken := gofn.If(req.JoinAsManager, theSwarm.JoinTokens.Manager, theSwarm.JoinTokens.Worker)
 	if joinToken == "" {
-		return apperrors.New(apperrors.ErrInfraInternal).
+		return apperrors.Wrap(apperrors.ErrInfraInternal).
 			WithNTParam("Error", "join token is not found")
 	}
 	data.JoinToken = joinToken
@@ -58,7 +58,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	// List all manager nodes to get the addr to join new node
 	listResp, err := uc.dockerManager.NodeManagerList(ctx)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	var leaderAddr, managerAddr string
@@ -73,7 +73,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	}
 	data.PreferManagerAddr = gofn.Coalesce(leaderAddr, managerAddr)
 	if data.PreferManagerAddr == "" {
-		return apperrors.New(apperrors.ErrInfraInternal).
+		return apperrors.Wrap(apperrors.ErrInfraInternal).
 			WithNTParam("Error", "active manager node not found")
 	}
 

@@ -83,7 +83,7 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		// Store log data in redis
 		err := redishelper.RPush(ctx, s.redisClient, s.Key, frames...)
 		if err != nil {
-			return apperrors.New(err).WithMsgLog("failed to push log frames to redis")
+			return apperrors.Wrap(err).WithMsgLog("failed to push log frames to redis")
 		}
 
 		if s.remoteInitialized.CompareAndSwap(false, true) {
@@ -93,7 +93,7 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		// Notify consumers about the new data
 		_, err = s.redisClient.Publish(ctx, s.Key, buildMessage(CommandNewData)).Result()
 		if err != nil {
-			return apperrors.New(err).WithMsgLog("failed to notify consumers about the new data")
+			return apperrors.Wrap(err).WithMsgLog("failed to notify consumers about the new data")
 		}
 	}
 
@@ -162,7 +162,7 @@ func (s *Store) GetLocalData(ctx context.Context, fromIndex int64) ([]*LogFrame,
 func (s *Store) GetRemoteData(ctx context.Context, fromIndex int64) ([]*LogFrame, error) {
 	frames, err := redishelper.LRange[*LogFrame](ctx, s.redisClient, s.Key, fromIndex, -1)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	return frames, nil
 }
@@ -173,12 +173,12 @@ func (s *Store) Reset() (err error) {
 		// Send close-msg to consumers
 		_, e := s.redisClient.Publish(ctx, s.Key, buildMessage(CommandClosed)).Result()
 		if e != nil {
-			err = errors.Join(err, apperrors.New(err).WithMsgLog("failed to notify consumers"))
+			err = errors.Join(err, apperrors.Wrap(err).WithMsgLog("failed to notify consumers"))
 		}
 		// Delete log data in redis
 		e = redishelper.Del(ctx, s.redisClient, s.Key)
 		if e != nil {
-			err = errors.Join(err, apperrors.New(err).WithMsgLog("failed to remove data from redis"))
+			err = errors.Join(err, apperrors.Wrap(err).WithMsgLog("failed to remove data from redis"))
 		}
 	}
 	if s.storeLocal {

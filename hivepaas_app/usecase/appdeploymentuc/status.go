@@ -17,14 +17,14 @@ func (uc *UC) GetDeploymentStatus(
 ) (*appdeploymentdto.GetDeploymentStatusResp, error) {
 	deployment, err := uc.deploymentRepo.GetByID(ctx, uc.db, req.AppID, req.DeploymentID)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	var deploymentInfo *cacheentity.DeploymentInfo
 	if deployment.IsNotStarted() || deployment.IsInProgress() {
 		deploymentInfo, err = uc.deploymentInfoRepo.Get(ctx, deployment.ID)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 

@@ -89,12 +89,12 @@ func TransformSystemCleanup(
 ) (resp *SystemCleanupResp, err error) {
 	config := setting.MustAsSystemCleanup()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)

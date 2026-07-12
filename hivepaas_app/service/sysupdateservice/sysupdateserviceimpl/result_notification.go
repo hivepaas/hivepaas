@@ -21,7 +21,7 @@ func (s *service) notifyForSystemUpdate(
 	notification, err := s.notificationService.GetDefaultNotification(ctx, db, base.NewObjectScopeGlobal(),
 		data.RefObjects, false)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -36,7 +36,7 @@ func (s *service) notifyForSystemUpdate(
 		TemplateData:    data.NotifMsgData,
 	})
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 	return nil
 }

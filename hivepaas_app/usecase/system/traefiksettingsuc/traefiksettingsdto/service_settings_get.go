@@ -45,11 +45,11 @@ func TransformServiceSettings(
 ) (resp *ServiceSettingsResp, err error) {
 	config := input.Setting.MustAsTraefikService()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 	resp.BaseSettingResp, err = settings.TransformSettingBase(input.Setting)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Some dynamic info retrieved from the infra

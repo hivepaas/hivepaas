@@ -24,7 +24,7 @@ func (uc *UC) GetAppFeatureSettings(
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// If setting not found or a field of the settings not found, init default value for it
@@ -52,7 +52,7 @@ func (uc *UC) GetAppFeatureSettings(
 
 	respData, err := appfeaturesettingsdto.TransformAppFeatureSettings(input)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &appfeaturesettingsdto.GetAppFeatureSettingsResp{

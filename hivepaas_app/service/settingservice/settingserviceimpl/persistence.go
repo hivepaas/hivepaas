@@ -14,7 +14,7 @@ func (s *service) PersistSettingData(ctx context.Context, db database.IDB,
 	// Deletes data
 	err := s.permissionManager.UpdateACLPermissions(ctx, db, persistingData.DeletingAccesses)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Persists data
@@ -22,13 +22,13 @@ func (s *service) PersistSettingData(ctx context.Context, db database.IDB,
 	err = s.settingRepo.UpsertMulti(ctx, db, persistingData.UpsertingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	// Accesses
 	err = s.permissionManager.UpdateACLPermissions(ctx, db, persistingData.UpsertingAccesses)
 	if err != nil {
-		return apperrors.New(err)
+		return apperrors.Wrap(err)
 	}
 
 	return nil

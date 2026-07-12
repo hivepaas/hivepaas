@@ -28,13 +28,13 @@ func (uc *UC) ListTask(
 		case base.SystemJobNameSslRenewal:
 			settingType = base.SettingTypeSSLRenewal
 		default:
-			return nil, apperrors.New(apperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
+			return nil, apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
 		}
 		setting, err := uc.settingRepo.GetSingle(ctx, uc.db, base.NewObjectScopeGlobal(), settingType, false,
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
-			return nil, apperrors.New(err)
+			return nil, apperrors.Wrap(err)
 		}
 		targetIDs = append(targetIDs, setting.ID)
 	}
@@ -52,12 +52,12 @@ func (uc *UC) ListTask(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTasks(listResp.Tasks, listResp.TaskInfoMap)
 	if err != nil {
-		return nil, apperrors.New(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	return &taskdto.ListTaskResp{

@@ -10,15 +10,6 @@ import { ECommandTemplateKind } from "@application/shared/enums";
 import { ProjectCommandTemplateEditCell } from "./project-command-template-edit-cell.com";
 import { ProjectCommandTemplateMenuCell } from "./project-command-template-menu-cell.com";
 
-function formatKind(kind: ProjectCommandTemplate["kind"]): string {
-    switch (kind) {
-        case ECommandTemplateKind.DataOps:
-            return "data-ops";
-        default:
-            return kind;
-    }
-}
-
 function getKindClassName(kind: ProjectCommandTemplate["kind"]): string {
     switch (kind) {
         case ECommandTemplateKind.Database:
@@ -69,7 +60,7 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className={getKindClassName(original.kind)}>{formatKind(original.kind)}</Badge>
+                    <Badge className={getKindClassName(original.kind)}>{original.kind}</Badge>
                 </div>
             ),
         },

@@ -519,6 +519,8 @@ export function CreateOrEditSslCertForm({
                                             <AppLink.Modules
                                                 to={sslProvidersManageRoute}
                                                 className="text-sm text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 ignorePrevPath
                                             >
                                                 Configure SSL providers

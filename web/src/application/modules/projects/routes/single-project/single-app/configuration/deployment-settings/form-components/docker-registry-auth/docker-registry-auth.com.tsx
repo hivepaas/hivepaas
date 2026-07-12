@@ -2,13 +2,13 @@ import { useMemo, useState } from "react";
 
 import { Field, FieldError, FieldGroup } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { Combobox, InfoBlock } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
@@ -81,12 +81,14 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
                     />
                     <FieldError errors={[registryAuthError]} />
                     <div className="text-xs">
-                        <Link
-                            to="#"
-                            className="text-blue-500"
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.providerConfiguration.registryAuth.$route(projectId)}
+                            className="text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             Configure Registry Credentials
-                        </Link>
+                        </AppLink.Basic>
                     </div>
                 </Field>
             </FieldGroup>

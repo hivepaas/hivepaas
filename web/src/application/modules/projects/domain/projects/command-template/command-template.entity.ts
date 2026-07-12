@@ -1,6 +1,6 @@
 import type { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import type { ECommandTemplateKind, ESettingStatus } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface ProjectCommandTemplateEnvVar {
     key: string;
@@ -35,7 +35,7 @@ export interface ProjectCommandTemplate {
     id: string;
     type: "command-template";
     name: string;
-    kind: ECommandTemplateKind;
+    kind: string;
     status: ESettingStatus;
     inherited: boolean;
     availableInProjects: boolean;

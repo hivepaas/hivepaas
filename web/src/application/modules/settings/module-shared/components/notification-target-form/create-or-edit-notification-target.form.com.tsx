@@ -395,6 +395,8 @@ export function CreateOrEditNotificationTargetForm({
                                                             <AppLink.Basic
                                                                 className="text-sm text-link"
                                                                 to={emailAccountsRoute}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                                 ignorePrevPath
                                                             >
                                                                 Configure email accounts
@@ -518,6 +520,8 @@ export function CreateOrEditNotificationTargetForm({
                                                             <AppLink.Basic
                                                                 className="text-sm text-link"
                                                                 to={imPlatformsRoute}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                                 ignorePrevPath
                                                             >
                                                                 Configure IM Platforms
@@ -593,6 +597,8 @@ export function CreateOrEditNotificationTargetForm({
                                                             <AppLink.Basic
                                                                 className="text-sm text-link"
                                                                 to={imPlatformsRoute}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                                 ignorePrevPath
                                                             >
                                                                 Configure IM Platforms
@@ -668,6 +674,8 @@ export function CreateOrEditNotificationTargetForm({
                                                             <AppLink.Basic
                                                                 className="text-sm text-link"
                                                                 to={imPlatformsRoute}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                                 ignorePrevPath
                                                             >
                                                                 Configure IM Platforms

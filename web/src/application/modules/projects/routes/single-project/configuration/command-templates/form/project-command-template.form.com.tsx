@@ -11,26 +11,17 @@ import {
     SettingsFormCancelAction,
 } from "~/settings/module-shared/components";
 
-import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    ContentBlock,
+    EditableCombobox,
+    FormActionBar,
+    InfoBlock,
+    LabelWithInfo,
+} from "@application/shared/components";
 import { ECommandTemplateKind } from "@application/shared/enums";
 import { KeyValueList } from "@application/shared/form";
 
-import {
-    Button,
-    Checkbox,
-    Field,
-    FieldError,
-    FieldGroup,
-    Input,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    Tabs,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { InputNumber } from "@/components/ui/input-number";
 
 import {
@@ -48,15 +39,7 @@ import { ProjectCommandTemplateScriptEditorField } from "./script-editor-field.c
 
 const INFO_BLOCK_TITLE_WIDTH = 150;
 
-const COMMAND_TEMPLATE_KIND_OPTIONS = [
-    { value: ECommandTemplateKind.Backup, label: "backup" },
-    { value: ECommandTemplateKind.DataOps, label: "data-ops" },
-    { value: ECommandTemplateKind.Database, label: "database" },
-    { value: ECommandTemplateKind.Deployment, label: "deployment" },
-    { value: ECommandTemplateKind.Diagnostics, label: "diagnostics" },
-    { value: ECommandTemplateKind.Maintenance, label: "maintenance" },
-    { value: ECommandTemplateKind.Testing, label: "testing" },
-] as const;
+const COMMAND_TEMPLATE_KIND_OPTIONS = Object.values(ECommandTemplateKind);
 
 type SchemaInput = ProjectCommandTemplateFormInput;
 type SchemaOutput = ProjectCommandTemplateFormOutput;
@@ -202,27 +185,15 @@ export function ProjectCommandTemplateForm({
                                 }
                             >
                                 <Field>
-                                    <Select
+                                    <EditableCombobox
+                                        options={COMMAND_TEMPLATE_KIND_OPTIONS}
                                         value={kind.value}
-                                        onValueChange={kind.onChange}
-                                    >
-                                        <SelectTrigger
-                                            aria-invalid={isKindInvalid}
-                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                        >
-                                            <SelectValue placeholder="select type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {COMMAND_TEMPLATE_KIND_OPTIONS.map(option => (
-                                                <SelectItem
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        onChange={kind.onChange}
+                                        placeholder="Select or enter type"
+                                        aria-invalid={isKindInvalid}
+                                        disabled={isReadOnly}
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                    />
                                     <FieldError errors={[errors.kind]} />
                                 </Field>
                             </InfoBlock>

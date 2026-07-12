@@ -47,7 +47,7 @@ function View({ domainIndex, readOnly = false }: RedirectToProps) {
 
                     setValue(`domains.${domainIndex}.domainRedirect`, value, { shouldDirty: true });
                 }}
-                placeholder="https://other-domain.com"
+                placeholder="e.g. other-domain.com"
                 className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                 allowClear
                 aria-invalid={isDomainRedirectInvalid}

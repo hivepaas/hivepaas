@@ -56,6 +56,11 @@ function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
     }
 }
 
+function toWildcardDomain(domain: string): string {
+    const parts = domain.split(".");
+    return `*.${parts.length > 2 ? parts.slice(1).join(".") : domain}`;
+}
+
 function formatKeyTypeLabel(value: ESslKeyType): string {
     switch (value) {
         case ESslKeyType.ECP256:
@@ -150,6 +155,8 @@ export function QuickInstallSslCertForm({
     const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
     const expireAt = useWatch({ control, name: "expireAt" });
     const notifyFrom = useWatch({ control, name: "notifyFrom" });
+    const wildcardDomainWatched = useWatch({ control, name: "wildcardDomain" });
+    const effectiveDomain = wildcardDomainWatched ? toWildcardDomain(domain) : domain;
 
     const isCustom = certType === ESslCertType.Custom;
     const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
@@ -307,7 +314,7 @@ export function QuickInstallSslCertForm({
                         <Field>
                             <FieldLabel>Domain</FieldLabel>
                             <Input
-                                value={domain}
+                                value={effectiveDomain}
                                 disabled
                             />
                         </Field>
@@ -425,6 +432,8 @@ export function QuickInstallSslCertForm({
                                         <AppLink.Modules
                                             to={sslProvidersRoute}
                                             className="text-sm text-link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             ignorePrevPath
                                         >
                                             Configure SSL providers

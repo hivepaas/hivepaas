@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, RotateCcw, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { MoreVertical, RefreshCcw, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { SslCertCommands } from "~/settings/data/commands";
@@ -113,7 +113,7 @@ function View({ scope, sslCert }: Props) {
                         isLoading={isRenewing}
                         onClick={handleRenew}
                     >
-                        <RotateCcw className="mr-2 size-4" />
+                        <RefreshCcw className="mr-2 size-4" />
                         Renew Now
                     </SettingsScopeMenuButton>
                     <SettingsScopeMenuButton

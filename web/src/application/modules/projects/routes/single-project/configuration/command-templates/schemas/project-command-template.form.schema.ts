@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import { ECommandTemplateKind } from "@application/shared/enums";
-
 export const PROJECT_COMMAND_TEMPLATE_COMMAND_MODE = {
     Command: "command",
     Script: "script",
@@ -29,12 +27,10 @@ const ArgGroupSchema = z.object({
     args: z.array(ArgSchema),
 });
 
-const CommandTemplateKindSchema = z.union([z.nativeEnum(ECommandTemplateKind), z.literal("")]);
-
 export const ProjectCommandTemplateFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
-        kind: CommandTemplateKindSchema,
+        kind: z.string().trim().min(1, "Type is required"),
         commandMode: z.enum([
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script,
@@ -52,14 +48,6 @@ export const ProjectCommandTemplateFormSchema = z
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {
-        if (!value.kind) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["kind"],
-                message: "Type is required",
-            });
-        }
-
         if (value.commandMode === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command) {
             if (!value.command) {
                 ctx.addIssue({

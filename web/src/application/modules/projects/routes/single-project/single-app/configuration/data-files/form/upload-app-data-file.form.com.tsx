@@ -267,6 +267,8 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose 
                                     <AppLink.Modules
                                         to={cloudStoragesRoute}
                                         className="text-sm text-link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         ignorePrevPath
                                     >
                                         Configure storage settings

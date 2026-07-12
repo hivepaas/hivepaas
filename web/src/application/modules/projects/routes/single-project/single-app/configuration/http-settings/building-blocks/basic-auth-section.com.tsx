@@ -4,10 +4,10 @@ import { Button, Checkbox, Field, FieldError } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 
-import { Combobox, InfoBlock } from "@application/shared/components";
+import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import { ProjectBasicAuthQueries } from "@application/modules/projects/data";
@@ -162,12 +162,14 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                 />
                                 <FieldError errors={[nameError]} />
                                 <div className="text-xs">
-                                    <Link
+                                    <AppLink.Basic
                                         to={ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId)}
-                                        className="text-blue-500"
+                                        className="text-link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                     >
                                         Configure Basic Auth Items
-                                    </Link>
+                                    </AppLink.Basic>
                                 </div>
                             </Field>
                         </InfoBlock>

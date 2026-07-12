@@ -3,7 +3,7 @@ import { z } from "zod";
 import { PROJECT_COMMAND_TEMPLATE_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import { ECommandTemplateKind, ESettingStatus, ESettingType } from "@application/shared/enums";
+import { ESettingStatus, ESettingType } from "@application/shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -79,7 +79,7 @@ const CommandTemplateSchema = z.object({
         .string()
         .nullish()
         .transform(value => value ?? ""),
-    kind: z.nativeEnum(ECommandTemplateKind),
+    kind: z.string(),
     status: z.nativeEnum(ESettingStatus),
     inherited: z.boolean().optional().default(false),
     availableInProjects: z.boolean().optional().default(false),

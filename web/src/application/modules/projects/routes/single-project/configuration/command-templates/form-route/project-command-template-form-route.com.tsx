@@ -9,7 +9,6 @@ import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
-import type { ECommandTemplateKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
 import {
@@ -72,7 +71,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
             availableInProjects: false,
             default: values.default,
             name: values.name,
-            kind: values.kind as ECommandTemplateKind,
+            kind: values.kind,
             command: values.commandMode === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command ? values.command : "",
             script: values.commandMode === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script ? values.script : "",
             workingDir: values.workingDir,

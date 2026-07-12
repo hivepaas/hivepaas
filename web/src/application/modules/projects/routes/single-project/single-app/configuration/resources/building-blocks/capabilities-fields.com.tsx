@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Input } from "@components/ui";
 import { Checkbox } from "@components/ui/checkbox";
 import { InputNumber } from "@components/ui/input-number";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { useController, useFieldArray, useFormContext } from "react-hook-form";
 
 import { InfoBlock, InputNumberWithAddon, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
@@ -32,6 +34,17 @@ export function CapabilitiesFields() {
 
     return (
         <div className="flex flex-col gap-6">
+            <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                <p>
+                    <span className="font-medium text-orange-500">Warning:</span> Modifying container capabilities can
+                    introduce severe security risks; please ensure you understand the implications before proceeding.
+                </p>
+                <p>
+                    Additionally, you must have <span className="font-medium text-orange-500">Write</span> permission on
+                    the <span className="font-medium text-orange-500">Cluster</span> module to apply these changes.
+                </p>
+            </div>
+
             <InfoBlock
                 title={
                     <LabelWithInfo

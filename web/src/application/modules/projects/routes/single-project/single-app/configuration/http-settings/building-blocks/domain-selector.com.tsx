@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Button, Checkbox } from "@components/ui";
+import { Button, Checkbox, FieldError } from "@components/ui";
 import { EyeIcon, Plus } from "lucide-react";
 import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { isValidDomain } from "@application/shared/utils/domain";
 
+import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 import {
     type AppConfigHttpSettingsFormSchemaInput,
     type AppConfigHttpSettingsFormSchemaOutput,
     emptyDomain,
 } from "../schemas";
-import { HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS } from "../http-settings-layout.constants";
 
 interface DomainSelectorProps {
     activeDomainIndex: number;
@@ -54,7 +55,14 @@ export function DomainSelector({
         return [...configuredDomains, suggestedDomain];
     }, [domainValues, normalizeDomain, suggestedDomain]);
     const [draft, setDraft] = useState(suggestedDomain);
-    const [duplicateDomainError, setDuplicateDomainError] = useState<string | null>(null);
+    const [domainInputError, setDomainInputError] = useState<string | null>(null);
+
+    const {
+        fieldState: { error: activeDomainFieldError },
+    } = useController({
+        control,
+        name: `domains.${activeDomainIndex >= 0 ? activeDomainIndex : 0}.domain`,
+    });
 
     const activeDomain = activeDomainIndex >= 0 ? domainValues[activeDomainIndex] : undefined;
     const hasActiveDomain = Boolean(activeDomain);
@@ -80,7 +88,7 @@ export function DomainSelector({
         } else {
             setDraft(value);
         }
-        setDuplicateDomainError(null);
+        setDomainInputError(null);
     }
 
     function handleAddDomain() {
@@ -96,24 +104,28 @@ export function DomainSelector({
 
         const trimmedDraft = draft.trim();
         if (trimmedDraft.length > 0) {
+            if (!isValidDomain(trimmedDraft, { maxLength: 100 })) {
+                setDomainInputError("Enter a valid domain (e.g. app.example.com)");
+                return;
+            }
             const hasDuplicateDomain = domainValues.some(
                 domain => normalizeDomain(domain.domain) === normalizeDomain(trimmedDraft),
             );
             if (hasDuplicateDomain) {
-                setDuplicateDomainError("Domain already exists.");
+                setDomainInputError("Domain already exists.");
                 return;
             }
             append({ ...emptyDomain, domain: trimmedDraft, containerPort });
             setActiveDomainIndex(domainValues.length);
             setDraft(trimmedDraft);
-            setDuplicateDomainError(null);
+            setDomainInputError(null);
             return;
         }
 
         append({ ...emptyDomain, containerPort });
         setActiveDomainIndex(domainValues.length);
         setDraft("");
-        setDuplicateDomainError(null);
+        setDomainInputError(null);
     }
 
     return (
@@ -170,7 +182,7 @@ export function DomainSelector({
                                 }
 
                                 setDraft(value);
-                                setDuplicateDomainError(null);
+                                setDomainInputError(null);
                             }}
                             onChange={handleDomainSelect}
                             onRefresh={undefined}
@@ -207,7 +219,7 @@ export function DomainSelector({
                             </Button>
                         )}
                     </div>
-                    {duplicateDomainError ? <p className="text-destructive text-sm">{duplicateDomainError}</p> : null}
+                    <FieldError errors={[domainInputError ? { message: domainInputError } : activeDomainFieldError]} />
                 </InfoBlock>
             )}
         </div>

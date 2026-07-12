@@ -48,7 +48,7 @@ export function FormActionBar({
             {sticky && (
                 <div
                     ref={sentinelRef}
-                    className="h-px mb-[-24px]"
+                    className="h-px"
                     aria-hidden
                 />
             )}

@@ -2,12 +2,12 @@ import React, { useMemo, useState } from "react";
 
 import { Field, FieldError, FieldGroup } from "@components/ui";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { useQuickInstallSslCertDialog } from "~/projects/dialogs/quick-install-ssl-cert";
 
-import { Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { ProjectSslCertQueries } from "@application/modules/projects/data";
@@ -160,12 +160,14 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                         </div>
                         <FieldError errors={[sslCertError]} />
                         <div className="text-xs text-muted-foreground">
-                            <Link
-                                to="#"
+                            <AppLink.Basic
+                                to={ROUTE.projects.single.providerConfiguration.sslCertificates.$route(projectId)}
                                 className="text-primary underline-offset-4 hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
                                 Configure SSL Certificates
-                            </Link>
+                            </AppLink.Basic>
                         </div>
                     </Field>
                 </FieldGroup>

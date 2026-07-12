@@ -6,7 +6,7 @@ import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -15,7 +15,14 @@ import type { AppStorageMount } from "~/projects/domain";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EMountConsistency, EMountType } from "~/projects/module-shared/enums";
 
-import { Combobox, type ComboboxOption, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    AppLink,
+    Combobox,
+    type ComboboxOption,
+    FormActionBar,
+    InfoBlock,
+    LabelWithInfo,
+} from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
@@ -198,14 +205,16 @@ export function StorageMountForm({
                                     <FieldError errors={[errors.type]} />
                                     <div className="text-xs">
                                         <p>
-                                            <Link
+                                            <AppLink.Basic
                                                 to={ROUTE.projects.single.configuration.storageSettings.$route(
                                                     projectId,
                                                 )}
-                                                className="text-blue-500"
+                                                className="text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                             >
                                                 Configure storage settings in the project
-                                            </Link>
+                                            </AppLink.Basic>
                                         </p>
                                     </div>
                                 </Field>

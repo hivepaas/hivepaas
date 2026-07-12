@@ -6,7 +6,7 @@ import type {
     ProjectCommandTemplateEnvVar,
 } from "~/projects/domain";
 
-import type { ECommandTemplateKind, ESettingStatus } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -30,7 +30,7 @@ export type ProjectCommandTemplate_CreateOne_Payload = {
     availableInProjects: boolean;
     default: boolean;
     name: string;
-    kind: ECommandTemplateKind;
+    kind: string;
     command: string;
     script: string;
     workingDir: string;

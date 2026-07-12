@@ -13,6 +13,11 @@ import { QuickInstallSslCertForm } from "../form";
 import { useQuickInstallSslCertDialogState } from "../hooks";
 import type { QuickInstallSslCertFormOutput } from "../schemas";
 
+function toWildcardDomain(domain: string): string {
+    const parts = domain.split(".");
+    return `*.${parts.length > 2 ? parts.slice(1).join(".") : domain}`;
+}
+
 function addDays(date: Date, days: number): Date {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
@@ -77,7 +82,7 @@ export function QuickInstallSslCertDialog() {
         const fallbackExpireAt = addDays(now, validPeriodDays);
         const expireAt = values.expireAt ?? fallbackExpireAt;
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
-        const certDomain = values.wildcardDomain ? `*.${values.domain}` : values.domain;
+        const certDomain = values.wildcardDomain ? toWildcardDomain(values.domain) : values.domain;
 
         createSslCert({
             projectID: projectId,
@@ -128,7 +133,7 @@ export function QuickInstallSslCertDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[560px]">
+            <DialogFixedContent className="w-[800px]">
                 <DialogHeader>
                     <DialogTitle>Quick install an SSL certificate</DialogTitle>
                 </DialogHeader>

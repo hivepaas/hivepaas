@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
 
+import { isValidDomain } from "@application/shared/utils/domain";
+
 export const HttpSettingsRefSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -56,21 +58,49 @@ export const HttpPathConfigSchema = z.object({
     rateLimitConfig: HttpRateLimitConfigSchema.optional(),
 });
 
-export const DomainFormSchema = z.object({
-    enabled: z.boolean(),
-    domain: z.string(),
-    containerPort: z.number().int().min(1).max(65535),
-    domainRedirect: z.string(),
-    sslCert: HttpSettingsRefSchema.optional(),
-    forceHttps: z.boolean(),
-    basicAuth: HttpBasicAuthConfigSchema.optional(),
-    lbConfig: HttpLBConfigSchema.optional(),
-    clientConfig: HttpClientConfigSchema.optional(),
-    headerConfig: HttpHeaderConfigSchema.optional(),
-    compressionConfig: HttpCompressionConfigSchema.optional(),
-    rateLimitConfig: HttpRateLimitConfigSchema.optional(),
-    paths: z.array(HttpPathConfigSchema),
-});
+const DOMAIN_MAX_LEN = 100; // mirrors backend base.DomainNameMaxLen
+
+export const DomainFormSchema = z
+    .object({
+        enabled: z.boolean(),
+        domain: z.string(),
+        containerPort: z.number().int().min(1).max(65535),
+        domainRedirect: z.string(),
+        sslCert: HttpSettingsRefSchema.optional(),
+        forceHttps: z.boolean(),
+        basicAuth: HttpBasicAuthConfigSchema.optional(),
+        lbConfig: HttpLBConfigSchema.optional(),
+        clientConfig: HttpClientConfigSchema.optional(),
+        headerConfig: HttpHeaderConfigSchema.optional(),
+        compressionConfig: HttpCompressionConfigSchema.optional(),
+        rateLimitConfig: HttpRateLimitConfigSchema.optional(),
+        paths: z.array(HttpPathConfigSchema),
+    })
+    .superRefine((values, ctx) => {
+        const domain = values.domain.trim();
+        if (!domain) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["domain"],
+                message: "Domain is required",
+            });
+        } else if (!isValidDomain(domain, { maxLength: DOMAIN_MAX_LEN })) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["domain"],
+                message: "Enter a valid domain (e.g. app.example.com)",
+            });
+        }
+
+        const domainRedirect = values.domainRedirect.trim();
+        if (domainRedirect && !isValidDomain(domainRedirect, { maxLength: DOMAIN_MAX_LEN })) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["domainRedirect"],
+                message: "Enter a valid domain (e.g. other-domain.com)",
+            });
+        }
+    });
 
 export const AppConfigHttpSettingsFormSchema = z.object({
     exposePublicly: z.boolean(),

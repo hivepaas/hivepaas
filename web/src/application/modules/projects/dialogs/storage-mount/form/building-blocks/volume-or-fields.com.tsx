@@ -6,12 +6,12 @@ import { Field, FieldError } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { dashedBorderBox } from "@lib/styles";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { ProjectDockerVolumesQueries } from "~/projects/data/queries/project-docker-volumes";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import type { SettingStorageSettings } from "~/settings/domain";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import type { StorageMountFormInput, StorageMountFormOutput } from "../../schemas";
@@ -101,12 +101,14 @@ function VolumeOrClusterMountFields({ variant }: VolumeFieldsProps & { variant: 
                     <FieldError errors={[volumeError]} />
 
                     <div className="text-xs">
-                        <Link
-                            to={ROUTE.projects.single.configuration.general.$route(projectId ?? "")}
-                            className="text-blue-500"
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.clusterResources.volumes.$route(projectId ?? "")}
+                            className="text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             Configure Volumes
-                        </Link>
+                        </AppLink.Basic>
                     </div>
                 </Field>
             </InfoBlock>

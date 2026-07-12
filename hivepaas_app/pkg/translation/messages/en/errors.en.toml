@@ -92,6 +92,7 @@ ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the syst
 ERR_PROJECT_NOT_FOUND = "Project '{{.Name}}' is not found"
 ERR_PROJECT_INACTIVE = "Project '{{.Name}}' is inactive"
 ERR_PROJECT_NAME_NOT_ALLOWED = "Project '{{.Name}}' is not allowed"
+ERR_PROJECT_NETWORK_UNAVAILABLE = "Project network '{{.Name}}' is not available"
 
 # App errors
 ERR_APP_NOT_FOUND = "App '{{.Name}}' is not found"

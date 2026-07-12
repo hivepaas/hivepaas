@@ -153,9 +153,10 @@ var (
 
 // Errors for projects
 var (
-	ErrProjectNotFound       = NewErr(ErrNotFound, "ERR_PROJECT_NOT_FOUND")
-	ErrProjectInactive       = NewErr(ErrInactive, "ERR_PROJECT_INACTIVE")
-	ErrProjectNameNotAllowed = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")
+	ErrProjectNotFound           = NewErr(ErrNotFound, "ERR_PROJECT_NOT_FOUND")
+	ErrProjectInactive           = NewErr(ErrInactive, "ERR_PROJECT_INACTIVE")
+	ErrProjectNameNotAllowed     = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")
+	ErrProjectNetworkUnavailable = NewErr(ErrUnavailable, "ERR_PROJECT_NETWORK_UNAVAILABLE")
 )
 
 // Errors for apps

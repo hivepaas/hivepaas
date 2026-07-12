@@ -75,7 +75,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	}
 
 	// Remove all project local networks
-	err = s.networkService.RemoveAllProjectNetworks(ctx, project)
+	err = s.networkService.RemoveAllProjectNetworks(ctx, db, project)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.New(err)
 	}

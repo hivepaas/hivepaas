@@ -7,12 +7,14 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
 func (s *service) copySwarmService(
 	ctx context.Context,
+	db database.IDB,
 	data *appCopyData,
 ) (err error) {
 	targetApp := data.TargetApp
@@ -57,11 +59,11 @@ func (s *service) copySwarmService(
 	if err != nil {
 		return apperrors.New(err)
 	}
-	oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, data.SrcProject, data.SrcApp.Env)
+	_, oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.SrcProject, data.SrcApp.Env)
 	if err != nil {
 		return apperrors.New(err)
 	}
-	newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, data.TargetProject, data.TargetApp.Env)
+	_, newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, data.TargetApp.Env)
 	if err != nil {
 		return apperrors.New(err)
 	}

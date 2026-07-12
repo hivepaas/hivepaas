@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
 type Service interface {
@@ -15,8 +16,9 @@ type Service interface {
 		httpSettings *entity.Setting) error
 
 	GetProjectNetworkName(project *entity.Project, env string) string
-	GetOrCreateProjectNetwork(ctx context.Context, project *entity.Project, env string) (*network.Inspect, error)
-	ListProjectNetworks(ctx context.Context, project *entity.Project) ([]network.Summary, error)
-	RemoveProjectNetwork(ctx context.Context, project *entity.Project, env string) error
-	RemoveAllProjectNetworks(ctx context.Context, project *entity.Project) error
+	GetOrCreateProjectNetwork(ctx context.Context, db database.IDB, project *entity.Project, env string) (
+		*entity.Setting, *network.Inspect, error)
+	ListProjectNetworks(ctx context.Context, db database.IDB, project *entity.Project) (
+		[]*entity.Setting, map[string]*network.Summary, error)
+	RemoveAllProjectNetworks(ctx context.Context, db database.IDB, project *entity.Project) error
 }

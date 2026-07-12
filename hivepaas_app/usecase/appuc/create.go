@@ -121,7 +121,7 @@ func (uc *UC) loadAppData(
 	}
 
 	// Create local network for the app to attach
-	_, err = uc.networkService.GetOrCreateProjectNetwork(ctx, project, req.Env)
+	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, req.Env)
 	if err != nil {
 		return apperrors.New(err)
 	}

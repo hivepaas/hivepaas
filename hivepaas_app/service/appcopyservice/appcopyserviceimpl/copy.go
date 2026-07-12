@@ -65,7 +65,7 @@ func (s *service) CopyApp(
 		return nil, apperrors.New(err)
 	}
 
-	err = s.copySwarmService(ctx, data)
+	err = s.copySwarmService(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.New(err)
 	}
@@ -161,7 +161,7 @@ func (s *service) copyApp(
 	}
 
 	// Create local network for the app to attach
-	_, err = s.networkService.GetOrCreateProjectNetwork(ctx, data.TargetProject, targetApp.Env)
+	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, targetApp.Env)
 	if err != nil {
 		return apperrors.New(err)
 	}

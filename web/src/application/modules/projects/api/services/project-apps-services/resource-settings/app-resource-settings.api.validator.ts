@@ -5,6 +5,11 @@ import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppResourceSettings_FindOne_Res } from "./app-resource-settings.api.contracts";
 
+const optionalStringSchema = z
+    .string()
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const GenericResourceSchema = z.object({
     kind: z.string(),
     value: z.string(),
@@ -12,20 +17,20 @@ const GenericResourceSchema = z.object({
 
 const ResourceReservationsSchema = z.object({
     cpus: z.number().optional(),
-    memory: z.string().optional(),
+    memory: optionalStringSchema,
     genericResources: z.array(GenericResourceSchema).nullish(),
 });
 
 const ResourceLimitsSchema = z.object({
     cpus: z.number().optional(),
-    memory: z.string().optional(),
+    memory: optionalStringSchema,
     pids: z.number().optional(),
 });
 
 const ResourceMemorySchema = z.object({
-    swap: z.string().optional(),
+    swap: optionalStringSchema,
     swappiness: z.number().nullish(),
-    shmSize: z.string().optional(),
+    shmSize: optionalStringSchema,
 });
 
 // BE Ulimit struct has no json tags, so fields are PascalCase

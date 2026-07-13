@@ -62,6 +62,7 @@ export function ResetUserPasswordDialog() {
                 <DialogActionFooter className="flex items-center justify-end gap-4">
                     <Button
                         type="button"
+                        className="min-w-[100px]"
                         variant="outline"
                         onClick={handleClose}
                     >

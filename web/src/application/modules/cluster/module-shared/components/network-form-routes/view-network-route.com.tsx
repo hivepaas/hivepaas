@@ -112,6 +112,7 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
                             <Button
                                 type="button"
                                 onClick={navigateToList}
+                                className="min-w-[100px]"
                             >
                                 Close
                             </Button>

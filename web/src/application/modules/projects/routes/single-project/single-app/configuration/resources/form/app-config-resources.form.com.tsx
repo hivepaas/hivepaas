@@ -14,7 +14,6 @@ import {
     MemoryFields,
     ResourceLimitFields,
     ResourceReservationFields,
-    UlimitsFields,
 } from "../building-blocks";
 import {
     AppConfigResourcesFormSchema,
@@ -99,9 +98,6 @@ export function AppConfigResourcesForm({ ref, defaultValues, onSubmit, readOnly 
                         </ContentBlock>
                         <ContentBlock label="Memory">
                             <MemoryFields />
-                        </ContentBlock>
-                        <ContentBlock label="Ulimits">
-                            <UlimitsFields />
                         </ContentBlock>
                         <ContentBlock label="Capabilities">
                             <CapabilitiesFields />

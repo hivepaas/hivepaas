@@ -2,10 +2,28 @@ import React, { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { Input } from "@components/ui/input";
-import { EyeIcon, EyeOffIcon, LayoutList, SearchIcon, TableCellsMerge } from "lucide-react";
+import {
+    AArrowUp,
+    ArrowDownAZ,
+    ArrowUpAZ,
+    EyeIcon,
+    EyeOffIcon,
+    LayoutList,
+    SearchIcon,
+    TableCellsMerge,
+} from "lucide-react";
 import { useDebounce } from "react-use";
 
-function View({ search, onRevealToggle, isRevealed, viewMode, onViewModeChange }: Props) {
+function View({
+    search,
+    onRevealToggle,
+    isRevealed,
+    viewMode,
+    onViewModeChange,
+    onSortCycle,
+    sortOrder = "normal",
+    readOnly,
+}: Props) {
     const [internalSearch, setInternalSearch] = useState(search?.value ?? "");
 
     useDebounce(
@@ -37,6 +55,34 @@ function View({ search, onRevealToggle, isRevealed, viewMode, onViewModeChange }
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
+                {/* Sort Button */}
+                {onSortCycle && (
+                    <Button
+                        type="button"
+                        variant={sortOrder !== "normal" ? "default" : "outline"}
+                        onClick={onSortCycle}
+                        disabled={readOnly}
+                        className="gap-2"
+                    >
+                        {sortOrder === "asc" ? (
+                            <>
+                                <ArrowDownAZ className="size-4" />
+                                <span>A → Z</span>
+                            </>
+                        ) : sortOrder === "desc" ? (
+                            <>
+                                <ArrowUpAZ className="size-4" />
+                                <span>Z → A</span>
+                            </>
+                        ) : (
+                            <>
+                                <AArrowUp className="size-4" />
+                                <span>Sort</span>
+                            </>
+                        )}
+                    </Button>
+                )}
+
                 {/* Reveal/Hide Toggle */}
                 <Button
                     type="button"
@@ -92,6 +138,9 @@ type Props = {
     onRevealToggle: () => void;
     viewMode: "merge" | "individual";
     onViewModeChange?: (mode: "merge" | "individual") => void;
+    onSortCycle?: () => void;
+    sortOrder?: "normal" | "asc" | "desc";
+    readOnly?: boolean;
 };
 
 export const EnvVarsFormHeader = React.memo(View);

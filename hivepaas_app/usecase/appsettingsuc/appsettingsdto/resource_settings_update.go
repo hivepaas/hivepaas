@@ -14,7 +14,6 @@ type UpdateAppResourceSettingsReq struct {
 	Reservations *ResourceReservations `json:"reservations"`
 	Limits       *ResourceLimits       `json:"limits"`
 	Memory       *Memory               `json:"memory"`
-	Ulimits      []*Ulimit             `json:"ulimits"`
 	Capabilities *Capabilities         `json:"capabilities"`
 
 	UpdateVer int `json:"updateVer"`

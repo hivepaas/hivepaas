@@ -40,7 +40,6 @@ type ResourceSettingsResp struct {
 	Reservations *ResourceReservations `json:"reservations"`
 	Limits       *ResourceLimits       `json:"limits"`
 	Memory       *Memory               `json:"memory"`
-	Ulimits      []*Ulimit             `json:"ulimits"`
 	Capabilities *Capabilities         `json:"capabilities"`
 
 	UpdateVer int `json:"updateVer"`
@@ -69,13 +68,8 @@ type Memory struct {
 	ShmSize    unit.DataSize `json:"shmSize"`
 }
 
-type Ulimit struct {
-	Name string
-	Hard int64
-	Soft int64
-}
-
 type Capabilities struct {
+	Ulimits        []*Ulimit         `json:"ulimits"`
 	CapabilityAdd  []string          `json:"capabilityAdd,omitempty"`
 	CapabilityDrop []string          `json:"capabilityDrop,omitempty"`
 	EnableGPU      bool              `json:"enableGPU,omitempty"`
@@ -96,6 +90,9 @@ func (c *Capabilities) Equal(other *Capabilities) bool {
 	if c.OomScoreAdj != other.OomScoreAdj {
 		return false
 	}
+	if !gofn.ContentEqualPtr(c.Ulimits, other.Ulimits) {
+		return false
+	}
 	if !gofn.ContentEqual(c.CapabilityAdd, other.CapabilityAdd) {
 		return false
 	}
@@ -106,6 +103,12 @@ func (c *Capabilities) Equal(other *Capabilities) bool {
 		return false
 	}
 	return true
+}
+
+type Ulimit struct {
+	Name string
+	Hard int64
+	Soft int64
 }
 
 func TransformResourceSettings(
@@ -119,7 +122,6 @@ func TransformResourceSettings(
 	resp.Reservations = TransformResourceReservations(spec.TaskTemplate.Resources)
 	resp.Limits = TransformResourceLimits(spec.TaskTemplate.Resources)
 	resp.Memory = TransformMemory(&spec.TaskTemplate)
-	resp.Ulimits = TransformUlimits(spec.TaskTemplate.ContainerSpec.Ulimits)
 	resp.Capabilities = TransformCapabilities(spec.TaskTemplate.ContainerSpec)
 
 	return resp, nil
@@ -184,20 +186,15 @@ func TransformMemory(taskSpec *swarm.TaskSpec) *Memory {
 	return resp
 }
 
-func TransformUlimits(ulimits []*container.Ulimit) []*Ulimit {
-	resp := make([]*Ulimit, 0, len(ulimits))
-	for _, ulimit := range ulimits {
-		resp = append(resp, &Ulimit{
-			Name: ulimit.Name,
-			Hard: ulimit.Hard,
-			Soft: ulimit.Soft,
-		})
-	}
-	return resp
-}
-
 func TransformCapabilities(containerSpec *swarm.ContainerSpec) *Capabilities {
 	return &Capabilities{
+		Ulimits: gofn.MapSlice(containerSpec.Ulimits, func(ulimit *container.Ulimit) *Ulimit {
+			return &Ulimit{
+				Name: ulimit.Name,
+				Hard: ulimit.Hard,
+				Soft: ulimit.Soft,
+			}
+		}),
 		CapabilityAdd:  containerSpec.CapabilityAdd,
 		CapabilityDrop: containerSpec.CapabilityDrop,
 		EnableGPU:      gofn.Contain(containerSpec.CapabilityAdd, "[gpu]"),

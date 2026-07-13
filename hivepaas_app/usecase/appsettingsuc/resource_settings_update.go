@@ -114,7 +114,6 @@ func (uc *UC) prepareUpdatingAppResourceSettings(
 	uc.prepareUpdatingAppResourceReservations(req, data)
 	uc.prepareUpdatingAppResourceLimits(req, data)
 	uc.prepareUpdatingAppMemory(req, data)
-	uc.prepareUpdatingAppResourceUlimits(req, data)
 	uc.prepareUpdatingAppCapabilities(req, data)
 }
 
@@ -203,26 +202,6 @@ func (uc *UC) prepareUpdatingAppMemory(
 	}
 }
 
-func (uc *UC) prepareUpdatingAppResourceUlimits(
-	req *appsettingsdto.UpdateAppResourceSettingsReq,
-	data *updateAppResourceSettingsData,
-) {
-	service := data.Service
-	containerSpec := service.Spec.TaskTemplate.ContainerSpec
-
-	containerSpec.Ulimits = make([]*container.Ulimit, 0, len(req.Ulimits))
-	for _, limit := range req.Ulimits {
-		if limit == nil {
-			continue
-		}
-		containerSpec.Ulimits = append(containerSpec.Ulimits, &container.Ulimit{
-			Name: limit.Name,
-			Hard: limit.Hard,
-			Soft: limit.Soft,
-		})
-	}
-}
-
 func (uc *UC) prepareUpdatingAppCapabilities(
 	req *appsettingsdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
@@ -233,6 +212,18 @@ func (uc *UC) prepareUpdatingAppCapabilities(
 	service := data.Service
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 
+	containerSpec.Ulimits = make([]*container.Ulimit, 0, len(req.Capabilities.Ulimits))
+	for _, limit := range req.Capabilities.Ulimits {
+		if limit == nil {
+			continue
+		}
+		containerSpec.Ulimits = append(containerSpec.Ulimits, &container.Ulimit{
+			Name: limit.Name,
+			Hard: limit.Hard,
+			Soft: limit.Soft,
+		})
+	}
+
 	containerSpec.CapabilityAdd = req.Capabilities.CapabilityAdd
 	containerSpec.CapabilityDrop = req.Capabilities.CapabilityDrop
 	if req.Capabilities.EnableGPU && !gofn.Contain(containerSpec.CapabilityAdd, "[gpu]") {
@@ -240,6 +231,7 @@ func (uc *UC) prepareUpdatingAppCapabilities(
 	} else if !req.Capabilities.EnableGPU {
 		containerSpec.CapabilityAdd = gofn.Drop(containerSpec.CapabilityAdd, "[gpu]")
 	}
+
 	containerSpec.OomScoreAdj = req.Capabilities.OomScoreAdj
 	containerSpec.Sysctls = req.Capabilities.Sysctls
 }

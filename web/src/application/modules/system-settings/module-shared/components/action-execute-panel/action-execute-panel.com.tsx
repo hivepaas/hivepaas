@@ -1,4 +1,3 @@
-import { FormActionBar } from "@application/shared/components";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 import type { ModuleId } from "@application/shared/permissions";
 
@@ -24,11 +23,9 @@ export function ActionExecutePanel({ message, buttonLabel, isLoading, permission
     );
 
     return (
-        <div className="rounded-lg border bg-background">
-            <div className="p-6">
+        <div className="rounded-lg border bg-background p-4 ">
+            <div className="flex flex-col items-start gap-6">
                 <p className="text-base text-foreground">{message}</p>
-            </div>
-            <FormActionBar>
                 {permissionModuleId ? (
                     <PermissionTooltipAction
                         id={permissionModuleId}
@@ -39,7 +36,7 @@ export function ActionExecutePanel({ message, buttonLabel, isLoading, permission
                 ) : (
                     button()
                 )}
-            </FormActionBar>
+            </div>
         </div>
     );
 }

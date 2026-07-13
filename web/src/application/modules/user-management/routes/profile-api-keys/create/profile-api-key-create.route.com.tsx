@@ -155,7 +155,7 @@ export function ProfileApiKeyCreateRoute() {
                     </div>
                 )}
 
-                <div className="pb-6 flex justify-end">
+                <div className="pb-0 flex justify-end">
                     {showForm ? (
                         <div className="flex items-center gap-3">
                             <Button

@@ -68,6 +68,7 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
                         onSearch={setSearchQuery}
                         placeholder="Select registry credentials"
                         searchable
+                        allowClear
                         closeOnSelect
                         emptyText="No registry credentials available"
                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}

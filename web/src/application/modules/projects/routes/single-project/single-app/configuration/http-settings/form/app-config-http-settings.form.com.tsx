@@ -1,14 +1,11 @@
 import React, { type PropsWithChildren, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-import { Button } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Trash2 } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
 
 import { ContentBlock } from "@application/shared/components";
-import { PopConfirm } from "@application/shared/components/pop-confirm";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -35,12 +32,10 @@ type SchemaOutput = AppConfigHttpSettingsFormSchemaOutput;
 function ConditionalDomainDetailSections({
     activeDomainIndex,
     setActiveDomainIndex,
-    onRemoveDomain,
     readOnly,
 }: {
     activeDomainIndex: number;
     setActiveDomainIndex: React.Dispatch<React.SetStateAction<number>>;
-    onRemoveDomain: (index: number) => void;
     readOnly: boolean;
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
@@ -70,34 +65,6 @@ function ConditionalDomainDetailSections({
 
     return (
         <>
-            <h3 className="font-medium bg-accent py-2 px-3 rounded-lg text-red-500 flex items-center justify-between">
-                Selected Domain: {activeDomain?.domain ?? ""}
-                <PopConfirm
-                    title="Remove domain"
-                    description="Confirm deletion of this domain?"
-                    confirmText="Remove"
-                    cancelText="Cancel"
-                    variant="destructive"
-                    onConfirm={() => {
-                        if (readOnly) {
-                            return;
-                        }
-
-                        onRemoveDomain(activeDomainIndex);
-                    }}
-                >
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                        title="Remove domain"
-                        disabled={readOnly}
-                    >
-                        <Trash2 className="size-3.5" />
-                    </Button>
-                </PopConfirm>
-            </h3>
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields
                     domainIndex={activeDomainIndex}
@@ -227,6 +194,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                                 setActiveDomainIndex={setActiveDomainIndex}
                                 internalEndpoints={defaultValues?.internalEndpoints ?? []}
                                 domainSuggestion={defaultValues?.domainSuggestion ?? ""}
+                                onRemoveDomain={handleRemoveDomain}
                                 readOnly={readOnly}
                             />
                         </div>
@@ -235,7 +203,6 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                             <ConditionalDomainDetailSections
                                 activeDomainIndex={activeDomainIndex}
                                 setActiveDomainIndex={setActiveDomainIndex}
-                                onRemoveDomain={handleRemoveDomain}
                                 readOnly={readOnly}
                             />
                         )}

@@ -38,7 +38,7 @@ function DomainChip({ domain, isFirst, isActive, readOnly, onClick, onMoveLeft, 
             onClick={onClick}
         >
             <span className="max-w-[160px] truncate">{domain || "(empty)"}</span>
-            {isActive && !isFirst && !readOnly && (
+            {!isFirst && !readOnly && (
                 <button
                     type="button"
                     title="Move left"
@@ -110,7 +110,7 @@ export function DomainSelector({
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const { append } = useFieldArray({ control, name: "domains" });
+    const { append, move } = useFieldArray({ control, name: "domains" });
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
     const domainValues = useWatch({ control, name: "domains", defaultValue: [] });
     const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
@@ -121,6 +121,7 @@ export function DomainSelector({
     const [domainInputError, setDomainInputError] = useState<string | null>(null);
 
     function handleMoveLeft(index: number) {
+        move(index, index - 1);
         setActiveDomainIndex(index - 1);
     }
 

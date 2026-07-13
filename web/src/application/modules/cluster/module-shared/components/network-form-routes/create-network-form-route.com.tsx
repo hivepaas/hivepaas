@@ -105,6 +105,7 @@ export function CreateNetworkFormRoute({ scope }: Props) {
                         <Button
                             type="button"
                             onClick={navigateToList}
+                            className="min-w-[100px]"
                         >
                             Close
                         </Button>

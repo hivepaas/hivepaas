@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useImperativeHandle, useState } from "react";
+import React, { type PropsWithChildren, useImperativeHandle, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
@@ -42,6 +42,32 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
     const [search, setSearch] = useState("");
     const [isRevealed, setIsRevealed] = useState(false);
     const [viewMode, setViewMode] = useState<"merge" | "individual">("individual");
+    const [sortOrder, setSortOrder] = useState<"normal" | "asc" | "desc">("normal");
+    const originalOrderRef = useRef<{ buildtime: SchemaInput["buildtime"]; runtime: SchemaInput["runtime"] } | null>(
+        null,
+    );
+
+    function handleSortCycle() {
+        const next = sortOrder === "normal" ? "asc" : sortOrder === "asc" ? "desc" : "normal";
+
+        if (next === "asc" || next === "desc") {
+            originalOrderRef.current ??= {
+                buildtime: methods.getValues("buildtime"),
+                runtime: methods.getValues("runtime"),
+            };
+            const sorter = (a: { key: string }, b: { key: string }) =>
+                next === "asc" ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key);
+            methods.setValue("buildtime", [...methods.getValues("buildtime")].sort(sorter), { shouldDirty: true });
+            methods.setValue("runtime", [...methods.getValues("runtime")].sort(sorter), { shouldDirty: true });
+        } else {
+            if (originalOrderRef.current) {
+                methods.setValue("buildtime", originalOrderRef.current.buildtime, { shouldDirty: true });
+                methods.setValue("runtime", originalOrderRef.current.runtime, { shouldDirty: true });
+                originalOrderRef.current = null;
+            }
+        }
+        setSortOrder(next);
+    }
 
     function onValid(values: SchemaOutput) {
         if (readOnly) {
@@ -114,6 +140,9 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                             }}
                             viewMode={viewMode}
                             onViewModeChange={setViewMode}
+                            onSortCycle={handleSortCycle}
+                            sortOrder={sortOrder}
+                            readOnly={readOnly}
                         />
 
                         <EnvVarsBaseForm

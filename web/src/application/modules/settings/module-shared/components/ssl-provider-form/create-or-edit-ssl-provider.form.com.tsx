@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
-import { SSL_KEY_TYPE_OPTIONS, SSL_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
+import { SSL_KEY_TYPE_OPTIONS, SSL_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESslProviderKind } from "@application/shared/enums";
@@ -345,6 +345,7 @@ export function CreateOrEditSslProviderForm({
                 <FormActionBar>
                     <Button
                         type="button"
+                        className="min-w-[100px]"
                         onClick={onClose}
                     >
                         Close

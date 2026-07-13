@@ -84,7 +84,7 @@ export function ViewNetworkDialog() {
                 <DialogActionFooter className="flex justify-end">
                     <Button
                         type="button"
-                        className="min-w-[120px]"
+                        className="min-w-[100px]"
                         onClick={handleClose}
                     >
                         Close

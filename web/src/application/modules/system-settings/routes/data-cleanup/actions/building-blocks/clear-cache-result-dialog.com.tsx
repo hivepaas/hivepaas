@@ -48,7 +48,7 @@ export function ClearCacheResultDialog({ open, title, rows, onOpenChange }: Clea
                 <DialogActionFooter className="flex justify-end">
                     <Button
                         type="button"
-                        className="min-w-[120px]"
+                        className="min-w-[100px]"
                         onClick={() => {
                             onOpenChange(false);
                         }}

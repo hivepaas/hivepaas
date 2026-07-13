@@ -116,6 +116,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                             <Button
                                 type="button"
                                 onClick={navigateToList}
+                                className="min-w-[100px]"
                             >
                                 Close
                             </Button>

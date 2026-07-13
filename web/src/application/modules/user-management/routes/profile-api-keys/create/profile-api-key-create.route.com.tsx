@@ -179,6 +179,7 @@ export function ProfileApiKeyCreateRoute() {
                     ) : (
                         <Button
                             type="button"
+                            className="min-w-[100px]"
                             onClick={handleClose}
                         >
                             Close

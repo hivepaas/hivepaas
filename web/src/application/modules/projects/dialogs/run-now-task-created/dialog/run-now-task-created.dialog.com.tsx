@@ -76,6 +76,7 @@ export function RunNowTaskCreatedDialog() {
                     <Button
                         type="button"
                         onClick={handleClose}
+                        className="min-w-[100px]"
                     >
                         Close
                     </Button>

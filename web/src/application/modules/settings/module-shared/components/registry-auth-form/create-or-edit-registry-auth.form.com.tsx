@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
+
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
@@ -270,6 +270,7 @@ export function CreateOrEditRegistryAuthForm({
                     <Button
                         type="button"
                         onClick={onClose}
+                        className="min-w-[100px]"
                     >
                         Close
                     </Button>

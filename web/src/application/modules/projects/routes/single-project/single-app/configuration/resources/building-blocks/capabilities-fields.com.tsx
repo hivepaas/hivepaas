@@ -12,6 +12,8 @@ import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
+import { UlimitsFields } from "./ulimits-fields.com";
+
 export function CapabilitiesFields() {
     const { control } = useFormContext<
         AppConfigResourcesFormSchemaInput,
@@ -44,6 +46,8 @@ export function CapabilitiesFields() {
                     the <span className="font-medium text-orange-500">Cluster</span> module to apply these changes.
                 </p>
             </div>
+
+            <UlimitsFields />
 
             <InfoBlock
                 title={

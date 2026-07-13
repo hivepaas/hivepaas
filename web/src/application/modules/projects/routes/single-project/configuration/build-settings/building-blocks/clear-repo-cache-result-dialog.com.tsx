@@ -55,7 +55,7 @@ export function ClearRepoCacheResultDialog({ open, result, onOpenChange }: Clear
                 <DialogActionFooter className="flex justify-end">
                     <Button
                         type="button"
-                        className="min-w-[120px]"
+                        className="min-w-[100px]"
                         onClick={() => {
                             onOpenChange(false);
                         }}

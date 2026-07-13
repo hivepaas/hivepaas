@@ -6,7 +6,6 @@ import { ACME_DNS_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/ac
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { EAcmeDnsProviderKind } from "@application/shared/enums";
 
 import {
     Button,
@@ -31,48 +30,8 @@ import {
     type CreateOrEditAcmeDnsProviderFormInput,
     type CreateOrEditAcmeDnsProviderFormOutput,
     CreateOrEditAcmeDnsProviderFormSchema,
+    DEFAULT_ACME_DNS_PROVIDER_FORM_VALUES,
 } from "./create-or-edit-acme-dns-provider.form.schema";
-
-export const DEFAULT_ACME_DNS_PROVIDER_FORM_VALUES: CreateOrEditAcmeDnsProviderFormInput = {
-    name: "",
-    kind: EAcmeDnsProviderKind.AcmeDNS,
-    acmeDnsApiBase: "",
-    acmeDnsAllowList: "",
-    acmeDnsStoragePath: "",
-    acmeDnsStorageBaseUrl: "",
-    azureClientId: "",
-    azureClientSecret: "",
-    azureSubscriptionId: "",
-    azureTenantId: "",
-    azureResourceGroupName: "",
-    baiduCloudAccessKey: "",
-    baiduCloudSecretKey: "",
-    cloudflareAuthToken: "",
-    digitalOceanAuthToken: "",
-    gCloudServiceAccount: "",
-    gCloudProjectId: "",
-    goDaddyApiKey: "",
-    goDaddyApiSecret: "",
-    hetznerApiToken: "",
-    huaweiCloudAccessKey: "",
-    huaweiCloudSecretKey: "",
-    huaweiCloudRegion: "",
-    namecheapApiUser: "",
-    namecheapApiKey: "",
-    rfc2136Nameserver: "",
-    rfc2136TsigKeyName: "",
-    rfc2136TsigSecret: "",
-    rfc2136TsigAlgorithm: "",
-    route53AccessKeyId: "",
-    route53SecretAccessKey: "",
-    route53HostedZoneId: "",
-    route53Region: "",
-    tencentCloudSecretId: "",
-    tencentCloudSecretKey: "",
-    tencentCloudRegion: "",
-    availableInProjects: false,
-    default: false,
-};
 
 export function CreateOrEditAcmeDnsProviderForm({
     isPending,
@@ -298,6 +257,7 @@ export function CreateOrEditAcmeDnsProviderForm({
                         <Button
                             type="button"
                             onClick={onClose}
+                            className="min-w-[100px]"
                         >
                             Close
                         </Button>

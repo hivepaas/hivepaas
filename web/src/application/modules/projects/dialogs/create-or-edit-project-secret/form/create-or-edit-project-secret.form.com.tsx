@@ -257,6 +257,7 @@ export function CreateOrEditProjectSecretForm({
                         <Button
                             type="button"
                             onClick={onClose}
+                            className="min-w-[100px]"
                         >
                             Close
                         </Button>

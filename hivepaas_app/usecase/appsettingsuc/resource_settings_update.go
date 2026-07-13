@@ -193,10 +193,13 @@ func (uc *UC) prepareUpdatingAppMemory(
 	}
 
 	if req.Memory != nil {
-		taskSpec.Resources.SwapBytes = new(req.Memory.Swap.Truncate(unit.MB).Bytes())
+		if req.Memory.Swap != nil {
+			taskSpec.Resources.SwapBytes = new(req.Memory.Swap.Truncate(unit.MB).Bytes())
+		}
+
 		taskSpec.Resources.MemorySwappiness = req.Memory.Swappiness
 
-		if req.Memory.ShmSize > unit.MB {
+		if req.Memory.ShmSize != nil && *req.Memory.ShmSize > unit.MB {
 			dockerhelper.SetShmSize(taskSpec, req.Memory.ShmSize.Truncate(unit.MB).Bytes())
 		}
 	}

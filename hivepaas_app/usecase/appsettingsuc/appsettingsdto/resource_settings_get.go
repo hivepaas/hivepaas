@@ -63,13 +63,13 @@ type ResourceLimits struct {
 }
 
 type Memory struct {
-	Swap       unit.DataSize `json:"swap"`
-	Swappiness *int64        `json:"swappiness"`
-	ShmSize    unit.DataSize `json:"shmSize"`
+	Swap       *unit.DataSize `json:"swap"`
+	Swappiness *int64         `json:"swappiness"`
+	ShmSize    *unit.DataSize `json:"shmSize"`
 }
 
 type Capabilities struct {
-	Ulimits        []*Ulimit         `json:"ulimits"`
+	Ulimits        []*Ulimit         `json:"ulimits,omitempty"`
 	CapabilityAdd  []string          `json:"capabilityAdd,omitempty"`
 	CapabilityDrop []string          `json:"capabilityDrop,omitempty"`
 	EnableGPU      bool              `json:"enableGPU,omitempty"`
@@ -175,13 +175,13 @@ func TransformMemory(taskSpec *swarm.TaskSpec) *Memory {
 			resp.Swappiness = taskSpec.Resources.MemorySwappiness
 		}
 		if taskSpec.Resources.SwapBytes != nil {
-			resp.Swap = unit.DataSize(*taskSpec.Resources.SwapBytes)
+			resp.Swap = new(unit.DataSize(*taskSpec.Resources.SwapBytes))
 		}
 	}
 	// Shm size (extract from Tmpfs mount)
 	shmMount := dockerhelper.GetShmMount(taskSpec)
 	if shmMount != nil && shmMount.TmpfsOptions != nil {
-		resp.ShmSize = unit.DataSize(shmMount.TmpfsOptions.SizeBytes)
+		resp.ShmSize = new(unit.DataSize(shmMount.TmpfsOptions.SizeBytes))
 	}
 	return resp
 }

@@ -149,6 +149,19 @@ export function CompressionConfigSection({
                                 <FieldError errors={[defaultEncodingError]} />
                             </InfoBlock>
 
+                            <InfoBlock title="Included Content Types">
+                                <Textarea
+                                    {...includedContentTypes}
+                                    value={includedContentTypes.value}
+                                    onChange={includedContentTypes.onChange}
+                                    placeholder="auto compress all text types"
+                                    rows={2}
+                                    className={`resize-y ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}
+                                    aria-invalid={isIncludedContentTypesInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[includedContentTypesError]} />
+                            </InfoBlock>
                             <InfoBlock title="Excluded Content Types">
                                 <Textarea
                                     {...excludedContentTypes}
@@ -163,19 +176,6 @@ export function CompressionConfigSection({
                                 <FieldError errors={[excludedContentTypesError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Included Content Types">
-                                <Textarea
-                                    {...includedContentTypes}
-                                    value={includedContentTypes.value}
-                                    onChange={includedContentTypes.onChange}
-                                    placeholder="text/html"
-                                    rows={2}
-                                    className={`resize-y ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}
-                                    aria-invalid={isIncludedContentTypesInvalid}
-                                    disabled={readOnly}
-                                />
-                                <FieldError errors={[includedContentTypesError]} />
-                            </InfoBlock>
                             <InfoBlock title="Min Response Body Size">
                                 <Input
                                     value={minResponseBody.value}

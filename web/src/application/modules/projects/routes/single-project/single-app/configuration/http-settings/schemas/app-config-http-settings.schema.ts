@@ -141,22 +141,7 @@ export function createDefaultCompressionConfig(): z.infer<typeof HttpCompression
     return {
         enabled: true,
         excludedContentTypes: "",
-        includedContentTypes: `text/plain
-text/html
-text/css
-text/javascript
-text/xml
-application/javascript
-application/json
-application/xml
-application/xml+rss
-application/manifest+json
-application/vnd.api+json
-image/svg+xml
-image/x-icon
-font/eot
-font/otf
-font/ttf`,
+        includedContentTypes: "",
         minResponseBody: "1kb",
         defaultEncoding: "br",
     };

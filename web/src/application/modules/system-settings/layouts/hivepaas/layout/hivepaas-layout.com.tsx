@@ -62,4 +62,4 @@ function View({ children }: PropsWithChildren) {
     );
 }
 
-export const LocalPaaSLayout = memo(View);
+export const HivePaaSLayout = memo(View);

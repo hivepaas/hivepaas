@@ -5,13 +5,13 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const dashboardRoot = resolve(scriptDir, "..");
 const repoRoot = resolve(dashboardRoot, "..");
-const backendRoot = join(repoRoot, "localpaas");
+const backendRoot = join(repoRoot, "hivepaas");
 
 const errors = [];
 
 const requiredFiles = [
-    ".cursor/rules/localpaas-dashboard-fe.mdc",
-    ".cursor/rules/localpaas-backend.mdc",
+    ".cursor/rules/hivepaas-dashboard-fe.mdc",
+    ".cursor/rules/hivepaas-backend.mdc",
     ".agents/skills/fe-dev/SKILL.md",
     ".agents/skills/fe-dev/agents/openai.yaml",
     ".agents/skills/convention-enforcer/SKILL.md",
@@ -20,25 +20,25 @@ const requiredFiles = [
     ".agents/skills/api-layer-review/agents/openai.yaml",
     ".agents/skills/backend-dev/SKILL.md",
     ".agents/skills/backend-dev/agents/openai.yaml",
-    "localpaas/.gitignore",
-    "localpaas/.cursor/rules/backend-architecture.mdc",
-    "localpaas/.cursor/rules/backend-api.mdc",
-    "localpaas/.cursor/rules/backend-data-migrations.mdc",
-    "localpaas/.cursor/rules/backend-quality.mdc",
-    "localpaas/docs/DEVELOPMENT_GUIDELINES.md",
-    "localpaas-dashboard/.cursor/rules/frontend-architecture.mdc",
-    "localpaas-dashboard/.cursor/rules/api-data-layer.mdc",
-    "localpaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc",
-    "localpaas-dashboard/.cursor/rules/quality-checks.mdc",
-    "localpaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md",
-    "localpaas-dashboard/docs/API_SERVICE_GUIDELINES.md",
-    "localpaas-dashboard/docs/DIALOGS.md",
-    "localpaas-dashboard/scripts/check-agent-setup.mjs",
+    "hivepaas/.gitignore",
+    "hivepaas/.cursor/rules/backend-architecture.mdc",
+    "hivepaas/.cursor/rules/backend-api.mdc",
+    "hivepaas/.cursor/rules/backend-data-migrations.mdc",
+    "hivepaas/.cursor/rules/backend-quality.mdc",
+    "hivepaas/docs/DEVELOPMENT_GUIDELINES.md",
+    "hivepaas-dashboard/.cursor/rules/frontend-architecture.mdc",
+    "hivepaas-dashboard/.cursor/rules/api-data-layer.mdc",
+    "hivepaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc",
+    "hivepaas-dashboard/.cursor/rules/quality-checks.mdc",
+    "hivepaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md",
+    "hivepaas-dashboard/docs/API_SERVICE_GUIDELINES.md",
+    "hivepaas-dashboard/docs/DIALOGS.md",
+    "hivepaas-dashboard/scripts/check-agent-setup.mjs",
 ];
 
 const setupFiles = [
-    ".cursor/rules/localpaas-dashboard-fe.mdc",
-    ".cursor/rules/localpaas-backend.mdc",
+    ".cursor/rules/hivepaas-dashboard-fe.mdc",
+    ".cursor/rules/hivepaas-backend.mdc",
     ".agents/skills/fe-dev/SKILL.md",
     ".agents/skills/fe-dev/agents/openai.yaml",
     ".agents/skills/convention-enforcer/SKILL.md",
@@ -47,40 +47,40 @@ const setupFiles = [
     ".agents/skills/api-layer-review/agents/openai.yaml",
     ".agents/skills/backend-dev/SKILL.md",
     ".agents/skills/backend-dev/agents/openai.yaml",
-    "localpaas/.gitignore",
-    "localpaas/.cursor/rules/backend-architecture.mdc",
-    "localpaas/.cursor/rules/backend-api.mdc",
-    "localpaas/.cursor/rules/backend-data-migrations.mdc",
-    "localpaas/.cursor/rules/backend-quality.mdc",
-    "localpaas/docs/DEVELOPMENT_GUIDELINES.md",
-    "localpaas-dashboard/.cursor/rules/frontend-architecture.mdc",
-    "localpaas-dashboard/.cursor/rules/api-data-layer.mdc",
-    "localpaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc",
-    "localpaas-dashboard/.cursor/rules/quality-checks.mdc",
-    "localpaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md",
-    "localpaas-dashboard/docs/API_SERVICE_GUIDELINES.md",
-    "localpaas-dashboard/package.json",
-    "localpaas-dashboard/scripts/check-agent-setup.mjs",
+    "hivepaas/.gitignore",
+    "hivepaas/.cursor/rules/backend-architecture.mdc",
+    "hivepaas/.cursor/rules/backend-api.mdc",
+    "hivepaas/.cursor/rules/backend-data-migrations.mdc",
+    "hivepaas/.cursor/rules/backend-quality.mdc",
+    "hivepaas/docs/DEVELOPMENT_GUIDELINES.md",
+    "hivepaas-dashboard/.cursor/rules/frontend-architecture.mdc",
+    "hivepaas-dashboard/.cursor/rules/api-data-layer.mdc",
+    "hivepaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc",
+    "hivepaas-dashboard/.cursor/rules/quality-checks.mdc",
+    "hivepaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md",
+    "hivepaas-dashboard/docs/API_SERVICE_GUIDELINES.md",
+    "hivepaas-dashboard/package.json",
+    "hivepaas-dashboard/scripts/check-agent-setup.mjs",
 ];
 
 const expectedSkills = new Map([
-    ["fe-dev", "LocalPaaS Dashboard"],
-    ["convention-enforcer", "LocalPaaS Dashboard"],
-    ["api-layer-review", "LocalPaaS Dashboard"],
-    ["backend-dev", "LocalPaaS Go backend"],
+    ["fe-dev", "HivePaaS Dashboard"],
+    ["convention-enforcer", "HivePaaS Dashboard"],
+    ["api-layer-review", "HivePaaS Dashboard"],
+    ["backend-dev", "HivePaaS Go backend"],
 ]);
 
 const expectedRules = new Map([
-    [".cursor/rules/localpaas-dashboard-fe.mdc", true],
-    [".cursor/rules/localpaas-backend.mdc", true],
-    ["localpaas-dashboard/.cursor/rules/frontend-architecture.mdc", false],
-    ["localpaas-dashboard/.cursor/rules/api-data-layer.mdc", false],
-    ["localpaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc", false],
-    ["localpaas-dashboard/.cursor/rules/quality-checks.mdc", false],
-    ["localpaas/.cursor/rules/backend-architecture.mdc", false],
-    ["localpaas/.cursor/rules/backend-api.mdc", false],
-    ["localpaas/.cursor/rules/backend-data-migrations.mdc", false],
-    ["localpaas/.cursor/rules/backend-quality.mdc", false],
+    [".cursor/rules/hivepaas-dashboard-fe.mdc", true],
+    [".cursor/rules/hivepaas-backend.mdc", true],
+    ["hivepaas-dashboard/.cursor/rules/frontend-architecture.mdc", false],
+    ["hivepaas-dashboard/.cursor/rules/api-data-layer.mdc", false],
+    ["hivepaas-dashboard/.cursor/rules/routing-dialogs-ui.mdc", false],
+    ["hivepaas-dashboard/.cursor/rules/quality-checks.mdc", false],
+    ["hivepaas/.cursor/rules/backend-architecture.mdc", false],
+    ["hivepaas/.cursor/rules/backend-api.mdc", false],
+    ["hivepaas/.cursor/rules/backend-data-migrations.mdc", false],
+    ["hivepaas/.cursor/rules/backend-quality.mdc", false],
 ]);
 
 const joinText = parts => parts.join("");
@@ -164,8 +164,8 @@ function checkSkill(skillName, expectedPhrase) {
         fail(`Prompt metadata must include display_name and default_prompt: ${display(metadataPath)}`);
     }
 
-    if (!metadata.includes("LocalPaaS")) {
-        fail(`Prompt metadata should mention LocalPaaS: ${display(metadataPath)}`);
+    if (!metadata.includes("HivePaaS")) {
+        fail(`Prompt metadata should mention HivePaaS: ${display(metadataPath)}`);
     }
 }
 
@@ -223,8 +223,8 @@ function checkRuleInventory(root, expectedPrefix, label) {
 }
 
 function checkRuleInventories() {
-    checkRuleInventory(dashboardRoot, "localpaas-dashboard/.cursor/rules/", "dashboard");
-    checkRuleInventory(backendRoot, "localpaas/.cursor/rules/", "backend");
+    checkRuleInventory(dashboardRoot, "hivepaas-dashboard/.cursor/rules/", "dashboard");
+    checkRuleInventory(backendRoot, "hivepaas/.cursor/rules/", "backend");
 }
 
 function checkStaleRefs() {
@@ -251,8 +251,8 @@ function checkRequiredContent() {
     const backendGuidelines = read(join(backendRoot, "docs/DEVELOPMENT_GUIDELINES.md"));
 
     for (const [label, content] of [
-        ["localpaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md", dashboardGuidelines],
-        ["localpaas/docs/DEVELOPMENT_GUIDELINES.md", backendGuidelines],
+        ["hivepaas-dashboard/docs/DEVELOPMENT_GUIDELINES.md", dashboardGuidelines],
+        ["hivepaas/docs/DEVELOPMENT_GUIDELINES.md", backendGuidelines],
     ]) {
         for (const heading of ["## Agent Quick Start", "## Rule Map"]) {
             if (!content.includes(heading)) {
@@ -262,31 +262,31 @@ function checkRequiredContent() {
     }
 
     if (!backendGuidelines.includes("## MCP Policy")) {
-        fail("Missing ## MCP Policy in localpaas/docs/DEVELOPMENT_GUIDELINES.md");
+        fail("Missing ## MCP Policy in hivepaas/docs/DEVELOPMENT_GUIDELINES.md");
     }
 
     if (!backendGuidelines.includes("Do not add `mcp.json` or `.mcp.json` by default.")) {
         fail("Backend guidelines must document the MCP opt-in policy");
     }
 
-    const frontendPointer = read(repoPath(".cursor/rules/localpaas-dashboard-fe.mdc"));
-    if (!frontendPointer.includes("frontend app root is `localpaas-dashboard/`")) {
-        fail("Root Cursor pointer must identify localpaas-dashboard/ as the frontend app root");
+    const frontendPointer = read(repoPath(".cursor/rules/hivepaas-dashboard-fe.mdc"));
+    if (!frontendPointer.includes("frontend app root is `hivepaas-dashboard/`")) {
+        fail("Root Cursor pointer must identify hivepaas-dashboard/ as the frontend app root");
     }
 
-    const backendPointer = read(repoPath(".cursor/rules/localpaas-backend.mdc"));
-    if (!backendPointer.includes("backend app root is `localpaas/`")) {
-        fail("Root Cursor pointer must identify localpaas/ as the backend app root");
+    const backendPointer = read(repoPath(".cursor/rules/hivepaas-backend.mdc"));
+    if (!backendPointer.includes("backend app root is `hivepaas/`")) {
+        fail("Root Cursor pointer must identify hivepaas/ as the backend app root");
     }
 
     const backendGitignoreLines = read(join(backendRoot, ".gitignore")).split(/\r?\n/);
     if (backendGitignoreLines.includes("/.cursor")) {
-        fail("localpaas/.gitignore must allow committed backend Cursor rules");
+        fail("hivepaas/.gitignore must allow committed backend Cursor rules");
     }
 
     for (const requiredLine of ["/.cursor/*", "!/.cursor/rules/", "!/.cursor/rules/*.mdc"]) {
         if (!backendGitignoreLines.includes(requiredLine)) {
-            fail(`localpaas/.gitignore must include ${requiredLine}`);
+            fail(`hivepaas/.gitignore must include ${requiredLine}`);
         }
     }
 }
@@ -307,7 +307,7 @@ function pathContextRoot(sourcePath) {
 }
 
 function resolveReferencedPath(rawPath, sourcePath) {
-    if (rawPath.startsWith("localpaas/") || rawPath.startsWith("localpaas-dashboard/")) {
+    if (rawPath.startsWith("hivepaas/") || rawPath.startsWith("hivepaas-dashboard/")) {
         return repoPath(rawPath);
     }
 
@@ -320,7 +320,7 @@ function resolveReferencedPath(rawPath, sourcePath) {
     }
 
     if (
-        rawPath.startsWith("localpaas_app/") ||
+        rawPath.startsWith("hivepaas_app/") ||
         rawPath.startsWith("config/") ||
         rawPath.startsWith("deployment/") ||
         rawPath === "Makefile"
@@ -341,7 +341,7 @@ function shouldSkipReferencedPath(rawPath) {
 
 function checkReferencedPaths() {
     const candidatePattern =
-        /`((?:(?:localpaas|localpaas-dashboard)\/|\.agents\/|\.cursor\/|localpaas_app\/|docs\/|src\/|config\/|deployment\/|tools\/|scripts\/|Makefile)[^`]+)`/g;
+        /`((?:(?:hivepaas|hivepaas-dashboard)\/|\.agents\/|\.cursor\/|hivepaas_app\/|docs\/|src\/|config\/|deployment\/|tools\/|scripts\/|Makefile)[^`]+)`/g;
 
     for (const path of setupFiles) {
         const absolutePath = repoPath(path);

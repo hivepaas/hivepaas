@@ -1,12 +1,12 @@
 ---
-description: LocalPaaS Dashboard frontend architecture and module conventions
+description: HivePaaS Dashboard frontend architecture and module conventions
 globs: src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
 # Frontend Architecture
 
-- Treat `localpaas-dashboard/` as the frontend project root.
+- Treat `hivepaas-dashboard/` as the frontend project root.
 - Keep feature code inside the owning module under `src/application/modules/<module>`.
 - Use `src/application/shared` only for cross-module UI, hooks, pages, layouts, dialogs, constants, and data utilities.
 - Use `src/infrastructure` for framework/client primitives, API plumbing, exceptions, device services, and generic data types.

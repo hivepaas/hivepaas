@@ -1,6 +1,6 @@
 ## API Service Guidelines
 
-This guideline documents the standard process to build a complete API surface for any entity in LocalPaaS Dashboard. It covers service and validator implementation, wiring into the API context, React hooks, data queries, and commands. Follow alongside `docs/DEVELOPMENT_GUIDELINES.md` for cross-cutting rules (imports, Zod, Result pattern, query keys, etc.).
+This guideline documents the standard process to build a complete API surface for any entity in HivePaaS Dashboard. It covers service and validator implementation, wiring into the API context, React hooks, data queries, and commands. Follow alongside `docs/DEVELOPMENT_GUIDELINES.md` for cross-cutting rules (imports, Zod, Result pattern, query keys, etc.).
 
 ### Scope and Outcomes
 

@@ -1,5 +1,5 @@
 export const QK = {
-    "system-settings.localpaas.service-settings.find-one": "system-settings.localpaas.service-settings.find-one",
+    "system-settings.hivepaas.service-settings.find-one": "system-settings.hivepaas.service-settings.find-one",
     "system-settings.traefik.service-settings.find-one": "system-settings.traefik.service-settings.find-one",
     "system-settings.backup.find-one": "system-settings.backup.find-one",
     "system-settings.backup-files.find-many-paginated": "system-settings.backup-files.find-many-paginated",

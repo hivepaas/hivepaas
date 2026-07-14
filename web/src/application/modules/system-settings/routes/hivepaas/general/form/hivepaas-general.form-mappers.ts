@@ -1,8 +1,8 @@
-import type { LocalPaaSServiceSettings } from "~/system-settings/domain";
+import type { HivePaaSServiceSettings } from "~/system-settings/domain";
 
-import type { LocalPaaSGeneralFormInput } from "../schemas";
+import type { HivePaaSGeneralFormInput } from "../schemas";
 
-export function mapLocalPaaSServiceSettingsToFormInput(settings: LocalPaaSServiceSettings): LocalPaaSGeneralFormInput {
+export function mapHivePaaSServiceSettingsToFormInput(settings: HivePaaSServiceSettings): HivePaaSGeneralFormInput {
     return {
         appSettings: {
             replicas: settings.appSettings.replicas,

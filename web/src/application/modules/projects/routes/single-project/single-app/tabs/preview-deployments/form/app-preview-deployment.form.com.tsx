@@ -122,7 +122,7 @@ export function AppPreviewDeploymentForm({
                     {!isDashboardUI && (
                         <div className="rounded-md border border-dashed border-primary/70 bg-muted/30 px-6 py-5">
                             <p className="text-sm">
-                                Type <span className="font-medium text-orange-500">/localpaas deploy</span> in the pull
+                                Type <span className="font-medium text-orange-500">/hivepaas deploy</span> in the pull
                                 request you want to deploy.
                             </p>
                             <p className="mt-4 text-sm">

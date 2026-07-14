@@ -7,24 +7,24 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
-import type { LocalPaaSServiceSettings } from "~/system-settings/domain";
+import type { HivePaaSServiceSettings } from "~/system-settings/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
 import {
-    type LocalPaaSGeneralFormInput,
-    type LocalPaaSGeneralFormOutput,
-    LocalPaaSGeneralFormSchema,
-    emptyLocalPaaSGeneralFormDefaults,
+    type HivePaaSGeneralFormInput,
+    type HivePaaSGeneralFormOutput,
+    HivePaaSGeneralFormSchema,
+    emptyHivePaaSGeneralFormDefaults,
 } from "../schemas";
-import type { LocalPaaSGeneralFormRef } from "../types";
+import type { HivePaaSGeneralFormRef } from "../types";
 
-import { mapLocalPaaSServiceSettingsToFormInput } from "./localpaas-general.form-mappers";
+import { mapHivePaaSServiceSettingsToFormInput } from "./hivepaas-general.form-mappers";
 
-type SchemaInput = LocalPaaSGeneralFormInput;
-type SchemaOutput = LocalPaaSGeneralFormOutput;
+type SchemaInput = HivePaaSGeneralFormInput;
+type SchemaOutput = HivePaaSGeneralFormOutput;
 
 function SectionHeader({ children }: PropsWithChildren) {
     return <div className="rounded-lg bg-muted px-4 py-3 text-sm font-semibold text-foreground">{children}</div>;
@@ -132,18 +132,18 @@ function RunWorkerInMainAppField() {
     );
 }
 
-export function LocalPaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
-            ? mapLocalPaaSServiceSettingsToFormInput(defaultValues)
-            : emptyLocalPaaSGeneralFormDefaults,
-        resolver: zodResolver(LocalPaaSGeneralFormSchema),
+            ? mapHivePaaSServiceSettingsToFormInput(defaultValues)
+            : emptyHivePaaSGeneralFormDefaults,
+        resolver: zodResolver(HivePaaSGeneralFormSchema),
         mode: "onSubmit",
     });
 
     useUpdateEffect(() => {
         methods.reset(
-            defaultValues ? mapLocalPaaSServiceSettingsToFormInput(defaultValues) : emptyLocalPaaSGeneralFormDefaults,
+            defaultValues ? mapHivePaaSServiceSettingsToFormInput(defaultValues) : emptyHivePaaSGeneralFormDefaults,
         );
     }, [defaultValues]);
 
@@ -285,8 +285,8 @@ type DurationFieldProps = {
 };
 
 type Props = PropsWithChildren<{
-    ref?: React.Ref<LocalPaaSGeneralFormRef>;
-    defaultValues?: LocalPaaSServiceSettings;
+    ref?: React.Ref<HivePaaSGeneralFormRef>;
+    defaultValues?: HivePaaSServiceSettings;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
 }>;

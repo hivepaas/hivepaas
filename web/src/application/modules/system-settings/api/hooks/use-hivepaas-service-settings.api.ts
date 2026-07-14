@@ -3,21 +3,21 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
 import type {
-    LocalPaaSServiceSettings_FindOne_Req,
-    LocalPaaSServiceSettings_UpdateOne_Req,
+    HivePaaSServiceSettings_FindOne_Req,
+    HivePaaSServiceSettings_UpdateOne_Req,
 } from "~/system-settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
-    return function useLocalPaaSServiceSettingsApi() {
+    return function useHivePaaSServiceSettingsApi() {
         const { api } = use(SystemSettingsApiContext);
         const { notifyError } = useApiErrorNotifications();
 
         const queries = useMemo(
             () => ({
-                findOne: async (data: LocalPaaSServiceSettings_FindOne_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.systemSettings.localpaasServiceSettings.findOne({ data }, signal);
+                findOne: async (data: HivePaaSServiceSettings_FindOne_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.systemSettings.hivepaasServiceSettings.findOne({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,
@@ -33,8 +33,8 @@ function createHook() {
 
         const mutations = useMemo(
             () => ({
-                updateOne: async (data: LocalPaaSServiceSettings_UpdateOne_Req["data"]) => {
-                    const result = await api.systemSettings.localpaasServiceSettings.updateOne({ data });
+                updateOne: async (data: HivePaaSServiceSettings_UpdateOne_Req["data"]) => {
+                    const result = await api.systemSettings.hivepaasServiceSettings.updateOne({ data });
 
                     return match(result, {
                         Ok: _ => _,
@@ -52,4 +52,4 @@ function createHook() {
     };
 }
 
-export const useLocalPaaSServiceSettingsApi = createHook();
+export const useHivePaaSServiceSettingsApi = createHook();

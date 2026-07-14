@@ -1,8 +1,8 @@
-# LocalPaaS Dashboard Development Guidelines
+# HivePaaS Dashboard Development Guidelines
 
 ## Project Root
 
-Work from `localpaas-dashboard/` for frontend tasks.
+Work from `hivepaas-dashboard/` for frontend tasks.
 
 Common scripts:
 
@@ -17,7 +17,7 @@ Common scripts:
 
 For Codex/Cursor frontend work:
 
-- Start from `localpaas-dashboard/`.
+- Start from `hivepaas-dashboard/`.
 - Read this file first, then load only the matching `.cursor/rules/*.mdc`.
 - Use `$fe-dev` for frontend implementation/review.
 - Use `$convention-enforcer` before and after frontend edits.
@@ -30,7 +30,7 @@ For Codex/Cursor frontend work:
 - `api-data-layer.mdc`: contracts, validators, services, API hooks, query keys, queries, commands, generated API.
 - `routing-dialogs-ui.mdc`: route wiring, navigation wrappers, dialogs, forms, tables, UI composition.
 - `quality-checks.mdc`: validation commands, dependency boundaries, generated files, formatting scope.
-- Root `.cursor/rules/localpaas-dashboard-fe.mdc`: parent-workspace pointer to this app and these rules.
+- Root `.cursor/rules/hivepaas-dashboard-fe.mdc`: parent-workspace pointer to this app and these rules.
 
 ## Architecture
 

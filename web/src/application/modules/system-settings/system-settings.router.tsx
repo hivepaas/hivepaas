@@ -13,15 +13,15 @@ export const systemSettingsRouter: RouteObject = {
     children: [
         {
             lazy: async () => {
-                const { LocalPaaSLayout } = await getLazyComponents();
+                const { HivePaaSLayout } = await getLazyComponents();
 
                 return {
                     element: (
                         <ConditionalModule id={MODULE_IDS.System}>
                             <ModuleTitle title="HivePaaS">
-                                <LocalPaaSLayout>
+                                <HivePaaSLayout>
                                     <Outlet />
-                                </LocalPaaSLayout>
+                                </HivePaaSLayout>
                             </ModuleTitle>
                         </ConditionalModule>
                     ),
@@ -42,9 +42,9 @@ export const systemSettingsRouter: RouteObject = {
                 {
                     path: "general",
                     lazy: async () => {
-                        const { SystemSettingsLocalPaaSGeneralRoute } = await getLazyComponents();
+                        const { SystemSettingsHivePaaSGeneralRoute } = await getLazyComponents();
 
-                        return { Component: SystemSettingsLocalPaaSGeneralRoute };
+                        return { Component: SystemSettingsHivePaaSGeneralRoute };
                     },
                 },
             ],

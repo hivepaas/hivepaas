@@ -47,7 +47,7 @@ export function NodesTable() {
                                     onClick={setManagerNodesDialog.actions.open}
                                     disabled={isDenied}
                                 >
-                                    Set managers
+                                    Set Manager Nodes
                                 </Button>
                                 <Button
                                     onClick={joinNewNodeDialog.actions.open}

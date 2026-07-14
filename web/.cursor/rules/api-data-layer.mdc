@@ -1,5 +1,5 @@
 ---
-description: LocalPaaS Dashboard API services, validators, hooks, queries, and commands
+description: HivePaaS Dashboard API services, validators, hooks, queries, and commands
 globs: src/application/**/{api,data}/**/*.{ts,tsx},src/infrastructure/api/**/*.{ts,tsx}
 alwaysApply: false
 ---

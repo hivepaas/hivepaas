@@ -1,5 +1,5 @@
 {
-  "name": "localpaas-dashboard",
+  "name": "hivepaas-dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -15,7 +15,7 @@
     "format:src": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:src:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "agents:check": "node scripts/check-agent-setup.mjs",
-    "codegen:download": "curl -o ./src/infrastructure/api/be-api/swagger.json -LJO https://raw.githubusercontent.com/localpaas/localpaas/main/docs/openapi/swagger.json",
+    "codegen:download": "curl -o ./src/infrastructure/api/be-api/swagger.json -LJO https://raw.githubusercontent.com/hivepaas/hivepaas/main/docs/openapi/swagger.json",
     "codegen:gen": "openapi-ts",
     "codegen": "yarn codegen:download && yarn codegen:gen",
     "prepare": "husky"

@@ -4,22 +4,22 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
-    LocalPaaSServiceSettings_FindOne_Req,
-    LocalPaaSServiceSettings_FindOne_Res,
-    LocalPaaSServiceSettings_UpdateOne_Req,
-    LocalPaaSServiceSettings_UpdateOne_Res,
-} from "./localpaas-service-settings.api.contracts";
-import type { LocalPaaSServiceSettingsApiValidator } from "./localpaas-service-settings.api.validator";
+    HivePaaSServiceSettings_FindOne_Req,
+    HivePaaSServiceSettings_FindOne_Res,
+    HivePaaSServiceSettings_UpdateOne_Req,
+    HivePaaSServiceSettings_UpdateOne_Res,
+} from "./hivepaas-service-settings.api.contracts";
+import type { HivePaaSServiceSettingsApiValidator } from "./hivepaas-service-settings.api.validator";
 
-export class LocalPaaSServiceSettingsApi extends BaseApi {
-    public constructor(private readonly validator: LocalPaaSServiceSettingsApiValidator) {
+export class HivePaaSServiceSettingsApi extends BaseApi {
+    public constructor(private readonly validator: HivePaaSServiceSettingsApiValidator) {
         super();
     }
 
     async findOne(
-        _request: LocalPaaSServiceSettings_FindOne_Req,
+        _request: HivePaaSServiceSettings_FindOne_Req,
         signal?: AbortSignal,
-    ): Promise<Result<LocalPaaSServiceSettings_FindOne_Res, Error>> {
+    ): Promise<Result<HivePaaSServiceSettings_FindOne_Res, Error>> {
         return lastValueFrom(
             from(this.client.v1.get("/system/hivepaas/service-settings", { signal })).pipe(
                 map(this.validator.findOne),
@@ -30,9 +30,9 @@ export class LocalPaaSServiceSettingsApi extends BaseApi {
     }
 
     async updateOne(
-        request: LocalPaaSServiceSettings_UpdateOne_Req,
+        request: HivePaaSServiceSettings_UpdateOne_Req,
         signal?: AbortSignal,
-    ): Promise<Result<LocalPaaSServiceSettings_UpdateOne_Res, Error>> {
+    ): Promise<Result<HivePaaSServiceSettings_UpdateOne_Res, Error>> {
         const { payload } = request.data;
 
         return lastValueFrom(

@@ -1,8 +1,8 @@
 import { createContext } from "react";
 
 import {
-    LocalPaaSServiceSettingsApi,
-    LocalPaaSServiceSettingsApiValidator,
+    HivePaaSServiceSettingsApi,
+    HivePaaSServiceSettingsApiValidator,
     SystemBackupApi,
     SystemBackupApiValidator,
     SystemBackupFileApi,
@@ -20,12 +20,12 @@ function createApi() {
     const systemBackupFileValidator = new SystemBackupFileApiValidator();
     const systemCleanupValidator = new SystemCleanupApiValidator();
     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
-    const localPaaSServiceSettingsValidator = new LocalPaaSServiceSettingsApiValidator();
+    const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
 
     return {
         systemSettings: {
-            localpaasServiceSettings: new LocalPaaSServiceSettingsApi(localPaaSServiceSettingsValidator),
+            hivepaasServiceSettings: new HivePaaSServiceSettingsApi(hivePaaSServiceSettingsValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),
             backup: new SystemBackupApi(systemBackupValidator),
             backupFiles: new SystemBackupFileApi(systemBackupFileValidator),

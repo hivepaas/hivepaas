@@ -3,8 +3,8 @@ import { useRef } from "react";
 import { Button } from "@components/ui";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import type { LocalPaaSServiceSettings_UpdateOne_Req } from "~/system-settings/api/services";
-import { LocalPaaSServiceSettingsCommands, LocalPaaSServiceSettingsQueries } from "~/system-settings/data";
+import type { HivePaaSServiceSettings_UpdateOne_Req } from "~/system-settings/api/services";
+import { HivePaaSServiceSettingsCommands, HivePaaSServiceSettingsQueries } from "~/system-settings/data";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -15,13 +15,13 @@ import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
-import { LocalPaaSGeneralForm } from "../form";
-import type { LocalPaaSGeneralFormOutput } from "../schemas";
-import type { LocalPaaSGeneralFormRef } from "../types";
+import { HivePaaSGeneralForm } from "../form";
+import type { HivePaaSGeneralFormOutput } from "../schemas";
+import type { HivePaaSGeneralFormRef } from "../types";
 
-type UpdatePayload = LocalPaaSServiceSettings_UpdateOne_Req["data"]["payload"];
+type UpdatePayload = HivePaaSServiceSettings_UpdateOne_Req["data"]["payload"];
 
-function mapFormValuesToPayload(values: LocalPaaSGeneralFormOutput, updateVer: number): UpdatePayload {
+function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: number): UpdatePayload {
     return {
         updateVer,
         appSettings: {
@@ -42,13 +42,13 @@ function mapFormValuesToPayload(values: LocalPaaSGeneralFormOutput, updateVer: n
     };
 }
 
-export function SystemSettingsLocalPaaSGeneralRoute() {
-    const formRef = useRef<LocalPaaSGeneralFormRef>(null);
+export function SystemSettingsHivePaaSGeneralRoute() {
+    const formRef = useRef<HivePaaSGeneralFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
 
-    const settingsQuery = LocalPaaSServiceSettingsQueries.useFindOne();
+    const settingsQuery = HivePaaSServiceSettingsQueries.useFindOne();
 
-    const { mutate: update, isPending } = LocalPaaSServiceSettingsCommands.useUpdateOne({
+    const { mutate: update, isPending } = HivePaaSServiceSettingsCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("HivePaaS service settings updated");
         },
@@ -63,13 +63,13 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
         },
     });
 
-    function handleSubmit(values: LocalPaaSGeneralFormOutput) {
+    function handleSubmit(values: HivePaaSGeneralFormOutput) {
         if (!canWrite) {
             return;
         }
 
         const settings = settingsQuery.data?.data;
-        invariant(settings, "localpaas service settings must be defined");
+        invariant(settings, "hivepaas service settings must be defined");
 
         update({
             payload: mapFormValuesToPayload(values, settings.updateVer),
@@ -89,10 +89,10 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
         );
     }
 
-    invariant(settingsQuery.data, "localpaas service settings data must be defined");
+    invariant(settingsQuery.data, "hivepaas service settings data must be defined");
 
     return (
-        <LocalPaaSGeneralForm
+        <HivePaaSGeneralForm
             ref={formRef}
             defaultValues={settingsQuery.data.data}
             onSubmit={handleSubmit}
@@ -115,6 +115,6 @@ export function SystemSettingsLocalPaaSGeneralRoute() {
                     )}
                 </PermissionTooltipAction>
             </FormActionBar>
-        </LocalPaaSGeneralForm>
+        </HivePaaSGeneralForm>
     );
 }

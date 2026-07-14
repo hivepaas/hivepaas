@@ -1,5 +1,5 @@
 ---
-description: LocalPaaS Dashboard routing, navigation, dialogs, forms, tables, and UI composition
+description: HivePaaS Dashboard routing, navigation, dialogs, forms, tables, and UI composition
 globs: src/application/**/*.{ts,tsx},src/components/**/*.{ts,tsx}
 alwaysApply: false
 ---

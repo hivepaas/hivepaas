@@ -1,5 +1,5 @@
 ---
-description: LocalPaaS Dashboard validation and quality checks
+description: HivePaaS Dashboard validation and quality checks
 globs: src/**/*.{ts,tsx,css,scss},package.json,*.config.*,docs/**/*.md
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 - Prefer focused changes that preserve existing module boundaries and user work.
 - Run `npm run agents:check` after changing Codex skills, Cursor rules, or agent-facing docs.
-- Run `npm run lint:ci` from `localpaas-dashboard/` for frontend code changes when feasible.
+- Run `npm run lint:ci` from `hivepaas-dashboard/` for frontend code changes when feasible.
 - Run `npm run build` when route exports, module aggregators, API context wiring, or build configuration changed.
 - Run `npm run format:src` only when formatting source files intentionally; avoid broad formatting churn.
 - For visible UI changes, run `npm run dev` and verify the affected screen in a browser when feasible.

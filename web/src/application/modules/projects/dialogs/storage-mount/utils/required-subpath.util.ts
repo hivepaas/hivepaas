@@ -1,6 +1,6 @@
 /**
  * Mirrors BE `StorageBindSettings.CaclRequiredSubpath` / volume / cluster
- * (`localpaas_app/entity/setting_storage_settings.go`).
+ * (`hivepaas_app/entity/setting_storage_settings.go`).
  */
 
 export interface SubpathPrefixSettings {

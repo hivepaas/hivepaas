@@ -5,7 +5,7 @@ const workerReplicasSchema = z.number().int().min(0).max(100);
 const workerConcurrencySchema = z.number().int().min(1).max(100);
 const durationSchema = z.string().trim().min(1);
 
-export const LocalPaaSGeneralFormSchema = z
+export const HivePaaSGeneralFormSchema = z
     .object({
         appSettings: z.object({
             replicas: appReplicasSchema,
@@ -33,10 +33,10 @@ export const LocalPaaSGeneralFormSchema = z
         }
     });
 
-export type LocalPaaSGeneralFormInput = z.input<typeof LocalPaaSGeneralFormSchema>;
-export type LocalPaaSGeneralFormOutput = z.output<typeof LocalPaaSGeneralFormSchema>;
+export type HivePaaSGeneralFormInput = z.input<typeof HivePaaSGeneralFormSchema>;
+export type HivePaaSGeneralFormOutput = z.output<typeof HivePaaSGeneralFormSchema>;
 
-export const emptyLocalPaaSGeneralFormDefaults: LocalPaaSGeneralFormInput = {
+export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
     appSettings: {
         replicas: 1,
     },

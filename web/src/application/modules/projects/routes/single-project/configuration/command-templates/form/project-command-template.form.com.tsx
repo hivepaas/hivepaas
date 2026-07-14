@@ -1,9 +1,9 @@
-import { useEffect, useId, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import type { ProjectCommandTemplate } from "~/projects/domain";
-import { CommandArgGroupsSection } from "~/projects/module-shared/components";
+import { CommandArgGroupsSection, CommandConfigSection } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import {
     InheritedSettingReadonlyNotice,
@@ -19,13 +19,10 @@ import {
     LabelWithInfo,
 } from "@application/shared/components";
 import { ECommandTemplateKind } from "@application/shared/enums";
-import { KeyValueList } from "@application/shared/form";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
-import { InputNumber } from "@/components/ui/input-number";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
 import {
-    PROJECT_COMMAND_TEMPLATE_COMMAND_MODE,
     type ProjectCommandTemplateFormInput,
     type ProjectCommandTemplateFormOutput,
     ProjectCommandTemplateFormSchema,
@@ -35,7 +32,6 @@ import {
     createEmptyProjectCommandTemplateFormDefaults,
     mapProjectCommandTemplateToFormInput,
 } from "./project-command-template.form-mappers";
-import { ProjectCommandTemplateScriptEditorField } from "./script-editor-field.com";
 
 const INFO_BLOCK_TITLE_WIDTH = 150;
 
@@ -45,6 +41,7 @@ type SchemaInput = ProjectCommandTemplateFormInput;
 type SchemaOutput = ProjectCommandTemplateFormOutput;
 
 export function ProjectCommandTemplateForm({
+    projectId: _projectId,
     isPending,
     onSubmit,
     initialValues,
@@ -91,9 +88,6 @@ export function ProjectCommandTemplateForm({
         onHasChanges?.(isReadOnly ? false : isDirty);
     }, [isDirty, isReadOnly, onHasChanges]);
 
-    const consoleWidthInputId = useId();
-    const consoleHeightInputId = useId();
-
     const {
         field: name,
         fieldState: { invalid: isNameInvalid },
@@ -102,28 +96,6 @@ export function ProjectCommandTemplateForm({
         field: kind,
         fieldState: { invalid: isKindInvalid },
     } = useController({ control, name: "kind" });
-    const { field: commandMode } = useController({ control, name: "commandMode" });
-    const {
-        field: command,
-        fieldState: { invalid: isCommandInvalid },
-    } = useController({ control, name: "command" });
-    const {
-        field: script,
-        fieldState: { invalid: isScriptInvalid },
-    } = useController({ control, name: "script" });
-    const {
-        field: workingDir,
-        fieldState: { invalid: isWorkingDirInvalid },
-    } = useController({ control, name: "workingDir" });
-    const { field: tty } = useController({ control, name: "tty" });
-    const {
-        field: consoleWidth,
-        fieldState: { invalid: isConsoleWidthInvalid },
-    } = useController({ control, name: "consoleSize.width" });
-    const {
-        field: consoleHeight,
-        fieldState: { invalid: isConsoleHeightInvalid },
-    } = useController({ control, name: "consoleSize.height" });
     const { field: defaultField } = useController({ control, name: "default" });
 
     function onValid(values: SchemaOutput) {
@@ -198,181 +170,11 @@ export function ProjectCommandTemplateForm({
                                 </Field>
                             </InfoBlock>
 
-                            <ContentBlock label="Command">
-                                <div className="flex flex-col gap-6">
-                                    <InfoBlock
-                                        title="Type"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Tabs
-                                            value={commandMode.value}
-                                            onValueChange={commandMode.onChange}
-                                        >
-                                            <TabsList>
-                                                <TabsTrigger value={PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command}>
-                                                    Command
-                                                </TabsTrigger>
-                                                <TabsTrigger value={PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script}>
-                                                    Script
-                                                </TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label={
-                                                    commandMode.value === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script
-                                                        ? "Script"
-                                                        : "Command"
-                                                }
-                                                isRequired
-                                            />
-                                        }
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        {commandMode.value === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script ? (
-                                            <Field>
-                                                <ProjectCommandTemplateScriptEditorField
-                                                    value={script.value}
-                                                    onChange={script.onChange}
-                                                    invalid={isScriptInvalid}
-                                                    error={errors.script}
-                                                    readOnly={isReadOnly}
-                                                />
-                                            </Field>
-                                        ) : (
-                                            <Field>
-                                                <Input
-                                                    {...command}
-                                                    placeholder='echo "$CMD_ARG_GROUP_1"'
-                                                    aria-invalid={isCommandInvalid}
-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                />
-                                                <FieldError errors={[errors.command]} />
-                                            </Field>
-                                        )}
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Working Dir"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Field>
-                                            <Input
-                                                {...workingDir}
-                                                placeholder="/path/to/working/dir"
-                                                aria-invalid={isWorkingDirInvalid}
-                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                            />
-                                            <FieldError errors={[errors.workingDir]} />
-                                        </Field>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Terminal"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <div className="flex w-full max-w-[430px] flex-wrap items-start gap-x-4 gap-y-3">
-                                            <div className="flex h-9 items-center gap-3 text-sm font-medium">
-                                                <span>TTY</span>
-                                                <Checkbox
-                                                    checked={tty.value}
-                                                    onCheckedChange={checked => {
-                                                        tty.onChange(checked === true);
-                                                    }}
-                                                    aria-label="TTY"
-                                                />
-                                            </div>
-
-                                            {tty.value && (
-                                                <>
-                                                    <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
-                                                            <label
-                                                                htmlFor={consoleWidthInputId}
-                                                                className="shrink-0 text-sm font-medium"
-                                                            >
-                                                                Width
-                                                            </label>
-                                                            <InputNumber
-                                                                id={consoleWidthInputId}
-                                                                ref={consoleWidth.ref}
-                                                                name={consoleWidth.name}
-                                                                value={consoleWidth.value}
-                                                                onBlur={consoleWidth.onBlur}
-                                                                onValueChange={value => {
-                                                                    const nextValue =
-                                                                        value !== undefined && Number.isFinite(value)
-                                                                            ? value
-                                                                            : undefined;
-
-                                                                    consoleWidth.onChange(nextValue);
-                                                                }}
-                                                                useGrouping={false}
-                                                                showControls={false}
-                                                                placeholder="120"
-                                                                aria-invalid={isConsoleWidthInvalid}
-                                                                className="min-w-0 flex-1"
-                                                            />
-                                                        </div>
-                                                        <FieldError errors={[errors.consoleSize?.width]} />
-                                                    </div>
-
-                                                    <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
-                                                            <label
-                                                                htmlFor={consoleHeightInputId}
-                                                                className="shrink-0 text-sm font-medium"
-                                                            >
-                                                                Height
-                                                            </label>
-                                                            <InputNumber
-                                                                id={consoleHeightInputId}
-                                                                ref={consoleHeight.ref}
-                                                                name={consoleHeight.name}
-                                                                value={consoleHeight.value}
-                                                                onBlur={consoleHeight.onBlur}
-                                                                onValueChange={value => {
-                                                                    const nextValue =
-                                                                        value !== undefined && Number.isFinite(value)
-                                                                            ? value
-                                                                            : undefined;
-
-                                                                    consoleHeight.onChange(nextValue);
-                                                                }}
-                                                                useGrouping={false}
-                                                                showControls={false}
-                                                                placeholder="40"
-                                                                aria-invalid={isConsoleHeightInvalid}
-                                                                className="min-w-0 flex-1"
-                                                            />
-                                                        </div>
-                                                        <FieldError errors={[errors.consoleSize?.height]} />
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Env"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <KeyValueList<SchemaInput>
-                                            name="envVars"
-                                            keyLabel="Name"
-                                            valueLabel="Value"
-                                            keyPlaceholder="name"
-                                            valuePlaceholder="value"
-                                            className="max-w-[600px]"
-                                            checkDuplicates
-                                            disabled={isReadOnly}
-                                        />
-                                    </InfoBlock>
-                                </div>
-                            </ContentBlock>
+                            <CommandConfigSection
+                                label="Command"
+                                readOnly={isReadOnly}
+                                envLabel="Env"
+                            />
 
                             <ContentBlock label="Arg Groups">
                                 <CommandArgGroupsSection readOnly={isReadOnly} />
@@ -424,6 +226,7 @@ export function ProjectCommandTemplateForm({
 }
 
 interface Props {
+    projectId?: string;
     isPending: boolean;
     onSubmit: (values: SchemaOutput) => void;
     initialValues?: ProjectCommandTemplate;

@@ -62,6 +62,27 @@ export type AppScheduledJobs_Notification_Payload = {
     failure?: AppScheduledJobs_RefObject_Payload;
 };
 
+export type AppScheduledJobs_CommandOutput_SaveToFile_Payload = {
+    fileName: string;
+    filePath?: string;
+    fileKind?: string;
+    storage?: AppScheduledJobs_RefObject_Payload;
+    compressionFormat: string;
+    encryptionFormat: string;
+    encryptionSecret?: string;
+};
+
+export type AppScheduledJobs_CommandOutput_PipeToApp_Payload = {
+    targetApp: AppScheduledJobs_RefObject_Payload;
+    command: AppScheduledJobs_Command_Payload;
+};
+
+export type AppScheduledJobs_CommandOutput_Payload = {
+    enabled: boolean;
+    saveToFile?: AppScheduledJobs_CommandOutput_SaveToFile_Payload | null;
+    pipeToApp?: AppScheduledJobs_CommandOutput_PipeToApp_Payload | null;
+};
+
 export type AppScheduledJobs_Upsert_Payload = {
     availableInProjects: boolean;
     default: boolean;
@@ -78,6 +99,7 @@ export type AppScheduledJobs_Upsert_Payload = {
     timeout?: string;
     controlDisabled: boolean;
     command: AppScheduledJobs_Command_Payload;
+    commandOutput?: AppScheduledJobs_CommandOutput_Payload;
     notification: AppScheduledJobs_Notification_Payload;
 };
 

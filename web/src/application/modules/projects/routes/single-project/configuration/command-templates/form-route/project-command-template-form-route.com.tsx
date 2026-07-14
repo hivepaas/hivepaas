@@ -134,6 +134,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
 
             {!isDetailLoading && shouldRenderForm && (
                 <ProjectCommandTemplateForm
+                    projectId={projectId}
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

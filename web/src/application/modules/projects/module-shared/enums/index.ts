@@ -9,6 +9,7 @@ export * from "./e.app-health-check-rest-method";
 export * from "./e.app-health-check-return-body-mode";
 export * from "./e.app-health-check-type";
 export * from "./e.app-scheduled-job-arg-separator";
+export * from "./e.app-scheduled-job-command-output-mode";
 export * from "./e.app-scheduled-job-schedule-mode";
 export * from "./e.app-scheduled-job-task-priority";
 export * from "./e.app-scheduled-job-task-status";

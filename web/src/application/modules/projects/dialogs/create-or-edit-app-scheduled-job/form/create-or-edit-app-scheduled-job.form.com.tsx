@@ -1,25 +1,33 @@
-import React, { useId, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
-import { CommandArgGroupsSection } from "~/projects/module-shared/components";
+import { CommandArgGroupsSection, CommandConfigSection } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
-import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
+import { EAppScheduledJobCommandOutputMode, EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
 import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { KeyValueList, NotificationSettings } from "@application/shared/form";
+import { ROUTE } from "@application/shared/constants";
+import { NotificationSettings } from "@application/shared/form";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { InputNumber } from "@/components/ui/input-number";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
-import { APP_SCHEDULED_JOB_COMMAND_MODE, CreateOrEditAppScheduledJobFormSchema } from "../schemas";
+import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
 
-import { INFO_BLOCK_TITLE_WIDTH, NextRunsField, PriorityTabsField, ScriptEditorField } from "./building-blocks";
+import {
+    CommandRunInTargetApp,
+    INFO_BLOCK_TITLE_WIDTH,
+    NextRunsField,
+    PipeToAppSection,
+    PriorityTabsField,
+    SaveToFileSection,
+} from "./building-blocks";
 import {
     createEmptyAppScheduledJobFormDefaults,
     mapAppScheduledJobToFormInput,
@@ -30,6 +38,7 @@ type SchemaOutput = CreateOrEditAppScheduledJobFormOutput;
 
 export function CreateOrEditAppScheduledJobForm({
     projectId,
+    appId,
     isPending,
     onSubmit,
     initialValues,
@@ -40,11 +49,11 @@ export function CreateOrEditAppScheduledJobForm({
 }: Props) {
     const defaultValues = useMemo(() => {
         if (initialValues) {
-            return mapAppScheduledJobToFormInput(initialValues);
+            return mapAppScheduledJobToFormInput(initialValues, projectId);
         }
 
-        return createEmptyAppScheduledJobFormDefaults();
-    }, [initialValues]);
+        return createEmptyAppScheduledJobFormDefaults(projectId);
+    }, [initialValues, projectId]);
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues,
@@ -65,13 +74,11 @@ export function CreateOrEditAppScheduledJobForm({
 
     const { sources: notificationSources, manageLink: notificationManageLink } =
         useProjectNotificationSettingsSources(projectId);
-    const retryMaxInputId = useId();
-    const retryDelayInputId = useId();
-    const retryDelayIncrInputId = useId();
-    const retryBackoffInputId = useId();
-    const retryDelayMaxInputId = useId();
-    const consoleWidthInputId = useId();
-    const consoleHeightInputId = useId();
+    const retryMaxInputId = React.useId();
+    const retryDelayInputId = React.useId();
+    const retryDelayIncrInputId = React.useId();
+    const retryBackoffInputId = React.useId();
+    const retryDelayMaxInputId = React.useId();
 
     const {
         field: name,
@@ -118,28 +125,9 @@ export function CreateOrEditAppScheduledJobForm({
     const { field: priority } = useController({ control, name: "priority" });
     const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
     const { field: runInShell } = useController({ control, name: "runInShell" });
-    const { field: commandMode } = useController({ control, name: "commandMode" });
-    const {
-        field: command,
-        fieldState: { invalid: isCommandInvalid },
-    } = useController({ control, name: "command" });
-    const {
-        field: script,
-        fieldState: { invalid: isScriptInvalid },
-    } = useController({ control, name: "script" });
-    const {
-        field: workingDir,
-        fieldState: { invalid: isWorkingDirInvalid },
-    } = useController({ control, name: "workingDir" });
-    const { field: tty } = useController({ control, name: "tty" });
-    const {
-        field: consoleWidth,
-        fieldState: { invalid: isConsoleWidthInvalid },
-    } = useController({ control, name: "consoleSize.width" });
-    const {
-        field: consoleHeight,
-        fieldState: { invalid: isConsoleHeightInvalid },
-    } = useController({ control, name: "consoleSize.height" });
+    const { field: commandOutputMode } = useController({ control, name: "commandOutputMode" });
+
+    const configureTemplatesLink = ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId);
 
     function onValid(values: SchemaOutput) {
         if (readOnly) {
@@ -459,190 +447,77 @@ export function CreateOrEditAppScheduledJobForm({
                                 </div>
                             </ContentBlock>
 
-                            <ContentBlock label="Command">
+                            <CommandConfigSection
+                                label="Command"
+                                showLoadTemplate
+                                templateProjectId={projectId}
+                                configureTemplatesLink={configureTemplatesLink}
+                                readOnly={readOnly}
+                            />
+
+                            <ContentBlock label="Arg Groups">
+                                <CommandArgGroupsSection
+                                    readOnly={readOnly}
+                                    fieldName="argGroups"
+                                />
+                            </ContentBlock>
+
+                            <ContentBlock label="Command Output">
                                 <div className="flex flex-col gap-6">
                                     <InfoBlock
-                                        title="Mode"
+                                        title="Output"
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
                                     >
                                         <Tabs
-                                            value={commandMode.value}
-                                            onValueChange={commandMode.onChange}
+                                            value={commandOutputMode.value}
+                                            onValueChange={commandOutputMode.onChange}
                                         >
                                             <TabsList>
                                                 <TabsTrigger
-                                                    value={APP_SCHEDULED_JOB_COMMAND_MODE.Command}
+                                                    value={EAppScheduledJobCommandOutputMode.Ignore}
                                                     disabled={readOnly}
                                                 >
-                                                    Command
+                                                    Ignore
                                                 </TabsTrigger>
                                                 <TabsTrigger
-                                                    value={APP_SCHEDULED_JOB_COMMAND_MODE.Script}
+                                                    value={EAppScheduledJobCommandOutputMode.SaveToFile}
                                                     disabled={readOnly}
                                                 >
-                                                    Script
+                                                    Save to File
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value={EAppScheduledJobCommandOutputMode.PipeToApp}
+                                                    disabled={readOnly}
+                                                >
+                                                    Pipe to App
                                                 </TabsTrigger>
                                             </TabsList>
                                         </Tabs>
                                     </InfoBlock>
-
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label={
-                                                    commandMode.value === APP_SCHEDULED_JOB_COMMAND_MODE.Script
-                                                        ? "Script"
-                                                        : "Command"
-                                                }
-                                                isRequired
-                                            />
-                                        }
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        {commandMode.value === APP_SCHEDULED_JOB_COMMAND_MODE.Script ? (
-                                            <Field>
-                                                <ScriptEditorField
-                                                    value={script.value}
-                                                    onChange={script.onChange}
-                                                    invalid={isScriptInvalid}
-                                                    error={errors.script}
-                                                    readOnly={readOnly}
-                                                />
-                                            </Field>
-                                        ) : (
-                                            <Field>
-                                                <Input
-                                                    {...command}
-                                                    placeholder="echo “$CMD_ARG_GROUP_1”"
-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                    aria-invalid={isCommandInvalid}
-                                                    disabled={readOnly}
-                                                />
-                                                <FieldError errors={[errors.command]} />
-                                            </Field>
-                                        )}
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Working Directory"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Field>
-                                            <Input
-                                                {...workingDir}
-                                                placeholder="/path/in/container"
-                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                aria-invalid={isWorkingDirInvalid}
-                                                disabled={readOnly}
-                                            />
-                                            <FieldError errors={[errors.workingDir]} />
-                                        </Field>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Terminal"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <div className="flex w-full max-w-[400px] flex-wrap items-start gap-x-4 gap-y-3">
-                                            <div className="flex h-9 items-center gap-3 text-sm font-medium">
-                                                <span>TTY</span>
-                                                <Checkbox
-                                                    checked={tty.value}
-                                                    onCheckedChange={checked => {
-                                                        tty.onChange(checked === true);
-                                                    }}
-                                                    aria-label="TTY"
-                                                    disabled={readOnly}
-                                                />
-                                            </div>
-
-                                            <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                                <div className="flex min-w-0 items-center gap-2">
-                                                    <label
-                                                        htmlFor={consoleWidthInputId}
-                                                        className="shrink-0 text-sm font-medium"
-                                                    >
-                                                        Width
-                                                    </label>
-                                                    <InputNumber
-                                                        id={consoleWidthInputId}
-                                                        ref={consoleWidth.ref}
-                                                        name={consoleWidth.name}
-                                                        value={consoleWidth.value}
-                                                        onBlur={consoleWidth.onBlur}
-                                                        onValueChange={value => {
-                                                            const nextValue =
-                                                                value !== undefined && Number.isFinite(value)
-                                                                    ? value
-                                                                    : undefined;
-
-                                                            consoleWidth.onChange(nextValue);
-                                                        }}
-                                                        useGrouping={false}
-                                                        showControls={false}
-                                                        placeholder="120"
-                                                        aria-invalid={isConsoleWidthInvalid}
-                                                        className="min-w-0 flex-1"
-                                                        disabled={readOnly}
-                                                    />
-                                                </div>
-                                                <FieldError errors={[errors.consoleSize?.width]} />
-                                            </div>
-
-                                            <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                                <div className="flex min-w-0 items-center gap-2">
-                                                    <label
-                                                        htmlFor={consoleHeightInputId}
-                                                        className="shrink-0 text-sm font-medium"
-                                                    >
-                                                        Height
-                                                    </label>
-                                                    <InputNumber
-                                                        id={consoleHeightInputId}
-                                                        ref={consoleHeight.ref}
-                                                        name={consoleHeight.name}
-                                                        value={consoleHeight.value}
-                                                        onBlur={consoleHeight.onBlur}
-                                                        onValueChange={value => {
-                                                            const nextValue =
-                                                                value !== undefined && Number.isFinite(value)
-                                                                    ? value
-                                                                    : undefined;
-
-                                                            consoleHeight.onChange(nextValue);
-                                                        }}
-                                                        useGrouping={false}
-                                                        showControls={false}
-                                                        placeholder="40"
-                                                        aria-invalid={isConsoleHeightInvalid}
-                                                        className="min-w-0 flex-1"
-                                                        disabled={readOnly}
-                                                    />
-                                                </div>
-                                                <FieldError errors={[errors.consoleSize?.height]} />
-                                            </div>
-                                        </div>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        title="Environment Variables"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <KeyValueList<SchemaInput>
-                                            name="envVars"
-                                            keyLabel="Key"
-                                            valueLabel="Value"
-                                            className="max-w-[600px]"
-                                            checkDuplicates
-                                            disabled={readOnly}
-                                        />
-                                    </InfoBlock>
                                 </div>
                             </ContentBlock>
 
-                            <ContentBlock label="Arg Groups">
-                                <CommandArgGroupsSection readOnly={readOnly} />
-                            </ContentBlock>
+                            {commandOutputMode.value === EAppScheduledJobCommandOutputMode.SaveToFile && (
+                                <SaveToFileSection
+                                    projectId={projectId}
+                                    readOnly={readOnly}
+                                />
+                            )}
+
+                            {commandOutputMode.value === EAppScheduledJobCommandOutputMode.PipeToApp && (
+                                <>
+                                    <PipeToAppSection
+                                        projectId={projectId}
+                                        appId={appId}
+                                        readOnly={readOnly}
+                                    />
+                                    <CommandRunInTargetApp
+                                        projectId={projectId}
+                                        appId={appId}
+                                        readOnly={readOnly}
+                                    />
+                                </>
+                            )}
 
                             <ContentBlock label="Notification Configuration">
                                 <NotificationSettings<SchemaInput>
@@ -699,6 +574,7 @@ export function CreateOrEditAppScheduledJobForm({
 
 interface Props {
     projectId: string;
+    appId: string;
     isPending: boolean;
     onSubmit: (values: SchemaOutput) => Promise<void> | void;
     initialValues?: AppScheduledJob;

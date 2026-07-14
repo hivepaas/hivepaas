@@ -9,4 +9,8 @@ export * from "./project-env-input";
 export * from "./project-env-badge";
 export * from "./project-env-filter";
 export * from "./git-selectors";
+export * from "./selector-dialog";
+export * from "./pickers";
 export * from "./command-arg-groups-section";
+export * from "./script-editor-field";
+export * from "./command-config-section";

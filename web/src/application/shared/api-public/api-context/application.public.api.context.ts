@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    AppsPublicApi,
+    AppsPublicApiValidator,
     ProjectsPublicApi,
     ProjectsPublicApiValidator,
     UsersPublicApi,
@@ -11,6 +13,7 @@ function createApplicationPublicApi() {
     return {
         projects: new ProjectsPublicApi(new ProjectsPublicApiValidator()),
         users: new UsersPublicApi(new UsersPublicApiValidator()),
+        apps: new AppsPublicApi(new AppsPublicApiValidator()),
     };
 }
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
     EAppScheduledJobArgSeparator,
+    EAppScheduledJobCommandOutputMode,
     EAppScheduledJobScheduleMode,
     EAppScheduledJobTaskPriority,
 } from "~/projects/module-shared/enums";
@@ -39,6 +40,26 @@ const ConsoleSizeSchema = z.object({
     height: z.number().int("Height must be an integer").min(1, "Height must be greater than 0"),
 });
 
+const PipeCommandSchema = z.object({
+    commandMode: z.enum([APP_SCHEDULED_JOB_COMMAND_MODE.Command, APP_SCHEDULED_JOB_COMMAND_MODE.Script]),
+    command: z.string().trim(),
+    script: z.string(),
+    workingDir: z.string().trim(),
+    tty: z.boolean(),
+    consoleSize: ConsoleSizeSchema,
+    envVars: z.array(EnvVarSchema),
+    argGroups: z.array(CommandArgGroupSchema),
+});
+
+const SaveToFileSchema = z.object({
+    fileName: z.string().trim(),
+    filePath: z.string().trim(),
+    storage: z.object({ id: z.string(), name: z.string() }).nullable(),
+    compressionFormat: z.string(),
+    encryptionFormat: z.string(),
+    encryptionSecret: z.string(),
+});
+
 export const CreateOrEditAppScheduledJobFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
@@ -64,6 +85,11 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         consoleSize: ConsoleSizeSchema,
         envVars: z.array(EnvVarSchema),
         argGroups: z.array(CommandArgGroupSchema),
+        commandOutputMode: z.nativeEnum(EAppScheduledJobCommandOutputMode),
+        saveToFile: SaveToFileSchema,
+        pipeTargetProject: z.object({ id: z.string(), name: z.string() }).nullable(),
+        pipeTargetApp: z.object({ id: z.string(), name: z.string() }).nullable(),
+        pipeCommand: PipeCommandSchema,
         notification: z.object({
             successUseDefault: z.boolean(),
             success: NotificationRefSchema.optional(),
@@ -111,6 +137,72 @@ export const CreateOrEditAppScheduledJobFormSchema = z
                 }
             });
         });
+
+        if (value.commandOutputMode === EAppScheduledJobCommandOutputMode.SaveToFile) {
+            if (value.saveToFile.encryptionFormat && !value.saveToFile.encryptionSecret.trim()) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Encryption secret is required",
+                    path: ["saveToFile", "encryptionSecret"],
+                });
+            }
+        }
+
+        if (value.commandOutputMode === EAppScheduledJobCommandOutputMode.PipeToApp) {
+            if (!value.pipeTargetApp) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Target app is required",
+                    path: ["pipeTargetApp"],
+                });
+            }
+
+            if (
+                value.pipeCommand.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Command &&
+                !value.pipeCommand.command.trim()
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Command is required",
+                    path: ["pipeCommand", "command"],
+                });
+            }
+
+            if (
+                value.pipeCommand.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Script &&
+                !value.pipeCommand.script.trim()
+            ) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Script is required",
+                    path: ["pipeCommand", "script"],
+                });
+            }
+
+            value.pipeCommand.argGroups.forEach((group, groupIndex) => {
+                if (!group.enabled) {
+                    return;
+                }
+
+                if (!group.exportEnv.trim()) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Export env is required",
+                        path: ["pipeCommand", "argGroups", groupIndex, "exportEnv"],
+                    });
+                }
+
+                group.args.forEach((arg, argIndex) => {
+                    if (arg.use && !arg.name.trim()) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: "Arg name is required",
+                            path: ["pipeCommand", "argGroups", groupIndex, "args", argIndex, "name"],
+                        });
+                    }
+                });
+            });
+        }
     });
 
 export type CreateOrEditAppScheduledJobFormInput = z.input<typeof CreateOrEditAppScheduledJobFormSchema>;

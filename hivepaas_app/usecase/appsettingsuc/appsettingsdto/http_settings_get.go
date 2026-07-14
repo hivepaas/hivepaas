@@ -60,6 +60,7 @@ type DomainResp struct {
 	HeaderConfig      *HTTPHeaderConfigResp      `json:"headerConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfigResp `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfigResp   `json:"rateLimitConfig,omitempty"`
+	PathRewriteConfig *HTTPPathRewriteConfigResp `json:"pathRewriteConfig,omitempty"`
 	Paths             []*HTTPPathConfigResp      `json:"paths,omitempty"`
 }
 
@@ -81,6 +82,7 @@ type HTTPClientConfigResp struct {
 
 type HTTPHeaderConfigResp struct {
 	Enabled               bool              `json:"enabled"`
+	AutoContentType       bool              `json:"autoContentType,omitempty"`
 	ToAddToRequests       map[string]string `json:"toAddToRequests"`
 	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests"`
 	ToAddToResponses      map[string]string `json:"toAddToResponses"`
@@ -103,6 +105,16 @@ type HTTPCompressionConfigResp struct {
 	DefaultEncoding      string        `json:"defaultEncoding"`
 }
 
+type HTTPPathRewriteConfigResp struct {
+	Enabled            bool   `json:"enabled"`
+	PrefixAdd          string `json:"prefixAdd,omitempty"`
+	PrefixStrip        string `json:"prefixStrip,omitempty"`
+	PrefixStripIsRegex bool   `json:"prefixStripIsRegex,omitempty"`
+	PathReplace        string `json:"pathReplace,omitempty"`
+	PathReplaceIsRegex bool   `json:"pathReplaceIsRegex,omitempty"`
+	PathReplaceWith    string `json:"pathReplaceWith,omitempty"`
+}
+
 type HTTPPathConfigResp struct {
 	Enabled           bool                       `json:"enabled"`
 	Path              string                     `json:"path"`
@@ -112,6 +124,7 @@ type HTTPPathConfigResp struct {
 	HeaderConfig      *HTTPHeaderConfigResp      `json:"headerConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfigResp `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfigResp   `json:"rateLimitConfig,omitempty"`
+	PathRewriteConfig *HTTPPathRewriteConfigResp `json:"pathRewriteConfig,omitempty"`
 }
 
 type AppHttpSettingsTransformInput struct {

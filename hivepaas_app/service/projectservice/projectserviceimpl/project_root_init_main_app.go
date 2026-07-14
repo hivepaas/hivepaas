@@ -12,7 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/contenttypes"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -85,10 +84,9 @@ func (s *service) initRootProjectMainApp(
 				ContainerPort: cfg.HTTPServer.Port,
 				ForceHttps:    true,
 				CompressionConfig: &entity.HTTPCompressionConfig{
-					Enabled:              true,
-					IncludedContentTypes: contenttypes.ContentTypesShouldCompress,
-					MinResponseBody:      unit.KB, // 1kb
-					DefaultEncoding:      "br",    // brotli
+					Enabled:         true,
+					MinResponseBody: unit.KB, // 1kb
+					DefaultEncoding: "br",    // brotli
 				},
 			},
 		},

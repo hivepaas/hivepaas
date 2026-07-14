@@ -44,6 +44,7 @@ type AppDomain struct {
 	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
 	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
 	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
+	PathRewriteConfig *HTTPPathRewriteConfig `json:"pathRewriteConfig,omitempty"`
 	Paths             []*HTTPPathConfig      `json:"paths,omitempty"`
 }
 
@@ -65,6 +66,7 @@ type HTTPClientConfig struct {
 
 type HTTPHeaderConfig struct {
 	Enabled               bool              `json:"enabled"`
+	AutoContentType       bool              `json:"autoContentType,omitempty"`
 	ToAddToRequests       map[string]string `json:"toAddToRequests,omitempty"`
 	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests,omitempty"`
 	ToAddToResponses      map[string]string `json:"toAddToResponses,omitempty"`
@@ -87,6 +89,16 @@ type HTTPRateLimitConfig struct {
 	MaxInFlightReq int               `json:"maxInFlightReq,omitempty"`
 }
 
+type HTTPPathRewriteConfig struct {
+	Enabled            bool   `json:"enabled"`
+	PrefixAdd          string `json:"prefixAdd,omitempty"`
+	PrefixStrip        string `json:"prefixStrip,omitempty"`
+	PrefixStripIsRegex bool   `json:"prefixStripIsRegex,omitempty"`
+	PathReplace        string `json:"pathReplace,omitempty"`
+	PathReplaceIsRegex bool   `json:"pathReplaceIsRegex,omitempty"`
+	PathReplaceWith    string `json:"pathReplaceWith,omitempty"`
+}
+
 type HTTPPathConfig struct {
 	Enabled           bool                   `json:"enabled"`
 	Path              string                 `json:"path"`
@@ -96,6 +108,7 @@ type HTTPPathConfig struct {
 	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
 	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
+	PathRewriteConfig *HTTPPathRewriteConfig `json:"pathRewriteConfig,omitempty"`
 }
 
 func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {

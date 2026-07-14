@@ -157,6 +157,9 @@ func (s *service) collectDomainConfig(
 	// RateLimit config
 	s.createRateLimitConfig(domain.RateLimitConfig, routerName, labels, &middlewares)
 
+	// PathRewrite config
+	s.createPathRewriteConfig(domain.PathRewriteConfig, routerName, labels, &middlewares)
+
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
 			strings.Join(middlewares, ",")
@@ -228,6 +231,9 @@ func (s *service) collectPathConfig(
 
 	// RateLimit config for path
 	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathRouterName, labels, &pathMiddlewares)
+
+	// PathRewrite config for path
+	s.createPathRewriteConfig(pathCfg.PathRewriteConfig, pathRouterName, labels, &pathMiddlewares)
 
 	if len(pathMiddlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
@@ -335,6 +341,12 @@ func (s *service) createHeaderConfig(
 	}
 
 	*middlewares = append(*middlewares, mwName+middlewareProvider)
+
+	if headerCfg.AutoContentType {
+		mwContentTypeName := fmt.Sprintf("%s-contenttype", routerName)
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.contenttype.autodetect", mwContentTypeName)] = "true"
+		*middlewares = append(*middlewares, mwContentTypeName+middlewareProvider)
+	}
 }
 
 func (s *service) createBasicAuthConfig(
@@ -425,6 +437,51 @@ func (s *service) createRateLimitConfig(
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.amount", mwName)] =
 			strconv.Itoa(rlCfg.MaxInFlightReq)
 		*middlewares = append(*middlewares, mwName+middlewareProvider)
+	}
+}
+
+func (s *service) createPathRewriteConfig(
+	rewriteCfg *entity.HTTPPathRewriteConfig,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if rewriteCfg == nil || !rewriteCfg.Enabled {
+		return
+	}
+
+	if rewriteCfg.PrefixAdd != "" {
+		mwName := fmt.Sprintf("%s-addprefix", routerName)
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.addprefix.prefix", mwName)] = rewriteCfg.PrefixAdd
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
+	}
+
+	if rewriteCfg.PrefixStrip != "" {
+		if rewriteCfg.PrefixStripIsRegex {
+			mwName := fmt.Sprintf("%s-stripprefixregex", routerName)
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefixregex.regex", mwName)] = rewriteCfg.PrefixStrip
+			*middlewares = append(*middlewares, mwName+middlewareProvider)
+		} else {
+			mwName := fmt.Sprintf("%s-stripprefix", routerName)
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", mwName)] = rewriteCfg.PrefixStrip
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.forceslash", mwName)] = "true"
+			*middlewares = append(*middlewares, mwName+middlewareProvider)
+		}
+	}
+
+	if rewriteCfg.PathReplace != "" {
+		if rewriteCfg.PathReplaceIsRegex {
+			if rewriteCfg.PathReplaceWith != "" {
+				mwName := fmt.Sprintf("%s-replacepathregex", routerName)
+				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.regex", mwName)] = rewriteCfg.PathReplace
+				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.replacement", mwName)] = rewriteCfg.PathReplaceWith
+				*middlewares = append(*middlewares, mwName+middlewareProvider)
+			}
+		} else {
+			mwName := fmt.Sprintf("%s-replacepath", routerName)
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepath.path", mwName)] = rewriteCfg.PathReplace
+			*middlewares = append(*middlewares, mwName+middlewareProvider)
+		}
 	}
 }
 

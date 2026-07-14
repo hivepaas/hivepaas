@@ -45,6 +45,7 @@ type DomainReq struct {
 	HeaderConfig      *HTTPHeaderConfigReq      `json:"headerConfig"`
 	CompressionConfig *HTTPCompressionConfigReq `json:"compressionConfig"`
 	RateLimitConfig   *HTTPRateLimitConfigReq   `json:"rateLimitConfig"`
+	PathRewriteConfig *HTTPPathRewriteConfigReq `json:"pathRewriteConfig"`
 	Paths             []*HTTPPathConfigReq      `json:"paths"`
 }
 
@@ -62,6 +63,7 @@ func (req *DomainReq) ToEntity() *entity.AppDomain {
 		HeaderConfig:      req.HeaderConfig.ToEntity(),
 		CompressionConfig: req.CompressionConfig.ToEntity(),
 		RateLimitConfig:   req.RateLimitConfig.ToEntity(),
+		PathRewriteConfig: req.PathRewriteConfig.ToEntity(),
 		Paths: gofn.MapSlice(req.Paths, func(item *HTTPPathConfigReq) *entity.HTTPPathConfig {
 			return item.ToEntity()
 		}),
@@ -134,6 +136,7 @@ func (r *HTTPClientConfigReq) ToEntity() *entity.HTTPClientConfig {
 
 type HTTPHeaderConfigReq struct {
 	Enabled               bool              `json:"enabled"`
+	AutoContentType       bool              `json:"autoContentType"`
 	ToAddToRequests       map[string]string `json:"toAddToRequests"`
 	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests"`
 	ToAddToResponses      map[string]string `json:"toAddToResponses"`
@@ -146,6 +149,7 @@ func (r *HTTPHeaderConfigReq) ToEntity() *entity.HTTPHeaderConfig {
 	}
 	return &entity.HTTPHeaderConfig{
 		Enabled:               r.Enabled,
+		AutoContentType:       r.AutoContentType,
 		ToAddToRequests:       r.ToAddToRequests,
 		ToRemoveFromRequests:  r.ToRemoveFromRequests,
 		ToAddToResponses:      r.ToAddToResponses,
@@ -195,6 +199,31 @@ func (r *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
 	}
 }
 
+type HTTPPathRewriteConfigReq struct {
+	Enabled            bool   `json:"enabled"`
+	PrefixAdd          string `json:"prefixAdd"`
+	PrefixStrip        string `json:"prefixStrip"`
+	PrefixStripIsRegex bool   `json:"prefixStripIsRegex"`
+	PathReplace        string `json:"pathReplace"`
+	PathReplaceIsRegex bool   `json:"pathReplaceIsRegex"`
+	PathReplaceWith    string `json:"pathReplaceWith"`
+}
+
+func (r *HTTPPathRewriteConfigReq) ToEntity() *entity.HTTPPathRewriteConfig {
+	if r == nil {
+		return nil
+	}
+	return &entity.HTTPPathRewriteConfig{
+		Enabled:            r.Enabled,
+		PrefixAdd:          r.PrefixAdd,
+		PrefixStrip:        r.PrefixStrip,
+		PrefixStripIsRegex: r.PrefixStripIsRegex,
+		PathReplace:        r.PathReplace,
+		PathReplaceIsRegex: r.PathReplaceIsRegex,
+		PathReplaceWith:    r.PathReplaceWith,
+	}
+}
+
 type HTTPPathConfigReq struct {
 	Enabled           bool                      `json:"enabled"`
 	Path              string                    `json:"path"`
@@ -203,6 +232,7 @@ type HTTPPathConfigReq struct {
 	ClientConfig      *HTTPClientConfigReq      `json:"clientConfig"`
 	RateLimitConfig   *HTTPRateLimitConfigReq   `json:"rateLimitConfig"`
 	CompressionConfig *HTTPCompressionConfigReq `json:"compressionConfig"`
+	PathRewriteConfig *HTTPPathRewriteConfigReq `json:"pathRewriteConfig"`
 }
 
 func (r *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
@@ -217,6 +247,7 @@ func (r *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
 		ClientConfig:      r.ClientConfig.ToEntity(),
 		RateLimitConfig:   r.RateLimitConfig.ToEntity(),
 		CompressionConfig: r.CompressionConfig.ToEntity(),
+		PathRewriteConfig: r.PathRewriteConfig.ToEntity(),
 	}
 }
 

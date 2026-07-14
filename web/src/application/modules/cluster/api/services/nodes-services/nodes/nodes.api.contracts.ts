@@ -86,3 +86,14 @@ export type Nodes_JoinNode_Req = ApiRequestBase<{
 export type Nodes_JoinNode_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Set manager nodes
+ */
+export type Nodes_SetManagers_Req = ApiRequestBase<{
+    nodes: { id: string }[];
+}>;
+
+export type Nodes_SetManagers_Res = ApiResponseBase<{
+    type: "success";
+}>;

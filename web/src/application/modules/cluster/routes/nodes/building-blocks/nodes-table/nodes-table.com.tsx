@@ -7,7 +7,7 @@ import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constant
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
-import { useJoinNewNodeDialog } from "@application/modules/cluster/dialogs";
+import { useJoinNewNodeDialog, useSetManagerNodesDialog } from "@application/modules/cluster/dialogs";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -19,9 +19,15 @@ export function NodesTable() {
         search,
     });
 
-    const dialog = useJoinNewNodeDialog({
+    const joinNewNodeDialog = useJoinNewNodeDialog({
         onClose: () => {
-            dialog.actions.close();
+            joinNewNodeDialog.actions.close();
+        },
+    });
+
+    const setManagerNodesDialog = useSetManagerNodesDialog({
+        onClose: () => {
+            setManagerNodesDialog.actions.close();
         },
     });
 
@@ -35,12 +41,21 @@ export function NodesTable() {
                         action="write"
                     >
                         {({ isDenied }) => (
-                            <Button
-                                onClick={dialog.actions.open}
-                                disabled={isDenied}
-                            >
-                                <Plus /> Join Node
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={setManagerNodesDialog.actions.open}
+                                    disabled={isDenied}
+                                >
+                                    Set managers
+                                </Button>
+                                <Button
+                                    onClick={joinNewNodeDialog.actions.open}
+                                    disabled={isDenied}
+                                >
+                                    <Plus /> Join Node
+                                </Button>
+                            </div>
                         )}
                     </PermissionTooltipAction>
                 }

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { NodesCommands } from "~/cluster/data/commands";
 import { NodesQueries } from "~/cluster/data/queries";
-import { NodeStatusBadge } from "~/cluster/module-shared/components";
+import { NodeStateBadge } from "~/cluster/module-shared/components";
 
 import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
@@ -100,7 +100,7 @@ function View({ nodeId }: Props) {
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{node.name}</h2>
-                            <NodeStatusBadge status={node.status} />
+                            <NodeStateBadge state={node.state} />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1.5">

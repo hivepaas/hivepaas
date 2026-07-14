@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -23,8 +24,14 @@ func (uc *UC) DeleteFile(
 			bunex.SelectFor("UPDATE OF file"),
 			bunex.SelectRelation("Storage"),
 		}
+		if req.Scope != nil {
+			opts = append(opts, bunex.SelectWhere("file.scope = ?", *req.Scope))
+		}
 		if req.ObjectID != "" {
 			opts = append(opts, bunex.SelectWhere("file.object_id = ?", req.ObjectID))
+		}
+		if len(req.Types) > 0 {
+			opts = append(opts, bunex.SelectWhereIn("file.type IN (?)", req.Types...))
 		}
 
 		file, err := uc.fileRepo.GetByID(ctx, db, req.ID, opts...)
@@ -32,7 +39,9 @@ func (uc *UC) DeleteFile(
 			return apperrors.Wrap(err)
 		}
 
-		if req.DeletePermanently {
+		deletePhysicalFile := false
+		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageLocal) {
+			deletePhysicalFile = true
 			_, err := uc.fileService.DeleteFileData(ctx, &fileservice.DeleteDataReq{
 				File:     file,
 				RetryMax: 2, //nolint:mnd
@@ -43,7 +52,7 @@ func (uc *UC) DeleteFile(
 		}
 
 		file.DeletedAt = time.Now()
-		file.Deleted = true
+		file.Deleted = deletePhysicalFile
 		err = uc.fileRepo.Update(ctx, db, file, bunex.UpdateColumns("deleted", "deleted_at"))
 		if err != nil {
 			return apperrors.Wrap(err)

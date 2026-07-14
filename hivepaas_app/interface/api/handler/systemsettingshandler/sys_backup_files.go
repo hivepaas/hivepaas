@@ -153,3 +153,51 @@ func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 
 	ctx.DataFromReader(http.StatusOK, data.ContentLength, data.ContentType, data.Content, data.ExtraHeaders)
 }
+
+// DeleteBackupFile Deletes backup file
+// @Summary Deletes backup file
+// @Description Deletes backup file
+// @Tags    system_settings
+// @Produce json
+// @Id      deleteSystemBackupFile
+// @Param   fileID path string true "file setting ID"
+// @Success 200 {object} filedto.DeleteFileResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /system/settings/backup/files/{fileID} [delete]
+func (h *Handler) DeleteBackupFile(ctx *gin.Context) {
+	fileID, err := h.ParseStringParam(ctx, "fileID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
+		ResourceModule: base.ResourceModuleSystem,
+		ResourceType:   base.ResourceTypeSystemBackup,
+		ResourceID:     fileID,
+		Action:         base.ActionTypeDelete,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := filedto.NewDeleteFileReq()
+	req.ID = fileID
+	req.Scope = new(base.ObjectScopeGlobal)
+	req.DeletePermanentlyIfLocal = true
+	req.Types = []base.FileType{base.FileTypeSystemBackup}
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.FileUC.DeleteFile(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

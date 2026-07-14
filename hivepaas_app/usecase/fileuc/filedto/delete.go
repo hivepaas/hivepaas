@@ -4,13 +4,17 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type DeleteFileReq struct {
-	ID                string `json:"-" mapstructure:"-"`
-	ObjectID          string `json:"-" mapstructure:"-"`
-	DeletePermanently bool   `json:"-" mapstructure:"deletePermanently"`
+	ID                       string                `json:"-" mapstructure:"-"`
+	Scope                    *base.ObjectScopeType `json:"-" mapstructure:"-"`
+	ObjectID                 string                `json:"-" mapstructure:"-"`
+	Types                    []base.FileType       `json:"-" mapstructure:"-"`
+	DeletePermanentlyIfLocal bool                  `json:"-" mapstructure:"deletePermanentlyIfLocal"`
+	DeletePermanently        bool                  `json:"-" mapstructure:"deletePermanently"`
 }
 
 func NewDeleteFileReq() *DeleteFileReq {

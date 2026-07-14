@@ -33,7 +33,7 @@ func (req *CreateAPIKeyReq) Validate() apperrors.ValidationErrors {
 	timeNow := timeutil.NowUTC()
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1,
 		base.SettingNameMaxLen, "name")...)
-	validators = append(validators, basedto.ValidateTime(&req.ExpireAt, false, timeNow,
+	validators = append(validators, basedto.ValidateTime(&req.ExpireAt, true, timeNow,
 		timeNow.AddDate(expirationYearMax, 0, 0), "expireAt")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Play, Search } from "lucide-react";
+import { Play } from "lucide-react";
 import type { ProjectGitBranch, ProjectGitPullRequest, ProjectGitRepo } from "~/projects/api/services";
 import { ProjectGitCredentialsQueries } from "~/projects/data";
-import { GIT_SELECTOR_PAGE_SIZE, type ParsedGitRepository, truncateSha } from "~/projects/module-shared/utils";
+import { SelectorSearch } from "~/projects/module-shared/components/selector-dialog";
+import {
+    GIT_SELECTOR_PAGE_SIZE,
+    type ParsedGitRepository,
+    appendUniqueByKey,
+    createSelectorPagination,
+    includesSelectorSearch,
+    truncateSha,
+} from "~/projects/module-shared/utils";
 
 import {
     Button,
@@ -13,7 +21,6 @@ import {
     DialogFixedContent,
     DialogHeader,
     DialogTitle,
-    Input,
     Table,
     TableBody,
     TableCell,
@@ -21,62 +28,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui";
-
-type SelectorPagination = {
-    page: number;
-    size: number;
-};
-
-function createPagination(page: number): SelectorPagination {
-    return {
-        page,
-        size: GIT_SELECTOR_PAGE_SIZE,
-    };
-}
-
-function includesSearch(value: string | number | null | undefined, search: string): boolean {
-    return String(value ?? "")
-        .toLowerCase()
-        .includes(search);
-}
-
-function appendUniqueByKey<T>(current: T[], next: T[], getKey: (item: T) => string): T[] {
-    const keys = new Set(current.map(getKey));
-    const merged = [...current];
-
-    for (const item of next) {
-        const key = getKey(item);
-
-        if (keys.has(key)) {
-            continue;
-        }
-
-        keys.add(key);
-        merged.push(item);
-    }
-
-    return merged;
-}
-
-function SelectorSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-    return (
-        <div className="relative w-full max-w-[320px]">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
-                <Search className="size-4" />
-                <span className="sr-only">Search</span>
-            </div>
-            <Input
-                value={value}
-                type="search"
-                placeholder="Search"
-                className="px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
-                onChange={event => {
-                    onChange(event.target.value);
-                }}
-            />
-        </div>
-    );
-}
 
 export function GitRepositoriesDialog({
     open,
@@ -93,7 +44,7 @@ export function GitRepositoriesDialog({
         {
             projectID: projectId,
             itemID: credentialId,
-            pagination: createPagination(page),
+            pagination: createSelectorPagination(page),
         },
         {
             enabled: open && Boolean(credentialId),
@@ -131,7 +82,7 @@ export function GitRepositoriesDialog({
 
         return rows.filter(row =>
             [row.name, row.fullName, row.cloneURL, row.gitURL, row.defaultBranch].some(value =>
-                includesSearch(value, normalizedSearch),
+                includesSelectorSearch(value, normalizedSearch),
             ),
         );
     }, [normalizedSearch, rows]);
@@ -250,7 +201,7 @@ export function PullRequestsDialog({
             itemID: credentialId,
             owner: requestOwner,
             repo: repository.repo,
-            pagination: createPagination(page),
+            pagination: createSelectorPagination(page),
         },
         {
             enabled: open && Boolean(credentialId) && Boolean(repository.repo),
@@ -286,7 +237,7 @@ export function PullRequestsDialog({
 
         return rows.filter(row =>
             [row.number, row.title, row.branch, row.sha, row.ref, row.author, row.state].some(value =>
-                includesSearch(value, normalizedSearch),
+                includesSelectorSearch(value, normalizedSearch),
             ),
         );
     }, [normalizedSearch, rows]);
@@ -420,7 +371,7 @@ export function BranchesDialog({
             itemID: credentialId,
             owner: requestOwner,
             repo: repository.repo,
-            pagination: createPagination(page),
+            pagination: createSelectorPagination(page),
         },
         {
             enabled: open && Boolean(credentialId) && Boolean(repository.repo),
@@ -454,7 +405,9 @@ export function BranchesDialog({
             return rows;
         }
 
-        return rows.filter(row => [row.name, row.ref, row.sha].some(value => includesSearch(value, normalizedSearch)));
+        return rows.filter(row =>
+            [row.name, row.ref, row.sha].some(value => includesSelectorSearch(value, normalizedSearch)),
+        );
     }, [normalizedSearch, rows]);
     const canLoadMore = (query.data?.data.length ?? 0) >= GIT_SELECTOR_PAGE_SIZE;
 

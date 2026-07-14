@@ -112,6 +112,59 @@ const CommandSchema = z
     .nullish()
     .transform(value => value ?? null);
 
+const CommandOutputSaveToFileSchema = z
+    .object({
+        fileName: z.string().optional().default(""),
+        filePath: z.string().optional().default(""),
+        fileKind: z.string().optional().default(""),
+        storage: NamedRefSchema,
+        compressionFormat: z.string().optional().default(""),
+        encryptionFormat: z.string().optional().default(""),
+        encryptionSecret: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const PipeToAppCommandSchema = z
+    .object({
+        runInShell: z.string().optional().default(""),
+        command: z.string().optional().default(""),
+        script: z.string().optional().default(""),
+        workingDir: z.string().optional().default(""),
+        consoleSize: ConsoleSizeSchema,
+        tty: z.boolean().optional().default(false),
+        envVars: z
+            .array(EnvVarSchema)
+            .nullish()
+            .transform(value => value ?? []),
+        argGroups: z
+            .array(ArgGroupSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const CommandOutputPipeToAppSchema = z
+    .object({
+        targetApp: z
+            .object({ id: z.string(), name: z.string() })
+            .nullish()
+            .transform(v => v ?? { id: "", name: "" }),
+        command: PipeToAppCommandSchema,
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const CommandOutputSchema = z
+    .object({
+        enabled: z.boolean().optional().default(false),
+        saveToFile: CommandOutputSaveToFileSchema,
+        pipeToApp: CommandOutputPipeToAppSchema,
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const NotificationSchema = z
     .object({
         successUseDefault: z.boolean(),
@@ -147,6 +200,7 @@ const AppScheduledJobSchema = z.object({
     timeout: z.string().optional().default(""),
     controlDisabled: z.boolean().optional().default(false),
     command: CommandSchema,
+    commandOutput: CommandOutputSchema,
     notification: NotificationSchema,
     nextRuns: z.array(z.coerce.date()).optional().default([]),
 });

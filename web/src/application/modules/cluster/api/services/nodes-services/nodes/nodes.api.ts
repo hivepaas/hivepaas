@@ -14,6 +14,8 @@ import type {
     Nodes_GetJoinNode_Res,
     Nodes_JoinNode_Req,
     Nodes_JoinNode_Res,
+    Nodes_SetManagers_Req,
+    Nodes_SetManagers_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services/nodes-services";
@@ -188,6 +190,29 @@ export class NodesApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.post("/cluster/nodes/join", json, { signal })).pipe(
+                map(() => Ok({ data: { type: "success" } as const })),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Set manager nodes
+     */
+    async setManagers(
+        request: Nodes_SetManagers_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Nodes_SetManagers_Res, Error>> {
+        const { nodes } = request.data;
+
+        const json = {
+            nodes: nodes.map(node => ({
+                id: node.id,
+            })),
+        };
+
+        return lastValueFrom(
+            from(this.client.v1.post("/cluster/nodes/set-managers", json, { signal })).pipe(
                 map(() => Ok({ data: { type: "success" } as const })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -4,9 +4,15 @@ import { toast } from "sonner";
 import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 import { CreateOrEditAppScheduledJobForm } from "~/projects/dialogs/create-or-edit-app-scheduled-job/form";
-import { APP_SCHEDULED_JOB_COMMAND_MODE } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
-import type { CreateOrEditAppScheduledJobFormOutput } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
-import { EAppScheduledJobScheduleMode, EAppScheduledJobType } from "~/projects/module-shared/enums";
+import {
+    APP_SCHEDULED_JOB_COMMAND_MODE,
+    type CreateOrEditAppScheduledJobFormOutput,
+} from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
+import {
+    EAppScheduledJobCommandOutputMode,
+    EAppScheduledJobScheduleMode,
+    EAppScheduledJobType,
+} from "~/projects/module-shared/enums";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -31,6 +37,8 @@ function mapFormValuesToPayload(
         values.scheduleMode === EAppScheduledJobScheduleMode.Cron && hasText(values.scheduleCronExpr)
             ? values.scheduleCronExpr
             : undefined;
+
+    const commandOutput = buildCommandOutputPayload(values);
 
     return {
         availableInProjects: false,
@@ -61,15 +69,10 @@ function mapFormValuesToPayload(
             tty: values.tty,
             ...(hasText(values.runInShell) ? { runInShell: values.runInShell } : {}),
             ...(hasText(values.workingDir) ? { workingDir: values.workingDir } : {}),
-            ...(values.envVars.length > 0
-                ? {
-                      envVars: values.envVars.map(envVar => ({
-                          ...envVar,
-                      })),
-                  }
-                : {}),
+            ...(values.envVars.length > 0 ? { envVars: values.envVars.map(envVar => ({ ...envVar })) } : {}),
             ...(values.argGroups.length > 0 ? { argGroups: values.argGroups } : {}),
         },
+        commandOutput,
         notification: {
             successUseDefault: values.notification.successUseDefault,
             ...(!values.notification.successUseDefault && values.notification.success
@@ -79,6 +82,51 @@ function mapFormValuesToPayload(
             ...(!values.notification.failureUseDefault && values.notification.failure
                 ? { failure: values.notification.failure }
                 : {}),
+        },
+    };
+}
+
+function buildCommandOutputPayload(
+    values: CreateOrEditAppScheduledJobFormOutput,
+): AppScheduledJobs_Upsert_Payload["commandOutput"] {
+    if (values.commandOutputMode === EAppScheduledJobCommandOutputMode.Ignore) {
+        return { enabled: false };
+    }
+
+    if (values.commandOutputMode === EAppScheduledJobCommandOutputMode.SaveToFile) {
+        const stf = values.saveToFile;
+
+        return {
+            enabled: true,
+            saveToFile: {
+                fileName: stf.fileName,
+                ...(hasText(stf.filePath) ? { filePath: stf.filePath } : {}),
+                fileKind: "",
+                ...(stf.storage ? { storage: { id: stf.storage.id } } : {}),
+                compressionFormat: stf.compressionFormat,
+                encryptionFormat: stf.encryptionFormat,
+                ...(hasText(stf.encryptionSecret) ? { encryptionSecret: stf.encryptionSecret } : {}),
+            },
+            pipeToApp: null,
+        };
+    }
+
+    const pc = values.pipeCommand;
+
+    return {
+        enabled: true,
+        saveToFile: null,
+        pipeToApp: {
+            targetApp: { id: values.pipeTargetApp?.id ?? "" },
+            command: {
+                command: pc.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Command ? pc.command : "",
+                script: pc.commandMode === APP_SCHEDULED_JOB_COMMAND_MODE.Script ? pc.script : "",
+                consoleSize: pc.consoleSize,
+                tty: pc.tty,
+                ...(hasText(pc.workingDir) ? { workingDir: pc.workingDir } : {}),
+                ...(pc.envVars.length > 0 ? { envVars: pc.envVars.map(ev => ({ ...ev })) } : {}),
+                ...(pc.argGroups.length > 0 ? { argGroups: pc.argGroups } : {}),
+            },
         },
     };
 }
@@ -184,6 +232,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
             {!(isEditMode && isDetailLoading) && shouldRenderForm && (
                 <CreateOrEditAppScheduledJobForm
                     projectId={projectId}
+                    appId={appId}
                     isPending={isCreating || isUpdating}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

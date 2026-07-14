@@ -1,3 +1,5 @@
+import type { PaginationState } from "@infrastructure/data";
+
 import type { ProjectPublic } from "@application/shared/entities";
 
 import { type ApiRequestBase, type ApiResponsePaginated } from "@infrastructure/api";
@@ -7,6 +9,7 @@ import { type ApiRequestBase, type ApiResponsePaginated } from "@infrastructure/
  */
 export type Public_Projects_FindManyPaginated_Req = ApiRequestBase<{
     search?: string;
+    pagination?: PaginationState;
 }>;
 
 export type Public_Projects_FindManyPaginated_Res = ApiResponsePaginated<ProjectPublic>;

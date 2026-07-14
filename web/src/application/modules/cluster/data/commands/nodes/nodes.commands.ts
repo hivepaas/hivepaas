@@ -9,6 +9,8 @@ import type {
     Nodes_GetJoinNode_Res,
     Nodes_JoinNode_Req,
     Nodes_JoinNode_Res,
+    Nodes_SetManagers_Req,
+    Nodes_SetManagers_Res,
     Nodes_UpdateOne_Req,
     Nodes_UpdateOne_Res,
 } from "~/cluster/api/services";
@@ -151,10 +153,43 @@ function useJoinNode({ onSuccess, ...options }: JoinNodeOptions = {}) {
     });
 }
 
+/**
+ * Set manager nodes command
+ */
+type SetManagersReq = Nodes_SetManagers_Req["data"];
+type SetManagersRes = Nodes_SetManagers_Res;
+type SetManagersOptions = Omit<UseMutationOptions<SetManagersRes, Error, SetManagersReq>, "mutationFn">;
+
+function useSetManagers({ onSuccess, ...options }: SetManagersOptions = {}) {
+    const { mutations } = useNodesApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.setManagers,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["nodes.$.find-many-paginated"]],
+            });
+
+            void queryClient.invalidateQueries({
+                queryKey: [QK["nodes.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+
+        ...options,
+    });
+}
+
 export const NodesCommands = Object.freeze({
     useDeleteOne,
     useUpdateOne,
     useCreateOne,
     useGetJoinNode,
     useJoinNode,
+    useSetManagers,
 });

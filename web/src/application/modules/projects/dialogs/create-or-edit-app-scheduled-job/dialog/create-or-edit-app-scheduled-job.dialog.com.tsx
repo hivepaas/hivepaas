@@ -208,6 +208,7 @@ export function CreateOrEditAppScheduledJobDialog() {
                 ) : (
                     <CreateOrEditAppScheduledJobForm
                         projectId={projectId}
+                        appId={appId}
                         isPending={isCreating || isUpdating}
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}

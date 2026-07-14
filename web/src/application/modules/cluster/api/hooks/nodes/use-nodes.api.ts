@@ -9,6 +9,7 @@ import type {
     Nodes_FindOneById_Req,
     Nodes_GetJoinNode_Req,
     Nodes_JoinNode_Req,
+    Nodes_SetManagers_Req,
     Nodes_UpdateOne_Req,
 } from "~/cluster/api/services";
 
@@ -178,7 +179,26 @@ function createHook() {
                         },
                     });
                 },
+                /**
+                 * Set manager nodes
+                 */
+                setManagers: async (data: Nodes_SetManagers_Req["data"]) => {
+                    const result = await api.nodes.$.setManagers({
+                        data,
+                    });
 
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to set manager nodes",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
             }),
             [api, notifyError],
         );

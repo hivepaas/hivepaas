@@ -65,6 +65,26 @@ export interface AppScheduledJobNotification {
     failure?: AppScheduledJobNamedRef;
 }
 
+export interface AppScheduledJobCommandOutputSaveToFile {
+    fileName: string;
+    filePath: string;
+    storage?: AppScheduledJobNamedRef;
+    compressionFormat: string;
+    encryptionFormat: string;
+    encryptionSecret?: string;
+}
+
+export interface AppScheduledJobCommandOutputPipeToApp {
+    targetApp: AppScheduledJobNamedRef;
+    command?: AppScheduledJobCommand;
+}
+
+export interface AppScheduledJobCommandOutput {
+    enabled: boolean;
+    saveToFile?: AppScheduledJobCommandOutputSaveToFile;
+    pipeToApp?: AppScheduledJobCommandOutputPipeToApp;
+}
+
 export interface AppScheduledJob {
     id: string;
     type: ESettingType;
@@ -91,6 +111,7 @@ export interface AppScheduledJob {
     timeout: string;
     controlDisabled: boolean;
     command: AppScheduledJobCommand | null;
+    commandOutput?: AppScheduledJobCommandOutput | null;
     notification: AppScheduledJobNotification | null;
     nextRuns: Date[];
 }

@@ -21,11 +21,14 @@ export class ProjectsPublicApi extends BaseApi {
         request: Public_Projects_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<Public_Projects_FindManyPaginated_Res, Error>> {
-        const { search } = request.data;
+        const { search, pagination } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
-        query.sorting([{ id: "name", desc: false }]).search(search);
+        query
+            .pagination(pagination)
+            .sorting([{ id: "name", desc: false }])
+            .search(search);
 
         return lastValueFrom(
             from(

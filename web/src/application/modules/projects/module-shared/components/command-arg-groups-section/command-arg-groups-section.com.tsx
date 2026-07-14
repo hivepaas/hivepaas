@@ -81,12 +81,12 @@ function getInputWidth(value: string, placeholder: string, min: number, max: num
     return `${width}ch`;
 }
 
-function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false }: ArgItemProps) {
+function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgItemProps) {
     const {
         control,
         formState: { errors },
     } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const basePath = `argGroups.${groupIndex}.args.${argIndex}`;
+    const basePath = `${fieldName}.${groupIndex}.args.${argIndex}`;
 
     const { field: useArg } = useController({ control, name: `${basePath}.use` as never });
     const {
@@ -153,13 +153,13 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false }: ArgItemPr
     );
 }
 
-function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProps) {
+function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgGroupRowProps) {
     const [open, setOpen] = useState(true);
     const {
         control,
         formState: { errors },
     } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const basePath = `argGroups.${groupIndex}`;
+    const basePath = `${fieldName}.${groupIndex}`;
 
     const { field: enabled } = useController({ control, name: `${basePath}.enabled` as never });
     const {
@@ -297,6 +297,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
                                                 remove(argIndex);
                                             }}
                                             readOnly={readOnly}
+                                            fieldName={fieldName}
                                         />
                                     ))}
                                 </div>
@@ -332,11 +333,11 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false }: ArgGroupRowProp
     );
 }
 
-function View({ readOnly = false }: Props) {
+function View({ readOnly = false, fieldName = "argGroups" }: Props) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const { fields, append, remove } = useFieldArray({
         control,
-        name: "argGroups",
+        name: fieldName as never,
     });
 
     return (
@@ -353,6 +354,7 @@ function View({ readOnly = false }: Props) {
                         remove(index);
                     }}
                     readOnly={readOnly}
+                    fieldName={fieldName}
                 />
             ))}
             <Button
@@ -376,16 +378,19 @@ interface ArgItemProps {
     argIndex: number;
     onRemove: () => void;
     readOnly?: boolean;
+    fieldName?: string;
 }
 
 interface ArgGroupRowProps {
     groupIndex: number;
     onRemove: () => void;
     readOnly?: boolean;
+    fieldName?: string;
 }
 
 interface Props {
     readOnly?: boolean;
+    fieldName?: string;
 }
 
 export const CommandArgGroupsSection = React.memo(View);

@@ -3,6 +3,7 @@ package nodeuc
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -68,7 +69,7 @@ func (uc *UC) SetManagerNodes(
 	}
 
 	// 2. Demote manager nodes to workers
-	for _, node := range demoteNodes {
+	for _, node := range uc.sortNodesToDemote(ctx, demoteNodes) {
 		inspect, err := uc.dockerManager.NodeInspect(ctx, node.ID)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -89,4 +90,40 @@ func (uc *UC) SetManagerNodes(
 	}
 
 	return &nodedto.SetManagerNodesResp{}, nil
+}
+
+func (uc *UC) sortNodesToDemote(
+	ctx context.Context,
+	demoteNodes []*swarm.Node,
+) []*swarm.Node {
+	// Sort demoteNodes to ensure the current node and the leader manager node are demoted last.
+	// This maintains Docker Swarm quorum stability and avoids interrupting the API client connection.
+	currNodeID, _ := uc.dockerManager.NodeCurrentID(ctx)
+	sort.SliceStable(demoteNodes, func(i, j int) bool {
+		nodeI := demoteNodes[i]
+		nodeJ := demoteNodes[j]
+
+		isSpecialI := nodeI.ID == currNodeID || (nodeI.ManagerStatus != nil && nodeI.ManagerStatus.Leader)
+		isSpecialJ := nodeJ.ID == currNodeID || (nodeJ.ManagerStatus != nil && nodeJ.ManagerStatus.Leader)
+
+		if isSpecialI && !isSpecialJ {
+			return false
+		}
+		if !isSpecialI && isSpecialJ {
+			return true
+		}
+
+		if isSpecialI && isSpecialJ {
+			isLeaderI := nodeI.ManagerStatus != nil && nodeI.ManagerStatus.Leader
+			isLeaderJ := nodeJ.ManagerStatus != nil && nodeJ.ManagerStatus.Leader
+			if isLeaderI && !isLeaderJ {
+				return false
+			}
+			if !isLeaderI && isLeaderJ {
+				return true
+			}
+		}
+		return false
+	})
+	return demoteNodes
 }

@@ -32,20 +32,21 @@ type AppHttpSettings struct {
 }
 
 type AppDomain struct {
-	Enabled           bool                   `json:"enabled"`
-	Domain            string                 `json:"domain"`
-	DomainRedirect    string                 `json:"domainRedirect,omitempty"`
-	SSLCert           ObjectID               `json:"sslCert,omitzero"`
-	ContainerPort     int                    `json:"containerPort,omitempty"`
-	ForceHttps        bool                   `json:"forceHttps,omitempty"`
-	LBConfig          *HTTPLBConfig          `json:"lbConfig,omitempty"`
-	BasicAuth         *HTTPBasicAuthConfig   `json:"basicAuth,omitempty"`
-	ClientConfig      *HTTPClientConfig      `json:"clientConfig,omitempty"`
-	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
-	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
-	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
-	PathRewriteConfig *HTTPPathRewriteConfig `json:"pathRewriteConfig,omitempty"`
-	Paths             []*HTTPPathConfig      `json:"paths,omitempty"`
+	Enabled              bool                      `json:"enabled"`
+	Domain               string                    `json:"domain"`
+	DomainRedirect       string                    `json:"domainRedirect,omitempty"`
+	SSLCert              ObjectID                  `json:"sslCert,omitzero"`
+	ContainerPort        int                       `json:"containerPort,omitempty"`
+	ForceHttps           bool                      `json:"forceHttps,omitempty"`
+	LBConfig             *HTTPLBConfig             `json:"lbConfig,omitempty"`
+	BasicAuth            *HTTPBasicAuthConfig      `json:"basicAuth,omitempty"`
+	ClientConfig         *HTTPClientConfig         `json:"clientConfig,omitempty"`
+	CompressionConfig    *HTTPCompressionConfig    `json:"compressionConfig,omitempty"`
+	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
+	HeaderConfig         *HTTPHeaderConfig         `json:"headerConfig,omitempty"`
+	PathRewriteConfig    *HTTPPathRewriteConfig    `json:"pathRewriteConfig,omitempty"`
+	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
+	Paths                []*HTTPPathConfig         `json:"paths,omitempty"`
 }
 
 type HTTPLBConfig struct {
@@ -99,16 +100,26 @@ type HTTPPathRewriteConfig struct {
 	PathReplaceWith    string `json:"pathReplaceWith,omitempty"`
 }
 
+type HTTPCircuitBreakerConfig struct {
+	Enabled          bool              `json:"enabled"`
+	Expression       string            `json:"expression,omitempty"`
+	CheckPeriod      timeutil.Duration `json:"checkPeriod,omitempty"`
+	FallbackDuration timeutil.Duration `json:"fallbackDuration,omitempty"`
+	RecoveryDuration timeutil.Duration `json:"recoveryDuration,omitempty"`
+	ResponseCode     int               `json:"responseCode,omitempty"`
+}
+
 type HTTPPathConfig struct {
-	Enabled           bool                   `json:"enabled"`
-	Path              string                 `json:"path"`
-	Mode              base.HTTPPathMode      `json:"mode"`
-	BasicAuth         *HTTPBasicAuthConfig   `json:"basicAuth,omitempty"`
-	ClientConfig      *HTTPClientConfig      `json:"clientConfig,omitempty"`
-	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
-	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
-	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
-	PathRewriteConfig *HTTPPathRewriteConfig `json:"pathRewriteConfig,omitempty"`
+	Enabled              bool                      `json:"enabled"`
+	Path                 string                    `json:"path"`
+	Mode                 base.HTTPPathMode         `json:"mode"`
+	BasicAuth            *HTTPBasicAuthConfig      `json:"basicAuth,omitempty"`
+	ClientConfig         *HTTPClientConfig         `json:"clientConfig,omitempty"`
+	HeaderConfig         *HTTPHeaderConfig         `json:"headerConfig,omitempty"`
+	CompressionConfig    *HTTPCompressionConfig    `json:"compressionConfig,omitempty"`
+	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
+	PathRewriteConfig    *HTTPPathRewriteConfig    `json:"pathRewriteConfig,omitempty"`
+	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
 }
 
 func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {

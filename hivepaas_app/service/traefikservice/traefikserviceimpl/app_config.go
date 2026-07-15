@@ -161,6 +161,9 @@ func (s *service) collectDomainConfig(
 	// PathRewrite config
 	s.createPathRewriteConfig(domain.PathRewriteConfig, routerName, labels, &middlewares)
 
+	// CircuitBreaker config
+	s.createCircuitBreakerConfig(domain.CircuitBreakerConfig, routerName, labels, &middlewares)
+
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
 			strings.Join(middlewares, ",")
@@ -235,6 +238,9 @@ func (s *service) collectPathConfig(
 
 	// PathRewrite config for path
 	s.createPathRewriteConfig(pathCfg.PathRewriteConfig, pathRouterName, labels, &pathMiddlewares)
+
+	// CircuitBreaker config for path
+	s.createCircuitBreakerConfig(pathCfg.CircuitBreakerConfig, pathRouterName, labels, &pathMiddlewares)
 
 	if len(pathMiddlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
@@ -439,6 +445,38 @@ func (s *service) createRateLimitConfig(
 			strconv.Itoa(rlCfg.MaxInFlightReq)
 		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
+}
+
+func (s *service) createCircuitBreakerConfig(
+	cbCfg *entity.HTTPCircuitBreakerConfig,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if cbCfg == nil || !cbCfg.Enabled || cbCfg.Expression == "" {
+		return
+	}
+	mwName := fmt.Sprintf("%s-circuitbreaker", routerName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.expression", mwName)] = cbCfg.Expression
+
+	if cbCfg.CheckPeriod > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.checkperiod", mwName)] =
+			cbCfg.CheckPeriod.ToDuration().String()
+	}
+	if cbCfg.FallbackDuration > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.fallbackduration", mwName)] =
+			cbCfg.FallbackDuration.ToDuration().String()
+	}
+	if cbCfg.RecoveryDuration > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.recoveryduration", mwName)] =
+			cbCfg.RecoveryDuration.ToDuration().String()
+	}
+	if cbCfg.ResponseCode > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.responsecode", mwName)] =
+			strconv.Itoa(cbCfg.ResponseCode)
+	}
+
+	*middlewares = append(*middlewares, mwName+middlewareProvider)
 }
 
 func (s *service) createPathRewriteConfig(

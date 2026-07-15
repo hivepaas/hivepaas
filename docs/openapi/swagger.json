@@ -28638,6 +28638,9 @@
           "basicAuth" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPBasicAuthConfigReq"
           },
+          "circuitBreakerConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigReq"
+          },
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigReq"
           },
@@ -28681,13 +28684,16 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.DomainResp" : {
         "properties" : {
           "basicAuth" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPBasicAuthConfigResp"
+          },
+          "circuitBreakerConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigResp"
           },
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigResp"
@@ -28732,7 +28738,7 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_sslcertuc_sslcertdto.SSLCertResp"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.EndpointSpec" : {
@@ -28966,6 +28972,54 @@
         "required" : [ "availableInProjects", "createdAt", "default", "enabled", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigReq" : {
+        "properties" : {
+          "checkPeriod" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "type" : "string"
+          },
+          "fallbackDuration" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "recoveryDuration" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "responseCode" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "checkPeriod", "enabled", "expression", "fallbackDuration", "recoveryDuration", "responseCode" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigResp" : {
+        "properties" : {
+          "checkPeriod" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "type" : "string"
+          },
+          "fallbackDuration" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "recoveryDuration" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "responseCode" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "checkPeriod", "enabled", "expression", "fallbackDuration", "recoveryDuration", "responseCode" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigReq" : {
         "properties" : {
           "allowedIPs" : {
@@ -29157,6 +29211,9 @@
           "basicAuth" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPBasicAuthConfigReq"
           },
+          "circuitBreakerConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigReq"
+          },
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigReq"
           },
@@ -29182,13 +29239,16 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPRateLimitConfigReq"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "enabled", "headerConfig", "mode", "path", "pathRewriteConfig", "rateLimitConfig" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "enabled", "headerConfig", "mode", "path", "pathRewriteConfig", "rateLimitConfig" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPPathConfigResp" : {
         "properties" : {
           "basicAuth" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPBasicAuthConfigResp"
+          },
+          "circuitBreakerConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPCircuitBreakerConfigResp"
           },
           "clientConfig" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPClientConfigResp"
@@ -29215,7 +29275,7 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPRateLimitConfigResp"
           }
         },
-        "required" : [ "basicAuth", "clientConfig", "compressionConfig", "enabled", "headerConfig", "mode", "path", "pathRewriteConfig", "rateLimitConfig" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "enabled", "headerConfig", "mode", "path", "pathRewriteConfig", "rateLimitConfig" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.HTTPPathRewriteConfigReq" : {

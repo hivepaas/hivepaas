@@ -21,6 +21,7 @@ export const HttpClientConfigSchema = z.object({
 
 export const HttpHeaderConfigSchema = z.object({
     enabled: z.boolean(),
+    autoContentType: z.boolean(),
     toAddToRequests: z.array(z.object({ key: z.string(), value: z.string() })),
     toRemoveFromRequests: z.array(z.object({ value: z.string() })),
     toAddToResponses: z.array(z.object({ key: z.string(), value: z.string() })),
@@ -47,6 +48,16 @@ export const HttpRateLimitConfigSchema = z.object({
     maxInFlightReq: z.number().min(0),
 });
 
+export const HttpPathRewriteConfigSchema = z.object({
+    enabled: z.boolean(),
+    prefixAdd: z.string(),
+    prefixStrip: z.string(),
+    prefixStripIsRegex: z.boolean(),
+    pathReplace: z.string(),
+    pathReplaceIsRegex: z.boolean(),
+    pathReplaceWith: z.string(),
+});
+
 export const HttpPathConfigSchema = z.object({
     enabled: z.boolean(),
     path: z.string().min(1, "Path is required"),
@@ -56,6 +67,7 @@ export const HttpPathConfigSchema = z.object({
     headerConfig: HttpHeaderConfigSchema.optional(),
     compressionConfig: HttpCompressionConfigSchema.optional(),
     rateLimitConfig: HttpRateLimitConfigSchema.optional(),
+    pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
 });
 
 const DOMAIN_MAX_LEN = 100; // mirrors backend base.DomainNameMaxLen
@@ -74,6 +86,7 @@ export const DomainFormSchema = z
         headerConfig: HttpHeaderConfigSchema.optional(),
         compressionConfig: HttpCompressionConfigSchema.optional(),
         rateLimitConfig: HttpRateLimitConfigSchema.optional(),
+        pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
         paths: z.array(HttpPathConfigSchema),
     })
     .superRefine((values, ctx) => {
@@ -130,6 +143,7 @@ export function createDefaultClientConfig(): z.infer<typeof HttpClientConfigSche
 export function createDefaultHeaderConfig(): z.infer<typeof HttpHeaderConfigSchema> {
     return {
         enabled: true,
+        autoContentType: false,
         toAddToRequests: [],
         toRemoveFromRequests: [],
         toAddToResponses: [],
@@ -154,6 +168,18 @@ export function createDefaultRateLimitConfig(): z.infer<typeof HttpRateLimitConf
         period: "",
         burst: 0,
         maxInFlightReq: 0,
+    };
+}
+
+export function createDefaultPathRewriteConfig(): z.infer<typeof HttpPathRewriteConfigSchema> {
+    return {
+        enabled: true,
+        prefixAdd: "",
+        prefixStrip: "",
+        prefixStripIsRegex: false,
+        pathReplace: "",
+        pathReplaceIsRegex: false,
+        pathReplaceWith: "",
     };
 }
 

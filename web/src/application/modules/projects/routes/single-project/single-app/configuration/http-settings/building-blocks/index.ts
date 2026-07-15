@@ -6,6 +6,7 @@ export * from "./domain-general-fields.com";
 export * from "./client-config-section.com";
 export * from "./compression-config-section.com";
 export * from "./header-config-section.com";
+export * from "./path-rewrite-config-section.com";
 export * from "./http-configurable-sections.com";
 export * from "./lb-config-section.com";
 export * from "./rate-limit-config-section.com";

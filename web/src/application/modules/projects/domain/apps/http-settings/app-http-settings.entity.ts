@@ -47,6 +47,7 @@ export type AppHttpDomain = {
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
+    pathRewriteConfig?: AppHttpPathRewriteConfig | null;
     paths?: AppHttpPathConfig[];
 };
 
@@ -59,6 +60,7 @@ export type AppHttpClientConfig = {
 
 export type AppHttpHeaderConfig = {
     enabled: boolean;
+    autoContentType: boolean;
     toAddToRequests: Record<string, string>;
     toRemoveFromRequests: string[];
     toAddToResponses: Record<string, string>;
@@ -81,6 +83,16 @@ export type AppHttpRateLimitConfig = {
     maxInFlightReq: number;
 };
 
+export type AppHttpPathRewriteConfig = {
+    enabled: boolean;
+    prefixAdd: string;
+    prefixStrip: string;
+    prefixStripIsRegex: boolean;
+    pathReplace: string;
+    pathReplaceIsRegex: boolean;
+    pathReplaceWith: string;
+};
+
 export type AppHttpPathConfig = {
     enabled: boolean;
     path: string;
@@ -90,6 +102,7 @@ export type AppHttpPathConfig = {
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
+    pathRewriteConfig?: AppHttpPathRewriteConfig | null;
 };
 
 export type AppHttpSettingsObjectIdReq = {
@@ -113,6 +126,7 @@ export type AppHttpSettingsUpdateDomain = {
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
+    pathRewriteConfig?: AppHttpPathRewriteConfig | null;
     paths: AppHttpSettingsUpdatePath[] | null;
 };
 
@@ -125,6 +139,7 @@ export type AppHttpSettingsUpdatePath = {
     headerConfig?: AppHttpHeaderConfig | null;
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
+    pathRewriteConfig?: AppHttpPathRewriteConfig | null;
 };
 
 export type AppHttpSettingsUpdatePayload = {

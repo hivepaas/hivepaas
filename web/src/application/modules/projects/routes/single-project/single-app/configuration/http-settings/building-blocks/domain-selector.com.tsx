@@ -12,6 +12,7 @@ import { isValidDomain } from "@application/shared/utils/domain";
 import {
     type AppConfigHttpSettingsFormSchemaInput,
     type AppConfigHttpSettingsFormSchemaOutput,
+    createDefaultCompressionConfig,
     emptyDomain,
 } from "../schemas";
 
@@ -135,6 +136,9 @@ export function DomainSelector({
                 : emptyDomain.containerPort;
 
         const trimmedDraft = newDomainDraft.trim();
+        const isFirstDomain = domainValues.length === 0;
+        const firstDomainDefaults = isFirstDomain ? { compressionConfig: createDefaultCompressionConfig() } : {};
+
         if (trimmedDraft.length > 0) {
             if (!isValidDomain(trimmedDraft, { maxLength: 100 })) {
                 setDomainInputError("Enter a valid domain (e.g. app.example.com)");
@@ -147,10 +151,10 @@ export function DomainSelector({
                 setDomainInputError("Domain already exists.");
                 return;
             }
-            append({ ...emptyDomain, domain: trimmedDraft, containerPort });
+            append({ ...emptyDomain, domain: trimmedDraft, containerPort, ...firstDomainDefaults });
             setActiveDomainIndex(domainValues.length);
         } else {
-            append({ ...emptyDomain, containerPort });
+            append({ ...emptyDomain, containerPort, ...firstDomainDefaults });
             setActiveDomainIndex(domainValues.length);
         }
 

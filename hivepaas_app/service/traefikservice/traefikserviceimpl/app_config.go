@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/moby/moby/api/types/swarm"
 	"gopkg.in/yaml.v3"
@@ -463,7 +464,10 @@ func (s *service) createPathRewriteConfig(
 			*middlewares = append(*middlewares, mwName+middlewareProvider)
 		} else {
 			mwName := fmt.Sprintf("%s-stripprefix", routerName)
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", mwName)] = rewriteCfg.PrefixStrip
+			prefixes := strings.FieldsFunc(rewriteCfg.PrefixStrip, func(r rune) bool {
+				return r == ',' || unicode.IsSpace(r)
+			})
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", mwName)] = strings.Join(prefixes, ",")
 			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.forceslash", mwName)] = "true"
 			*middlewares = append(*middlewares, mwName+middlewareProvider)
 		}

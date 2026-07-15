@@ -105,9 +105,9 @@ type HTTPPathConfig struct {
 	Mode              base.HTTPPathMode      `json:"mode"`
 	BasicAuth         *HTTPBasicAuthConfig   `json:"basicAuth,omitempty"`
 	ClientConfig      *HTTPClientConfig      `json:"clientConfig,omitempty"`
-	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
 	HeaderConfig      *HTTPHeaderConfig      `json:"headerConfig,omitempty"`
 	CompressionConfig *HTTPCompressionConfig `json:"compressionConfig,omitempty"`
+	RateLimitConfig   *HTTPRateLimitConfig   `json:"rateLimitConfig,omitempty"`
 	PathRewriteConfig *HTTPPathRewriteConfig `json:"pathRewriteConfig,omitempty"`
 }
 

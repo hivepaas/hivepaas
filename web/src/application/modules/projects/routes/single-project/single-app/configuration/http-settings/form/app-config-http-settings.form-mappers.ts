@@ -35,6 +35,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
         headerConfig: domain.headerConfig
             ? {
                   enabled: domain.headerConfig.enabled,
+                  autoContentType: domain.headerConfig.autoContentType,
                   toAddToRequests: Object.entries(domain.headerConfig.toAddToRequests).map(([key, value]) => ({
                       key,
                       value,
@@ -65,6 +66,17 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                   maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
               }
             : undefined,
+        pathRewriteConfig: domain.pathRewriteConfig
+            ? {
+                  enabled: domain.pathRewriteConfig.enabled,
+                  prefixAdd: domain.pathRewriteConfig.prefixAdd,
+                  prefixStrip: domain.pathRewriteConfig.prefixStrip,
+                  prefixStripIsRegex: domain.pathRewriteConfig.prefixStripIsRegex,
+                  pathReplace: domain.pathRewriteConfig.pathReplace,
+                  pathReplaceIsRegex: domain.pathRewriteConfig.pathReplaceIsRegex,
+                  pathReplaceWith: domain.pathRewriteConfig.pathReplaceWith,
+              }
+            : undefined,
         paths: (domain.paths ?? []).map(path => ({
             enabled: path.enabled,
             path: path.path,
@@ -83,6 +95,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
             headerConfig: path.headerConfig
                 ? {
                       enabled: path.headerConfig.enabled,
+                      autoContentType: path.headerConfig.autoContentType,
                       toAddToRequests: Object.entries(path.headerConfig.toAddToRequests).map(([key, value]) => ({
                           key,
                           value,
@@ -111,6 +124,17 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                       period: path.rateLimitConfig.period,
                       burst: path.rateLimitConfig.burst,
                       maxInFlightReq: path.rateLimitConfig.maxInFlightReq,
+                  }
+                : undefined,
+            pathRewriteConfig: path.pathRewriteConfig
+                ? {
+                      enabled: path.pathRewriteConfig.enabled,
+                      prefixAdd: path.pathRewriteConfig.prefixAdd,
+                      prefixStrip: path.pathRewriteConfig.prefixStrip,
+                      prefixStripIsRegex: path.pathRewriteConfig.prefixStripIsRegex,
+                      pathReplace: path.pathRewriteConfig.pathReplace,
+                      pathReplaceIsRegex: path.pathRewriteConfig.pathReplaceIsRegex,
+                      pathReplaceWith: path.pathRewriteConfig.pathReplaceWith,
                   }
                 : undefined,
         })),
@@ -154,6 +178,7 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
             headerConfig: domain.headerConfig
                 ? {
                       enabled: domain.headerConfig.enabled,
+                      autoContentType: domain.headerConfig.autoContentType,
                       toAddToRequests: Object.fromEntries(
                           domain.headerConfig.toAddToRequests.map(({ key, value }) => [key, value]),
                       ),
@@ -194,6 +219,17 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                       maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
                   }
                 : null,
+            pathRewriteConfig: domain.pathRewriteConfig
+                ? {
+                      enabled: domain.pathRewriteConfig.enabled,
+                      prefixAdd: domain.pathRewriteConfig.prefixAdd,
+                      prefixStrip: domain.pathRewriteConfig.prefixStrip,
+                      prefixStripIsRegex: domain.pathRewriteConfig.prefixStripIsRegex,
+                      pathReplace: domain.pathRewriteConfig.pathReplace,
+                      pathReplaceIsRegex: domain.pathRewriteConfig.pathReplaceIsRegex,
+                      pathReplaceWith: domain.pathRewriteConfig.pathReplaceWith,
+                  }
+                : null,
             paths: domain.paths.map(path => ({
                 enabled: path.enabled,
                 path: path.path,
@@ -214,6 +250,7 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                 headerConfig: path.headerConfig
                     ? {
                           enabled: path.headerConfig.enabled,
+                          autoContentType: path.headerConfig.autoContentType,
                           toAddToRequests: Object.fromEntries(
                               path.headerConfig.toAddToRequests.map(({ key, value }) => [key, value]),
                           ),
@@ -252,6 +289,17 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                           period: path.rateLimitConfig.period,
                           burst: path.rateLimitConfig.burst,
                           maxInFlightReq: path.rateLimitConfig.maxInFlightReq,
+                      }
+                    : null,
+                pathRewriteConfig: path.pathRewriteConfig
+                    ? {
+                          enabled: path.pathRewriteConfig.enabled,
+                          prefixAdd: path.pathRewriteConfig.prefixAdd,
+                          prefixStrip: path.pathRewriteConfig.prefixStrip,
+                          prefixStripIsRegex: path.pathRewriteConfig.prefixStripIsRegex,
+                          pathReplace: path.pathRewriteConfig.pathReplace,
+                          pathReplaceIsRegex: path.pathRewriteConfig.pathReplaceIsRegex,
+                          pathReplaceWith: path.pathRewriteConfig.pathReplaceWith,
                       }
                     : null,
             })),

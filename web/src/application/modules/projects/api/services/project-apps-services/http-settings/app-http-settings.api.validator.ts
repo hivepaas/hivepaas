@@ -7,6 +7,7 @@ import {
     type AppHttpHeaderConfig,
     type AppHttpLBConfig,
     type AppHttpPathConfig,
+    type AppHttpPathRewriteConfig,
     type AppHttpRateLimitConfig,
 } from "~/projects/domain";
 import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
@@ -35,6 +36,7 @@ const HttpClientConfigSchema = z.object({
 
 const HttpHeaderConfigSchema = z.object({
     enabled: z.boolean().optional(),
+    autoContentType: z.boolean().nullish(),
     toAddToRequests: z.record(z.string()).nullish(),
     toRemoveFromRequests: z.array(z.string()).nullish(),
     toAddToResponses: z.record(z.string()).nullish(),
@@ -57,6 +59,16 @@ const HttpRateLimitConfigSchema = z.object({
     maxInFlightReq: z.number(),
 });
 
+const HttpPathRewriteConfigSchema = z.object({
+    enabled: z.boolean(),
+    prefixAdd: z.string().nullish(),
+    prefixStrip: z.string().nullish(),
+    prefixStripIsRegex: z.boolean().nullish(),
+    pathReplace: z.string().nullish(),
+    pathReplaceIsRegex: z.boolean().nullish(),
+    pathReplaceWith: z.string().nullish(),
+});
+
 const HttpLBConfigSchema = z.object({
     strategy: z.nativeEnum(ELBStrategy),
 });
@@ -70,6 +82,7 @@ const HttpPathConfigSchema = z.object({
     headerConfig: HttpHeaderConfigSchema.nullish(),
     compressionConfig: HttpCompressionConfigSchema.nullish(),
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
+    pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
 });
 
 const DomainSchema = z.object({
@@ -85,6 +98,7 @@ const DomainSchema = z.object({
     headerConfig: HttpHeaderConfigSchema.nullish(),
     compressionConfig: HttpCompressionConfigSchema.nullish(),
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
+    pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
     paths: z.array(HttpPathConfigSchema).nullish(),
 });
 
@@ -119,6 +133,7 @@ function mapHeaderConfig(raw: z.infer<typeof HttpHeaderConfigSchema> | null | un
     }
     return {
         enabled: raw.enabled ?? true,
+        autoContentType: raw.autoContentType ?? false,
         toAddToRequests: raw.toAddToRequests ?? {},
         toRemoveFromRequests: raw.toRemoveFromRequests ?? [],
         toAddToResponses: raw.toAddToResponses ?? {},
@@ -153,6 +168,23 @@ function mapRateLimitConfig(
         period: raw.period,
         burst: raw.burst,
         maxInFlightReq: raw.maxInFlightReq,
+    };
+}
+
+function mapPathRewriteConfig(
+    raw: z.infer<typeof HttpPathRewriteConfigSchema> | null | undefined,
+): AppHttpPathRewriteConfig | null {
+    if (raw == null) {
+        return null;
+    }
+    return {
+        enabled: raw.enabled,
+        prefixAdd: raw.prefixAdd ?? "",
+        prefixStrip: raw.prefixStrip ?? "",
+        prefixStripIsRegex: raw.prefixStripIsRegex ?? false,
+        pathReplace: raw.pathReplace ?? "",
+        pathReplaceIsRegex: raw.pathReplaceIsRegex ?? false,
+        pathReplaceWith: raw.pathReplaceWith ?? "",
     };
 }
 
@@ -191,6 +223,7 @@ function mapPath(raw: z.infer<typeof HttpPathConfigSchema>): AppHttpPathConfig {
         headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
+        pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
     };
 }
 
@@ -208,6 +241,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppHttpDomain {
         headerConfig: mapHeaderConfig(raw.headerConfig ?? undefined),
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
+        pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
         paths: raw.paths?.map(mapPath) ?? [],
     };
 }

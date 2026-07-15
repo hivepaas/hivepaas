@@ -3,6 +3,7 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
 import type {
+    SystemBackupFile_DeleteOne_Req,
     SystemBackupFile_DownloadOne_Req,
     SystemBackupFile_FindManyPaginated_Req,
     SystemBackupFile_FindOneById_Req,
@@ -57,7 +58,28 @@ function createHook() {
             [api, notifyError],
         );
 
-        return { queries };
+        const mutations = useMemo(
+            () => ({
+                deleteOne: async (data: SystemBackupFile_DeleteOne_Req["data"]) => {
+                    const result = await api.systemSettings.backupFiles.deleteOne({ data });
+
+                    return match(result, {
+                        Ok: response => response,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to delete backup file",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api, notifyError],
+        );
+
+        return { queries, mutations };
     };
 }
 

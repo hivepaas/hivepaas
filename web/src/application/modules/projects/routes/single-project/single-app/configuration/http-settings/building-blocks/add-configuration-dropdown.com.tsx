@@ -12,10 +12,17 @@ import {
     createDefaultClientConfig,
     createDefaultCompressionConfig,
     createDefaultHeaderConfig,
+    createDefaultPathRewriteConfig,
     createDefaultRateLimitConfig,
 } from "../schemas";
 
-type ConfigKeyDomain = "basicAuth" | "clientConfig" | "compressionConfig" | "headerConfig" | "rateLimitConfig";
+type ConfigKeyDomain =
+    | "basicAuth"
+    | "clientConfig"
+    | "compressionConfig"
+    | "headerConfig"
+    | "pathRewriteConfig"
+    | "rateLimitConfig";
 export type ConfigSectionKey = ConfigKeyDomain;
 
 const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
@@ -23,6 +30,7 @@ const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "clientConfig", label: "Client Configuration" },
     { key: "compressionConfig", label: "Compression Configuration" },
     { key: "headerConfig", label: "Header Configuration" },
+    { key: "pathRewriteConfig", label: "Path Rewrite Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
 ];
 
@@ -46,7 +54,11 @@ interface AddConfigurationDropdownProps {
     onSectionAdded?: (key: ConfigSectionKey) => void;
 }
 
-export function AddConfigurationDropdown({ basePath, readOnly = false, onSectionAdded }: AddConfigurationDropdownProps) {
+export function AddConfigurationDropdown({
+    basePath,
+    readOnly = false,
+    onSectionAdded,
+}: AddConfigurationDropdownProps) {
     const { control, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
@@ -78,6 +90,9 @@ export function AddConfigurationDropdown({ basePath, readOnly = false, onSection
                 break;
             case "headerConfig":
                 setFormValue(fieldPath, createDefaultHeaderConfig(), { shouldDirty: true, shouldValidate: true });
+                break;
+            case "pathRewriteConfig":
+                setFormValue(fieldPath, createDefaultPathRewriteConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
             case "rateLimitConfig":
                 setFormValue(fieldPath, createDefaultRateLimitConfig(), { shouldDirty: true, shouldValidate: true });

@@ -5,6 +5,8 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    SystemBackupFile_DeleteOne_Req,
+    SystemBackupFile_DeleteOne_Res,
     SystemBackupFile_DownloadOne_Req,
     SystemBackupFile_DownloadOne_Res,
     SystemBackupFile_FindManyPaginated_Req,
@@ -100,6 +102,21 @@ export class SystemBackupFileApi extends BaseApi {
             ).pipe(
                 map(mapDownloadResponse),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async deleteOne(request: SystemBackupFile_DeleteOne_Req): Promise<Result<SystemBackupFile_DeleteOne_Res, Error>> {
+        const { fileID, deletePermanently } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.delete(`/system/settings/backup/files/${fileID}`, {
+                    params: { deletePermanently },
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

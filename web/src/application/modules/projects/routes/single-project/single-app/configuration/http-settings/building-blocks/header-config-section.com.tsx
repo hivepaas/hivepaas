@@ -35,6 +35,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
         AppConfigHttpSettingsFormSchemaOutput
     >();
     const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const { field: autoContentType } = useController({ control, name: `${prefix}.autoContentType` as never });
     const isEnabled = Boolean(enabled.value);
 
     return (
@@ -53,15 +54,33 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Header Configuration
-                        <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
-                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/headers/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            (docs)
-                        </a>
+                        Header Configuration (docs
+                        <span className="ml-1">
+                            <a
+                                className="text-xs text-blue-500 hover:text-blue-600"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/headers/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
+                            >
+                                [1]
+                            </a>{" "}
+                            ,
+                            <a
+                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/contenttype/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
+                            >
+                                [2]
+                            </a>
+                        </span>{" "}
+                        )
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (
@@ -95,6 +114,19 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 }
 
                                 enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
+                        />
+                    </InfoBlock>
+                    <InfoBlock title="Auto Detect Content Type">
+                        <Checkbox
+                            checked={Boolean(autoContentType.value)}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                autoContentType.onChange(value);
                             }}
                             disabled={readOnly}
                         />

@@ -25,3 +25,12 @@ export type SystemBackupFile_DownloadOne_Res = ApiResponseBase<{
     blob: Blob;
     filename?: string;
 }>;
+
+export type SystemBackupFile_DeleteOne_Req = ApiRequestBase<{
+    fileID: string;
+    deletePermanently: boolean;
+}>;
+
+export type SystemBackupFile_DeleteOne_Res = ApiResponseBase<{
+    type: "success";
+}>;

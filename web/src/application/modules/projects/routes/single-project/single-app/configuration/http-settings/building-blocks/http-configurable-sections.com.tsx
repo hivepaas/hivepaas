@@ -9,6 +9,7 @@ import { BasicAuthSection } from "./basic-auth-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
 import { CompressionConfigSection } from "./compression-config-section.com";
 import { HeaderConfigSection } from "./header-config-section.com";
+import { PathRewriteConfigSection } from "./path-rewrite-config-section.com";
 import { RateLimitConfigSection } from "./rate-limit-config-section.com";
 
 interface HttpConfigurableSectionsProps {
@@ -76,6 +77,17 @@ export function HttpConfigurableSections({ basePath, readOnly = false }: HttpCon
                     autoExpandToken={expandSignal?.key === "headerConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.headerConfig`);
+                    }}
+                />
+            )}
+
+            {segment?.["pathRewriteConfig"] != null && (
+                <PathRewriteConfigSection
+                    prefix={`${basePath}.pathRewriteConfig`}
+                    readOnly={readOnly}
+                    autoExpandToken={expandSignal?.key === "pathRewriteConfig" ? expandSignal.seq : undefined}
+                    onRemove={() => {
+                        removeSection(`${basePath}.pathRewriteConfig`);
                     }}
                 />
             )}

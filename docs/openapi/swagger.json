@@ -27879,7 +27879,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -38788,6 +38788,66 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputFileStorageReq" : {
+        "properties" : {
+          "bucket" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bucket", "id" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputFileStorageResp" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "bucket" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "availableInProjects", "bucket", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputPipeToAppReq" : {
         "properties" : {
           "command" : {
@@ -38863,7 +38923,7 @@
             "type" : "string"
           },
           "storage" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputFileStorageReq"
           }
         },
         "required" : [ "compressionFormat", "encryptionFormat", "encryptionSecret", "fileKind", "fileName", "filePath", "storage" ],
@@ -38890,7 +38950,7 @@
             "type" : "string"
           },
           "storage" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings.BaseSettingResp"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_schedjobuc_schedjobdto.CommandOutputFileStorageResp"
           }
         },
         "required" : [ "compressionFormat", "encryptionFormat", "encryptionSecret", "fileKind", "fileName", "filePath", "storage" ],
@@ -41793,6 +41853,9 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_systemsettings_systembackupuc_systembackupdto.SystemBackupCloudStorageReq" : {
         "properties" : {
+          "bucket" : {
+            "type" : "string"
+          },
           "destinationDir" : {
             "type" : "string"
           },
@@ -41800,13 +41863,16 @@
             "type" : "string"
           }
         },
-        "required" : [ "destinationDir", "id" ],
+        "required" : [ "bucket", "destinationDir", "id" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_systemsettings_systembackupuc_systembackupdto.SystemBackupCloudStorageResp" : {
         "properties" : {
           "availableInProjects" : {
             "type" : "boolean"
+          },
+          "bucket" : {
+            "type" : "string"
           },
           "createdAt" : {
             "type" : "string"
@@ -41848,7 +41914,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "destinationDir", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "bucket", "createdAt", "default", "destinationDir", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_systemsettings_systembackupuc_systembackupdto.SystemBackupCompressionReq" : {
@@ -43247,9 +43313,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

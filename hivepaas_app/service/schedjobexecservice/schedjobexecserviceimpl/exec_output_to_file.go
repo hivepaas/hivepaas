@@ -178,7 +178,7 @@ func (s *service) initOutputFile(
 
 		data.File.StorageType = base.FileStorageCloud
 		data.File.StorageID = storageSetting.ID
-		data.File.Bucket = s3Client.Config.Bucket
+		data.File.Bucket = gofn.Coalesce(cmdOutput.Storage.Bucket, s3Client.Config.Bucket)
 		data.File.Path = filepath.Join(cmdOutput.FilePath, fileName)
 		data.uploadFunc = func(ctx context.Context, objectKey string, content io.Reader) error {
 			return s3Client.UploadEx(ctx, data.File.Bucket, objectKey, 0, 0, content)

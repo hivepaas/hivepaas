@@ -186,13 +186,13 @@ func (req *CommandOutputReq) validate(appID string, field string) (res []vld.Val
 }
 
 type CommandOutputSaveToFileReq struct {
-	FileName          string                     `json:"fileName"`
-	FilePath          string                     `json:"filePath"`
-	FileKind          base.FileKind              `json:"fileKind"`
-	Storage           basedto.ObjectIDReq        `json:"storage"`
-	CompressionFormat base.FileCompressionFormat `json:"compressionFormat"`
-	EncryptionFormat  base.FileEncryptionFormat  `json:"encryptionFormat"`
-	EncryptionSecret  string                     `json:"encryptionSecret"`
+	FileName          string                      `json:"fileName"`
+	FilePath          string                      `json:"filePath"`
+	FileKind          base.FileKind               `json:"fileKind"`
+	Storage           CommandOutputFileStorageReq `json:"storage"`
+	CompressionFormat base.FileCompressionFormat  `json:"compressionFormat"`
+	EncryptionFormat  base.FileEncryptionFormat   `json:"encryptionFormat"`
+	EncryptionSecret  string                      `json:"encryptionSecret"`
 }
 
 func (req *CommandOutputSaveToFileReq) ToEntity() *entity.SchedJobCommandOutputSaveToFile {
@@ -217,13 +217,39 @@ func (req *CommandOutputSaveToFileReq) validate(field string) (res []vld.Validat
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateObjectIDReq(&req.Storage, false, field+"storage")...)
+	res = append(res, req.Storage.validate(field+"storage")...)
 	res = append(res, basedto.ValidateStrIn(&req.CompressionFormat, false, base.AllFileCompressionFormats,
 		field+"compressionFormat")...)
 	res = append(res, basedto.ValidateStrIn(&req.EncryptionFormat, false, base.AllFileEncryptionFormats,
 		field+"encryptionFormat")...)
 	res = append(res, basedto.ValidateStr(&req.EncryptionSecret, req.EncryptionFormat != "",
 		encryptionMinLen, encryptionMaxLen, field+"encryptionSecret")...)
+	return res
+}
+
+type CommandOutputFileStorageReq struct {
+	ID     string `json:"id"`
+	Bucket string `json:"bucket"`
+}
+
+func (req *CommandOutputFileStorageReq) ToEntity() *entity.SchedJobCommandOutputFileStorage {
+	if req == nil {
+		return nil
+	}
+	return &entity.SchedJobCommandOutputFileStorage{
+		ID:     req.ID,
+		Bucket: req.Bucket,
+	}
+}
+
+func (req *CommandOutputFileStorageReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return nil
+	}
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateID(&req.ID, false, field+"id")...)
 	return res
 }
 

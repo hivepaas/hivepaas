@@ -68,6 +68,7 @@ func (resp *SystemBackupEncryptionResp) CopySecret(field entity.EncryptedField) 
 
 type SystemBackupCloudStorageResp struct {
 	*settings.BaseSettingResp
+	Bucket         string `json:"bucket,omitempty"`
 	DestinationDir string `json:"destinationDir,omitempty"`
 }
 

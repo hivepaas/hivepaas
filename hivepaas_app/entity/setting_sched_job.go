@@ -221,13 +221,18 @@ type SchedJobCommandOutput struct {
 }
 
 type SchedJobCommandOutputSaveToFile struct {
-	FileName          string                     `json:"fileName"`
-	FilePath          string                     `json:"filePath"`
-	FileKind          base.FileKind              `json:"fileKind"`
-	Storage           ObjectID                   `json:"storage"`
-	CompressionFormat base.FileCompressionFormat `json:"compressionFormat"`
-	EncryptionFormat  base.FileEncryptionFormat  `json:"encryptionFormat"`
-	EncryptionSecret  EncryptedField             `json:"encryptionSecret"`
+	FileName          string                           `json:"fileName"`
+	FilePath          string                           `json:"filePath"`
+	FileKind          base.FileKind                    `json:"fileKind"`
+	Storage           SchedJobCommandOutputFileStorage `json:"storage"`
+	CompressionFormat base.FileCompressionFormat       `json:"compressionFormat"`
+	EncryptionFormat  base.FileEncryptionFormat        `json:"encryptionFormat"`
+	EncryptionSecret  EncryptedField                   `json:"encryptionSecret"`
+}
+
+type SchedJobCommandOutputFileStorage struct {
+	ID     string `json:"id"`
+	Bucket string `json:"bucket,omitempty"`
 }
 
 type SchedJobCommandOutputPipeToApp struct {

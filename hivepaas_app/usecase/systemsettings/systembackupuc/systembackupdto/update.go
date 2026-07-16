@@ -95,12 +95,14 @@ func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validato
 
 type SystemBackupCloudStorageReq struct {
 	ID             string `json:"id"`
+	Bucket         string `json:"bucket"`
 	DestinationDir string `json:"destinationDir"`
 }
 
 func (req *SystemBackupCloudStorageReq) ToEntity() entity.SystemBackupCloudStorage {
 	return entity.SystemBackupCloudStorage{
 		ID:             req.ID,
+		Bucket:         req.Bucket,
 		DestinationDir: req.DestinationDir,
 	}
 }

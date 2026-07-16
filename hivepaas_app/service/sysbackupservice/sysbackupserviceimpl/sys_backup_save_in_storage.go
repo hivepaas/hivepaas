@@ -25,16 +25,17 @@ func (s *service) sysBackupSaveResultInStorage(
 	db database.IDB,
 	data *sysBackupData,
 ) (err error) {
-	if data.SysBackupSettings.CloudStorage.ID == "" {
+	cloudStorage := &data.SysBackupSettings.CloudStorage
+	if cloudStorage.ID == "" {
 		return nil
 	}
-	storageSetting := data.RefObjects.RefSettings[data.SysBackupSettings.CloudStorage.ID]
+	storageSetting := data.RefObjects.RefSettings[cloudStorage.ID]
 	if storageSetting == nil {
 		return nil
 	}
 
 	var storageName string
-	var storageBucket string
+	storageBucket := cloudStorage.Bucket
 	var uploadFunc func(targetFilePath string, data io.Reader) error
 
 	switch base.CloudStorageKind(storageSetting.Kind) {
@@ -44,7 +45,9 @@ func (s *service) sysBackupSaveResultInStorage(
 			return apperrors.Wrap(err)
 		}
 		storageName = "AWS S3"
-		storageBucket = s3Client.Config.Bucket
+		if storageBucket == "" {
+			storageBucket = s3Client.Config.Bucket
+		}
 		uploadFunc = func(targetFilePath string, input io.Reader) error {
 			return s3Client.UploadEx(ctx, storageBucket, targetFilePath,
 				0, 0, input)
@@ -53,7 +56,7 @@ func (s *service) sysBackupSaveResultInStorage(
 		return apperrors.Wrap(apperrors.ErrStorageTypeUnsupported).WithParam("Type", storageSetting.Kind)
 	}
 
-	targetFilePath := filepath.Join(data.SysBackupSettings.CloudStorage.DestinationDir, data.OutFileName)
+	targetFilePath := filepath.Join(cloudStorage.DestinationDir, data.OutFileName)
 	backupFile, err := os.Open(data.OutFilePath)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -81,7 +84,7 @@ func (s *service) sysBackupSaveResultInStorage(
 		Type:        base.FileTypeSystemBackup,
 		Status:      base.FileStatusActive,
 		StorageType: base.FileStorageCloud,
-		StorageID:   data.SysBackupSettings.CloudStorage.ID,
+		StorageID:   cloudStorage.ID,
 		Bucket:      storageBucket,
 		Name:        data.OutFileName,
 		Path:        targetFilePath,

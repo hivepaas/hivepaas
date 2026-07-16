@@ -72,18 +72,23 @@ type CommandOutputResp struct {
 }
 
 type CommandOutputSaveToFileResp struct {
-	FileName          string                     `json:"fileName"`
-	FilePath          string                     `json:"filePath"`
-	FileKind          base.FileKind              `json:"fileKind"`
-	Storage           *settings.BaseSettingResp  `json:"storage,omitempty"`
-	CompressionFormat base.FileCompressionFormat `json:"compressionFormat,omitempty"`
-	EncryptionFormat  base.FileEncryptionFormat  `json:"encryptionFormat,omitempty"`
-	EncryptionSecret  string                     `json:"encryptionSecret,omitempty"`
+	FileName          string                        `json:"fileName"`
+	FilePath          string                        `json:"filePath"`
+	FileKind          base.FileKind                 `json:"fileKind"`
+	Storage           *CommandOutputFileStorageResp `json:"storage,omitempty"`
+	CompressionFormat base.FileCompressionFormat    `json:"compressionFormat,omitempty"`
+	EncryptionFormat  base.FileEncryptionFormat     `json:"encryptionFormat,omitempty"`
+	EncryptionSecret  string                        `json:"encryptionSecret,omitempty"`
 }
 
 func (resp *CommandOutputSaveToFileResp) CopyEncryptionSecret(field entity.EncryptedField) error {
 	resp.EncryptionSecret = field.String()
 	return nil
+}
+
+type CommandOutputFileStorageResp struct {
+	*settings.BaseSettingResp
+	Bucket string `json:"bucket,omitempty"`
 }
 
 type CommandOutputPipeToAppResp struct {
@@ -121,7 +126,10 @@ func TransformSchedJob(
 
 		if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
 			targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
-			cmdOutputResp.SaveToFile.Storage, err = settings.TransformSettingBase(targetStorage)
+			cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
+				Bucket: cmdOutput.SaveToFile.Storage.Bucket,
+			}
+			cmdOutputResp.SaveToFile.Storage.BaseSettingResp, err = settings.TransformSettingBase(targetStorage)
 			if err != nil {
 				return nil, apperrors.Wrap(err)
 			}

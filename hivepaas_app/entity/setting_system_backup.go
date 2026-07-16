@@ -40,6 +40,7 @@ type SystemBackupEncryption struct {
 
 type SystemBackupCloudStorage struct {
 	ID             string `json:"id,omitempty"` // can be S3 setting ID
+	Bucket         string `json:"bucket,omitempty"`
 	DestinationDir string `json:"destinationDir,omitempty"`
 }
 

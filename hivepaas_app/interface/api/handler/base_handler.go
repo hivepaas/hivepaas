@@ -40,13 +40,13 @@ var (
 			return time.Parse(time.RFC3339, s)
 		},
 		reflect.TypeFor[time.Duration](): func(s string) (any, error) {
-			return time.ParseDuration(s)
+			return timeutil.ParseTimeDurationWithEmptyIsZero(s)
 		},
 		reflect.TypeFor[timeutil.Date](): func(s string) (any, error) {
 			return timeutil.ParseDate(s)
 		},
 		reflect.TypeFor[timeutil.Duration](): func(s string) (any, error) {
-			return timeutil.ParseDuration(s)
+			return timeutil.ParseDurationWithEmptyIsZero(s)
 		},
 		reflect.TypeFor[unit.DataSize](): func(s string) (any, error) {
 			return unit.ParseDataSizeString(s)

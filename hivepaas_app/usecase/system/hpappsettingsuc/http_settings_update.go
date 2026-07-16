@@ -1,4 +1,4 @@
-package appsettingsuc
+package hpappsettingsuc
 
 import (
 	"context"
@@ -14,32 +14,32 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
-func (uc *UC) UpdateAppHttpSettings(
+func (uc *UC) UpdateHttpSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appsettingsdto.UpdateAppHttpSettingsReq,
-) (*appsettingsdto.UpdateAppHttpSettingsResp, error) {
+	req *hpappsettingsdto.UpdateHttpSettingsReq,
+) (*hpappsettingsdto.UpdateHttpSettingsResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &updateAppHttpSettingsData{}
-		err := uc.loadAppHttpSettingsForUpdate(ctx, db, req, data)
+		data := &updateHttpSettingsData{}
+		err := uc.loadHttpSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
-		uc.prepareUpdatingAppHttpSettings(ctx, data, persistingData)
+		uc.prepareUpdatingHttpSettings(ctx, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyAppHttpSettings(ctx, data)
+		err = uc.applyHttpSettings(ctx, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -49,23 +49,27 @@ func (uc *UC) UpdateAppHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appsettingsdto.UpdateAppHttpSettingsResp{}, nil
+	return &hpappsettingsdto.UpdateHttpSettingsResp{}, nil
 }
 
-type updateAppHttpSettingsData struct {
+type updateHttpSettingsData struct {
 	App             *entity.App
 	HttpSetting     *entity.Setting
 	NewHttpSettings *entity.AppHttpSettings
 	RefObjects      *entity.RefObjects
 }
 
-func (uc *UC) loadAppHttpSettingsForUpdate(
+type persistingAppData struct {
+	appservice.PersistingAppData
+}
+
+func (uc *UC) loadHttpSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
-	req *appsettingsdto.UpdateAppHttpSettingsReq,
-	data *updateAppHttpSettingsData,
+	req *hpappsettingsdto.UpdateHttpSettingsReq,
+	data *updateHttpSettingsData,
 ) error {
-	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
+	app, err := uc.appRepo.GetByKey(ctx, uc.db, "", base.HivepaasAppKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectRelation("Project",
@@ -85,7 +89,10 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	newHttpSettings := req.ToEntity()
+	newHttpSettings := data.HttpSetting.MustAsAppHttpSettings()
+	if err := req.ApplyTo(newHttpSettings); err != nil {
+		return apperrors.Wrap(err)
+	}
 	data.NewHttpSettings = newHttpSettings
 
 	// Make sure all reference settings used in these settings exist actively
@@ -113,26 +120,14 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingAppHttpSettings(
+func (uc *UC) prepareUpdatingHttpSettings(
 	_ context.Context,
-	data *updateAppHttpSettingsData,
+	data *updateHttpSettingsData,
 	persistingData *persistingAppData,
 ) {
-	app := data.App
 	setting := data.HttpSetting
 	timeNow := timeutil.NowUTC()
 
-	if setting == nil {
-		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeApp,
-			ObjectID:  app.ID,
-			Type:      base.SettingTypeAppHttp,
-			CreatedAt: timeNow,
-			Version:   entity.CurrentAppHttpSettingsVersion,
-		}
-		data.HttpSetting = setting
-	}
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
 	setting.Status = base.SettingStatusActive
@@ -141,9 +136,9 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *UC) applyAppHttpSettings(
+func (uc *UC) applyHttpSettings(
 	ctx context.Context,
-	data *updateAppHttpSettingsData,
+	data *updateHttpSettingsData,
 ) error {
 	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
 	if err != nil {
@@ -185,5 +180,17 @@ func (uc *UC) applyAppHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
+	return nil
+}
+
+func (uc *UC) persistData(
+	ctx context.Context,
+	db database.IDB,
+	persistingData *persistingAppData,
+) error {
+	err := uc.appService.PersistAppData(ctx, db, &persistingData.PersistingAppData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 	return nil
 }

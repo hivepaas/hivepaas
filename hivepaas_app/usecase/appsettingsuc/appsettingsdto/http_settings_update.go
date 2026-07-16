@@ -79,6 +79,7 @@ func (req *DomainReq) modifyRequest() error {
 	if req == nil {
 		return nil
 	}
+	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
 	if err := req.LBConfig.modifyRequest(); err != nil {
 		return apperrors.Wrap(err)
 	}

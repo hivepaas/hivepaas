@@ -36,6 +36,28 @@ func ParseDuration(s string) (Duration, error) {
 	return Duration(v), nil
 }
 
+func ParseDurationWithEmptyIsZero(s string) (Duration, error) {
+	if s == "" {
+		return 0, nil
+	}
+	v, err := str2duration.ParseDuration(s)
+	if err != nil {
+		return 0, tracerr.Wrap(err)
+	}
+	return Duration(v), nil
+}
+
+func ParseTimeDurationWithEmptyIsZero(s string) (time.Duration, error) {
+	if s == "" {
+		return 0, nil
+	}
+	v, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, tracerr.Wrap(err)
+	}
+	return v, nil
+}
+
 //nolint:gosec
 func (dur Duration) String() string {
 	u := uint64(dur)

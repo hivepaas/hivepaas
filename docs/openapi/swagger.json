@@ -24584,6 +24584,96 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/hivepaas/http-settings" : {
+      "get" : {
+        "description" : "Gets HivePaaS HTTP settings",
+        "operationId" : "getHivePaaSHttpSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.GetHttpSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets HivePaaS HTTP settings",
+        "tags" : [ "system_hivepaas" ]
+      },
+      "put" : {
+        "description" : "Updates HivePaaS HTTP settings",
+        "operationId" : "updateHivePaaSHttpSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateHttpSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateHttpSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates HivePaaS HTTP settings",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/hivepaas/release-info" : {
       "get" : {
         "description" : "Gets release info of the app",
@@ -27771,7 +27861,7 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -40663,6 +40753,60 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.DomainReq" : {
+        "properties" : {
+          "clientConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPClientConfigReq"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "rateLimitConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPRateLimitConfigReq"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.DomainResp" : {
+        "properties" : {
+          "clientConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPClientConfigResp"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "rateLimitConfig" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPRateLimitConfigResp"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_sslcertuc_sslcertdto.SSLCertResp"
+          }
+        },
+        "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.GetHttpSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HttpSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.GetServiceSettingsResp" : {
         "properties" : {
           "data" : {
@@ -40673,6 +40817,78 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPClientConfigReq" : {
+        "properties" : {
+          "allowedIPs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "allowedIPs", "enabled" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPClientConfigResp" : {
+        "properties" : {
+          "allowedIPs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "allowedIPs", "enabled" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPRateLimitConfigReq" : {
+        "properties" : {
+          "average" : {
+            "type" : "integer"
+          },
+          "burst" : {
+            "type" : "integer"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "maxInFlightReq" : {
+            "type" : "integer"
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HTTPRateLimitConfigResp" : {
+        "properties" : {
+          "average" : {
+            "type" : "integer"
+          },
+          "burst" : {
+            "type" : "integer"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "maxInFlightReq" : {
+            "type" : "integer"
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSAppSettingsReq" : {
@@ -40765,6 +40981,21 @@
         "required" : [ "concurrency", "replicas", "runWorkerInMainApp" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HttpSettingsResp" : {
+        "properties" : {
+          "domains" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.DomainResp"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "domains", "updateVer" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.ServiceSettingsResp" : {
         "properties" : {
           "appSettings" : {
@@ -40820,6 +41051,30 @@
           }
         },
         "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "healthcheckSettings", "id", "inherited", "kind", "name", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateHttpSettingsReq" : {
+        "properties" : {
+          "domains" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.DomainReq"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "domains", "updateVer" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateHttpSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateServiceSettingsReq" : {
@@ -42992,9 +43247,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

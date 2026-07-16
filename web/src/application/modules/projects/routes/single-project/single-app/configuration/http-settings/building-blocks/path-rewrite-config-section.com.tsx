@@ -270,7 +270,7 @@ export function PathRewriteConfigSection({
                                             onChange={v => {
                                                 prefixStrip.onChange(v);
                                             }}
-                                            placeholder="/foo"
+                                            placeholder="/foo /bar"
                                             className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
                                             disabled={readOnly}
                                         />

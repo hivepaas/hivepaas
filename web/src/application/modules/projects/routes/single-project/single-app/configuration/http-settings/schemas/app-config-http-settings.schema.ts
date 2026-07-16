@@ -58,6 +58,15 @@ export const HttpPathRewriteConfigSchema = z.object({
     pathReplaceWith: z.string(),
 });
 
+export const HttpCircuitBreakerConfigSchema = z.object({
+    enabled: z.boolean(),
+    expression: z.string(),
+    checkPeriod: z.string(),
+    fallbackDuration: z.string(),
+    recoveryDuration: z.string(),
+    responseCode: z.number().min(0),
+});
+
 export const HttpPathConfigSchema = z.object({
     enabled: z.boolean(),
     path: z.string().min(1, "Path is required"),
@@ -68,6 +77,7 @@ export const HttpPathConfigSchema = z.object({
     compressionConfig: HttpCompressionConfigSchema.optional(),
     rateLimitConfig: HttpRateLimitConfigSchema.optional(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
+    circuitBreakerConfig: HttpCircuitBreakerConfigSchema.optional(),
 });
 
 const DOMAIN_MAX_LEN = 100; // mirrors backend base.DomainNameMaxLen
@@ -87,6 +97,7 @@ export const DomainFormSchema = z
         compressionConfig: HttpCompressionConfigSchema.optional(),
         rateLimitConfig: HttpRateLimitConfigSchema.optional(),
         pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
+        circuitBreakerConfig: HttpCircuitBreakerConfigSchema.optional(),
         paths: z.array(HttpPathConfigSchema),
     })
     .superRefine((values, ctx) => {
@@ -180,6 +191,17 @@ export function createDefaultPathRewriteConfig(): z.infer<typeof HttpPathRewrite
         pathReplace: "",
         pathReplaceIsRegex: false,
         pathReplaceWith: "",
+    };
+}
+
+export function createDefaultCircuitBreakerConfig(): z.infer<typeof HttpCircuitBreakerConfigSchema> {
+    return {
+        enabled: true,
+        expression: "",
+        checkPeriod: "",
+        fallbackDuration: "",
+        recoveryDuration: "",
+        responseCode: 0,
     };
 }
 

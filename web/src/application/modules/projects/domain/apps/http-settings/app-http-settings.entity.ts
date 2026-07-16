@@ -48,6 +48,7 @@ export type AppHttpDomain = {
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
     pathRewriteConfig?: AppHttpPathRewriteConfig | null;
+    circuitBreakerConfig?: AppHttpCircuitBreakerConfig | null;
     paths?: AppHttpPathConfig[];
 };
 
@@ -93,6 +94,15 @@ export type AppHttpPathRewriteConfig = {
     pathReplaceWith: string;
 };
 
+export type AppHttpCircuitBreakerConfig = {
+    enabled: boolean;
+    expression: string;
+    checkPeriod: string;
+    fallbackDuration: string;
+    recoveryDuration: string;
+    responseCode: number;
+};
+
 export type AppHttpPathConfig = {
     enabled: boolean;
     path: string;
@@ -103,6 +113,7 @@ export type AppHttpPathConfig = {
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
     pathRewriteConfig?: AppHttpPathRewriteConfig | null;
+    circuitBreakerConfig?: AppHttpCircuitBreakerConfig | null;
 };
 
 export type AppHttpSettingsObjectIdReq = {
@@ -127,6 +138,7 @@ export type AppHttpSettingsUpdateDomain = {
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
     pathRewriteConfig?: AppHttpPathRewriteConfig | null;
+    circuitBreakerConfig?: AppHttpCircuitBreakerConfig | null;
     paths: AppHttpSettingsUpdatePath[] | null;
 };
 
@@ -140,6 +152,7 @@ export type AppHttpSettingsUpdatePath = {
     compressionConfig?: AppHttpCompressionConfig | null;
     rateLimitConfig?: AppHttpRateLimitConfig | null;
     pathRewriteConfig?: AppHttpPathRewriteConfig | null;
+    circuitBreakerConfig?: AppHttpCircuitBreakerConfig | null;
 };
 
 export type AppHttpSettingsUpdatePayload = {

@@ -6,6 +6,7 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 import { AddConfigurationDropdown, type ConfigSectionKey } from "./add-configuration-dropdown.com";
 import { BasicAuthSection } from "./basic-auth-section.com";
+import { CircuitBreakerConfigSection } from "./circuit-breaker-config-section.com";
 import { ClientConfigSection } from "./client-config-section.com";
 import { CompressionConfigSection } from "./compression-config-section.com";
 import { HeaderConfigSection } from "./header-config-section.com";
@@ -99,6 +100,17 @@ export function HttpConfigurableSections({ basePath, readOnly = false }: HttpCon
                     autoExpandToken={expandSignal?.key === "rateLimitConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
                         removeSection(`${basePath}.rateLimitConfig`);
+                    }}
+                />
+            )}
+
+            {segment?.["circuitBreakerConfig"] != null && (
+                <CircuitBreakerConfigSection
+                    prefix={`${basePath}.circuitBreakerConfig`}
+                    readOnly={readOnly}
+                    autoExpandToken={expandSignal?.key === "circuitBreakerConfig" ? expandSignal.seq : undefined}
+                    onRemove={() => {
+                        removeSection(`${basePath}.circuitBreakerConfig`);
                     }}
                 />
             )}

@@ -9,6 +9,7 @@ import {
     type AppConfigHttpSettingsFormSchemaInput,
     type AppConfigHttpSettingsFormSchemaOutput,
     createDefaultBasicAuthRef,
+    createDefaultCircuitBreakerConfig,
     createDefaultClientConfig,
     createDefaultCompressionConfig,
     createDefaultHeaderConfig,
@@ -22,7 +23,8 @@ type ConfigKeyDomain =
     | "compressionConfig"
     | "headerConfig"
     | "pathRewriteConfig"
-    | "rateLimitConfig";
+    | "rateLimitConfig"
+    | "circuitBreakerConfig";
 export type ConfigSectionKey = ConfigKeyDomain;
 
 const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
@@ -32,6 +34,7 @@ const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "headerConfig", label: "Header Configuration" },
     { key: "pathRewriteConfig", label: "Path Rewrite Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
+    { key: "circuitBreakerConfig", label: "Circuit Breaker Configuration" },
 ];
 
 function segmentAtPath(
@@ -96,6 +99,12 @@ export function AddConfigurationDropdown({
                 break;
             case "rateLimitConfig":
                 setFormValue(fieldPath, createDefaultRateLimitConfig(), { shouldDirty: true, shouldValidate: true });
+                break;
+            case "circuitBreakerConfig":
+                setFormValue(fieldPath, createDefaultCircuitBreakerConfig(), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                });
                 break;
             default:
                 break;

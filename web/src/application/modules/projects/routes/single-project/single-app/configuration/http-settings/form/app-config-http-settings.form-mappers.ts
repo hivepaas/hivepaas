@@ -77,6 +77,16 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                   pathReplaceWith: domain.pathRewriteConfig.pathReplaceWith,
               }
             : undefined,
+        circuitBreakerConfig: domain.circuitBreakerConfig
+            ? {
+                  enabled: domain.circuitBreakerConfig.enabled,
+                  expression: domain.circuitBreakerConfig.expression,
+                  checkPeriod: domain.circuitBreakerConfig.checkPeriod,
+                  fallbackDuration: domain.circuitBreakerConfig.fallbackDuration,
+                  recoveryDuration: domain.circuitBreakerConfig.recoveryDuration,
+                  responseCode: domain.circuitBreakerConfig.responseCode,
+              }
+            : undefined,
         paths: (domain.paths ?? []).map(path => ({
             enabled: path.enabled,
             path: path.path,
@@ -135,6 +145,16 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
                       pathReplace: path.pathRewriteConfig.pathReplace,
                       pathReplaceIsRegex: path.pathRewriteConfig.pathReplaceIsRegex,
                       pathReplaceWith: path.pathRewriteConfig.pathReplaceWith,
+                  }
+                : undefined,
+            circuitBreakerConfig: path.circuitBreakerConfig
+                ? {
+                      enabled: path.circuitBreakerConfig.enabled,
+                      expression: path.circuitBreakerConfig.expression,
+                      checkPeriod: path.circuitBreakerConfig.checkPeriod,
+                      fallbackDuration: path.circuitBreakerConfig.fallbackDuration,
+                      recoveryDuration: path.circuitBreakerConfig.recoveryDuration,
+                      responseCode: path.circuitBreakerConfig.responseCode,
                   }
                 : undefined,
         })),
@@ -230,6 +250,16 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                       pathReplaceWith: domain.pathRewriteConfig.pathReplaceWith,
                   }
                 : null,
+            circuitBreakerConfig: domain.circuitBreakerConfig
+                ? {
+                      enabled: domain.circuitBreakerConfig.enabled,
+                      expression: domain.circuitBreakerConfig.expression,
+                      checkPeriod: domain.circuitBreakerConfig.checkPeriod,
+                      fallbackDuration: domain.circuitBreakerConfig.fallbackDuration,
+                      recoveryDuration: domain.circuitBreakerConfig.recoveryDuration,
+                      responseCode: domain.circuitBreakerConfig.responseCode,
+                  }
+                : null,
             paths: domain.paths.map(path => ({
                 enabled: path.enabled,
                 path: path.path,
@@ -300,6 +330,16 @@ export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOu
                           pathReplace: path.pathRewriteConfig.pathReplace,
                           pathReplaceIsRegex: path.pathRewriteConfig.pathReplaceIsRegex,
                           pathReplaceWith: path.pathRewriteConfig.pathReplaceWith,
+                      }
+                    : null,
+                circuitBreakerConfig: path.circuitBreakerConfig
+                    ? {
+                          enabled: path.circuitBreakerConfig.enabled,
+                          expression: path.circuitBreakerConfig.expression,
+                          checkPeriod: path.circuitBreakerConfig.checkPeriod,
+                          fallbackDuration: path.circuitBreakerConfig.fallbackDuration,
+                          recoveryDuration: path.circuitBreakerConfig.recoveryDuration,
+                          responseCode: path.circuitBreakerConfig.responseCode,
                       }
                     : null,
             })),

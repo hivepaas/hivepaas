@@ -72,7 +72,7 @@ func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
 
 	req := systemcleanupdto.NewUpdateSystemCleanupReq()
 	req.Scope = base.NewObjectScopeGlobal()
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
@@ -110,7 +110,7 @@ func (h *Handler) ExecuteCleanup(ctx *gin.Context) {
 
 	req := systemcleanupdto.NewExecuteSystemCleanupReq()
 	req.Scope = base.NewObjectScopeGlobal()
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

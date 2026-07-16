@@ -40,7 +40,7 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	req := githubappdto.NewBeginGithubAppManifestFlowReq()
 	req.Scope = scope
 	req.Type = base.SettingTypeGithubApp
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
@@ -146,7 +146,7 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	req.Scope = scope
 	req.Type = base.SettingTypeGithubApp
 	req.ID = itemID
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

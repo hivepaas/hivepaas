@@ -38,7 +38,7 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 	req.Scope = scope
 	req.Type = base.SettingTypeSSLCert
 	req.ID = itemID
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

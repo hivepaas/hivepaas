@@ -142,7 +142,7 @@ func (h *Handler) ExecuteAppSchedJob(ctx *gin.Context) {
 	req.ID = jobID
 	req.Scope = base.NewObjectScopeApp(appID, projectID)
 
-	if err = h.ParseJSONBody(ctx, req); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

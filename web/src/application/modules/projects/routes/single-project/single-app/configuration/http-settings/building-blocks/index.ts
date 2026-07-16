@@ -1,5 +1,6 @@
 export * from "./add-configuration-dropdown.com";
 export * from "./basic-auth-section.com";
+export * from "./circuit-breaker-config-section.com";
 export * from "./domain-configurable-sections.com";
 export * from "./domain-selector.com";
 export * from "./domain-general-fields.com";

@@ -1,6 +1,7 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
+    type AppHttpCircuitBreakerConfig,
     type AppHttpClientConfig,
     type AppHttpCompressionConfig,
     type AppHttpDomain,
@@ -69,6 +70,15 @@ const HttpPathRewriteConfigSchema = z.object({
     pathReplaceWith: z.string().nullish(),
 });
 
+const HttpCircuitBreakerConfigSchema = z.object({
+    enabled: z.boolean(),
+    expression: z.string().nullish(),
+    checkPeriod: z.string().nullish(),
+    fallbackDuration: z.string().nullish(),
+    recoveryDuration: z.string().nullish(),
+    responseCode: z.number().nullish(),
+});
+
 const HttpLBConfigSchema = z.object({
     strategy: z.nativeEnum(ELBStrategy),
 });
@@ -83,6 +93,7 @@ const HttpPathConfigSchema = z.object({
     compressionConfig: HttpCompressionConfigSchema.nullish(),
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
+    circuitBreakerConfig: HttpCircuitBreakerConfigSchema.nullish(),
 });
 
 const DomainSchema = z.object({
@@ -99,6 +110,7 @@ const DomainSchema = z.object({
     compressionConfig: HttpCompressionConfigSchema.nullish(),
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
+    circuitBreakerConfig: HttpCircuitBreakerConfigSchema.nullish(),
     paths: z.array(HttpPathConfigSchema).nullish(),
 });
 
@@ -188,6 +200,22 @@ function mapPathRewriteConfig(
     };
 }
 
+function mapCircuitBreakerConfig(
+    raw: z.infer<typeof HttpCircuitBreakerConfigSchema> | null | undefined,
+): AppHttpCircuitBreakerConfig | null {
+    if (raw == null) {
+        return null;
+    }
+    return {
+        enabled: raw.enabled,
+        expression: raw.expression ?? "",
+        checkPeriod: raw.checkPeriod ?? "",
+        fallbackDuration: raw.fallbackDuration ?? "",
+        recoveryDuration: raw.recoveryDuration ?? "",
+        responseCode: raw.responseCode ?? 0,
+    };
+}
+
 function mapLBConfig(raw: z.infer<typeof HttpLBConfigSchema> | null | undefined): AppHttpLBConfig | null {
     if (raw == null) {
         return null;
@@ -224,6 +252,7 @@ function mapPath(raw: z.infer<typeof HttpPathConfigSchema>): AppHttpPathConfig {
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
         pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
+        circuitBreakerConfig: mapCircuitBreakerConfig(raw.circuitBreakerConfig ?? undefined),
     };
 }
 
@@ -242,6 +271,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppHttpDomain {
         compressionConfig: mapCompressionConfig(raw.compressionConfig ?? undefined),
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
         pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
+        circuitBreakerConfig: mapCircuitBreakerConfig(raw.circuitBreakerConfig ?? undefined),
         paths: raw.paths?.map(mapPath) ?? [],
     };
 }

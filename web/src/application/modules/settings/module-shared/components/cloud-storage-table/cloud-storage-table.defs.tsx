@@ -44,7 +44,7 @@ function createColumns(scope: CloudStorageTableScope): ColumnDef<SettingCloudSto
         },
         {
             accessorKey: "s3.bucket",
-            header: "Bucket",
+            header: "Default Bucket",
             cell: ({ row: { original } }) => original.s3.bucket || "-",
         },
         {

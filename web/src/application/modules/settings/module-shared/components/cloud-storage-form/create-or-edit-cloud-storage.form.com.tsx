@@ -250,7 +250,7 @@ export function CreateOrEditCloudStorageForm({
                         titleWidth={220}
                         title={
                             <LabelWithInfo
-                                label="Bucket"
+                                label="Default Bucket"
                                 isRequired
                             />
                         }

@@ -22,6 +22,10 @@ function View({ children }: PropsWithChildren) {
             label: "General",
             route: ROUTE.systemSettings.hivepaas.general.$route,
         },
+        {
+            label: "HTTP Settings",
+            route: ROUTE.systemSettings.hivepaas.httpSettings.$route,
+        },
     ];
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;

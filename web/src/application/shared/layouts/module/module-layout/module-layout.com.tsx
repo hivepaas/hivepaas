@@ -1,8 +1,6 @@
-import { type PropsWithChildren } from "react";
+import { type PropsWithChildren, useEffect } from "react";
 
-import { useUpdateEffect } from "react-use";
-
-import { useF2aSetupDialog } from "@application/shared/dialogs";
+import { useF2aSetupDialogState, useMfaSetupRequiredDialogState } from "@application/shared/dialogs";
 
 import { useAuthContext } from "@application/authentication/context";
 
@@ -11,18 +9,24 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ModuleSidebar } from "../module-sidebar";
 
 export function ModuleLayout({ children }: PropsWithChildren) {
-    const f2aSetupDialog = useF2aSetupDialog({
-        onClose: () => {
-            f2aSetupDialog.actions.close();
-        },
-        isSetupRequired: true,
-    });
     const { data } = useAuthContext();
 
-    useUpdateEffect(() => {
-        if ("mfaSetupRequired" in data && data.mfaSetupRequired) {
-            f2aSetupDialog.actions.open();
+    useEffect(() => {
+        if (!("mfaSetupRequired" in data) || !data.mfaSetupRequired) {
+            return;
         }
+
+        const f2aSetupState = useF2aSetupDialogState.getState();
+        if (f2aSetupState.state.mode !== "closed") {
+            return;
+        }
+
+        const introState = useMfaSetupRequiredDialogState.getState();
+        if (introState.state.mode !== "closed") {
+            return;
+        }
+
+        useMfaSetupRequiredDialogState.getState().open();
     }, [data]);
 
     return (

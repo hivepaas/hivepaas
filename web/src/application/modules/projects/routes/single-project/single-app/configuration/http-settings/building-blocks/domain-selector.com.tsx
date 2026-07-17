@@ -170,24 +170,23 @@ export function DomainSelector({
         const isFirstDomain = domainValues.length === 0;
         const firstDomainDefaults = isFirstDomain ? { compressionConfig: createDefaultCompressionConfig() } : {};
 
-        if (trimmedDraft.length > 0) {
-            if (!isValidDomain(trimmedDraft, { maxLength: 100 })) {
-                setDomainInputError("Enter a valid domain (e.g. app.example.com)");
-                return;
-            }
-            const hasDuplicateDomain = domainValues.some(
-                domain => normalizeDomain(domain.domain) === normalizeDomain(trimmedDraft),
-            );
-            if (hasDuplicateDomain) {
-                setDomainInputError("Domain already exists.");
-                return;
-            }
-            append({ ...emptyDomain, domain: trimmedDraft, containerPort, ...firstDomainDefaults });
-            setActiveDomainIndex(domainValues.length);
-        } else {
-            append({ ...emptyDomain, containerPort, ...firstDomainDefaults });
-            setActiveDomainIndex(domainValues.length);
+        if (trimmedDraft.length === 0) {
+            setDomainInputError("Domain is required");
+            return;
         }
+        if (!isValidDomain(trimmedDraft, { maxLength: 100 })) {
+            setDomainInputError("Enter a valid domain (e.g. app.example.com)");
+            return;
+        }
+        const hasDuplicateDomain = domainValues.some(
+            domain => normalizeDomain(domain.domain) === normalizeDomain(trimmedDraft),
+        );
+        if (hasDuplicateDomain) {
+            setDomainInputError("Domain already exists.");
+            return;
+        }
+        append({ ...emptyDomain, domain: trimmedDraft, containerPort, ...firstDomainDefaults });
+        setActiveDomainIndex(domainValues.length);
 
         setIsAdding(false);
         setNewDomainDraft("");

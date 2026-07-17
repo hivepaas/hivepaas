@@ -64,7 +64,7 @@ export function RateLimitConfigSection({
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center text-sm font-medium hover:bg-accent"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
                     >
                         {open ? (
                             <ChevronDown className="size-4 shrink-0" />

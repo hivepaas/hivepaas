@@ -20,6 +20,7 @@ const SystemBackupEncryptionSchema = z
 
 const SystemBackupCloudStorageSchema = SettingsBaseEntitySchema.omit({ description: true })
     .extend({
+        bucket: z.string().default(""),
         destinationDir: z.string().default(""),
     })
     .nullable();

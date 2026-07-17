@@ -16,6 +16,7 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
     encryptionFormat: ESystemBackupEncryptionFormat.None,
     encryptionSecret: "",
     cloudStorage: undefined,
+    cloudStorageBucket: "",
     cloudStorageDestinationDir: "",
     backupDeletedObjects: false,
     notification: {
@@ -42,6 +43,7 @@ export function mapSystemBackupSettingsToFormInput(settings: SystemBackupSetting
                   name: settings.cloudStorage.name,
               }
             : undefined,
+        cloudStorageBucket: settings.cloudStorage?.bucket ?? "",
         cloudStorageDestinationDir: settings.cloudStorage?.destinationDir ?? "",
         backupDeletedObjects: settings.dbBackupConfig.backupDeletedObjects,
         notification: {

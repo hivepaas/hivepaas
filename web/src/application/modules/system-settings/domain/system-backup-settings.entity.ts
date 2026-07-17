@@ -20,6 +20,7 @@ export interface SystemBackupEncryption {
 }
 
 export interface SystemBackupCloudStorage extends SettingsBaseEntity {
+    bucket?: string;
     destinationDir: string;
 }
 

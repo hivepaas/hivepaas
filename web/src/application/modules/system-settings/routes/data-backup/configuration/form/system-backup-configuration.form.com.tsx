@@ -151,6 +151,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
         field: cloudStorage,
         fieldState: { error: cloudStorageError, invalid: isCloudStorageInvalid },
     } = useController({ control, name: "cloudStorage" });
+    const { field: cloudStorageBucket } = useController({ control, name: "cloudStorageBucket" });
     const {
         field: cloudStorageDestinationDir,
         fieldState: { error: cloudStorageDestinationDirError, invalid: isCloudStorageDestinationDirInvalid },
@@ -325,16 +326,31 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 Configure Cloud Storages
                             </AppLink.Basic>
                         </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                {cloudStorage.value && (
+                    <InfoBlock title="Bucket">
                         <Field>
                             <Input
-                                {...cloudStorageDestinationDir}
-                                placeholder="path/to/sub/dir"
+                                {...cloudStorageBucket}
+                                placeholder="use default"
                                 className="max-w-[400px]"
-                                aria-invalid={isCloudStorageDestinationDirInvalid}
                             />
-                            <FieldError errors={[cloudStorageDestinationDirError]} />
                         </Field>
-                    </FieldGroup>
+                    </InfoBlock>
+                )}
+
+                <InfoBlock title="Destination Directory">
+                    <Field>
+                        <Input
+                            {...cloudStorageDestinationDir}
+                            placeholder="path/to/sub/dir"
+                            className="max-w-[400px]"
+                            aria-invalid={isCloudStorageDestinationDirInvalid}
+                        />
+                        <FieldError errors={[cloudStorageDestinationDirError]} />
+                    </Field>
                 </InfoBlock>
             </div>
         </>

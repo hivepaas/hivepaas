@@ -54,6 +54,7 @@ export function SaveToFileSection({ projectId, readOnly = false }: Props) {
         field: storage,
         fieldState: { invalid: isStorageInvalid },
     } = useController({ control, name: "saveToFile.storage" });
+    const { field: bucket } = useController({ control, name: "saveToFile.bucket" });
     const { field: filePath } = useController({ control, name: "saveToFile.filePath" });
 
     const {
@@ -197,6 +198,20 @@ export function SaveToFileSection({ projectId, readOnly = false }: Props) {
                             </AppLink.Modules>
                         </Field>
                     </FieldGroup>
+                </InfoBlock>
+
+                <InfoBlock
+                    title="Bucket"
+                    titleWidth={160}
+                >
+                    <Field>
+                        <Input
+                            {...bucket}
+                            placeholder="use default"
+                            className="max-w-[400px]"
+                            disabled={readOnly}
+                        />
+                    </Field>
                 </InfoBlock>
 
                 {storage.value && (

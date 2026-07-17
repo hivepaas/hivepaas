@@ -33,6 +33,7 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
         },
         cloudStorage: {
             id: values.cloudStorage?.id ?? "",
+            bucket: values.cloudStorageBucket,
             destinationDir: values.cloudStorageDestinationDir,
         },
         dbBackupConfig: {

@@ -103,6 +103,7 @@ function buildCommandOutputPayload(
                 ...(hasText(stf.filePath) ? { filePath: stf.filePath } : {}),
                 fileKind: "",
                 ...(stf.storage ? { storage: { id: stf.storage.id } } : {}),
+                ...(hasText(stf.bucket) ? { bucket: stf.bucket } : {}),
                 compressionFormat: stf.compressionFormat,
                 encryptionFormat: stf.encryptionFormat,
                 ...(hasText(stf.encryptionSecret) ? { encryptionSecret: stf.encryptionSecret } : {}),

@@ -33,6 +33,7 @@ export const SystemBackupConfigurationFormSchema = z.object({
     encryptionFormat: z.nativeEnum(ESystemBackupEncryptionFormat),
     encryptionSecret: z.string(),
     cloudStorage: SettingsRefSchema.optional(),
+    cloudStorageBucket: z.string(),
     cloudStorageDestinationDir: z.string(),
     backupDeletedObjects: z.boolean(),
     notification: NotificationSchema,

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { flushSync } from "react-dom";
+
 import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { cn } from "@lib/utils";
 import { ArrowBigLeftDash, Check, EyeIcon, Plus, X } from "lucide-react";
@@ -93,7 +95,6 @@ interface DomainSelectorProps {
     setActiveDomainIndex: (index: number) => void;
     internalEndpoints: string[];
     domainSuggestion: string;
-    onRemoveDomain: (index: number) => void;
     readOnly?: boolean;
 }
 
@@ -102,16 +103,15 @@ export function DomainSelector({
     setActiveDomainIndex,
     internalEndpoints,
     domainSuggestion,
-    onRemoveDomain,
     readOnly = false,
 }: DomainSelectorProps) {
-    const { control } = useFormContext<
+    const { control, clearErrors, getValues, reset } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const { append, move } = useFieldArray({ control, name: "domains" });
+    const { fields, append, move } = useFieldArray({ control, name: "domains" });
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
     const domainValues = useWatch({ control, name: "domains", defaultValue: [] });
     const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
@@ -124,6 +124,37 @@ export function DomainSelector({
     function handleMoveLeft(index: number) {
         move(index, index - 1);
         setActiveDomainIndex(index - 1);
+    }
+
+    function handleRemoveDomain(index: number) {
+        if (readOnly) {
+            return;
+        }
+
+        const values = getValues();
+        // RHF can leave null holes after unregister; strip them when compacting.
+        const rawDomains = values.domains as ((typeof values.domains)[number] | null)[];
+        const nextDomains = rawDomains.filter((d, i): d is (typeof values.domains)[number] => i !== index && d != null);
+
+        let nextActive = -1;
+        if (nextDomains.length > 0) {
+            if (activeDomainIndex === index) {
+                // Deleted active → select neighbor (next at same index, or previous if last).
+                nextActive = Math.min(index, nextDomains.length - 1);
+            } else if (activeDomainIndex > index) {
+                nextActive = activeDomainIndex - 1;
+            } else {
+                nextActive = activeDomainIndex;
+            }
+        }
+
+        // Unmount domain detail controllers before reset so RHF does not leave null/phantom holes.
+        flushSync(() => {
+            setActiveDomainIndex(-1);
+        });
+        reset({ ...values, domains: nextDomains }, { keepDefaultValues: true, keepDirty: true, keepTouched: true });
+        clearErrors();
+        setActiveDomainIndex(nextActive);
     }
 
     function handleConfirmAdd() {
@@ -217,10 +248,10 @@ export function DomainSelector({
                     }
                 >
                     <div className="flex flex-wrap items-center gap-2">
-                        {domainValues.map((d, i) => (
+                        {fields.map((field, i) => (
                             <DomainChip
-                                key={i}
-                                domain={d.domain}
+                                key={field.id}
+                                domain={domainValues[i]?.domain ?? ""}
                                 isFirst={i === 0}
                                 isActive={i === activeDomainIndex}
                                 readOnly={readOnly}
@@ -231,10 +262,10 @@ export function DomainSelector({
                                     handleMoveLeft(i);
                                 }}
                                 onView={() => {
-                                    handleViewDomain(d.domain);
+                                    handleViewDomain(domainValues[i]?.domain ?? "");
                                 }}
                                 onRemove={() => {
-                                    onRemoveDomain(i);
+                                    handleRemoveDomain(i);
                                 }}
                             />
                         ))}

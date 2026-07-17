@@ -69,6 +69,7 @@ export interface AppScheduledJobCommandOutputSaveToFile {
     fileName: string;
     filePath: string;
     storage?: AppScheduledJobNamedRef;
+    bucket?: string;
     compressionFormat: string;
     encryptionFormat: string;
     encryptionSecret?: string;

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,21 @@ const kindOptions = [
     ERepoWebhookKind.Gogs,
 ] satisfies string[];
 
+const WEBHOOK_EVENT_TYPES = [
+    {
+        label: "GitHub events:",
+        details: "Issue comments, Pull requests, Pushes",
+    },
+    {
+        label: "GitLab events:",
+        details: "Comments, Merge request events, Push events",
+    },
+    {
+        label: "Gitea events:",
+        details: "Pull Request, Pull Request Comments, Pull Request Synchronized, Push",
+    },
+] as const;
+
 export function CreateOrEditRepoWebhookForm({
     isPending,
     onSubmit,
@@ -44,6 +59,7 @@ export function CreateOrEditRepoWebhookForm({
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const [showEventTypes, setShowEventTypes] = useState(false);
 
     const {
         handleSubmit,
@@ -133,6 +149,40 @@ export function CreateOrEditRepoWebhookForm({
             <div className="flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                <div
+                    className={cn(
+                        dashedBorderBox,
+                        SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+                        "text-center leading-6 ",
+                    )}
+                >
+                    <p>
+                        <span className="text-orange-500">Note:</span> Webhooks allow{" "}
+                        <span className="text-orange-500">HivePaaS</span> to receive events from your source code
+                        management systems (such as GitHub or GitLab). After creating a webhook here, you can use the
+                        generated URL and Secret to configure it on your GitHub or GitLab organization or repository
+                        settings.{" "}
+                        <button
+                            type="button"
+                            className="text-primary cursor-pointer"
+                            aria-expanded={showEventTypes}
+                            onClick={() => {
+                                setShowEventTypes(current => !current);
+                            }}
+                        >
+                            View required event types to configure
+                        </button>
+                    </p>
+                    {showEventTypes && (
+                        <ul className="mt-3 list-disc space-y-1 pl-5 text-left">
+                            {WEBHOOK_EVENT_TYPES.map(eventType => (
+                                <li key={eventType.label}>
+                                    <span className="font-semibold">{eventType.label}</span> {eventType.details}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
                 <fieldset
                     disabled={isReadOnly}
                     className={cn(
@@ -273,11 +323,6 @@ export function CreateOrEditRepoWebhookForm({
                             }}
                         />
                     </InfoBlock>
-
-                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
-                        After creating it, you can use the information above to configure the webhook on GitHub, GitLab,
-                        or wherever your source code is hosted.
-                    </div>
                 </fieldset>
             </div>
             {!isReadOnly && (

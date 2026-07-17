@@ -8,6 +8,8 @@ import { useProfileContext } from "@application/shared/context";
 import { ProfileCommands } from "@application/shared/data/commands";
 import { SessionQueries } from "@application/shared/data/queries";
 
+import { useAuthContext } from "@application/authentication/context";
+
 import {
     CurrentPasscodeForm,
     type CurrentPasscodeSchemaOutput,
@@ -21,6 +23,7 @@ type State = { qrCode: string; totpToken: string; secretKey: string } | null;
 export function F2aSetupDialog() {
     const [stateData, setStateData] = useState<State>(null);
     const { setProfile, clearProfile } = useProfileContext();
+    const { clear: clearAuth } = useAuthContext();
 
     const { state, props: { isSetupRequired = false } = {}, ...actions } = useF2aSetupDialogState();
 
@@ -103,6 +106,7 @@ export function F2aSetupDialog() {
             {
                 onSuccess: () => {
                     toast.success("2FA setup completed successfully");
+                    clearAuth();
                     void refetch();
                     actions.close();
                     setStateData(null);

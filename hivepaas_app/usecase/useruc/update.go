@@ -133,6 +133,7 @@ func (uc *UC) prepareUpdatingUserData(
 	if req.Notes != nil {
 		user.Notes = *req.Notes
 	}
+	oldSecurityOption := user.SecurityOption
 	if req.SecurityOption != nil {
 		user.SecurityOption = *req.SecurityOption
 	}
@@ -140,9 +141,20 @@ func (uc *UC) prepareUpdatingUserData(
 		user.AccessExpireAt = *req.AccessExpireAt
 	}
 
-	if user.Status == base.UserStatusActive &&
-		user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
-		user.Status = base.UserStatusPending // User needs to set up 2FA authentication
+	switch user.Status {
+	case base.UserStatusActive:
+		// User needs to set up 2FA authentication, set user status to `pending`
+		if user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
+			user.Status = base.UserStatusPending
+		}
+	case base.UserStatusPending:
+		// Look like admin changes user setting from `2FA` back to `password-only`
+		if oldSecurityOption == base.UserSecurityPassword2FA &&
+			user.SecurityOption == base.UserSecurityPasswordOnly && user.Password != "" {
+			user.Status = base.UserStatusActive
+		}
+	case base.UserStatusDisabled:
+		// Do nothing
 	}
 
 	persistingData.UpsertingUsers = append(persistingData.UpsertingUsers, user)

@@ -26,6 +26,7 @@ export type SystemBackup_UpdateOne_Payload = {
     };
     cloudStorage: {
         id: string;
+        bucket: string;
         destinationDir: string;
     };
     dbBackupConfig: {

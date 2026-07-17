@@ -118,6 +118,7 @@ const CommandOutputSaveToFileSchema = z
         filePath: z.string().optional().default(""),
         fileKind: z.string().optional().default(""),
         storage: NamedRefSchema,
+        bucket: z.string().optional().default(""),
         compressionFormat: z.string().optional().default(""),
         encryptionFormat: z.string().optional().default(""),
         encryptionSecret: z.string().optional().default(""),

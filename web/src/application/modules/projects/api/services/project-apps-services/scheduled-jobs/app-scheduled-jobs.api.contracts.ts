@@ -67,6 +67,7 @@ export type AppScheduledJobs_CommandOutput_SaveToFile_Payload = {
     filePath?: string;
     fileKind?: string;
     storage?: AppScheduledJobs_RefObject_Payload;
+    bucket?: string;
     compressionFormat: string;
     encryptionFormat: string;
     encryptionSecret?: string;

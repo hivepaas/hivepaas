@@ -52,6 +52,7 @@ export function AppConfigHttpSettingsRoute() {
     });
 
     function handleSubmit(values: AppConfigHttpSettingsFormSchemaOutput) {
+        console.log("values", values);
         if (!canWrite) {
             return;
         }

@@ -55,6 +55,7 @@ const SaveToFileSchema = z.object({
     fileName: z.string().trim(),
     filePath: z.string().trim(),
     storage: z.object({ id: z.string(), name: z.string() }).nullable(),
+    bucket: z.string().trim(),
     compressionFormat: z.string(),
     encryptionFormat: z.string(),
     encryptionSecret: z.string(),

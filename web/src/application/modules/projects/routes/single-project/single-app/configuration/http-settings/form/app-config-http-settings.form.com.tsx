@@ -1,7 +1,7 @@
 import React, { type PropsWithChildren, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldPath, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { type FieldErrors, type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppHttpSettings } from "~/projects/domain";
 
@@ -54,7 +54,9 @@ function ConditionalDomainDetailSections({
             return;
         }
 
-        if (activeDomainIndex < 0 || activeDomainIndex >= len) {
+        // Do not auto-select when index is -1: delete flow unmounts detail controllers
+        // before splice, then restores the active index explicitly.
+        if (activeDomainIndex >= len) {
             setActiveDomainIndex(len - 1);
         }
     }, [activeDomainIndex, domains.length, setActiveDomainIndex]);
@@ -110,18 +112,6 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
     });
 
     const { control } = methods;
-    const { remove } = useFieldArray({ control, name: "domains" });
-
-    const handleRemoveDomain = (index: number) => {
-        if (readOnly) {
-            return;
-        }
-
-        const before = methods.getValues().domains.length;
-        remove(index);
-        const after = before - 1;
-        setActiveDomainIndex(after > 0 ? 0 : -1);
-    };
 
     const activeDomainIndexRef = useRef(activeDomainIndex);
     useEffect(() => {
@@ -156,6 +146,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                 if (error.errors.length === 0) {
                     return;
                 }
+
                 error.errors.forEach(({ path, message }, index) => {
                     methods.setError(
                         path as FieldPath<SchemaInput>,
@@ -170,6 +161,10 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
 
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
 
+    function onInvalid(errors: FieldErrors<SchemaInput>) {
+        console.error(errors);
+    }
+
     return (
         <div className="pt-2">
             <FormProvider {...methods}>
@@ -180,7 +175,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                             return;
                         }
 
-                        void methods.handleSubmit(onSubmit)(event);
+                        void methods.handleSubmit(onSubmit, onInvalid)(event);
                     }}
                     className="flex flex-col gap-6"
                 >
@@ -194,7 +189,6 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                                 setActiveDomainIndex={setActiveDomainIndex}
                                 internalEndpoints={defaultValues?.internalEndpoints ?? []}
                                 domainSuggestion={defaultValues?.domainSuggestion ?? ""}
-                                onRemoveDomain={handleRemoveDomain}
                                 readOnly={readOnly}
                             />
                         </div>

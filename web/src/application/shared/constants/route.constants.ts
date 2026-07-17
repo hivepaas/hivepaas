@@ -359,6 +359,11 @@ export const ROUTE = {
                 $pattern: "system/hivepaas/general",
                 $route: "/system/hivepaas/general/",
             },
+
+            httpSettings: {
+                $pattern: "system/hivepaas/http-settings",
+                $route: "/system/hivepaas/http-settings/",
+            },
         },
 
         traefik: {

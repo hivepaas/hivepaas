@@ -3,4 +3,5 @@ export * from "./system-backup-file.entity.schema";
 export * from "./system-cleanup-settings.entity.schema";
 export * from "./system-ssl-renewal-settings.entity.schema";
 export * from "./hivepaas-service-settings.entity.schema";
+export * from "./hivepaas-http-settings.entity.schema";
 export * from "./traefik-service-settings.entity.schema";

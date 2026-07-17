@@ -3,6 +3,7 @@
  */
 export {
     SystemSettingsHivePaaSGeneralRoute,
+    SystemSettingsHivePaaSHttpSettingsRoute,
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsDataBackupActionsRoute,
     SystemSettingsDataBackupBackupFilesRoute,
@@ -17,3 +18,8 @@ export {
  * Layouts
  */
 export { DataBackupLayout, DataCleanupLayout, HivePaaSLayout, SslRenewalLayout, TraefikLayout } from "./layouts";
+
+/**
+ * Dialogs
+ */
+export { SystemSettingsDialogsContainer } from "./dialogs-container";

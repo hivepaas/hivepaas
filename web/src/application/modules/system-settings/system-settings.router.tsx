@@ -10,6 +10,18 @@ async function getLazyComponents() {
 }
 
 export const systemSettingsRouter: RouteObject = {
+    lazy: async () => {
+        const { SystemSettingsDialogsContainer } = await getLazyComponents();
+
+        return {
+            element: (
+                <>
+                    <Outlet />
+                    <SystemSettingsDialogsContainer />
+                </>
+            ),
+        };
+    },
     children: [
         {
             lazy: async () => {
@@ -45,6 +57,14 @@ export const systemSettingsRouter: RouteObject = {
                         const { SystemSettingsHivePaaSGeneralRoute } = await getLazyComponents();
 
                         return { Component: SystemSettingsHivePaaSGeneralRoute };
+                    },
+                },
+                {
+                    path: "http-settings",
+                    lazy: async () => {
+                        const { SystemSettingsHivePaaSHttpSettingsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsHivePaaSHttpSettingsRoute };
                     },
                 },
             ],

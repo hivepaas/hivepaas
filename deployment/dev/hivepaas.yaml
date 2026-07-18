@@ -16,6 +16,7 @@ services:
       - "--entrypoints.websecure.http.tls=true"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      - "--log=true"
       - "--log.level=DEBUG"
       - "--accesslog=true"
     networks:

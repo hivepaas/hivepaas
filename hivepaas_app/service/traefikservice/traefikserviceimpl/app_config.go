@@ -303,16 +303,19 @@ func (s *service) createClientConfig(
 	if clientCfg == nil || !clientCfg.Enabled {
 		return
 	}
-	mwName := fmt.Sprintf("%s-buffering", routerName)
-	if clientCfg.MaxRequestBody > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.buffering.maxrequestbodybytes", mwName)] =
-			strconv.FormatInt(clientCfg.MaxRequestBody.Bytes(), 10)
+
+	if clientCfg.MaxRequestBody > 0 || clientCfg.MemRequestBody > 0 {
+		mwName := fmt.Sprintf("%s-buffering", routerName)
+		if clientCfg.MaxRequestBody > 0 {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.buffering.maxrequestbodybytes", mwName)] =
+				strconv.FormatInt(clientCfg.MaxRequestBody.Bytes(), 10)
+		}
+		if clientCfg.MemRequestBody > 0 {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.buffering.memrequestbodybytes", mwName)] =
+				strconv.FormatInt(clientCfg.MemRequestBody.Bytes(), 10)
+		}
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
-	if clientCfg.MemRequestBody > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.buffering.memrequestbodybytes", mwName)] =
-			strconv.FormatInt(clientCfg.MemRequestBody.Bytes(), 10)
-	}
-	*middlewares = append(*middlewares, mwName+middlewareProvider)
 
 	if len(clientCfg.AllowedIPs) > 0 {
 		mwNameIp := fmt.Sprintf("%s-allowed-ips", routerName)
@@ -331,23 +334,31 @@ func (s *service) createHeaderConfig(
 	if headerCfg == nil || !headerCfg.Enabled {
 		return
 	}
+
 	mwName := fmt.Sprintf("%s-headers", routerName)
+	hasHeaders := false
 
 	for k, v := range headerCfg.ToAddToRequests {
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customrequestheaders.%s", mwName, k)] = v
+		hasHeaders = true
 	}
 	for k, v := range headerCfg.ToAddToResponses {
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customresponseheaders.%s", mwName, k)] = v
+		hasHeaders = true
 	}
 
 	for _, k := range headerCfg.ToRemoveFromRequests {
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customrequestheaders.%s", mwName, k)] = ""
+		hasHeaders = true
 	}
 	for _, k := range headerCfg.ToRemoveFromResponses {
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customresponseheaders.%s", mwName, k)] = ""
+		hasHeaders = true
 	}
 
-	*middlewares = append(*middlewares, mwName+middlewareProvider)
+	if hasHeaders {
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
+	}
 
 	if headerCfg.AutoContentType {
 		mwContentTypeName := fmt.Sprintf("%s-contenttype", routerName)
@@ -498,15 +509,17 @@ func (s *service) createPathRewriteConfig(
 	if rewriteCfg.PrefixStrip != "" {
 		if rewriteCfg.PrefixStripIsRegex {
 			mwName := fmt.Sprintf("%s-stripprefixregex", routerName)
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefixregex.regex", mwName)] = rewriteCfg.PrefixStrip
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefixregex.regex", mwName)] =
+				rewriteCfg.PrefixStrip
 			*middlewares = append(*middlewares, mwName+middlewareProvider)
 		} else {
 			mwName := fmt.Sprintf("%s-stripprefix", routerName)
 			prefixes := strings.FieldsFunc(rewriteCfg.PrefixStrip, func(r rune) bool {
 				return r == ',' || unicode.IsSpace(r)
 			})
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", mwName)] = strings.Join(prefixes, ",")
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.forceslash", mwName)] = "true"
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", mwName)] =
+				strings.Join(prefixes, ",")
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.forceslash", mwName)] = labelValueTrue
 			*middlewares = append(*middlewares, mwName+middlewareProvider)
 		}
 	}
@@ -515,8 +528,10 @@ func (s *service) createPathRewriteConfig(
 		if rewriteCfg.PathReplaceIsRegex {
 			if rewriteCfg.PathReplaceWith != "" {
 				mwName := fmt.Sprintf("%s-replacepathregex", routerName)
-				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.regex", mwName)] = rewriteCfg.PathReplace
-				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.replacement", mwName)] = rewriteCfg.PathReplaceWith
+				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.regex", mwName)] =
+					rewriteCfg.PathReplace
+				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.replacement", mwName)] =
+					rewriteCfg.PathReplaceWith
 				*middlewares = append(*middlewares, mwName+middlewareProvider)
 			}
 		} else {

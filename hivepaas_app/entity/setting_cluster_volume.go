@@ -33,8 +33,8 @@ func (s *ClusterVolume) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
-func (s *ClusterVolume) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *ClusterVolume) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *ClusterVolume) Migrate(setting *Setting) (hasChange bool, err error) {

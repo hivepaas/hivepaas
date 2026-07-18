@@ -52,8 +52,8 @@ func (s *Secret) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
-func (s *Secret) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *Secret) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *Secret) Migrate(setting *Setting) (hasChange bool, err error) {

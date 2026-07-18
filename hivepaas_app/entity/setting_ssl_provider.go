@@ -51,8 +51,8 @@ func (s *SSLProvider) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *SSLProvider) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *SSLProvider) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *SSLProvider) Migrate(setting *Setting) (hasChange bool, err error) {

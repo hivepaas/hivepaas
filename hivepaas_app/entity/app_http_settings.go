@@ -186,8 +186,8 @@ func (s *AppHttpSettings) GetBasicAuthIDs() (res []string) {
 	return
 }
 
-func (s *AppHttpSettings) CalcResLinks(setting *Setting) []*ResLink {
-	resLinks := s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
+	resLinks := s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 
 	// Links domain to the current setting
 	timeNow := timeutil.NowUTC()

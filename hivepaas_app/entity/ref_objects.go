@@ -91,7 +91,7 @@ func (r *RefObjectIDs) GetRecursiveRefObjectIDs(refObjects *RefObjects) *RefObje
 	return res
 }
 
-func (r *RefObjectIDs) CalcResLinks(srcType base.ResourceType, srcID string) []*ResLink {
+func (r *RefObjectIDs) GetResourceLinks(srcType base.ResourceType, srcID string) []*ResLink {
 	resLinks := make([]*ResLink, 0, len(r.RefSettingIDs)+len(r.RefAppIDs)+len(r.RefUserIDs))
 	timeNow := timeutil.NowUTC()
 	for _, refSettingID := range r.RefSettingIDs {

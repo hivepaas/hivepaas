@@ -44,8 +44,8 @@ func (s *DomainSettings) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *DomainSettings) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *DomainSettings) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *DomainSettings) Migrate(setting *Setting) (hasChange bool, err error) {

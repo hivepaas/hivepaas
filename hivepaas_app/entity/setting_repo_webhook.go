@@ -33,8 +33,8 @@ func (s *RepoWebhook) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{}
 }
 
-func (s *RepoWebhook) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *RepoWebhook) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *RepoWebhook) Migrate(setting *Setting) (hasChange bool, err error) {

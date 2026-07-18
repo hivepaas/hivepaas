@@ -37,8 +37,8 @@ func (s *TraefikService) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *TraefikService) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *TraefikService) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *TraefikService) Migrate(setting *Setting) (hasChange bool, err error) {

@@ -73,7 +73,7 @@ func (r *RefClusterObjectIDs) AddRefIDs(refIDs *RefClusterObjectIDs) {
 	r.RefNetworkIDs = append(r.RefNetworkIDs, refIDs.RefNetworkIDs...)
 }
 
-func (r *RefClusterObjectIDs) CalcResLinks(srcType base.ResourceType, srcID string) []*ResLink {
+func (r *RefClusterObjectIDs) GetResourceLinks(srcType base.ResourceType, srcID string) []*ResLink {
 	resLinks := make([]*ResLink, 0, len(r.RefNodeIDs)+len(r.RefVolumeIDs)+len(r.RefNetworkIDs))
 	timeNow := timeutil.NowUTC()
 	for _, refNodeID := range r.RefNodeIDs {

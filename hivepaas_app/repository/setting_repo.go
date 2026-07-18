@@ -533,7 +533,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 
 	newLinks := make([]*entity.ResLink, 0, len(settings)*2) //nolint:mnd
 	for _, setting := range settings {
-		links, err := setting.CalcResLinks()
+		links, err := setting.GetResourceLinks()
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

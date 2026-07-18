@@ -98,8 +98,8 @@ func (s *AppDeploymentSettings) GetGitCredentialIDs() (res []string) {
 	return
 }
 
-func (s *AppDeploymentSettings) CalcResLinks(setting *Setting) []*ResLink {
-	resLinks := s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *AppDeploymentSettings) GetResourceLinks(setting *Setting) []*ResLink {
+	resLinks := s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 
 	// Links repo ID (URL) to the current deployment
 	if s.ActiveMethod == base.DeploymentMethodRepo && s.RepoSource != nil && setting.ObjectID != "" {

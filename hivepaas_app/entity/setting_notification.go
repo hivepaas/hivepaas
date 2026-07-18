@@ -124,8 +124,8 @@ func (s *Notification) GetType() base.SettingType {
 	return base.SettingTypeNotification
 }
 
-func (s *Notification) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *Notification) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *Notification) Migrate(setting *Setting) (hasChange bool, err error) {

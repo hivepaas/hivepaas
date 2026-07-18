@@ -51,8 +51,8 @@ func (s *ConfigFile) ContentAsBytes() []byte {
 	return reflectutil.UnsafeStrToBytes(s.Content)
 }
 
-func (s *ConfigFile) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *ConfigFile) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *ConfigFile) Migrate(setting *Setting) (hasChange bool, err error) {

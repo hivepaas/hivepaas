@@ -47,8 +47,8 @@ func (s *AppFeatureSettings) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *AppFeatureSettings) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *AppFeatureSettings) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *AppFeatureSettings) Migrate(setting *Setting) (hasChange bool, err error) {

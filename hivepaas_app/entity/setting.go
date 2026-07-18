@@ -70,7 +70,7 @@ type Setting struct {
 type SettingData interface {
 	GetType() base.SettingType
 	GetRefObjectIDs() *RefObjectIDs
-	CalcResLinks(setting *Setting) []*ResLink
+	GetResourceLinks(setting *Setting) []*ResLink
 	Migrate(setting *Setting) (hasChange bool, err error)
 }
 
@@ -173,7 +173,7 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 	return res, nil
 }
 
-func (s *Setting) CalcResLinks() ([]*ResLink, error) {
+func (s *Setting) GetResourceLinks() ([]*ResLink, error) {
 	if !s.DeletedAt.IsZero() {
 		return nil, nil
 	}
@@ -184,7 +184,7 @@ func (s *Setting) CalcResLinks() ([]*ResLink, error) {
 	if settingData == nil {
 		return nil, nil
 	}
-	return settingData.CalcResLinks(s), nil
+	return settingData.GetResourceLinks(s), nil
 }
 
 func (s *Setting) Migrate() (hasChange bool, err error) {

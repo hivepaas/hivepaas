@@ -59,8 +59,8 @@ func (s *SSLCert) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *SSLCert) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *SSLCert) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *SSLCert) Migrate(setting *Setting) (hasChange bool, err error) {

@@ -37,8 +37,8 @@ func (s *SSLRenewal) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *SSLRenewal) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *SSLRenewal) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *SSLRenewal) Migrate(setting *Setting) (hasChange bool, err error) {

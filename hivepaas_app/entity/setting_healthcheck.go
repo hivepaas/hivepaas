@@ -77,8 +77,8 @@ func (s *Healthcheck) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *Healthcheck) CalcResLinks(setting *Setting) []*ResLink {
-	return s.GetRefObjectIDs().CalcResLinks(base.ResourceTypeSetting, setting.ID)
+func (s *Healthcheck) GetResourceLinks(setting *Setting) []*ResLink {
+	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 func (s *Healthcheck) Migrate(setting *Setting) (hasChange bool, err error) {

@@ -18,6 +18,7 @@ export function AppLogsToolbarFilters({
     onLinesChange,
     onSinceChange,
     onDurationChange,
+    onRequestRefresh,
 }: AppLogsToolbarFiltersProps) {
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -34,12 +35,20 @@ export function AppLogsToolbarFilters({
                         onValueChange={value => {
                             onLinesChange(value && value > 0 ? value : undefined);
                         }}
+                        onKeyDown={event => {
+                            if (event.key === "Enter") {
+                                onRequestRefresh();
+                            }
+                        }}
                     />
                 </div>
             )}
             <DateTimePicker
                 value={since}
-                onChange={onSinceChange}
+                onChange={value => {
+                    onSinceChange(value);
+                    onRequestRefresh();
+                }}
                 placeholder="Since"
                 showClearButton
                 granularity="second"
@@ -49,7 +58,10 @@ export function AppLogsToolbarFilters({
             />
             <DurationPicker
                 value={duration}
-                onChange={onDurationChange}
+                onChange={value => {
+                    onDurationChange(value);
+                    onRequestRefresh();
+                }}
             />
         </div>
     );
@@ -143,6 +155,7 @@ interface AppLogsToolbarFiltersProps {
     onLinesChange: (value: number | undefined) => void;
     onSinceChange: (value: Date | undefined) => void;
     onDurationChange: (value: string | undefined) => void;
+    onRequestRefresh: () => void;
 }
 
 interface DurationPickerProps {

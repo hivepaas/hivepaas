@@ -1,4 +1,4 @@
-import { type SetStateAction, useCallback, useEffect, useMemo, useRef } from "react";
+import { type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { WebSocketReadyState, WebSocketSubscription } from "@infrastructure/websocket";
 import { useAppLogsWsApi } from "~/projects/api";
@@ -33,6 +33,8 @@ export function AppLogsViewer({
     const subscriptionRef = useRef<WebSocketSubscription | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const hasAutoStartedRef = useRef(false);
+    const pendingFilterRefreshRef = useRef(false);
+    const [filterRefreshNonce, setFilterRefreshNonce] = useState(0);
     const { streams } = useAppLogsWsApi();
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const isStreaming = webSocketReadyState === WebSocket.OPEN;
@@ -153,6 +155,29 @@ export function AppLogsViewer({
         }
     }, [isConnectionActive, onLogsChange, refreshLogs, tabID]);
 
+    const requestFilterRefresh = useCallback(() => {
+        if (isConnectionActive) {
+            return;
+        }
+
+        pendingFilterRefreshRef.current = true;
+        setFilterRefreshNonce(current => current + 1);
+    }, [isConnectionActive]);
+
+    useEffect(() => {
+        if (!pendingFilterRefreshRef.current) {
+            return;
+        }
+
+        pendingFilterRefreshRef.current = false;
+
+        if (isConnectionActive) {
+            return;
+        }
+
+        void handleRefresh();
+    }, [filterRefreshNonce, handleRefresh, isConnectionActive, request]);
+
     useEffect(() => {
         if (!shouldAutoStream || !isActive || hasAutoStartedRef.current) {
             return;
@@ -206,6 +231,7 @@ export function AppLogsViewer({
                     onDurationChange={value => {
                         onDurationChange(tabID, value);
                     }}
+                    onRequestRefresh={requestFilterRefresh}
                 />
             }
         />

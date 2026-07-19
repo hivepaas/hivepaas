@@ -25,7 +25,7 @@ export function F2aSetupDialog() {
     const { setProfile, clearProfile } = useProfileContext();
     const { clear: clearAuth } = useAuthContext();
 
-    const { state, props: { isSetupRequired = false } = {}, ...actions } = useF2aSetupDialogState();
+    const { state, ...actions } = useF2aSetupDialogState();
 
     const { mutate: logout } = SessionCommands.useLogout({
         onSuccess: () => {
@@ -130,9 +130,11 @@ export function F2aSetupDialog() {
     const showSetupForm = stateData !== null && state.mode !== "deactivate";
 
     function handleDismissLogout() {
+        // Close first and clear MFA flag so ModuleLayout cannot reopen the intro
+        // while logout is in flight. Clear profile only after logout removes the
+        // token — otherwise ApplicationProfileInit refetches and re-enforces 2FA.
         actions.close();
         setStateData(null);
-        clearProfile();
         clearAuth();
         logout();
     }
@@ -141,12 +143,17 @@ export function F2aSetupDialog() {
         <Dialog
             open={state.mode !== "closed"}
             onOpenChange={open => {
-                if (!open && isSetupRequired) {
-                    handleDismissLogout();
-                    return;
-                }
-
                 if (!open) {
+                    // Read latest auth so a successful setup (clearAuth then close)
+                    // does not look like an enforced dismiss.
+                    const authData = useAuthContext.getState().data;
+                    const isEnforcedSetup = "mfaSetupRequired" in authData && authData.mfaSetupRequired;
+
+                    if (isEnforcedSetup) {
+                        handleDismissLogout();
+                        return;
+                    }
+
                     actions.close();
                     setStateData(null);
                 }

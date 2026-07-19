@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import {
     Dialog,
     DialogActionFooter,
@@ -19,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { useMfaSetupRequiredDialogState } from "../hooks";
 
 export function MfaSetupRequiredDialog() {
+    const isAdvancingToSetupRef = useRef(false);
     const { state, props: { onActivate } = {}, ...actions } = useMfaSetupRequiredDialogState();
     const { clearProfile } = useProfileContext();
     const { clear: clearAuth } = useAuthContext();
@@ -39,6 +42,7 @@ export function MfaSetupRequiredDialog() {
     });
 
     function handleActivate() {
+        isAdvancingToSetupRef.current = true;
         actions.close();
 
         if (onActivate) {
@@ -50,9 +54,11 @@ export function MfaSetupRequiredDialog() {
     }
 
     function handleDismissLogout() {
+        // Close first and clear MFA flag so ModuleLayout cannot reopen the intro
+        // while logout is in flight. Clear profile only after logout removes the
+        // token — otherwise ApplicationProfileInit refetches and re-enforces 2FA.
         actions.close();
         f2aSetupDialog.actions.close();
-        clearProfile();
         clearAuth();
         logout();
     }
@@ -62,6 +68,11 @@ export function MfaSetupRequiredDialog() {
             open={state.mode !== "closed"}
             onOpenChange={open => {
                 if (!open) {
+                    if (isAdvancingToSetupRef.current) {
+                        isAdvancingToSetupRef.current = false;
+                        return;
+                    }
+
                     handleDismissLogout();
                 }
             }}

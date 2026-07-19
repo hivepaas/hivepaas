@@ -5,7 +5,7 @@ import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
 import { useProfileContext } from "@application/shared/context";
-import { ProfileCommands } from "@application/shared/data/commands";
+import { ProfileCommands, SessionCommands } from "@application/shared/data/commands";
 import { SessionQueries } from "@application/shared/data/queries";
 
 import { useAuthContext } from "@application/authentication/context";
@@ -26,6 +26,17 @@ export function F2aSetupDialog() {
     const { clear: clearAuth } = useAuthContext();
 
     const { state, props: { isSetupRequired = false } = {}, ...actions } = useF2aSetupDialogState();
+
+    const { mutate: logout } = SessionCommands.useLogout({
+        onSuccess: () => {
+            clearProfile();
+            clearAuth();
+        },
+        onSessionInvalid: () => {
+            clearProfile();
+            clearAuth();
+        },
+    });
 
     const { mutate: complete2FASetup, isPending: isComplete2FASetupPending } = ProfileCommands.useComplete2FASetup();
 
@@ -118,14 +129,27 @@ export function F2aSetupDialog() {
     const showCurrentPasscodeForm = (state.mode === "change" && !stateData) || state.mode === "deactivate";
     const showSetupForm = stateData !== null && state.mode !== "deactivate";
 
+    function handleDismissLogout() {
+        actions.close();
+        setStateData(null);
+        clearProfile();
+        clearAuth();
+        logout();
+    }
+
     return (
         <Dialog
             open={state.mode !== "closed"}
             onOpenChange={open => {
                 if (!open && isSetupRequired) {
+                    handleDismissLogout();
                     return;
                 }
-                actions.close();
+
+                if (!open) {
+                    actions.close();
+                    setStateData(null);
+                }
             }}
         >
             <DialogFixedContent className="min-w-[400px] w-fit">

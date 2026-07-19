@@ -8,7 +8,11 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 
+import { useProfileContext } from "@application/shared/context";
+import { SessionCommands } from "@application/shared/data/commands";
 import { useF2aSetupDialog } from "@application/shared/dialogs/f2a-setup";
+
+import { useAuthContext } from "@application/authentication/context";
 
 import { Button } from "@/components/ui/button";
 
@@ -16,9 +20,22 @@ import { useMfaSetupRequiredDialogState } from "../hooks";
 
 export function MfaSetupRequiredDialog() {
     const { state, props: { onActivate } = {}, ...actions } = useMfaSetupRequiredDialogState();
+    const { clearProfile } = useProfileContext();
+    const { clear: clearAuth } = useAuthContext();
 
     const f2aSetupDialog = useF2aSetupDialog({
         isSetupRequired: true,
+    });
+
+    const { mutate: logout } = SessionCommands.useLogout({
+        onSuccess: () => {
+            clearProfile();
+            clearAuth();
+        },
+        onSessionInvalid: () => {
+            clearProfile();
+            clearAuth();
+        },
     });
 
     function handleActivate() {
@@ -32,13 +49,20 @@ export function MfaSetupRequiredDialog() {
         f2aSetupDialog.actions.open();
     }
 
+    function handleDismissLogout() {
+        actions.close();
+        f2aSetupDialog.actions.close();
+        clearProfile();
+        clearAuth();
+        logout();
+    }
+
     return (
         <Dialog
             open={state.mode !== "closed"}
             onOpenChange={open => {
                 if (!open) {
-                    // Enforced: dismiss is a no-op until the user activates 2FA setup.
-                    return;
+                    handleDismissLogout();
                 }
             }}
         >

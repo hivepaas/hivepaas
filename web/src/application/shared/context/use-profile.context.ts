@@ -85,9 +85,9 @@ useProfileContext.subscribe((state, prevState) => {
             projectPermissions.setProjects(state.profile.projectPermissions);
         }
 
-        // Only clear the intermediate login 2FA challenge state.
-        // Preserve mfaSetupRequired until MFA setup completes successfully.
-        if ("required2FA" in auth.data && auth.data.required2FA) {
+        // New session: clear any stale auth flags from a previous account.
+        // MFA setup is re-enabled immediately after setProfile when nextStep requires it.
+        if (prevState.profile === null) {
             auth.clear();
         }
 

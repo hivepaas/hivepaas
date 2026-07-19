@@ -118,21 +118,21 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                             disabled={readOnly}
                         />
                     </InfoBlock>
-                    <InfoBlock title="Auto Detect Content Type">
-                        <Checkbox
-                            checked={Boolean(autoContentType.value)}
-                            onCheckedChange={value => {
-                                if (readOnly) {
-                                    return;
-                                }
-
-                                autoContentType.onChange(value);
-                            }}
-                            disabled={readOnly}
-                        />
-                    </InfoBlock>
                     {isEnabled && (
                         <>
+                            <InfoBlock title="Auto Detect Content Type">
+                                <Checkbox
+                                    checked={Boolean(autoContentType.value)}
+                                    onCheckedChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        autoContentType.onChange(value);
+                                    }}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
                             <InfoBlock
                                 title={
                                     <LabelWithInfo

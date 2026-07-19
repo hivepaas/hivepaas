@@ -17,6 +17,8 @@ import { SessionCommands } from "@application/shared/data/commands";
 import { useCreateFeedbackDialog } from "@application/shared/dialogs";
 import type { Profile } from "@application/shared/entities";
 
+import { useAuthContext } from "@application/authentication/context";
+
 import { Avatar } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -54,6 +56,7 @@ const colorModeOptions: {
 export function NavUser({ user }: { user: Profile }) {
     const { isMobile } = useSidebar();
     const { profile, clearProfile } = useProfileContext();
+    const { clear: clearAuth } = useAuthContext();
     const colorMode = useColorModeContext(state => state.mode);
     const setColorMode = useColorModeContext(state => state.setMode);
     const createFeedbackDialog = useCreateFeedbackDialog();
@@ -61,9 +64,13 @@ export function NavUser({ user }: { user: Profile }) {
     const { mutate: logout, isPending } = SessionCommands.useLogout({
         onSuccess: () => {
             clearProfile();
+            clearAuth();
             // deleteToken();
         },
-        onSessionInvalid: clearProfile,
+        onSessionInvalid: () => {
+            clearProfile();
+            clearAuth();
+        },
     });
 
     function handleLogout() {

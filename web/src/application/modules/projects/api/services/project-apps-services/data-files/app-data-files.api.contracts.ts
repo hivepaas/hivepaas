@@ -20,7 +20,7 @@ export type AppDataFiles_CreateOne_Req = ApiRequestBase<{
     fileKind: string;
     filePath: string;
     storageID: string;
-    bucket: string;
+    bucket?: string;
 }>;
 
 export type AppDataFiles_FindManyPaginated_Req = ApiRequestBase<{

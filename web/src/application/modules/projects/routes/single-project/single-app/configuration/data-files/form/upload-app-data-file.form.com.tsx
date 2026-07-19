@@ -279,18 +279,13 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose 
 
                         <InfoBlock
                             titleWidth={200}
-                            title={
-                                <LabelWithInfo
-                                    label="Bucket"
-                                    isRequired
-                                />
-                            }
+                            title={<LabelWithInfo label="Bucket" />}
                         >
                             <FieldGroup>
                                 <Field>
                                     <Input
                                         {...bucketField}
-                                        placeholder="bucket name"
+                                        placeholder="use default"
                                         aria-invalid={isBucketInvalid}
                                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     />

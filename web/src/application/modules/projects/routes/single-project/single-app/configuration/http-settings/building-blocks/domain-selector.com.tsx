@@ -329,6 +329,11 @@ export function DomainSelector({
                     {domainInputError && <FieldError errors={[{ message: domainInputError }]} />}
                 </InfoBlock>
             )}
+            {fields.length > 0 && activeDomainIndex >= 0 && activeDomainIndex < fields.length && (
+                <div className="text-red-500 font-medium bg-accent py-2 px-3 rounded-lg">
+                    Selected domain: {domainValues[activeDomainIndex]?.domain.trim() ?? "—"}
+                </div>
+            )}
         </div>
     );
 }

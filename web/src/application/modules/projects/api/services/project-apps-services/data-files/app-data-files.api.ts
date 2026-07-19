@@ -124,7 +124,7 @@ export class AppDataFilesApi extends BaseApi {
                         fileKind,
                         filePath,
                         storageId: storageID,
-                        bucket,
+                        ...(bucket?.trim() ? { bucket } : {}),
                     },
                     { signal },
                 ),

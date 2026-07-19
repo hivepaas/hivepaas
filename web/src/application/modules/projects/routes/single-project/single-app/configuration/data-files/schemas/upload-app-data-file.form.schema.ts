@@ -14,7 +14,7 @@ const CloudSchema = z.object({
             name: z.string(),
         })
         .nullable(),
-    bucket: z.string().trim().min(1, "Bucket is required"),
+    bucket: z.string().trim(),
     fileKind: z.string().trim().min(1, "File Kind is required"),
     filePath: z.string().trim().min(1, "File Path is required"),
 });

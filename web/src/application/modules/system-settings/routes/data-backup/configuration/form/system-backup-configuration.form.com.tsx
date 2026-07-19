@@ -330,28 +330,30 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 </InfoBlock>
 
                 {cloudStorage.value && (
-                    <InfoBlock title="Bucket">
-                        <Field>
-                            <Input
-                                {...cloudStorageBucket}
-                                placeholder="use default"
-                                className="max-w-[400px]"
-                            />
-                        </Field>
-                    </InfoBlock>
-                )}
+                    <>
+                        <InfoBlock title="Bucket">
+                            <Field>
+                                <Input
+                                    {...cloudStorageBucket}
+                                    placeholder="use default"
+                                    className="max-w-[400px]"
+                                />
+                            </Field>
+                        </InfoBlock>
 
-                <InfoBlock title="Destination Directory">
-                    <Field>
-                        <Input
-                            {...cloudStorageDestinationDir}
-                            placeholder="path/to/sub/dir"
-                            className="max-w-[400px]"
-                            aria-invalid={isCloudStorageDestinationDirInvalid}
-                        />
-                        <FieldError errors={[cloudStorageDestinationDirError]} />
-                    </Field>
-                </InfoBlock>
+                        <InfoBlock title="Destination Directory">
+                            <Field>
+                                <Input
+                                    {...cloudStorageDestinationDir}
+                                    placeholder="path/to/sub/dir"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isCloudStorageDestinationDirInvalid}
+                                />
+                                <FieldError errors={[cloudStorageDestinationDirError]} />
+                            </Field>
+                        </InfoBlock>
+                    </>
+                )}
             </div>
         </>
     );

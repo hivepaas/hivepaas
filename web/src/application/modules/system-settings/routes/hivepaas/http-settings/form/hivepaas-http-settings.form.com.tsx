@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useEffect, useImperativeHandle, useState } from "react";
+import React, { type PropsWithChildren, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
@@ -98,11 +98,24 @@ export function HivePaaSHttpSettingsForm({ ref, defaultValues, onSubmit, readOnl
         mode: "onSubmit",
     });
 
+    const activeDomainIndexRef = useRef(activeDomainIndex);
+    useEffect(() => {
+        activeDomainIndexRef.current = activeDomainIndex;
+    }, [activeDomainIndex]);
+
     useUpdateEffect(() => {
+        const prevName = methods.getValues().domains[activeDomainIndexRef.current]?.domain;
         methods.reset(
             defaultValues ? mapHivePaaSHttpSettingsToFormInput(defaultValues) : emptyHivePaaSHttpSettingsFormDefaults,
         );
-        setActiveDomainIndex(0);
+        const newDomains = defaultValues?.domains ?? [];
+        if (newDomains.length === 0) {
+            setActiveDomainIndex(-1);
+            return;
+        }
+        const trimmedPrev = prevName?.trim() ?? "";
+        const idx = trimmedPrev ? newDomains.findIndex(d => d.domain.trim() === trimmedPrev) : -1;
+        setActiveDomainIndex(idx >= 0 ? idx : 0);
     }, [defaultValues]);
 
     useImperativeHandle(

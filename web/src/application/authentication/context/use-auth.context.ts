@@ -10,10 +10,6 @@ const Schema = z.object({
     required2FA: z.literal(true),
 });
 
-const MfaSetupRequiredSchema = z.object({
-    mfaSetupRequired: z.literal(true),
-});
-
 class JSONStorage {
     persisted(defaultData: State["data"]): State["data"] {
         const value = localStorage.getItem(KEY);
@@ -25,7 +21,8 @@ class JSONStorage {
         try {
             const json = JSON.parse(value) as State["data"];
 
-            // Try to parse as required2FA schema
+            // Only restore the login 2FA challenge (email + mfaToken).
+            // mfaSetupRequired is memory-only; scrub any legacy persisted value.
             const parsed2FA = Schema.safeParse(json);
             if (parsed2FA.success) {
                 return {
@@ -35,15 +32,6 @@ class JSONStorage {
                 };
             }
 
-            // Try to parse as mfaSetupRequired schema
-            const parsedMfaSetup = MfaSetupRequiredSchema.safeParse(json);
-            if (parsedMfaSetup.success) {
-                return {
-                    mfaSetupRequired: parsedMfaSetup.data.mfaSetupRequired,
-                };
-            }
-
-            // If neither matches, remove invalid data
             localStorage.removeItem(KEY);
         } catch {
             localStorage.removeItem(KEY);
@@ -112,8 +100,6 @@ export const useAuthContext = create<State & Actions>()(set => {
                     draft.data = {
                         mfaSetupRequired: true,
                     };
-
-                    storage.update(draft.data);
                 }),
             );
         },

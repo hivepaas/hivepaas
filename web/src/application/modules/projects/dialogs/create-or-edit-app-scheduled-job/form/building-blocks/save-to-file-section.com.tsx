@@ -200,34 +200,36 @@ export function SaveToFileSection({ projectId, readOnly = false }: Props) {
                     </FieldGroup>
                 </InfoBlock>
 
-                <InfoBlock
-                    title="Bucket"
-                    titleWidth={160}
-                >
-                    <Field>
-                        <Input
-                            {...bucket}
-                            placeholder="use default"
-                            className="max-w-[400px]"
-                            disabled={readOnly}
-                        />
-                    </Field>
-                </InfoBlock>
-
                 {storage.value && (
-                    <InfoBlock
-                        title="Destination Directory"
-                        titleWidth={160}
-                    >
-                        <Field>
-                            <Input
-                                {...filePath}
-                                placeholder="path/to/sub/dir"
-                                className="max-w-[400px]"
-                                disabled={readOnly}
-                            />
-                        </Field>
-                    </InfoBlock>
+                    <>
+                        <InfoBlock
+                            title="Bucket"
+                            titleWidth={160}
+                        >
+                            <Field>
+                                <Input
+                                    {...bucket}
+                                    placeholder="use default"
+                                    className="max-w-[400px]"
+                                    disabled={readOnly}
+                                />
+                            </Field>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title="Destination Directory"
+                            titleWidth={160}
+                        >
+                            <Field>
+                                <Input
+                                    {...filePath}
+                                    placeholder="path/to/sub/dir"
+                                    className="max-w-[400px]"
+                                    disabled={readOnly}
+                                />
+                            </Field>
+                        </InfoBlock>
+                    </>
                 )}
             </div>
         </ContentBlock>

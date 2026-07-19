@@ -56,7 +56,7 @@ export function AppDataFileFormRoute({ projectId, appId }: Props) {
                 fileKind: values["fileKind"],
                 filePath: values["filePath"],
                 storageID: storage["id"],
-                bucket: values["bucket"],
+                ...(values["bucket"].trim() ? { bucket: values["bucket"] } : {}),
             });
         }
     }

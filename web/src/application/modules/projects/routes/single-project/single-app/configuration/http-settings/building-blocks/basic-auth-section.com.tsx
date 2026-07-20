@@ -148,7 +148,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                         nameField.onChange(option.name);
                                     }}
                                     onSearch={setSearchQuery}
-                                    placeholder="Select basic auth credential"
+                                    placeholder="Select basic auth credentials"
                                     searchable
                                     closeOnSelect
                                     emptyText="No basic auth credentials available"
@@ -168,7 +168,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
-                                        Configure Basic Auth Items
+                                        Configure Basic Auth Credentials
                                     </AppLink.Basic>
                                 </div>
                             </Field>

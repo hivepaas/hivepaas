@@ -11,6 +11,10 @@ services:
         published: 8000 # Host port
         protocol: tcp
         mode: host
+    deploy:
+      labels:
+        - "hivepaas.app.key=frontend"
+        - "hivepaas.app.name=frontend"
     logging:
       driver: local
       options:
@@ -22,6 +26,10 @@ services:
     networks:
       - hivepaas_net
       - local_net
+    deploy:
+      labels:
+        - "hivepaas.app.key=backend"
+        - "hivepaas.app.name=backend"
     logging:
       driver: local
       options:
@@ -33,6 +41,10 @@ services:
     networks:
       - hivepaas_net
       - local_net
+    deploy:
+      labels:
+        - "hivepaas.app.key=db"
+        - "hivepaas.app.name=db"
     logging:
       driver: local
       options:

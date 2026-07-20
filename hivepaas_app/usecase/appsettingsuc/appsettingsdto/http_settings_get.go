@@ -148,7 +148,7 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	resp = &HttpSettingsResp{}
 	resp.InternalEndpoints = []string{
 		fmt.Sprintf("http://%s:<port>", input.App.Key),
-		fmt.Sprintf("http://%s:<port>", input.App.LocalKey),
+		fmt.Sprintf("http://%s:<port>", input.App.GlobalKey),
 	}
 	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 

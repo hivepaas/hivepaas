@@ -73,10 +73,10 @@ func (s *service) InitRootProject(
 			}
 		}
 		shouldUpdateService := false
-		switch app.Key {
-		case base.HivepaasAppKey:
+		switch app.GlobalKey {
+		case base.HivepaasAppGlobalKey:
 			shouldUpdateService, err = s.initRootProjectMainApp(ctx, db, app, svc)
-		case base.HivepaasTraefikAppKey:
+		case base.HivepaasTraefikGlobalKey:
 			shouldUpdateService, err = s.initRootProjectTraefikApp(ctx, db, app, svc)
 		}
 		if err != nil {

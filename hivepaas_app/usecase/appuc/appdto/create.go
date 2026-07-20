@@ -1,6 +1,8 @@
 package appdto
 
 import (
+	"strings"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -33,6 +35,12 @@ func (req *AppBaseReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+func (req *AppBaseReq) modifyRequest() error {
+	req.Name = strings.TrimSpace(req.Name)
+	req.Env = strings.ToLower(strings.TrimSpace(req.Env))
+	return nil
+}
+
 func NewCreateAppReq() *CreateAppReq {
 	return &CreateAppReq{}
 }
@@ -43,6 +51,10 @@ func (req *CreateAppReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+func (req *CreateAppReq) ModifyRequest() error {
+	return req.modifyRequest()
 }
 
 type CreateAppResp struct {

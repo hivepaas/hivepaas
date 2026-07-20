@@ -25,3 +25,12 @@ func CalcProjectEnvKey(env string) string {
 		return slugify.SlugifyEx(env, []string{"-", "_"}, projectKeyMaxLen)
 	}
 }
+
+func CalcAppGlobalKey(projectKey, appKey, env string) string {
+	globalKey := projectKey
+	if env != "" {
+		globalKey += "_" + CalcProjectEnvKey(env)
+	}
+	globalKey += "_" + appKey
+	return globalKey
+}

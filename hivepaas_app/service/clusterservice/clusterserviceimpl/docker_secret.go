@@ -69,7 +69,7 @@ func (s *service) createSwarmSecret(
 	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, secretDefaultFileMode)
 
 	// Create the secret in docker swarm
-	secretName := app.LocalKey + "_" + strings.ToLower(secret.Key)
+	secretName := app.Key + "_" + strings.ToLower(secret.Key)
 	secretBytes, err := secret.ValueAsBytes()
 	if err != nil {
 		return nil, apperrors.Wrap(err)

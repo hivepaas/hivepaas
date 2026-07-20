@@ -59,7 +59,7 @@ func (uc *UC) loadProjectDataForDelete(
 	data *deleteProjectData,
 ) error {
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
-		bunex.SelectFor("UPDATE"),
+		bunex.SelectFor("UPDATE OF project"),
 		bunex.SelectRelation("Apps",
 			bunex.SelectWhere("app.deleted_at IS NULL"),
 		),
@@ -80,9 +80,4 @@ func (uc *UC) prepareDeletingProject(
 	project := data.Project
 	project.DeletedAt = timeNow
 	persistingData.UpsertingProjects = append(persistingData.UpsertingProjects, project)
-
-	for _, app := range project.Apps {
-		app.DeletedAt = timeNow
-		persistingData.UpsertingApps = append(persistingData.UpsertingApps, app)
-	}
 }

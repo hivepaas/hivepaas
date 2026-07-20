@@ -69,7 +69,7 @@ func (uc *UC) loadHttpSettingsForUpdate(
 	req *hpappsettingsdto.UpdateHttpSettingsReq,
 	data *updateHttpSettingsData,
 ) error {
-	app, err := uc.appRepo.GetByKey(ctx, uc.db, "", base.HivepaasAppKey,
+	app, err := uc.appRepo.GetByGlobalKey(ctx, uc.db, "", base.HivepaasAppGlobalKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectRelation("Project",

@@ -43,7 +43,6 @@ type AppResp struct {
 	Project   *projectdto.ProjectBaseResp `json:"project"`
 	ParentApp *AppBaseResp                `json:"parentApp"`
 	Key       string                      `json:"key"`
-	LocalKey  string                      `json:"localKey"`
 	Status    base.AppStatus              `json:"status"`
 	Env       string                      `json:"env"`
 	Note      string                      `json:"note"`
@@ -72,12 +71,11 @@ type AppStatsResp struct {
 }
 
 type AppBaseResp struct {
-	ID       string         `json:"id"`
-	Name     string         `json:"name"`
-	Key      string         `json:"key"`
-	LocalKey string         `json:"localKey"`
-	Status   base.AppStatus `json:"status"`
-	Env      string         `json:"env"`
+	ID     string         `json:"id"`
+	Name   string         `json:"name"`
+	Key    string         `json:"key"`
+	Status base.AppStatus `json:"status"`
+	Env    string         `json:"env"`
 }
 
 type AppTransformationInput struct {
@@ -134,12 +132,11 @@ func TransformAppBase(app *entity.App) *AppBaseResp {
 		return nil
 	}
 	return &AppBaseResp{
-		ID:       app.ID,
-		Name:     app.Name,
-		Key:      app.Key,
-		LocalKey: app.LocalKey,
-		Status:   app.Status,
-		Env:      app.Env,
+		ID:     app.ID,
+		Name:   app.Name,
+		Key:    app.Key,
+		Status: app.Status,
+		Env:    app.Env,
 	}
 }
 

@@ -65,7 +65,7 @@ func (s *service) LoadAppByKey(
 	extraOpts ...bunex.SelectQueryOption,
 ) (*entity.App, error) {
 	// NOTE: make sure to add SelectRelation("Project") into extraOpts
-	app, err := s.appRepo.GetByKey(ctx, db, projectID, appKey, extraOpts...)
+	app, err := s.appRepo.GetByGlobalKey(ctx, db, projectID, appKey, extraOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

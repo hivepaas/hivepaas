@@ -24,6 +24,10 @@ func (req *UpdateProjectReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
+func (req *UpdateProjectReq) ModifyRequest() error {
+	return req.modifyRequest()
+}
+
 type UpdateProjectResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

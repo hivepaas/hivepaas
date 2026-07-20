@@ -77,11 +77,10 @@ func (uc *UC) CreateApp(
 }
 
 type createAppData struct {
-	Project         *entity.Project
-	AppKey          string
-	AppLocalKey     string
-	LocalNetAliases []string
-	ServiceSpec     *swarm.ServiceSpec
+	Project      *entity.Project
+	AppGlobalKey string
+	AppKey       string
+	ServiceSpec  *swarm.ServiceSpec
 }
 
 func (uc *UC) loadAppData(
@@ -102,22 +101,17 @@ func (uc *UC) loadAppData(
 	}
 	data.Project = project
 
-	appSlug := slugify.SlugifyAsKey(req.Name)
-	data.AppLocalKey = appSlug
-	if req.Env != "" {
-		data.AppLocalKey += "_" + projecthelper.CalcProjectEnvKey(req.Env)
-	}
-	data.AppKey = project.Key + "_" + data.AppLocalKey
-	data.LocalNetAliases = append(data.LocalNetAliases, appSlug)
+	data.AppKey = slugify.SlugifyAsKey(req.Name)
+	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, req.Env)
 
 	// App keys must be unique globally
-	conflictApp, err := uc.appRepo.GetByKey(ctx, db, "", data.AppKey, bunex.SelectColumns("id"))
+	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", data.AppGlobalKey, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
 	if conflictApp != nil {
 		return apperrors.NewAlreadyExist("App").
-			WithMsgLog("app key '%s' already exists", data.AppKey)
+			WithMsgLog("app unique key '%s' already exists", data.AppGlobalKey)
 	}
 
 	// Create local network for the app to attach
@@ -144,7 +138,7 @@ func (uc *UC) preparePersistingApp(
 		ID:        gofn.Must(ulid.NewStringULID()),
 		ProjectID: project.ID,
 		Key:       data.AppKey,
-		LocalKey:  data.AppLocalKey,
+		GlobalKey: data.AppGlobalKey,
 		CreatedAt: timeNow,
 	}
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
@@ -199,9 +193,10 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 			},
 		},
 		Annotations: swarm.Annotations{
-			Name: app.Key,
+			Name: app.GlobalKey,
 			Labels: map[string]string{
 				appservice.LabelAppNamespace: data.Project.Key,
+				appservice.LabelAppKey:       app.Key,
 				appservice.LabelAppName:      app.Name,
 				appservice.LabelAppEnv:       app.Env,
 			},
@@ -210,13 +205,13 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 			ContainerSpec: &swarm.ContainerSpec{
 				Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
 				Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
-				Hostname: app.LocalKey,
+				Hostname: app.Key,
 				Init:     new(true), // default to use `tini`
 			},
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
 					Target:  uc.networkService.GetProjectNetworkName(data.Project, app.Env),
-					Aliases: data.LocalNetAliases,
+					Aliases: []string{app.Key},
 				},
 			},
 			LogDriver: &swarm.Driver{

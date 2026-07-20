@@ -8,7 +8,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
@@ -29,16 +28,17 @@ func (s *service) copySwarmService(
 	data.TargetService = targetSvc
 
 	targetSvc.ID = ""
-	targetSvc.Spec.Name = targetApp.Key
+	targetSvc.Spec.Name = targetApp.GlobalKey
 
 	// Remove all env/config/secrets
 	targetSvc.Spec.TaskTemplate.ContainerSpec.Env = nil
 	targetSvc.Spec.TaskTemplate.ContainerSpec.Configs = nil
 	targetSvc.Spec.TaskTemplate.ContainerSpec.Secrets = nil
-	targetSvc.Spec.TaskTemplate.ContainerSpec.Hostname = targetApp.LocalKey
+	targetSvc.Spec.TaskTemplate.ContainerSpec.Hostname = targetApp.Key
 
 	// Update correct labels
 	targetSvc.Spec.Labels[appservice.LabelAppNamespace] = data.TargetProject.Key
+	targetSvc.Spec.Labels[appservice.LabelAppKey] = targetApp.Key
 	targetSvc.Spec.Labels[appservice.LabelAppName] = targetApp.Name
 	targetSvc.Spec.Labels[appservice.LabelAppEnv] = targetApp.Env
 
@@ -78,7 +78,7 @@ func (s *service) copySwarmService(
 			continue
 		}
 		if net.Target == newLocalNet.ID || net.Target == newLocalNet.Name {
-			net.Aliases = []string{slugify.SlugifyAsKey(targetApp.Name)}
+			net.Aliases = []string{targetApp.Key}
 			newNetAttachments = append(newNetAttachments, net)
 			localNetAdded = true
 			continue
@@ -88,7 +88,7 @@ func (s *service) copySwarmService(
 	if !localNetAdded { // Add local net
 		newNetAttachments = append(newNetAttachments, swarm.NetworkAttachmentConfig{
 			Target:  newLocalNet.ID,
-			Aliases: []string{slugify.SlugifyAsKey(targetApp.Name)},
+			Aliases: []string{targetApp.Key},
 		})
 	}
 	targetSvc.Spec.TaskTemplate.Networks = newNetAttachments

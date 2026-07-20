@@ -3,7 +3,6 @@ package appcopyserviceimpl
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -139,25 +138,20 @@ func (s *service) copyApp(
 		return apperrors.Wrap(err)
 	}
 
-	targetApp.LocalKey = slugify.SlugifyAsKey(targetApp.Name)
+	targetApp.Key = slugify.SlugifyAsKey(targetApp.Name)
 	if targetApp.ParentApp != nil {
-		parentAppKey := targetApp.ParentApp.LocalKey
-		parentAppKey, _ = strings.CutSuffix(parentAppKey, "_"+projecthelper.CalcProjectEnvKey(targetApp.ParentApp.Env))
-		targetApp.LocalKey = parentAppKey + "_" + targetApp.LocalKey
+		targetApp.Key = targetApp.ParentApp.Key + "_" + targetApp.Key
 	}
-	if targetApp.Env != "" {
-		targetApp.LocalKey += "_" + projecthelper.CalcProjectEnvKey(targetApp.Env)
-	}
-	targetApp.Key = data.TargetProject.Key + "_" + targetApp.LocalKey
+	targetApp.GlobalKey = projecthelper.CalcAppGlobalKey(data.TargetProject.Key, targetApp.Key, targetApp.Env)
 
 	// App keys must be unique globally
-	conflictApp, err := s.appRepo.GetByKey(ctx, db, "", targetApp.Key, bunex.SelectColumns("id"))
+	conflictApp, err := s.appRepo.GetByGlobalKey(ctx, db, "", targetApp.GlobalKey, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
 	if conflictApp != nil {
 		return apperrors.NewAlreadyExist("App").
-			WithMsgLog("app key '%s' already exists", targetApp.Key)
+			WithMsgLog("app unique key '%s' already exists", targetApp.GlobalKey)
 	}
 
 	// Create local network for the app to attach

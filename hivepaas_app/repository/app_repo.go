@@ -20,7 +20,7 @@ type AppRepo interface {
 		opts ...bunex.SelectQueryOption) (*entity.App, error)
 	GetByName(ctx context.Context, db database.IDB, projectID, name string,
 		opts ...bunex.SelectQueryOption) (*entity.App, error)
-	GetByKey(ctx context.Context, db database.IDB, projectID, key string,
+	GetByGlobalKey(ctx context.Context, db database.IDB, projectID, gKey string,
 		opts ...bunex.SelectQueryOption) (*entity.App, error)
 
 	List(ctx context.Context, db database.IDB, projectID string, paging *basedto.Paging,
@@ -83,10 +83,10 @@ func (repo *appRepo) GetByName(ctx context.Context, db database.IDB, projectID, 
 	return app, nil
 }
 
-func (repo *appRepo) GetByKey(ctx context.Context, db database.IDB, projectID, key string,
+func (repo *appRepo) GetByGlobalKey(ctx context.Context, db database.IDB, projectID, gKey string,
 	opts ...bunex.SelectQueryOption) (*entity.App, error) {
 	app := &entity.App{}
-	query := db.NewSelect().Model(app).Where("LOWER(app.key) = ?", key).Limit(1)
+	query := db.NewSelect().Model(app).Where("app.global_key = ?", gKey).Limit(1)
 	if projectID != "" {
 		query = query.Where("app.project_id = ?", projectID)
 	}

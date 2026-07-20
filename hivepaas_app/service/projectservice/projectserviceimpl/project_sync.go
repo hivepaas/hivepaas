@@ -2,7 +2,6 @@ package projectserviceimpl
 
 import (
 	"context"
-	"strings"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
@@ -11,6 +10,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -43,17 +44,13 @@ func (s *service) SyncProject(
 
 	// Sync the services with the apps, create new apps if need to
 	for _, svc := range services {
-		appKey := svc.Spec.Name
-		appLocalKey := strings.TrimLeft(strings.TrimPrefix(appKey, project.Key), "_-")
-		appName := svc.Spec.Labels[appservice.LabelAppName]
+		appKey := svc.Spec.Labels[appservice.LabelAppKey]
+		appName := gofn.Coalesce(svc.Spec.Labels[appservice.LabelAppName], svc.Spec.Name)
 		appEnv := svc.Spec.Labels[appservice.LabelAppEnv]
-		if appName == "" {
-			appName = strings.TrimPrefix(appKey, project.Key)
-			if appEnv != "" {
-				appName = strings.TrimSuffix(appName, appEnv)
-			}
-			appName = strings.Trim(appName, "_-")
+		if appKey == "" {
+			appKey = slugify.SlugifyAsKey(appName)
 		}
+		appGlobalKey := projecthelper.CalcAppGlobalKey(project.Key, appKey, appEnv)
 
 		if existingApp, exists := appMapByKey[appKey]; exists {
 			if existingApp.ServiceID != svc.ID {
@@ -67,7 +64,7 @@ func (s *service) SyncProject(
 				ID:        gofn.Must(ulid.NewStringULID()),
 				Name:      appName,
 				Key:       appKey,
-				LocalKey:  appLocalKey,
+				GlobalKey: appGlobalKey,
 				Env:       appEnv,
 				ProjectID: project.ID,
 				ServiceID: svc.ID,

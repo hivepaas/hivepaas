@@ -45,6 +45,9 @@ services:
       - ./hivepaas/ssl/certs:/etc/traefik/ssl/certs
       - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
+      labels:
+        - "hivepaas.app.key=traefik"
+        - "hivepaas.app.name=traefik"
       mode: replicated
       replicas: 1
       placement:
@@ -74,6 +77,8 @@ services:
       - db:/var/lib/postgresql
     deploy:
       labels:
+        - "hivepaas.app.key=db"
+        - "hivepaas.app.name=db"
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
@@ -94,6 +99,8 @@ services:
       - local_net
     deploy:
       labels:
+        - "hivepaas.app.key=redis"
+        - "hivepaas.app.name=redis"
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
@@ -114,6 +121,8 @@ services:
       - local_net
     deploy:
       labels:
+        - "hivepaas.app.key=adminer"
+        - "hivepaas.app.name=adminer"
         - "traefik.enable=true"
         - "traefik.http.routers.adminer.rule=Host(`adminer.dev.hivepaas.com`)"
         - "traefik.http.routers.adminer.entrypoints=websecure"
@@ -145,6 +154,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
+        - "hivepaas.app.key=app"
+        - "hivepaas.app.name=app"
         - "traefik.enable=true"
         - "traefik.http.services.app-svc.loadbalancer.server.port=10000"
         - "traefik.http.routers.app-router.rule=Host(`app.dev.hivepaas.com`)"
@@ -188,6 +199,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
+        - "hivepaas.app.key=worker"
+        - "hivepaas.app.name=worker"
         - "traefik.enable=false"
       mode: replicated
       replicas: 0
@@ -212,6 +225,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
+        - "hivepaas.app.key=updater"
+        - "hivepaas.app.name=updater"
         - "traefik.enable=false"
       mode: replicated
       replicas: 0
@@ -241,6 +256,8 @@ services:
       mode: global
       endpoint_mode: dnsrr
       labels:
+        - "hivepaas.app.key=agent"
+        - "hivepaas.app.name=agent"
         - "traefik.enable=false"
     logging:
       driver: local

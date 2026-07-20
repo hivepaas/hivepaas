@@ -13,7 +13,7 @@ func (uc *UC) GetProjectIDForAppKey(
 	appKey string,
 	requireActive bool,
 ) (string, error) {
-	app, err := uc.appRepo.GetByKey(ctx, uc.db, "", appKey,
+	app, err := uc.appRepo.GetByGlobalKey(ctx, uc.db, "", appKey,
 		bunex.SelectColumns("project_id"),
 		bunex.SelectWhereIf(requireActive, "app.status = ?", base.AppStatusActive),
 	)

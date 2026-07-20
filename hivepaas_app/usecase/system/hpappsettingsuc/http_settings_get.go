@@ -20,7 +20,7 @@ func (uc *UC) GetHttpSettings(
 	auth *basedto.Auth,
 	req *hpappsettingsdto.GetHttpSettingsReq,
 ) (*hpappsettingsdto.GetHttpSettingsResp, error) {
-	app, err := uc.appRepo.GetByKey(ctx, uc.db, "", base.HivepaasAppKey,
+	app, err := uc.appRepo.GetByGlobalKey(ctx, uc.db, "", base.HivepaasAppGlobalKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {

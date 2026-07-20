@@ -2,6 +2,7 @@ package projectdto
 
 import (
 	"fmt"
+	"strings"
 
 	vld "github.com/tiendc/go-validator"
 
@@ -65,6 +66,13 @@ func (req *ProjectBaseReq) validateEnvs(field string) (res []vld.Validator) {
 	return res
 }
 
+func (req *ProjectBaseReq) modifyRequest() error {
+	for _, env := range req.Envs {
+		env.Name = strings.ToLower(strings.TrimSpace(env.Name))
+	}
+	return nil
+}
+
 type ProjectEnvReq struct {
 	Name  string `json:"name"`
 	Color string `json:"color"`
@@ -89,6 +97,10 @@ func (req *CreateProjectReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+func (req *CreateProjectReq) ModifyRequest() error {
+	return req.modifyRequest()
 }
 
 type CreateProjectResp struct {

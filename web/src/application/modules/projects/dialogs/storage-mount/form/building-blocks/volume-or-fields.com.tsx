@@ -19,7 +19,7 @@ import type { StorageMountFormInput, StorageMountFormOutput } from "../../schema
 interface VolumeFieldsProps {
     storageSettings?: SettingStorageSettings;
     projectKey?: string;
-    appLocalKey?: string;
+    appKey?: string;
 }
 
 type MountVariant = "volume" | "cluster";

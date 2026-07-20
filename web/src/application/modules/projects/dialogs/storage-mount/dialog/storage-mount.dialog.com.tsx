@@ -32,7 +32,7 @@ export function StorageMountDialog() {
     const open = state.mode !== "closed";
     const isEdit = state.mode === "edit";
     const projectKey = state.mode !== "closed" ? state.projectKey : undefined;
-    const appLocalKey = state.mode !== "closed" ? state.appLocalKey : undefined;
+    const appKey = state.mode !== "closed" ? state.appKey : undefined;
     const defaultValues = state.mode === "edit" ? mountWithoutId(state.mount) : undefined;
 
     async function handleSubmit(values: StorageMountFormOutput) {
@@ -78,7 +78,7 @@ export function StorageMountDialog() {
                         onSubmit={values => void handleSubmit(values)}
                         defaultValues={defaultValues}
                         projectKey={projectKey}
-                        appLocalKey={appLocalKey}
+                        appKey={appKey}
                         readOnly={readOnly}
                     >
                         <div className={cn(dashedBorderBox, "text-center")}>

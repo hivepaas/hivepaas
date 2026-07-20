@@ -16,7 +16,6 @@ export interface ProjectAppBaseRef {
     id: string;
     name: string;
     key: string;
-    localKey: string;
     status: EProjectAppStatus | "";
     env: string;
 }

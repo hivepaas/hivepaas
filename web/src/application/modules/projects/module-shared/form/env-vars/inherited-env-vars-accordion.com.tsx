@@ -106,7 +106,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                         </div>
                     ) : (
                         <div className="text-sm text-muted-foreground py-4 text-center">
-                            {search ? "No records match your search" : "No inherited environment variables"}
+                            {search ? "No records match your search" : "No results"}
                         </div>
                     )}
                 </AccordionContent>

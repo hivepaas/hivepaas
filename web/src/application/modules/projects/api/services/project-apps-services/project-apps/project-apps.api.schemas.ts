@@ -17,7 +17,6 @@ export const ProjectAppParentSchema = z
         id: z.string(),
         name: OptionalStringSchema,
         key: OptionalStringSchema,
-        localKey: OptionalStringSchema,
         status: z
             .union([z.nativeEnum(EProjectAppStatus), z.literal("")])
             .nullish()
@@ -35,7 +34,6 @@ export const ProjectAppSchema = z.object({
     note: z.string(),
     tags: z.array(z.string()),
     key: z.string(),
-    localKey: OptionalStringSchema,
     updateVer: z.number(),
     stats: ProjectAppStatsSchema.nullable(),
     parentApp: ProjectAppParentSchema,
@@ -49,7 +47,6 @@ export const ProjectAppSchema = z.object({
 
 export const ProjectAppDetailsSchema = ProjectAppSchema.extend({
     key: z.string(),
-    localKey: OptionalStringSchema,
     updateVer: z.number(),
     stats: ProjectAppStatsSchema.nullable(),
 });

@@ -21,25 +21,25 @@ export const useStorageMountDialogState = create<State & Actions>()(set => ({
     props: {},
 
     open: (options = {}) => {
-        const { projectKey, appLocalKey, props = {} } = options;
+        const { projectKey, appKey, props = {} } = options;
         set({
             state: {
                 mode: "open",
                 projectKey,
-                appLocalKey,
+                appKey,
             },
             props,
         });
     },
 
     openEdit: (mount, options = {}) => {
-        const { projectKey, appLocalKey, props = {} } = options;
+        const { projectKey, appKey, props = {} } = options;
         set({
             state: {
                 mode: "edit",
                 mount,
                 projectKey,
-                appLocalKey,
+                appKey,
             },
             props,
         });

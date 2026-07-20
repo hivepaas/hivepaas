@@ -17,7 +17,7 @@ import type { StorageMountFormInput, StorageMountFormOutput } from "../../schema
 interface BindFieldsProps {
     storageSettings?: SettingStorageSettings;
     projectKey?: string;
-    appLocalKey?: string;
+    appKey?: string;
 }
 
 export function BindFields({ storageSettings }: BindFieldsProps) {

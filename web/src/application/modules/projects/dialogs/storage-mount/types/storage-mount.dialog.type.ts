@@ -5,13 +5,13 @@ export interface StorageMountDialogState {
         | {
               mode: "open";
               projectKey?: string;
-              appLocalKey?: string;
+              appKey?: string;
           }
         | {
               mode: "edit";
               mount: AppStorageMount & { _id: string };
               projectKey?: string;
-              appLocalKey?: string;
+              appKey?: string;
           }
         | {
               mode: "closed";
@@ -20,7 +20,7 @@ export interface StorageMountDialogState {
 
 export interface StorageMountDialogOptions {
     projectKey?: string;
-    appLocalKey?: string;
+    appKey?: string;
     props?: {
         onClose?: () => void;
         onSubmit?: (mount: AppStorageMount) => Promise<void>;

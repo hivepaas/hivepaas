@@ -173,7 +173,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             viewMode={viewMode}
                             isRevealed={isRevealed}
                             name="buildtime"
-                            title="Buildtime Env Vars"
+                            title="Buildtime Env Variables"
                             readOnly={readOnly}
                         />
                         <div className="h-px bg-border" />
@@ -190,7 +190,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             viewMode={viewMode}
                             isRevealed={isRevealed}
                             name="runtime"
-                            title="Runtime Env Vars"
+                            title="Runtime Env Variables"
                             readOnly={readOnly}
                         />
 

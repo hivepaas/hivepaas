@@ -320,7 +320,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                 </div>
             ) : (
                 <div className="text-sm text-muted-foreground py-4 text-center">
-                    {search ? "No records match your search" : "No environment variables"}
+                    {search ? "No records match your search" : "No results"}
                 </div>
             )}
 

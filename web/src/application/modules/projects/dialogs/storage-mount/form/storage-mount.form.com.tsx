@@ -40,7 +40,7 @@ type Props = {
     defaultValues?: AppStorageMount;
     onSubmit: (values: StorageMountFormOutput) => void;
     projectKey?: string;
-    appLocalKey?: string;
+    appKey?: string;
     readOnly?: boolean;
     stickyActions?: boolean;
     onClose?: () => void;

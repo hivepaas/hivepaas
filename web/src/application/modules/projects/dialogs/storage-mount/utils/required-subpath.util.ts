@@ -21,7 +21,7 @@ export function joinPathSegments(...parts: string[]): string {
 export function computeRequiredSubpath(
     s: SubpathPrefixSettings | undefined,
     projectKey: string | undefined,
-    appLocalKey: string | undefined,
+    appKey: string | undefined,
 ): string {
     if (!s?.enabled) {
         return "";
@@ -30,5 +30,5 @@ export function computeRequiredSubpath(
     if (!s.appsMustUseSubPaths) {
         return base;
     }
-    return joinPathSegments(base, projectKey ?? "", appLocalKey ?? "");
+    return joinPathSegments(base, projectKey ?? "", appKey ?? "");
 }

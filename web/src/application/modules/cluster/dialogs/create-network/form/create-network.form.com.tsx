@@ -138,6 +138,7 @@ export function CreateNetworkForm({
                                 valuePlaceholder="value"
                                 className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
+                                enableValueEditing
                             />
                             <FieldError errors={[errors.labels]} />
                         </InfoBlock>
@@ -152,6 +153,7 @@ export function CreateNetworkForm({
                                 valuePlaceholder="value"
                                 className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                 disabled={readOnly || isPending}
+                                enableValueEditing
                             />
                             <FieldError errors={[errors.options]} />
                         </InfoBlock>

@@ -416,6 +416,7 @@ export function CreateOrEditEmailAccountForm({
                                             valuePlaceholder="value"
                                             checkDuplicates
                                             className={SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
+                                            enableValueEditing
                                         />
                                     </InfoBlock>
                                     <InfoBlock

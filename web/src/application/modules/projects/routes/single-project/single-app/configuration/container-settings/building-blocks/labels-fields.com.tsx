@@ -18,6 +18,7 @@ export function LabelsFields() {
                     name="serviceLabels"
                     className="max-w-[600px]"
                     checkDuplicates
+                    enableValueEditing
                 />
             </InfoBlock>
             <InfoBlock
@@ -32,6 +33,7 @@ export function LabelsFields() {
                     name="containerLabels"
                     className="max-w-[600px]"
                     checkDuplicates
+                    enableValueEditing
                 />
             </InfoBlock>
         </div>

@@ -195,6 +195,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                                 keyLabel="Label"
                                 className="max-w-[660px]"
                                 checkDuplicates
+                                enableValueEditing
                             />
                         </InfoBlock>
                     </fieldset>

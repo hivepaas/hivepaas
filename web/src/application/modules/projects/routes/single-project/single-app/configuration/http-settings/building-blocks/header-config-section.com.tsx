@@ -145,6 +145,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                     name={`${prefix}.toAddToRequests` as never}
                                     className={HTTP_SETTINGS_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
+                                    enableValueEditing
                                 />
                             </InfoBlock>
                             <InfoBlock
@@ -174,6 +175,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                     name={`${prefix}.toAddToResponses` as never}
                                     className={HTTP_SETTINGS_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
                                     disabled={readOnly}
+                                    enableValueEditing
                                 />
                             </InfoBlock>
                             <InfoBlock

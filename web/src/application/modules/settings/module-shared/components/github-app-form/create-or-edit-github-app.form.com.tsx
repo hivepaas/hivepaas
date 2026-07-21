@@ -7,8 +7,6 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { RefreshCcw } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
-import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
 import {
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
@@ -19,8 +17,15 @@ import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/com
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { CreateOrEditGithubAppFormInput, CreateOrEditGithubAppFormOutput } from "../schemas";
-import { CreateOrEditGithubAppFormSchema } from "../schemas";
+import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
+import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
+
+import type {
+    CreateOrEditGithubAppFormInput,
+    CreateOrEditGithubAppFormOutput,
+} from "./create-or-edit-github-app.form.schema";
+import { CreateOrEditGithubAppFormSchema } from "./create-or-edit-github-app.form.schema";
 
 export function CreateOrEditGithubAppForm({
     isPending,

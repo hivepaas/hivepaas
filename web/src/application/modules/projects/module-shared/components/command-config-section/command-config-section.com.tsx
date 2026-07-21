@@ -325,6 +325,7 @@ export function CommandConfigSection({
                                 className="max-w-[600px]"
                                 checkDuplicates
                                 disabled={readOnly}
+                                enableValueEditing
                             />
                         </FieldGroup>
                     </InfoBlock>

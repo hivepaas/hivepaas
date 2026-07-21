@@ -7,8 +7,6 @@ import { cn } from "@lib/utils";
 import { Clipboard } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
-import { SettingsFormCancelAction } from "~/settings/module-shared/components/settings-form-cancel-action";
 import {
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
@@ -19,8 +17,15 @@ import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/com
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
-import type { CreateOrEditRepoWebhookFormInput, CreateOrEditRepoWebhookFormOutput } from "../schemas";
-import { CreateOrEditRepoWebhookFormSchema } from "../schemas";
+import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
+import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
+
+import type {
+    CreateOrEditRepoWebhookFormInput,
+    CreateOrEditRepoWebhookFormOutput,
+} from "./create-or-edit-repo-webhook.form.schema";
+import { CreateOrEditRepoWebhookFormSchema } from "./create-or-edit-repo-webhook.form.schema";
 
 const kindOptions = [
     ERepoWebhookKind.Github,

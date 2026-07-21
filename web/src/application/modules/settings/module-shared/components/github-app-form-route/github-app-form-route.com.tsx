@@ -5,8 +5,8 @@ import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
-import { CreateOrEditGithubAppForm } from "~/settings/dialogs/create-or-edit-github-app/form";
-import type { CreateOrEditGithubAppFormOutput } from "~/settings/dialogs/create-or-edit-github-app/schemas";
+import { CreateOrEditGithubAppForm } from "~/settings/module-shared/components/github-app-form";
+import type { CreateOrEditGithubAppFormOutput } from "~/settings/module-shared/components/github-app-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";

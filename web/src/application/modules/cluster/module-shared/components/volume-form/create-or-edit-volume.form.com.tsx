@@ -393,6 +393,7 @@ export function CreateOrEditVolumeForm({
                                 valuePlaceholder="value"
                                 className="max-w-[560px]"
                                 disabled={coreDisabled}
+                                enableValueEditing
                             />
                             <FieldError errors={[errors.labels]} />
                         </InfoBlock>
@@ -407,6 +408,7 @@ export function CreateOrEditVolumeForm({
                                 valuePlaceholder="value"
                                 className="max-w-[560px]"
                                 disabled={coreDisabled}
+                                enableValueEditing
                             />
                             <FieldError errors={[errors.options]} />
                         </InfoBlock>

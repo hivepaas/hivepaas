@@ -69,6 +69,7 @@ export function LogDriverFields() {
                     name="logDriver.options"
                     className="max-w-[600px]"
                     checkDuplicates
+                    enableValueEditing
                 />
             </InfoBlock>
         </div>

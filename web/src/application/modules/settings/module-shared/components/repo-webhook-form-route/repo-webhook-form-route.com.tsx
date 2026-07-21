@@ -6,8 +6,8 @@ import { ProjectRepoWebhookCommands } from "~/projects/data/commands";
 import { ProjectRepoWebhookQueries } from "~/projects/data/queries";
 import { RepoWebhookCommands } from "~/settings/data/commands";
 import { RepoWebhookQueries } from "~/settings/data/queries";
-import { CreateOrEditRepoWebhookForm } from "~/settings/dialogs/create-or-edit-repo-webhook/form";
-import type { CreateOrEditRepoWebhookFormOutput } from "~/settings/dialogs/create-or-edit-repo-webhook/schemas";
+import { CreateOrEditRepoWebhookForm } from "~/settings/module-shared/components/repo-webhook-form";
+import type { CreateOrEditRepoWebhookFormOutput } from "~/settings/module-shared/components/repo-webhook-form";
 import type { ERepoWebhookKind } from "~/settings/module-shared/enums";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 

@@ -13,38 +13,32 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) BuildCommandEnv(
+func (s *service) BuildCommandEnvVars(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	schedJob *entity.SchedJob,
-) (res []*envvarservice.EnvVar, usedSecrets []*entity.Secret, err error) {
+) (_ []*envvarservice.EnvVar, err error) {
 	envVars := schedJob.Command.EnvVars
 
 	for _, argGroup := range schedJob.Command.ArgGroups {
-		if env := s.buildEnvForArgs(argGroup); env != nil {
+		if env := s.buildEnvVarForArgs(argGroup); env != nil {
 			envVars = append(envVars, env)
 		}
 	}
 
-	// Quick check to see if we need to load secrets
-	loadSecrets := false
-	for _, env := range envVars {
-		if !env.IsLiteral && s.envVarService.HasSecretRef(env.Value) {
-			loadSecrets = true
-			break
-		}
+	envResp, err := s.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+		App:        app,
+		TargetVars: envVars,
+	})
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
-	res, usedSecrets, err = s.envVarService.ProcessEnvRefs(ctx, db, app, envVars,
-		false, loadSecrets, false)
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-	return res, usedSecrets, nil
+	return envResp, nil
 }
 
-func (s *service) buildEnvForArgs(
+func (s *service) buildEnvVarForArgs(
 	argGroup *entity.CommandTemplateArgGroup,
 ) *entity.EnvVar {
 	if !argGroup.Enabled || len(argGroup.Args) == 0 {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
 func (s *service) applyEnvVars(
@@ -14,14 +15,17 @@ func (s *service) applyEnvVars(
 	data *appCopyData,
 ) (err error) {
 	app := data.TargetApp
-	envs, _, err := s.envVarService.BuildAppEnvVars(ctx, db, app, false)
+	envResp, err := s.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+		App:  app,
+		Sort: true,
+	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	envVars := make([]string, 0, len(envs))
+	envVars := make([]string, 0, len(envResp))
 	var errs []string
-	for _, env := range envs {
+	for _, env := range envResp {
 		envVars = append(envVars, env.ToString("="))
 		errs = append(errs, env.Errors...)
 	}

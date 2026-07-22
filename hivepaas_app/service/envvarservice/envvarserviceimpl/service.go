@@ -6,13 +6,16 @@ import (
 )
 
 func New(
+	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 ) envvarservice.Service {
 	return &service{
+		appRepo:     appRepo,
 		settingRepo: settingRepo,
 	}
 }
 
 type service struct {
+	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 }

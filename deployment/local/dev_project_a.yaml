@@ -4,8 +4,10 @@ services:
   frontend:
     image: crccheck/hello-world:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_frontend
+      local_net:
     ports:
       - target: 80 # Container port
         published: 8000 # Host port
@@ -24,8 +26,10 @@ services:
   backend:
     image: crccheck/hello-world:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_backend
+      local_net:
     deploy:
       labels:
         - "hivepaas.app.key=backend"
@@ -39,8 +43,10 @@ services:
   db:
     image: crccheck/hello-world:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_db
+      local_net:
     deploy:
       labels:
         - "hivepaas.app.key=db"

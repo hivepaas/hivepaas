@@ -113,10 +113,10 @@ func (uc *UC) prepareUpdatingProjectEnvVars(
 		Data: make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars)+len(req.RuntimeEnvVars)),
 	}
 	for _, env := range req.BuildtimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(true))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
 	}
 	for _, env := range req.RuntimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(false))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindRuntime))
 	}
 	setting.MustSetData(envVars)
 

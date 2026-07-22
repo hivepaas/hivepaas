@@ -10,9 +10,11 @@ import (
 type Service interface {
 	HasSecretRef(v string) bool
 
-	BuildAppEnvVars(ctx context.Context, db database.IDB, app *entity.App, buildPhase bool) (
-		res []*EnvVar, refSecrets []*entity.Secret, err error)
-	ProcessEnvRefs(ctx context.Context, db database.IDB, app *entity.App, envVars []*entity.EnvVar,
-		loadEnvVars bool, loadSecrets bool, buildPhase bool) (
-		res []*EnvVar, refSecrets []*entity.Secret, err error)
+	ComputeProjectEnvVars(ctx context.Context, db database.IDB, req *ComputeProjectEnvVarsReq) ([]*EnvVar, error)
+	ComputeProjectSystemEnvVars(ctx context.Context, req *ComputeProjectSystemEnvVarsReq) ([]*EnvVar, error)
+
+	ComputeAppEnvVars(ctx context.Context, db database.IDB, req *ComputeAppEnvVarsReq) ([]*EnvVar, error)
+	ComputeAppSharedEnvVars(ctx context.Context, db database.IDB, app *entity.App, buildPhase bool,
+		skipLoadingSecrets bool, maskSecrets bool) ([]*EnvVar, error)
+	ComputeAppSystemEnvVars(ctx context.Context, req *ComputeAppSystemEnvVarsReq) ([]*EnvVar, error)
 }

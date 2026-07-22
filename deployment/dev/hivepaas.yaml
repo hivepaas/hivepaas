@@ -20,7 +20,9 @@ services:
       - "--log.level=DEBUG"
       - "--accesslog=true"
     networks:
-      - hivepaas_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_traefik
     ports:
       # Expose traefik's entry points to the Swarm
       # Swarm requires the long syntax for ports.
@@ -117,8 +119,10 @@ services:
     image: adminer:latest
     restart: unless-stopped
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_adminer
+      local_net:
     deploy:
       labels:
         - "hivepaas.app.key=adminer"
@@ -140,8 +144,10 @@ services:
   app:
     image: hivepaas/hivepaas-dev:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_app
+      local_net:
     environment:
       HP_CONFIG_FILE: config/config.development.toml
       HP_USER_ADMIN_USERNAME: admin

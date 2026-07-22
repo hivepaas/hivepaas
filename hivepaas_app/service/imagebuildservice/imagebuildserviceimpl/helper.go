@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	"github.com/moby/moby/api/types/registry"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
 func (s *service) calcBuildImageTags(
@@ -51,25 +53,30 @@ func (s *service) calcBuildEnvVars(
 	db database.IDB,
 	data *imageBuildData,
 ) (map[string]*string, error) {
-	envVars, refSecrets, err := s.envVarService.BuildAppEnvVars(ctx, db, data.App, true)
+	envResp, err := s.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+		App:            data.App,
+		BuildPhaseOnly: true,
+	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	if data.LogStore != nil && len(refSecrets) > 0 {
-		secrets := make([]string, 0, len(refSecrets))
-		for _, secret := range refSecrets {
-			plainSecret, err := secret.Value.GetPlain()
-			if err != nil {
-				return nil, apperrors.Wrap(err)
+	if data.LogStore != nil && len(envResp) > 0 {
+		secrets := make(map[string]struct{}, 10) //nolint:mnd
+		for _, env := range envResp {
+			for secret := range env.RefSecrets {
+				plainSecret, err := secret.Value.GetPlain()
+				if err != nil {
+					return nil, apperrors.Wrap(err)
+				}
+				secrets[plainSecret] = struct{}{}
 			}
-			secrets = append(secrets, plainSecret)
 		}
-		data.LogStore.UpdateRedactorAddSecrets(secrets)
+		data.LogStore.UpdateRedactorAddSecrets(gofn.MapKeys(secrets))
 	}
 
-	result := make(map[string]*string, len(envVars))
-	for _, envVar := range envVars {
+	result := make(map[string]*string, len(envResp))
+	for _, envVar := range envResp {
 		result[envVar.Key] = &envVar.Value
 	}
 

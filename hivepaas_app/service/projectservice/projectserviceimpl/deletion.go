@@ -15,6 +15,9 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	// Remove all apps
 	var wg sync.WaitGroup
 	for _, app := range project.Apps {
+		if app.ParentID != "" {
+			continue
+		}
 		wg.Go(func() {
 			_ = s.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
 				if err := s.appService.DeleteApp(ctx, db, app); err != nil {

@@ -50,7 +50,7 @@ func TransformEnvVars(setting *entity.Setting) (resp *EnvVarsResp, err error) {
 	if envVars != nil {
 		for _, v := range envVars.Data {
 			res := basedto.TransformEnvVar(v)
-			if v.IsBuildEnv {
+			if v.IsBuild {
 				resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, res)
 			} else {
 				resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, res)

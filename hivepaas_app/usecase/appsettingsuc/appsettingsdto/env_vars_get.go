@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
 type GetAppEnvVarsReq struct {
@@ -32,64 +33,119 @@ type GetAppEnvVarsResp struct {
 
 type EnvVarsResp struct {
 	InheritedBuildtimeEnvVars []*basedto.EnvVarResp `json:"inheritedBuildtimeEnvVars"`
-	InheritedRuntimeEnvVars   []*basedto.EnvVarResp `json:"inheritedRuntimeEnvVars"`
 	BuildtimeEnvVars          []*basedto.EnvVarResp `json:"buildtimeEnvVars"`
+	InheritedRuntimeEnvVars   []*basedto.EnvVarResp `json:"inheritedRuntimeEnvVars"`
 	RuntimeEnvVars            []*basedto.EnvVarResp `json:"runtimeEnvVars"`
+	SharedEnvVars             []*basedto.EnvVarResp `json:"sharedEnvVars"`
 	UpdateVer                 int                   `json:"updateVer"`
 }
 
-func TransformEnvVars(app *entity.App, envVars []*entity.Setting) (resp *EnvVarsResp, err error) {
-	if len(envVars) == 0 {
-		return nil, nil
-	}
+type EnvVarsTransformationInput struct {
+	App               *entity.App
+	Vars              []*entity.Setting
+	SystemVars        []*envvarservice.EnvVar
+	ParentSystemVars  []*envvarservice.EnvVar
+	ProjectSystemVars []*envvarservice.EnvVar
+}
 
+func TransformEnvVars(input *EnvVarsTransformationInput) (resp *EnvVarsResp, err error) {
 	resp = &EnvVarsResp{
 		InheritedBuildtimeEnvVars: make([]*basedto.EnvVarResp, 0, 20), //nolint
-		InheritedRuntimeEnvVars:   make([]*basedto.EnvVarResp, 0, 20), //nolint
 		BuildtimeEnvVars:          make([]*basedto.EnvVarResp, 0, 20), //nolint
+		InheritedRuntimeEnvVars:   make([]*basedto.EnvVarResp, 0, 20), //nolint
 		RuntimeEnvVars:            make([]*basedto.EnvVarResp, 0, 20), //nolint
+		SharedEnvVars:             make([]*basedto.EnvVarResp, 0, 10), //nolint
 	}
 
 	var appEnvVars, parentAppEnvVars, projectEnvVars *entity.EnvVars
-	for _, env := range envVars {
-		switch env.ObjectID {
-		case app.ID:
-			appEnvVars = env.MustAsEnvVars()
-			resp.UpdateVer = env.UpdateVer
-		case app.ProjectID:
-			projectEnvVars = env.MustAsEnvVars()
-		case app.ParentID:
-			parentAppEnvVars = env.MustAsEnvVars()
+	for _, envSetting := range input.Vars {
+		switch envSetting.ObjectID {
+		case input.App.ID:
+			appEnvVars = envSetting.MustAsEnvVars()
+			resp.UpdateVer = envSetting.UpdateVer
+		case input.App.ProjectID:
+			projectEnvVars = envSetting.MustAsEnvVars()
+		case input.App.ParentID:
+			parentAppEnvVars = envSetting.MustAsEnvVars()
 		}
 	}
 
-	if projectEnvVars != nil {
-		for _, v := range projectEnvVars.Data {
-			res := basedto.TransformEnvVar(v)
-			if v.IsBuildEnv {
-				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, res)
-			} else {
-				resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, res)
-			}
-		}
-	}
-	if parentAppEnvVars != nil {
-		for _, v := range parentAppEnvVars.Data {
-			res := basedto.TransformEnvVar(v)
-			if v.IsBuildEnv {
-				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, res)
-			} else {
-				resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, res)
-			}
+	TransformInheritedEnvVars(projectEnvVars, parentAppEnvVars, input, resp)
+	TransformOwnEnvVars(appEnvVars, input, resp)
+
+	return resp, nil
+}
+
+func TransformOwnEnvVars(
+	appEnvVars *entity.EnvVars,
+	input *EnvVarsTransformationInput,
+	resp *EnvVarsResp,
+) {
+	for _, env := range input.SystemVars {
+		envResp := basedto.TransformEnvVar(env.EnvVar)
+		switch {
+		case env.IsBuild:
+			resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, envResp)
+		case env.IsShared:
+			resp.SharedEnvVars = append(resp.SharedEnvVars, envResp)
+		default:
+			resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, envResp)
 		}
 	}
 	if appEnvVars != nil {
-		for _, v := range appEnvVars.Data {
-			res := basedto.TransformEnvVar(v)
-			if v.IsBuildEnv {
-				resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, res)
+		for _, env := range appEnvVars.Data {
+			envResp := basedto.TransformEnvVar(env)
+			switch {
+			case env.IsBuild:
+				resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, envResp)
+			case env.IsShared:
+				resp.SharedEnvVars = append(resp.SharedEnvVars, envResp)
+			default:
+				resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, envResp)
+			}
+		}
+	}
+}
+
+func TransformInheritedEnvVars(
+	projectEnvVars, parentAppEnvVars *entity.EnvVars,
+	input *EnvVarsTransformationInput,
+	resp *EnvVarsResp,
+) {
+	for _, env := range input.ProjectSystemVars {
+		envResp := basedto.TransformEnvVar(env.EnvVar)
+		if env.IsBuild {
+			resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+		} else {
+			resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+		}
+	}
+	if projectEnvVars != nil {
+		for _, env := range projectEnvVars.Data {
+			envResp := basedto.TransformEnvVar(env)
+			if env.IsBuild {
+				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
 			} else {
-				resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, res)
+				resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+			}
+		}
+	}
+
+	for _, env := range input.ParentSystemVars {
+		envResp := basedto.TransformEnvVar(env.EnvVar)
+		if env.IsBuild {
+			resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+		} else {
+			resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+		}
+	}
+	if parentAppEnvVars != nil {
+		for _, env := range parentAppEnvVars.Data {
+			envResp := basedto.TransformEnvVar(env)
+			if env.IsBuild {
+				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+			} else {
+				resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
 			}
 		}
 	}
@@ -99,8 +155,6 @@ func TransformEnvVars(app *entity.App, envVars []*entity.Setting) (resp *EnvVars
 		resp.InheritedBuildtimeEnvVars = removeDuplicatedEnvVars(resp.InheritedBuildtimeEnvVars)
 		resp.InheritedRuntimeEnvVars = removeDuplicatedEnvVars(resp.InheritedRuntimeEnvVars)
 	}
-
-	return resp, nil
 }
 
 func removeDuplicatedEnvVars(envVars []*basedto.EnvVarResp) (resp []*basedto.EnvVarResp) {

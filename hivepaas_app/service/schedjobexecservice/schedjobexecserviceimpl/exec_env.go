@@ -3,6 +3,8 @@ package schedjobexecserviceimpl
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -13,7 +15,7 @@ func (s *service) calcCommandEnv(
 	data *execData,
 ) (env []string, err error) {
 	schedJob := data.SchedJobSetting.MustAsSchedJob()
-	envVars, refSecrets, err := s.schedJobService.BuildCommandEnv(ctx, db, data.App, schedJob)
+	envVars, err := s.schedJobService.BuildCommandEnvVars(ctx, db, data.App, schedJob)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -23,16 +25,19 @@ func (s *service) calcCommandEnv(
 		env = append(env, v.ToString("="))
 	}
 
-	if len(refSecrets) > 0 && data.LogStore != nil {
-		secrets := make([]string, 0, len(refSecrets))
-		for _, secret := range refSecrets {
-			plainSecret, err := secret.Value.GetPlain()
-			if err != nil {
-				return nil, apperrors.Wrap(err)
+	if data.LogStore != nil && len(envVars) > 0 {
+		secrets := make(map[string]struct{}, 10) //nolint:mnd
+		for _, env := range envVars {
+			for secret := range env.RefSecrets {
+				plainSecret, err := secret.Value.GetPlain()
+				if err != nil {
+					return nil, apperrors.Wrap(err)
+				}
+				secrets[plainSecret] = struct{}{}
 			}
-			secrets = append(secrets, plainSecret)
 		}
-		data.LogStore.UpdateRedactorAddSecrets(secrets)
+		data.LogStore.UpdateRedactorAddSecrets(gofn.MapKeys(secrets))
 	}
+
 	return env, nil
 }

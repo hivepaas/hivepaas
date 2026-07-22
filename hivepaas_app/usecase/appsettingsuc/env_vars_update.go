@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -117,10 +118,13 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 		Data: make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars)+len(req.RuntimeEnvVars)),
 	}
 	for _, env := range req.BuildtimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(true))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
 	}
 	for _, env := range req.RuntimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(false))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindRuntime))
+	}
+	for _, env := range req.SharedEnvVars {
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindShared))
 	}
 	setting.MustSetData(envVars)
 
@@ -133,14 +137,25 @@ func (uc *UC) applyAppEnvVars(
 	data *updateAppEnvVarsData,
 ) error {
 	app := data.App
-	envs, _, err := uc.envVarService.BuildAppEnvVars(ctx, db, app, false)
+	computedVars, err := uc.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+		App: app,
+	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	envVars := make([]string, 0, len(envs))
+	// Validate to make sure build-time env vars are valid
+	_, err = uc.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+		App:            app,
+		BuildPhaseOnly: true,
+	})
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	envVars := make([]string, 0, len(computedVars))
 	var errors []string
-	for _, env := range envs {
+	for _, env := range computedVars {
 		envVars = append(envVars, env.ToString("="))
 		errors = append(errors, env.Errors...)
 	}

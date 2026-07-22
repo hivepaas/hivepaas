@@ -27516,6 +27516,12 @@
           "isLiteral" : {
             "type" : "boolean"
           },
+          "isReadOnly" : {
+            "type" : "boolean"
+          },
+          "isSystem" : {
+            "type" : "boolean"
+          },
           "key" : {
             "type" : "string"
           },
@@ -27523,7 +27529,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "isLiteral", "key", "value" ],
+        "required" : [ "isLiteral", "isReadOnly", "isSystem", "key", "value" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_basedto.ListMeta" : {
@@ -28872,11 +28878,17 @@
             },
             "type" : "array"
           },
+          "sharedEnvVars" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.EnvVarResp"
+            },
+            "type" : "array"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "buildtimeEnvVars", "inheritedBuildtimeEnvVars", "inheritedRuntimeEnvVars", "runtimeEnvVars", "updateVer" ],
+        "required" : [ "buildtimeEnvVars", "inheritedBuildtimeEnvVars", "inheritedRuntimeEnvVars", "runtimeEnvVars", "sharedEnvVars", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.GenericResource" : {
@@ -30124,11 +30136,17 @@
             },
             "type" : "array"
           },
+          "sharedEnvVars" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.EnvVarReq"
+            },
+            "type" : "array"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "buildtimeEnvVars", "runtimeEnvVars", "updateVer" ],
+        "required" : [ "buildtimeEnvVars", "runtimeEnvVars", "sharedEnvVars", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.UpdateAppEnvVarsResp" : {

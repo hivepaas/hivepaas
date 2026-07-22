@@ -39,7 +39,7 @@ func (req *CommandTemplateBaseReq) ToEntity() *entity.CommandTemplate {
 		Script:     req.Script,
 		WorkingDir: req.WorkingDir,
 		EnvVars: gofn.MapSlice(req.EnvVars, func(item *basedto.EnvVarReq) *entity.EnvVar {
-			return item.ToEntity(false)
+			return item.ToEntity(base.EnvVarKindRuntime)
 		}),
 		ArgGroups: gofn.MapSlice(req.ArgGroups, func(item *CommandTemplateArgGroupReq) *entity.CommandTemplateArgGroup {
 			return item.ToEntity()

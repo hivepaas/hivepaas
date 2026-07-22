@@ -21,7 +21,9 @@ services:
       - "--accesslog=true"
     networks:
       # Connect to the 'hivepaas' overlay network for inter-container communication across nodes
-      - hivepaas_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_traefik
     ports:
       # Expose traefik's entry points to the Swarm
       # Swarm requires the long syntax for ports.
@@ -119,8 +121,10 @@ services:
   adminer:
     image: adminer:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_adminer
+      local_net:
     ports:
       - target: 8080 # Container port
         published: 38080 # Host port exposed on the nodes
@@ -167,8 +171,10 @@ services:
   app:
     image: hivepaas/hivepaas-dev:latest
     networks:
-      - hivepaas_net
-      - local_net
+      hivepaas_net:
+        aliases:
+          - hivepaas_app
+      local_net:
     environment:
       HP_CONFIG_FILE: config/config.development.toml
       HP_USER_ADMIN_USERNAME: admin

@@ -7,6 +7,8 @@ export type EnvVarRecord = {
     key: string;
     value: string;
     isLiteral: boolean;
+    isSystem?: boolean;
+    isReadOnly?: boolean;
 };
 
 export const MULTILINE_ENV_SEPARATOR = "-----MULTILINE-ENV-----";
@@ -33,6 +35,8 @@ function parseSingleLineEnvVar(line: string): EnvVarRecord | null {
             key: trimmedLine,
             value: "",
             isLiteral: false,
+            isSystem: false,
+            isReadOnly: false,
         };
     }
 
@@ -46,6 +50,8 @@ function parseSingleLineEnvVar(line: string): EnvVarRecord | null {
         key,
         value: line.substring(equalsIndex + 1),
         isLiteral: false,
+        isSystem: false,
+        isReadOnly: false,
     };
 }
 
@@ -68,6 +74,8 @@ function parseMultilineEnvVar(lines: string[]): EnvVarRecord | null {
         key,
         value: valueLines.join("\n"),
         isLiteral: false,
+        isSystem: false,
+        isReadOnly: false,
     };
 }
 
@@ -160,4 +168,81 @@ export function parseEnvVars(text: string): EnvVarRecord[] {
     flushNormalLines();
 
     return records;
+}
+
+type ReadOnlySnapshotEntry = {
+    record: EnvVarRecord;
+    index: number;
+};
+
+/**
+ * Snapshot read-only env vars by key so merge-mode edits can restore them later.
+ */
+export function snapshotReadOnlyEnvVars(records: EnvVarRecord[]): Map<string, ReadOnlySnapshotEntry> {
+    const snapshot = new Map<string, ReadOnlySnapshotEntry>();
+
+    records.forEach((record, index) => {
+        const key = record.key.trim();
+        if (!record.isReadOnly || key === "") {
+            return;
+        }
+
+        snapshot.set(key, {
+            record: {
+                key: record.key,
+                value: record.value,
+                isLiteral: record.isLiteral,
+                isSystem: record.isSystem ?? false,
+                isReadOnly: true,
+            },
+            index,
+        });
+    });
+
+    return snapshot;
+}
+
+/**
+ * Reconcile parsed merge-mode records with a read-only snapshot.
+ * Matching keys are restored to the original read-only record; missing read-only
+ * records are re-inserted near their original index.
+ */
+export function reconcileEnvVarsWithReadOnlySnapshot(
+    parsed: EnvVarRecord[],
+    snapshot: Map<string, ReadOnlySnapshotEntry>,
+): EnvVarRecord[] {
+    if (snapshot.size === 0) {
+        return parsed.map(record => ({
+            ...record,
+            isSystem: record.isSystem ?? false,
+            isReadOnly: record.isReadOnly ?? false,
+        }));
+    }
+
+    const usedKeys = new Set<string>();
+    const result: EnvVarRecord[] = parsed.map(record => {
+        const locked = snapshot.get(record.key);
+
+        if (locked) {
+            usedKeys.add(record.key);
+            return { ...locked.record };
+        }
+
+        return {
+            ...record,
+            isSystem: record.isSystem ?? false,
+            isReadOnly: record.isReadOnly ?? false,
+        };
+    });
+
+    const missing = Array.from(snapshot.entries())
+        .filter(([key]) => !usedKeys.has(key))
+        .sort((a, b) => a[1].index - b[1].index);
+
+    for (const [, { record, index }] of missing) {
+        const insertAt = Math.min(Math.max(index, 0), result.length);
+        result.splice(insertAt, 0, { ...record });
+    }
+
+    return result;
 }

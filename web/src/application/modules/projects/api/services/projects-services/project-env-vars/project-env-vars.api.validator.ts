@@ -11,6 +11,8 @@ const ProjectBuildtimeEnvVarSchema = z.object({
     key: z.string(),
     value: z.string(),
     isLiteral: z.boolean().nullish(),
+    isSystem: z.boolean().nullish(),
+    isReadOnly: z.boolean().nullish(),
 });
 
 /**
@@ -20,7 +22,19 @@ const ProjectRuntimeEnvVarSchema = z.object({
     key: z.string(),
     value: z.string(),
     isLiteral: z.boolean().nullish(),
+    isSystem: z.boolean().nullish(),
+    isReadOnly: z.boolean().nullish(),
 });
+
+function toDomainEnvVar(envVar: z.infer<typeof ProjectBuildtimeEnvVarSchema>) {
+    return {
+        key: envVar.key,
+        value: envVar.value,
+        isLiteral: envVar.isLiteral ?? false,
+        isSystem: envVar.isSystem ?? false,
+        isReadOnly: envVar.isReadOnly ?? false,
+    };
+}
 
 /**
  * Project env var schema
@@ -51,20 +65,8 @@ export class ProjectEnvVarsApiValidator {
 
         return {
             data: {
-                buildtime: data
-                    ? data.buildtimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
-                    : [],
-                runtime: data
-                    ? data.runtimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
-                    : [],
+                buildtime: data ? data.buildtimeEnvVars.map(toDomainEnvVar) : [],
+                runtime: data ? data.runtimeEnvVars.map(toDomainEnvVar) : [],
                 updateVer: data?.updateVer ?? 0,
             },
             meta,

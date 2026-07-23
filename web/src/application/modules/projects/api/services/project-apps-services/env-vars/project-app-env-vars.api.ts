@@ -11,6 +11,16 @@ import type {
 } from "./project-app-env-vars.api.contracts";
 import type { ProjectAppEnvVarsApiValidator } from "./project-app-env-vars.api.validator";
 
+type EnvVarWire = {
+    key: string;
+    value: string;
+    isLiteral: boolean;
+};
+
+function toEnvVarWire(envVars: { key: string; value: string; isLiteral: boolean }[]): EnvVarWire[] {
+    return envVars.map(({ key, value, isLiteral }) => ({ key, value, isLiteral }));
+}
+
 export class ProjectAppEnvVarsApi extends BaseApi {
     public constructor(private readonly validator: ProjectAppEnvVarsApiValidator) {
         super();
@@ -45,15 +55,21 @@ export class ProjectAppEnvVarsApi extends BaseApi {
         request: ProjectAppEnvVars_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAppEnvVars_UpdateOne_Res, Error>> {
-        const { projectID, appID, updateVer, buildtime, runtime } = request.data;
+        const { projectID, appID, updateVer, buildtime, runtime, shared } = request.data;
 
         const json = {
             updateVer,
             buildtimeEnvVars: JsonTransformer.array({
                 data: buildtime,
+                some: toEnvVarWire,
             }),
             runtimeEnvVars: JsonTransformer.array({
                 data: runtime,
+                some: toEnvVarWire,
+            }),
+            sharedEnvVars: JsonTransformer.array({
+                data: shared,
+                some: toEnvVarWire,
             }),
         };
 

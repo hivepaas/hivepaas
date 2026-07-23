@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@components/ui/button";
@@ -10,13 +10,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip"
 import { Plus, Trash2, WrapText } from "lucide-react";
 import { type Path, get, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
-import { MULTILINE_ENV_SEPARATOR, parseEnvVars, stringifyEnvVars } from "@application/shared/utils/env-vars";
-
-type EnvVarRecord = {
-    key: string;
-    value: string;
-    isLiteral: boolean;
-};
+import {
+    type EnvVarRecord,
+    MULTILINE_ENV_SEPARATOR,
+    parseEnvVars,
+    reconcileEnvVarsWithReadOnlySnapshot,
+    snapshotReadOnlyEnvVars,
+    stringifyEnvVars,
+} from "@application/shared/utils/env-vars";
 
 const MERGE_VIEW_PLACEHOLDER = `KEY_1=VALUE_1
 ${MULTILINE_ENV_SEPARATOR}
@@ -46,6 +47,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
     }, [fieldValuesWatch]);
 
     const previousViewModeRef = useRef<"merge" | "individual">(viewMode);
+    const readOnlySnapshotRef = useRef(snapshotReadOnlyEnvVars([]));
     const [mergeText, setMergeText] = useState<string | null>(null);
     const [multilineFieldIds, setMultilineFieldIds] = useState<Set<string>>(() => new Set());
 
@@ -94,10 +96,20 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
             });
     }, [fields, fieldValues, search]);
 
+    const applyParsedMergeText = useCallback(
+        (text: string) => {
+            const parsedArray = parseEnvVars(text);
+            const reconciled = reconcileEnvVarsWithReadOnlySnapshot(parsedArray, readOnlySnapshotRef.current);
+            replace(reconciled);
+        },
+        [replace],
+    );
+
     // Handle view mode switching
     useEffect(() => {
         // When switching from individual to merge
         if (previousViewModeRef.current === "individual" && viewMode === "merge") {
+            readOnlySnapshotRef.current = snapshotReadOnlyEnvVars(fieldValues);
             const text = stringifyEnvVars(fieldValues);
             setMergeText(text);
         }
@@ -110,12 +122,11 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
             }
 
             const text = mergeText ?? stringifyEnvVars(fieldValues);
-            const parsedArray = parseEnvVars(text);
-            replace(parsedArray);
+            applyParsedMergeText(text);
         }
 
         previousViewModeRef.current = viewMode;
-    }, [viewMode, fieldValues, replace, mergeText, readOnly]);
+    }, [viewMode, fieldValues, mergeText, readOnly, applyParsedMergeText]);
 
     // Handle merge textarea changes
     const handleMergeTextChange = (value: string) => {
@@ -132,8 +143,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
         }
 
         const text = mergeText ?? "";
-        const parsedArray = parseEnvVars(text);
-        replace(parsedArray);
+        applyParsedMergeText(text);
     };
 
     // Get merge text value
@@ -152,11 +162,11 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
             return;
         }
 
-        append({ key: "", value: "", isLiteral: false });
+        append({ key: "", value: "", isLiteral: false, isSystem: false, isReadOnly: false });
     };
 
-    const handleMultilineToggle = (fieldId: string, value: string) => {
-        if (readOnly) {
+    const handleMultilineToggle = (fieldId: string, value: string, rowReadOnly: boolean) => {
+        if (readOnly || rowReadOnly) {
             return;
         }
 
@@ -192,6 +202,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                         const field = fields[index];
                         if (!field || !record) return null;
 
+                        const rowReadOnly = readOnly || record.isReadOnly === true;
                         const hasMultilineValue = record.value.includes("\n");
                         const isMultiline = multilineFieldIds.has(field.id) || hasMultilineValue;
                         const cannotDisableMultiline = isMultiline && hasMultilineValue;
@@ -209,7 +220,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                             {...register(`${name}.${index}.key`)}
                                             placeholder="Key"
                                             aria-invalid={!!get(errors, `${name}.${index}.key`)}
-                                            disabled={readOnly}
+                                            disabled={rowReadOnly}
                                         />
                                         <FieldError errors={[get(errors, `${name}.${index}.key`)]} />
                                     </Field>
@@ -224,7 +235,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                                 {...register(`${name}.${index}.value`)}
                                                 placeholder="Value"
                                                 aria-invalid={!!get(errors, `${name}.${index}.value`)}
-                                                disabled={readOnly}
+                                                disabled={rowReadOnly}
                                                 minRows={4}
                                                 maxRows={0}
                                                 className={cn(
@@ -239,7 +250,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                                 {...register(`${name}.${index}.value`)}
                                                 placeholder="Value"
                                                 aria-invalid={!!get(errors, `${name}.${index}.value`)}
-                                                disabled={readOnly}
+                                                disabled={rowReadOnly}
                                             />
                                         )}
                                         <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
@@ -254,12 +265,12 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                             variant={isMultiline ? "secondary" : "ghost"}
                                             size="icon"
                                             onClick={() => {
-                                                handleMultilineToggle(field.id, record.value);
+                                                handleMultilineToggle(field.id, record.value, rowReadOnly);
                                             }}
-                                            disabled={readOnly}
+                                            disabled={rowReadOnly}
                                             aria-label="Toggle multi-line mode"
                                             aria-pressed={isMultiline}
-                                            aria-disabled={readOnly || cannotDisableMultiline || undefined}
+                                            aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
                                             className={cn(
                                                 "h-8 w-8 text-muted-foreground",
                                                 isMultiline && "text-foreground",
@@ -278,16 +289,18 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                         id={`${name}-${index}-literal`}
                                         checked={record.isLiteral}
                                         onCheckedChange={checked => {
-                                            if (readOnly) {
+                                            if (rowReadOnly) {
                                                 return;
                                             }
 
                                             update(index, {
                                                 ...record,
                                                 isLiteral: checked === true,
+                                                isSystem: record.isSystem ?? false,
+                                                isReadOnly: record.isReadOnly ?? false,
                                             });
                                         }}
-                                        disabled={readOnly}
+                                        disabled={rowReadOnly}
                                     />
                                     <label
                                         htmlFor={`${name}-${index}-literal`}
@@ -298,22 +311,26 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
                                 </div>
 
                                 {/* Delete Button */}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        if (readOnly) {
-                                            return;
-                                        }
+                                {rowReadOnly && !readOnly ? (
+                                    <div className="h-8 w-8" />
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            if (rowReadOnly) {
+                                                return;
+                                            }
 
-                                        remove(index);
-                                    }}
-                                    disabled={readOnly}
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                >
-                                    <Trash2 className="size-4" />
-                                </Button>
+                                            remove(index);
+                                        }}
+                                        disabled={rowReadOnly}
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
+                                )}
                             </div>
                         );
                     })}

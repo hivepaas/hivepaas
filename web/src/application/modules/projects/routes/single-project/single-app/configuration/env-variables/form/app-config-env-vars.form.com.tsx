@@ -27,23 +27,41 @@ const DEFAULTS: AppConfigEnvVarsFormSchemaInput = {
 type SchemaInput = AppConfigEnvVarsFormSchemaInput;
 type SchemaOutput = AppConfigEnvVarsFormSchemaOutput;
 
-const SHARED_ENV_VARS_NOTICE = (
-    <div className={cn(dashedBorderBox, "leading-6")}>
-        <p>
-            These are runtime environment variables that can be accessed by other applications within the same project.{" "}
-            <br />
-            <span className="text-orange-500">Important</span>: Always use these variables to establish inter-app
-            connections instead of hardcoding static values (such as fixed IPs or local domain names). Hardcoding values
-            may prevent certain HivePaaS features from working properly.
-        </p>
-        <p className="mt-3">
-            Example usage: If the <span className="font-semibold">db</span> app defines shared variables{" "}
-            <code>HIVEPAAS_HOST</code> and <code>HIVEPAAS_PORT</code>, you can connect to it from your{" "}
-            <span className="text-orange-500">backend</span> app using:{" "}
-            <code>{"CONNECT_STR=scheme://${db.HIVEPAAS_HOST}:${db.HIVEPAAS_PORT}"}</code>
-        </p>
-    </div>
-);
+function SharedEnvVarsNotice() {
+    const [showExample, setShowExample] = useState(false);
+
+    return (
+        <div className={cn(dashedBorderBox, "leading-6")}>
+            <p>
+                These are runtime environment variables that can be accessed by other applications within the same
+                project. <br />
+                <span className="text-orange-500">Important:</span> Always use these variables to establish inter-app
+                connections instead of hardcoding static values (such as fixed IPs or local domain names). Hardcoding
+                values may prevent certain HivePaaS features from working properly.{" "}
+                <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => {
+                        setShowExample(previous => !previous);
+                    }}
+                >
+                    Example usage
+                </button>
+            </p>
+            {showExample && (
+                <p className="mt-3">
+                    If the <span className="text-orange-500">db</span> app defines shared variables{" "}
+                    <code className="font-semibold">HIVEPAAS_HOST</code> and{" "}
+                    <code className="font-semibold">HIVEPAAS_PORT</code>, you can connect to it from your{" "}
+                    <span className="text-orange-500">backend</span> app using:{" "}
+                    <code className="font-semibold">
+                        {"CONNECT_STR=scheme://${db.HIVEPAAS_HOST}:${db.HIVEPAAS_PORT}"}
+                    </code>
+                </p>
+            )}
+        </div>
+    );
+}
 
 export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Props>(function AppConfigEnvVarsForm(
     { defaultValues, inheritedValues, onSubmit, readOnly = false, children }: Props,
@@ -226,7 +244,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             title="Shared Runtime Env Variables"
                             readOnly={readOnly}
                             alwaysExpanded
-                            notice={SHARED_ENV_VARS_NOTICE}
+                            notice={<SharedEnvVarsNotice />}
                         />
 
                         {children}

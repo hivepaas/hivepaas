@@ -127,6 +127,7 @@ export const DomainFormSchema = z
     });
 
 export const AppConfigHttpSettingsFormSchema = z.object({
+    port: z.number().int().min(1).max(65535),
     exposePublicly: z.boolean(),
     domains: z.array(DomainFormSchema),
 });
@@ -216,6 +217,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
 };
 
 export const emptyAppConfigHttpSettingsFormDefaults: AppConfigHttpSettingsFormSchemaInput = {
+    port: 8080,
     exposePublicly: false,
     domains: [],
 };

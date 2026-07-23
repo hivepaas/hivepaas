@@ -4,6 +4,9 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
 import type {
+    EnvVarWireItem,
+    ProjectAppEnvVars_Compute_Req,
+    ProjectAppEnvVars_Compute_Res,
     ProjectAppEnvVars_FindOne_Req,
     ProjectAppEnvVars_FindOne_Res,
     ProjectAppEnvVars_UpdateOne_Req,
@@ -11,13 +14,7 @@ import type {
 } from "./project-app-env-vars.api.contracts";
 import type { ProjectAppEnvVarsApiValidator } from "./project-app-env-vars.api.validator";
 
-type EnvVarWire = {
-    key: string;
-    value: string;
-    isLiteral: boolean;
-};
-
-function toEnvVarWire(envVars: { key: string; value: string; isLiteral: boolean }[]): EnvVarWire[] {
+function toEnvVarWire(envVars: { key: string; value: string; isLiteral: boolean }[]): EnvVarWireItem[] {
     return envVars.map(({ key, value, isLiteral }) => ({ key, value, isLiteral }));
 }
 
@@ -80,6 +77,43 @@ export class ProjectAppEnvVarsApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Compute project app env vars
+     */
+    async compute(
+        request: ProjectAppEnvVars_Compute_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAppEnvVars_Compute_Res, Error>> {
+        const { projectID, appID, buildtimeEnvVars, runtimeEnvVars, sharedEnvVars } = request.data;
+
+        const json = {
+            buildtimeEnvVars: JsonTransformer.array({
+                data: buildtimeEnvVars,
+                some: toEnvVarWire,
+            }),
+            runtimeEnvVars: JsonTransformer.array({
+                data: runtimeEnvVars,
+                some: toEnvVarWire,
+            }),
+            sharedEnvVars: JsonTransformer.array({
+                data: sharedEnvVars,
+                some: toEnvVarWire,
+            }),
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(`/projects/${projectID}/apps/${appID}/env-vars/compute`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.compute),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

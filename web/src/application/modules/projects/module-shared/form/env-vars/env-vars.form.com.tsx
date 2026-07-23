@@ -1,10 +1,32 @@
 import React from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@components/ui/accordion";
+import { Button } from "@components/ui/button";
 
 import { ConfigVariables } from "@application/shared/form";
 
-function View({ search, viewMode, isRevealed, title, name, readOnly = false, alwaysExpanded = false, notice }: Props) {
+function View({
+    search,
+    viewMode,
+    isRevealed,
+    title,
+    name,
+    readOnly = false,
+    alwaysExpanded = false,
+    notice,
+    onShowFinalValues,
+}: Props) {
+    const extraActions = onShowFinalValues ? (
+        <Button
+            type="button"
+            variant="outline"
+            onClick={onShowFinalValues}
+            className="w-fit"
+        >
+            Show Final Values
+        </Button>
+    ) : undefined;
+
     const content = (
         <div className="flex flex-col gap-4">
             {notice}
@@ -14,6 +36,7 @@ function View({ search, viewMode, isRevealed, title, name, readOnly = false, alw
                 viewMode={viewMode}
                 isRevealed={isRevealed}
                 readOnly={readOnly}
+                extraActions={extraActions}
             />
         </div>
     );
@@ -56,6 +79,7 @@ type Props = {
     readOnly?: boolean;
     alwaysExpanded?: boolean;
     notice?: React.ReactNode;
+    onShowFinalValues?: () => void;
 };
 
 export const EnvVarsBaseForm = React.memo(View);

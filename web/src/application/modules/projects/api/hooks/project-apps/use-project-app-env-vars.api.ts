@@ -2,7 +2,11 @@ import { use, useMemo } from "react";
 
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
-import type { ProjectAppEnvVars_FindOne_Req, ProjectAppEnvVars_UpdateOne_Req } from "~/projects/api/services";
+import type {
+    ProjectAppEnvVars_Compute_Req,
+    ProjectAppEnvVars_FindOne_Req,
+    ProjectAppEnvVars_UpdateOne_Req,
+} from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
@@ -56,6 +60,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update app env vars",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Compute project app env vars
+                 */
+                compute: async (data: ProjectAppEnvVars_Compute_Req["data"]) => {
+                    const result = await api.projects.apps.envVars.$.compute({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to compute app env vars",
                                 error,
                             });
 

@@ -1,6 +1,11 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectAppEnvVarsApi } from "~/projects/api/hooks/project-apps";
-import type { ProjectAppEnvVars_UpdateOne_Req, ProjectAppEnvVars_UpdateOne_Res } from "~/projects/api/services";
+import type {
+    ProjectAppEnvVars_Compute_Req,
+    ProjectAppEnvVars_Compute_Res,
+    ProjectAppEnvVars_UpdateOne_Req,
+    ProjectAppEnvVars_UpdateOne_Res,
+} from "~/projects/api/services";
 
 import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
@@ -32,6 +37,28 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
+/**
+ * Compute project app env vars command
+ */
+type ComputeReq = ProjectAppEnvVars_Compute_Req["data"];
+type ComputeRes = ProjectAppEnvVars_Compute_Res;
+type ComputeOptions = Omit<UseMutationOptions<ComputeRes, Error, ComputeReq>, "mutationFn">;
+
+function useCompute({ onSuccess, ...options }: ComputeOptions = {}) {
+    const { mutations } = useProjectAppEnvVarsApi();
+
+    return useMutation({
+        mutationFn: mutations.compute,
+        onSuccess: (response, request, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectAppEnvVarsCommands = Object.freeze({
     useUpdateOne,
+    useCompute,
 });

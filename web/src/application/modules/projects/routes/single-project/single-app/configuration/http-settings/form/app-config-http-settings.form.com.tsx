@@ -187,7 +187,6 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                             <DomainSelector
                                 activeDomainIndex={activeDomainIndex}
                                 setActiveDomainIndex={setActiveDomainIndex}
-                                internalEndpoints={defaultValues?.internalEndpoints ?? []}
                                 domainSuggestion={defaultValues?.domainSuggestion ?? ""}
                                 readOnly={readOnly}
                             />

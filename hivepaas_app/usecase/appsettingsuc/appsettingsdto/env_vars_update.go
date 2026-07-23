@@ -11,19 +11,19 @@ import (
 )
 
 type UpdateAppEnvVarsReq struct {
-	ProjectID        string               `json:"-"`
-	AppID            string               `json:"-"`
+	ProjectID string `json:"-"`
+	AppID     string `json:"-"`
+	UpdateVer int    `json:"updateVer"`
+	*AppEnvVarsBaseReq
+}
+
+type AppEnvVarsBaseReq struct {
 	BuildtimeEnvVars []*basedto.EnvVarReq `json:"buildtimeEnvVars"`
 	RuntimeEnvVars   []*basedto.EnvVarReq `json:"runtimeEnvVars"`
 	SharedEnvVars    []*basedto.EnvVarReq `json:"sharedEnvVars"`
-	UpdateVer        int                  `json:"updateVer"`
 }
 
-func NewUpdateAppEnvVarsReq() *UpdateAppEnvVarsReq {
-	return &UpdateAppEnvVarsReq{}
-}
-
-func (req *UpdateAppEnvVarsReq) ModifyRequest() error {
+func (req *AppEnvVarsBaseReq) modifyRequest() error {
 	for _, env := range req.BuildtimeEnvVars {
 		env.Key = strings.TrimSpace(env.Key)
 		env.Value = strings.TrimSpace(env.Value)
@@ -39,14 +39,17 @@ func (req *UpdateAppEnvVarsReq) ModifyRequest() error {
 	return nil
 }
 
-// Validate implements interface basedto.ReqValidator
-func (req *UpdateAppEnvVarsReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	validators = append(validators, basedto.ValidateEnvVarsReq(req.BuildtimeEnvVars, "buildtimeEnvVars")...)
-	validators = append(validators, basedto.ValidateEnvVarsReq(req.RuntimeEnvVars, "runtimeEnvVars")...)
-	validators = append(validators, basedto.ValidateEnvVarsReq(req.SharedEnvVars, "sharedEnvVars")...)
+func (req *AppEnvVarsBaseReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return nil
+	}
+	if field != "" {
+		field += "."
+	}
+
+	res = append(res, basedto.ValidateEnvVarsReq(req.BuildtimeEnvVars, field+"buildtimeEnvVars")...)
+	res = append(res, basedto.ValidateEnvVarsReq(req.RuntimeEnvVars, field+"runtimeEnvVars")...)
+	res = append(res, basedto.ValidateEnvVarsReq(req.SharedEnvVars, field+"sharedEnvVars")...)
 
 	allSharedEnvs := make(map[string]struct{}, len(req.SharedEnvVars))
 	for _, env := range req.SharedEnvVars {
@@ -54,14 +57,14 @@ func (req *UpdateAppEnvVarsReq) Validate() apperrors.ValidationErrors {
 	}
 	for _, env := range req.RuntimeEnvVars {
 		if _, ok := allSharedEnvs[env.Key]; ok {
-			validators = append(validators, vld.Must(false).OnError(
+			res = append(res, vld.Must(false).OnError(
 				vld.SetField("runtimeEnvVars", nil),
 				vld.SetCustomKey("ERR_VLD_VALUES_NON_UNIQUE"),
 			))
 			continue
 		}
 		if !base.IsAppRuntimeEnvAllowed(env.Key) {
-			validators = append(validators, vld.Must(false).OnError(
+			res = append(res, vld.Must(false).OnError(
 				vld.SetField("runtimeEnvVars", nil),
 				vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
 				vld.SetParam("Value", env.Key),
@@ -69,6 +72,24 @@ func (req *UpdateAppEnvVarsReq) Validate() apperrors.ValidationErrors {
 		}
 	}
 
+	return res
+}
+
+func NewUpdateAppEnvVarsReq() *UpdateAppEnvVarsReq {
+	return &UpdateAppEnvVarsReq{}
+}
+
+// ModifyRequest implements interface basedto.ReqModifier
+func (req *UpdateAppEnvVarsReq) ModifyRequest() error {
+	return req.modifyRequest()
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *UpdateAppEnvVarsReq) Validate() apperrors.ValidationErrors {
+	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

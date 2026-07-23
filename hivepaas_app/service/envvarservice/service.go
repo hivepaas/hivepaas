@@ -8,6 +8,7 @@ import (
 )
 
 type Service interface {
+	HasRef(v string) bool
 	HasSecretRef(v string) bool
 
 	ComputeProjectEnvVars(ctx context.Context, db database.IDB, req *ComputeProjectEnvVarsReq) ([]*EnvVar, error)

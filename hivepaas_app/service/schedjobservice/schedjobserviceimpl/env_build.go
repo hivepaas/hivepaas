@@ -27,9 +27,29 @@ func (s *service) BuildCommandEnvVars(
 		}
 	}
 
+	targetVarKeys := make([]string, 0, len(envVars))
+	targetVars := make([]*envvarservice.EnvVar, 0, len(envVars))
+	for _, env := range envVars {
+		targetVarKeys = append(targetVarKeys, env.Key)
+		targetVars = append(targetVars, &envvarservice.EnvVar{EnvVar: env})
+	}
+
+	// Trivial case: there is no ref need to process in the values
+	hasRef := false
+	for _, env := range targetVars {
+		if !env.IsLiteral && s.envVarService.HasRef(env.Value) {
+			hasRef = true
+			break
+		}
+	}
+	if !hasRef {
+		return targetVars, nil
+	}
+
 	envResp, err := s.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
-		App:        app,
-		TargetVars: envVars,
+		App:            app,
+		TargetVars:     targetVarKeys,
+		OverridingVars: targetVars,
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

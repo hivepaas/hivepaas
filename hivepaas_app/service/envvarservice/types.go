@@ -16,9 +16,10 @@ func (env *EnvVar) ToString(sep string) string {
 
 type ComputeAppEnvVarsReq struct {
 	App                    *entity.App
-	TargetVars             []*entity.EnvVar
-	InheritedProjectVars   []*EnvVar
-	InheritedParentAppVars []*EnvVar
+	TargetVars             []string
+	OverridingVars         []*EnvVar
+	InheritedProjectVars   []*EnvVar // if nil, data will be loaded from DB when needed
+	InheritedParentAppVars []*EnvVar // if nil, data will be loaded from DB when needed
 	SkipLoadingVars        bool
 	SkipLoadingSecrets     bool
 	MaskSecrets            bool
@@ -34,7 +35,8 @@ type ComputeAppSystemEnvVarsReq struct {
 
 type ComputeProjectEnvVarsReq struct {
 	Project            *entity.Project
-	TargetVars         []*entity.EnvVar
+	TargetVars         []string
+	OverridingVars     []*EnvVar
 	SkipLoadingVars    bool
 	SkipLoadingSecrets bool
 	MaskSecrets        bool

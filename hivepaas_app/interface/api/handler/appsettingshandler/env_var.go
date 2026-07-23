@@ -82,3 +82,40 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// ComputeEnvVars Computes app env vars
+// @Summary Computes app env vars
+// @Description Computes app env vars
+// @Tags    app_settings
+// @Produce json
+// @Id      computeAppEnvVars
+// @Param   projectID path string true "project ID"
+// @Param   appID path string true "app ID"
+// @Param   body body appsettingsdto.ComputeAppEnvVarsReq true "request data"
+// @Success 200 {object} appsettingsdto.ComputeAppEnvVarsResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/apps/{appID}/env-vars/compute [post]
+func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
+	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewComputeAppEnvVarsReq()
+	req.ProjectID = projectID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.ComputeAppEnvVars(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

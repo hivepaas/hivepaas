@@ -115,7 +115,7 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 	setting.Status = base.SettingStatusActive
 
 	envVars := &entity.EnvVars{
-		Data: make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars)+len(req.RuntimeEnvVars)),
+		Data: make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars)+len(req.RuntimeEnvVars)+len(req.SharedEnvVars)),
 	}
 	for _, env := range req.BuildtimeEnvVars {
 		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
@@ -138,7 +138,8 @@ func (uc *UC) applyAppEnvVars(
 ) error {
 	app := data.App
 	computedVars, err := uc.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
-		App: app,
+		App:  app,
+		Sort: true,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)

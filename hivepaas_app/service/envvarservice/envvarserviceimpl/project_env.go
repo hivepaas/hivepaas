@@ -19,29 +19,10 @@ func (s *service) ComputeProjectEnvVars(
 	db database.IDB,
 	req *envvarservice.ComputeProjectEnvVarsReq,
 ) ([]*envvarservice.EnvVar, error) {
-	// Trivial case
-	hasRef := false
-	for _, aVar := range req.TargetVars {
-		if !aVar.IsLiteral && s.HasRef(aVar.Value) {
-			hasRef = true
-			break
-		}
-	}
-	if !hasRef && len(req.TargetVars) > 0 {
-		return gofn.MapSlice(req.TargetVars, func(v *entity.EnvVar) *envvarservice.EnvVar {
-			return &envvarservice.EnvVar{EnvVar: v}
-		}), nil
-	}
-
 	allVars, allSecrets, err := s.loadProjectVarsAndSecrets(ctx, db, req.Project, req.SkipLoadingVars,
-		req.SkipLoadingSecrets, req.BuildPhaseOnly)
+		req.SkipLoadingSecrets, req.BuildPhaseOnly, req.OverridingVars)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
-	}
-
-	// Merge target vars with the current
-	for _, inVar := range req.TargetVars {
-		allVars[inVar.Key] = &envvarservice.EnvVar{EnvVar: inVar}
 	}
 
 	refsData := &processRefsData{
@@ -50,35 +31,29 @@ func (s *service) ComputeProjectEnvVars(
 		MaskSecrets: req.MaskSecrets,
 	}
 
-	// Make a list of vars to compute
 	resultVars := make([]*envvarservice.EnvVar, 0, len(allVars))
+	var targetVarMap map[string]struct{}
 	if len(req.TargetVars) > 0 {
-		for _, env := range req.TargetVars {
-			if req.BuildPhaseOnly && !env.IsBuild {
-				continue
-			}
-			resultVars = append(resultVars, &envvarservice.EnvVar{EnvVar: env})
-		}
-	} else {
-		for _, env := range allVars {
-			if req.BuildPhaseOnly && !env.IsBuild {
-				continue
-			}
-			if req.SharedVarsOnly && !env.IsShared {
-				continue
-			}
-			resultVars = append(resultVars, env)
-		}
+		targetVarMap = gofn.MapSliceToMapKeys(req.TargetVars, struct{}{})
 	}
 
-	// Process all references within the ENV values
-	for _, env := range resultVars {
+	// Replace all references within the ENV values
+	for _, env := range allVars {
+		if req.BuildPhaseOnly && !env.IsBuild {
+			continue
+		}
+		if req.SharedVarsOnly && !env.IsShared {
+			continue
+		}
+		if targetVarMap != nil && !gofn.MapContainKeys(targetVarMap, env.Key) {
+			continue
+		}
 		if !env.IsLiteral {
-			err := s.processRefs(env, refsData)
-			if err != nil {
+			if err = s.processRefs(env, refsData); err != nil {
 				return nil, apperrors.Wrap(err)
 			}
 		}
+		resultVars = append(resultVars, env)
 	}
 
 	if req.Sort {
@@ -97,6 +72,7 @@ func (s *service) loadProjectVarsAndSecrets(
 	skipLoadingVars bool,
 	skipLoadingSecrets bool,
 	buildPhase bool,
+	overridingVars []*envvarservice.EnvVar,
 ) (envVars map[string]*envvarservice.EnvVar, secrets map[string]*entity.Setting, err error) {
 	if skipLoadingVars && skipLoadingSecrets {
 		return nil, nil, nil
@@ -115,10 +91,6 @@ func (s *service) loadProjectVarsAndSecrets(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	if len(settings) == 0 {
-		return envVars, secrets, nil
-	}
-
 	envVars = make(map[string]*envvarservice.EnvVar, 20) //nolint:mnd
 	secrets = make(map[string]*entity.Setting, 10)       //nolint:mnd
 	for _, setting := range settings {
@@ -132,6 +104,11 @@ func (s *service) loadProjectVarsAndSecrets(
 		if setting.Type == base.SettingTypeSecret {
 			secrets[setting.Name] = setting
 		}
+	}
+
+	// Inject overriding vars
+	for _, env := range overridingVars {
+		envVars[env.Key] = env
 	}
 
 	// Inject project system env vars

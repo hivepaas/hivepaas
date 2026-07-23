@@ -18,48 +18,27 @@ const (
 	refSecretMaxSize = 10 * 1024 // 10 KB
 )
 
-//nolint:gocognit
 func (s *service) ComputeAppEnvVars(
 	ctx context.Context,
 	db database.IDB,
 	req *envvarservice.ComputeAppEnvVarsReq,
 ) ([]*envvarservice.EnvVar, error) {
-	// Trivial case
-	hasRef := false
-	for _, aVar := range req.TargetVars {
-		if !aVar.IsLiteral && s.HasRef(aVar.Value) {
-			hasRef = true
-			break
-		}
-	}
-	if !hasRef && len(req.TargetVars) > 0 {
-		return gofn.MapSlice(req.TargetVars, func(v *entity.EnvVar) *envvarservice.EnvVar {
-			return &envvarservice.EnvVar{EnvVar: v}
-		}), nil
-	}
-
-	appVars, appSecrets, err := s.loadAppVarsAndSecrets(ctx, db, req.App, req.SkipLoadingVars, req.SkipLoadingSecrets,
-		req.BuildPhaseOnly)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	envStore := make(map[string]*envvarservice.EnvVar, len(appVars)+20) //nolint:mnd
+	envStore := make(map[string]*envvarservice.EnvVar, 30) //nolint:mnd
 
 	// Merge with inherited envs
-	err = s.loadAppInheritedEnvVars(ctx, db, req, envStore)
+	err := s.loadAppInheritedEnvVars(ctx, db, req, envStore)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	// Merge with envs of the current app
+	appVars, appSecrets, err := s.loadAppVarsAndSecrets(ctx, db, req.App, req.SkipLoadingVars, req.SkipLoadingSecrets,
+		req.BuildPhaseOnly, req.OverridingVars)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 	for _, appVar := range appVars {
 		envStore[appVar.Key] = appVar
-	}
-
-	// Merge target vars with the current
-	for _, inVar := range req.TargetVars {
-		envStore[inVar.Key] = &envvarservice.EnvVar{EnvVar: inVar}
 	}
 
 	refsData := &processRefsData{
@@ -80,35 +59,29 @@ func (s *service) ComputeAppEnvVars(
 		},
 	}
 
-	// Make a list of vars to compute
-	resultVars := make([]*envvarservice.EnvVar, 0, len(appVars))
+	resultVars := make([]*envvarservice.EnvVar, 0, len(envStore))
+	var targetVarMap map[string]struct{}
 	if len(req.TargetVars) > 0 {
-		for _, env := range req.TargetVars {
-			if req.BuildPhaseOnly && !env.IsBuild {
-				continue
-			}
-			resultVars = append(resultVars, &envvarservice.EnvVar{EnvVar: env})
-		}
-	} else {
-		for _, env := range appVars {
-			if req.BuildPhaseOnly && !env.IsBuild {
-				continue
-			}
-			if req.SharedVarsOnly && !env.IsShared {
-				continue
-			}
-			resultVars = append(resultVars, env)
-		}
+		targetVarMap = gofn.MapSliceToMapKeys(req.TargetVars, struct{}{})
 	}
 
-	// Process all references within the ENV values
-	for _, env := range resultVars {
+	// Replace all references within the ENV values
+	for _, env := range envStore {
+		if req.BuildPhaseOnly && !env.IsBuild {
+			continue
+		}
+		if req.SharedVarsOnly && !env.IsShared {
+			continue
+		}
+		if targetVarMap != nil && !gofn.MapContainKeys(targetVarMap, env.Key) {
+			continue
+		}
 		if !env.IsLiteral {
-			err := s.processRefs(env, refsData)
-			if err != nil {
+			if err = s.processRefs(env, refsData); err != nil {
 				return nil, apperrors.Wrap(err)
 			}
 		}
+		resultVars = append(resultVars, env)
 	}
 
 	if req.Sort {
@@ -127,6 +100,7 @@ func (s *service) loadAppVarsAndSecrets(
 	skipLoadingVars bool,
 	skipLoadingSecrets bool,
 	buildPhase bool,
+	overridingVars []*envvarservice.EnvVar,
 ) (envVars map[string]*envvarservice.EnvVar, secrets map[string]*entity.Setting, err error) {
 	if skipLoadingVars && skipLoadingSecrets {
 		return nil, nil, nil
@@ -145,10 +119,6 @@ func (s *service) loadAppVarsAndSecrets(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	if len(settings) == 0 {
-		return envVars, secrets, nil
-	}
-
 	envVars = make(map[string]*envvarservice.EnvVar, 20) //nolint:mnd
 	secrets = make(map[string]*entity.Setting, 10)       //nolint:mnd
 	for _, setting := range settings {
@@ -162,6 +132,11 @@ func (s *service) loadAppVarsAndSecrets(
 		if setting.Type == base.SettingTypeSecret {
 			secrets[setting.Name] = setting
 		}
+	}
+
+	// Inject overriding vars
+	for _, env := range overridingVars {
+		envVars[env.Key] = env
 	}
 
 	// Inject app system env vars

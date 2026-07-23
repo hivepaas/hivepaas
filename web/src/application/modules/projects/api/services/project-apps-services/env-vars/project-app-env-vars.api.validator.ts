@@ -11,6 +11,8 @@ const ProjectBuildtimeEnvVarSchema = z.object({
     key: z.string(),
     value: z.string(),
     isLiteral: z.boolean().nullish(),
+    isSystem: z.boolean().nullish(),
+    isReadOnly: z.boolean().nullish(),
 });
 
 /**
@@ -20,7 +22,24 @@ const ProjectRuntimeEnvVarSchema = z.object({
     key: z.string(),
     value: z.string(),
     isLiteral: z.boolean().nullish(),
+    isSystem: z.boolean().nullish(),
+    isReadOnly: z.boolean().nullish(),
 });
+
+/**
+ * Project shared env var schema
+ */
+const ProjectSharedEnvVarSchema = ProjectRuntimeEnvVarSchema;
+
+function toDomainEnvVar(envVar: z.infer<typeof ProjectBuildtimeEnvVarSchema>) {
+    return {
+        key: envVar.key,
+        value: envVar.value,
+        isLiteral: envVar.isLiteral ?? false,
+        isSystem: envVar.isSystem ?? false,
+        isReadOnly: envVar.isReadOnly ?? false,
+    };
+}
 
 /**
  * Project env var schema
@@ -28,6 +47,7 @@ const ProjectRuntimeEnvVarSchema = z.object({
 const ProjectEnvVarSchema = z.object({
     buildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema),
     runtimeEnvVars: z.array(ProjectRuntimeEnvVarSchema),
+    sharedEnvVars: z.array(ProjectSharedEnvVarSchema).nullish(),
     inheritedBuildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema).nullish(),
     inheritedRuntimeEnvVars: z.array(ProjectRuntimeEnvVarSchema).nullish(),
     updateVer: z.number(),
@@ -53,33 +73,14 @@ export class ProjectAppEnvVarsApiValidator {
 
         return {
             data: {
-                buildtime: data
-                    ? data.buildtimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
-                    : [],
-                runtime: data
-                    ? data.runtimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
-                    : [],
+                buildtime: data ? data.buildtimeEnvVars.map(toDomainEnvVar) : [],
+                runtime: data ? data.runtimeEnvVars.map(toDomainEnvVar) : [],
+                shared: data?.sharedEnvVars ? data.sharedEnvVars.map(toDomainEnvVar) : [],
                 inheritedBuildtimeEnvVars: data?.inheritedBuildtimeEnvVars
-                    ? data.inheritedBuildtimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
+                    ? data.inheritedBuildtimeEnvVars.map(toDomainEnvVar)
                     : [],
                 inheritedRuntimeEnvVars: data?.inheritedRuntimeEnvVars
-                    ? data.inheritedRuntimeEnvVars.map(envVar => ({
-                          key: envVar.key,
-                          value: envVar.value,
-                          isLiteral: envVar.isLiteral ?? false,
-                      }))
+                    ? data.inheritedRuntimeEnvVars.map(toDomainEnvVar)
                     : [],
                 updateVer: data?.updateVer ?? 0,
             },

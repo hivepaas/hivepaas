@@ -87,6 +87,7 @@ export function AppConfigEnvVariablesRoute() {
             defaultValues={{
                 buildtime: envVars.buildtime,
                 runtime: envVars.runtime,
+                shared: envVars.shared,
             }}
             inheritedValues={{
                 buildtime: envVars.inheritedBuildtimeEnvVars,

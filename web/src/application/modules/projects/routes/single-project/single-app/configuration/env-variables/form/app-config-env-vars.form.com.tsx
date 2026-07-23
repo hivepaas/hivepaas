@@ -21,10 +21,47 @@ import { type AppConfigEnvVarsFormRef } from "../types";
 const DEFAULTS: AppConfigEnvVarsFormSchemaInput = {
     buildtime: [],
     runtime: [],
+    shared: [],
 };
 
 type SchemaInput = AppConfigEnvVarsFormSchemaInput;
 type SchemaOutput = AppConfigEnvVarsFormSchemaOutput;
+
+function SharedEnvVarsNotice() {
+    const [showExample, setShowExample] = useState(false);
+
+    return (
+        <div className={cn(dashedBorderBox, "leading-6")}>
+            <p>
+                These are runtime environment variables that can be accessed by other applications within the same
+                project. <br />
+                <span className="text-orange-500">Important:</span> Always use these variables to establish inter-app
+                connections instead of hardcoding static values (such as fixed IPs or local domain names). Hardcoding
+                values may prevent certain HivePaaS features from working properly.{" "}
+                <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => {
+                        setShowExample(previous => !previous);
+                    }}
+                >
+                    Example usage
+                </button>
+            </p>
+            {showExample && (
+                <p className="mt-3">
+                    If the <span className="text-orange-500">db</span> app defines shared variables{" "}
+                    <code className="font-semibold">HIVEPAAS_HOST</code> and{" "}
+                    <code className="font-semibold">HIVEPAAS_PORT</code>, you can connect to it from your{" "}
+                    <span className="text-orange-500">backend</span> app using:{" "}
+                    <code className="font-semibold">
+                        {"CONNECT_STR=scheme://${db.HIVEPAAS_HOST}:${db.HIVEPAAS_PORT}"}
+                    </code>
+                </p>
+            )}
+        </div>
+    );
+}
 
 export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Props>(function AppConfigEnvVarsForm(
     { defaultValues, inheritedValues, onSubmit, readOnly = false, children }: Props,
@@ -45,9 +82,11 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
     const [isRevealed, setIsRevealed] = useState(false);
     const [viewMode, setViewMode] = useState<"merge" | "individual">("individual");
     const [sortOrder, setSortOrder] = useState<"normal" | "asc" | "desc">("normal");
-    const originalOrderRef = useRef<{ buildtime: SchemaInput["buildtime"]; runtime: SchemaInput["runtime"] } | null>(
-        null,
-    );
+    const originalOrderRef = useRef<{
+        buildtime: SchemaInput["buildtime"];
+        runtime: SchemaInput["runtime"];
+        shared: SchemaInput["shared"];
+    } | null>(null);
 
     function handleSortCycle() {
         const next = sortOrder === "normal" ? "asc" : sortOrder === "asc" ? "desc" : "normal";
@@ -56,15 +95,18 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
             originalOrderRef.current ??= {
                 buildtime: methods.getValues("buildtime"),
                 runtime: methods.getValues("runtime"),
+                shared: methods.getValues("shared"),
             };
             const sorter = (a: { key: string }, b: { key: string }) =>
                 next === "asc" ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key);
             methods.setValue("buildtime", [...methods.getValues("buildtime")].sort(sorter), { shouldDirty: true });
             methods.setValue("runtime", [...methods.getValues("runtime")].sort(sorter), { shouldDirty: true });
+            methods.setValue("shared", [...methods.getValues("shared")].sort(sorter), { shouldDirty: true });
         } else {
             if (originalOrderRef.current) {
                 methods.setValue("buildtime", originalOrderRef.current.buildtime, { shouldDirty: true });
                 methods.setValue("runtime", originalOrderRef.current.runtime, { shouldDirty: true });
+                methods.setValue("shared", originalOrderRef.current.shared, { shouldDirty: true });
                 originalOrderRef.current = null;
             }
         }
@@ -192,6 +234,17 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             name="runtime"
                             title="Runtime Env Variables"
                             readOnly={readOnly}
+                        />
+                        <div className="h-px bg-border" />
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
+                            name="shared"
+                            title="Shared Runtime Env Variables"
+                            readOnly={readOnly}
+                            alwaysExpanded
+                            notice={<SharedEnvVarsNotice />}
                         />
 
                         {children}

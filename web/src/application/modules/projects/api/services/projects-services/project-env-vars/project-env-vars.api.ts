@@ -46,13 +46,18 @@ export class ProjectEnvVarsApi extends BaseApi {
     ): Promise<Result<ProjectEnvVars_UpdateOne_Res, Error>> {
         const { projectID, updateVer, buildtime, runtime } = request.data;
 
+        const toEnvVarWire = (envVars: { key: string; value: string; isLiteral: boolean }[]) =>
+            envVars.map(({ key, value, isLiteral }) => ({ key, value, isLiteral }));
+
         const json = {
             updateVer,
             buildtimeEnvVars: JsonTransformer.array({
                 data: buildtime,
+                some: toEnvVarWire,
             }),
             runtimeEnvVars: JsonTransformer.array({
                 data: runtime,
+                some: toEnvVarWire,
             }),
         };
 

@@ -1,4 +1,9 @@
-import { type ProjectBuildtimeEnvVar, type ProjectEnvVar, type ProjectRuntimeEnvVar } from "~/projects/domain";
+import {
+    type ProjectAppEnvVar,
+    type ProjectBuildtimeEnvVar,
+    type ProjectRuntimeEnvVar,
+    type ProjectSharedEnvVar,
+} from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
@@ -11,7 +16,7 @@ export type ProjectAppEnvVars_FindOne_Req = ApiRequestBase<{
 }>;
 
 export type ProjectAppEnvVars_FindOne_Res = ApiResponseBase<
-    ProjectEnvVar & {
+    ProjectAppEnvVar & {
         inheritedBuildtimeEnvVars: ProjectBuildtimeEnvVar[];
         inheritedRuntimeEnvVars: ProjectRuntimeEnvVar[];
     }
@@ -20,13 +25,14 @@ export type ProjectAppEnvVars_FindOne_Res = ApiResponseBase<
 /**
  * Update project app env vars
  */
-export type ProjectAppEnvVars_UpdateOne_Req = ApiRequestBase<
-    {
-        projectID: string;
-        appID: string;
-        updateVer: number;
-    } & ProjectEnvVar
->;
+export type ProjectAppEnvVars_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    updateVer: number;
+    buildtime: ProjectBuildtimeEnvVar[];
+    runtime: ProjectRuntimeEnvVar[];
+    shared: ProjectSharedEnvVar[];
+}>;
 
 export type ProjectAppEnvVars_UpdateOne_Res = ApiResponseBase<{
     type: "success";

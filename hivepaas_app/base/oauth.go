@@ -16,3 +16,12 @@ var (
 	AllOAuthKinds = []OAuthKind{OAuthKindGithub, OAuthKindGithubApp, OAuthKindGitlab, OAuthKindGitea,
 		OAuthKindGoogle, OAuthKindMicrosoftOnline, OAuthKindOpenIDConnect}
 )
+
+const (
+	OAuthScopeDefaultGitea           = "read:user user:email"
+	OAuthScopeDefaultGithub          = "read:user user:email"
+	OAuthScopeDefaultGitlab          = "read_user"
+	OAuthScopeDefaultGoogle          = "openid email profile"
+	OAuthScopeDefaultMicrosoftOnline = "openid profile email User.Read"
+	OAuthScopeDefaultOpenIDConnect   = "openid profile email"
+)

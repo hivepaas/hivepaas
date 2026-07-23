@@ -2,10 +2,6 @@ package base
 
 import "github.com/tiendc/gofn"
 
-const (
-	SettingNameMaxLen = 100
-)
-
 type SettingType string
 
 const (

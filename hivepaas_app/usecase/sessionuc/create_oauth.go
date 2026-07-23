@@ -24,8 +24,7 @@ func (uc *UC) CreateOAuthSession(
 	oauthUser := req.User
 	email := oauthUser.Email
 	if email == "" {
-		return nil, apperrors.Wrap(apperrors.ErrInternal).
-			WithMsgLog("unable to create oauth session, email is not returned from provider")
+		return nil, apperrors.Wrap(apperrors.ErrOAuthUserEmailNotReturned)
 	}
 
 	dbUser, err := uc.userRepo.GetByEmail(ctx, uc.db, email)

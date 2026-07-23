@@ -50,13 +50,14 @@ ERR_PASSWORD_MISMATCHED = "Password is incorrect"
 ERR_PASSCODE_MISMATCHED = "Passcode is incorrect"
 ERR_TOO_MANY_LOGIN_FAILURES = "You made too many login failures. Please wait {{.WaitDuration}} seconds before trying again."
 ERR_TOO_MANY_PASSCODE_ATTEMPTS = "You made too many passcode attempts. Please start over the login process."
+ERR_OAUTH_USER_EMAIL_NOT_RETURNED = "Email is not returned from provider. Please set correct OAuth scopes."
 
 # User errors
 ERR_USER_UNAVAILABLE = "User is unavailable. Please contact administrator."
 ERR_USERNAME_UNAVAILABLE = "Username is unavailable"
 ERR_USER_DEMO_UNAUTHORIZED = "Demo user is unauthorized to perform the action"
 ERR_USER_INVITE_TOKEN_INVALID = "Invite token is invalid or expired"
-ERR_USER_STATUS_NOT_ALLOW_ACTION = "User status does not allow the action"
+ERR_USER_STATUS_NOT_ALLOW_ACTION = "User current status does not allow the action"
 ERR_USER_ALREADY_SIGN_UP = "User already signs up"
 ERR_USER_NOT_COMPLETE_MFA_SETUP = "User hasn't completed the required MFA setup yet"
 ERR_PASSWORD_NOT_MEET_REQUIREMENTS = "Password does not meet requirements. Must contain at least {{.MinLen}} characters with {{.Lowers}} lowercase, {{.Uppers}} uppercase, {{.Digits}} digit, and {{.Specials}} special characters."
@@ -104,7 +105,6 @@ ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a rep
 ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
 
 # Cluster error
-ERR_NODE_REQUIRED_BY_HIVEPAAS_APP = "Node is required to be an active manager as HivePaaS app is running in it"
 ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_MOUNT_TYPE_UNSUPPORTED = "Mount type '{{.Type}}' is not supported"
 ERR_VOLUME_ALREADY_EXISTS = "Volume '{{.Volume}}' already exists"

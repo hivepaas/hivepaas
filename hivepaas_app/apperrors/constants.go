@@ -107,6 +107,7 @@ var (
 	ErrPasscodeMismatched          = NewErr(ErrUnauthorized, "ERR_PASSCODE_MISMATCHED")
 	ErrTooManyLoginFailures        = NewErr(ErrUnauthorized, "ERR_TOO_MANY_LOGIN_FAILURES")
 	ErrTooManyPasscodeAttempts     = NewErr(ErrUnauthorized, "ERR_TOO_MANY_PASSCODE_ATTEMPTS")
+	ErrOAuthUserEmailNotReturned   = NewErr(ErrPreconditionFailed, "ERR_OAUTH_USER_EMAIL_NOT_RETURNED")
 )
 
 // Errors for user
@@ -172,7 +173,6 @@ var (
 
 // Errors for cluster
 var (
-	ErrNodeRequiredByHivePaaSApp     = NewErr(ErrPreconditionRequired, "ERR_NODE_REQUIRED_BY_HIVEPAAS_APP")
 	ErrServiceNotRunning             = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
 	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
 	ErrVolumeAlreadyExists           = NewErr(ErrAlreadyExist, "ERR_VOLUME_ALREADY_EXISTS")

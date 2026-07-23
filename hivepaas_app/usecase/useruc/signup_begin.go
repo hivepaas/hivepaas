@@ -29,8 +29,8 @@ func (uc *UC) BeginUserSignup(
 	}
 
 	if user.Status != base.UserStatusPending {
-		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
-			WithMsgLog("user '%s' not require signup", user.Email)
+		return nil, apperrors.Wrap(apperrors.ErrUserStatusNotAllowAction).
+			WithMsgLog("user '%s' is not required to signup", user.Email)
 	}
 
 	resp := &userdto.BeginUserSignupDataResp{

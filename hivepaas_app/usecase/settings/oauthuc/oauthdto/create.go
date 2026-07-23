@@ -2,6 +2,7 @@ package oauthdto
 
 import (
 	"strings"
+	"unicode"
 
 	vld "github.com/tiendc/go-validator"
 
@@ -50,18 +51,49 @@ func (req *OAuthBaseReq) modifyRequest() error {
 	req.TokenURL = strings.TrimSpace(req.TokenURL)
 	req.ProfileURL = strings.TrimSpace(req.ProfileURL)
 	req.AutoDiscoveryURL = strings.TrimSpace(req.AutoDiscoveryURL)
-	for i := range req.Scopes {
-		req.Scopes[i] = strings.TrimSpace(req.Scopes[i])
+	req.Scopes = strings.FieldsFunc(strings.Join(req.Scopes, ","), func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	})
+	if len(req.Scopes) == 0 {
+		switch req.Kind {
+		case base.OAuthKindGitea:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultGitea)
+		case base.OAuthKindGithub:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultGithub)
+		case base.OAuthKindGithubApp:
+		case base.OAuthKindGitlab:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultGitlab)
+		case base.OAuthKindGoogle:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultGoogle)
+		case base.OAuthKindMicrosoftOnline:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultMicrosoftOnline)
+		case base.OAuthKindOpenIDConnect:
+			req.Scopes = strings.Fields(base.OAuthScopeDefaultOpenIDConnect)
+		}
 	}
 	return nil
 }
 
-// nolint
 func (req *OAuthBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	// TODO: add validation
+	res = append(res, basedto.ValidateStr(&req.Name, true, base.SettingNameMinLen,
+		base.SettingNameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStr(&req.ClientID, true, base.IDMinLen,
+		base.IDMaxLen, field+"clientId")...)
+	res = append(res, basedto.ValidateStr(&req.ClientSecret, true, base.SecretMinLen,
+		base.SecretMaxLen, field+"clientSecret")...)
+	res = append(res, basedto.ValidateStr(&req.Organization, false, base.IDMinLen,
+		base.IDMaxLen, field+"organization")...)
+	res = append(res, basedto.ValidateStr(&req.AuthURL, false, base.URLMinLen,
+		base.URLMaxLen, field+"authURL")...)
+	res = append(res, basedto.ValidateStr(&req.TokenURL, false, base.URLMinLen,
+		base.URLMaxLen, field+"tokenURL")...)
+	res = append(res, basedto.ValidateStr(&req.ProfileURL, false, base.URLMinLen,
+		base.URLMaxLen, field+"profileURL")...)
+	res = append(res, basedto.ValidateStr(&req.AutoDiscoveryURL, false, base.URLMinLen,
+		base.URLMaxLen, field+"autoDiscoveryURL")...)
 	return res
 }
 

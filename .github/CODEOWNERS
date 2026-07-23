@@ -1,4 +1,16 @@
-# the usage of this file: https://help.github.com/articles/about-codeowners/
+# ==========================================
+# Global Default Owner
+# ==========================================
 
-# These owners will be the default owners for everything in the repo.
-*       @tiendc
+# ==========================================
+# Critical Security & CI/CD Pipelines
+# ==========================================
+/.github/       @tiendc
+
+# ==========================================
+# Configuration & Deployments
+# ==========================================
+/Makefile       @tiendc
+/config/        @tiendc
+/deployment/    @tiendc
+/scripts/       @tiendc

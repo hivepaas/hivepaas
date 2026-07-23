@@ -180,15 +180,6 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		schedJobGroup.POST("calc-next-runs", settingHandler.SchedJobCalcNextRuns)
 	}
 
-	{ // secrets group
-		secretGroup := settingGroup.Group("/secrets")
-		secretGroup.GET("", settingHandler.ListSecret)
-		secretGroup.POST("", settingHandler.CreateSecret)
-		secretGroup.PUT("/:itemID", settingHandler.UpdateSecret)
-		secretGroup.PUT("/:itemID/status", settingHandler.UpdateSecretStatus)
-		secretGroup.DELETE("/:itemID", settingHandler.DeleteSecret)
-	}
-
 	{ // SSH key group
 		sshKeyGroup := settingGroup.Group("/ssh-keys")
 		sshKeyGroup.GET("/:itemID", settingHandler.GetSSHKey)

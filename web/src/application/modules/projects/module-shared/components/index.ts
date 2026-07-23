@@ -5,6 +5,7 @@ export * from "./project-app-status-badge";
 export * from "./project-secret-status-badge";
 export * from "./project-sidebar";
 export * from "./env-vars-form-header";
+export * from "./final-env-values-dialog";
 export * from "./project-env-input";
 export * from "./project-env-badge";
 export * from "./project-env-filter";

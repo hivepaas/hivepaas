@@ -115,8 +115,8 @@ const DomainSchema = z.object({
 });
 
 const AppHttpSettingsSchema = z.object({
-    internalEndpoints: z.array(z.string()).nullish(),
     domainSuggestion: z.string(),
+    port: z.number().nullish(),
     exposePublicly: z.boolean(),
     domains: z.array(DomainSchema).nullish(),
     updateVer: z.number(),
@@ -281,8 +281,8 @@ export class AppHttpSettingsApiValidator {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {
-                internalEndpoints: data.internalEndpoints ?? [],
                 domainSuggestion: data.domainSuggestion,
+                port: data.port ?? 0,
                 exposePublicly: data.exposePublicly,
                 domains: data.domains?.map(mapDomain) ?? [],
                 updateVer: data.updateVer,

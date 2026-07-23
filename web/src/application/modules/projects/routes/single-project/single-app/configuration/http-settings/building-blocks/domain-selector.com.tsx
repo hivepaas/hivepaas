@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 
 import { flushSync } from "react-dom";
 
-import { Button, Checkbox, FieldError, Input } from "@components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
+import { InputNumber } from "@components/ui/input-number";
 import { cn } from "@lib/utils";
 import { ArrowBigLeftDash, Check, EyeIcon, Plus, X } from "lucide-react";
 import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
@@ -93,15 +94,17 @@ function DomainChip({ domain, isFirst, isActive, readOnly, onClick, onMoveLeft, 
 interface DomainSelectorProps {
     activeDomainIndex: number;
     setActiveDomainIndex: (index: number) => void;
-    internalEndpoints: string[];
     domainSuggestion: string;
     readOnly?: boolean;
+}
+
+function isValidContainerPort(value: unknown): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 65535;
 }
 
 export function DomainSelector({
     activeDomainIndex,
     setActiveDomainIndex,
-    internalEndpoints,
     domainSuggestion,
     readOnly = false,
 }: DomainSelectorProps) {
@@ -112,6 +115,10 @@ export function DomainSelector({
     >();
 
     const { fields, append, move } = useFieldArray({ control, name: "domains" });
+    const {
+        field: port,
+        fieldState: { error: portError, invalid: isPortInvalid },
+    } = useController({ control, name: "port" });
     const { field: exposePublicly } = useController({ control, name: "exposePublicly" });
     const domainValues = useWatch({ control, name: "domains", defaultValue: [] });
     const normalizeDomain = useMemo(() => (value: string) => value.trim().toLowerCase(), []);
@@ -160,14 +167,18 @@ export function DomainSelector({
     function handleConfirmAdd() {
         if (readOnly) return;
 
+        const isFirstDomain = domainValues.length === 0;
         const firstPort = domainValues[0]?.containerPort;
-        const containerPort =
-            typeof firstPort === "number" && Number.isInteger(firstPort) && firstPort >= 1 && firstPort <= 65535
-                ? firstPort
-                : emptyDomain.containerPort;
+        const topLevelPort = getValues("port");
+        const containerPort = isFirstDomain
+            ? isValidContainerPort(topLevelPort)
+                ? topLevelPort
+                : emptyDomain.containerPort
+            : isValidContainerPort(firstPort)
+              ? firstPort
+              : emptyDomain.containerPort;
 
         const trimmedDraft = newDomainDraft.trim();
-        const isFirstDomain = domainValues.length === 0;
         const firstDomainDefaults = isFirstDomain ? { compressionConfig: createDefaultCompressionConfig() } : {};
 
         if (trimmedDraft.length === 0) {
@@ -206,17 +217,37 @@ export function DomainSelector({
 
     return (
         <div className="flex flex-col gap-4">
-            <InfoBlock title="Project Internal Endpoint(s)">
-                <div className="flex flex-wrap gap-2">
-                    {internalEndpoints.map(ep => (
-                        <span
-                            key={ep}
-                            className="font-mono text-xs text-red-500"
-                        >
-                            {ep}
-                        </span>
-                    ))}
-                </div>
+            <InfoBlock
+                title={
+                    <LabelWithInfo
+                        label="Container Port"
+                        content="The port on which the container will listen for incoming traffic."
+                    />
+                }
+            >
+                <FieldGroup>
+                    <Field>
+                        <InputNumber
+                            name={port.name}
+                            ref={port.ref}
+                            onBlur={port.onBlur}
+                            disabled={readOnly || port.disabled}
+                            value={port.value}
+                            onValueChange={v => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                port.onChange(v ?? 0);
+                            }}
+                            useGrouping={false}
+                            placeholder="8080"
+                            className="max-w-[100px]"
+                            aria-invalid={isPortInvalid}
+                        />
+                        <FieldError errors={[portError]} />
+                    </Field>
+                </FieldGroup>
             </InfoBlock>
 
             <InfoBlock

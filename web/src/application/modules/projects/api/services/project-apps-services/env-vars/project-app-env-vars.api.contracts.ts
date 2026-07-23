@@ -7,6 +7,12 @@ import {
 
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
+export type EnvVarWireItem = {
+    key: string;
+    value: string;
+    isLiteral: boolean;
+};
+
 /**
  * Find one project app env vars
  */
@@ -37,3 +43,16 @@ export type ProjectAppEnvVars_UpdateOne_Req = ApiRequestBase<{
 export type ProjectAppEnvVars_UpdateOne_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Compute project app env vars
+ */
+export type ProjectAppEnvVars_Compute_Req = ApiRequestBase<{
+    projectID: string;
+    appID: string;
+    buildtimeEnvVars?: EnvVarWireItem[];
+    runtimeEnvVars?: EnvVarWireItem[];
+    sharedEnvVars?: EnvVarWireItem[];
+}>;
+
+export type ProjectAppEnvVars_Compute_Res = ApiResponseBase<{ key: string; value: string }[]>;

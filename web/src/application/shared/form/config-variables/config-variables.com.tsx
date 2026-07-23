@@ -25,7 +25,14 @@ KEY_2=
 value line
 ${MULTILINE_ENV_SEPARATOR}`;
 
-function View<T>({ name, search = "", viewMode = "individual", isRevealed = false, readOnly = false }: Props<T>) {
+function View<T>({
+    name,
+    search = "",
+    viewMode = "individual",
+    isRevealed = false,
+    readOnly = false,
+    extraActions,
+}: Props<T>) {
     const {
         control,
         register,
@@ -342,16 +349,19 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
             )}
 
             {/* Add Button */}
-            <Button
-                type="button"
-                variant="outline"
-                onClick={handleAdd}
-                disabled={readOnly}
-                className="w-fit"
-            >
-                <Plus className="size-4" />
-                Add
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAdd}
+                    disabled={readOnly}
+                    className="w-fit"
+                >
+                    <Plus className="size-4" />
+                    Add
+                </Button>
+                {extraActions}
+            </div>
         </div>
     ) : (
         <div className="flex flex-col gap-2">
@@ -372,6 +382,7 @@ function View<T>({ name, search = "", viewMode = "individual", isRevealed = fals
             <p className="text-xs text-muted-foreground">
                 Enter environment variables in key=value format, one per line
             </p>
+            {extraActions ? <div className="flex flex-wrap items-center gap-2">{extraActions}</div> : null}
         </div>
     );
 }
@@ -382,6 +393,7 @@ type Props<T> = {
     viewMode?: "merge" | "individual";
     isRevealed?: boolean;
     readOnly?: boolean;
+    extraActions?: React.ReactNode;
 };
 
 export const ConfigVariables = React.memo(View) as typeof View;

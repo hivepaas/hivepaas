@@ -2,8 +2,8 @@ import type { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums"
 import type { SettingsBaseEntity } from "~/settings/domain";
 
 export type AppHttpSettings = {
-    internalEndpoints: string[];
     domainSuggestion: string;
+    port: number;
     exposePublicly: boolean;
     domains: AppHttpDomain[];
     updateVer: number;
@@ -156,6 +156,7 @@ export type AppHttpSettingsUpdatePath = {
 };
 
 export type AppHttpSettingsUpdatePayload = {
+    port: number;
     exposePublicly: boolean;
     domains: AppHttpSettingsUpdateDomain[];
     updateVer: number;

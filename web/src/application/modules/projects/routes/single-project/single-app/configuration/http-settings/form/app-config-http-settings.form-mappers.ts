@@ -163,6 +163,7 @@ function mapDomainToFormInput(domain: AppHttpDomain): AppConfigHttpSettingsFormS
 
 export function mapAppHttpSettingsToFormInput(data: AppHttpSettings): AppConfigHttpSettingsFormSchemaInput {
     return {
+        port: data.port >= 1 && data.port <= 65535 ? data.port : 8080,
         exposePublicly: data.exposePublicly,
         domains: data.domains.map(mapDomainToFormInput),
     };
@@ -170,6 +171,7 @@ export function mapAppHttpSettingsToFormInput(data: AppHttpSettings): AppConfigH
 
 export function mapFormValuesToPayload(values: AppConfigHttpSettingsFormSchemaOutput): AppHttpSettingsUpdatePayload {
     return {
+        port: values.port,
         exposePublicly: values.exposePublicly,
         domains: values.domains.map(domain => ({
             enabled: domain.enabled,

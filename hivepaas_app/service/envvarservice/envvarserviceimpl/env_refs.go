@@ -70,7 +70,7 @@ func (s *service) processRefsRecursively(
 				env.Errors = append(env.Errors, fmt.Sprintf("failed to parse secret '%s'", varName))
 				return match
 			}
-			env.RefSecrets[secret] = struct{}{}
+			env.AddRefSecret(secret)
 
 			if data.MaskSecrets {
 				return secretMask
@@ -128,7 +128,7 @@ func (s *service) processRefsRecursively(
 			return match
 		}
 		for secret := range refEnv.RefSecrets {
-			env.RefSecrets[secret] = struct{}{}
+			env.AddRefSecret(secret)
 		}
 		return refEnv.Value
 	}

@@ -14,6 +14,13 @@ func (env *EnvVar) ToString(sep string) string {
 	return env.Key + sep + env.Value
 }
 
+func (env *EnvVar) AddRefSecret(secret *entity.Secret) {
+	if env.RefSecrets == nil {
+		env.RefSecrets = make(map[*entity.Secret]struct{})
+	}
+	env.RefSecrets[secret] = struct{}{}
+}
+
 type ComputeAppEnvVarsReq struct {
 	App                    *entity.App
 	TargetVars             []string

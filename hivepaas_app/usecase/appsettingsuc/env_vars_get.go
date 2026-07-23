@@ -42,19 +42,19 @@ func (uc *UC) GetAppEnvVars(
 		App:  app,
 		Vars: settings,
 	}
-	input.SystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx,
+	input.SystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx, uc.db,
 		&envvarservice.ComputeAppSystemEnvVarsReq{App: app})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 	if app.ParentApp != nil {
-		input.ParentSystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx,
+		input.ParentSystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx, uc.db,
 			&envvarservice.ComputeAppSystemEnvVarsReq{App: app.ParentApp})
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
 	}
-	input.ProjectSystemVars, err = uc.envVarService.ComputeProjectSystemEnvVars(ctx,
+	input.ProjectSystemVars, err = uc.envVarService.ComputeProjectSystemEnvVars(ctx, uc.db,
 		&envvarservice.ComputeProjectSystemEnvVarsReq{Project: app.Project})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

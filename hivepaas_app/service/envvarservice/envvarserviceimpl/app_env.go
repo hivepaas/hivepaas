@@ -140,7 +140,7 @@ func (s *service) loadAppVarsAndSecrets(
 	}
 
 	// Inject app system env vars
-	sysVars, err := s.ComputeAppSystemEnvVars(ctx, &envvarservice.ComputeAppSystemEnvVarsReq{
+	sysVars, err := s.ComputeAppSystemEnvVars(ctx, db, &envvarservice.ComputeAppSystemEnvVarsReq{
 		App: app,
 	})
 	if err != nil {

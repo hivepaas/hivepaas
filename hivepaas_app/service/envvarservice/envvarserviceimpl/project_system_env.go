@@ -6,11 +6,13 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
 func (s *service) ComputeProjectSystemEnvVars(
 	ctx context.Context,
+	_ database.IDB,
 	req *envvarservice.ComputeProjectSystemEnvVarsReq,
 ) ([]*envvarservice.EnvVar, error) {
 	result := []*envvarservice.EnvVar{

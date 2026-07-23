@@ -42,6 +42,7 @@ const (
 	ResourceTypeNode               ResourceType = "node"
 	ResourceTypeNotification       ResourceType = "notification"
 	ResourceTypeOAuth              ResourceType = "oauth"
+	ResourceTypePort               ResourceType = "port"
 	ResourceTypeProject            ResourceType = "project"
 	ResourceTypeRegistryAuth       ResourceType = "registry-auth"
 	ResourceTypeRepo               ResourceType = "repo"

@@ -76,6 +76,7 @@ func (s *service) initRootProjectMainApp(
 		UpdatedAt: timeNow,
 	}
 	httpSettings := &entity.AppHttpSettings{
+		Port:           cfg.HTTPServer.Port,
 		ExposePublicly: true,
 		Domains: []*entity.AppDomain{
 			{

@@ -40,11 +40,11 @@ type GetAppHttpSettingsResp struct {
 }
 
 type HttpSettingsResp struct {
-	InternalEndpoints []string      `json:"internalEndpoints"`
-	DomainSuggestion  string        `json:"domainSuggestion"`
-	ExposePublicly    bool          `json:"exposePublicly"`
-	Domains           []*DomainResp `json:"domains"`
-	UpdateVer         int           `json:"updateVer"`
+	DomainSuggestion string        `json:"domainSuggestion"`
+	Port             int           `json:"port"`
+	ExposePublicly   bool          `json:"exposePublicly"`
+	Domains          []*DomainResp `json:"domains"`
+	UpdateVer        int           `json:"updateVer"`
 }
 
 type DomainResp struct {
@@ -146,10 +146,6 @@ type AppHttpSettingsTransformInput struct {
 
 func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSettingsResp, err error) {
 	resp = &HttpSettingsResp{}
-	resp.InternalEndpoints = []string{
-		fmt.Sprintf("http://%s:<port>", input.App.Key),
-		fmt.Sprintf("http://%s:<port>", input.App.GlobalKey),
-	}
 	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 
 	if input.HttpSettings == nil {

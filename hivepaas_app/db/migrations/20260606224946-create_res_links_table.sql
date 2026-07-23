@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS res_links
     src_id          VARCHAR NOT NULL,
     dst_type        VARCHAR(100) NOT NULL,
     dst_id          VARCHAR NOT NULL,
+    index           INT2 NOT NULL DEFAULT 0,
     data            JSONB NULL,
 
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

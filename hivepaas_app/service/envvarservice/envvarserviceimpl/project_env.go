@@ -112,7 +112,7 @@ func (s *service) loadProjectVarsAndSecrets(
 	}
 
 	// Inject project system env vars
-	projectSysVars, err := s.ComputeProjectSystemEnvVars(ctx, &envvarservice.ComputeProjectSystemEnvVarsReq{
+	projectSysVars, err := s.ComputeProjectSystemEnvVars(ctx, db, &envvarservice.ComputeProjectSystemEnvVarsReq{
 		Project: project,
 	})
 	if err != nil {

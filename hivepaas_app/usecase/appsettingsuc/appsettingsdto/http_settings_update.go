@@ -20,6 +20,7 @@ import (
 type UpdateAppHttpSettingsReq struct {
 	ProjectID      string       `json:"-"`
 	AppID          string       `json:"-"`
+	Port           int          `json:"port"`
 	ExposePublicly bool         `json:"exposePublicly"`
 	Domains        []*DomainReq `json:"domains"`
 	UpdateVer      int          `json:"updateVer"`
@@ -27,6 +28,7 @@ type UpdateAppHttpSettingsReq struct {
 
 func (req *UpdateAppHttpSettingsReq) ToEntity() *entity.AppHttpSettings {
 	return &entity.AppHttpSettings{
+		Port:           req.Port,
 		ExposePublicly: req.ExposePublicly,
 		Domains: gofn.MapSlice(req.Domains, func(r *DomainReq) *entity.AppDomain {
 			return r.ToEntity()
@@ -532,10 +534,17 @@ func NewUpdateAppHttpSettingsReq() *UpdateAppHttpSettingsReq {
 }
 
 func (req *UpdateAppHttpSettingsReq) ModifyRequest() error {
+	activePort := 0
 	for _, domainReq := range req.Domains {
+		if activePort == 0 && domainReq.Enabled {
+			activePort = domainReq.ContainerPort
+		}
 		if err := domainReq.modifyRequest(); err != nil {
 			return apperrors.Wrap(err)
 		}
+	}
+	if req.Port == 0 {
+		req.Port = activePort
 	}
 	return nil
 }
@@ -545,6 +554,7 @@ func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidatePort(&req.Port, false, 1, "port")...)
 	validators = append(validators, vld.Slice(req.Domains).ForEach(
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
 			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)

@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/tiendc/gofn"
@@ -26,6 +27,7 @@ func (s *appHttpSettingsParser) New() SettingData {
 }
 
 type AppHttpSettings struct {
+	Port           int          `json:"port"`
 	ExposePublicly bool         `json:"exposePublicly"`
 	Domains        []*AppDomain `json:"domains,omitempty"`
 	Reset          bool         `json:"reset,omitempty"`
@@ -189,9 +191,9 @@ func (s *AppHttpSettings) GetBasicAuthIDs() (res []string) {
 func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	resLinks := s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 
-	// Links domain to the current setting
+	// Links domains to the current setting
 	timeNow := timeutil.NowUTC()
-	for _, domain := range s.GetActiveDomainNames() {
+	for i, domain := range s.GetActiveDomainNames() {
 		if setting.ObjectID == "" {
 			continue
 		}
@@ -200,10 +202,21 @@ func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
 			SrcID:     setting.ID,
 			DstType:   base.ResourceTypeDomain,
 			DstID:     domain,
+			Index:     i,
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		})
 	}
+
+	// Links port
+	resLinks = append(resLinks, &ResLink{
+		SrcType:   base.ResourceTypeSetting,
+		SrcID:     setting.ID,
+		DstType:   base.ResourceTypePort,
+		DstID:     strconv.Itoa(s.Port),
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	})
 
 	return resLinks
 }

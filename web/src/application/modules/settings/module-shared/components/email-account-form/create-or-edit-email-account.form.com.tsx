@@ -1,24 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, FormProvider, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import {
     SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import {
-    FormActionBar,
-    InfoBlock,
-    InputWithAddOn,
-    LabelWithInfo,
-    SelectWithAddon,
-} from "@application/shared/components";
+import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EEmailKind } from "@application/shared/enums";
-import { FieldListLayout, KeyValueList } from "@application/shared/form";
+import { KeyValueList } from "@application/shared/form";
 
 import {
     Button,
@@ -123,9 +116,6 @@ export function CreateOrEditEmailAccountForm({
     }, [isDirty, onHasChanges, isReadOnly]);
 
     const kindValue = useWatch({ control, name: "kind" });
-    const fieldMapping = useFieldArray({ control, name: "fieldMapping" });
-    const [mappingKey, setMappingKey] = useState("");
-    const [mappingValue, setMappingValue] = useState("");
 
     const {
         field: name,
@@ -178,23 +168,6 @@ export function CreateOrEditEmailAccountForm({
 
     function onInvalid(_errors: FieldErrors<CreateOrEditEmailAccountFormOutput>) {
         console.error(_errors);
-    }
-
-    function handleAddFieldMapping() {
-        const trimmedKey = mappingKey.trim();
-        if (!trimmedKey) {
-            return;
-        }
-
-        const exists = fieldMapping.fields.some(field => field.key === trimmedKey);
-        if (exists) {
-            toast.error(`Key "${trimmedKey}" already exists`);
-            return;
-        }
-
-        fieldMapping.append({ key: trimmedKey, value: mappingValue.trim() });
-        setMappingKey("");
-        setMappingValue("");
     }
 
     return (
@@ -423,50 +396,16 @@ export function CreateOrEditEmailAccountForm({
                                         titleWidth={220}
                                         title={<LabelWithInfo label="Field Mappings" />}
                                     >
-                                        <FieldListLayout
+                                        <KeyValueList<CreateOrEditEmailAccountFormInput>
+                                            name="fieldMapping"
+                                            keyOptions={FIELD_MAPPING_OPTIONS}
+                                            keyLabel="Name"
+                                            valueLabel="Value"
+                                            keyPlaceholder="select field"
+                                            valuePlaceholder="value"
+                                            checkDuplicates
+                                            enableValueEditing
                                             className={SETTINGS_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
-                                            inputsClassName="grid min-w-0 flex-1 grid-cols-2 gap-2"
-                                            inputRow={
-                                                <>
-                                                    <SelectWithAddon
-                                                        addonLeft="Name"
-                                                        value={mappingKey}
-                                                        onValueChange={setMappingKey}
-                                                        placeholder="select field"
-                                                    >
-                                                        {FIELD_MAPPING_OPTIONS.map(option => (
-                                                            <SelectItem
-                                                                key={option.value}
-                                                                value={option.value}
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectWithAddon>
-                                                    <InputWithAddOn
-                                                        addonLeft="Value"
-                                                        value={mappingValue}
-                                                        onChange={event => {
-                                                            setMappingValue(event.target.value);
-                                                        }}
-                                                        placeholder="value"
-                                                    />
-                                                </>
-                                            }
-                                            onAdd={handleAddFieldMapping}
-                                            addDisabled={!mappingKey.trim()}
-                                            items={fieldMapping.fields.map((field, index) => ({
-                                                id: field.id,
-                                                content: (
-                                                    <div className="grid flex-1 grid-cols-2 gap-2">
-                                                        <div className="break-words text-sm">{field.key}</div>
-                                                        <div className="break-words text-sm">{field.value}</div>
-                                                    </div>
-                                                ),
-                                                onRemove: () => {
-                                                    fieldMapping.remove(index);
-                                                },
-                                            }))}
                                         />
                                     </InfoBlock>
                                 </>

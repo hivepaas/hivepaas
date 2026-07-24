@@ -19,8 +19,10 @@ function View<T>({
     keyOptions,
     disabled = false,
     enableValueEditing = false,
+    keyField = "key",
+    valueField = "value",
 }: Props<T>) {
-    const { control } = useFormContext<Record<string, { key: string; value: string }[]>>();
+    const { control } = useFormContext<Record<string, Record<string, string>[]>>();
     const { fields, append, remove, update } = useFieldArray({ control, name: name as string });
 
     const [keyInput, setKeyInput] = useState("");
@@ -29,6 +31,11 @@ function View<T>({
     const [draftValue, setDraftValue] = useState("");
 
     const canEditValues = enableValueEditing && !disabled;
+
+    const getFieldValue = (field: Record<string, unknown>, fieldName: string) => {
+        const value = field[fieldName];
+        return typeof value === "string" ? value : "";
+    };
 
     const handleAdd = () => {
         if (disabled) {
@@ -39,14 +46,16 @@ function View<T>({
         if (!trimmedKey) return;
 
         if (checkDuplicates) {
-            const exists = fields.some(field => (field as { key?: string }).key === trimmedKey);
+            const exists = fields.some(
+                field => getFieldValue(field as Record<string, unknown>, keyField) === trimmedKey,
+            );
             if (exists) {
                 toast.error(`Key "${trimmedKey}" already exists`);
                 return;
             }
         }
 
-        append({ key: trimmedKey, value: valueInput.trim() } as never);
+        append({ [keyField]: trimmedKey, [valueField]: valueInput.trim() } as never);
         setKeyInput("");
         setValueInput("");
         setEditingIndex(null);
@@ -67,10 +76,10 @@ function View<T>({
             return;
         }
 
-        const currentField = fields[index] as { key?: string; value?: string };
+        const currentField = fields[index] as Record<string, unknown>;
         update(index, {
-            key: currentField.key ?? "",
-            value: draftValue.trim(),
+            [keyField]: getFieldValue(currentField, keyField),
+            [valueField]: draftValue.trim(),
         } as never);
         setEditingIndex(null);
         setDraftValue("");
@@ -149,17 +158,18 @@ function View<T>({
             {fields.length > 0 && (
                 <div className="mt-2 divide-y divide-zinc-200">
                     {fields.map((field, index) => {
-                        const rowKey = (field as { key?: string }).key ?? "";
-                        const rowValue = (field as { value?: string }).value ?? "";
+                        const row = field as Record<string, unknown>;
+                        const rowKey = getFieldValue(row, keyField);
+                        const rowValue = getFieldValue(row, valueField);
                         const isEditing = canEditValues && editingIndex === index;
 
                         return (
                             <div
                                 key={field.id}
-                                className="flex items-center group gap-3 py-2"
+                                className="flex items-center group gap-2 py-2"
                             >
-                                <div className="grid grid-cols-2 flex-1 gap-3">
-                                    <div className="text-sm break-words">{rowKey}</div>
+                                <div className="grid grid-cols-2 flex-1 gap-2">
+                                    <div className="text-sm wrap-break-word">{rowKey}</div>
                                     {isEditing ? (
                                         <Input
                                             value={draftValue}
@@ -182,13 +192,13 @@ function View<T>({
                                             className="h-8"
                                         />
                                     ) : (
-                                        <div className="text-sm break-words">{rowValue}</div>
+                                        <div className="text-sm wrap-break-word">{rowValue}</div>
                                     )}
                                 </div>
                                 <div
                                     className={cn(
-                                        "flex shrink-0 items-center justify-end gap-1",
-                                        enableValueEditing ? "w-[76px]" : "w-[40px]",
+                                        "flex shrink-0 items-center justify-space-between gap-1",
+                                        enableValueEditing ? "w-[76px]" : "w-10",
                                     )}
                                 >
                                     {enableValueEditing && (
@@ -266,6 +276,8 @@ type Props<T> = {
     keyOptions?: { label: string; value: string }[];
     disabled?: boolean;
     enableValueEditing?: boolean;
+    keyField?: string;
+    valueField?: string;
 };
 
 export const KeyValueList = React.memo(View) as typeof View;

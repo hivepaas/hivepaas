@@ -1,11 +1,9 @@
-import { useState } from "react";
-
 import { Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
-import { useController, useFieldArray, useFormContext } from "react-hook-form";
+import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
-import { FieldListLayout } from "@application/shared/form";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
@@ -18,14 +16,6 @@ export function ResourceReservationFields() {
 
     const { field: cpusField } = useController({ control, name: "reservations.cpus" });
     const { field: memoryField } = useController({ control, name: "reservations.memory" });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "reservations.genericResources",
-    });
-
-    const [newKind, setNewKind] = useState("");
-    const [newValue, setNewValue] = useState("");
 
     return (
         <div className="flex flex-col gap-6">
@@ -74,48 +64,14 @@ export function ResourceReservationFields() {
                     />
                 }
             >
-                <FieldListLayout
+                <KeyValueList<AppConfigResourcesFormSchemaInput>
+                    name="reservations.genericResources"
+                    keyField="kind"
+                    keyLabel="Name"
+                    keyPlaceholder="SSD"
+                    valuePlaceholder="sda1 (string or integer)"
+                    enableValueEditing
                     className="max-w-[590px]"
-                    inputsClassName="grid grid-cols-2 flex-1 gap-3"
-                    inputRow={
-                        <>
-                            <InputWithAddOn
-                                addonLeft="Name"
-                                value={newKind}
-                                onChange={e => {
-                                    setNewKind(e.target.value);
-                                }}
-                                placeholder="SSD"
-                            />
-                            <InputWithAddOn
-                                addonLeft="Value"
-                                value={newValue}
-                                onChange={e => {
-                                    setNewValue(e.target.value);
-                                }}
-                                placeholder="sda1 (string or integer)"
-                            />
-                        </>
-                    }
-                    onAdd={() => {
-                        if (!newKind.trim()) return;
-                        append({ kind: newKind.trim(), value: newValue.trim() });
-                        setNewKind("");
-                        setNewValue("");
-                    }}
-                    addDisabled={!newKind.trim()}
-                    items={fields.map((field, index) => ({
-                        id: field.id,
-                        content: (
-                            <div className="grid grid-cols-2 flex-1 gap-3">
-                                <span className="text-sm break-words">{field.kind}</span>
-                                <span className="text-sm break-words">{field.value}</span>
-                            </div>
-                        ),
-                        onRemove: () => {
-                            remove(index);
-                        },
-                    }))}
                 />
             </InfoBlock>
         </div>

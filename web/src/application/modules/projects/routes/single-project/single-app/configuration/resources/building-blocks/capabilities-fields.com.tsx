@@ -1,14 +1,12 @@
-import { useState } from "react";
-
 import { Input } from "@components/ui";
 import { Checkbox } from "@components/ui/checkbox";
 import { InputNumber } from "@components/ui/input-number";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useController, useFieldArray, useFormContext } from "react-hook-form";
+import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock, InputNumberWithAddon, InputWithAddOn, LabelWithInfo } from "@application/shared/components";
-import { FieldListLayout } from "@application/shared/form";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
 
@@ -25,14 +23,6 @@ export function CapabilitiesFields() {
     const { field: capabilityDropField } = useController({ control, name: "capabilities.capabilityDrop" });
     const { field: enableGPUField } = useController({ control, name: "capabilities.enableGPU" });
     const { field: oomScoreAdjField } = useController({ control, name: "capabilities.oomScoreAdj" });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "capabilities.sysctls",
-    });
-
-    const [newName, setNewName] = useState("");
-    const [newValue, setNewValue] = useState("");
 
     return (
         <div className="flex flex-col gap-6">
@@ -132,53 +122,14 @@ export function CapabilitiesFields() {
                     />
                 }
             >
-                <FieldListLayout
+                <KeyValueList<AppConfigResourcesFormSchemaInput>
+                    name="capabilities.sysctls"
+                    keyField="name"
+                    keyLabel="Name"
+                    keyPlaceholder="net.core.somaxconn"
+                    valuePlaceholder="1024"
+                    enableValueEditing
                     className="max-w-[590px]"
-                    inputsClassName="grid grid-cols-2 flex-1 gap-3"
-                    inputRow={
-                        <>
-                            <InputWithAddOn
-                                addonLeft="Name"
-                                value={newName}
-                                onChange={e => {
-                                    setNewName(e.target.value);
-                                }}
-                                placeholder="net.core.somaxconn"
-                            />
-                            <InputNumberWithAddon
-                                addonLeft="Value"
-                                value={
-                                    newValue.trim() === "" || Number.isNaN(Number(newValue))
-                                        ? undefined
-                                        : Number(newValue)
-                                }
-                                onValueChange={v => {
-                                    setNewValue(v === undefined ? "" : String(v));
-                                }}
-                                useGrouping={false}
-                                placeholder="1024"
-                            />
-                        </>
-                    }
-                    onAdd={() => {
-                        if (!newName.trim()) return;
-                        append({ name: newName.trim(), value: newValue.trim() });
-                        setNewName("");
-                        setNewValue("");
-                    }}
-                    addDisabled={!newName.trim()}
-                    items={fields.map((field, index) => ({
-                        id: field.id,
-                        content: (
-                            <div className="grid grid-cols-2 flex-1 gap-3">
-                                <span className="text-sm break-words">{field.name}</span>
-                                <span className="text-sm break-words">{field.value}</span>
-                            </div>
-                        ),
-                        onRemove: () => {
-                            remove(index);
-                        },
-                    }))}
                 />
             </InfoBlock>
         </div>

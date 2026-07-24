@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Input } from "@components/ui";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -12,8 +13,7 @@ import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
 
-const networkAttachmentsGridClass =
-    "grid flex-1 min-w-0 w-full grid-cols-2 gap-3 max-w-[500px] items-center [&>*]:min-w-0";
+const networkAttachmentsGridClass = "grid flex-1 min-w-0 w-full grid-cols-2 gap-2 items-center [&>*]:min-w-0";
 
 type NetworkOptionValue = {
     id: string;
@@ -24,8 +24,12 @@ export function NetworksFields({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
 
-    const { control } = useFormContext<AppConfigNetworksFormSchemaInput, unknown, AppConfigNetworksFormSchemaOutput>();
-    const { fields, append, remove } = useFieldArray({
+    const { control, getValues } = useFormContext<
+        AppConfigNetworksFormSchemaInput,
+        unknown,
+        AppConfigNetworksFormSchemaOutput
+    >();
+    const { fields, append, remove, update } = useFieldArray({
         control,
         name: "networkAttachments",
     });
@@ -33,6 +37,8 @@ export function NetworksFields({ readOnly = false }: Props) {
     const [search, setSearch] = useState("");
     const [selectedNetwork, setSelectedNetwork] = useState<NetworkOptionValue | null>(null);
     const [aliasesText, setAliasesText] = useState("");
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [draftAliases, setDraftAliases] = useState("");
 
     const {
         data: { data: projectNetworks } = DEFAULT_PAGINATED_DATA,
@@ -64,6 +70,38 @@ export function NetworksFields({ readOnly = false }: Props) {
         append({ id: selectedNetwork.id, name: selectedNetwork.name, aliasesText: aliasesText.trim() });
         setSelectedNetwork(null);
         setAliasesText("");
+        setEditingIndex(null);
+        setDraftAliases("");
+    };
+
+    const handleStartEdit = (index: number, currentAliases: string) => {
+        if (readOnly) {
+            return;
+        }
+
+        setEditingIndex(index);
+        setDraftAliases(currentAliases);
+    };
+
+    const handleSaveEdit = (index: number) => {
+        if (readOnly || editingIndex !== index) {
+            return;
+        }
+
+        // useFieldArray shadows the form `id` with its own React key, so read from form values.
+        const currentAttachment = getValues(`networkAttachments.${index}`);
+        update(index, {
+            id: currentAttachment.id,
+            name: currentAttachment.name,
+            aliasesText: draftAliases.trim(),
+        });
+        setEditingIndex(null);
+        setDraftAliases("");
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setDraftAliases("");
     };
 
     return (
@@ -76,6 +114,7 @@ export function NetworksFields({ readOnly = false }: Props) {
             }
         >
             <FieldListLayout
+                className="max-w-[590px]"
                 inputsClassName={networkAttachmentsGridClass}
                 inputRow={
                     <>
@@ -116,18 +155,60 @@ export function NetworksFields({ readOnly = false }: Props) {
                 }
                 onAdd={handleAdd}
                 disabled={readOnly}
-                items={fields.map((field, index) => ({
-                    id: field.id,
-                    content: (
-                        <div className={networkAttachmentsGridClass}>
-                            <span className="text-sm wrap-break-word min-w-0">{field.name || field.id}</span>
-                            <span className="text-sm wrap-break-word min-w-0">{field.aliasesText}</span>
-                        </div>
-                    ),
-                    onRemove: () => {
-                        remove(index);
-                    },
-                }))}
+                items={fields.map((field, index) => {
+                    const isEditing = !readOnly && editingIndex === index;
+
+                    return {
+                        id: field.id,
+                        content: (
+                            <div className={networkAttachmentsGridClass}>
+                                <span className="text-sm wrap-break-word min-w-0">{field.name || field.id}</span>
+                                {isEditing ? (
+                                    <Input
+                                        value={draftAliases}
+                                        onChange={e => {
+                                            setDraftAliases(e.target.value);
+                                        }}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                handleSaveEdit(index);
+                                            }
+                                            if (e.key === "Escape") {
+                                                e.preventDefault();
+                                                handleCancelEdit();
+                                            }
+                                        }}
+                                        placeholder="alias1 alias2"
+                                        className="h-8"
+                                    />
+                                ) : (
+                                    <span className="text-sm wrap-break-word min-w-0">{field.aliasesText}</span>
+                                )}
+                            </div>
+                        ),
+                        isEditing,
+                        onEdit: readOnly
+                            ? undefined
+                            : () => {
+                                  if (isEditing) {
+                                      handleSaveEdit(index);
+                                      return;
+                                  }
+
+                                  handleStartEdit(index, field.aliasesText);
+                              },
+                        onRemove: () => {
+                            if (editingIndex === index) {
+                                handleCancelEdit();
+                            } else if (editingIndex !== null && editingIndex > index) {
+                                setEditingIndex(editingIndex - 1);
+                            }
+
+                            remove(index);
+                        },
+                    };
+                })}
             />
         </InfoBlock>
     );

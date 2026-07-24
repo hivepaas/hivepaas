@@ -78,3 +78,38 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// ComputeEnvVars Computes project env vars
+// @Summary Computes project env vars
+// @Description Computes project env vars
+// @Tags    project_settings
+// @Produce json
+// @Id      computeProjectEnvVars
+// @Param   projectID path string true "project ID"
+// @Param   body body projectsettingsdto.ComputeProjectEnvVarsReq true "request data"
+// @Success 200 {object} projectsettingsdto.ComputeProjectEnvVarsResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/env-vars/compute [post]
+func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
+	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := projectsettingsdto.NewComputeProjectEnvVarsReq()
+	req.ProjectID = projectID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.projectSettingsUC.ComputeProjectEnvVars(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

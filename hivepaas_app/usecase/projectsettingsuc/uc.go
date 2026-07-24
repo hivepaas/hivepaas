@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 )
 
@@ -14,6 +15,7 @@ type UC struct {
 	projectSharedSettingRepo repository.ProjectSharedSettingRepo
 	settingRepo              repository.SettingRepo
 
+	envVarService  envvarservice.Service
 	projectService projectservice.Service
 
 	permissionManager permission.Manager
@@ -26,6 +28,7 @@ func New(
 	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
 	settingRepo repository.SettingRepo,
 
+	envVarService envvarservice.Service,
 	projectService projectservice.Service,
 
 	permissionManager permission.Manager,
@@ -37,6 +40,7 @@ func New(
 		projectSharedSettingRepo: projectSharedSettingRepo,
 		settingRepo:              settingRepo,
 
+		envVarService:  envVarService,
 		projectService: projectService,
 
 		permissionManager: permissionManager,

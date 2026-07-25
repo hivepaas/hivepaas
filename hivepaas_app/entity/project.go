@@ -32,7 +32,7 @@ type Project struct {
 	Owner       *User            `bun:"rel:has-one,join:owner_id=id" json:"owner,omitempty"`
 	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
 	Apps        []*App           `bun:"rel:has-many,join:id=project_id" json:"apps,omitempty"`
-	Tags        []*ProjectTag    `bun:"rel:has-many,join:id=project_id" json:"tags,omitempty"`
+	Tags        []*Tag           `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
 	Accesses    []*ACLPermission `bun:"rel:has-many,join:id=res_id" json:"accesses,omitempty"`
 	SrcResLinks []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
 	DstResLinks []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`

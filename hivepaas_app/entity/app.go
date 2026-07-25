@@ -36,7 +36,7 @@ type App struct {
 	Project     *Project   `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
 	ParentApp   *App       `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
 	Settings    []*Setting `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
-	Tags        []*AppTag  `bun:"rel:has-many,join:id=app_id" json:"tags,omitempty"`
+	Tags        []*Tag     `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
 	SrcResLinks []*ResLink `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
 	DstResLinks []*ResLink `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
 }

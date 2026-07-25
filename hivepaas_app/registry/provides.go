@@ -296,11 +296,9 @@ var Provides = []any{
 	repository.NewACLPermissionRepo,
 	// Repo: Project
 	repository.NewProjectRepo,
-	repository.NewProjectTagRepo,
 	repository.NewProjectSharedSettingRepo,
 	// Repo: App
 	repository.NewAppRepo,
-	repository.NewAppTagRepo,
 	// Repo: App deployment
 	repository.NewDeploymentRepo,
 	repository.NewTaskLogRepo,
@@ -317,6 +315,7 @@ var Provides = []any{
 	// Migration
 	repository.NewDataMigrationRepo,
 	// Others
+	repository.NewTagRepo,
 	repository.NewLoginTrustedDeviceRepo,
 	repository.NewLockRepo,
 	repository.NewBinObjectRepo,

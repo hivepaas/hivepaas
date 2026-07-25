@@ -21,7 +21,7 @@ func (uc *UC) GetApp(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("Tags",
-			bunex.SelectOrder("display_order"),
+			bunex.SelectOrder("index"),
 		),
 		bunex.SelectRelation("Settings",
 			// NOTE: load http settings to extract active domain names of the app

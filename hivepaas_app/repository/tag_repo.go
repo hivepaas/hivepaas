@@ -12,29 +12,29 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
-type AppTagRepo interface {
+type TagRepo interface {
 	List(ctx context.Context, db database.IDB, paging *basedto.Paging,
-		opts ...bunex.SelectQueryOption) ([]*entity.AppTag, *basedto.PagingMeta, error)
+		opts ...bunex.SelectQueryOption) ([]*entity.Tag, *basedto.PagingMeta, error)
 
-	UpsertMulti(ctx context.Context, db database.IDB, appTags []*entity.AppTag,
+	UpsertMulti(ctx context.Context, db database.IDB, tags []*entity.Tag,
 		conflictCols, updateCols []string, opts ...bunex.InsertQueryOption) error
 
-	DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
+	DeleteAllByObjects(ctx context.Context, db database.IDB, objectIDs []string,
 		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
-type appTagRepo struct {
+type tagRepo struct {
 }
 
-func NewAppTagRepo() AppTagRepo {
-	return &appTagRepo{}
+func NewTagRepo() TagRepo {
+	return &tagRepo{}
 }
 
-func (repo *appTagRepo) List(ctx context.Context, db database.IDB, paging *basedto.Paging,
-	opts ...bunex.SelectQueryOption) ([]*entity.AppTag, *basedto.PagingMeta, error) {
-	var appTags []*entity.AppTag
-	query := db.NewSelect().Model(&appTags)
+func (repo *tagRepo) List(ctx context.Context, db database.IDB, paging *basedto.Paging,
+	opts ...bunex.SelectQueryOption) ([]*entity.Tag, *basedto.PagingMeta, error) {
+	var tags []*entity.Tag
+	query := db.NewSelect().Model(&tags)
 	query = bunex.ApplySelect(query, opts...)
 
 	var pagingMeta *basedto.PagingMeta
@@ -57,15 +57,15 @@ func (repo *appTagRepo) List(ctx context.Context, db database.IDB, paging *based
 		return nil, nil, wrapPaginationError(err, paging)
 	}
 
-	return appTags, pagingMeta, nil
+	return tags, pagingMeta, nil
 }
 
-func (repo *appTagRepo) UpsertMulti(ctx context.Context, db database.IDB, appTags []*entity.AppTag,
+func (repo *tagRepo) UpsertMulti(ctx context.Context, db database.IDB, tags []*entity.Tag,
 	conflictCols, updateCols []string, opts ...bunex.InsertQueryOption) error {
-	if len(appTags) == 0 {
+	if len(tags) == 0 {
 		return nil
 	}
-	query := db.NewInsert().Model(&appTags)
+	query := db.NewInsert().Model(&tags)
 	query = bunex.ApplyInsert(query, opts...)
 	query = bunex.ApplyUpsert(query, conflictCols, updateCols)
 
@@ -76,13 +76,13 @@ func (repo *appTagRepo) UpsertMulti(ctx context.Context, db database.IDB, appTag
 	return nil
 }
 
-func (repo *appTagRepo) DeleteAllByApps(ctx context.Context, db database.IDB,
-	appIDs []string, opts ...bunex.DeleteQueryOption) error {
-	if len(appIDs) == 0 {
+func (repo *tagRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
+	objectIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(objectIDs) == 0 {
 		return nil
 	}
-	query := db.NewDelete().Model((*entity.AppTag)(nil)).
-		Where("app_id IN (?)", bun.List(appIDs))
+	query := db.NewDelete().Model((*entity.Tag)(nil)).
+		Where("object_id IN (?)", bun.List(objectIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
@@ -92,12 +92,12 @@ func (repo *appTagRepo) DeleteAllByApps(ctx context.Context, db database.IDB,
 	return nil
 }
 
-func (repo *appTagRepo) DeleteHard(ctx context.Context, db database.IDB,
+func (repo *tagRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
 		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
-	query := db.NewDelete().Model((*entity.AppTag)(nil)).ForceDelete().WhereAllWithDeleted()
+	query := db.NewDelete().Model((*entity.Tag)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

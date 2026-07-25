@@ -26,7 +26,7 @@ func (uc *UC) CreateAppTag(
 		}
 
 		persistingData := &persistingAppData{}
-		uc.preparePersistingAppTags(tagData.App, []string{req.Tag}, tagData.NextDisplayOrder, persistingData)
+		uc.preparePersistingAppTags(tagData.App, []string{req.Tag}, tagData.NextIndex, persistingData)
 
 		return uc.persistData(ctx, db, persistingData)
 	})
@@ -38,8 +38,8 @@ func (uc *UC) CreateAppTag(
 }
 
 type createAppTagData struct {
-	App              *entity.App
-	NextDisplayOrder int
+	App       *entity.App
+	NextIndex int
 }
 
 func (uc *UC) loadAppTagDataForAddNew(
@@ -54,21 +54,21 @@ func (uc *UC) loadAppTagDataForAddNew(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
-		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
+		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.App = app
 
-	nextDisplayOrder := 0
+	nextIndex := 0
 	for _, tag := range app.Tags {
 		if tag.DeletedAt.IsZero() && strings.EqualFold(tag.Tag, req.Tag) {
 			return apperrors.NewAlreadyExist("App tag")
 		}
-		nextDisplayOrder = max(nextDisplayOrder, tag.DisplayOrder+1)
+		nextIndex = max(nextIndex, tag.Index+1)
 	}
-	data.NextDisplayOrder = nextDisplayOrder
+	data.NextIndex = nextIndex
 
 	return nil
 }

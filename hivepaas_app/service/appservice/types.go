@@ -6,7 +6,7 @@ import (
 
 type PersistingAppData struct {
 	UpsertingApps        []*entity.App
-	UpsertingTags        []*entity.AppTag
+	UpsertingTags        []*entity.Tag
 	UpsertingSettings    []*entity.Setting
 	UpsertingResLinks    []*entity.ResLink
 	UpsertingDeployments []*entity.Deployment

@@ -14,11 +14,11 @@ func New(
 	db *database.DB,
 
 	appRepo repository.AppRepo,
-	appTagRepo repository.AppTagRepo,
 	deploymentRepo repository.DeploymentRepo,
 	fileRepo repository.FileRepo,
 	resLinkRepo repository.ResLinkRepo,
 	settingRepo repository.SettingRepo,
+	tagRepo repository.TagRepo,
 	taskRepo repository.TaskRepo,
 
 	clusterService clusterservice.Service,
@@ -31,11 +31,11 @@ func New(
 		db: db,
 
 		appRepo:        appRepo,
-		appTagRepo:     appTagRepo,
 		deploymentRepo: deploymentRepo,
 		fileRepo:       fileRepo,
 		resLinkRepo:    resLinkRepo,
 		settingRepo:    settingRepo,
+		tagRepo:        tagRepo,
 		taskRepo:       taskRepo,
 
 		clusterService: clusterService,
@@ -50,11 +50,11 @@ type service struct {
 	db *database.DB
 
 	appRepo        repository.AppRepo
-	appTagRepo     repository.AppTagRepo
 	deploymentRepo repository.DeploymentRepo
 	fileRepo       repository.FileRepo
 	resLinkRepo    repository.ResLinkRepo
 	settingRepo    repository.SettingRepo
+	tagRepo        repository.TagRepo
 	taskRepo       repository.TaskRepo
 
 	clusterService clusterservice.Service

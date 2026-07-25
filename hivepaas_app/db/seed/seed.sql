@@ -38,13 +38,6 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'Project A', 'project_a', 'active', '01JAB
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO project_tags (project_id, tag, display_order)
-VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'tag 1', 0),
-       ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'Tag 2', 1),
-       ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'Tag 3', 0),
-       ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'my tag', 1)
-ON CONFLICT DO NOTHING;
-
 INSERT INTO apps (id, name, global_key, key, status, project_id, env, created_at, updated_at)
 VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Backend', 'project_a_dev_backend', 'backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
         'development', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
@@ -58,8 +51,12 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Backend', 'project_a_dev_backend', 'backe
         'staging', '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO app_tags (app_id, tag, display_order)
-VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'tag 1', 0),
+INSERT INTO tags (object_id, tag, index)
+VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'tag 1', 0),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'Tag 2', 1),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'Tag 3', 0),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'my tag', 1),
+       ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'tag 1', 0),
        ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Tag 2', 1),
        ('01JAB9XED0GTXBSQDFVYAJ8WD2', 'Tag 3', 0),
        ('01JAB9XED0GTXBSQDFVYAJ8WD2', 'my tag', 1)

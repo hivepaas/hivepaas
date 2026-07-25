@@ -37,12 +37,12 @@ var (
 			Model: (*entity.ResLink)(nil),
 		},
 		{
-			Type:  "db/project",
-			Model: (*entity.Project)(nil),
+			Type:  "db/tag",
+			Model: (*entity.Tag)(nil),
 		},
 		{
-			Type:  "db/project-tag",
-			Model: (*entity.ProjectTag)(nil),
+			Type:  "db/project",
+			Model: (*entity.Project)(nil),
 		},
 		{
 			Type:  "db/project-shared-setting",
@@ -51,10 +51,6 @@ var (
 		{
 			Type:  "db/app",
 			Model: (*entity.App)(nil),
-		},
-		{
-			Type:  "db/app-tag",
-			Model: (*entity.AppTag)(nil),
 		},
 		{
 			Type:  "db/deployment",

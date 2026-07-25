@@ -12,7 +12,7 @@ import (
 func (s *service) PersistProjectData(ctx context.Context, db database.IDB,
 	persistingData *projectservice.PersistingProjectData) error {
 	// Deletes all current linked data if configured
-	err := s.projectTagRepo.DeleteAllByProjects(ctx, db, persistingData.ProjectsToDeleteTags)
+	err := s.tagRepo.DeleteAllByObjects(ctx, db, persistingData.ProjectsToDeleteTags)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -46,8 +46,8 @@ func (s *service) PersistProjectData(ctx context.Context, db database.IDB,
 	}
 
 	// Project Tags
-	err = s.projectTagRepo.UpsertMulti(ctx, db, persistingData.UpsertingTags,
-		entity.ProjectTagUpsertingConflictCols, entity.ProjectTagUpsertingUpdateCols)
+	err = s.tagRepo.UpsertMulti(ctx, db, persistingData.UpsertingTags,
+		entity.TagUpsertingConflictCols, entity.TagUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

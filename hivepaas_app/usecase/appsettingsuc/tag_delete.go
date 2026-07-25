@@ -42,8 +42,8 @@ func (uc *UC) DeleteAppTags(
 
 type deleteAppTagData struct {
 	App               *entity.App
-	DeletingAppTags   []*entity.AppTag
-	UpdatingOrderTags []*entity.AppTag
+	DeletingAppTags   []*entity.Tag
+	UpdatingOrderTags []*entity.Tag
 }
 
 func (uc *UC) loadAppTagDataForDelete(
@@ -58,7 +58,7 @@ func (uc *UC) loadAppTagDataForDelete(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
-		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
+		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -95,8 +95,8 @@ func (uc *UC) prepareDeletingAppTag(
 
 	// Updates order of the active tags
 	for i, tag := range tagData.UpdatingOrderTags {
-		if tag.DisplayOrder != i {
-			tag.DisplayOrder = i
+		if tag.Index != i {
+			tag.Index = i
 			persistingData.UpsertingTags = append(persistingData.UpsertingTags, tag)
 		}
 	}

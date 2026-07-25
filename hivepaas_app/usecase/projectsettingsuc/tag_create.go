@@ -26,8 +26,7 @@ func (uc *UC) CreateProjectTag(
 		}
 
 		persistingData := &persistingProjectData{}
-		uc.preparePersistingProjectTags(tagData.Project, []string{req.Tag},
-			tagData.NextDisplayOrder, persistingData)
+		uc.preparePersistingProjectTags(tagData.Project, []string{req.Tag}, tagData.NextIndex, persistingData)
 
 		return uc.persistData(ctx, db, persistingData)
 	})
@@ -39,8 +38,8 @@ func (uc *UC) CreateProjectTag(
 }
 
 type createProjectTagData struct {
-	Project          *entity.Project
-	NextDisplayOrder int
+	Project   *entity.Project
+	NextIndex int
 }
 
 func (uc *UC) loadProjectTagDataForAddNew(
@@ -52,21 +51,21 @@ func (uc *UC) loadProjectTagDataForAddNew(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
+		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.Project = project
 
-	nextDisplayOrder := 0
+	nextIndex := 0
 	for _, projectTag := range project.Tags {
 		if projectTag.DeletedAt.IsZero() && strings.EqualFold(projectTag.Tag, req.Tag) {
 			return apperrors.NewAlreadyExist("Project tag")
 		}
-		nextDisplayOrder = max(nextDisplayOrder, projectTag.DisplayOrder+1)
+		nextIndex = max(nextIndex, projectTag.Index+1)
 	}
-	data.NextDisplayOrder = nextDisplayOrder
+	data.NextIndex = nextIndex
 
 	return nil
 }
@@ -74,17 +73,17 @@ func (uc *UC) loadProjectTagDataForAddNew(
 func (uc *UC) preparePersistingProjectTags(
 	project *entity.Project,
 	tags []string,
-	startDisplayOrder int,
+	startIndex int,
 	persistingData *persistingProjectData,
 ) {
-	displayOrder := startDisplayOrder
+	index := startIndex
 	for _, tag := range tags {
 		persistingData.UpsertingTags = append(persistingData.UpsertingTags,
-			&entity.ProjectTag{
-				ProjectID:    project.ID,
-				Tag:          tag,
-				DisplayOrder: displayOrder,
+			&entity.Tag{
+				ObjectID: project.ID,
+				Tag:      tag,
+				Index:    index,
 			})
-		displayOrder++
+		index++
 	}
 }

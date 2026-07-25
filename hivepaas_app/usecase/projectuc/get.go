@@ -19,7 +19,7 @@ func (uc *UC) GetProject(
 ) (*projectdto.GetProjectResp, error) {
 	project, err := uc.projectRepo.GetByID(ctx, uc.db, req.ID,
 		bunex.SelectRelation("Tags",
-			bunex.SelectOrder("display_order"),
+			bunex.SelectOrder("index"),
 		),
 		bunex.SelectRelation("Owner",
 			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),

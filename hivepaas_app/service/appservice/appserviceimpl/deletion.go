@@ -40,7 +40,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	}
 
 	// App tags
-	err = s.appTagRepo.DeleteAllByApps(ctx, db, appIDs)
+	err = s.tagRepo.DeleteAllByObjects(ctx, db, appIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

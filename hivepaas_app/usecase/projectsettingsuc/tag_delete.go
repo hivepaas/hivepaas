@@ -42,8 +42,8 @@ func (uc *UC) DeleteProjectTags(
 
 type deleteProjectTagData struct {
 	Project             *entity.Project
-	DeletingProjectTags []*entity.ProjectTag
-	UpdatingOrderTags   []*entity.ProjectTag
+	DeletingProjectTags []*entity.Tag
+	UpdatingOrderTags   []*entity.Tag
 }
 
 func (uc *UC) loadProjectTagDataForDelete(
@@ -55,7 +55,7 @@ func (uc *UC) loadProjectTagDataForDelete(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectRelation("Tags", bunex.SelectOrder("display_order")),
+		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -92,8 +92,8 @@ func (uc *UC) prepareDeletingProjectTag(
 
 	// Updates order of the active tags
 	for i, projectTag := range tagData.UpdatingOrderTags {
-		if projectTag.DisplayOrder != i {
-			projectTag.DisplayOrder = i
+		if projectTag.Index != i {
+			projectTag.Index = i
 			persistingData.UpsertingTags = append(persistingData.UpsertingTags, projectTag)
 		}
 	}

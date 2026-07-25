@@ -80,7 +80,7 @@ func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
 		return nil, apperrors.Wrap(err)
 	}
 	resp.Envs = TransformProjectEnvs(project.Settings)
-	resp.Tags = gofn.MapSlice(project.Tags, func(t *entity.ProjectTag) string { return t.Tag })
+	resp.Tags = gofn.MapSlice(project.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.UserAccesses = TransformUserAccesses(project)
 	resp.Owner = TransformProjectOwner(project)
 	return resp, nil

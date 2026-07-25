@@ -164,18 +164,18 @@ func (uc *UC) preparePersistingAppBase(
 func (uc *UC) preparePersistingAppTags(
 	app *entity.App,
 	tags []string,
-	startDisplayOrder int,
+	startIndex int,
 	persistingData *persistingAppData,
 ) {
-	displayOrder := startDisplayOrder
+	index := startIndex
 	for _, tag := range tags {
 		persistingData.UpsertingTags = append(persistingData.UpsertingTags,
-			&entity.AppTag{
-				AppID:        app.ID,
-				Tag:          tag,
-				DisplayOrder: displayOrder,
+			&entity.Tag{
+				ObjectID: app.ID,
+				Tag:      tag,
+				Index:    index,
 			})
-		displayOrder++
+		index++
 	}
 }
 

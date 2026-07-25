@@ -183,18 +183,18 @@ func (uc *UC) preparePersistingProjectEnvs(
 func (uc *UC) preparePersistingProjectTags(
 	project *entity.Project,
 	tags []string,
-	startDisplayOrder int,
+	startIndex int,
 	persistingData *persistingProjectData,
 ) {
-	displayOrder := startDisplayOrder
+	index := startIndex
 	for _, tag := range tags {
 		persistingData.UpsertingTags = append(persistingData.UpsertingTags,
-			&entity.ProjectTag{
-				ProjectID:    project.ID,
-				Tag:          tag,
-				DisplayOrder: displayOrder,
+			&entity.Tag{
+				ObjectID: project.ID,
+				Tag:      tag,
+				Index:    index,
 			})
-		displayOrder++
+		index++
 	}
 }
 

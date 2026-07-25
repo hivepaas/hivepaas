@@ -40,7 +40,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	}
 
 	// Project tags
-	err = s.projectTagRepo.DeleteAllByProjects(ctx, db, projectIDs)
+	err = s.tagRepo.DeleteAllByObjects(ctx, db, projectIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

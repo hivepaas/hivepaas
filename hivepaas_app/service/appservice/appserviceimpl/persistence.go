@@ -12,7 +12,7 @@ import (
 func (s *service) PersistAppData(ctx context.Context, db database.IDB,
 	persistingData *appservice.PersistingAppData) error {
 	// Deletes all current linked data if configured
-	err := s.appTagRepo.DeleteAllByApps(ctx, db, persistingData.AppsToDeleteTags)
+	err := s.tagRepo.DeleteAllByObjects(ctx, db, persistingData.AppsToDeleteTags)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -40,8 +40,8 @@ func (s *service) PersistAppData(ctx context.Context, db database.IDB,
 	}
 
 	// Tags
-	err = s.appTagRepo.UpsertMulti(ctx, db, persistingData.UpsertingTags,
-		entity.AppTagUpsertingConflictCols, entity.AppTagUpsertingUpdateCols)
+	err = s.tagRepo.UpsertMulti(ctx, db, persistingData.UpsertingTags,
+		entity.TagUpsertingConflictCols, entity.TagUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

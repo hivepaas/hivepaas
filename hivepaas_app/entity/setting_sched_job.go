@@ -89,7 +89,11 @@ func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
 }
 
 func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
-	if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
+	// TODO (low): should we always update lastSchedTime of sched jobs
+	// if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
+	//	return false
+	// }
+	if s.LastSchedTime.Equal(lastSchedTime) {
 		return false
 	}
 	s.LastSchedTime = lastSchedTime

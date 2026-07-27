@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui";
 import { cn } from "@lib/utils";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { type Path, useFieldArray, useFormContext } from "react-hook-form";
@@ -18,6 +18,7 @@ function View<T>({
     checkDuplicates = false,
     keyOptions,
     disabled = false,
+    enableEditing,
     enableValueEditing = false,
     keyField = "key",
     valueField = "value",
@@ -28,9 +29,12 @@ function View<T>({
     const [keyInput, setKeyInput] = useState("");
     const [valueInput, setValueInput] = useState("");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [draftKey, setDraftKey] = useState("");
     const [draftValue, setDraftValue] = useState("");
 
-    const canEditValues = enableValueEditing && !disabled;
+    // enableValueEditing is kept as a backward-compatible alias for enableEditing.
+    const showEditControls = enableEditing ?? enableValueEditing;
+    const canEdit = showEditControls && !disabled;
 
     const getFieldValue = (field: Record<string, unknown>, fieldName: string) => {
         const value = field[fieldName];
@@ -59,77 +63,107 @@ function View<T>({
         setKeyInput("");
         setValueInput("");
         setEditingIndex(null);
+        setDraftKey("");
         setDraftValue("");
     };
 
-    const handleStartEdit = (index: number, currentValue: string) => {
-        if (!canEditValues) {
+    const handleStartEdit = (index: number, currentKey: string, currentValue: string) => {
+        if (!canEdit) {
             return;
         }
 
         setEditingIndex(index);
+        setDraftKey(currentKey);
         setDraftValue(currentValue);
     };
 
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setDraftKey("");
+        setDraftValue("");
+    };
+
     const handleSaveEdit = (index: number) => {
-        if (!canEditValues || editingIndex !== index) {
+        if (!canEdit || editingIndex !== index) {
             return;
         }
 
-        const currentField = fields[index] as Record<string, unknown>;
+        const trimmedKey = draftKey.trim();
+        if (!trimmedKey) {
+            return;
+        }
+
+        if (checkDuplicates) {
+            const duplicate = fields.some(
+                (field, i) => i !== index && getFieldValue(field as Record<string, unknown>, keyField) === trimmedKey,
+            );
+            if (duplicate) {
+                toast.error(`Key "${trimmedKey}" already exists`);
+                return;
+            }
+        }
+
         update(index, {
-            [keyField]: getFieldValue(currentField, keyField),
+            [keyField]: trimmedKey,
             [valueField]: draftValue.trim(),
         } as never);
-        setEditingIndex(null);
-        setDraftValue("");
+        handleCancelEdit();
+    };
+
+    const renderKeyInput = (value: string, onChange: (next: string) => void, inputClassName?: string) => {
+        if (keyOptions) {
+            return (
+                <Select
+                    value={value}
+                    onValueChange={next => {
+                        if (disabled) {
+                            return;
+                        }
+
+                        onChange(next);
+                    }}
+                    disabled={disabled}
+                >
+                    <SelectTrigger className={inputClassName}>
+                        <SelectValue placeholder={keyPlaceholder ?? keyLabel} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {keyOptions.map(option => (
+                            <SelectItem
+                                key={option.value}
+                                value={option.value}
+                            >
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            );
+        }
+
+        return (
+            <InputWithAddOn
+                addonLeft={keyLabel}
+                value={value}
+                onChange={e => {
+                    if (disabled) {
+                        return;
+                    }
+
+                    onChange(e.target.value);
+                }}
+                placeholder={keyPlaceholder ?? keyLabel}
+                disabled={disabled}
+                // className={inputClassName}
+            />
+        );
     };
 
     return (
         <div className={cn("flex flex-col gap-3", className)}>
             <div className="flex gap-2">
                 <div className="grid flex-1 grid-cols-2 gap-2">
-                    {keyOptions ? (
-                        <Select
-                            value={keyInput}
-                            onValueChange={value => {
-                                if (disabled) {
-                                    return;
-                                }
-
-                                setKeyInput(value);
-                            }}
-                            disabled={disabled}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={keyPlaceholder ?? keyLabel} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {keyOptions.map(option => (
-                                    <SelectItem
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    ) : (
-                        <InputWithAddOn
-                            addonLeft={keyLabel}
-                            value={keyInput}
-                            onChange={e => {
-                                if (disabled) {
-                                    return;
-                                }
-
-                                setKeyInput(e.target.value);
-                            }}
-                            placeholder={keyPlaceholder ?? keyLabel}
-                            disabled={disabled}
-                        />
-                    )}
+                    {renderKeyInput(keyInput, setKeyInput)}
                     <InputWithAddOn
                         addonLeft={valueLabel}
                         value={valueInput}
@@ -161,7 +195,7 @@ function View<T>({
                         const row = field as Record<string, unknown>;
                         const rowKey = getFieldValue(row, keyField);
                         const rowValue = getFieldValue(row, valueField);
-                        const isEditing = canEditValues && editingIndex === index;
+                        const isEditing = canEdit && editingIndex === index;
 
                         return (
                             <div
@@ -169,54 +203,58 @@ function View<T>({
                                 className="flex items-center group gap-2 py-2"
                             >
                                 <div className="grid grid-cols-2 flex-1 gap-2">
-                                    <div className="text-sm wrap-break-word">{rowKey}</div>
                                     {isEditing ? (
-                                        <Input
-                                            value={draftValue}
-                                            onChange={e => {
-                                                setDraftValue(e.target.value);
-                                            }}
-                                            onKeyDown={e => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault();
-                                                    handleSaveEdit(index);
-                                                }
-                                                if (e.key === "Escape") {
-                                                    e.preventDefault();
-                                                    setEditingIndex(null);
-                                                    setDraftValue("");
-                                                }
-                                            }}
-                                            placeholder={valuePlaceholder ?? valueLabel}
-                                            disabled={disabled}
-                                            className="h-8"
-                                        />
+                                        <>
+                                            {renderKeyInput(draftKey, setDraftKey, "h-8")}
+                                            <InputWithAddOn
+                                                addonLeft={valueLabel}
+                                                value={draftValue}
+                                                onChange={e => {
+                                                    setDraftValue(e.target.value);
+                                                }}
+                                                onKeyDown={e => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        handleSaveEdit(index);
+                                                    }
+                                                    if (e.key === "Escape") {
+                                                        e.preventDefault();
+                                                        handleCancelEdit();
+                                                    }
+                                                }}
+                                                placeholder={valuePlaceholder ?? valueLabel}
+                                                disabled={disabled}
+                                            />
+                                        </>
                                     ) : (
-                                        <div className="text-sm wrap-break-word">{rowValue}</div>
+                                        <>
+                                            <div className="text-sm wrap-break-word">{rowKey}</div>
+                                            <div className="text-sm wrap-break-word">{rowValue}</div>
+                                        </>
                                     )}
                                 </div>
                                 <div
                                     className={cn(
-                                        "flex shrink-0 items-center justify-space-between gap-1",
-                                        enableValueEditing ? "w-[76px]" : "w-10",
+                                        "flex shrink-0 items-center justify-end gap-1",
+                                        showEditControls ? "w-[76px]" : "w-10",
                                     )}
                                 >
-                                    {enableValueEditing && (
+                                    {showEditControls && (
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md"
                                             disabled={disabled}
-                                            title={isEditing ? "Save value" : "Edit value"}
-                                            aria-label={isEditing ? "Save value" : "Edit value"}
+                                            title={isEditing ? "Save" : "Edit"}
+                                            aria-label={isEditing ? "Save" : "Edit"}
                                             onClick={() => {
                                                 if (isEditing) {
                                                     handleSaveEdit(index);
                                                     return;
                                                 }
 
-                                                handleStartEdit(index, rowValue);
+                                                handleStartEdit(index, rowKey, rowValue);
                                             }}
                                         >
                                             {isEditing ? <Check className="size-4" /> : <Pencil className="size-4" />}
@@ -234,8 +272,7 @@ function View<T>({
                                             }
 
                                             if (editingIndex === index) {
-                                                setEditingIndex(null);
-                                                setDraftValue("");
+                                                handleCancelEdit();
                                             } else if (editingIndex !== null && editingIndex > index) {
                                                 setEditingIndex(editingIndex - 1);
                                             }
@@ -275,6 +312,9 @@ type Props<T> = {
     checkDuplicates?: boolean;
     keyOptions?: { label: string; value: string }[];
     disabled?: boolean;
+    /** Enables inline editing of both key and value columns. */
+    enableEditing?: boolean;
+    /** Backward-compatible alias for `enableEditing`. */
     enableValueEditing?: boolean;
     keyField?: string;
     valueField?: string;

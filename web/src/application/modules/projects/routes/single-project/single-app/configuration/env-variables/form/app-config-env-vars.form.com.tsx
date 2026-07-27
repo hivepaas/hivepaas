@@ -302,23 +302,21 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             search={search}
                             viewMode={viewMode}
                             isRevealed={isRevealed}
+                            name="shared"
+                            title="Shared Runtime Env Variables"
+                            readOnly={readOnly}
+                            notice={<SharedEnvVarsNotice />}
+                        />
+                        <EnvVarsBaseForm
+                            search={search}
+                            viewMode={viewMode}
+                            isRevealed={isRevealed}
                             name="runtime"
                             title="Runtime Env Variables"
                             readOnly={readOnly}
                             onShowFinalValues={() => {
                                 handleShowFinalValues("runtime");
                             }}
-                        />
-                        <div className="h-px bg-border" />
-                        <EnvVarsBaseForm
-                            search={search}
-                            viewMode={viewMode}
-                            isRevealed={isRevealed}
-                            name="shared"
-                            title="Shared Runtime Env Variables"
-                            readOnly={readOnly}
-                            alwaysExpanded
-                            notice={<SharedEnvVarsNotice />}
                         />
 
                         {children}

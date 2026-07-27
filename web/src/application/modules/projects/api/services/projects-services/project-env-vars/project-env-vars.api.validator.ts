@@ -1,6 +1,6 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import type { ProjectEnvVars_FindOne_Res } from "~/projects/api/services/projects-services";
+import type { ProjectEnvVars_Compute_Res, ProjectEnvVars_FindOne_Res } from "~/projects/api/services/projects-services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -53,6 +53,19 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const ComputedEnvVarSchema = z.object({
+    key: z.string(),
+    value: z.string(),
+});
+
+/**
+ * Compute project env vars API response schema
+ */
+const ComputeSchema = z.object({
+    data: z.array(ComputedEnvVarSchema).nullable(),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class ProjectEnvVarsApiValidator {
     /**
      * Validate and transform find one project env vars API response
@@ -69,6 +82,21 @@ export class ProjectEnvVarsApiValidator {
                 runtime: data ? data.runtimeEnvVars.map(toDomainEnvVar) : [],
                 updateVer: data?.updateVer ?? 0,
             },
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform compute project env vars API response
+     */
+    compute = (response: AxiosResponse): ProjectEnvVars_Compute_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: ComputeSchema,
+        });
+
+        return {
+            data: data ?? [],
             meta,
         };
     };

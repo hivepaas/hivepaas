@@ -17,6 +17,7 @@ func (uc *UC) ListAppBase(
 ) (*appdto.ListAppBaseResp, error) {
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("ProjectEnv"),
 	}
 
 	if req.ParentID != "" {
@@ -30,12 +31,13 @@ func (uc *UC) ListAppBase(
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.status IN (?)", bunex.List(req.Status)),
+			bunex.SelectWhereIn("app.status IN (?)", req.Status...),
 		)
 	}
 	if len(req.Env) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.env IN (?)", bunex.List(req.Env)),
+			bunex.SelectJoin("JOIN project_envs ON project_envs.id = app.project_env_id"),
+			bunex.SelectWhereIn("project_envs.name IN (?)", req.Env...),
 		)
 	}
 	if req.Search != "" {
@@ -49,7 +51,7 @@ func (uc *UC) ListAppBase(
 	}
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.id IN (?)", bunex.List(auth.AllowObjectIDs)),
+			bunex.SelectWhereIn("app.id IN (?)", auth.AllowObjectIDs...),
 		)
 	}
 

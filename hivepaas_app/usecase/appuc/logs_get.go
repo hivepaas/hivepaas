@@ -24,7 +24,7 @@ const (
 	runtimeLogSessionTimeout       = time.Hour
 )
 
-//nolint:gocognit
+//nolint:gocognit,funlen
 func (uc *UC) GetAppLogs(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -36,6 +36,7 @@ func (uc *UC) GetAppLogs(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

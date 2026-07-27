@@ -15,8 +15,12 @@ func (uc *UC) GetAppServiceSettings(
 	auth *basedto.Auth,
 	req *appsettingsdto.GetAppServiceSettingsReq,
 ) (*appsettingsdto.GetAppServiceSettingsResp, error) {
-	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

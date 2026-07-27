@@ -60,7 +60,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 			ResourceModule: base.ResourceModuleProject,
 			AnyOf:          []base.ActionType{base.ActionTypeWrite},
 		}
-		switch req.Scope.ScopeType() {
+		switch req.Scope.ScopeType {
 		case base.ObjectScopeApp:
 			accessCheck.ResourceType = base.ResourceTypeApp
 			accessCheck.ResourceID = req.Scope.AppID
@@ -69,6 +69,8 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 		case base.ObjectScopeProject:
 			accessCheck.ResourceType = base.ResourceTypeProject
 			accessCheck.ResourceID = req.Scope.ProjectID
+		case base.ObjectScopeProjectEnv:
+			// TODO: refactor permission mechanism
 		case base.ObjectScopeGlobal, base.ObjectScopeUser:
 			fallthrough
 		default:

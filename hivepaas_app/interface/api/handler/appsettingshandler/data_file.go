@@ -33,7 +33,7 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 	}
 
 	req := filedto.NewCreateFileReq()
-	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

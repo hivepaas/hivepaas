@@ -24,8 +24,12 @@ func (uc *UC) CheckAppContainerPort(
 	auth *basedto.Auth,
 	req *appsettingsdto.CheckAppContainerPortReq,
 ) (*appsettingsdto.CheckAppContainerPortResp, error) {
-	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

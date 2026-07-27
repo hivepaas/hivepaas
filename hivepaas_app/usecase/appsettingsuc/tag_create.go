@@ -54,6 +54,7 @@ func (uc *UC) loadAppTagDataForAddNew(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {

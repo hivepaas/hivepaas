@@ -426,6 +426,7 @@ func (h *BaseHandler) IsWebsocketRequest(ctx *gin.Context) bool {
 	return strings.ToLower(ctx.Request.Header.Get("Connection")) == "upgrade"
 }
 
+//nolint:gocognit,gocyclo
 func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) error {
 	cfg := &config.Current.Files
 	err := ctx.Request.ParseMultipartForm(int64(cfg.RequestMaxSize))
@@ -478,7 +479,13 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		if projectID == "" || appID == "" {
 			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId or appId")
 		}
-		req.Scope = base.NewObjectScopeApp(appID, projectID)
+		req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	case base.ObjectScopeProjectEnv:
+		projectID, projectEnv := ctx.PostForm("projectId"), ctx.PostForm("projectEnv")
+		if projectID == "" || projectEnv == "" {
+			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId or projectEnv")
+		}
+		req.Scope = base.NewObjectScopeProjectEnv(projectID, projectEnv)
 	case base.ObjectScopeProject:
 		projectID := ctx.PostForm("projectId")
 		if projectID == "" {

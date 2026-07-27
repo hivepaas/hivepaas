@@ -65,6 +65,7 @@ func (uc *UC) loadAppServiceSettingsForUpdate(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

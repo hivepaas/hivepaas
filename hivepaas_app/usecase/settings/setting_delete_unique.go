@@ -30,9 +30,9 @@ type DeleteUniqueSettingResp struct {
 type DeleteUniqueSettingData struct {
 	BaseSettingData
 
-	Setting              *entity.Setting
-	ProjectSharedSetting *entity.ProjectSharedSetting
-	ExtraLoadOpts        []bunex.SelectQueryOption
+	Setting       *entity.Setting
+	SharedSetting *entity.SharedSetting
+	ExtraLoadOpts []bunex.SelectQueryOption
 
 	AfterLoading     func(context.Context, database.Tx, *DeleteUniqueSettingData) error
 	BeforePersisting func(context.Context, database.Tx, *DeleteUniqueSettingData, *PersistingSettingDeletionData) error
@@ -114,7 +114,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 
 	// The setting was imported to project from global
 	if setting.ObjectID == "" && req.Scope.IsProjectScope() {
-		data.ProjectSharedSetting, err = uc.ProjectSharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, setting.ID)
+		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, setting.ID)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -129,9 +129,9 @@ func (uc *BaseUC) prepareUniqueSettingDeletion(
 	persistingData *PersistingSettingDeletionData,
 ) {
 	timeNow := timeutil.NowUTC()
-	if data.ProjectSharedSetting != nil {
-		data.ProjectSharedSetting.DeletedAt = timeNow
-		persistingData.ProjectSharedSetting = data.ProjectSharedSetting
+	if data.SharedSetting != nil {
+		data.SharedSetting.DeletedAt = timeNow
+		persistingData.SharedSetting = data.SharedSetting
 	} else {
 		data.Setting.UpdateVer++
 		data.Setting.DeletedAt = timeNow

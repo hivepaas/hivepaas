@@ -19,6 +19,7 @@ func (uc *UC) SetAppRunning(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

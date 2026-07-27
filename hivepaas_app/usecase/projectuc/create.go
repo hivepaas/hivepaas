@@ -125,7 +125,7 @@ func (uc *UC) preparePersistingProject(
 	}
 
 	uc.preparePersistingProjectBase(project, req.ProjectBaseReq, timeNow, persistingData)
-	uc.preparePersistingProjectEnvs(project, req.Envs, timeNow, persistingData)
+	uc.preparePersistingProjectEnvs(project, req.Envs, 0, timeNow, persistingData)
 	uc.preparePersistingProjectTags(project, req.Tags, 0, persistingData)
 	uc.preparePersistingProjectWebhook(project, timeNow, persistingData)
 	uc.preparePersistingProjectNotificationDefault(project, timeNow, persistingData)
@@ -149,35 +149,26 @@ func (uc *UC) preparePersistingProjectBase(
 func (uc *UC) preparePersistingProjectEnvs(
 	project *entity.Project,
 	envs []*projectdto.ProjectEnvReq,
+	startIndex int,
 	timeNow time.Time,
 	persistingData *persistingProjectData,
 ) {
-	var envsSetting *entity.Setting
-	for _, setting := range project.Settings {
-		if setting.Type == base.SettingTypeProjectEnvs && setting.IsActive() {
-			envsSetting = setting
-			break
-		}
+	index := startIndex
+	for _, env := range envs {
+		persistingData.UpsertingProjectEnvs = append(persistingData.UpsertingProjectEnvs,
+			&entity.ProjectEnv{
+				ID:        projecthelper.CalcProjectEnvID(project.ID, env.Name),
+				ProjectID: project.ID,
+				Name:      env.Name,
+				Key:       projecthelper.CalcProjectEnvKey(env.Name),
+				Status:    base.ProjectStatusActive,
+				Color:     env.Color,
+				Index:     index,
+				CreatedAt: timeNow,
+				UpdatedAt: timeNow,
+			})
+		index++
 	}
-	if envsSetting == nil {
-		envsSetting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeProject,
-			ObjectID:  project.ID,
-			Type:      base.SettingTypeProjectEnvs,
-			Status:    base.SettingStatusActive,
-			Name:      "Project envs",
-			Version:   entity.CurrentProjectEnvsVersion,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
-		}
-	}
-	envsSetting.MustSetData(&entity.ProjectEnvs{
-		Envs: gofn.MapSlice(envs, func(e *projectdto.ProjectEnvReq) *entity.Env {
-			return e.ToEntity()
-		}),
-	})
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, envsSetting)
 }
 
 func (uc *UC) preparePersistingProjectTags(

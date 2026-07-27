@@ -49,7 +49,7 @@ func (uc *BaseUC) GetUniqueSetting(
 		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
-		setting.CurrentObjectID = req.Scope.MainObjectID()
+		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
 	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true, false, setting)

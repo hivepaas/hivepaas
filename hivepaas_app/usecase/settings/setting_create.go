@@ -147,8 +147,8 @@ func (uc *BaseUC) prepareSettingCreation(
 	timeNow := timeutil.NowUTC()
 	setting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           req.Scope.ScopeType(),
-		ObjectID:        req.Scope.MainObjectID(),
+		Scope:           req.Scope.ScopeType,
+		ObjectID:        req.Scope.ScopeObjectID(),
 		Type:            req.Type,
 		Status:          base.SettingStatusActive,
 		Name:            data.VerifyingName,

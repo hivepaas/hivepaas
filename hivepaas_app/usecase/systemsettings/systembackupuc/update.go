@@ -117,7 +117,7 @@ func (uc *UC) loadSettingData(
 		timeNow := timeutil.NowUTC()
 		jobSetting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     req.Scope.ScopeType(),
+			Scope:     req.Scope.ScopeType,
 			Type:      base.SettingTypeSchedJob,
 			Status:    base.SettingStatusActive,
 			Name:      backupJobName,

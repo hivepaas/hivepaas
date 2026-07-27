@@ -132,7 +132,7 @@ func (uc *BaseUC) loadUniqueSettingForUpdateStatus(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	if setting.ObjectID != req.Scope.MainObjectID() {
+	if setting.ObjectID != req.Scope.ScopeObjectID() {
 		return apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
 	}
 

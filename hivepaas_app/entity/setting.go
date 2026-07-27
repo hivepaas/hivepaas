@@ -54,13 +54,13 @@ type Setting struct {
 	ExpireAt  time.Time `bun:",nullzero" json:"expireAt,omitempty"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	BelongToUser         *User                   `bun:"rel:belongs-to,join:object_id=id" json:"belongToUser,omitempty"`
-	BelongToProject      *Project                `bun:"rel:belongs-to,join:object_id=id" json:"belongToProject,omitempty"`
-	BelongToApp          *App                    `bun:"rel:belongs-to,join:object_id=id" json:"belongToApp,omitempty"`
-	AccessibleByProjects []*ProjectSharedSetting `bun:"rel:has-many,join:id=setting_id" json:"accessibleByProjects,omitempty"` //nolint:lll
-	Tasks                []*Task                 `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`
-	SrcResLinks          []*ResLink              `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
-	DstResLinks          []*ResLink              `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+	BelongToUser         *User            `bun:"rel:belongs-to,join:object_id=id" json:"belongToUser,omitempty"`
+	BelongToProject      *Project         `bun:"rel:belongs-to,join:object_id=id" json:"belongToProject,omitempty"`
+	BelongToApp          *App             `bun:"rel:belongs-to,join:object_id=id" json:"belongToApp,omitempty"`
+	AccessibleByProjects []*SharedSetting `bun:"rel:has-many,join:id=setting_id" json:"accessibleByProjects,omitempty"` //nolint:lll
+	Tasks                []*Task          `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`
+	SrcResLinks          []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
+	DstResLinks          []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
 
 	// NOTE: temporary fields
 	parsedData      SettingData

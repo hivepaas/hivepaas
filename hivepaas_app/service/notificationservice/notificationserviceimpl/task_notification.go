@@ -8,10 +8,10 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bbpool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/services/email"
@@ -81,7 +81,6 @@ func (s *service) NotifyForTaskResult(
 	return resp, nil
 }
 
-//nolint:gocognit
 func (s *service) loadDefaultNotificationSourceSettings(
 	ctx context.Context,
 	db database.IDB,
@@ -106,17 +105,15 @@ func (s *service) loadDefaultNotificationSourceSettings(
 	}
 
 	var scope *base.ObjectScope
-	var objectID, parentObjectID string
 	switch {
 	case data.ScopeApp != nil:
-		objectID, parentObjectID = data.ScopeApp.ID, data.ScopeApp.ProjectID
-		scope = base.NewObjectScopeApp(objectID, parentObjectID)
+		scope = data.ScopeApp.GetObjectScope()
+	case data.ScopeProjectEnv != nil:
+		scope = data.ScopeProjectEnv.GetObjectScope()
 	case data.ScopeProject != nil:
-		objectID = data.ScopeProject.ID
-		scope = base.NewObjectScopeProject(objectID)
+		scope = data.ScopeProject.GetObjectScope()
 	case data.ScopeUser != nil:
-		objectID = data.ScopeUser.ID
-		scope = base.NewObjectScopeUser(objectID)
+		scope = data.ScopeUser.GetObjectScope()
 	default:
 		scope = base.NewObjectScopeGlobal()
 	}
@@ -129,48 +126,33 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		return apperrors.Wrap(err)
 	}
 
-	findFunc := func(typ base.SettingType, kind *string) *entity.Setting {
-		var defaultInParent *entity.Setting
-		var defaultInGlobal *entity.Setting
-		for _, setting := range settings {
-			if setting.Type != typ || (kind != nil && setting.Kind != *kind) {
-				continue
-			}
-			if setting.ObjectID == objectID {
-				return setting // found the default setting in current scope
-			}
-			if setting.ObjectID == parentObjectID {
-				defaultInParent = setting
-				continue
-			}
-			if setting.Scope == base.ObjectScopeGlobal {
-				defaultInGlobal = setting
-				continue
-			}
-		}
-		return gofn.Coalesce(defaultInParent, defaultInGlobal)
-	}
-
 	if needLoadEmail {
-		if setting := findFunc(base.SettingTypeEmail, nil); setting != nil {
+		setting, _ := gofn.First(settinghelper.FindSettingsByScope(settings, scope, base.SettingTypeEmail, nil))
+		if setting != nil {
 			data.RefObjects.RefSettings[setting.ID] = setting
 			notif.ViaEmail.Sender.ID = setting.ID
 		}
 	}
 	if needLoadSlack {
-		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindSlack))); setting != nil {
+		setting, _ := gofn.First(settinghelper.FindSettingsByScope(settings, scope, base.SettingTypeIMService,
+			new(string(base.IMServiceKindSlack))))
+		if setting != nil {
 			data.RefObjects.RefSettings[setting.ID] = setting
 			notif.ViaSlack.Webhook.ID = setting.ID
 		}
 	}
 	if needLoadDiscord {
-		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindDiscord))); setting != nil {
+		setting, _ := gofn.First(settinghelper.FindSettingsByScope(settings, scope, base.SettingTypeIMService,
+			new(string(base.IMServiceKindDiscord))))
+		if setting != nil {
 			data.RefObjects.RefSettings[setting.ID] = setting
 			notif.ViaDiscord.Webhook.ID = setting.ID
 		}
 	}
 	if needLoadTelegram {
-		if setting := findFunc(base.SettingTypeIMService, new(string(base.IMServiceKindTelegram))); setting != nil {
+		setting, _ := gofn.First(settinghelper.FindSettingsByScope(settings, scope, base.SettingTypeIMService,
+			new(string(base.IMServiceKindTelegram))))
+		if setting != nil {
 			data.RefObjects.RefSettings[setting.ID] = setting
 			notif.ViaTelegram.Setting.ID = setting.ID
 		}

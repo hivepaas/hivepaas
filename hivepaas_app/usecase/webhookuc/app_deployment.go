@@ -137,19 +137,15 @@ func (uc *UC) ensureAppActive(
 	checkUpdateVer bool,
 	lockApp bool,
 ) error {
-	qryOpts := []bunex.SelectQueryOption{
-		bunex.SelectColumns("id"),
-		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
-	}
-	if checkUpdateVer {
-		qryOpts = append(qryOpts,
-			bunex.SelectWhere("app.update_ver = ?", app.UpdateVer),
-		)
-	}
-	if lockApp {
-		qryOpts = append(qryOpts, bunex.SelectFor("UPDATE OF app"))
-	}
-	_, err := uc.appRepo.GetByID(ctx, db, "", app.ID, qryOpts...)
+	_, err := uc.appService.LoadApp(ctx, db, app.ProjectID, app.ID, true, true,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectForIf(lockApp, "UPDATE OF app"),
+		bunex.SelectWhereIf(checkUpdateVer, "app.update_ver = ?", app.UpdateVer),
+	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

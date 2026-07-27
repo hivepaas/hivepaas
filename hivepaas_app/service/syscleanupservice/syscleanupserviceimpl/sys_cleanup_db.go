@@ -46,7 +46,7 @@ var (
 		},
 		{
 			Type:  "db/project-shared-setting",
-			Model: (*entity.ProjectSharedSetting)(nil),
+			Model: (*entity.SharedSetting)(nil),
 		},
 		{
 			Type:  "db/app",

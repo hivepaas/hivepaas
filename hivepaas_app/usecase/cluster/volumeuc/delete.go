@@ -24,7 +24,7 @@ func (uc *UC) DeleteVolume(
 			db database.Tx,
 			data *settings.DeleteSettingData,
 		) error {
-			if data.Setting.ObjectID == req.Scope.MainObjectID() {
+			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
 				_, err := uc.dockerManager.VolumeRemove(ctx, dockerhelper.ParseID(data.Setting.ID), true)
 				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 					return apperrors.Wrap(err)

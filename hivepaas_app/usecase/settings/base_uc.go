@@ -15,9 +15,9 @@ import (
 type BaseUC struct {
 	DB *database.DB
 
-	FileRepo                 repository.FileRepo
-	ProjectSharedSettingRepo repository.ProjectSharedSettingRepo
-	SettingRepo              repository.SettingRepo
+	FileRepo          repository.FileRepo
+	SharedSettingRepo repository.SharedSettingRepo
+	SettingRepo       repository.SettingRepo
 
 	AppService        appservice.Service
 	ClusterService    clusterservice.Service
@@ -32,7 +32,7 @@ func New(
 	db *database.DB,
 
 	fileRepo repository.FileRepo,
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
+	sharedSettingRepo repository.SharedSettingRepo,
 	settingRepo repository.SettingRepo,
 
 	appService appservice.Service,
@@ -46,9 +46,9 @@ func New(
 	return &BaseUC{
 		DB: db,
 
-		FileRepo:                 fileRepo,
-		ProjectSharedSettingRepo: projectSharedSettingRepo,
-		SettingRepo:              settingRepo,
+		FileRepo:          fileRepo,
+		SharedSettingRepo: sharedSettingRepo,
+		SettingRepo:       settingRepo,
 
 		AppService:        appService,
 		ClusterService:    clusterService,

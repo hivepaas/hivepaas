@@ -17,11 +17,12 @@ func (uc *UC) GetAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.GetAppEnvVarsReq,
 ) (*appsettingsdto.GetAppEnvVarsResp, error) {
-	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("ParentApp",
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		),

@@ -44,5 +44,8 @@ ERR_VLD_USER_STATUS_INVALID = "User status must be one of {{.TargetValue}}"
 ERR_VLD_USER_SECURITY_OPTION_INVALID = "User security option must be one of {{.TargetValue}}"
 ERR_VLD_ACCESS_EXPIRATION_INVALID = "Access expiration date is invalid"
 
+# PROJECTS
+ERR_VLD_PROJECT_ENV_NAME_INVALID = "Project env must contain only lowercase letters (a-z), numbers (0-9), hyphens (-), and underscores (_)"
+
 # INFRA
 ERR_VLD_DOCKER_LABEL_UNALLOWED = "Docker object label '{{.Label}}' is unallowed"

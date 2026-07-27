@@ -33,10 +33,10 @@ func (uc *UC) GetAppFeatureSettings(
 		resp = &settings.GetUniqueSettingResp{
 			Data: &entity.Setting{
 				ID:        gofn.Must(ulid.NewStringULID()),
-				Scope:     req.Scope.ScopeType(),
+				Scope:     req.Scope.ScopeType,
 				Type:      base.SettingTypeAppFeatures,
 				Status:    base.SettingStatusActive,
-				ObjectID:  req.Scope.MainObjectID(),
+				ObjectID:  req.Scope.ScopeObjectID(),
 				CreatedAt: timeNow,
 				UpdatedAt: timeNow,
 			},

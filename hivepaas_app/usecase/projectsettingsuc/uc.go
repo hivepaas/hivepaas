@@ -11,9 +11,9 @@ import (
 type UC struct {
 	db *database.DB
 
-	projectRepo              repository.ProjectRepo
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo
-	settingRepo              repository.SettingRepo
+	projectRepo       repository.ProjectRepo
+	sharedSettingRepo repository.SharedSettingRepo
+	settingRepo       repository.SettingRepo
 
 	envVarService  envvarservice.Service
 	projectService projectservice.Service
@@ -25,7 +25,7 @@ func New(
 	db *database.DB,
 
 	projectRepo repository.ProjectRepo,
-	projectSharedSettingRepo repository.ProjectSharedSettingRepo,
+	sharedSettingRepo repository.SharedSettingRepo,
 	settingRepo repository.SettingRepo,
 
 	envVarService envvarservice.Service,
@@ -36,9 +36,9 @@ func New(
 	return &UC{
 		db: db,
 
-		projectRepo:              projectRepo,
-		projectSharedSettingRepo: projectSharedSettingRepo,
-		settingRepo:              settingRepo,
+		projectRepo:       projectRepo,
+		sharedSettingRepo: sharedSettingRepo,
+		settingRepo:       settingRepo,
 
 		envVarService:  envVarService,
 		projectService: projectService,

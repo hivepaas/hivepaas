@@ -6,10 +6,15 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
 type Service interface {
+	LoadAppByKey(ctx context.Context, db database.IDB, appKey string, extraOpts ...bunex.SelectQueryOption) (
+		*entity.App, error)
+
 	GetHpAppSwarmService(ctx context.Context) (*swarm.Service, error)
 	GetHpAppTasks(ctx context.Context) ([]swarm.Task, error)
 	RestartHpAppSwarmService(ctx context.Context) error

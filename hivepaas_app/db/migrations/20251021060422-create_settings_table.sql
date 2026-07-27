@@ -23,12 +23,12 @@ CREATE TABLE IF NOT EXISTS settings
 );
 
 CREATE INDEX idx_settings_scope ON settings(scope);
+CREATE INDEX idx_settings_object_id ON settings(object_id);
 CREATE INDEX idx_settings_type ON settings(type);
 CREATE INDEX idx_settings_kind ON settings(kind);
 CREATE INDEX idx_settings_name ON settings(name);
 CREATE INDEX idx_settings_size ON settings(size);
 CREATE INDEX idx_settings_status ON settings(status);
-CREATE INDEX idx_settings_object_id ON settings(object_id);
 CREATE INDEX idx_settings_updated_at ON settings(updated_at);
 CREATE INDEX idx_settings_expire_at ON settings(expire_at);
 CREATE INDEX idx_settings_deleted_at ON settings(deleted_at);

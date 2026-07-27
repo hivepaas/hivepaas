@@ -46,7 +46,7 @@ func (s *service) ComputeAppEnvVars(
 		SecretStore: appSecrets,
 		MaskSecrets: req.MaskSecrets,
 		ExternalRefsLoadFunc: func(refName string) (map[string]*envvarservice.EnvVar, error) {
-			resp, err := s.computeAppSharedEnvVars(ctx, db, req.App.ProjectID, req.App.Env,
+			resp, err := s.computeAppSharedEnvVars(ctx, db, req.App.ProjectID, req.App.ProjectEnvID,
 				refName, req.BuildPhaseOnly, false, req.MaskSecrets)
 			if err != nil {
 				return nil, apperrors.Wrap(err)

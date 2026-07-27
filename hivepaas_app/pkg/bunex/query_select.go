@@ -42,6 +42,13 @@ func SelectFor(selectFor string, args ...any) SelectQueryOption {
 	}
 }
 
+func SelectForIf(cond bool, selectFor string, args ...any) SelectQueryOption {
+	if !cond {
+		return selectNoneOption
+	}
+	return SelectFor(selectFor, args...)
+}
+
 func SelectWhere(queryStr string, args ...any) SelectQueryOption {
 	return func(query *bun.SelectQuery) *bun.SelectQuery {
 		return query.Where(queryStr, args...)

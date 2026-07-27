@@ -18,7 +18,7 @@ func (s *service) ExecuteInTx(
 	fn func(database.Tx) error,
 ) error {
 	err := transaction.Execute(ctx, s.db, func(db database.Tx) error {
-		_, err := s.appRepo.GetByID(ctx, db, "", app.ID,
+		_, err := s.appRepo.GetByID(ctx, db, app.ProjectID, app.ID,
 			bunex.SelectColumns("id"),
 			bunex.SelectWhereIf(requireUpdateVerMatch, "app.update_ver = ?", app.UpdateVer))
 		if err != nil {

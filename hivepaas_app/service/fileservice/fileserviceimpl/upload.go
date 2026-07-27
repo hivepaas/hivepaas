@@ -44,8 +44,8 @@ func (s *service) Upload(
 		mimetype := fileutil.TypeByExtension(filepath.Ext(fileName))
 		file := &entity.File{
 			ID:          gofn.Must(ulid.NewStringULID()),
-			Scope:       req.Scope.ScopeType(),
-			ObjectID:    req.Scope.MainObjectID(),
+			Scope:       req.Scope.ScopeType,
+			ObjectID:    req.Scope.ScopeObjectID(),
 			Status:      base.FileStatusActive,
 			Type:        req.FileType,
 			Kind:        string(req.FileKind),

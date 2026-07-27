@@ -17,11 +17,12 @@ func (uc *UC) ComputeAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.ComputeAppEnvVarsReq,
 ) (*appsettingsdto.ComputeAppEnvVarsResp, error) {
-	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

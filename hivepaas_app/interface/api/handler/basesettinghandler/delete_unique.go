@@ -40,12 +40,14 @@ func (h *Handler) DeleteUniqueSetting(
 		o(options)
 	}
 
-	scope := &base.ObjectScope{}
+	scope := &base.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeDelete, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
+	case base.ObjectScopeProjectEnv:
+		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeUser:

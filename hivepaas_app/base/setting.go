@@ -30,7 +30,6 @@ const (
 	SettingTypeNotification       SettingType = "notification"
 	SettingTypeOAuth              SettingType = "oauth"
 	SettingTypeProject            SettingType = "project"
-	SettingTypeProjectEnvs        SettingType = "project-envs"
 	SettingTypeRegistryAuth       SettingType = "registry-auth"
 	SettingTypeRepoWebhook        SettingType = "repo-webhook"
 	SettingTypeSSHKey             SettingType = "ssh-key"

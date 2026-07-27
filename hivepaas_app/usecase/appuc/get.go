@@ -16,9 +16,14 @@ func (uc *UC) GetApp(
 	auth *basedto.Auth,
 	req *appdto.GetAppReq,
 ) (*appdto.GetAppResp, error) {
-	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("ParentApp",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("Tags",
 			bunex.SelectOrder("index"),
@@ -27,15 +32,9 @@ func (uc *UC) GetApp(
 			// NOTE: load http settings to extract active domain names of the app
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 		),
-		bunex.SelectRelation("ParentApp",
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
-	}
-	if app.ProjectID != req.ProjectID {
-		return nil, apperrors.Wrap(apperrors.ErrUnauthorized)
 	}
 
 	transformationInput := &appdto.AppTransformationInput{}

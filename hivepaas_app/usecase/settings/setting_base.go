@@ -39,9 +39,10 @@ type BaseSettingResp struct {
 }
 
 type BaseSettingData struct {
-	ScopeProject *entity.Project
-	ScopeApp     *entity.App
-	ScopeUser    *entity.User
+	ScopeProject    *entity.Project
+	ScopeProjectEnv *entity.ProjectEnv
+	ScopeApp        *entity.App
+	ScopeUser       *entity.User
 }
 
 func (uc *BaseUC) loadSettingScopeData(
@@ -51,7 +52,7 @@ func (uc *BaseUC) loadSettingScopeData(
 	data *BaseSettingData,
 ) (err error) {
 	requireActive := !req.Scope.NotRequireActive
-	switch req.Scope.ScopeType() {
+	switch req.Scope.ScopeType {
 	case base.ObjectScopeGlobal:
 		return nil
 
@@ -63,12 +64,25 @@ func (uc *BaseUC) loadSettingScopeData(
 			return apperrors.Wrap(err)
 		}
 
+	case base.ObjectScopeProjectEnv:
+		data.ScopeProjectEnv, err = uc.ProjectService.LoadProjectEnv(ctx, db, req.Scope.ProjectID,
+			req.Scope.ProjectEnvID, requireActive, requireActive,
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.ScopeProject = data.ScopeProjectEnv.Project
+
 	case base.ObjectScopeApp:
 		data.ScopeApp, err = uc.AppService.LoadApp(ctx, db, req.Scope.ProjectID, req.Scope.AppID,
 			requireActive, requireActive,
 			bunex.SelectRelation("Project",
 				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			),
+			bunex.SelectRelation("ProjectEnv"),
 			bunex.SelectRelation("ParentApp",
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
@@ -78,7 +92,9 @@ func (uc *BaseUC) loadSettingScopeData(
 			return apperrors.Wrap(err)
 		}
 		data.ScopeProject = data.ScopeApp.Project
+		data.ScopeProjectEnv = data.ScopeApp.ProjectEnv
 		req.Scope.ProjectID = data.ScopeApp.ProjectID
+		req.Scope.ProjectEnvID = data.ScopeApp.ProjectEnvID
 		req.Scope.ParentAppID = data.ScopeApp.ParentID
 
 	case base.ObjectScopeUser:
@@ -193,6 +209,7 @@ func (uc *BaseUC) checkRefAppsExistence(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

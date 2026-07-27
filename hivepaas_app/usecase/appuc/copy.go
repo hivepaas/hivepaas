@@ -76,9 +76,12 @@ func (uc *UC) loadAppDataForCopying(
 	req *appdto.CopyAppReq,
 	data *copyAppData,
 ) error {
-	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, false, false,
+	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project"),
+		bunex.SelectRelation("Project.ProjectEnvs",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -94,11 +97,18 @@ func (uc *UC) loadAppDataForCopying(
 
 func (uc *UC) onCopyApp(
 	req *appdto.CopyAppReq,
-	targetApp, _ *entity.App,
+	targetApp, srcApp *entity.App,
 ) error {
 	targetApp.Name = req.TargetName
-	targetApp.Env = req.TargetEnv
 	targetApp.Status = gofn.Coalesce(req.TargetStatus, base.AppStatusActive)
+
+	projectEnv := srcApp.Project.GetEnv(req.TargetEnv)
+	if projectEnv == nil {
+		return apperrors.NewNotFound("Target project env")
+	}
+	targetApp.ProjectEnvID = projectEnv.ID
+	targetApp.ProjectEnv = projectEnv
+
 	return nil
 }
 

@@ -13,10 +13,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -33,6 +35,7 @@ type Executor struct {
 
 	taskLogRepo repository.TaskLogRepo
 
+	appService          appservice.Service
 	notificationService notificationservice.Service
 	schedJobExecService schedjobexecservice.Service
 	settingService      settingservice.Service
@@ -49,6 +52,7 @@ func NewExecutor(
 
 	taskLogRepo repository.TaskLogRepo,
 
+	appService appservice.Service,
 	notificationService notificationservice.Service,
 	schedJobExecService schedjobexecservice.Service,
 	settingService settingservice.Service,
@@ -63,6 +67,7 @@ func NewExecutor(
 
 		taskLogRepo: taskLogRepo,
 
+		appService:          appService,
 		notificationService: notificationService,
 		schedJobExecService: schedJobExecService,
 		settingService:      settingService,
@@ -175,19 +180,34 @@ func (e *Executor) loadSchedJobData(
 	data *taskData,
 ) (err error) {
 	schedJob := data.SchedJob.MustAsSchedJob()
+
+	targetApp := data.App
+	if targetApp == nil && schedJob.App.ID != "" {
+		targetApp, err = e.appService.LoadApp(ctx, db, "", schedJob.App.ID, true, true,
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ProjectEnv"),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.App = targetApp
+		data.Project = targetApp.Project
+	}
+
+	var scope *base.ObjectScope
+	if targetApp != nil {
+		scope = targetApp.GetObjectScope()
+	}
+
 	// Load reference objects
-	scope := &base.ObjectScope{AppID: schedJob.App.ID} // ID can be empty
-	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope,
-		true, false, data.SchedJob)
+	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope, true, false, data.SchedJob)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.AddRefObjects(refObjects)
-
-	if schedJob.App.ID != "" {
-		data.App = data.RefObjects.RefApps[schedJob.App.ID]
-		data.Project = data.App.Project
-	}
 
 	return nil
 }

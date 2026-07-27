@@ -45,7 +45,7 @@ func (uc *UC) ListFile(
 	}
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("file.id IN (?)", auth.AllowObjectIDs),
+			bunex.SelectWhereIn("file.id IN (?)", auth.AllowObjectIDs...),
 		)
 	}
 

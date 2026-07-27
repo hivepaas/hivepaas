@@ -20,12 +20,14 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	var auth *basedto.Auth
 	var err error
 
-	scope := &base.ObjectScope{}
+	scope := &base.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
+	case base.ObjectScopeProjectEnv:
+		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
@@ -125,12 +127,14 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	var err error
 	var itemID string
 
-	scope := &base.ObjectScope{}
+	scope := &base.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
+	case base.ObjectScopeProjectEnv:
+		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:

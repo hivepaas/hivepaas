@@ -16,12 +16,14 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 	var itemID string
 	var err error
 
-	scope := &base.ObjectScope{}
+	scope := &base.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
+	case base.ObjectScopeProjectEnv:
+		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeUser:

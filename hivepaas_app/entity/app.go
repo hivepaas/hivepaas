@@ -11,34 +11,35 @@ import (
 
 var (
 	AppUpsertingConflictCols = []string{"id"}
-	AppUpsertingUpdateCols   = []string{"name", "key", "global_key", "project_id", "parent_id", "service_id",
-		"status", "env", "note", "update_ver", "updated_at", "deleted_at"}
+	AppUpsertingUpdateCols   = []string{"name", "key", "global_key", "project_id", "project_env_id", "parent_id",
+		"service_id", "status", "note", "update_ver", "updated_at", "deleted_at"}
 	AppDefaultExcludeColumns = []string{"note"}
 )
 
 type App struct {
-	ID        string         `bun:",pk" json:"id"`
-	Name      string         `json:"name"`
-	Key       string         `json:"key"`
-	GlobalKey string         `json:"globalKey"`
-	ProjectID string         `json:"projectId"`
-	ParentID  string         `bun:",nullzero" json:"parentId,omitempty"`
-	ServiceID string         `bun:",nullzero" json:"serviceId"`
-	Status    base.AppStatus `json:"status"`
-	Env       string         `bun:",nullzero" json:"env"`
-	Note      string         `bun:",nullzero" json:"note,omitempty"`
-	UpdateVer int            `json:"updateVer"`
+	ID           string         `bun:",pk" json:"id"`
+	Name         string         `json:"name"`
+	Key          string         `json:"key"`
+	GlobalKey    string         `json:"globalKey"`
+	ProjectID    string         `json:"projectId"`
+	ProjectEnvID string         `json:"projectEnvId"`
+	ParentID     string         `bun:",nullzero" json:"parentId,omitempty"`
+	ServiceID    string         `bun:",nullzero" json:"serviceId"`
+	Status       base.AppStatus `json:"status"`
+	Note         string         `bun:",nullzero" json:"note,omitempty"`
+	UpdateVer    int            `json:"updateVer"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	Project     *Project   `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
-	ParentApp   *App       `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
-	Settings    []*Setting `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
-	Tags        []*Tag     `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
-	SrcResLinks []*ResLink `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
-	DstResLinks []*ResLink `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"project"`
+	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"projectEnv"`
+	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
+	Settings    []*Setting  `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
+	Tags        []*Tag      `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
+	SrcResLinks []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
+	DstResLinks []*ResLink  `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
 }
 
 // GetID implements IDEntity interface
@@ -53,9 +54,10 @@ func (app *App) GetName() string {
 
 func (app *App) GetObjectScope() *base.ObjectScope {
 	return &base.ObjectScope{
-		AppID:       app.ID,
-		ParentAppID: app.ParentID,
-		ProjectID:   app.ProjectID,
+		AppID:        app.ID,
+		ParentAppID:  app.ParentID,
+		ProjectID:    app.ProjectID,
+		ProjectEnvID: app.ProjectEnvID,
 	}
 }
 

@@ -2,28 +2,33 @@ package projectdto
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
 
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 const (
 	projectNameMinLen = 1
 	projectNameMaxLen = 100
 
-	projectEnvMinLen = 1
-	projectEnvMaxLen = 50
+	projectEnvMinLen  = 1
+	projectEnvMaxLen  = 50
+	projectEnvMinItem = 1
+	projectEnvMaxItem = 10
 
 	projectTagMinLen = 0
 	projectTagMaxLen = 50
 
 	projectNoteMinLen = 1
 	projectNoteMaxLen = 10000
+)
+
+var (
+	reProjectEnv = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
 )
 
 type CreateProjectReq struct {
@@ -59,33 +64,31 @@ func (req *ProjectBaseReq) validateName(field string) []vld.Validator {
 
 func (req *ProjectBaseReq) validateEnvs(field string) (res []vld.Validator) {
 	for i, env := range req.Envs {
+		envField := field + fmt.Sprintf("[%v].name", i)
 		res = append(res, basedto.ValidateStr(&env.Name, true, projectEnvMinLen, projectEnvMaxLen,
-			field+fmt.Sprintf("[%v].name", i))...)
+			envField)...)
+		res = append(res, vld.Must(reProjectEnv.MatchString(env.Name)).OnError(
+			vld.SetField(envField, nil),
+			vld.SetCustomKey("ERR_VLD_PROJECT_ENV_NAME_INVALID"),
+		))
 	}
-	res = append(res, vld.SliceUniqueBy(req.Envs, func(env *ProjectEnvReq) string { return env.Name }))
+	res = append(res,
+		vld.SliceLen(req.Envs, projectEnvMinItem, projectEnvMaxItem).OnError(
+			vld.SetField(field, nil),
+			vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
+		),
+		vld.SliceUniqueBy(req.Envs, func(env *ProjectEnvReq) string { return env.Name }),
+	)
 	return res
 }
 
 func (req *ProjectBaseReq) modifyRequest() error {
-	for _, env := range req.Envs {
-		env.Name = strings.ToLower(strings.TrimSpace(env.Name))
-	}
 	return nil
 }
 
 type ProjectEnvReq struct {
 	Name  string `json:"name"`
 	Color string `json:"color"`
-}
-
-func (req *ProjectEnvReq) ToEntity() *entity.Env {
-	if req == nil {
-		return nil
-	}
-	return &entity.Env{
-		Name:  req.Name,
-		Color: req.Color,
-	}
 }
 
 func NewCreateProjectReq() *CreateProjectReq {

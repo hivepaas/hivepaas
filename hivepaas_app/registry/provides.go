@@ -93,7 +93,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accessiblebyprojectsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
@@ -252,7 +251,6 @@ var Provides = []any{
 	hpappsettingsuc.New,
 	traefiksettingsuc.New,
 	binobjectuc.New,
-	accessiblebyprojectsuc.New,
 	supportuc.New,
 	builduc.New,
 
@@ -296,7 +294,7 @@ var Provides = []any{
 	repository.NewACLPermissionRepo,
 	// Repo: Project
 	repository.NewProjectRepo,
-	repository.NewProjectSharedSettingRepo,
+	repository.NewProjectEnvRepo,
 	// Repo: App
 	repository.NewAppRepo,
 	// Repo: App deployment
@@ -304,6 +302,7 @@ var Provides = []any{
 	repository.NewTaskLogRepo,
 	// Repo: Setting
 	repository.NewSettingRepo,
+	repository.NewSharedSettingRepo,
 	repository.NewResLinkRepo,
 	// Repo: File
 	repository.NewFileRepo,

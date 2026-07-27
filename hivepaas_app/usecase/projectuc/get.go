@@ -18,15 +18,14 @@ func (uc *UC) GetProject(
 	req *projectdto.GetProjectReq,
 ) (*projectdto.GetProjectResp, error) {
 	project, err := uc.projectRepo.GetByID(ctx, uc.db, req.ID,
+		bunex.SelectRelation("ProjectEnvs",
+			bunex.SelectOrder("index"),
+		),
 		bunex.SelectRelation("Tags",
 			bunex.SelectOrder("index"),
 		),
 		bunex.SelectRelation("Owner",
 			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("Settings",
-			// NOTE: for now, we only need to load Envs settings
-			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeProjectEnvs),
 		),
 	)
 	if err != nil {

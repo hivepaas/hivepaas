@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 var (
@@ -30,6 +32,7 @@ type Project struct {
 
 	PhotoData   *BinObject       `bun:"rel:has-one,join:photo_id=id" json:"photoData,omitempty"`
 	Owner       *User            `bun:"rel:has-one,join:owner_id=id" json:"owner,omitempty"`
+	ProjectEnvs []*ProjectEnv    `bun:"rel:has-many,join:id=project_id" json:"projectEnvs"`
 	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
 	Apps        []*App           `bun:"rel:has-many,join:id=project_id" json:"apps,omitempty"`
 	Tags        []*Tag           `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
@@ -70,4 +73,35 @@ func (p *Project) GetSettingByType(typ base.SettingType) *Setting {
 		}
 	}
 	return nil
+}
+
+func (p *Project) GetEnv(env string) *ProjectEnv {
+	envKey := projecthelper.CalcProjectEnvKey(env)
+	for _, projectEnv := range p.ProjectEnvs {
+		if projectEnv.Key == envKey {
+			return projectEnv
+		}
+	}
+	return nil
+}
+
+func (p *Project) GetOrCreateEnv(env string) *ProjectEnv {
+	projectEnv := p.GetEnv(env)
+	if projectEnv != nil {
+		return projectEnv
+	}
+	envKey := projecthelper.CalcProjectEnvKey(env)
+	timeNow := timeutil.NowUTC()
+	projectEnv = &ProjectEnv{
+		ID:        projecthelper.CalcProjectEnvID(p.ID, env),
+		ProjectID: p.ID,
+		Name:      env,
+		Key:       envKey,
+		Status:    base.ProjectStatusActive,
+		Index:     len(p.ProjectEnvs),
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	}
+	p.ProjectEnvs = append(p.ProjectEnvs, projectEnv)
+	return projectEnv
 }

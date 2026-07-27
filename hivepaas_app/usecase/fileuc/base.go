@@ -11,9 +11,10 @@ import (
 )
 
 type baseFileData struct {
-	ScopeProject *entity.Project
-	ScopeApp     *entity.App
-	ScopeUser    *entity.User
+	ScopeProject    *entity.Project
+	ScopeProjectEnv *entity.ProjectEnv
+	ScopeApp        *entity.App
+	ScopeUser       *entity.User
 }
 
 func (uc *UC) loadScopeData(
@@ -23,17 +24,9 @@ func (uc *UC) loadScopeData(
 	data *baseFileData,
 ) (err error) {
 	requireActive := !scope.NotRequireActive
-	switch scope.ScopeType() {
+	switch scope.ScopeType {
 	case base.ObjectScopeGlobal:
 		return nil
-
-	case base.ObjectScopeProject:
-		data.ScopeProject, err = uc.projectService.LoadProject(ctx, db, scope.ProjectID, requireActive,
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
 
 	case base.ObjectScopeApp:
 		data.ScopeApp, err = uc.appService.LoadApp(ctx, db, scope.ProjectID, scope.AppID,
@@ -41,6 +34,7 @@ func (uc *UC) loadScopeData(
 			bunex.SelectRelation("Project",
 				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			),
+			bunex.SelectRelation("ProjectEnv"),
 			bunex.SelectRelation("ParentApp",
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
@@ -50,6 +44,26 @@ func (uc *UC) loadScopeData(
 			return apperrors.Wrap(err)
 		}
 		data.ScopeProject = data.ScopeApp.Project
+
+	case base.ObjectScopeProjectEnv:
+		data.ScopeProjectEnv, err = uc.projectService.LoadProjectEnv(ctx, db, scope.ProjectID, scope.ProjectEnvID,
+			requireActive, requireActive,
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.ScopeProject = data.ScopeProjectEnv.Project
+
+	case base.ObjectScopeProject:
+		data.ScopeProject, err = uc.projectService.LoadProject(ctx, db, scope.ProjectID, requireActive,
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 
 	case base.ObjectScopeUser:
 		data.ScopeUser, err = uc.userService.LoadUserEx(ctx, db, scope.UserID, requireActive)

@@ -26,7 +26,7 @@ func validateAppName(name *string, field string) []vld.Validator {
 }
 
 func validateAppEnv(env *string, field string) []vld.Validator {
-	return basedto.ValidateStr(env, false, appEnvMinLen, appEnvMaxLen, field)
+	return basedto.ValidateStr(env, true, appEnvMinLen, appEnvMaxLen, field)
 }
 
 func validateAppTags(tags []string, field string) []vld.Validator {

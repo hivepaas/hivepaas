@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -47,7 +48,10 @@ func (uc *UC) loadAppDataForUpdateStatus(
 ) error {
 	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.ID, true, false,
 		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project"),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

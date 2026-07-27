@@ -39,7 +39,7 @@ func (uc *UC) ListProjectBase(
 
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("project.id IN (?)", bunex.List(auth.AllowObjectIDs)),
+			bunex.SelectWhereIn("project.id IN (?)", auth.AllowObjectIDs...),
 		)
 	}
 

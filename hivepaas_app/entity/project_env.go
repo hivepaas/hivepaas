@@ -1,0 +1,69 @@
+package entity
+
+import (
+	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+)
+
+var (
+	ProjectEnvUpsertingConflictCols = []string{"id"}
+	ProjectEnvUpsertingUpdateCols   = []string{"project_id", "name", "key", "status", "color", "index",
+		"update_ver", "updated_at", "deleted_at"}
+)
+
+type ProjectEnv struct {
+	ID        string             `bun:",pk" json:"id"`
+	ProjectID string             `json:"projectId"`
+	Name      string             `json:"name"`
+	Key       string             `json:"key"`
+	Status    base.ProjectStatus `json:"status"`
+	Color     string             `json:"color"`
+	Index     int                `json:"index"`
+	UpdateVer int                `json:"updateVer"`
+
+	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
+	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
+	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
+
+	Project     *Project         `bun:"rel:has-one,join:project_id=id" json:"project"`
+	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
+	Apps        []*App           `bun:"rel:has-many,join:id=project_id" json:"apps,omitempty"`
+	Accesses    []*ACLPermission `bun:"rel:has-many,join:id=res_id" json:"accesses,omitempty"`
+	SrcResLinks []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
+	DstResLinks []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+}
+
+// GetID implements IDEntity interface
+func (p *ProjectEnv) GetID() string {
+	return p.ID
+}
+
+// GetName implements NamedEntity interface
+func (p *ProjectEnv) GetName() string {
+	return p.Name
+}
+
+func (p *ProjectEnv) GetObjectScope() *base.ObjectScope {
+	return &base.ObjectScope{
+		ProjectEnvID: p.ID,
+	}
+}
+
+func (p *ProjectEnv) GetSettingsByType(typ base.SettingType) (resp []*Setting) {
+	for _, setting := range p.Settings {
+		if setting.Type == typ {
+			resp = append(resp, setting)
+		}
+	}
+	return resp
+}
+
+func (p *ProjectEnv) GetSettingByType(typ base.SettingType) *Setting {
+	for _, setting := range p.Settings {
+		if setting.Type == typ {
+			return setting
+		}
+	}
+	return nil
+}

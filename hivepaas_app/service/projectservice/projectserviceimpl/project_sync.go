@@ -46,10 +46,10 @@ func (s *service) SyncProject(
 	for _, svc := range services {
 		appKey := svc.Spec.Labels[appservice.LabelAppKey]
 		appName := gofn.Coalesce(svc.Spec.Labels[appservice.LabelAppName], svc.Spec.Name)
-		appEnv := svc.Spec.Labels[appservice.LabelAppEnv]
 		if appKey == "" {
 			appKey = slugify.SlugifyAsKey(appName)
 		}
+		appEnv := gofn.Coalesce(svc.Spec.Labels[appservice.LabelAppEnv], "default")
 		appGlobalKey := projecthelper.CalcAppGlobalKey(project.Key, appKey, appEnv)
 
 		if existingApp, exists := appMapByKey[appKey]; exists {
@@ -60,20 +60,27 @@ func (s *service) SyncProject(
 				updateApps = append(updateApps, existingApp)
 			}
 		} else {
+			projectEnv := project.GetOrCreateEnv(appEnv)
 			newApp := &entity.App{
-				ID:        gofn.Must(ulid.NewStringULID()),
-				Name:      appName,
-				Key:       appKey,
-				GlobalKey: appGlobalKey,
-				Env:       appEnv,
-				ProjectID: project.ID,
-				ServiceID: svc.ID,
-				Status:    base.AppStatusActive,
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
+				ID:           gofn.Must(ulid.NewStringULID()),
+				ProjectID:    project.ID,
+				ProjectEnvID: projectEnv.ID,
+				Name:         appName,
+				Key:          appKey,
+				GlobalKey:    appGlobalKey,
+				ServiceID:    svc.ID,
+				Status:       base.AppStatusActive,
+				CreatedAt:    timeNow,
+				UpdatedAt:    timeNow,
 			}
 			newApps = append(newApps, newApp)
 		}
+	}
+
+	err = s.projectEnvRepo.UpsertMulti(ctx, db, project.ProjectEnvs,
+		entity.ProjectEnvUpsertingConflictCols, entity.ProjectEnvUpsertingUpdateCols)
+	if err != nil {
+		return nil, nil, nil, apperrors.Wrap(err)
 	}
 
 	err = s.appRepo.UpsertMulti(ctx, db, gofn.Concat(newApps, updateApps),

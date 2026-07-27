@@ -58,7 +58,10 @@ func (uc *UC) loadAppDataForUpdate(
 ) error {
 	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.ID, true, false,
 		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project"),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -95,9 +98,6 @@ func (uc *UC) preparePersistingAppUpdate(
 	timeNow := timeutil.NowUTC()
 	app := data.App
 	app.UpdateVer++
-
-	// NOTE: we don't allow to change app env after creation
-	req.Env = app.Env
 
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	persistingData.AppsToDeleteTags = append(persistingData.AppsToDeleteTags, app.ID)

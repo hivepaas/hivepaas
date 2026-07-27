@@ -36,7 +36,7 @@ func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 
 	req := schedjobdto.NewListSchedJobTaskReq()
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -81,7 +81,7 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -127,7 +127,7 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewCancelSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -172,7 +172,7 @@ func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskLogsReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, projectID)
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -96,8 +96,8 @@ func TransformAppCopyPreparationData(
 	resp = &PrepareAppCopyDataResp{
 		SourceName:   app.Name,
 		TargetName:   app.Name + " (copied)",
-		SourceEnv:    app.Env,
-		TargetEnv:    app.Env,
+		SourceEnv:    app.ProjectEnv.Name,
+		TargetEnv:    app.ProjectEnv.Name,
 		SourceStatus: app.Status,
 		TargetStatus: base.AppStatusActive,
 

@@ -81,7 +81,7 @@ func (uc *BaseUC) ListSetting(
 	}
 	if len(auth.AllowObjectIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("setting.id IN (?)", auth.AllowObjectIDs),
+			bunex.SelectWhereIn("setting.id IN (?)", auth.AllowObjectIDs...),
 		)
 	}
 	listOpts = append(listOpts, data.ExtraLoadOpts...)
@@ -92,7 +92,7 @@ func (uc *BaseUC) ListSetting(
 	}
 
 	for _, setting := range settings {
-		setting.CurrentObjectID = req.Scope.MainObjectID()
+		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
 	var refObjects *entity.RefObjects

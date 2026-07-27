@@ -61,12 +61,12 @@ func (uc *UC) BeginReprovisionGithubApp(
 	}
 
 	var beginFlowURL string
-	switch req.Scope.ScopeType() {
+	switch req.Scope.ScopeType {
 	case base.ObjectScopeGlobal:
 		beginFlowURL = cfg.GlobalGithubAppManifestFlowBeginURL(appSetting.ID, state)
 		manifest.RedirectURL = cfg.GlobalGithubAppManifestFlowProgressURL(appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
-	case base.ObjectScopeProject:
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv:
 		beginFlowURL = cfg.ProjectGithubAppManifestFlowBeginURL(req.Scope.ProjectID, appSetting.ID, state)
 		manifest.RedirectURL = cfg.ProjectGithubAppManifestFlowProgressURL(req.Scope.ProjectID, appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
@@ -74,7 +74,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 		fallthrough
 	default:
 		return nil, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).
-			WithParam("Scope", req.Scope.ScopeType())
+			WithParam("Scope", req.Scope.ScopeType)
 	}
 
 	manifestCache := &cacheentity.GithubAppManifest{

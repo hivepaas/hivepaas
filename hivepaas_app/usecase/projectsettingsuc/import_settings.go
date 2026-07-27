@@ -50,7 +50,7 @@ type settingImportData struct {
 }
 
 type persistingSettingImportData struct {
-	ProjectSharedSettings []*entity.ProjectSharedSetting
+	SharedSettings []*entity.SharedSetting
 }
 
 func (uc *UC) loadSettingsForImport(
@@ -93,9 +93,9 @@ func (uc *UC) preparePersistingSettingImports(
 ) {
 	timeNow := timeutil.NowUTC()
 	for _, setting := range data.Settings {
-		persistingData.ProjectSharedSettings = append(persistingData.ProjectSharedSettings,
-			&entity.ProjectSharedSetting{
-				ProjectID:       data.Project.ID,
+		persistingData.SharedSettings = append(persistingData.SharedSettings,
+			&entity.SharedSetting{
+				ObjectID:        data.Project.ID,
 				SettingID:       setting.ID,
 				DataViewAllowed: req.DataViewAllowed,
 				CreatedAt:       timeNow,
@@ -108,8 +108,8 @@ func (uc *UC) persistSettingImports(
 	db database.IDB,
 	persistingData *persistingSettingImportData,
 ) error {
-	err := uc.projectSharedSettingRepo.UpsertMulti(ctx, db, persistingData.ProjectSharedSettings,
-		entity.ProjectSharedSettingUpsertingConflictCols, entity.ProjectSharedSettingUpsertingUpdateCols)
+	err := uc.sharedSettingRepo.UpsertMulti(ctx, db, persistingData.SharedSettings,
+		entity.SharedSettingUpsertingConflictCols, entity.SharedSettingUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

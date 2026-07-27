@@ -58,8 +58,10 @@ type ProjectAppResp struct {
 }
 
 type ProjectEnvResp struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	ID     string             `json:"id"`
+	Name   string             `json:"name"`
+	Status base.ProjectStatus `json:"status"`
+	Color  string             `json:"color"`
 }
 
 type ProjectUserAccessResp struct {
@@ -79,7 +81,10 @@ func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
 	if err = copier.Copy(&resp, &project); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	resp.Envs = TransformProjectEnvs(project.Settings)
+	resp.Envs, err = TransformProjectEnvs(project.ProjectEnvs)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 	resp.Tags = gofn.MapSlice(project.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.UserAccesses = TransformUserAccesses(project)
 	resp.Owner = TransformProjectOwner(project)
@@ -93,20 +98,11 @@ func TransformProjectOwner(project *entity.Project) *basedto.UserBaseResp {
 	return basedto.TransformUserBase(project.Owner)
 }
 
-func TransformProjectEnvs(settings []*entity.Setting) (resp []*ProjectEnvResp) {
-	for _, setting := range settings {
-		if setting.Type != base.SettingTypeProjectEnvs || !setting.IsActive() {
-			continue
-		}
-		envs := setting.MustAsProjectEnvs()
-		for _, env := range envs.Envs {
-			resp = append(resp, &ProjectEnvResp{
-				Name:  env.Name,
-				Color: env.Color,
-			})
-		}
+func TransformProjectEnvs(envs []*entity.ProjectEnv) (resp []*ProjectEnvResp, err error) {
+	if err = copier.Copy(&resp, &envs); err != nil {
+		return nil, apperrors.Wrap(err)
 	}
-	return resp
+	return resp, nil
 }
 
 func TransformUserAccesses(project *entity.Project) []*ProjectUserAccessResp {

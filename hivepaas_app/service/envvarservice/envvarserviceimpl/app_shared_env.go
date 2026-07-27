@@ -31,7 +31,7 @@ func (s *service) computeAppSharedEnvVars(
 	ctx context.Context,
 	db database.IDB,
 	projectID string,
-	projectEnv string,
+	projectEnvID string,
 	appKey string,
 	buildPhase bool,
 	skipLoadingSecrets bool,
@@ -40,11 +40,7 @@ func (s *service) computeAppSharedEnvVars(
 	listOpts := []bunex.SelectQueryOption{
 		// bunex.SelectWhere("app.status = ?", base.AppStatusActive),
 		bunex.SelectWhere("app.key = ?", appKey),
-	}
-	if projectEnv == "" {
-		listOpts = append(listOpts, bunex.SelectWhere("app.env IS NULL"))
-	} else {
-		listOpts = append(listOpts, bunex.SelectWhere("app.env = ?", projectEnv))
+		bunex.SelectWhere("app.project_env_id = ?", projectEnvID),
 	}
 	apps, _, err := s.appRepo.List(ctx, db, projectID, nil, listOpts...)
 	if err != nil {

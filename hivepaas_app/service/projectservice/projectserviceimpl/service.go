@@ -13,6 +13,7 @@ func New(
 	appRepo repository.AppRepo,
 	binObjectRepo repository.BinObjectRepo,
 	fileRepo repository.FileRepo,
+	projectEnvRepo repository.ProjectEnvRepo,
 	projectRepo repository.ProjectRepo,
 	resLinkRepo repository.ResLinkRepo,
 	settingRepo repository.SettingRepo,
@@ -27,15 +28,16 @@ func New(
 	permissionManager permission.Manager,
 ) projectservice.Service {
 	return &service{
-		appRepo:       appRepo,
-		binObjectRepo: binObjectRepo,
-		fileRepo:      fileRepo,
-		projectRepo:   projectRepo,
-		resLinkRepo:   resLinkRepo,
-		settingRepo:   settingRepo,
-		tagRepo:       tagRepo,
-		taskRepo:      taskRepo,
-		userRepo:      userRepo,
+		appRepo:        appRepo,
+		binObjectRepo:  binObjectRepo,
+		fileRepo:       fileRepo,
+		projectEnvRepo: projectEnvRepo,
+		projectRepo:    projectRepo,
+		resLinkRepo:    resLinkRepo,
+		settingRepo:    settingRepo,
+		tagRepo:        tagRepo,
+		taskRepo:       taskRepo,
+		userRepo:       userRepo,
 
 		appService:     appService,
 		networkService: networkService,
@@ -46,15 +48,16 @@ func New(
 }
 
 type service struct {
-	appRepo       repository.AppRepo
-	binObjectRepo repository.BinObjectRepo
-	fileRepo      repository.FileRepo
-	projectRepo   repository.ProjectRepo
-	resLinkRepo   repository.ResLinkRepo
-	settingRepo   repository.SettingRepo
-	tagRepo       repository.TagRepo
-	taskRepo      repository.TaskRepo
-	userRepo      repository.UserRepo
+	appRepo        repository.AppRepo
+	binObjectRepo  repository.BinObjectRepo
+	fileRepo       repository.FileRepo
+	projectEnvRepo repository.ProjectEnvRepo
+	projectRepo    repository.ProjectRepo
+	resLinkRepo    repository.ResLinkRepo
+	settingRepo    repository.SettingRepo
+	tagRepo        repository.TagRepo
+	taskRepo       repository.TaskRepo
+	userRepo       repository.UserRepo
 
 	appService     appservice.Service
 	networkService networkservice.Service

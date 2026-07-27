@@ -16,20 +16,18 @@ func (uc *UC) PrepareAppCopy(
 	auth *basedto.Auth,
 	req *appdto.PrepareAppCopyReq,
 ) (*appdto.PrepareAppCopyResp, error) {
-	app, err := uc.appRepo.GetByID(ctx, uc.db, req.ProjectID, req.AppID,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
 		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
-	}
-	if app.ProjectID != req.ProjectID {
-		return nil, apperrors.Wrap(apperrors.ErrUnauthorized)
 	}
 
 	refObjects, err := uc.settingService.LoadReferenceObjects(ctx, uc.db, app.GetObjectScope(),

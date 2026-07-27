@@ -137,7 +137,7 @@ func (uc *BaseUC) loadUniqueSettingForUpdate(
 	}
 
 	// Not allow updating inherited settings, in the case, create a new one overriding the upstream
-	if data.Setting != nil && data.Setting.ObjectID != req.Scope.MainObjectID() {
+	if data.Setting != nil && data.Setting.ObjectID != req.Scope.ScopeObjectID() {
 		data.Setting = nil
 	}
 
@@ -166,8 +166,8 @@ func (uc *BaseUC) prepareUniqueSettingUpdate(
 	if data.Setting == nil {
 		setting = &entity.Setting{
 			ID:              gofn.Must(ulid.NewStringULID()),
-			Scope:           req.Scope.ScopeType(),
-			ObjectID:        req.Scope.MainObjectID(),
+			Scope:           req.Scope.ScopeType,
+			ObjectID:        req.Scope.ScopeObjectID(),
 			Type:            req.Type,
 			Status:          base.SettingStatusActive,
 			Name:            data.Name,

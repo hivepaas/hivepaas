@@ -37,7 +37,6 @@ func (req *AppBaseReq) validate(field string) (res []vld.Validator) {
 
 func (req *AppBaseReq) modifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
-	req.Env = strings.ToLower(strings.TrimSpace(req.Env))
 	return nil
 }
 

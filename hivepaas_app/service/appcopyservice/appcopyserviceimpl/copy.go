@@ -138,11 +138,12 @@ func (s *service) copyApp(
 		return apperrors.Wrap(err)
 	}
 
+	targetEnv := targetApp.ProjectEnv.Name
 	targetApp.Key = slugify.SlugifyAsKey(targetApp.Name)
 	if targetApp.ParentApp != nil {
 		targetApp.Key = targetApp.ParentApp.Key + "_" + targetApp.Key
 	}
-	targetApp.GlobalKey = projecthelper.CalcAppGlobalKey(data.TargetProject.Key, targetApp.Key, targetApp.Env)
+	targetApp.GlobalKey = projecthelper.CalcAppGlobalKey(data.TargetProject.Key, targetApp.Key, targetEnv)
 
 	// App keys must be unique globally
 	conflictApp, err := s.appRepo.GetByGlobalKey(ctx, db, "", targetApp.GlobalKey, bunex.SelectColumns("id"))
@@ -155,7 +156,7 @@ func (s *service) copyApp(
 	}
 
 	// Create local network for the app to attach
-	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, targetApp.Env)
+	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, targetEnv)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

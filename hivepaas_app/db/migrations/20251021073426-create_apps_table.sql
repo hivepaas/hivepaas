@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS apps
     key            VARCHAR(100) NOT NULL,
     global_key     VARCHAR(100) NOT NULL,
     project_id     VARCHAR(100) NOT NULL,
+    project_env_id VARCHAR(100) NOT NULL,
     parent_id      VARCHAR(100) NULL,
     service_id     VARCHAR(100) NULL,
-    env            VARCHAR(100) NULL,
     status         VARCHAR NOT NULL CONSTRAINT chk_status CHECK
                         (status IN ('active','disabled','deleting')),
     note           VARCHAR(10000) NULL,
@@ -18,13 +18,14 @@ CREATE TABLE IF NOT EXISTS apps
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at     TIMESTAMPTZ NULL,
 
-    CONSTRAINT fk_apps_project_id FOREIGN KEY (project_id) REFERENCES projects (id)
+    CONSTRAINT fk_apps_project_id FOREIGN KEY (project_id) REFERENCES projects (id),
+    CONSTRAINT fk_apps_project_env_id FOREIGN KEY (project_env_id) REFERENCES project_envs (id)
 );
 
 CREATE UNIQUE INDEX idx_uq_apps_global_key ON apps(global_key) WHERE deleted_at IS NULL;
 CREATE INDEX idx_apps_project_id ON apps(project_id);
+CREATE INDEX idx_apps_project_env_id ON apps(project_env_id);
 CREATE INDEX idx_apps_parent_id ON apps(parent_id);
-CREATE INDEX idx_apps_env ON apps(env);
 CREATE INDEX idx_apps_updated_at ON apps(updated_at);
 CREATE INDEX idx_apps_deleted_at ON apps(deleted_at);
 

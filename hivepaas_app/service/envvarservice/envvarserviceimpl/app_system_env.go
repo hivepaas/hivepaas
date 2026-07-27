@@ -62,7 +62,7 @@ func (s *service) ComputeAppSystemEnvVars(
 		{
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarEnv,
-				Value:    req.App.Env,
+				Value:    req.App.ProjectEnv.Name,
 				IsShared: true,
 			},
 		},

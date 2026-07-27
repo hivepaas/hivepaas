@@ -186,7 +186,7 @@ func (s *service) DeleteConfigForApp(
 		}
 	} else {
 		// This is a child app, we may need to restore the inherited config having the same name as this
-		inheritedConfigSetting, err := s.settingRepo.GetByName(ctx, db, base.NewObjectScopeApp(app.ParentID, app.ProjectID),
+		inheritedConfigSetting, err := s.settingRepo.GetByName(ctx, db, app.GetObjectScope(),
 			base.SettingTypeConfigFile, config.Name, false)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)

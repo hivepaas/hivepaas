@@ -40,7 +40,7 @@ func (s *service) copySwarmService(
 	targetSvc.Spec.Labels[appservice.LabelAppNamespace] = data.TargetProject.Key
 	targetSvc.Spec.Labels[appservice.LabelAppKey] = targetApp.Key
 	targetSvc.Spec.Labels[appservice.LabelAppName] = targetApp.Name
-	targetSvc.Spec.Labels[appservice.LabelAppEnv] = targetApp.Env
+	targetSvc.Spec.Labels[appservice.LabelAppEnv] = targetApp.ProjectEnv.Name
 
 	// Update endpoints
 	if targetSvc.Spec.EndpointSpec != nil {
@@ -59,11 +59,13 @@ func (s *service) copySwarmService(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	_, oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.SrcProject, data.SrcApp.Env)
+	_, oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.SrcProject,
+		data.SrcApp.ProjectEnv.Name)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	_, newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, data.TargetApp.Env)
+	_, newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject,
+		data.TargetApp.ProjectEnv.Name)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

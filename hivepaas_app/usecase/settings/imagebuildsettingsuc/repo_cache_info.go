@@ -23,8 +23,8 @@ func (uc *UC) GetRepoCacheInfo(
 	}
 	if !req.Scope.IsGlobalScope() {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("file.scope = ?", req.Scope.ScopeType()),
-			bunex.SelectWhere("file.object_id = ?", req.Scope.MainObjectID()),
+			bunex.SelectWhere("file.scope = ?", req.Scope.ScopeType),
+			bunex.SelectWhere("file.object_id = ?", req.Scope.ScopeObjectID()),
 		)
 	}
 

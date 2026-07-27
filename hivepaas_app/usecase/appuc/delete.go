@@ -17,7 +17,7 @@ func (uc *UC) DeleteApp(
 	req *appdto.DeleteAppReq,
 ) (*appdto.DeleteAppResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		app, err := uc.appRepo.GetByID(ctx, db, req.ProjectID, req.AppID,
+		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, false, false,
 			bunex.SelectFor("UPDATE OF app"),
 		)
 		if err != nil {

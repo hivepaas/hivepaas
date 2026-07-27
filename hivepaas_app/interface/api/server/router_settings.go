@@ -9,11 +9,6 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 	settingGroup := apiGroup.Group("/settings")
 	settingHandler := s.handlerRegistry.settingHandler
 
-	{ // accessing projects group
-		settingGroup.GET("/:itemID/accessible-by-projects", settingHandler.GetAccessibleByProjects)
-		settingGroup.PUT("/:itemID/accessible-by-projects", settingHandler.UpdateAccessibleByProjects)
-	}
-
 	{ // access-token group
 		accessTokenGroup := settingGroup.Group("/access-tokens")
 		accessTokenGroup.GET("/:itemID", settingHandler.GetAccessToken)

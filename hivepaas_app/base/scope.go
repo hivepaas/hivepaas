@@ -1,58 +1,60 @@
 package base
 
+import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+
 type ObjectScopeType string
 
 const (
-	ObjectScopeGlobal  ObjectScopeType = ""
-	ObjectScopeUser    ObjectScopeType = "user"
-	ObjectScopeProject ObjectScopeType = "project"
-	ObjectScopeApp     ObjectScopeType = "app"
+	ObjectScopeGlobal     ObjectScopeType = ""
+	ObjectScopeUser       ObjectScopeType = "user"
+	ObjectScopeProjectEnv ObjectScopeType = "project-env"
+	ObjectScopeProject    ObjectScopeType = "project"
+	ObjectScopeApp        ObjectScopeType = "app"
 )
 
 type ObjectScope struct {
-	AppID            string
-	ParentAppID      string
-	ProjectID        string
-	UserID           string
-	NotRequireActive bool
-}
+	ScopeType    ObjectScopeType
+	AppID        string
+	ParentAppID  string
+	ProjectID    string
+	ProjectEnvID string
+	UserID       string
 
-func (s *ObjectScope) ScopeType() ObjectScopeType {
-	switch {
-	case s.AppID != "":
-		return ObjectScopeApp
-	case s.ProjectID != "":
-		return ObjectScopeProject
-	case s.UserID != "":
-		return ObjectScopeUser
-	default:
-		return ObjectScopeGlobal
-	}
+	NotRequireActive bool
+	NoInherited      bool
 }
 
 func (s *ObjectScope) IsGlobalScope() bool {
-	return s.ScopeType() == ObjectScopeGlobal
+	return s.ScopeType == ObjectScopeGlobal
 }
 
 func (s *ObjectScope) IsAppScope() bool {
-	return s.AppID != ""
+	return s.ScopeType == ObjectScopeApp
+}
+
+func (s *ObjectScope) IsProjectEnvScope() bool {
+	return s.ScopeType == ObjectScopeProjectEnv
 }
 
 func (s *ObjectScope) IsProjectScope() bool {
-	return s.ProjectID != ""
+	return s.ScopeType == ObjectScopeProject
 }
 
 func (s *ObjectScope) IsUserScope() bool {
-	return s.UserID != ""
+	return s.ScopeType == ObjectScopeUser
 }
 
-func (s *ObjectScope) MainObjectID() string {
-	switch {
-	case s.AppID != "":
+func (s *ObjectScope) ScopeObjectID() string {
+	switch s.ScopeType {
+	case ObjectScopeGlobal:
+		return ""
+	case ObjectScopeApp:
 		return s.AppID
-	case s.ProjectID != "":
+	case ObjectScopeProjectEnv:
+		return s.ProjectEnvID
+	case ObjectScopeProject:
 		return s.ProjectID
-	case s.UserID != "":
+	case ObjectScopeUser:
 		return s.UserID
 	default:
 		return ""
@@ -60,24 +62,37 @@ func (s *ObjectScope) MainObjectID() string {
 }
 
 func NewObjectScopeGlobal() *ObjectScope {
-	return &ObjectScope{}
+	return &ObjectScope{ScopeType: ObjectScopeGlobal}
 }
 
-func NewObjectScopeApp(appID, projectID string) *ObjectScope {
+func NewObjectScopeApp(appID, parentAppID, projectID, env string) *ObjectScope {
 	return &ObjectScope{
-		AppID:     appID,
-		ProjectID: projectID,
+		ScopeType:    ObjectScopeApp,
+		AppID:        appID,
+		ParentAppID:  parentAppID,
+		ProjectID:    projectID,
+		ProjectEnvID: projecthelper.CalcProjectEnvID(projectID, env),
+	}
+}
+
+func NewObjectScopeProjectEnv(projectID string, env string) *ObjectScope {
+	return &ObjectScope{
+		ScopeType:    ObjectScopeProjectEnv,
+		ProjectID:    projectID,
+		ProjectEnvID: projecthelper.CalcProjectEnvID(projectID, env),
 	}
 }
 
 func NewObjectScopeProject(projectID string) *ObjectScope {
 	return &ObjectScope{
+		ScopeType: ObjectScopeProject,
 		ProjectID: projectID,
 	}
 }
 
 func NewObjectScopeUser(userID string) *ObjectScope {
 	return &ObjectScope{
-		UserID: userID,
+		ScopeType: ObjectScopeUser,
+		UserID:    userID,
 	}
 }

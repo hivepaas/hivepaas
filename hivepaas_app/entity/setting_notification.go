@@ -175,8 +175,8 @@ func NewNotificationDefaultForScope(scope *base.ObjectScope) *Notification {
 			UseDefault: true,
 		},
 	}
-	switch scope.ScopeType() {
-	case base.ObjectScopeProject, base.ObjectScopeApp:
+	switch scope.ScopeType {
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv, base.ObjectScopeApp:
 		notif.ViaEmail.ToProjectOwners = true
 		notif.ViaEmail.ToProjectMembers = true
 	case base.ObjectScopeUser:

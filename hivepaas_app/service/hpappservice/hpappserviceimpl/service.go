@@ -7,11 +7,13 @@ import (
 )
 
 func New(
+	appRepo repository.AppRepo,
 	taskRepo repository.TaskRepo,
 
 	dockerManager docker.Manager,
 ) hpappservice.Service {
 	return &service{
+		appRepo:  appRepo,
 		taskRepo: taskRepo,
 
 		dockerManager: dockerManager,
@@ -19,6 +21,7 @@ func New(
 }
 
 type service struct {
+	appRepo  repository.AppRepo
 	taskRepo repository.TaskRepo
 
 	dockerManager docker.Manager

@@ -75,6 +75,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -92,7 +93,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 	}
 
 	// Loads project local network
-	_, data.LocalNetwork, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, app.Project, app.Env)
+	_, data.LocalNetwork, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, app.Project, app.ProjectEnv.Name)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}

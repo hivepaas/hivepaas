@@ -25,7 +25,7 @@ func (uc *UC) DeleteNode(
 			db database.Tx,
 			data *settings.DeleteSettingData,
 		) error {
-			if data.Setting.ObjectID == req.Scope.MainObjectID() {
+			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
 				var options []docker.NodeRemoveOption
 				if req.Force {
 					options = append(options, docker.NodeRemoveForce(true))

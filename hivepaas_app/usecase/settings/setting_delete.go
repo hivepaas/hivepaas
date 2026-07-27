@@ -33,9 +33,9 @@ type DeleteSettingResp struct {
 type DeleteSettingData struct {
 	BaseSettingData
 
-	Setting              *entity.Setting
-	ProjectSharedSetting *entity.ProjectSharedSetting
-	ExtraLoadOpts        []bunex.SelectQueryOption
+	Setting       *entity.Setting
+	SharedSetting *entity.SharedSetting
+	ExtraLoadOpts []bunex.SelectQueryOption
 
 	AfterLoading     func(context.Context, database.Tx, *DeleteSettingData) error
 	BeforePersisting func(context.Context, database.Tx, *DeleteSettingData, *PersistingSettingDeletionData) error
@@ -43,8 +43,8 @@ type DeleteSettingData struct {
 }
 
 type PersistingSettingDeletionData struct {
-	Setting              *entity.Setting
-	ProjectSharedSetting *entity.ProjectSharedSetting
+	Setting       *entity.Setting
+	SharedSetting *entity.SharedSetting
 }
 
 func (uc *BaseUC) DeleteSetting(
@@ -126,7 +126,7 @@ func (uc *BaseUC) loadSettingForDeletion(
 
 	// The setting was imported to project from global
 	if setting.ObjectID == "" && req.Scope.IsProjectScope() {
-		data.ProjectSharedSetting, err = uc.ProjectSharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, req.ID)
+		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, req.ID)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -141,9 +141,9 @@ func (uc *BaseUC) prepareSettingDeletion(
 	persistingData *PersistingSettingDeletionData,
 ) {
 	timeNow := timeutil.NowUTC()
-	if data.ProjectSharedSetting != nil {
-		data.ProjectSharedSetting.DeletedAt = timeNow
-		persistingData.ProjectSharedSetting = data.ProjectSharedSetting
+	if data.SharedSetting != nil {
+		data.SharedSetting.DeletedAt = timeNow
+		persistingData.SharedSetting = data.SharedSetting
 	} else {
 		data.Setting.UpdateVer++
 		data.Setting.DeletedAt = timeNow
@@ -156,8 +156,8 @@ func (uc *BaseUC) persistSettingDeletion(
 	db database.IDB,
 	persistingData *PersistingSettingDeletionData,
 ) (err error) {
-	if persistingData.ProjectSharedSetting != nil {
-		err = uc.ProjectSharedSettingRepo.Update(ctx, db, persistingData.ProjectSharedSetting,
+	if persistingData.SharedSetting != nil {
+		err = uc.SharedSettingRepo.Update(ctx, db, persistingData.SharedSetting,
 			bunex.UpdateColumns("deleted_at"),
 		)
 		if err != nil {
@@ -175,7 +175,7 @@ func (uc *BaseUC) persistSettingDeletion(
 
 	// If deleted item is global, delete all references from projects
 	if persistingData.Setting.ObjectID == "" {
-		err = uc.ProjectSharedSettingRepo.DeleteAllBySetting(ctx, db, persistingData.Setting.ID)
+		err = uc.SharedSettingRepo.DeleteAllBySetting(ctx, db, persistingData.Setting.ID)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

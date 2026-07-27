@@ -78,6 +78,7 @@ func (uc *UC) CreateApp(
 
 type createAppData struct {
 	Project      *entity.Project
+	ProjectEnv   *entity.ProjectEnv
 	AppGlobalKey string
 	AppKey       string
 	ServiceSpec  *swarm.ServiceSpec
@@ -92,6 +93,9 @@ func (uc *UC) loadAppData(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
 		bunex.SelectFor("UPDATE OF project"),
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		bunex.SelectRelation("ProjectEnvs",
+			bunex.SelectWhere("project_env.name = ?", req.Env),
+		),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -99,8 +103,17 @@ func (uc *UC) loadAppData(
 	if project.Status != base.ProjectStatusActive {
 		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
 	}
-	data.Project = project
+	if len(project.ProjectEnvs) == 0 {
+		return apperrors.NewNotFound("Project env")
+	}
+	projectEnv := project.ProjectEnvs[0]
+	if projectEnv.Status != base.ProjectStatusActive {
+		return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithNTParam("Project", project.Name).
+			WithNTParam("Env", projectEnv.Name)
+	}
 
+	data.Project = project
+	data.ProjectEnv = projectEnv
 	data.AppKey = slugify.SlugifyAsKey(req.Name)
 	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, req.Env)
 
@@ -135,11 +148,12 @@ func (uc *UC) preparePersistingApp(
 	timeNow := timeutil.NowUTC()
 	project := data.Project
 	app := &entity.App{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		ProjectID: project.ID,
-		Key:       data.AppKey,
-		GlobalKey: data.AppGlobalKey,
-		CreatedAt: timeNow,
+		ID:           gofn.Must(ulid.NewStringULID()),
+		ProjectID:    project.ID,
+		ProjectEnvID: data.ProjectEnv.ID,
+		Key:          data.AppKey,
+		GlobalKey:    data.AppGlobalKey,
+		CreatedAt:    timeNow,
 	}
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)
@@ -154,7 +168,6 @@ func (uc *UC) preparePersistingAppBase(
 ) {
 	app.Name = req.Name
 	app.Status = req.Status
-	app.Env = req.Env
 	app.Note = req.Note
 	app.UpdatedAt = timeNow
 
@@ -198,7 +211,7 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 				appservice.LabelAppNamespace: data.Project.Key,
 				appservice.LabelAppKey:       app.Key,
 				appservice.LabelAppName:      app.Name,
-				appservice.LabelAppEnv:       app.Env,
+				appservice.LabelAppEnv:       data.ProjectEnv.Name,
 			},
 		},
 		TaskTemplate: swarm.TaskSpec{
@@ -210,7 +223,7 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 			},
 			Networks: []swarm.NetworkAttachmentConfig{
 				{
-					Target:  uc.networkService.GetProjectNetworkName(data.Project, app.Env),
+					Target:  uc.networkService.GetProjectNetworkName(data.Project, data.ProjectEnv.Name),
 					Aliases: []string{app.Key},
 				},
 			},

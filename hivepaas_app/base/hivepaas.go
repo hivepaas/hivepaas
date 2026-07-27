@@ -2,28 +2,28 @@ package base
 
 const (
 	HivepaasAppServiceName = "hivepaas_app"
-	HivepaasAppGlobalKey   = "hivepaas_app"
+	HivepaasAppKey         = "app"
 
 	HivepaasWorkerServiceName = "hivepaas_worker"
-	HivepaasWorkerGlobalKey   = "hivepaas_worker"
+	HivepaasWorkerKey         = "worker"
 
 	HivepaasDbServiceName = "hivepaas_db"
-	HivepaasDbGlobalKey   = "hivepaas_db"
+	HivepaasDbKey         = "db"
 
 	HivepaasCacheServiceName = "hivepaas_redis"
-	HivepaasCacheGlobalKey   = "hivepaas_redis"
+	HivepaasCacheKey         = "redis"
 
 	HivepaasTraefikServiceName = "hivepaas_traefik"
-	HivepaasTraefikGlobalKey   = "hivepaas_traefik"
+	HivepaasTraefikKey         = "traefik"
 
 	HivepaasUpdaterServiceName = "hivepaas_updater"
-	HivepaasUpdaterGlobalKey   = "hivepaas_updater"
+	HivepaasUpdaterKey         = "updater"
 
 	HivepaasDockerProxyServiceName = "hivepaas_docker_proxy"
-	HivepaasDockerProxyGlobalKey   = "hivepaas_docker_proxy"
+	HivepaasDockerProxyKey         = "docker_proxy"
 
 	HivepaasAgentServiceName = "hivepaas_agent"
-	HivepaasAgentGlobalKey   = "hivepaas_agent"
+	HivepaasAgentKey         = "agent"
 )
 
 const (

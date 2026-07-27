@@ -38,17 +38,30 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'Project A', 'project_a', 'active', '01JAB
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO apps (id, name, global_key, key, status, project_id, env, created_at, updated_at)
-VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', 'Backend', 'project_a_dev_backend', 'backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
-        'development', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD2', 'Frontend', 'project_a_dev_frontend', 'frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
-        'development', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD3', 'Postgres', 'project_a_prod_db', 'db', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB1',
-        'production', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD5', 'Backend', 'project_b_dev_backend', 'backend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
-        'development', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJ8WD6', 'Frontend', 'project_b_staging_frontend', 'frontend', 'active', '01JAB9XED0GTXBSQDFVYAJ8WB2',
-        'staging', '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+INSERT INTO project_envs (id, project_id, name, key, status, color, index, created_at, updated_at)
+VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1:dev', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'development', 'dev', 'active', '#112233', 0,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB1:prod', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'production', 'prod', 'active', '#aabbcc', 1,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB1:stg', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'staging', 'stg', 'active', '#ccddff', 2,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB2:dev', '01JAB9XED0GTXBSQDFVYAJ8WB2', 'development', 'dev', 'active', '#ffaa11', 0,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WB3:dev', '01JAB9XED0GTXBSQDFVYAJ8WB3', 'development', 'dev', 'active', '#778899', 0,
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO apps (id, project_id, project_env_id, name, global_key, key, status, created_at, updated_at)
+VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:dev', 'Backend', 'project_a_dev_backend', 'backend', 'active',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WD2', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:dev', 'Frontend', 'project_a_dev_frontend', 'frontend', 'active',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WD3', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:prod', 'Postgres', 'project_a_prod_db', 'db', 'active',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WD5', '01JAB9XED0GTXBSQDFVYAJ8WB2', '01JAB9XED0GTXBSQDFVYAJ8WB2:dev', 'Backend', 'project_b_dev_backend', 'backend', 'active',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WD6', '01JAB9XED0GTXBSQDFVYAJ8WB2', '01JAB9XED0GTXBSQDFVYAJ8WB2:dev', 'Frontend', 'project_b_staging_frontend', 'frontend', 'active',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tags (object_id, tag, index)
@@ -187,9 +200,6 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WE1', '', NULL, 'oauth', 'github', 'Github', 'ac
         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WR1', '', NULL, 'cloud-storage', 'aws-s3', 'my cloud storage (s3)', 'active', true, true,
         '{"s3": {"secretKey": "hpsalt:HIx2ZGU2ub+0Jg== u6pTNbPq9T5oTeZPN1nnofaFcm6vN1u30OFVsF+fEsSiksyesKjnEeNOg2L4vnMpkUnsoYCiuru5xBEgXQl3Jt4y6Y40evvLVKnyj14lgWO8RWrAKfhhc2vAOEg=", "accessKeyId": "e74c319305880f8ce70dedb4463b4e8a", "bucket": "localpaas-dev", "region": "apac", "endpoint": "https://2d8acc928b0d56d7301b169067ba96af.r2.cloudflarestorage.com"}}',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
-       ('01JAB9XED0GTXBSQDFVYAJXXX1', 'project', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'project-envs', NULL, 'Project Envs', 'active', false, false,
-        '{"envs":[{"name":"development","color":"#008000"},{"name":"staging","color":"#d19fe8"},{"name":"production","color":"#ed9121"},{"name":"more-env","color":"#12345678"}]}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 

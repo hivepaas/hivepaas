@@ -97,6 +97,7 @@ func (s *service) loadAppDataForCreatingPreview(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 		),
@@ -156,7 +157,8 @@ func (s *service) onCopyApp(
 	data *createPreviewData,
 ) error {
 	targetApp.Name = data.CalcAppName
-	targetApp.Env = data.App.Env
+	targetApp.ProjectEnvID = data.App.ProjectEnvID
+	targetApp.ProjectEnv = data.App.ProjectEnv
 	targetApp.Status = base.AppStatusActive
 	targetApp.ParentID = data.App.ID // Preview app must be a child app of the current
 	targetApp.ParentApp = srcApp

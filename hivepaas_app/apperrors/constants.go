@@ -156,10 +156,12 @@ var (
 
 // Errors for projects
 var (
-	ErrProjectNotFound           = NewErr(ErrNotFound, "ERR_PROJECT_NOT_FOUND")
-	ErrProjectInactive           = NewErr(ErrInactive, "ERR_PROJECT_INACTIVE")
-	ErrProjectNameNotAllowed     = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")
-	ErrProjectNetworkUnavailable = NewErr(ErrUnavailable, "ERR_PROJECT_NETWORK_UNAVAILABLE")
+	ErrProjectNotFound            = NewErr(ErrNotFound, "ERR_PROJECT_NOT_FOUND")
+	ErrProjectInactive            = NewErr(ErrInactive, "ERR_PROJECT_INACTIVE")
+	ErrProjectEnvInactive         = NewErr(ErrInactive, "ERR_PROJECT_ENV_INACTIVE")
+	ErrProjectNameNotAllowed      = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")
+	ErrProjectNetworkUnavailable  = NewErr(ErrUnavailable, "ERR_PROJECT_NETWORK_UNAVAILABLE")
+	ErrProjectEnvRemovalUnallowed = NewErr(ErrNotAllowed, "ERR_PROJECT_ENV_REMOVAL_UNALLOWED")
 )
 
 // Errors for apps

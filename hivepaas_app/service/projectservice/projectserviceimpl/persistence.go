@@ -38,6 +38,13 @@ func (s *service) PersistProjectData(ctx context.Context, db database.IDB,
 		return apperrors.Wrap(err)
 	}
 
+	// Project envs
+	err = s.projectEnvRepo.UpsertMulti(ctx, db, persistingData.UpsertingProjectEnvs,
+		entity.ProjectEnvUpsertingConflictCols, entity.ProjectEnvUpsertingUpdateCols)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	// Apps
 	err = s.appRepo.UpsertMulti(ctx, db, persistingData.UpsertingApps,
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)

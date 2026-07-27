@@ -22,4 +22,8 @@ type Service interface {
 	DeleteProject(ctx context.Context, db database.IDB, project *entity.Project) error
 	SyncProject(ctx context.Context, db database.IDB, project *entity.Project) (
 		newApps, updateApps []*entity.App, _ []swarm.Service, _ error)
+
+	LoadProjectEnv(ctx context.Context, db database.IDB, projectID, projectEnvID string,
+		requireProjectActive, requireAppActive bool, extraOpts ...bunex.SelectQueryOption) (
+		*entity.ProjectEnv, error)
 }

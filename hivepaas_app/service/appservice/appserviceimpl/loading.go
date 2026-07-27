@@ -18,7 +18,7 @@ func (s *service) LoadApps(
 	projectID string,
 	appIDs []string,
 	requireProjectActive, requireAppsActive bool,
-	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project")
+	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project & ProjectEnv")
 ) ([]*entity.App, error) {
 	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *service) LoadApp(
 	db database.IDB,
 	projectID, appID string,
 	requireProjectActive, requireAppActive bool,
-	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project")
+	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project & ProjectEnv")
 ) (*entity.App, error) {
 	app, err := s.appRepo.GetByID(ctx, db, projectID, appID, extraOpts...)
 	if err != nil {
@@ -79,12 +79,20 @@ func (s *service) validateAppStatus(
 	app *entity.App,
 	requireProjectActive, requireAppActive bool,
 ) error {
+	projectName := app.ProjectID
+	if app.Project != nil {
+		projectName = app.Project.Name
+	}
 	if requireProjectActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
-		projectName := app.ProjectID
-		if app.Project != nil {
-			projectName = app.Project.Name
-		}
 		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+	}
+	if requireProjectActive && (app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive) {
+		projectEnv := app.ProjectEnvID
+		if app.ProjectEnv != nil {
+			projectEnv = app.ProjectEnv.Name
+		}
+		return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
+			WithNTParam("Env", projectEnv)
 	}
 	if requireAppActive {
 		if app.Status != base.AppStatusActive {

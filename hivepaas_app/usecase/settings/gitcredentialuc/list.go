@@ -54,7 +54,7 @@ func (uc *UC) ListGitCredential(
 	}
 
 	for _, setting := range settings {
-		setting.CurrentObjectID = req.Scope.MainObjectID()
+		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
 	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true,

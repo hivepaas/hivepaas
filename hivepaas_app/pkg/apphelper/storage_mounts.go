@@ -11,8 +11,8 @@ func CalcMountSubpath(
 	app *entity.App,
 	pathTemplate string, // something like `project_data/{{project}}/{{env}}/{{app}}`
 ) string {
-	path := strings.NewReplacer("{{project}}", project.Key, "{{env}}", app.Env, "{{app}}", app.GlobalKey).
-		Replace(pathTemplate)
+	path := strings.NewReplacer("{{project}}", project.Key, "{{env}}", app.ProjectEnv.Name,
+		"{{app}}", app.GlobalKey).Replace(pathTemplate)
 	path = strings.ReplaceAll(path, "//", "/")
 	return path
 }

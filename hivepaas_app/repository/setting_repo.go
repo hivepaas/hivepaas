@@ -99,25 +99,19 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.O
 	opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	theOpts := opts
 	if scope != nil {
-		// Query project ID for the app if it's not given
-		if scope.AppID != "" && scope.ProjectID == "" {
-			app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
-				bunex.SelectColumns("project_id", "parent_id"))
-			if err != nil {
-				return nil, apperrors.Wrap(err)
-			}
-			scope.ParentAppID = app.ParentID
-			scope.ProjectID = app.ProjectID
+		if err := repo.loadScopeData(ctx, db, scope); err != nil {
+			return nil, apperrors.Wrap(err)
 		}
-
-		switch {
-		case scope.AppID != "":
-			theOpts = repo.applyAppFilter(theOpts, scope.AppID, scope.ParentAppID, scope.ProjectID)
-		case scope.ProjectID != "":
-			theOpts = repo.applyProjectFilter(theOpts, scope.ProjectID)
-		case scope.UserID != "":
-			theOpts = repo.applyUserFilter(theOpts, scope.UserID)
-		default:
+		switch scope.ScopeType {
+		case base.ObjectScopeApp:
+			theOpts = repo.applyAppFilter(theOpts, scope)
+		case base.ObjectScopeProjectEnv:
+			theOpts = repo.applyProjectEnvFilter(theOpts, scope)
+		case base.ObjectScopeProject:
+			theOpts = repo.applyProjectFilter(theOpts, scope)
+		case base.ObjectScopeUser:
+			theOpts = repo.applyDirectUserFilter(theOpts, scope)
+		case base.ObjectScopeGlobal:
 			theOpts = repo.applyGlobalFilter(theOpts)
 		}
 	}
@@ -140,7 +134,7 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *base.O
 	return setting, nil
 }
 
-//nolint:gocognit
+//nolint:gocognit,gocyclo
 func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *base.ObjectScope,
 	typ base.SettingType, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	opts = repo.applyFilter(opts, typ, "", requireActive)
@@ -168,10 +162,10 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 		return settings[0], nil
 	}
 
-	var parentSetting, projectSetting, globalSetting *entity.Setting
+	var parentSetting, projectEnvSetting, projectSetting, globalSetting *entity.Setting
 	for _, setting := range settings {
-		switch {
-		case scope.AppID != "":
+		switch scope.ScopeType {
+		case base.ObjectScopeApp:
 			if setting.ObjectID == scope.AppID { // app's direct setting has the highest priority
 				return setting, nil
 			}
@@ -179,19 +173,31 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 				parentSetting = setting
 				continue
 			}
+			if projectEnvSetting == nil && setting.ObjectID != "" && setting.ObjectID == scope.ProjectEnvID {
+				projectEnvSetting = setting
+				continue
+			}
 			if projectSetting == nil && setting.ObjectID != "" && setting.ObjectID == scope.ProjectID {
 				projectSetting = setting
 				continue
 			}
-		case scope.ProjectID != "":
+		case base.ObjectScopeProjectEnv:
+			if setting.ObjectID == scope.ProjectEnvID { // project env's direct setting has the highest priority
+				return setting, nil
+			}
+			if projectSetting == nil && setting.ObjectID != "" && setting.ObjectID == scope.ProjectID {
+				projectSetting = setting
+				continue
+			}
+		case base.ObjectScopeProject:
 			if setting.ObjectID == scope.ProjectID { // project's direct setting has the highest priority
 				return setting, nil
 			}
-		case scope.UserID != "":
+		case base.ObjectScopeUser:
 			if setting.ObjectID == scope.UserID { // // user's direct setting has the highest priority
 				return setting, nil
 			}
-		default:
+		case base.ObjectScopeGlobal:
 			return setting, nil
 		}
 
@@ -200,7 +206,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 			continue
 		}
 	}
-	setting := gofn.Coalesce(parentSetting, projectSetting, globalSetting)
+	setting := gofn.Coalesce(parentSetting, projectEnvSetting, projectSetting, globalSetting)
 	if setting != nil {
 		return setting, nil
 	}
@@ -211,25 +217,19 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *base.
 	paging *basedto.Paging, opts ...bunex.SelectQueryOption) ([]*entity.Setting, *basedto.PagingMeta, error) {
 	theOpts := opts
 	if scope != nil {
-		// Query project ID for the app if it's not given
-		if scope.AppID != "" && scope.ProjectID == "" {
-			app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
-				bunex.SelectColumns("project_id", "parent_id"))
-			if err != nil {
-				return nil, nil, apperrors.Wrap(err)
-			}
-			scope.ParentAppID = app.ParentID
-			scope.ProjectID = app.ProjectID
+		if err := repo.loadScopeData(ctx, db, scope); err != nil {
+			return nil, nil, apperrors.Wrap(err)
 		}
-
-		switch {
-		case scope.AppID != "":
-			theOpts = repo.applyAppFilter(theOpts, scope.AppID, scope.ParentAppID, scope.ProjectID)
-		case scope.ProjectID != "":
-			theOpts = repo.applyProjectFilter(theOpts, scope.ProjectID)
-		case scope.UserID != "":
-			theOpts = repo.applyUserFilter(theOpts, scope.UserID)
-		default:
+		switch scope.ScopeType {
+		case base.ObjectScopeApp:
+			theOpts = repo.applyAppFilter(theOpts, scope)
+		case base.ObjectScopeProjectEnv:
+			theOpts = repo.applyProjectEnvFilter(theOpts, scope)
+		case base.ObjectScopeProject:
+			theOpts = repo.applyProjectFilter(theOpts, scope)
+		case base.ObjectScopeUser:
+			theOpts = repo.applyDirectUserFilter(theOpts, scope)
+		case base.ObjectScopeGlobal:
 			theOpts = repo.applyGlobalFilter(theOpts)
 		}
 	}
@@ -300,53 +300,105 @@ func (repo *settingRepo) applyNameAndKindFilter(opts []bunex.SelectQueryOption,
 	return opts
 }
 
+// applyAppFilter filters settings belong to the app or to any parent object
 func (repo *settingRepo) applyAppFilter(opts []bunex.SelectQueryOption,
-	appID, parentAppID, projectID string) []bunex.SelectQueryOption {
-	if projectID != "" {
-		opts = append(opts,
-			bunex.SelectJoin("LEFT JOIN project_shared_settings pss ON pss.setting_id = setting.id"),
-			bunex.SelectWhereGroup(
-				bunex.SelectWhereIf(appID != "", "setting.object_id = ?", appID),
-				bunex.SelectWhereOrIf(parentAppID != "", "setting.object_id = ?", parentAppID),
-				bunex.SelectWhereOr("setting.object_id = ?", projectID),
-				bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.avail_in_projects = TRUE)"),
-				bunex.SelectWhereOr("(setting.object_id IS NULL AND pss.project_id = ? AND pss.deleted_at IS NULL)",
-					projectID),
-			),
-		)
-	} else if appID != "" {
-		opts = append(opts,
-			bunex.SelectWhereGroup(
-				bunex.SelectWhere("setting.object_id = ?", appID),
-				bunex.SelectWhereOrIf(parentAppID != "", "setting.object_id = ?", parentAppID),
-			),
+	scope *base.ObjectScope) []bunex.SelectQueryOption {
+	if scope.NoInherited {
+		return append(opts,
+			bunex.SelectWhere("setting.object_id = ?", scope.AppID),
 		)
 	}
-	return opts
+
+	return append(opts,
+		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
+		bunex.SelectWhereGroup(
+			bunex.SelectWhere("setting.object_id = ?", scope.AppID),
+			bunex.SelectWhereOrIf(scope.ParentAppID != "", "setting.object_id = ?", scope.ParentAppID),
+			bunex.SelectWhereOrIf(scope.ProjectEnvID != "", "setting.object_id = ?", scope.ProjectEnvID),
+			bunex.SelectWhereOr("setting.object_id = ?", scope.ProjectID),
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.avail_in_projects = TRUE)"),
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
+				scope.ProjectID),
+			bunex.SelectWhereOrIf(scope.ProjectEnvID != "",
+				"(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
+				scope.ProjectEnvID),
+		),
+	)
 }
 
+// applyProjectEnvFilter filters settings belong to the project env or to any parent object
+func (repo *settingRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
+	scope *base.ObjectScope) []bunex.SelectQueryOption {
+	if scope.NoInherited {
+		return append(opts,
+			bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID))
+	}
+
+	return append(opts,
+		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
+		bunex.SelectWhereGroup(
+			bunex.SelectWhere("setting.object_id = ?", scope.ProjectID),
+			bunex.SelectWhereOr("setting.object_id = ?", scope.ProjectEnvID),
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.avail_in_projects = TRUE)"),
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
+				scope.ProjectID),
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
+				scope.ProjectEnvID),
+		),
+	)
+}
+
+// applyProjectFilter filters settings belong to the project or to any parent object
 func (repo *settingRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
-	projectID string) []bunex.SelectQueryOption {
-	opts = append(opts,
-		bunex.SelectJoin("LEFT JOIN project_shared_settings pss ON pss.setting_id = setting.id"),
+	scope *base.ObjectScope) []bunex.SelectQueryOption {
+	projectID := scope.ProjectID
+
+	if scope.NoInherited {
+		return append(opts,
+			bunex.SelectWhere("setting.object_id = ?", projectID))
+	}
+
+	return append(opts,
+		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
 		bunex.SelectWhereGroup(
 			bunex.SelectWhere("setting.object_id = ?", projectID),
 			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.avail_in_projects = TRUE)"),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND pss.project_id = ? AND pss.deleted_at IS NULL)",
+			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
 				projectID),
 		),
 	)
+}
+
+// applyDirectUserFilter filters settings belong to the user
+func (repo *settingRepo) applyDirectUserFilter(opts []bunex.SelectQueryOption,
+	scope *base.ObjectScope) []bunex.SelectQueryOption {
+	opts = append(opts, bunex.SelectWhere("setting.object_id = ?", scope.UserID))
 	return opts
 }
 
-func (repo *settingRepo) applyUserFilter(opts []bunex.SelectQueryOption, userID string) []bunex.SelectQueryOption {
-	opts = append(opts, bunex.SelectWhere("setting.object_id = ?", userID))
-	return opts
-}
-
+// applyGlobalFilter filters settings belong to global scope
 func (repo *settingRepo) applyGlobalFilter(opts []bunex.SelectQueryOption) []bunex.SelectQueryOption {
 	opts = append(opts, bunex.SelectWhere("setting.object_id IS NULL"))
 	return opts
+}
+
+func (repo *settingRepo) loadScopeData(ctx context.Context, db database.IDB, scope *base.ObjectScope) error {
+	if scope == nil {
+		return nil
+	}
+
+	if scope.ScopeType == base.ObjectScopeApp && (scope.ProjectID == "" || scope.ProjectEnvID == "") {
+		app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
+			bunex.SelectColumns("project_id", "project_env_id", "parent_id"))
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		scope.ProjectID = app.ProjectID
+		scope.ProjectEnvID = app.ProjectEnvID
+		scope.ParentAppID = app.ParentID
+	}
+
+	return nil
 }
 
 func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scope *base.ObjectScope,
@@ -355,17 +407,11 @@ func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scop
 		Where("setting.type = ?", typ).
 		Where("setting.status = ?", base.SettingStatusActive)
 	if scope != nil {
-		switch scope.ScopeType() {
-		case base.ObjectScopeGlobal:
+		scopeObjectID := scope.ScopeObjectID()
+		if scopeObjectID != "" {
+			query = query.Where("setting.object_id = ?", scopeObjectID)
+		} else {
 			query = query.Where("setting.object_id IS NULL")
-		case base.ObjectScopeProject:
-			query = query.Where("setting.object_id = ?", scope.ProjectID)
-		case base.ObjectScopeApp:
-			query = query.Where("setting.object_id = ?", scope.AppID)
-		case base.ObjectScopeUser:
-			query = query.Where("setting.object_id = ?", scope.UserID)
-		default:
-			// Do nothing
 		}
 	}
 	query = bunex.ApplySelect(query, opts...)
@@ -473,15 +519,13 @@ func (repo *settingRepo) UpdateClearDefaultFlag(ctx context.Context, db database
 	if exceptID != "" {
 		query = query.Where("setting.id != ?", exceptID)
 	}
-	switch {
-	case scope.AppID != "":
-		query = query.Where("setting.object_id = ?", scope.AppID)
-	case scope.ProjectID != "":
-		query = query.Where("setting.object_id = ?", scope.ProjectID)
-	case scope.UserID != "":
-		query = query.Where("setting.object_id = ?", scope.UserID)
-	default:
-		query = query.Where("setting.object_id IS NULL")
+	if scope != nil {
+		scopeObjectID := scope.ScopeObjectID()
+		if scopeObjectID != "" {
+			query = query.Where("setting.object_id = ?", scopeObjectID)
+		} else {
+			query = query.Where("setting.object_id IS NULL")
+		}
 	}
 	query = bunex.ApplyUpdate(query, opts...)
 

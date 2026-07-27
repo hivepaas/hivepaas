@@ -21,7 +21,9 @@ func (s *service) InitRootProject(
 	ctx context.Context,
 	db database.IDB,
 ) (postInitFunc func() error, err error) {
-	project, err := s.projectRepo.GetByKey(ctx, db, base.HivepaasProjectKey)
+	project, err := s.projectRepo.GetByKey(ctx, db, base.HivepaasProjectKey,
+		bunex.SelectRelation("ProjectEnvs"),
+	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return nil, apperrors.Wrap(err)
 	}
@@ -73,10 +75,10 @@ func (s *service) InitRootProject(
 			}
 		}
 		shouldUpdateService := false
-		switch app.GlobalKey {
-		case base.HivepaasAppGlobalKey:
+		switch app.Key {
+		case base.HivepaasAppKey:
 			shouldUpdateService, err = s.initRootProjectMainApp(ctx, db, app, svc)
-		case base.HivepaasTraefikGlobalKey:
+		case base.HivepaasTraefikKey:
 			shouldUpdateService, err = s.initRootProjectTraefikApp(ctx, db, app, svc)
 		}
 		if err != nil {

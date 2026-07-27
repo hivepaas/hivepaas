@@ -55,8 +55,8 @@ func (uc *UC) CreateFile(
 
 	file := &entity.File{
 		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       req.Scope.ScopeType(),
-		ObjectID:    req.Scope.MainObjectID(),
+		Scope:       req.Scope.ScopeType,
+		ObjectID:    req.Scope.ScopeObjectID(),
 		Type:        req.FileType,
 		Kind:        string(req.FileKind),
 		Status:      base.FileStatusActive,

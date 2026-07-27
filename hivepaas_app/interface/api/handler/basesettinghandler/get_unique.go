@@ -40,12 +40,14 @@ func (h *Handler) GetUniqueSetting(
 		o(options)
 	}
 
-	scope := &base.ObjectScope{}
+	scope := &base.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "")
+	case base.ObjectScopeProjectEnv:
+		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp:
 		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "")
 	case base.ObjectScopeUser:

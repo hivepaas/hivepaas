@@ -61,7 +61,7 @@ func (uc *BaseUC) GetSetting(
 		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
-		setting.CurrentObjectID = req.Scope.MainObjectID()
+		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
 	var refObjects *entity.RefObjects
@@ -92,7 +92,7 @@ func (uc *BaseUC) GetSettingByID(
 		return nil, apperrors.Wrap(err)
 	}
 	if setting != nil {
-		setting.CurrentObjectID = req.Scope.MainObjectID()
+		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 	return setting, nil
 }

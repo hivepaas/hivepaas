@@ -56,8 +56,8 @@ func (uc *UC) BeginGithubAppManifestFlow(
 
 	appSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           req.Scope.ScopeType(),
-		ObjectID:        req.Scope.MainObjectID(),
+		Scope:           req.Scope.ScopeType,
+		ObjectID:        req.Scope.ScopeObjectID(),
 		Type:            base.SettingTypeGithubApp,
 		Kind:            string(base.SettingTypeGithubApp),
 		Status:          base.SettingStatusActive,
@@ -97,12 +97,12 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	}
 
 	var beginFlowURL string
-	switch req.Scope.ScopeType() {
+	switch req.Scope.ScopeType {
 	case base.ObjectScopeGlobal:
 		beginFlowURL = cfg.GlobalGithubAppManifestFlowBeginURL(appSetting.ID, state)
 		manifest.RedirectURL = cfg.GlobalGithubAppManifestFlowProgressURL(appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
-	case base.ObjectScopeProject:
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv:
 		beginFlowURL = cfg.ProjectGithubAppManifestFlowBeginURL(req.Scope.ProjectID, appSetting.ID, state)
 		manifest.RedirectURL = cfg.ProjectGithubAppManifestFlowProgressURL(req.Scope.ProjectID, appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
@@ -110,7 +110,7 @@ func (uc *UC) BeginGithubAppManifestFlow(
 		fallthrough
 	default:
 		return nil, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).
-			WithParam("Scope", req.Scope.ScopeType())
+			WithParam("Scope", req.Scope.ScopeType)
 	}
 
 	manifestCache := &cacheentity.GithubAppManifest{

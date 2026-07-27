@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui";
 import { cn } from "@lib/utils";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { type Path, useFieldArray, useFormContext } from "react-hook-form";
@@ -206,7 +206,8 @@ function View<T>({
                                     {isEditing ? (
                                         <>
                                             {renderKeyInput(draftKey, setDraftKey, "h-8")}
-                                            <Input
+                                            <InputWithAddOn
+                                                addonLeft={valueLabel}
                                                 value={draftValue}
                                                 onChange={e => {
                                                     setDraftValue(e.target.value);

@@ -20,7 +20,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
         unknown,
         AppConfigNetworksFormSchemaOutput
     >();
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove, update } = useFieldArray({
         control,
         name: "portConfigs",
     });
@@ -29,7 +29,59 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
     const [target, setTarget] = useState<number>(0);
     const [protocol, setProtocol] = useState<EPortConfigProtocol>(EPortConfigProtocol.TCP);
     const [publishMode, setPublishMode] = useState<EPortConfigPublishMode>(EPortConfigPublishMode.Host);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [draftPublished, setDraftPublished] = useState(0);
+    const [draftTarget, setDraftTarget] = useState(0);
+    const [draftProtocol, setDraftProtocol] = useState<EPortConfigProtocol>(EPortConfigProtocol.TCP);
+    const [draftPublishMode, setDraftPublishMode] = useState<EPortConfigPublishMode>(EPortConfigPublishMode.Host);
     const resolutionMode = watch("resolutionMode");
+
+    const handleStartEdit = (index: number) => {
+        if (readOnly) {
+            return;
+        }
+
+        const field = fields[index];
+        if (!field) {
+            return;
+        }
+
+        setEditingIndex(index);
+        setDraftPublished(field.published);
+        setDraftTarget(field.target);
+        setDraftProtocol(field.protocol);
+        setDraftPublishMode(field.publishMode);
+    };
+
+    const handleSaveEdit = (index: number) => {
+        if (readOnly || editingIndex !== index) {
+            return;
+        }
+
+        if (draftPublished === 0 || draftTarget === 0) {
+            return;
+        }
+
+        update(index, {
+            published: draftPublished,
+            target: draftTarget,
+            protocol: draftProtocol,
+            publishMode: draftPublishMode,
+        });
+        setEditingIndex(null);
+        setDraftPublished(0);
+        setDraftTarget(0);
+        setDraftProtocol(EPortConfigProtocol.TCP);
+        setDraftPublishMode(EPortConfigPublishMode.Host);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
+        setDraftPublished(0);
+        setDraftTarget(0);
+        setDraftProtocol(EPortConfigProtocol.TCP);
+        setDraftPublishMode(EPortConfigPublishMode.Host);
+    };
 
     return (
         <>
@@ -182,23 +234,115 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                         append({ published, target, protocol, publishMode });
                         setPublished(0);
                         setTarget(0);
+                        handleCancelEdit();
                     }}
                     addDisabled={readOnly || published === 0 || target === 0}
                     disabled={readOnly}
-                    items={fields.map((field, index) => ({
-                        id: field.id,
-                        content: (
-                            <div className={portFieldsGridClass}>
-                                <span className="text-sm wrap-break-word min-w-0">{field.published}</span>
-                                <span className="text-sm wrap-break-word min-w-0">{field.target}</span>
-                                <span className="text-sm wrap-break-word min-w-0">{field.protocol}</span>
-                                <span className="text-sm wrap-break-word min-w-0">{field.publishMode}</span>
-                            </div>
-                        ),
-                        onRemove: () => {
-                            remove(index);
-                        },
-                    }))}
+                    items={fields.map((field, index) => {
+                        const isEditing = !readOnly && editingIndex === index;
+
+                        return {
+                            id: field.id,
+                            isEditing,
+                            content: (
+                                <div className={portFieldsGridClass}>
+                                    {isEditing ? (
+                                        <>
+                                            <InputNumberWithAddon
+                                                addonLeft="Host"
+                                                value={draftPublished}
+                                                onValueChange={v => {
+                                                    setDraftPublished(v ?? 0);
+                                                }}
+                                                useGrouping={false}
+                                                placeholder="8000"
+                                                classNameContainer="min-w-0"
+                                            />
+                                            <InputNumberWithAddon
+                                                addonLeft="Container"
+                                                value={draftTarget}
+                                                onValueChange={v => {
+                                                    setDraftTarget(v ?? 0);
+                                                }}
+                                                useGrouping={false}
+                                                placeholder="80"
+                                                classNameContainer="min-w-0"
+                                            />
+                                            <div className="flex min-w-0 items-center rounded-md border border-input">
+                                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                                    Protocol
+                                                </span>
+                                                <Select
+                                                    value={draftProtocol}
+                                                    onValueChange={value => {
+                                                        setDraftProtocol(value as EPortConfigProtocol);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value={EPortConfigProtocol.TCP}>TCP</SelectItem>
+                                                        <SelectItem value={EPortConfigProtocol.UDP}>UDP</SelectItem>
+                                                        <SelectItem value={EPortConfigProtocol.SCTP}>SCTP</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex min-w-0 items-center rounded-md border border-input">
+                                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                                    Mode
+                                                </span>
+                                                <Select
+                                                    value={draftPublishMode}
+                                                    onValueChange={value => {
+                                                        setDraftPublishMode(value as EPortConfigPublishMode);
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value={EPortConfigPublishMode.Host}>
+                                                            Host
+                                                        </SelectItem>
+                                                        <SelectItem value={EPortConfigPublishMode.Ingress}>
+                                                            Ingress
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm wrap-break-word min-w-0">{field.published}</span>
+                                            <span className="text-sm wrap-break-word min-w-0">{field.target}</span>
+                                            <span className="text-sm wrap-break-word min-w-0">{field.protocol}</span>
+                                            <span className="text-sm wrap-break-word min-w-0">{field.publishMode}</span>
+                                        </>
+                                    )}
+                                </div>
+                            ),
+                            onEdit: readOnly
+                                ? undefined
+                                : () => {
+                                      if (isEditing) {
+                                          handleSaveEdit(index);
+                                          return;
+                                      }
+
+                                      handleStartEdit(index);
+                                  },
+                            onRemove: () => {
+                                if (editingIndex === index) {
+                                    handleCancelEdit();
+                                } else if (editingIndex !== null && editingIndex > index) {
+                                    setEditingIndex(editingIndex - 1);
+                                }
+
+                                remove(index);
+                            },
+                        };
+                    })}
                 />
             </InfoBlock>
         </>

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { Input } from "@components/ui";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -38,6 +37,7 @@ export function NetworksFields({ readOnly = false }: Props) {
     const [selectedNetwork, setSelectedNetwork] = useState<NetworkOptionValue | null>(null);
     const [aliasesText, setAliasesText] = useState("");
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [draftNetwork, setDraftNetwork] = useState<NetworkOptionValue | null>(null);
     const [draftAliases, setDraftAliases] = useState("");
 
     const {
@@ -71,16 +71,20 @@ export function NetworksFields({ readOnly = false }: Props) {
         setSelectedNetwork(null);
         setAliasesText("");
         setEditingIndex(null);
+        setDraftNetwork(null);
         setDraftAliases("");
     };
 
-    const handleStartEdit = (index: number, currentAliases: string) => {
+    const handleStartEdit = (index: number) => {
         if (readOnly) {
             return;
         }
 
+        // useFieldArray shadows the form `id` with its own React key, so read from form values.
+        const currentAttachment = getValues(`networkAttachments.${index}`);
         setEditingIndex(index);
-        setDraftAliases(currentAliases);
+        setDraftNetwork({ id: currentAttachment.id, name: currentAttachment.name });
+        setDraftAliases(currentAttachment.aliasesText);
     };
 
     const handleSaveEdit = (index: number) => {
@@ -88,19 +92,24 @@ export function NetworksFields({ readOnly = false }: Props) {
             return;
         }
 
-        // useFieldArray shadows the form `id` with its own React key, so read from form values.
-        const currentAttachment = getValues(`networkAttachments.${index}`);
+        if (!draftNetwork) {
+            toast.error("Please select a network");
+            return;
+        }
+
         update(index, {
-            id: currentAttachment.id,
-            name: currentAttachment.name,
+            id: draftNetwork.id,
+            name: draftNetwork.name,
             aliasesText: draftAliases.trim(),
         });
         setEditingIndex(null);
+        setDraftNetwork(null);
         setDraftAliases("");
     };
 
     const handleCancelEdit = () => {
         setEditingIndex(null);
+        setDraftNetwork(null);
         setDraftAliases("");
     };
 
@@ -162,28 +171,49 @@ export function NetworksFields({ readOnly = false }: Props) {
                         id: field.id,
                         content: (
                             <div className={networkAttachmentsGridClass}>
-                                <span className="text-sm wrap-break-word min-w-0">{field.name || field.id}</span>
                                 {isEditing ? (
-                                    <Input
-                                        value={draftAliases}
-                                        onChange={e => {
-                                            setDraftAliases(e.target.value);
-                                        }}
-                                        onKeyDown={e => {
-                                            if (e.key === "Enter") {
-                                                e.preventDefault();
-                                                handleSaveEdit(index);
-                                            }
-                                            if (e.key === "Escape") {
-                                                e.preventDefault();
-                                                handleCancelEdit();
-                                            }
-                                        }}
-                                        placeholder="alias1 alias2"
-                                        className="h-8"
-                                    />
+                                    <>
+                                        <Combobox<NetworkOptionValue>
+                                            options={comboboxOptions}
+                                            value={draftNetwork?.id ?? null}
+                                            onChange={(_, option) => {
+                                                setDraftNetwork(option ?? null);
+                                            }}
+                                            onSearch={setSearch}
+                                            placeholder="local_net_1"
+                                            searchable
+                                            emptyText="No networks available"
+                                            valueKey="id"
+                                            loading={isFetching}
+                                            onRefresh={() => void refetch()}
+                                            isRefreshing={isRefetching}
+                                        />
+                                        <InputWithAddOn
+                                            addonLeft="Alias"
+                                            value={draftAliases}
+                                            onChange={e => {
+                                                setDraftAliases(e.target.value);
+                                            }}
+                                            onKeyDown={e => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    handleSaveEdit(index);
+                                                }
+                                                if (e.key === "Escape") {
+                                                    e.preventDefault();
+                                                    handleCancelEdit();
+                                                }
+                                            }}
+                                            placeholder="alias1 alias2"
+                                        />
+                                    </>
                                 ) : (
-                                    <span className="text-sm wrap-break-word min-w-0">{field.aliasesText}</span>
+                                    <>
+                                        <span className="text-sm wrap-break-word min-w-0">
+                                            {field.name || field.id}
+                                        </span>
+                                        <span className="text-sm wrap-break-word min-w-0">{field.aliasesText}</span>
+                                    </>
                                 )}
                             </div>
                         ),
@@ -196,7 +226,7 @@ export function NetworksFields({ readOnly = false }: Props) {
                                       return;
                                   }
 
-                                  handleStartEdit(index, field.aliasesText);
+                                  handleStartEdit(index);
                               },
                         onRemove: () => {
                             if (editingIndex === index) {

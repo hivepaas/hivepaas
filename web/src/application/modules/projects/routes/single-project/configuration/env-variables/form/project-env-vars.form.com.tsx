@@ -2,8 +2,11 @@ import React, { type PropsWithChildren, useImperativeHandle, useRef, useState } 
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { useParams } from "react-router";
 import { toast } from "sonner";
-import { EnvVarsFormHeader } from "~/projects/module-shared/components";
+import invariant from "tiny-invariant";
+import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
+import { EnvVarsFormHeader, type FinalEnvValueItem, FinalEnvValuesDialog } from "~/projects/module-shared/components";
 
 import { EnvVarsBaseForm } from "@application/modules/projects/module-shared/form/env-vars/env-vars.form.com";
 
@@ -24,10 +27,25 @@ const DEFAULTS: ProjectEnvVarsFormSchemaInput = {
 type SchemaInput = ProjectEnvVarsFormSchemaInput;
 type SchemaOutput = ProjectEnvVarsFormSchemaOutput;
 
+type EnvVarFormItem = SchemaInput["buildtime"][number];
+
+function toEnvVarWire(envVars: EnvVarFormItem[]) {
+    return envVars
+        .filter(envVar => envVar.key.trim() !== "")
+        .map(({ key, value, isLiteral }) => ({
+            key: key.trim(),
+            value,
+            isLiteral,
+        }));
+}
+
 export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>(function ProjectEnvVarsForm(
     { defaultValues, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<ProjectEnvVarsFormRef>,
 ) {
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
+
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             ...DEFAULTS,
@@ -46,6 +64,50 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
     const originalOrderRef = useRef<{ buildtime: SchemaInput["buildtime"]; runtime: SchemaInput["runtime"] } | null>(
         null,
     );
+
+    const [finalValuesOpen, setFinalValuesOpen] = useState(false);
+    const [finalValuesItems, setFinalValuesItems] = useState<FinalEnvValueItem[]>([]);
+    const [finalValuesSectionTitle, setFinalValuesSectionTitle] = useState("Build Time Env Variables");
+
+    const { mutate: computeEnvVars, isPending: isComputing } = ProjectEnvVarsCommands.useCompute({
+        onSuccess: response => {
+            setFinalValuesItems(response.data);
+            setFinalValuesOpen(true);
+        },
+    });
+
+    function handleShowFinalValues(section: "buildtime" | "runtime") {
+        invariant(projectId, "projectId must be defined");
+
+        const values = methods.getValues();
+
+        if (section === "buildtime") {
+            const buildtimeEnvVars = toEnvVarWire(values.buildtime);
+            if (buildtimeEnvVars.length === 0) {
+                toast.error("No buildtime env vars to compute");
+                return;
+            }
+
+            setFinalValuesSectionTitle("Build Time Env Variables");
+            computeEnvVars({
+                projectID: projectId,
+                buildtimeEnvVars,
+            });
+            return;
+        }
+
+        const runtimeEnvVars = toEnvVarWire(values.runtime);
+        if (runtimeEnvVars.length === 0) {
+            toast.error("No runtime env vars to compute");
+            return;
+        }
+
+        setFinalValuesSectionTitle("Runtime Env Variables");
+        computeEnvVars({
+            projectID: projectId,
+            runtimeEnvVars,
+        });
+    }
 
     function handleSortCycle() {
         const next = sortOrder === "normal" ? "asc" : sortOrder === "asc" ? "desc" : "normal";
@@ -152,6 +214,9 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                             name="buildtime"
                             title="Build Time Env Variables"
                             readOnly={readOnly}
+                            onShowFinalValues={() => {
+                                handleShowFinalValues("buildtime");
+                            }}
                         />
                         <div className="h-px bg-border" />
                         <EnvVarsBaseForm
@@ -161,12 +226,27 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                             name="runtime"
                             title="Runtime Env Variables"
                             readOnly={readOnly}
+                            onShowFinalValues={() => {
+                                handleShowFinalValues("runtime");
+                            }}
                         />
 
                         {children}
                     </fieldset>
                 </form>
             </FormProvider>
+
+            <FinalEnvValuesDialog
+                open={finalValuesOpen || isComputing}
+                onOpenChange={open => {
+                    if (!open && !isComputing) {
+                        setFinalValuesOpen(false);
+                    }
+                }}
+                items={finalValuesItems}
+                sectionTitle={finalValuesSectionTitle}
+                isPending={isComputing}
+            />
         </div>
     );
 });

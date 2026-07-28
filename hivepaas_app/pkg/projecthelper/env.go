@@ -31,7 +31,7 @@ func CalcProjectEnvKey(env string) string {
 }
 
 func IsProjectEnvID(env string) bool {
-	return strings.IndexByte(env, projectEnvIDSep[0]) >= 0
+	return strings.IndexByte(env, projectEnvIDSep[0]) > 0
 }
 
 func CalcProjectEnvID(projectID, env string) string {

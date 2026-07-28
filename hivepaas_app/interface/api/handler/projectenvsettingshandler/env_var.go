@@ -31,7 +31,7 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 
 	req := projectsettingsdto.NewGetProjectEnvVarsReq()
 	req.ProjectID = projectID
-	req.ProjectEnv = projectEnvID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -68,7 +68,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 
 	req := projectsettingsdto.NewUpdateProjectEnvVarsReq()
 	req.ProjectID = projectID
-	req.ProjectEnv = projectEnvID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -105,7 +105,7 @@ func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
 
 	req := projectsettingsdto.NewComputeProjectEnvVarsReq()
 	req.ProjectID = projectID
-	req.ProjectEnv = projectEnvID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

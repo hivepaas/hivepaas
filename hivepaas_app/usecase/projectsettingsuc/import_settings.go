@@ -45,8 +45,9 @@ func (uc *UC) ImportSettingsToProject(
 }
 
 type settingImportData struct {
-	Project  *entity.Project
-	Settings []*entity.Setting
+	Project    *entity.Project
+	ProjectEnv *entity.ProjectEnv
+	Settings   []*entity.Setting
 }
 
 type persistingSettingImportData struct {
@@ -62,14 +63,21 @@ func (uc *UC) loadSettingsForImport(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF project"),
+		bunex.SelectRelation("ProjectEnvs"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.Project = project
+	if req.ProjectEnvID != "" {
+		data.ProjectEnv = project.GetEnv(req.ProjectEnvID)
+		if data.ProjectEnv == nil {
+			return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
+		}
+	}
 
 	settingIDs := req.Settings.ToIDStringSlice()
-	settings, err := uc.settingRepo.ListByIDs(ctx, db, base.NewObjectScopeGlobal(), settingIDs, false)
+	settings, err := uc.settingRepo.ListByIDs(ctx, db, nil, settingIDs, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -78,8 +86,7 @@ func (uc *UC) loadSettingsForImport(
 	settingMap := entityutil.SliceToIDMap(settings)
 	for _, id := range settingIDs {
 		if _, exists := settingMap[id]; !exists {
-			return apperrors.NewNotFound("Setting").
-				WithMsgLog("setting %s not found", id)
+			return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id)
 		}
 	}
 
@@ -93,13 +100,19 @@ func (uc *UC) preparePersistingSettingImports(
 ) {
 	timeNow := timeutil.NowUTC()
 	for _, setting := range data.Settings {
-		persistingData.SharedSettings = append(persistingData.SharedSettings,
-			&entity.SharedSetting{
-				ObjectID:        data.Project.ID,
-				SettingID:       setting.ID,
-				DataViewAllowed: req.DataViewAllowed,
-				CreatedAt:       timeNow,
-			})
+		sharedSetting := &entity.SharedSetting{
+			SettingID:   setting.ID,
+			CanViewData: req.CanViewData,
+			CreatedAt:   timeNow,
+		}
+		if data.ProjectEnv != nil {
+			sharedSetting.Scope = base.ObjectScopeProjectEnv
+			sharedSetting.ObjectID = data.ProjectEnv.ID
+		} else {
+			sharedSetting.Scope = base.ObjectScopeProject
+			sharedSetting.ObjectID = data.Project.ID
+		}
+		persistingData.SharedSettings = append(persistingData.SharedSettings, sharedSetting)
 	}
 }
 

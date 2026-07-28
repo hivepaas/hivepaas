@@ -1,9 +1,10 @@
 -- +migrate Up
 CREATE TABLE IF NOT EXISTS shared_settings
 (
-    object_id         VARCHAR(100) NOT NULL,
-    setting_id        VARCHAR(100) NOT NULL,
-    data_view_allowed BOOL NOT NULL DEFAULT FALSE, -- if false, users in project can't see setting data
+    scope         VARCHAR(50) NOT NULL,
+    object_id     VARCHAR(100) NOT NULL,
+    setting_id    VARCHAR(100) NOT NULL,
+    can_view_data BOOL NOT NULL DEFAULT TRUE, -- if false, users in project can't see setting data
 
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at   TIMESTAMPTZ NULL,

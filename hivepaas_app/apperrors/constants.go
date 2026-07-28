@@ -157,6 +157,7 @@ var (
 // Errors for projects
 var (
 	ErrProjectNotFound            = NewErr(ErrNotFound, "ERR_PROJECT_NOT_FOUND")
+	ErrProjectEnvNotFound         = NewErr(ErrNotFound, "ERR_PROJECT_ENV_NOT_FOUND")
 	ErrProjectInactive            = NewErr(ErrInactive, "ERR_PROJECT_INACTIVE")
 	ErrProjectEnvInactive         = NewErr(ErrInactive, "ERR_PROJECT_ENV_INACTIVE")
 	ErrProjectNameNotAllowed      = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")

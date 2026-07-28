@@ -113,7 +113,7 @@ func (s *service) LoadReferenceSettings(
 	if errorIfUnavail {
 		for _, id := range settingIDs {
 			if _, exists := settingMap[id]; !exists {
-				return nil, apperrors.NewNotFound("Setting").
+				return nil, apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id).
 					WithMsgLog("setting %s not found or expired", id)
 			}
 		}
@@ -159,8 +159,7 @@ func (s *service) LoadReferenceApps(
 			app.Project = nil
 		}
 		if errorIfUnavail && app.Project == nil {
-			return nil, apperrors.NewNotFound("Project").
-				WithMsgLog("project %s not found", app.ProjectID)
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", app.ProjectID)
 		}
 	}
 

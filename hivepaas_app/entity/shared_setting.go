@@ -2,17 +2,20 @@ package entity
 
 import (
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
 var (
 	SharedSettingUpsertingConflictCols = []string{"object_id", "setting_id"}
-	SharedSettingUpsertingUpdateCols   = []string{"data_view_allowed", "deleted_at"}
+	SharedSettingUpsertingUpdateCols   = []string{"scope", "can_view_data", "deleted_at"}
 )
 
 type SharedSetting struct {
-	ObjectID        string `bun:",pk" json:"objectId"`
-	SettingID       string `bun:",pk" json:"settingId"`
-	DataViewAllowed bool   `json:"dataViewAllowed"`
+	Scope       base.ObjectScopeType `json:"scope"`
+	ObjectID    string               `bun:",pk" json:"objectId"`
+	SettingID   string               `bun:",pk" json:"settingId"`
+	CanViewData bool                 `json:"canViewData"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`

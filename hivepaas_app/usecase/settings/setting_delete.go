@@ -124,9 +124,9 @@ func (uc *BaseUC) loadSettingForDeletion(
 	}
 	data.Setting = setting
 
-	// The setting was imported to project from global
-	if setting.ObjectID == "" && req.Scope.IsProjectScope() {
-		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, req.ID)
+	// The setting was imported from another scope
+	if setting.ObjectID != req.Scope.ScopeObjectID() {
+		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ScopeObjectID(), req.ID)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

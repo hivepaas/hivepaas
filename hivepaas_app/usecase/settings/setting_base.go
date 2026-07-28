@@ -190,7 +190,7 @@ func (uc *BaseUC) checkRefSettingsExistence(
 	for _, refSettingID := range refSettingIDs {
 		found := entityutil.FindByID(settings, refSettingID)
 		if found == nil {
-			return apperrors.NewNotFound("Setting").WithMsgLog("setting %s not found", refSettingID)
+			return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", refSettingID)
 		}
 	}
 	return nil

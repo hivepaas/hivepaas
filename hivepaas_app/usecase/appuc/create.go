@@ -104,7 +104,7 @@ func (uc *UC) loadAppData(
 		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
 	}
 	if len(project.ProjectEnvs) == 0 {
-		return apperrors.NewNotFound("Project env")
+		return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
 	}
 	projectEnv := project.ProjectEnvs[0]
 	if projectEnv.Status != base.ProjectStatusActive {

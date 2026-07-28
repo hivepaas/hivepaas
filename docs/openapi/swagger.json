@@ -39037,7 +39037,7 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ImportSettingsToProjectReq" : {
         "properties" : {
-          "dataViewAllowed" : {
+          "canViewData" : {
             "type" : "boolean"
           },
           "settings" : {
@@ -39047,7 +39047,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "dataViewAllowed", "settings" ],
+        "required" : [ "canViewData", "settings" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ImportSettingsToProjectResp" : {

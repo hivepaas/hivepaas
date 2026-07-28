@@ -113,8 +113,8 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	data.Setting = setting
 
 	// The setting was imported to project from global
-	if setting.ObjectID == "" && req.Scope.IsProjectScope() {
-		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ProjectID, setting.ID)
+	if setting.ObjectID != req.Scope.ScopeObjectID() {
+		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ScopeObjectID(), setting.ID)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

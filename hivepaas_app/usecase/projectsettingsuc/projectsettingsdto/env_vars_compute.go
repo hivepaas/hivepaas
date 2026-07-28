@@ -4,12 +4,13 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type ComputeProjectEnvVarsReq struct {
-	ProjectID  string `json:"-"`
-	ProjectEnv string `json:"-"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
 	*ProjectEnvVarsBaseReq
 }
 
@@ -25,6 +26,8 @@ func (req *ComputeProjectEnvVarsReq) ModifyRequest() error {
 func (req *ComputeProjectEnvVarsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

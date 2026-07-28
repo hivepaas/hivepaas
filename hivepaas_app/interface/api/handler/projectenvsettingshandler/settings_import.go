@@ -32,7 +32,7 @@ func (h *Handler) ImportSettings(ctx *gin.Context) {
 
 	req := projectsettingsdto.NewImportSettingsToProjectReq()
 	req.ProjectID = projectID
-	req.ProjectEnv = projectEnvID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

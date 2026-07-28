@@ -6,6 +6,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -15,6 +16,7 @@ import (
 type GetDeploymentLogsReq struct {
 	Token        string            `json:"-" mapstructure:"token"`
 	ProjectID    string            `json:"-"`
+	ProjectEnvID string            `json:"-"`
 	AppID        string            `json:"-"`
 	DeploymentID string            `json:"-"`
 	Follow       bool              `json:"-" mapstructure:"follow"`
@@ -31,6 +33,8 @@ func NewGetDeploymentLogsReq() *GetDeploymentLogsReq {
 func (req *GetDeploymentLogsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateID(&req.DeploymentID, true, "deploymentId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

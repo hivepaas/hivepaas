@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      checkAppContainerPort
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.CheckAppContainerPortReq true "request data"
 // @Success 200 {object} appsettingsdto.CheckAppContainerPortResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/container/check-port [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/check-port [post]
 func (h *Handler) CheckAppContainerPort(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) CheckAppContainerPort(ctx *gin.Context) {
 
 	req := appsettingsdto.NewCheckAppContainerPortReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

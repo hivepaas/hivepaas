@@ -29,10 +29,10 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/tasks [get]
 func (h *Handler) ListTask(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeTask,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -72,11 +72,11 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		ResourceID:     taskID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeTask,
+		ResourceID:      taskID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -118,11 +118,11 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		ResourceID:     taskID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeTask,
+		ResourceID:      taskID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -169,11 +169,11 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		ResourceID:     taskID,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeTask,
+		ResourceID:      taskID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -214,11 +214,11 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeTask,
-		ResourceID:     taskID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeTask,
+		ResourceID:      taskID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

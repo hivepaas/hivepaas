@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/hivepaashandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/imagehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectbasehandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projecthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/sessionhandler"
@@ -180,6 +181,7 @@ var Provides = []any{
 	projectbasehandler.New,
 	projecthandler.New,
 	projectsettingshandler.New,
+	projectenvsettingshandler.New,
 	appbasehandler.New,
 	apphandler.New,
 	appsettingshandler.New,

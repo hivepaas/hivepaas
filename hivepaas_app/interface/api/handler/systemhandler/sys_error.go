@@ -28,10 +28,10 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/errors [get]
 func (h *Handler) ListSysError(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSysError,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSysError,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -71,11 +71,11 @@ func (h *Handler) GetSysError(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSysError,
-		ResourceID:     errorID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSysError,
+		ResourceID:      errorID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -116,11 +116,11 @@ func (h *Handler) DeleteSysError(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSysError,
-		ResourceID:     errorID,
-		Action:         base.ActionTypeDelete,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeDelete},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSysError,
+		ResourceID:      errorID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

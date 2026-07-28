@@ -19,21 +19,22 @@ import (
 // @Produce json
 // @Id      createAppDataFile
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body filedto.CreateFileReq true "request data"
 // @Success 201 {object} filedto.CreateFileResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/data-files [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files [post]
 func (h *Handler) CreateDataFile(ctx *gin.Context) {
-	auth, projectID, appID, _, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "")
+	auth, projectID, projectEnvID, appID, _, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := filedto.NewCreateFileReq()
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -55,13 +56,14 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 // @Produce json
 // @Id      listAppDataFile
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} filedto.ListFileResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/data-files [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files [get]
 func (h *Handler) ListDataFile(ctx *gin.Context) {
-	auth, _, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, _, _, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -90,14 +92,15 @@ func (h *Handler) ListDataFile(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppDataFile
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.GetFileResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/data-files/{itemID} [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID} [get]
 func (h *Handler) GetDataFile(ctx *gin.Context) {
-	auth, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
+	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -127,14 +130,15 @@ func (h *Handler) GetDataFile(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppDataFileDownloadURL
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.GetFileDownloadURLResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/data-files/{itemID}/download-url [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}/download-url [get]
 func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
-	auth, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
+	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -166,14 +170,15 @@ func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteAppDataFile
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.DeleteFileResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/data-files/{itemID} [delete]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID} [delete]
 func (h *Handler) DeleteDataFile(ctx *gin.Context) {
-	auth, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "itemID")
+	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

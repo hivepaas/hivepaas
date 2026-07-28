@@ -8,7 +8,8 @@ import (
 )
 
 type ComputeProjectEnvVarsReq struct {
-	ProjectID string `json:"-"`
+	ProjectID  string `json:"-"`
+	ProjectEnv string `json:"-"`
 	*ProjectEnvVarsBaseReq
 }
 

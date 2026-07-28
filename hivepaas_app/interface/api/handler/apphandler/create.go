@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps [post]
 func (h *Handler) CreateApp(ctx *gin.Context) {
-	auth, projectID, _, err := h.GetAuth(ctx, base.ActionTypeWrite, false)
+	auth, projectID, projectEnvID, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -31,6 +31,7 @@ func (h *Handler) CreateApp(ctx *gin.Context) {
 
 	req := appdto.NewCreateAppReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

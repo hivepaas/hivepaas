@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      deleteApp
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appdto.DeleteAppReq true "request data"
 // @Success 200 {object} appdto.DeleteAppResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID} [delete]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID} [delete]
 func (h *Handler) DeleteApp(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeDelete, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeDelete)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) DeleteApp(ctx *gin.Context) {
 
 	req := appdto.NewDeleteAppReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)

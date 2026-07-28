@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
 )
 
@@ -22,27 +21,26 @@ func (uc *UC) GetUserAccesses(
 		bunex.SelectRelation("Owner",
 			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnvs",
+			bunex.SelectOrder("index"),
+		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	objPerms, modPerms, err := uc.permissionManager.LoadObjectAccesses(ctx, uc.db, &permission.AccessCheck{
-		SubjectType:    base.SubjectTypeUser,
-		ResourceModule: base.ResourceModuleProject,
-		ResourceType:   base.ResourceTypeProject,
-		ResourceID:     project.ID,
-		Action:         base.ActionTypeRead,
-	})
+	modPerms, projectPerms, envPerms, err := uc.permissionManager.LoadProjectAccesses(ctx, uc.db, project.ID,
+		entityutil.ExtractIDs(project.ProjectEnvs), true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	resp := projectsettingsdto.TransformUserAccesses(&projectsettingsdto.UserAccessesTransformInput{
-		Project:           project,
-		ObjectPermissions: objPerms,
-		ModulePermissions: modPerms,
-		CurrentUser:       auth.User.User,
+		Project:            project,
+		ModulePermissions:  modPerms,
+		ProjectPermissions: projectPerms,
+		EnvPermissions:     envPerms,
+		CurrentUser:        auth.User.User,
 	})
 
 	return &projectsettingsdto.GetUserAccessesResp{

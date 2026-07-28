@@ -68,9 +68,11 @@ func (h *Handler) GetSetting(
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
 	case base.ObjectScopeProjectEnv:
-		// TODO: refactor permission mechanism
+		auth, scope.ProjectID, scope.ProjectEnvID, itemID, err = h.GetAuthProjectEnvSettings(ctx,
+			base.ActionTypeRead, "itemID")
 	case base.ObjectScopeApp:
-		auth, scope.ProjectID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, itemID, err = h.GetAuthAppSettings(ctx,
+			base.ActionTypeRead, "itemID")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "itemID")
 	default:

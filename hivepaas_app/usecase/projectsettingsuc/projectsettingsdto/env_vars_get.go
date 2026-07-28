@@ -9,8 +9,8 @@ import (
 )
 
 type GetProjectEnvVarsReq struct {
-	ProjectID string `json:"-"`
-	Env       string `json:"-" mapstructure:"env"`
+	ProjectID  string `json:"-"`
+	ProjectEnv string `json:"-"`
 }
 
 func NewGetProjectEnvVarsReq() *GetProjectEnvVarsReq {

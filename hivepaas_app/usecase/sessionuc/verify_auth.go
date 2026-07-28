@@ -11,7 +11,7 @@ import (
 func (uc *UC) VerifyAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
-	accessCheck *permission.AccessCheck,
+	accessCheck permission.AccessCheck,
 ) error {
 	if auth.User.AuthClaims.IsRefresh {
 		return apperrors.Wrap(apperrors.ErrForbidden).
@@ -28,13 +28,14 @@ func (uc *UC) VerifyAuth(
 	limitAccess := auth.User.AuthClaims.AccessAction
 	if limitAccess != nil {
 		allowed := false
+		baseCheck := accessCheck.GetBase()
 		switch {
-		case accessCheck.Action != "":
-			allowed = limitAccess.Allows(accessCheck.Action)
-		case len(accessCheck.AllOf) > 0:
-			allowed = limitAccess.AllowsAll(accessCheck.AllOf)
-		case len(accessCheck.AnyOf) > 0:
-			allowed = limitAccess.AllowsAny(accessCheck.AnyOf)
+		case baseCheck.Action != "":
+			allowed = limitAccess.Allows(baseCheck.Action)
+		case len(baseCheck.AllOf) > 0:
+			allowed = limitAccess.AllowsAll(baseCheck.AllOf)
+		case len(baseCheck.AnyOf) > 0:
+			allowed = limitAccess.AllowsAny(baseCheck.AnyOf)
 		}
 		if !allowed {
 			if auth.User.IsDemoUser() { // Special case: demo user

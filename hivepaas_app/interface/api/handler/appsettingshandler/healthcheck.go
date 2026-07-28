@@ -15,6 +15,7 @@ import (
 // @Produce json
 // @Id      listAppHealthcheck
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
@@ -23,7 +24,7 @@ import (
 // @Success 200 {object} healthcheckdto.ListHealthcheckResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks [get]
 func (h *Handler) ListAppHealthcheck(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
@@ -35,12 +36,13 @@ func (h *Handler) ListAppHealthcheck(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppHealthcheck
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} healthcheckdto.GetHealthcheckResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID} [get]
 func (h *Handler) GetAppHealthcheck(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
@@ -52,12 +54,13 @@ func (h *Handler) GetAppHealthcheck(ctx *gin.Context) {
 // @Produce json
 // @Id      createAppHealthcheck
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body healthcheckdto.CreateHealthcheckReq true "request data"
 // @Success 201 {object} healthcheckdto.CreateHealthcheckResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks [post]
 func (h *Handler) CreateAppHealthcheck(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
@@ -69,13 +72,14 @@ func (h *Handler) CreateAppHealthcheck(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppHealthcheck
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   body body healthcheckdto.UpdateHealthcheckReq true "request data"
 // @Success 200 {object} healthcheckdto.UpdateHealthcheckResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID} [put]
 func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
@@ -87,13 +91,14 @@ func (h *Handler) UpdateAppHealthcheck(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppHealthcheckStatus
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   body body healthcheckdto.UpdateHealthcheckStatusReq true "request data"
 // @Success 200 {object} healthcheckdto.UpdateHealthcheckStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID}/status [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID}/status [put]
 func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }
@@ -105,12 +110,13 @@ func (h *Handler) UpdateAppHealthcheckStatus(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteAppHealthcheck
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} healthcheckdto.DeleteHealthcheckResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID} [delete]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID} [delete]
 func (h *Handler) DeleteAppHealthcheck(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeHealthcheck, base.ObjectScopeApp)
 }

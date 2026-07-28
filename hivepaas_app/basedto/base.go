@@ -120,3 +120,7 @@ type PagingMeta struct {
 	Limit  int `json:"limit"`
 	Total  int `json:"total"`
 }
+
+func NewEmptyListMeta() *ListMeta {
+	return &ListMeta{Page: &PagingMeta{}}
+}

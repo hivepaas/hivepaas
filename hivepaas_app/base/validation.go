@@ -15,4 +15,7 @@ const (
 
 	TokenMinLen = 3
 	TokenMaxLen = 200
+
+	ProjectEnvMinLen = 1
+	ProjectEnvMaxLen = 50
 )

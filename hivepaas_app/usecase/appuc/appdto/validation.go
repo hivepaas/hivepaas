@@ -10,9 +10,6 @@ const (
 	appNameMinLen = 1
 	appNameMaxLen = 100
 
-	appEnvMinLen = 1
-	appEnvMaxLen = 50
-
 	appTagMinLen = 0
 	appTagMaxLen = 50
 
@@ -23,10 +20,6 @@ const (
 func validateAppName(name *string, field string) []vld.Validator {
 	return basedto.ValidateStr(name, true, appNameMinLen, appNameMaxLen, field)
 	// TODO: need validation for valid characters
-}
-
-func validateAppEnv(env *string, field string) []vld.Validator {
-	return basedto.ValidateStr(env, true, appEnvMinLen, appEnvMaxLen, field)
 }
 
 func validateAppTags(tags []string, field string) []vld.Validator {

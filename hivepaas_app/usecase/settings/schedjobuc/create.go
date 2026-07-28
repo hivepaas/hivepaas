@@ -90,13 +90,12 @@ func (uc *UC) checkPermissionPipeToApp(
 	}
 
 	// If command output is piped to another app, need to check permission
-	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.AccessCheck{
-		ResourceModule:     base.ResourceModuleProject,
-		ResourceType:       base.ResourceTypeApp,
-		ResourceID:         targetApp.ID,
-		ParentResourceType: base.ResourceTypeProject,
-		ParentResourceID:   targetApp.ProjectID,
-		Action:             base.ActionTypeWrite,
+	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.AppAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		AppID:           targetApp.ID,
+		ParentID:        targetApp.ParentID,
+		ProjectID:       targetApp.ProjectID,
+		ProjectEnv:      targetApp.ProjectEnvID,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)

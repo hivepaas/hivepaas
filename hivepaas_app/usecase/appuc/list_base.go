@@ -34,12 +34,6 @@ func (uc *UC) ListAppBase(
 			bunex.SelectWhereIn("app.status IN (?)", req.Status...),
 		)
 	}
-	if len(req.Env) > 0 {
-		listOpts = append(listOpts,
-			bunex.SelectJoin("JOIN project_envs ON project_envs.id = app.project_env_id"),
-			bunex.SelectWhereIn("project_envs.name IN (?)", req.Env...),
-		)
-	}
 	if req.Search != "" {
 		keyword := bunex.MakeLikeOpStr(req.Search, true)
 		listOpts = append(listOpts,
@@ -49,9 +43,21 @@ func (uc *UC) ListAppBase(
 			),
 		)
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	if req.ProjectEnvID != "" {
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("app.id IN (?)", auth.AllowObjectIDs...),
+			bunex.SelectJoin("JOIN project_envs ON project_envs.id = app.project_env_id"),
+			bunex.SelectWhere("project_envs.id = ?", req.ProjectEnvID),
+		)
+	}
+
+	allowedAllIDs, allowedIDs := auth.AllowedApps(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &appdto.ListAppBaseResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
+		listOpts = append(listOpts,
+			bunex.SelectWhereIn("app.id IN (?)", allowedIDs...),
 		)
 	}
 

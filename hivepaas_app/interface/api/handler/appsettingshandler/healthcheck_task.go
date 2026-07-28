@@ -17,6 +17,7 @@ import (
 // @Produce json
 // @Id      listAppHealthcheckTask
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   search query string false "`search=<target> (support *)`"
@@ -26,9 +27,9 @@ import (
 // @Success 200 {object} healthcheckdto.ListHealthcheckTaskResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/healthchecks/{itemID}/tasks [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID}/tasks [get]
 func (h *Handler) ListAppHealthcheckTask(ctx *gin.Context) {
-	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -36,7 +37,7 @@ func (h *Handler) ListAppHealthcheckTask(ctx *gin.Context) {
 
 	req := healthcheckdto.NewListHealthcheckTaskReq()
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return

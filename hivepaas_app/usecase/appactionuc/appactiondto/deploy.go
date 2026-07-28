@@ -18,8 +18,9 @@ const (
 )
 
 type DeployAppReq struct {
-	ProjectID string `json:"-"`
-	AppID     string `json:"-"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
 
 	ImageSource  *DeploymentImageSourceReq `json:"imageSource"`
 	RepoSource   *DeploymentRepoSourceReq  `json:"repoSource"`
@@ -126,6 +127,8 @@ func NewDeployAppReq() *DeployAppReq {
 func (req *DeployAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.ActiveMethod, false,
 		base.AllDeploymentMethods, "activeMethod")...)

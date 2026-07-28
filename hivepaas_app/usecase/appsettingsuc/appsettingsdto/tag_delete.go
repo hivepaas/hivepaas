@@ -4,13 +4,15 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type DeleteAppTagsReq struct {
-	ProjectID string   `json:"-"`
-	AppID     string   `json:"-"`
-	Tags      []string `json:"tags"`
+	ProjectID    string   `json:"-"`
+	ProjectEnvID string   `json:"-"`
+	AppID        string   `json:"-"`
+	Tags         []string `json:"tags"`
 }
 
 func NewDeleteAppTagsReq() *DeleteAppTagsReq {
@@ -21,6 +23,8 @@ func NewDeleteAppTagsReq() *DeleteAppTagsReq {
 func (req *DeleteAppTagsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Tags, true, 1, nil, "tags")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

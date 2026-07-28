@@ -19,6 +19,7 @@ import (
 
 type UpdateAppHttpSettingsReq struct {
 	ProjectID      string       `json:"-"`
+	ProjectEnvID   string       `json:"-"`
 	AppID          string       `json:"-"`
 	Port           int          `json:"port"`
 	ExposePublicly bool         `json:"exposePublicly"`
@@ -553,6 +554,8 @@ func (req *UpdateAppHttpSettingsReq) ModifyRequest() error {
 func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidatePort(&req.Port, false, 1, "port")...)
 	validators = append(validators, vld.Slice(req.Domains).ForEach(

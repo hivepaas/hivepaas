@@ -20,11 +20,11 @@ func (h *Handler) getAuth(
 			return
 		}
 	}
-	auth, err = h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleCluster,
-		ResourceType:   resType,
-		ResourceID:     itemID,
-		Action:         action,
+	auth, err = h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		Module:          base.ResourceModuleCluster,
+		ResourceType:    resType,
+		ResourceID:      itemID,
 	})
 	if err != nil {
 		return

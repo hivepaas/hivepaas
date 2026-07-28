@@ -17,6 +17,7 @@ import (
 // @Produce json
 // @Id      listAppSchedJobTask
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   search query string false "`search=<target> (support *)`"
@@ -26,9 +27,9 @@ import (
 // @Success 200 {object} schedjobdto.ListSchedJobTaskResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/sched-jobs/{itemID}/tasks [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks [get]
 func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
-	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -36,7 +37,7 @@ func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 
 	req := schedjobdto.NewListSchedJobTaskReq()
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -58,15 +59,16 @@ func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppSchedJobTask
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} schedjobdto.GetSchedJobTaskResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID} [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID} [get]
 func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
-	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -81,7 +83,7 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -103,6 +105,7 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 // @Produce json
 // @Id      cancelAppSchedJobTask
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   taskID path string true "task ID"
@@ -110,9 +113,9 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 // @Success 200 {object} schedjobdto.CancelSchedJobTaskResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/cancel [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/cancel [post]
 func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
-	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeExecute, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeExecute, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -127,7 +130,7 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewCancelSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -149,15 +152,16 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppSchedJobTaskLogs
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} schedjobdto.GetSchedJobTaskLogsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/logs [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/logs [get]
 func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
-	auth, projectID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -172,7 +176,7 @@ func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskLogsReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -17,6 +17,7 @@ import (
 // @Produce json
 // @Id      listAppPreview
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   status query string false "`status=<target>`"
 // @Param   search query string false "`search=<target> (support *)`"
@@ -26,9 +27,9 @@ import (
 // @Success 200 {object} appdto.ListAppResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/previews [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/previews [get]
 func (h *Handler) ListAppPreview(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -36,6 +37,7 @@ func (h *Handler) ListAppPreview(ctx *gin.Context) {
 
 	req := appdto.NewListAppReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.ParentID = appID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)

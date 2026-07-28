@@ -10,8 +10,9 @@ import (
 )
 
 type UpdateProjectEnvVarsReq struct {
-	ProjectID string `json:"-"`
-	UpdateVer int    `json:"updateVer"`
+	ProjectID  string `json:"-"`
+	ProjectEnv string `json:"-"`
+	UpdateVer  int    `json:"updateVer"`
 	*ProjectEnvVarsBaseReq
 }
 

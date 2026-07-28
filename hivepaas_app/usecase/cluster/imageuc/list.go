@@ -29,9 +29,14 @@ func (uc *UC) ListImage(
 			return gofn.Contain(img.RepoTags, keyword)
 		})
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	allowedAllIDs, allowedIDs := auth.AllowedImages(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &imagedto.ListImageResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
 		filterImages = gofn.FilterPtr(filterImages, func(img *image.Summary) bool {
-			return gofn.Contain(auth.AllowObjectIDs, img.ID)
+			return gofn.Contain(allowedIDs, img.ID)
 		})
 	}
 

@@ -45,10 +45,8 @@ func (h *Handler) Download(
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		itemID, err = h.GetParamGlobalSettings(ctx, "itemID")
-	case base.ObjectScopeProject:
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv:
 		scope.ProjectID, itemID, err = h.GetParamProjectSettings(ctx, "itemID")
-	case base.ObjectScopeProjectEnv:
-		// TODO: refactor permission mechanism
 	case base.ObjectScopeApp:
 		scope.ProjectID, scope.AppID, itemID, err = h.GetParamAppSettings(ctx, "itemID")
 	case base.ObjectScopeUser:

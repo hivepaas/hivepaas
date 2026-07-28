@@ -16,6 +16,7 @@ import (
 // @Produce json
 // @Id      getAppDeploymentLogs
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Param   follow query string false "`follow=true/false`"
@@ -25,9 +26,9 @@ import (
 // @Success 200 {object} appdeploymentdto.GetDeploymentLogsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/logs [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/logs [get]
 func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context) {
-	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
+	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -35,6 +36,7 @@ func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context) {
 
 	req := appdeploymentdto.NewGetDeploymentLogsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {

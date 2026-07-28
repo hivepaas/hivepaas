@@ -9,10 +9,11 @@ import (
 )
 
 type UpdateAppStatusReq struct {
-	ID        string         `json:"-"`
-	ProjectID string         `json:"-"`
-	UpdateVer int            `json:"updateVer"`
-	Status    base.AppStatus `json:"status"`
+	ProjectID    string         `json:"-"`
+	ProjectEnvID string         `json:"-"`
+	AppID        string         `json:"-"`
+	UpdateVer    int            `json:"updateVer"`
+	Status       base.AppStatus `json:"status"`
 }
 
 func NewUpdateAppStatusReq() *UpdateAppStatusReq {
@@ -22,8 +23,10 @@ func NewUpdateAppStatusReq() *UpdateAppStatusReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppStatusReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Status, true, base.AllAppStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

@@ -16,13 +16,14 @@ import (
 // @Produce json
 // @Id      getAppLogsInfo
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.GetAppLogsInfoResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/logs/info [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/logs/info [get]
 func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -30,6 +31,7 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 
 	req := appdto.NewGetAppLogsInfoReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -52,6 +54,7 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppLogs
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   taskId query string false "`taskId=<task-id>`"
 // @Param   follow query string false "`follow=true/false`"
@@ -61,9 +64,9 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Success 200 {object} appdto.GetAppLogsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/logs [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/logs [get]
 func (h *Handler) GetAppLogs(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -71,6 +74,7 @@ func (h *Handler) GetAppLogs(ctx *gin.Context) {
 
 	req := appdto.NewGetAppLogsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)

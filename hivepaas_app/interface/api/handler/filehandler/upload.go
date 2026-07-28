@@ -53,37 +53,37 @@ func (h *Handler) UploadFiles(ctx *gin.Context) {
 }
 
 func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq) (auth *basedto.Auth, err error) {
-	var accessCheck *permission.AccessCheck
+	var accessCheck permission.AccessCheck
 	switch req.FileType {
 	case base.FileTypeDataFile:
-		accessCheck = &permission.AccessCheck{
-			ResourceModule: base.ResourceModuleProject,
-			AnyOf:          []base.ActionType{base.ActionTypeWrite},
-		}
 		switch req.Scope.ScopeType {
 		case base.ObjectScopeApp:
-			accessCheck.ResourceType = base.ResourceTypeApp
-			accessCheck.ResourceID = req.Scope.AppID
-			accessCheck.ParentResourceType = base.ResourceTypeProject
-			accessCheck.ParentResourceID = req.Scope.ProjectID
+			accessCheck = &permission.AppAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{AnyOf: []base.ActionType{base.ActionTypeWrite}},
+				ProjectID:       req.Scope.ProjectID,
+				AppID:           req.Scope.AppID,
+			}
 		case base.ObjectScopeProject:
-			accessCheck.ResourceType = base.ResourceTypeProject
-			accessCheck.ResourceID = req.Scope.ProjectID
+			accessCheck = &permission.ProjectAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{AnyOf: []base.ActionType{base.ActionTypeWrite}},
+				ProjectID:       req.Scope.ProjectID,
+			}
 		case base.ObjectScopeProjectEnv:
-			// TODO: refactor permission mechanism
+			accessCheck = &permission.ProjectAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{AnyOf: []base.ActionType{base.ActionTypeWrite}},
+				ProjectID:       req.Scope.ProjectID,
+				ProjectEnv:      new(req.Scope.CalcProjectEnvKey()),
+			}
 		case base.ObjectScopeGlobal, base.ObjectScopeUser:
 			fallthrough
 		default:
 			return nil, apperrors.Wrap(apperrors.ErrUnsupported).WithParam("Name", "Scope")
 		}
 	case base.FileTypeBuildSource:
-		accessCheck = &permission.AccessCheck{
-			ResourceModule:     base.ResourceModuleProject,
-			ResourceType:       base.ResourceTypeApp,
-			ResourceID:         req.Scope.AppID,
-			ParentResourceType: base.ResourceTypeProject,
-			ParentResourceID:   req.Scope.ProjectID,
-			AnyOf:              []base.ActionType{base.ActionTypeWrite},
+		accessCheck = &permission.AppAccessCheck{
+			BaseAccessCheck: permission.BaseAccessCheck{AnyOf: []base.ActionType{base.ActionTypeWrite}},
+			ProjectID:       req.Scope.ProjectID,
+			AppID:           req.Scope.AppID,
 		}
 	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
 		fallthrough

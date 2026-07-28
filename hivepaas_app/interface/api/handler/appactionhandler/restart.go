@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      appActionRestart
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appactiondto.RestartAppReq true "request data"
 // @Success 200 {object} appactiondto.RestartAppResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/restart [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/restart [post]
 func (h *Handler) RestartApp(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) RestartApp(ctx *gin.Context) {
 
 	req := appactiondto.NewRestartAppReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

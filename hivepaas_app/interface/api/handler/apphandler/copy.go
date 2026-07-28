@@ -17,13 +17,14 @@ import (
 // @Produce json
 // @Id      prepareAppCopy
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.PrepareAppCopyResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/copy/prepare [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/copy/prepare [get]
 func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -31,6 +32,7 @@ func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
 
 	req := appdto.NewPrepareAppCopyReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -53,14 +55,15 @@ func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
 // @Produce json
 // @Id      copyApp
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appdto.CopyAppReq true "request data"
 // @Success 201 {object} appdto.CopyAppResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/copy [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/copy [post]
 func (h *Handler) CopyApp(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -68,6 +71,7 @@ func (h *Handler) CopyApp(ctx *gin.Context) {
 
 	req := appdto.NewCopyAppReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

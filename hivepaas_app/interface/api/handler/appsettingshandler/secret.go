@@ -15,11 +15,12 @@ import (
 // @Produce json
 // @Id      listAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} secretdto.ListSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets [get]
 func (h *Handler) ListSecret(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
@@ -31,12 +32,13 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} secretdto.GetSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID} [get]
 func (h *Handler) GetSecret(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
@@ -48,12 +50,13 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppSecretDownloadToken
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} secretdto.GetDownloadTokenResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download-token [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID}/download-token [get]
 func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
 	h.GetDownloadToken(ctx, base.ResourceTypeSecret, base.ObjectScopeApp, "", 0)
 }
@@ -65,12 +68,13 @@ func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
 // @Produce json
 // @Id      downloadAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} secretdto.DownloadSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/download [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID}/download [get]
 func (h *Handler) DownloadSecret(ctx *gin.Context) {
 	h.Download(ctx, base.ResourceTypeSecret, base.ObjectScopeApp, "")
 }
@@ -82,12 +86,13 @@ func (h *Handler) DownloadSecret(ctx *gin.Context) {
 // @Produce json
 // @Id      createAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body secretdto.CreateSecretReq true "request data"
 // @Success 201 {object} secretdto.CreateSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets [post]
 func (h *Handler) CreateSecret(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
@@ -99,13 +104,14 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   body body secretdto.UpdateSecretReq true "request data"
 // @Success 200 {object} secretdto.UpdateSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID} [put]
 func (h *Handler) UpdateSecret(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
@@ -117,13 +123,14 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppSecretStatus
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Param   body body secretdto.UpdateSecretStatusReq true "request data"
 // @Success 200 {object} secretdto.UpdateSecretStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID}/status [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID}/status [put]
 func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }
@@ -135,12 +142,13 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteAppSecret
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} secretdto.DeleteSecretResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/secrets/{itemID} [delete]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID} [delete]
 func (h *Handler) DeleteSecret(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSecret, base.ObjectScopeApp)
 }

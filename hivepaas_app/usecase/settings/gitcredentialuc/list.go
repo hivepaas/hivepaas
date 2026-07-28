@@ -42,9 +42,14 @@ func (uc *UC) ListGitCredential(
 			),
 		)
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	allowedAllIDs, allowedIDs := auth.AllowedSettings(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &gitcredentialdto.ListGitCredentialResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("setting.id IN (?)", auth.AllowObjectIDs...),
+			bunex.SelectWhereIn("setting.id IN (?)", allowedIDs...),
 		)
 	}
 

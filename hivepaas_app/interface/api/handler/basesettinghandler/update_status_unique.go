@@ -35,9 +35,9 @@ func (h *Handler) UpdateUniqueSettingStatus(
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeProjectEnv:
-		// TODO: refactor permission mechanism
+		auth, scope.ProjectID, scope.ProjectEnvID, _, err = h.GetAuthProjectEnvSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeApp:
-		auth, scope.ProjectID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
+		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "")
 	default:

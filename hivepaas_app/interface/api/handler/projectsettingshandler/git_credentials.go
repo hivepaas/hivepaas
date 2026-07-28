@@ -94,7 +94,7 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // @Description Lists branches of a git repository
 // @Tags    project_settings
 // @Produce json
-// @Id      listGitBranch
+// @Id      listProjectGitBranch
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "credential ID"
 // @Param   owner query string true "repo owner (org, user)"
@@ -136,7 +136,7 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 // @Description Lists pull requests of a git repository
 // @Tags    project_settings
 // @Produce json
-// @Id      listGitPullRequest
+// @Id      listProjectGitPullRequest
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "credential ID"
 // @Param   owner query string true "repo owner (org, user)"

@@ -80,9 +80,9 @@ func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings/repo-cache [get]
 func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSettings,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSettings,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -117,9 +117,9 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/image-build-settings/repo-cache/clear [post]
 func (h *Handler) ClearRepoCache(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSettings,
-		Action:         base.ActionTypeExecute,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeExecute},
+		Module:          base.ResourceModuleSettings,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

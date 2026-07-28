@@ -15,11 +15,12 @@ import (
 // @Produce json
 // @Id      getAppFeatureSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appfeaturesettingsdto.GetAppFeatureSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/feature-settings [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings [get]
 func (h *Handler) GetAppFeatureSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeAppFeatures, base.ObjectScopeApp)
 }
@@ -31,12 +32,13 @@ func (h *Handler) GetAppFeatureSettings(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppFeatureSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appfeaturesettingsdto.UpdateAppFeatureSettingsReq true "request data"
 // @Success 200 {object} appfeaturesettingsdto.UpdateAppFeatureSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/feature-settings [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings [put]
 func (h *Handler) UpdateAppFeatureSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeAppFeatures, base.ObjectScopeApp)
 }

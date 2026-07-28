@@ -214,16 +214,6 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		repoWebhookGroup.DELETE("/:itemID", projectSettingsHandler.DeleteRepoWebhook)
 	}
 
-	{ // Scheduled jobs
-		schedJobGroup := projectGroup.Group("/:projectID/sched-jobs")
-		schedJobGroup.GET("", projectSettingsHandler.ListSchedJob)
-		schedJobGroup.GET("/:itemID", projectSettingsHandler.GetSchedJob)
-		schedJobGroup.POST("", projectSettingsHandler.CreateSchedJob)
-		schedJobGroup.PUT("/:itemID", projectSettingsHandler.UpdateSchedJob)
-		schedJobGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSchedJobStatus)
-		schedJobGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSchedJob)
-	}
-
 	{ // Secrets
 		secretGroup := projectGroup.Group("/:projectID/secrets")
 		secretGroup.GET("", projectSettingsHandler.ListSecret)
@@ -273,5 +263,5 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		storageSettingsGroup.DELETE("", projectSettingsHandler.DeleteStorageSettings)
 	}
 
-	_ = s.registerAppRoutes(projectGroup)
+	s.registerProjectEnvRoutes(projectGroup.Group("/:projectID"))
 }

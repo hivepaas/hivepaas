@@ -23,9 +23,9 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/traefik/config/reload [post]
 func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -64,9 +64,9 @@ func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/traefik/config/reset [post]
 func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -105,9 +105,9 @@ func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/traefik/restart [post]
 func (h *Handler) RestartTraefik(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

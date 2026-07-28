@@ -17,15 +17,16 @@ import (
 // @Produce json
 // @Id      cancelAppDeployment
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Param   body body appdeploymentdto.CancelDeploymentReq true "request data"
 // @Success 200 {object} appdeploymentdto.CancelDeploymentResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/cancel [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/cancel [post]
 func (h *Handler) CancelAppDeployment(ctx *gin.Context) {
-	auth, projectID, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "deploymentID")
+	auth, projectID, projectEnvID, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "deploymentID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -33,6 +34,7 @@ func (h *Handler) CancelAppDeployment(ctx *gin.Context) {
 
 	req := appdeploymentdto.NewCancelDeploymentReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	req.DeploymentID = itemID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {

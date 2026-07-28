@@ -94,7 +94,7 @@ func (uc *UC) loadAppData(
 		bunex.SelectFor("UPDATE OF project"),
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectRelation("ProjectEnvs",
-			bunex.SelectWhere("project_env.name = ?", req.Env),
+			bunex.SelectWhere("project_env.id = ?", req.ProjectEnvID),
 		),
 	)
 	if err != nil {
@@ -115,7 +115,7 @@ func (uc *UC) loadAppData(
 	data.Project = project
 	data.ProjectEnv = projectEnv
 	data.AppKey = slugify.SlugifyAsKey(req.Name)
-	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, req.Env)
+	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, projectEnv.Key)
 
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", data.AppGlobalKey, bunex.SelectColumns("id"))
@@ -128,7 +128,7 @@ func (uc *UC) loadAppData(
 	}
 
 	// Create local network for the app to attach
-	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, req.Env)
+	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, projectEnv.Key)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

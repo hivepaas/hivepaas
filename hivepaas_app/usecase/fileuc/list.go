@@ -43,9 +43,14 @@ func (uc *UC) ListFile(
 			),
 		)
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	allowedAllIDs, allowedIDs := auth.AllowedFiles(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &filedto.ListFileResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("file.id IN (?)", auth.AllowObjectIDs...),
+			bunex.SelectWhereIn("file.id IN (?)", allowedIDs...),
 		)
 	}
 

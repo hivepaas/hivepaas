@@ -17,13 +17,14 @@ import (
 // @Produce json
 // @Id      getAppNetworkSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appsettingsdto.GetAppNetworkSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/network-settings [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/network-settings [get]
 func (h *Handler) GetAppNetworkSettings(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -31,6 +32,7 @@ func (h *Handler) GetAppNetworkSettings(ctx *gin.Context) {
 
 	req := appsettingsdto.NewGetAppNetworkSettingsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -53,14 +55,15 @@ func (h *Handler) GetAppNetworkSettings(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppNetworkSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.UpdateAppNetworkSettingsReq true "request data"
 // @Success 200 {object} appsettingsdto.UpdateAppNetworkSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/network-settings [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/network-settings [put]
 func (h *Handler) UpdateAppNetworkSettings(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -68,6 +71,7 @@ func (h *Handler) UpdateAppNetworkSettings(ctx *gin.Context) {
 
 	req := appsettingsdto.NewUpdateAppNetworkSettingsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

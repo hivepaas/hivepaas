@@ -17,13 +17,14 @@ import (
 // @Produce json
 // @Id      getAppHttpSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appsettingsdto.GetAppHttpSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/http-settings [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/http-settings [get]
 func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -31,6 +32,7 @@ func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
 
 	req := appsettingsdto.NewGetAppHttpSettingsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -53,14 +55,15 @@ func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
 // @Produce json
 // @Id      updateAppHttpSettings
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.UpdateAppHttpSettingsReq true "request data"
 // @Success 200 {object} appsettingsdto.UpdateAppHttpSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/http-settings [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/http-settings [put]
 func (h *Handler) UpdateAppHttpSettings(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -68,6 +71,7 @@ func (h *Handler) UpdateAppHttpSettings(ctx *gin.Context) {
 
 	req := appsettingsdto.NewUpdateAppHttpSettingsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

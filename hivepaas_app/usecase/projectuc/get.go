@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
@@ -32,19 +31,13 @@ func (uc *UC) GetProject(
 		return nil, apperrors.Wrap(err)
 	}
 
-	// Loads all accesses of the project
+	// Loads all accesses on the project
 	if req.GetUserAccesses {
-		objPerms, modPerms, err := uc.permissionManager.LoadObjectAccesses(ctx, uc.db, &permission.AccessCheck{
-			SubjectType:    base.SubjectTypeUser,
-			ResourceModule: base.ResourceModuleProject,
-			ResourceType:   base.ResourceTypeProject,
-			ResourceID:     project.ID,
-			Action:         base.ActionTypeRead,
-		})
+		project.Accesses, err = uc.permissionManager.LoadProjectAccessUsers(ctx, uc.db, project.ID,
+			entityutil.ExtractIDs(project.ProjectEnvs))
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		project.Accesses = uc.permissionManager.MergeObjectAccessesBySubjectID(objPerms, modPerms)
 	}
 
 	resp, err := projectdto.TransformProject(project)

@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
 
+//nolint:nakedret
 func (h *Handler) getAuth(
 	ctx *gin.Context,
 	resType base.ResourceType,
@@ -21,11 +22,12 @@ func (h *Handler) getAuth(
 			return
 		}
 	}
-	accessCheck := &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleUser,
-		ResourceType:   resType,
-		ResourceID:     userID,
-		Action:         action,
+	var accessCheck permission.AccessCheck
+	accessCheck = &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		Module:          base.ResourceModuleUser,
+		ResourceType:    resType,
+		ResourceID:      userID,
 	}
 	if userID == "current" {
 		accessCheck = authhandler.NoAccessCheck

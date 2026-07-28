@@ -61,6 +61,11 @@ func (s *ObjectScope) ScopeObjectID() string {
 	}
 }
 
+func (s *ObjectScope) CalcProjectEnvKey() string {
+	_, envKey := projecthelper.ParseProjectEnvID(s.ProjectEnvID)
+	return envKey
+}
+
 func NewObjectScopeGlobal() *ObjectScope {
 	return &ObjectScope{ScopeType: ObjectScopeGlobal}
 }

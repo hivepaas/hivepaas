@@ -30,10 +30,10 @@ const (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/backup/files [get]
 func (h *Handler) ListBackupFiles(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -74,11 +74,10 @@ func (h *Handler) GetBackupFile(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		ResourceID:     fileID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -120,11 +119,11 @@ func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		ResourceID:     fileID,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
+		ResourceID:      fileID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -172,11 +171,11 @@ func (h *Handler) DeleteBackupFile(ctx *gin.Context) {
 		return
 	}
 
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		ResourceID:     fileID,
-		Action:         base.ActionTypeDelete,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeDelete},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
+		ResourceID:      fileID,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

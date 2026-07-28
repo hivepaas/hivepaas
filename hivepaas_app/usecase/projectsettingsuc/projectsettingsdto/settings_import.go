@@ -9,6 +9,7 @@ import (
 
 type ImportSettingsToProjectReq struct {
 	ProjectID       string                   `json:"-"`
+	ProjectEnv      string                   `json:"-"`
 	Settings        basedto.ObjectIDSliceReq `json:"settings"`
 	DataViewAllowed bool                     `json:"dataViewAllowed"`
 }

@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	NoAccessCheck = (*permission.AccessCheck)(nil)
+	NoAccessCheck = (permission.AccessCheck)(nil)
 )
 
 type Handler struct {
@@ -68,7 +68,7 @@ func (h *Handler) GetCurrentUserByToken(ctx *gin.Context, token string) (*basedt
 	return user, nil
 }
 
-func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck *permission.AccessCheck) (*basedto.Auth, error) {
+func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck permission.AccessCheck) (*basedto.Auth, error) {
 	auth, err := h.getCurrentAuth(ctx)
 	if err != nil {
 		return auth, apperrors.Wrap(err) // NOTE: on error, still return `auth`

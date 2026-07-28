@@ -7,6 +7,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
@@ -15,11 +16,12 @@ var (
 )
 
 type OpenTerminalReq struct {
-	ProjectID string `json:"-"`
-	AppID     string `json:"-"`
-	Shell     string `json:"-" mapstructure:"shell"`
-	Width     uint   `json:"-" mapstructure:"w"`
-	Height    uint   `json:"-" mapstructure:"h"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+	Shell        string `json:"-" mapstructure:"shell"`
+	Width        uint   `json:"-" mapstructure:"w"`
+	Height       uint   `json:"-" mapstructure:"h"`
 }
 
 func NewOpenTerminalReq() *OpenTerminalReq {
@@ -29,6 +31,8 @@ func NewOpenTerminalReq() *OpenTerminalReq {
 func (req *OpenTerminalReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Shell, false, SupportedShells, "shell")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

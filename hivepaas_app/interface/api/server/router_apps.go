@@ -5,18 +5,23 @@ import (
 )
 
 //nolint:funlen
-func (s *HTTPServer) registerAppRoutes(projectGroup *gin.RouterGroup) *gin.RouterGroup {
-	appGroup := projectGroup.Group("/:projectID/apps")
+func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.RouterGroup) *gin.RouterGroup {
+	appGroup := projectEnvGroup.Group("/apps")
 	appHandler := s.handlerRegistry.appHandler
 	appSettingsHandler := s.handlerRegistry.appSettingsHandler
 	appDeploymentHandler := s.handlerRegistry.appDeploymentHandler
 	appActionHandler := s.handlerRegistry.appActionHandler
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
 
+	{ // List apps from `projects/projectID/apps`
+		projectGroup.GET("/apps", appHandler.ListAppInProject)
+		projectGroup.GET("/apps/base", appHandler.ListAppBaseInProject)
+	}
+
 	{ // Base
-		appGroup.GET("/base", appHandler.ListAppBase)
 		appGroup.GET("/:appID", appHandler.GetApp)
-		appGroup.GET("", appHandler.ListApp)
+		appGroup.GET("", appHandler.ListAppInEnv)
+		appGroup.GET("/base", appHandler.ListAppBaseInEnv)
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
 		appGroup.PUT("/:appID", appHandler.UpdateApp)

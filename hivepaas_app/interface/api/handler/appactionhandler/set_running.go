@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      appActionSetRunning
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appactiondto.SetAppRunningReq true "request data"
 // @Success 200 {object} appactiondto.SetAppRunningResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/running-status [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/running-status [post]
 func (h *Handler) SetAppRunning(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) SetAppRunning(ctx *gin.Context) {
 
 	req := appactiondto.NewSetAppRunningReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

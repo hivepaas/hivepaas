@@ -92,9 +92,9 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 
 	currCaps := appsettingsdto.TransformCapabilities(service.Spec.TaskTemplate.ContainerSpec)
 	if !req.Capabilities.Equal(currCaps) { // Modifying capabilities requires Write on Cluster module
-		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.AccessCheck{
-			ResourceModule: base.ResourceModuleCluster,
-			Action:         base.ActionTypeWrite,
+		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
+			BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+			Module:          base.ResourceModuleCluster,
 		})
 		if err != nil {
 			return apperrors.Wrap(err)

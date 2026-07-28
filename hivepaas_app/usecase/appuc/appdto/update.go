@@ -4,13 +4,15 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type UpdateAppReq struct {
-	ID        string `json:"-"`
-	ProjectID string `json:"-"`
-	UpdateVer int    `json:"updateVer"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+	UpdateVer    int    `json:"updateVer"`
 	*AppBaseReq
 }
 
@@ -21,8 +23,10 @@ func NewUpdateAppReq() *UpdateAppReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
-	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

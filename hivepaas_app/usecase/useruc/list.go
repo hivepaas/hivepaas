@@ -43,6 +43,16 @@ func (uc *UC) ListUser(
 		)
 	}
 
+	allowedAllIDs, allowedIDs := auth.AllowedUsers(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &userdto.ListUserResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
+		listOpts = append(listOpts,
+			bunex.SelectWhereIn("\"user\".id IN (?)", allowedIDs...),
+		)
+	}
+
 	users, paging, err := uc.userRepo.List(ctx, uc.db, &req.Paging, listOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

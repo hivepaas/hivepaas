@@ -2,44 +2,82 @@ package appbasehandler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
 
 //nolint:nakedret
 func (h *Handler) GetAuth(
 	ctx *gin.Context,
 	action base.ActionType,
-	getAppID bool,
-) (auth *basedto.Auth, projectID, appID string, err error) {
+) (auth *basedto.Auth, projectID, projectEnvID, appID string, err error) {
 	projectID, err = h.ParseStringParam(ctx, "projectID")
 	if err != nil {
 		return
 	}
-	var accessCheck *permission.AccessCheck
-	if getAppID {
-		appID, err = h.ParseStringParam(ctx, "appID")
-		if err != nil {
-			return
-		}
-		accessCheck = &permission.AccessCheck{
-			ResourceModule:     base.ResourceModuleProject,
-			ResourceType:       base.ResourceTypeApp,
-			ResourceID:         appID,
-			ParentResourceType: base.ResourceTypeProject,
-			ParentResourceID:   projectID,
-			Action:             action,
-		}
-	} else {
-		accessCheck = &permission.AccessCheck{
-			ResourceModule: base.ResourceModuleProject,
-			ResourceType:   base.ResourceTypeProject,
-			ResourceID:     projectID,
-			Action:         gofn.If(action == base.ActionTypeDelete, base.ActionTypeWrite, action),
-		}
+	projectEnv, err := h.ParseStringParam(ctx, "projectEnv")
+	if err != nil {
+		return
+	}
+	projectEnvID = projecthelper.CalcProjectEnvID(projectID, projectEnv)
+	appID, err = h.ParseStringParam(ctx, "appID")
+	if err != nil {
+		return
+	}
+	accessCheck := &permission.AppAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		ProjectID:       projectID,
+		AppID:           appID,
+		ProjectEnv:      projectEnvID,
+	}
+	auth, err = h.AuthHandler.GetCurrentAuth(ctx, accessCheck)
+	if err != nil {
+		return
+	}
+	return
+}
+
+//nolint:nakedret
+func (h *Handler) GetAuthInProject(
+	ctx *gin.Context,
+	action base.ActionType,
+) (auth *basedto.Auth, projectID string, err error) {
+	projectID, err = h.ParseStringParam(ctx, "projectID")
+	if err != nil {
+		return
+	}
+	accessCheck := &permission.ProjectAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		ProjectID:       projectID,
+	}
+	auth, err = h.AuthHandler.GetCurrentAuth(ctx, accessCheck)
+	if err != nil {
+		return
+	}
+	return
+}
+
+//nolint:nakedret
+func (h *Handler) GetAuthInEnv(
+	ctx *gin.Context,
+	action base.ActionType,
+) (auth *basedto.Auth, projectID, projectEnvID string, err error) {
+	projectID, err = h.ParseStringParam(ctx, "projectID")
+	if err != nil {
+		return
+	}
+	projectEnv, err := h.ParseStringParam(ctx, "projectEnv")
+	if err != nil {
+		return
+	}
+	projectEnvID = projecthelper.CalcProjectEnvID(projectID, projectEnv)
+	accessCheck := &permission.ProjectAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		ProjectID:       projectID,
+		ProjectEnv:      &projectEnvID,
 	}
 	auth, err = h.AuthHandler.GetCurrentAuth(ctx, accessCheck)
 	if err != nil {
@@ -53,11 +91,16 @@ func (h *Handler) GetAuthForItem(
 	ctx *gin.Context,
 	action base.ActionType,
 	paramName string,
-) (auth *basedto.Auth, projectID, appID, itemID string, err error) {
+) (auth *basedto.Auth, projectID, projectEnvID, appID, itemID string, err error) {
 	projectID, err = h.ParseStringParam(ctx, "projectID")
 	if err != nil {
 		return
 	}
+	projectEnv, err := h.ParseStringParam(ctx, "projectEnv")
+	if err != nil {
+		return
+	}
+	projectEnvID = projecthelper.CalcProjectEnvID(projectID, projectEnv)
 	appID, err = h.ParseStringParam(ctx, "appID")
 	if err != nil {
 		return
@@ -68,13 +111,11 @@ func (h *Handler) GetAuthForItem(
 			return
 		}
 	}
-	auth, err = h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule:     base.ResourceModuleProject,
-		ResourceType:       base.ResourceTypeApp,
-		ResourceID:         appID,
-		ParentResourceType: base.ResourceTypeProject,
-		ParentResourceID:   projectID,
-		Action:             action,
+	auth, err = h.AuthHandler.GetCurrentAuth(ctx, &permission.AppAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		ProjectID:       projectID,
+		AppID:           appID,
+		ProjectEnv:      projectEnvID,
 	})
 	if err != nil {
 		return

@@ -22,10 +22,10 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal [get]
 func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSSLRenewal,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSSLRenewal,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -60,10 +60,10 @@ func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal [put]
 func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSSLRenewal,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSSLRenewal,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -98,10 +98,10 @@ func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal/exec [post]
 func (h *Handler) ExecuteSSLRenewal(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSSLRenewal,
-		Action:         base.ActionTypeExecute,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeExecute},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSSLRenewal,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

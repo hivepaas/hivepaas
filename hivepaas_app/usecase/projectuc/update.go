@@ -88,11 +88,9 @@ func (uc *UC) loadProjectDataForUpdate(
 
 	// Only admin, current owner, and users have permission on Project module can change project owner
 	if req.Owner.ID != project.OwnerID && !auth.User.IsAdmin() && auth.User.ID != project.OwnerID {
-		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.AccessCheck{
-			SubjectType:    base.SubjectTypeUser,
-			SubjectID:      auth.User.ID,
-			ResourceModule: base.ResourceModuleProject,
-			Action:         base.ActionTypeWrite,
+		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
+			BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+			Module:          base.ResourceModuleProject,
 		})
 		if err != nil {
 			return apperrors.Wrap(err)

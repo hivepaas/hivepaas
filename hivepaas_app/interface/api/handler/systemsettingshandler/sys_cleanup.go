@@ -22,10 +22,10 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/cleanup [get]
 func (h *Handler) GetCleanupSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemCleanup,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemCleanup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -60,10 +60,10 @@ func (h *Handler) GetCleanupSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/cleanup [put]
 func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemCleanup,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemCleanup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -98,10 +98,10 @@ func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/cleanup/exec [post]
 func (h *Handler) ExecuteCleanup(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemCleanup,
-		Action:         base.ActionTypeExecute,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeExecute},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemCleanup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

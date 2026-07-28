@@ -17,13 +17,14 @@ import (
 // @Produce json
 // @Id      getAppServiceTasks
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appsettingsdto.GetAppServiceTasksResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/service-tasks [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/service-tasks [get]
 func (h *Handler) GetAppServiceTasks(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -31,6 +32,7 @@ func (h *Handler) GetAppServiceTasks(ctx *gin.Context) {
 
 	req := appsettingsdto.NewGetAppServiceTasksReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)

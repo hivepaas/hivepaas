@@ -1,14 +1,18 @@
 package appactiondto
 
 import (
+	vld "github.com/tiendc/go-validator"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
 type SetAppRunningReq struct {
-	ProjectID string `json:"-"`
-	AppID     string `json:"-"`
-	Running   bool   `json:"running"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+	Running      bool   `json:"running"`
 }
 
 func NewSetAppRunningReq() *SetAppRunningReq {
@@ -17,7 +21,12 @@ func NewSetAppRunningReq() *SetAppRunningReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *SetAppRunningReq) Validate() apperrors.ValidationErrors {
-	return nil
+	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type SetAppRunningResp struct {

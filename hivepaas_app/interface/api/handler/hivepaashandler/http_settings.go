@@ -22,9 +22,9 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/hivepaas/http-settings [get]
 func (h *Handler) GetHttpSettings(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		Action:         base.ActionTypeRead,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -63,9 +63,9 @@ func (h *Handler) GetHttpSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/hivepaas/http-settings [put]
 func (h *Handler) UpdateHttpSettings(ctx *gin.Context) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

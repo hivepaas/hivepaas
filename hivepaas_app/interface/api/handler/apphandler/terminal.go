@@ -18,13 +18,14 @@ import (
 // @Produce json
 // @Id      getAppTerminalInfo
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.GetTerminalInfoResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/terminal/info [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/terminal/info [get]
 func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 
 	req := appdto.NewGetTerminalInfoReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -54,13 +56,14 @@ func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 // @Produce json
 // @Id      getAppTerminal
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.OpenTerminalResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/terminal [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/terminal [get]
 func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -68,6 +71,7 @@ func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 
 	req := appdto.NewOpenTerminalReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)

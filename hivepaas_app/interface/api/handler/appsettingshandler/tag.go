@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      createAppTag
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.CreateAppTagReq true "request data"
 // @Success 201 {object} appsettingsdto.CreateAppTagResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/tags [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/tags [post]
 func (h *Handler) CreateAppTag(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) CreateAppTag(ctx *gin.Context) {
 
 	req := appsettingsdto.NewCreateAppTagReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
@@ -54,14 +56,15 @@ func (h *Handler) CreateAppTag(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteAppTag
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.DeleteAppTagsReq true "request data"
 // @Success 200 {object} appsettingsdto.DeleteAppTagsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/tags/delete [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/tags/delete [post]
 func (h *Handler) DeleteAppTags(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -69,6 +72,7 @@ func (h *Handler) DeleteAppTags(ctx *gin.Context) {
 
 	req := appsettingsdto.NewDeleteAppTagsReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)

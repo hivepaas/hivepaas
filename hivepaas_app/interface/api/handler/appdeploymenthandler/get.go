@@ -17,14 +17,15 @@ import (
 // @Produce json
 // @Id      getAppDeployment
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Success 200 {object} appdeploymentdto.GetDeploymentResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID} [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID} [get]
 func (h *Handler) GetAppDeployment(ctx *gin.Context) {
-	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
+	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -32,6 +33,7 @@ func (h *Handler) GetAppDeployment(ctx *gin.Context) {
 
 	req := appdeploymentdto.NewGetDeploymentReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
@@ -56,14 +58,15 @@ func (h *Handler) GetAppDeployment(ctx *gin.Context) {
 // @Produce plain
 // @Id      getAppDeploymentStatus
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Success 200 {object} appdeploymentdto.GetDeploymentStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/deployments/{deploymentID}/status [get]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/status [get]
 func (h *Handler) GetAppDeploymentStatus(ctx *gin.Context) {
-	auth, projectID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
+	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -71,6 +74,7 @@ func (h *Handler) GetAppDeploymentStatus(ctx *gin.Context) {
 
 	req := appdeploymentdto.NewGetDeploymentStatusReq()
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
 	req.DeploymentID = deploymentID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {

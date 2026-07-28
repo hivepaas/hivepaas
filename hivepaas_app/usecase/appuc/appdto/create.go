@@ -11,14 +11,14 @@ import (
 )
 
 type CreateAppReq struct {
-	ProjectID string `json:"-"`
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
 	*AppBaseReq
 }
 
 type AppBaseReq struct {
 	Name   string         `json:"name"`
 	Status base.AppStatus `json:"status"`
-	Env    string         `json:"env"`
 	Tags   []string       `json:"tags"`
 	Note   string         `json:"note"`
 }
@@ -29,7 +29,6 @@ func (req *AppBaseReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, validateAppName(&req.Name, field+"name")...)
 	res = append(res, basedto.ValidateStrIn(&req.Status, true, base.AllAppStatuses, field+"status")...)
-	res = append(res, validateAppEnv(&req.Env, field+"env")...)
 	res = append(res, validateAppNote(&req.Note, field+"note")...)
 	res = append(res, validateAppTags(req.Tags, field+"tags")...)
 	return res
@@ -48,6 +47,8 @@ func NewCreateAppReq() *CreateAppReq {
 func (req *CreateAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

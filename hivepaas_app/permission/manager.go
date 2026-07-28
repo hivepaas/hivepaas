@@ -11,7 +11,7 @@ import (
 )
 
 type Manager interface {
-	CheckAccess(ctx context.Context, db database.IDB, auth *basedto.Auth, check *AccessCheck) (bool, error)
+	CheckAccess(ctx context.Context, db database.IDB, auth *basedto.Auth, check AccessCheck) (bool, error)
 
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
@@ -20,7 +20,9 @@ type Manager interface {
 		subjectType base.SubjectType, subjectIDs []string) error
 	RemoveACLPermissionsOfUsers(ctx context.Context, db database.IDB, userIDs []string) error
 
-	LoadObjectAccesses(ctx context.Context, db database.IDB, check *AccessCheck,
-		extraLoadOpts ...bunex.SelectQueryOption) (objPerms, modPerms []*entity.ACLPermission, err error)
-	MergeObjectAccessesBySubjectID(objPerms, modPerms []*entity.ACLPermission) []*entity.ACLPermission
+	LoadProjectAccesses(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,
+		makeAdjustment bool, extraLoadOpts ...bunex.SelectQueryOption) (modPerms []*entity.ACLPermission,
+		projectPerms []*entity.ACLPermission, envPerms map[string][]*entity.ACLPermission, err error)
+	LoadProjectAccessUsers(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,
+		extraLoadOpts ...bunex.SelectQueryOption) (userPerms []*entity.ACLPermission, err error)
 }

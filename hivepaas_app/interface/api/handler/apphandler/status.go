@@ -17,22 +17,24 @@ import (
 // @Produce json
 // @Id      updateAppStatus
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   body body appdto.UpdateAppStatusReq true "request data"
 // @Success 200 {object} appdto.UpdateAppStatusResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps/{appID}/status [put]
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/status [put]
 func (h *Handler) UpdateAppStatus(ctx *gin.Context) {
-	auth, projectID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := appdto.NewUpdateAppStatusReq()
-	req.ID = appID
+	req.AppID = appID
 	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -22,10 +22,10 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/backup [get]
 func (h *Handler) GetBackupSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		Action:         base.ActionTypeRead,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -60,10 +60,10 @@ func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/backup [put]
 func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		Action:         base.ActionTypeWrite,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -98,10 +98,10 @@ func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/settings/backup/exec [post]
 func (h *Handler) ExecuteBackup(ctx *gin.Context) {
-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.AccessCheck{
-		ResourceModule: base.ResourceModuleSystem,
-		ResourceType:   base.ResourceTypeSystemBackup,
-		Action:         base.ActionTypeExecute,
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeExecute},
+		Module:          base.ResourceModuleSystem,
+		ResourceType:    base.ResourceTypeSystemBackup,
 	})
 	if err != nil {
 		h.RenderError(ctx, err)

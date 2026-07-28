@@ -55,9 +55,14 @@ func (uc *UC) ListDeployment(
 	if req.Search != "" { //nolint
 		// TODO: add implementation
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	allowedAllIDs, allowedIDs := auth.AllowedDeployments(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &appdeploymentdto.ListDeploymentResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("deployment.id IN (?)", auth.AllowObjectIDs...),
+			bunex.SelectWhereIn("deployment.id IN (?)", allowedIDs...),
 		)
 	}
 

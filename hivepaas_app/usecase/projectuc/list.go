@@ -35,9 +35,14 @@ func (uc *UC) ListProject(
 			),
 		)
 	}
-	if len(auth.AllowObjectIDs) > 0 {
+
+	allowedAllIDs, allowedIDs := auth.AllowedProjects(nil)
+	if !allowedAllIDs {
+		if len(allowedIDs) == 0 { // return empty result
+			return &projectdto.ListProjectResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
 		listOpts = append(listOpts,
-			bunex.SelectWhereIn("project.id IN (?)", auth.AllowObjectIDs...),
+			bunex.SelectWhereIn("project.id IN (?)", allowedIDs...),
 		)
 	}
 

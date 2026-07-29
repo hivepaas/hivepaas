@@ -1,6 +1,8 @@
 package imagebuildsettingsdto
 
 import (
+	vld "github.com/tiendc/go-validator"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -16,8 +18,9 @@ func NewGetRepoCacheInfoReq() *GetRepoCacheInfoReq {
 }
 
 func (req *GetRepoCacheInfoReq) Validate() apperrors.ValidationErrors {
-	// TODO: add validation
-	return nil
+	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateCond(req.Scope.IsValid(), "params")...)
+	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetRepoCacheInfoResp struct {

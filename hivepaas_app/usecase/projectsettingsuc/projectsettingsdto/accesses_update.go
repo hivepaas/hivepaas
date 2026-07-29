@@ -9,8 +9,9 @@ import (
 )
 
 type UpdateUserAccessesReq struct {
-	ProjectID    string           `json:"-"`
-	UserAccesses []*UserAccessReq `json:"userAccesses"`
+	ProjectID       string             `json:"-"`
+	UserAccesses    []*UserAccessReq   `json:"userAccesses"`
+	EnvUserAccesses [][]*UserAccessReq `json:"envUserAccesses"`
 }
 
 type UserAccessReq struct {

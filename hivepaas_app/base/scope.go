@@ -1,6 +1,8 @@
 package base
 
-import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+)
 
 type ObjectScopeType string
 
@@ -63,7 +65,14 @@ func (s *ObjectScope) ScopeObjectID() string {
 
 func (s *ObjectScope) CalcProjectEnvKey() string {
 	_, envKey := projecthelper.ParseProjectEnvID(s.ProjectEnvID)
-	return envKey
+	if envKey != "" {
+		return envKey
+	}
+	return projecthelper.CalcProjectEnvKey(s.ProjectEnvID)
+}
+
+func (s *ObjectScope) IsValid() bool {
+	return s.ScopeObjectID() != ""
 }
 
 func NewObjectScopeGlobal() *ObjectScope {

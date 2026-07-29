@@ -7,6 +7,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
+const (
+	typeMinLen = 1
+	typeMaxLen = 50
+
+	nameMinLen = 1
+	nameMaxLen = 100
+
+	descMinLen = 1
+	descMaxLen = 10000
+)
+
 type CreateFeedbackReq struct {
 	*FeedbackBaseReq
 }
@@ -20,12 +31,14 @@ type FeedbackBaseReq struct {
 	Description string `json:"description"`
 }
 
-// nolint
 func (req *FeedbackBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	// TODO: add validation
+	res = append(res, basedto.ValidateStr(&req.Type, true, typeMinLen, typeMaxLen, field+"type")...)
+	res = append(res, basedto.ValidateStr(&req.Name, true, nameMinLen, nameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStr(&req.Subject, true, nameMinLen, nameMaxLen, field+"subject")...)
+	res = append(res, basedto.ValidateStr(&req.Description, true, descMinLen, descMaxLen, field+"description")...)
 	return res
 }
 

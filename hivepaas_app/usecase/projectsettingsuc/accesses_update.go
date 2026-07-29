@@ -3,6 +3,8 @@ package projectsettingsuc
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -89,7 +91,7 @@ func (uc *UC) prepareUpdatingUserAccesses(
 	project := data.Project
 	currAccesses := data.CurrentAccesses
 	timeNow := timeutil.NowUTC()
-	upsertingACLs := make(map[string]*entity.ACLPermission, len(currAccesses))
+	mapUpsertingACLs := make(map[string]*entity.ACLPermission, len(currAccesses))
 
 	for _, envAccesses := range req.EnvUserAccesses {
 		projectEnvID := projecthelper.CalcProjectEnvID(project.ID, envAccesses.Name)
@@ -106,20 +108,28 @@ func (uc *UC) prepareUpdatingUserAccesses(
 					CreatedAt:    timeNow,
 					UpdatedAt:    timeNow,
 				}
-				currAccesses[key] = currAccess
-			} else if !currAccess.Actions.Equal(accessReq.Access) {
-				currAccess.Actions = accessReq.Access
-				currAccess.UpdatedAt = timeNow
+				mapUpsertingACLs[key] = currAccess
+			} else {
+				delete(currAccesses, key)
+				if !currAccess.Actions.Equal(accessReq.Access) {
+					currAccess.Actions = accessReq.Access
+					currAccess.UpdatedAt = timeNow
+					mapUpsertingACLs[key] = currAccess
+				}
 			}
-			upsertingACLs[key] = currAccess
 		}
 	}
+	upsertingACLs := gofn.MapValues(mapUpsertingACLs)
+	// Remaining items in the current list need to delete
+	for _, access := range currAccesses {
+		access.DeletedAt = timeNow
+		upsertingACLs = append(upsertingACLs, access)
+	}
+
 	if len(upsertingACLs) == 0 {
 		return
 	}
-	for _, access := range upsertingACLs {
-		persistingData.UpsertingACLPermissions = append(persistingData.UpsertingACLPermissions, access)
-	}
+	persistingData.UpsertingACLPermissions = append(persistingData.UpsertingACLPermissions, upsertingACLs...)
 
 	project.UpdatedAt = timeNow
 	project.UpdateVer++

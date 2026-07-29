@@ -27,6 +27,7 @@ type ACLPermission struct {
 	SubjectProject *Project `bun:"rel:has-one,join:subj_id=id" json:"subjectProject,omitempty"`
 	SubjectApp     *App     `bun:"rel:has-one,join:subj_id=id" json:"subjectApp,omitempty"`
 
-	ResourceProject *Project `bun:"rel:has-one,join:res_id=id" json:"resourceProject,omitempty"`
-	ResourceApp     *App     `bun:"rel:has-one,join:res_id=id" json:"resourceApp,omitempty"`
+	ResourceProject    *Project    `bun:"rel:has-one,join:res_id=id" json:"resourceProject,omitempty"`
+	ResourceProjectEnv *ProjectEnv `bun:"rel:has-one,join:res_id=id" json:"resourceProjectEnv,omitempty"`
+	ResourceApp        *App        `bun:"rel:has-one,join:res_id=id" json:"resourceApp,omitempty"`
 }

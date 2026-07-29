@@ -35,6 +35,7 @@ export function ProjectEnvInput({
     const colorInputIdPrefix = React.useId();
     const newColorInputId = React.useId();
     const hasReachedMax = envs.length >= MAX_PROJECT_ENVS;
+    const hasReachedMin = envs.length <= 1;
 
     React.useEffect(() => {
         if (isInputVisible && inputRef.current) {
@@ -160,15 +161,16 @@ export function ProjectEnvInput({
                         <button
                             type="button"
                             onClick={() => {
-                                if (disabled) {
+                                if (disabled || hasReachedMin) {
                                     return;
                                 }
 
                                 onDelete(env.name);
                             }}
-                            disabled={disabled}
+                            disabled={disabled || hasReachedMin}
                             className="rounded-sm p-0.5 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/80 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-label={`Remove ${env.name}`}
+                            aria-label={hasReachedMin ? "At least 1 environment is required" : `Remove ${env.name}`}
+                            title={hasReachedMin ? "At least 1 environment is required" : undefined}
                         >
                             <X className="size-3.5 text-white/90" />
                         </button>
@@ -218,7 +220,9 @@ export function ProjectEnvInput({
                     disabled
                     className="inline-flex size-8 cursor-not-allowed items-center justify-center rounded-md border border-border bg-secondary text-secondary-foreground opacity-50"
                     title={disabled ? "Environment editing is disabled" : `Maximum ${MAX_PROJECT_ENVS} environments`}
-                    aria-label={disabled ? "Environment editing is disabled" : `Maximum ${MAX_PROJECT_ENVS} environments`}
+                    aria-label={
+                        disabled ? "Environment editing is disabled" : `Maximum ${MAX_PROJECT_ENVS} environments`
+                    }
                 >
                     <Plus className="size-4" />
                 </button>

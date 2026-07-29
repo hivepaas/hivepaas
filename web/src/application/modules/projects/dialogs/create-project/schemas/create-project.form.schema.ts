@@ -1,9 +1,8 @@
 import { z } from "zod";
 
 export const DEFAULT_PROJECT_ENVS = [
-    { name: "Development", color: "#a855f7" },
-    { name: "Staging", color: "#eab308" },
-    { name: "Production", color: "#84cc16" },
+    { name: "development", color: "#a855f7" },
+    { name: "production", color: "#84cc16" },
 ] as const;
 
 export const MAX_PROJECT_ENVS = 10;
@@ -15,7 +14,8 @@ const ProjectEnvFormSchema = z.object({
         })
         .trim()
         .min(1, "Environment name is required")
-        .max(50, "Environment name must be 50 characters or less"),
+        .max(50, "Environment name must be 50 characters or less")
+        .regex(/^[a-z][a-z0-9-]*$/, "Environment name must be lowercase (letters, numbers, hyphens)"),
     color: z.string(),
 });
 
@@ -31,6 +31,7 @@ export const CreateProjectFormSchema = z.object({
     }),
     envs: z
         .array(ProjectEnvFormSchema)
+        .min(1, "At least 1 environment is required")
         .max(MAX_PROJECT_ENVS, `Maximum ${MAX_PROJECT_ENVS} environments`)
         .superRefine((envs, ctx) => {
             const names = new Set<string>();

@@ -9,9 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -27,15 +25,11 @@ func (uc *UC) DeleteUser(
 			return apperrors.Wrap(err)
 		}
 
-		persistingData := &userservice.PersistingUserData{}
-		uc.prepareDeletingUser(userData, persistingData)
-
 		err = uc.userService.DeleteUser(ctx, db, userData.User)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-
-		return uc.userService.PersistUserData(ctx, db, persistingData)
+		return nil
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -87,14 +81,4 @@ func (uc *UC) loadUserDataForDelete(
 	}
 
 	return nil
-}
-
-func (uc *UC) prepareDeletingUser(
-	userData *deleteUserData,
-	persistingData *userservice.PersistingUserData,
-) {
-	user := userData.User
-	user.DeletedAt = timeutil.NowUTC()
-
-	persistingData.UpsertingUsers = append(persistingData.UpsertingUsers, user)
 }

@@ -2,11 +2,13 @@ package userserviceimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
 func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.User) error {
@@ -19,8 +21,8 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 	// Delete ref resources in DB
 	userIDs := []string{user.ID}
 
-	// ACL permissions having the user ID as subject ID
-	err = s.permissionManager.DeleteACLPermissionsBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
+	// ACL permissions related to the user
+	err = s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, userIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -57,5 +59,10 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 		}
 	}
 
+	user.DeletedAt = time.Now()
+	err = s.userRepo.Update(ctx, db, user, bunex.UpdateColumns("deleted_at"))
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/filehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/hivepaashandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/imagehandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projecthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectsettingshandler"
@@ -38,6 +39,7 @@ type HandlerRegistry struct {
 	sessionHandler            *sessionhandler.Handler
 	userHandler               *userhandler.Handler
 	projectHandler            *projecthandler.Handler
+	projectEnvHandler         *projectenvhandler.Handler
 	projectSettingsHandler    *projectsettingshandler.Handler
 	projectEnvSettingsHandler *projectenvsettingshandler.Handler
 	appHandler                *apphandler.Handler
@@ -64,6 +66,7 @@ func NewHandlerRegistry(
 	sessionHandler *sessionhandler.Handler,
 	userHandler *userhandler.Handler,
 	projectHandler *projecthandler.Handler,
+	projectEnvHandler *projectenvhandler.Handler,
 	projectSettingsHandler *projectsettingshandler.Handler,
 	projectEnvSettingsHandler *projectenvsettingshandler.Handler,
 	appHandler *apphandler.Handler,
@@ -89,6 +92,7 @@ func NewHandlerRegistry(
 		sessionHandler:            sessionHandler,
 		userHandler:               userHandler,
 		projectHandler:            projectHandler,
+		projectEnvHandler:         projectEnvHandler,
 		projectSettingsHandler:    projectSettingsHandler,
 		projectEnvSettingsHandler: projectEnvSettingsHandler,
 		appHandler:                appHandler,

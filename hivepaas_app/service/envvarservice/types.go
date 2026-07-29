@@ -21,26 +21,34 @@ func (env *EnvVar) AddRefSecret(secret *entity.Secret) {
 	env.RefSecrets[secret] = struct{}{}
 }
 
-type ComputeAppEnvVarsReq struct {
-	App                    *entity.App
-	TargetVars             []string
-	OverridingVars         []*EnvVar
-	InheritedProjectVars   []*EnvVar // if nil, data will be loaded from DB when needed
-	InheritedParentAppVars []*EnvVar // if nil, data will be loaded from DB when needed
-	SkipLoadingVars        bool
-	SkipLoadingSecrets     bool
-	MaskSecrets            bool
-	BuildPhaseOnly         bool
-	SharedVarsOnly         bool
-	Sort                   bool
+type ComputeEnvVarsInAppReq struct {
+	App              *entity.App
+	TargetVars       []string
+	OverridingVars   []*EnvVar
+	InheritedVars    []*EnvVar         // if nil, data will be loaded from DB when needed
+	InheritedSecrets []*entity.Setting // if nil, data will be loaded from DB when needed
+
+	SkipLoadingVars    bool
+	SkipLoadingSecrets bool
+	MaskSecrets        bool
+	BuildPhaseOnly     bool
+	SharedVarsOnly     bool
+	Sort               bool
 }
 
-type ComputeAppSystemEnvVarsReq struct {
+type ComputeEnvVarsInAppResp struct {
+	EnvVars          []*EnvVar
+	Secrets          []*entity.Setting
+	InheritedEnvVars []*EnvVar
+	InheritedSecrets []*entity.Setting
+}
+
+type ComputeSystemEnvVarsInAppReq struct {
 	App  *entity.App
 	Sort bool
 }
 
-type ComputeProjectEnvVarsReq struct {
+type ComputeEnvVarsInProjectReq struct {
 	Project            *entity.Project
 	TargetVars         []string
 	OverridingVars     []*EnvVar
@@ -52,7 +60,39 @@ type ComputeProjectEnvVarsReq struct {
 	Sort               bool
 }
 
-type ComputeProjectSystemEnvVarsReq struct {
+type ComputeEnvVarsInProjectResp struct {
+	EnvVars []*EnvVar
+	Secrets []*entity.Setting
+}
+
+type ComputeSystemEnvVarsInProjectReq struct {
 	Project *entity.Project
 	Sort    bool
+}
+
+type ComputeEnvVarsInProjectEnvReq struct {
+	ProjectEnv       *entity.ProjectEnv
+	TargetVars       []string
+	OverridingVars   []*EnvVar
+	InheritedVars    []*EnvVar         // if nil, data will be loaded from DB when needed
+	InheritedSecrets []*entity.Setting // if nil, data will be loaded from DB when needed
+
+	SkipLoadingVars    bool
+	SkipLoadingSecrets bool
+	MaskSecrets        bool
+	BuildPhaseOnly     bool
+	SharedVarsOnly     bool
+	Sort               bool
+}
+
+type ComputeEnvVarsInProjectEnvResp struct {
+	EnvVars          []*EnvVar
+	Secrets          []*entity.Setting
+	InheritedEnvVars []*EnvVar
+	InheritedSecrets []*entity.Setting
+}
+
+type ComputeSystemEnvVarsInProjectEnvReq struct {
+	ProjectEnv *entity.ProjectEnv
+	Sort       bool
 }

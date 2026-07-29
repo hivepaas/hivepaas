@@ -1,0 +1,65 @@
+package projectenvsettingsdto
+
+import (
+	vld "github.com/tiendc/go-validator"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+)
+
+type GetProjectEnvEnvVarsReq struct {
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+}
+
+func NewGetProjectEnvEnvVarsReq() *GetProjectEnvEnvVarsReq {
+	return &GetProjectEnvEnvVarsReq{}
+}
+
+func (req *GetProjectEnvEnvVarsReq) Validate() apperrors.ValidationErrors {
+	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
+		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	return apperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+type GetProjectEnvEnvVarsResp struct {
+	Meta *basedto.Meta `json:"meta"`
+	Data *EnvVarsResp  `json:"data"`
+}
+
+type EnvVarsResp struct {
+	BuildtimeEnvVars []*basedto.EnvVarResp `json:"buildtimeEnvVars"`
+	RuntimeEnvVars   []*basedto.EnvVarResp `json:"runtimeEnvVars"`
+	UpdateVer        int                   `json:"updateVer"`
+}
+
+func TransformEnvVars(setting *entity.Setting) (resp *EnvVarsResp, err error) {
+	if setting == nil {
+		return
+	}
+	resp = &EnvVarsResp{
+		BuildtimeEnvVars: make([]*basedto.EnvVarResp, 0, 20), //nolint
+		RuntimeEnvVars:   make([]*basedto.EnvVarResp, 0, 20), //nolint
+		UpdateVer:        setting.UpdateVer,
+	}
+
+	envVars, err := setting.AsEnvVars()
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	if envVars != nil {
+		for _, v := range envVars.Data {
+			res := basedto.TransformEnvVar(v)
+			if v.IsBuild {
+				resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, res)
+			} else {
+				resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, res)
+			}
+		}
+	}
+	return resp, nil
+}

@@ -18,35 +18,39 @@ const (
 	refSecretMaxSize = 10 * 1024 // 10 KB
 )
 
-func (s *service) ComputeAppEnvVars(
+func (s *service) ComputeEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
-	req *envvarservice.ComputeAppEnvVarsReq,
-) ([]*envvarservice.EnvVar, error) {
-	envStore := make(map[string]*envvarservice.EnvVar, 30) //nolint:mnd
+	req *envvarservice.ComputeEnvVarsInAppReq,
+) (*envvarservice.ComputeEnvVarsInAppResp, error) {
+	envStore := make(map[string]*envvarservice.EnvVar, 20) //nolint:mnd
+	secretStore := make(map[string]*entity.Setting, 10)    //nolint:mnd
 
-	// Merge with inherited envs
-	err := s.loadAppInheritedEnvVars(ctx, db, req, envStore)
+	// Merge with inherited envs and secrets
+	inheritedVars, inheritedSecrets, err := s.loadInheritedVarsAndSecretsInApp(ctx, db, req, envStore, secretStore)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	// Merge with envs of the current app
-	appVars, appSecrets, err := s.loadAppVarsAndSecrets(ctx, db, req.App, req.SkipLoadingVars, req.SkipLoadingSecrets,
-		req.BuildPhaseOnly, req.OverridingVars)
+	currVars, currSecrets, err := s.loadVarsAndSecretsInApp(ctx, db, req.App, req.SkipLoadingVars,
+		req.SkipLoadingSecrets, req.BuildPhaseOnly, req.OverridingVars)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	for _, appVar := range appVars {
-		envStore[appVar.Key] = appVar
+	for _, aVar := range currVars {
+		envStore[aVar.Key] = aVar
+	}
+	for _, aSec := range currSecrets {
+		secretStore[aSec.Name] = aSec
 	}
 
 	refsData := &processRefsData{
 		EnvStore:    envStore,
-		SecretStore: appSecrets,
+		SecretStore: secretStore,
 		MaskSecrets: req.MaskSecrets,
 		ExternalRefsLoadFunc: func(refName string) (map[string]*envvarservice.EnvVar, error) {
-			resp, err := s.computeAppSharedEnvVars(ctx, db, req.App.ProjectID, req.App.ProjectEnvID,
+			resp, err := s.computeSharedEnvVarsInApp(ctx, db, req.App.ProjectID, req.App.ProjectEnvID,
 				refName, req.BuildPhaseOnly, false, req.MaskSecrets)
 			if err != nil {
 				return nil, apperrors.Wrap(err)
@@ -90,10 +94,15 @@ func (s *service) ComputeAppEnvVars(
 		})
 	}
 
-	return resultVars, nil
+	return &envvarservice.ComputeEnvVarsInAppResp{
+		EnvVars:          resultVars,
+		Secrets:          gofn.MapValues(secretStore),
+		InheritedEnvVars: inheritedVars,
+		InheritedSecrets: inheritedSecrets,
+	}, nil
 }
 
-func (s *service) loadAppVarsAndSecrets(
+func (s *service) loadVarsAndSecretsInApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
@@ -135,76 +144,75 @@ func (s *service) loadAppVarsAndSecrets(
 	}
 
 	// Inject overriding vars
-	for _, env := range overridingVars {
-		envVars[env.Key] = env
+	for _, aVar := range overridingVars {
+		envVars[aVar.Key] = aVar
 	}
 
-	// Inject app system env vars
-	sysVars, err := s.ComputeAppSystemEnvVars(ctx, db, &envvarservice.ComputeAppSystemEnvVarsReq{
+	// Inject system env vars in app
+	sysVars, err := s.ComputeSystemEnvVarsInApp(ctx, db, &envvarservice.ComputeSystemEnvVarsInAppReq{
 		App: app,
 	})
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
-	for _, envVar := range sysVars {
-		envVars[envVar.Key] = envVar
+	for _, aVar := range sysVars {
+		envVars[aVar.Key] = aVar
 	}
 
 	return envVars, secrets, nil
 }
 
-func (s *service) loadAppInheritedEnvVars(
+func (s *service) loadInheritedVarsAndSecretsInApp(
 	ctx context.Context,
 	db database.IDB,
-	req *envvarservice.ComputeAppEnvVarsReq,
+	req *envvarservice.ComputeEnvVarsInAppReq,
 	envStore map[string]*envvarservice.EnvVar,
-) (err error) {
-	projectVars := req.InheritedProjectVars
-	if projectVars == nil {
-		projectVars, err = s.ComputeProjectEnvVars(ctx, db, &envvarservice.ComputeProjectEnvVarsReq{
-			Project:            req.App.Project,
-			SkipLoadingVars:    req.SkipLoadingVars,
-			SkipLoadingSecrets: req.SkipLoadingSecrets,
-			MaskSecrets:        req.MaskSecrets,
-			BuildPhaseOnly:     req.BuildPhaseOnly,
-			SharedVarsOnly:     req.SharedVarsOnly,
-		})
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
-	for _, projectVar := range projectVars {
-		envStore[projectVar.Key] = projectVar
-	}
-
-	// Merge with envs from parent app
-	parentAppVars := req.InheritedParentAppVars
-	if parentAppVars == nil && req.App.ParentID != "" {
-		// Load parent app if not yet loaded
-		if req.App.ParentApp == nil {
-			req.App.ParentApp, err = s.appRepo.GetByID(ctx, db, req.App.ProjectID, req.App.ParentID,
-				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			)
+	secretStore map[string]*entity.Setting,
+) (inheritedVars []*envvarservice.EnvVar, inheritedSecrets []*entity.Setting, err error) {
+	// Merge with envs and secrets from parent project env
+	inheritedVars, inheritedSecrets = req.InheritedVars, req.InheritedSecrets
+	if inheritedVars == nil || inheritedSecrets == nil { //nolint:nestif
+		if req.App.ParentApp != nil { // the app has a parent app, loads data from the parent
+			req.App.ParentApp.ProjectEnv = req.App.ProjectEnv
+			resp, err := s.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
+				App:                req.App,
+				SkipLoadingVars:    req.SkipLoadingVars,
+				SkipLoadingSecrets: req.SkipLoadingSecrets,
+				MaskSecrets:        req.MaskSecrets,
+				BuildPhaseOnly:     req.BuildPhaseOnly,
+				SharedVarsOnly:     req.SharedVarsOnly,
+			})
 			if err != nil {
-				return apperrors.Wrap(err)
+				return nil, nil, apperrors.Wrap(err)
 			}
-		}
-
-		parentAppVars, err = s.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
-			App:                req.App.ParentApp,
-			SkipLoadingVars:    req.SkipLoadingVars,
-			SkipLoadingSecrets: req.SkipLoadingSecrets,
-			MaskSecrets:        req.MaskSecrets,
-			BuildPhaseOnly:     req.BuildPhaseOnly,
-			SharedVarsOnly:     req.SharedVarsOnly,
-		})
-		if err != nil {
-			return apperrors.Wrap(err)
+			inheritedVars, inheritedSecrets = resp.EnvVars, resp.Secrets
+		} else { // the app belongs to a project env directly, loads data from the env
+			resp, err := s.ComputeEnvVarsInProjectEnv(ctx, db, &envvarservice.ComputeEnvVarsInProjectEnvReq{
+				ProjectEnv:         req.App.ProjectEnv,
+				SkipLoadingVars:    req.SkipLoadingVars,
+				SkipLoadingSecrets: req.SkipLoadingSecrets,
+				MaskSecrets:        req.MaskSecrets,
+				BuildPhaseOnly:     req.BuildPhaseOnly,
+				SharedVarsOnly:     req.SharedVarsOnly,
+			})
+			if err != nil {
+				return nil, nil, apperrors.Wrap(err)
+			}
+			inheritedVars, inheritedSecrets = resp.EnvVars, resp.Secrets
 		}
 	}
-	for _, parentVar := range parentAppVars {
-		envStore[parentVar.Key] = parentVar
+	for _, aVar := range inheritedVars {
+		envStore[aVar.Key] = aVar
+	}
+	for _, aSec := range inheritedSecrets {
+		secretStore[aSec.Name] = aSec
 	}
 
-	return nil
+	if inheritedVars == nil {
+		inheritedVars = []*envvarservice.EnvVar{}
+	}
+	if inheritedSecrets == nil {
+		inheritedSecrets = []*entity.Setting{}
+	}
+	return inheritedVars, inheritedSecrets, nil
 }

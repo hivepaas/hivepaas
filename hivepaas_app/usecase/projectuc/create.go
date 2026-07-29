@@ -17,7 +17,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
@@ -105,10 +104,6 @@ func (uc *UC) loadProjectData(
 	}
 
 	return nil
-}
-
-type persistingProjectData struct {
-	projectservice.PersistingProjectData
 }
 
 func (uc *UC) preparePersistingProject(
@@ -231,16 +226,4 @@ func (uc *UC) preparePersistingProjectNotificationDefault(
 	}
 	setting.MustSetData(entity.NewNotificationDefaultForScope(base.NewObjectScopeProject(project.ID)))
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-}
-
-func (uc *UC) persistData(
-	ctx context.Context,
-	db database.IDB,
-	persistingData *persistingProjectData,
-) error {
-	err := uc.projectService.PersistProjectData(ctx, db, &persistingData.PersistingProjectData)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
 }

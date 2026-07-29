@@ -7,7 +7,12 @@ import (
 //nolint:funlen
 func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 	projectEnvGroup := projectGroup.Group("/:projectEnv")
+	projectEnvHandler := s.handlerRegistry.projectEnvHandler
 	projectEnvSettingsHandler := s.handlerRegistry.projectEnvSettingsHandler
+
+	// Project envs
+	projectEnvGroup.PUT("/status", projectEnvHandler.UpdateProjectEnvStatus)
+	projectEnvGroup.DELETE("", projectEnvHandler.DeleteProjectEnv)
 
 	// Settings import
 	projectEnvGroup.POST("/settings-import", projectEnvSettingsHandler.ImportSettings)

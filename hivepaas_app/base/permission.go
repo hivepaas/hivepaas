@@ -9,6 +9,7 @@ const (
 	SubjectTypeNetwork    SubjectType = "network"
 	SubjectTypeNode       SubjectType = "node"
 	SubjectTypeProject    SubjectType = "project"
+	SubjectTypeProjectEnv SubjectType = "project-env"
 	SubjectTypeUser       SubjectType = "user"
 )
 

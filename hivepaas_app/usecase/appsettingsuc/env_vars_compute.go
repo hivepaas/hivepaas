@@ -17,12 +17,15 @@ func (uc *UC) ComputeAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.ComputeAppEnvVarsReq,
 ) (*appsettingsdto.ComputeAppEnvVarsResp, error) {
-	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, false, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("ParentApp",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -42,19 +45,20 @@ func (uc *UC) ComputeAppEnvVars(
 		}
 	}
 
-	computedVars, err := uc.envVarService.ComputeAppEnvVars(ctx, uc.db, &envvarservice.ComputeAppEnvVarsReq{
-		App:            app,
-		OverridingVars: envVars,
-		BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
-		MaskSecrets:    true,
-		Sort:           true,
-	})
+	computedVars, err := uc.envVarService.ComputeEnvVarsInApp(ctx, uc.db,
+		&envvarservice.ComputeEnvVarsInAppReq{
+			App:            app,
+			OverridingVars: envVars,
+			BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
+			MaskSecrets:    true,
+			Sort:           true,
+		})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars))
-	for _, env := range computedVars {
+	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars.EnvVars))
+	for _, env := range computedVars.EnvVars {
 		respEnvs = append(respEnvs, basedto.TransformEnvVar(env.EnvVar))
 	}
 

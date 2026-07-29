@@ -53,7 +53,7 @@ func (s *service) calcBuildEnvVars(
 	db database.IDB,
 	data *imageBuildData,
 ) (map[string]*string, error) {
-	envResp, err := s.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+	envResp, err := s.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
 		App:            data.App,
 		BuildPhaseOnly: true,
 	})
@@ -61,9 +61,9 @@ func (s *service) calcBuildEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	if data.LogStore != nil && len(envResp) > 0 {
+	if data.LogStore != nil && len(envResp.EnvVars) > 0 {
 		secrets := make(map[string]struct{}, 10) //nolint:mnd
-		for _, env := range envResp {
+		for _, env := range envResp.EnvVars {
 			for secret := range env.RefSecrets {
 				plainSecret, err := secret.Value.GetPlain()
 				if err != nil {
@@ -75,8 +75,8 @@ func (s *service) calcBuildEnvVars(
 		data.LogStore.UpdateRedactorAddSecrets(gofn.MapKeys(secrets))
 	}
 
-	result := make(map[string]*string, len(envResp))
-	for _, envVar := range envResp {
+	result := make(map[string]*string, len(envResp.EnvVars))
+	for _, envVar := range envResp.EnvVars {
 		result[envVar.Key] = &envVar.Value
 	}
 

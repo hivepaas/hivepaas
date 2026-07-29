@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/hivepaashandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/imagehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectbasehandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projecthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectsettingshandler"
@@ -90,6 +91,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc"
@@ -180,6 +183,7 @@ var Provides = []any{
 	userhandler.New,
 	projectbasehandler.New,
 	projecthandler.New,
+	projectenvhandler.New,
 	projectsettingshandler.New,
 	projectenvsettingshandler.New,
 	appbasehandler.New,
@@ -209,7 +213,9 @@ var Provides = []any{
 	sessionuc.New,
 	useruc.New,
 	projectuc.New,
+	projectenvuc.New,
 	projectsettingsuc.New,
+	projectenvsettingsuc.New,
 	appuc.New,
 	appsettingsuc.New,
 	appdeploymentuc.New,

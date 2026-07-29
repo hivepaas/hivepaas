@@ -14,31 +14,31 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeProjectEnvVars(
+func (s *service) ComputeEnvVarsInProject(
 	ctx context.Context,
 	db database.IDB,
-	req *envvarservice.ComputeProjectEnvVarsReq,
-) ([]*envvarservice.EnvVar, error) {
-	allVars, allSecrets, err := s.loadProjectVarsAndSecrets(ctx, db, req.Project, req.SkipLoadingVars,
+	req *envvarservice.ComputeEnvVarsInProjectReq,
+) (*envvarservice.ComputeEnvVarsInProjectResp, error) {
+	currVars, currSecrets, err := s.loadVarsAndSecretsInProject(ctx, db, req.Project, req.SkipLoadingVars,
 		req.SkipLoadingSecrets, req.BuildPhaseOnly, req.OverridingVars)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	refsData := &processRefsData{
-		EnvStore:    allVars,
-		SecretStore: allSecrets,
+		EnvStore:    currVars,
+		SecretStore: currSecrets,
 		MaskSecrets: req.MaskSecrets,
 	}
 
-	resultVars := make([]*envvarservice.EnvVar, 0, len(allVars))
+	resultVars := make([]*envvarservice.EnvVar, 0, len(currVars))
 	var targetVarMap map[string]struct{}
 	if len(req.TargetVars) > 0 {
 		targetVarMap = gofn.MapSliceToMapKeys(req.TargetVars, struct{}{})
 	}
 
 	// Replace all references within the ENV values
-	for _, env := range allVars {
+	for _, env := range currVars {
 		if req.BuildPhaseOnly && !env.IsBuild {
 			continue
 		}
@@ -62,10 +62,13 @@ func (s *service) ComputeProjectEnvVars(
 		})
 	}
 
-	return resultVars, nil
+	return &envvarservice.ComputeEnvVarsInProjectResp{
+		EnvVars: resultVars,
+		Secrets: gofn.MapValues(currSecrets),
+	}, nil
 }
 
-func (s *service) loadProjectVarsAndSecrets(
+func (s *service) loadVarsAndSecretsInProject(
 	ctx context.Context,
 	db database.IDB,
 	project *entity.Project,
@@ -107,19 +110,19 @@ func (s *service) loadProjectVarsAndSecrets(
 	}
 
 	// Inject overriding vars
-	for _, env := range overridingVars {
-		envVars[env.Key] = env
+	for _, aVar := range overridingVars {
+		envVars[aVar.Key] = aVar
 	}
 
-	// Inject project system env vars
-	projectSysVars, err := s.ComputeProjectSystemEnvVars(ctx, db, &envvarservice.ComputeProjectSystemEnvVarsReq{
+	// Inject system env vars in project
+	sysVars, err := s.ComputeSystemEnvVarsInProject(ctx, db, &envvarservice.ComputeSystemEnvVarsInProjectReq{
 		Project: project,
 	})
 	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
-	for _, envVar := range projectSysVars {
-		envVars[envVar.Key] = envVar
+	for _, aVar := range sysVars {
+		envVars[aVar.Key] = aVar
 	}
 
 	return envVars, secrets, nil

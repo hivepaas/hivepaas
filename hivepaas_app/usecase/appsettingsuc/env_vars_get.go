@@ -17,7 +17,7 @@ func (uc *UC) GetAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.GetAppEnvVarsReq,
 ) (*appsettingsdto.GetAppEnvVarsResp, error) {
-	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, false, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
@@ -43,20 +43,34 @@ func (uc *UC) GetAppEnvVars(
 		App:  app,
 		Vars: settings,
 	}
-	input.SystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx, uc.db,
-		&envvarservice.ComputeAppSystemEnvVarsReq{App: app})
+	input.SystemVars, err = uc.envVarService.ComputeSystemEnvVarsInApp(ctx, uc.db,
+		&envvarservice.ComputeSystemEnvVarsInAppReq{App: app})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+
 	if app.ParentApp != nil {
-		input.ParentSystemVars, err = uc.envVarService.ComputeAppSystemEnvVars(ctx, uc.db,
-			&envvarservice.ComputeAppSystemEnvVarsReq{App: app.ParentApp})
+		parentApp := app.ParentApp
+		parentApp.Project = app.Project
+		parentApp.ProjectEnv = app.ProjectEnv
+		parentApp.ProjectEnv.Project = app.Project
+		input.ParentSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInApp(ctx, uc.db,
+			&envvarservice.ComputeSystemEnvVarsInAppReq{App: parentApp})
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
 	}
-	input.ProjectSystemVars, err = uc.envVarService.ComputeProjectSystemEnvVars(ctx, uc.db,
-		&envvarservice.ComputeProjectSystemEnvVarsReq{Project: app.Project})
+
+	projectEnv := app.ProjectEnv
+	projectEnv.Project = app.Project
+	input.EnvSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInProjectEnv(ctx, uc.db,
+		&envvarservice.ComputeSystemEnvVarsInProjectEnvReq{ProjectEnv: projectEnv})
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	input.ProjectSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInProject(ctx, uc.db,
+		&envvarservice.ComputeSystemEnvVarsInProjectReq{Project: app.Project})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

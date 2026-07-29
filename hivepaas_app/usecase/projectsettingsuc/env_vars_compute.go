@@ -35,7 +35,7 @@ func (uc *UC) ComputeProjectEnvVars(
 		}
 	}
 
-	computedVars, err := uc.envVarService.ComputeProjectEnvVars(ctx, uc.db, &envvarservice.ComputeProjectEnvVarsReq{
+	computedVars, err := uc.envVarService.ComputeEnvVarsInProject(ctx, uc.db, &envvarservice.ComputeEnvVarsInProjectReq{
 		Project:        project,
 		OverridingVars: envVars,
 		BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
@@ -46,8 +46,8 @@ func (uc *UC) ComputeProjectEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars))
-	for _, env := range computedVars {
+	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars.EnvVars))
+	for _, env := range computedVars.EnvVars {
 		respEnvs = append(respEnvs, basedto.TransformEnvVar(env.EnvVar))
 	}
 

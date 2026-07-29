@@ -14,10 +14,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeAppSystemEnvVars(
+func (s *service) ComputeSystemEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
-	req *envvarservice.ComputeAppSystemEnvVarsReq,
+	req *envvarservice.ComputeSystemEnvVarsInAppReq,
 ) ([]*envvarservice.EnvVar, error) {
 	httpLinks, _, err := s.resLinkRepo.List(ctx, db, nil,
 		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id"),

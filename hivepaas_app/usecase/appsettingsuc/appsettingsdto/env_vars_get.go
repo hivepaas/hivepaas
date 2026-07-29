@@ -49,6 +49,7 @@ type EnvVarsTransformationInput struct {
 	Vars              []*entity.Setting
 	SystemVars        []*envvarservice.EnvVar
 	ParentSystemVars  []*envvarservice.EnvVar
+	EnvSystemVars     []*envvarservice.EnvVar
 	ProjectSystemVars []*envvarservice.EnvVar
 }
 
@@ -61,12 +62,14 @@ func TransformEnvVars(input *EnvVarsTransformationInput) (resp *EnvVarsResp, err
 		SharedEnvVars:             make([]*basedto.EnvVarResp, 0, 10), //nolint
 	}
 
-	var appEnvVars, parentAppEnvVars, projectEnvVars *entity.EnvVars
+	var appEnvVars, parentAppEnvVars, envEnvVars, projectEnvVars *entity.EnvVars
 	for _, envSetting := range input.Vars {
 		switch envSetting.ObjectID {
 		case input.App.ID:
 			appEnvVars = envSetting.MustAsEnvVars()
 			resp.UpdateVer = envSetting.UpdateVer
+		case input.App.ProjectEnvID:
+			envEnvVars = envSetting.MustAsEnvVars()
 		case input.App.ProjectID:
 			projectEnvVars = envSetting.MustAsEnvVars()
 		case input.App.ParentID:
@@ -74,7 +77,7 @@ func TransformEnvVars(input *EnvVarsTransformationInput) (resp *EnvVarsResp, err
 		}
 	}
 
-	TransformInheritedEnvVars(projectEnvVars, parentAppEnvVars, input, resp)
+	TransformInheritedEnvVars(projectEnvVars, envEnvVars, parentAppEnvVars, input, resp)
 	TransformOwnEnvVars(appEnvVars, input, resp)
 
 	return resp, nil
@@ -111,8 +114,9 @@ func TransformOwnEnvVars(
 	}
 }
 
+//nolint:gocognit
 func TransformInheritedEnvVars(
-	projectEnvVars, parentAppEnvVars *entity.EnvVars,
+	projectEnvVars, envEnvVars, parentAppEnvVars *entity.EnvVars,
 	input *EnvVarsTransformationInput,
 	resp *EnvVarsResp,
 ) {
@@ -126,6 +130,25 @@ func TransformInheritedEnvVars(
 	}
 	if projectEnvVars != nil {
 		for _, env := range projectEnvVars.Data {
+			envResp := basedto.TransformEnvVar(env)
+			if env.IsBuild {
+				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+			} else {
+				resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+			}
+		}
+	}
+
+	for _, env := range input.EnvSystemVars {
+		envResp := basedto.TransformEnvVar(env.EnvVar)
+		if env.IsBuild {
+			resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+		} else {
+			resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+		}
+	}
+	if envEnvVars != nil {
+		for _, env := range envEnvVars.Data {
 			envResp := basedto.TransformEnvVar(env)
 			if env.IsBuild {
 				resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)

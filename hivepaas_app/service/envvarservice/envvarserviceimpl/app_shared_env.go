@@ -10,7 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeAppSharedEnvVars(
+func (s *service) ComputeSharedEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
@@ -18,16 +18,20 @@ func (s *service) ComputeAppSharedEnvVars(
 	skipLoadingSecrets bool,
 	maskSecrets bool,
 ) ([]*envvarservice.EnvVar, error) {
-	return s.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+	resp, err := s.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
 		App:                app,
 		SkipLoadingSecrets: skipLoadingSecrets,
 		MaskSecrets:        maskSecrets,
 		BuildPhaseOnly:     buildPhase,
 		SharedVarsOnly:     true,
 	})
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	return resp.EnvVars, nil
 }
 
-func (s *service) computeAppSharedEnvVars(
+func (s *service) computeSharedEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
 	projectID string,
@@ -49,5 +53,5 @@ func (s *service) computeAppSharedEnvVars(
 	if len(apps) == 0 {
 		return nil, apperrors.NewNotFound("App")
 	}
-	return s.ComputeAppSharedEnvVars(ctx, db, apps[0], buildPhase, skipLoadingSecrets, maskSecrets)
+	return s.ComputeSharedEnvVarsInApp(ctx, db, apps[0], buildPhase, skipLoadingSecrets, maskSecrets)
 }

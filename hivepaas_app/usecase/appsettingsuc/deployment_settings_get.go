@@ -19,7 +19,7 @@ func (uc *UC) GetAppDeploymentSettings(
 	auth *basedto.Auth,
 	req *appsettingsdto.GetAppDeploymentSettingsReq,
 ) (*appsettingsdto.GetAppDeploymentSettingsResp, error) {
-	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
+	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, false, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),

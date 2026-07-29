@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
 
 // ImportSettings Imports settings from global to a project
@@ -18,8 +18,8 @@ import (
 // @Id      importSettingsToProjectEnv
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
-// @Param   body body projectsettingsdto.ImportSettingsToProjectReq true "request data"
-// @Success 200 {object} projectsettingsdto.ImportSettingsToProjectResp
+// @Param   body body projectenvsettingsdto.ImportSettingsToProjectEnvReq true "request data"
+// @Success 200 {object} projectenvsettingsdto.ImportSettingsToProjectEnvResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/settings-import [post]
@@ -30,7 +30,7 @@ func (h *Handler) ImportSettings(ctx *gin.Context) {
 		return
 	}
 
-	req := projectsettingsdto.NewImportSettingsToProjectReq()
+	req := projectenvsettingsdto.NewImportSettingsToProjectEnvReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
@@ -38,7 +38,7 @@ func (h *Handler) ImportSettings(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.projectSettingsUC.ImportSettingsToProject(h.RequestCtx(ctx), auth, req)
+	resp, err := h.projectEnvSettingsUC.ImportSettingsToProjectEnv(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

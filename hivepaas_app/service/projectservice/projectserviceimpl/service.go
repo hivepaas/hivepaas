@@ -1,6 +1,7 @@
 package projectserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -10,6 +11,8 @@ import (
 )
 
 func New(
+	db *database.DB,
+
 	appRepo repository.AppRepo,
 	binObjectRepo repository.BinObjectRepo,
 	fileRepo repository.FileRepo,
@@ -28,6 +31,8 @@ func New(
 	permissionManager permission.Manager,
 ) projectservice.Service {
 	return &service{
+		db: db,
+
 		appRepo:        appRepo,
 		binObjectRepo:  binObjectRepo,
 		fileRepo:       fileRepo,
@@ -48,6 +53,8 @@ func New(
 }
 
 type service struct {
+	db *database.DB
+
 	appRepo        repository.AppRepo
 	binObjectRepo  repository.BinObjectRepo
 	fileRepo       repository.FileRepo

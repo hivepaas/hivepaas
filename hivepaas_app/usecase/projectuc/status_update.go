@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -33,23 +31,11 @@ func (uc *UC) UpdateProjectStatus(
 		uc.preparePersistingProjectStatusUpdate(req, projectData, persistingData)
 
 		project := projectData.Project
-		var targetAppStatus base.AppStatus
-		switch project.Status {
-		case base.ProjectStatusActive:
-			targetAppStatus = base.AppStatusActive
-		case base.ProjectStatusDisabled:
-			targetAppStatus = base.AppStatusDisabled
-		case base.ProjectStatusDeleting:
-			// Do nothing
-		}
-
-		for _, app := range project.Apps {
-			if targetAppStatus == "" {
-				continue
-			}
-			// Run app update in a separate transaction to reduce lock time
-			err = uc.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
-				err := uc.appService.SetAppStatus(ctx, db, app, targetAppStatus, true)
+		for _, env := range project.ProjectEnvs {
+			env.Project = project
+			// Run updates in a separate transaction to reduce lock time
+			err = uc.projectService.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
+				err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}
@@ -58,7 +44,6 @@ func (uc *UC) UpdateProjectStatus(
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
-			return nil
 		}
 
 		return uc.persistData(ctx, db, persistingData)
@@ -78,9 +63,7 @@ func (uc *UC) loadProjectDataForUpdateStatus(
 ) error {
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ID,
 		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectRelation("Apps",
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		),
+		bunex.SelectRelation("ProjectEnvs.Apps"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

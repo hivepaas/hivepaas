@@ -138,7 +138,7 @@ func (uc *UC) applyAppEnvVars(
 	data *updateAppEnvVarsData,
 ) error {
 	app := data.App
-	computedVars, err := uc.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+	computedVars, err := uc.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
 		App:  app,
 		Sort: true,
 	})
@@ -147,7 +147,7 @@ func (uc *UC) applyAppEnvVars(
 	}
 
 	// Validate to make sure build-time env vars are valid
-	_, err = uc.envVarService.ComputeAppEnvVars(ctx, db, &envvarservice.ComputeAppEnvVarsReq{
+	_, err = uc.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
 		App:            app,
 		BuildPhaseOnly: true,
 	})
@@ -155,9 +155,9 @@ func (uc *UC) applyAppEnvVars(
 		return apperrors.Wrap(err)
 	}
 
-	envVars := make([]string, 0, len(computedVars))
+	envVars := make([]string, 0, len(computedVars.EnvVars))
 	var errors []string
-	for _, env := range computedVars {
+	for _, env := range computedVars.EnvVars {
 		envVars = append(envVars, env.ToString("="))
 		errors = append(errors, env.Errors...)
 	}

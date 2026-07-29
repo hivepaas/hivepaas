@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
 
 // GetEnvVars Gets project env vars
@@ -18,7 +18,7 @@ import (
 // @Id      getProjectEnvEnvVars
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
-// @Success 200 {object} projectsettingsdto.GetProjectEnvVarsResp
+// @Success 200 {object} projectenvsettingsdto.GetProjectEnvEnvVarsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars [get]
@@ -29,7 +29,7 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	req := projectsettingsdto.NewGetProjectEnvVarsReq()
+	req := projectenvsettingsdto.NewGetProjectEnvEnvVarsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
@@ -37,7 +37,7 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.projectSettingsUC.GetProjectEnvVars(h.RequestCtx(ctx), auth, req)
+	resp, err := h.projectEnvSettingsUC.GetProjectEnvEnvVars(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -54,8 +54,8 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 // @Id      updateProjectEnvEnvVars
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
-// @Param   body body projectsettingsdto.UpdateProjectEnvVarsReq true "request data"
-// @Success 200 {object} projectsettingsdto.UpdateProjectEnvVarsResp
+// @Param   body body projectenvsettingsdto.UpdateProjectEnvEnvVarsReq true "request data"
+// @Success 200 {object} projectenvsettingsdto.UpdateProjectEnvEnvVarsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars [put]
@@ -66,7 +66,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	req := projectsettingsdto.NewUpdateProjectEnvVarsReq()
+	req := projectenvsettingsdto.NewUpdateProjectEnvEnvVarsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
@@ -74,7 +74,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.projectSettingsUC.UpdateProjectEnvVars(h.RequestCtx(ctx), auth, req)
+	resp, err := h.projectEnvSettingsUC.UpdateProjectEnvEnvVars(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -91,8 +91,8 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 // @Id      computeProjectEnvEnvVars
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
-// @Param   body body projectsettingsdto.ComputeProjectEnvVarsReq true "request data"
-// @Success 200 {object} projectsettingsdto.ComputeProjectEnvVarsResp
+// @Param   body body projectenvsettingsdto.ComputeProjectEnvEnvVarsReq true "request data"
+// @Success 200 {object} projectenvsettingsdto.ComputeProjectEnvEnvVarsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars/compute [post]
@@ -103,7 +103,7 @@ func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	req := projectsettingsdto.NewComputeProjectEnvVarsReq()
+	req := projectenvsettingsdto.NewComputeProjectEnvEnvVarsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
@@ -111,7 +111,7 @@ func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.projectSettingsUC.ComputeProjectEnvVars(h.RequestCtx(ctx), auth, req)
+	resp, err := h.projectEnvSettingsUC.ComputeProjectEnvEnvVars(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

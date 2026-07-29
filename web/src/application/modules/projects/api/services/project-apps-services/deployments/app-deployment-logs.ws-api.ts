@@ -11,6 +11,7 @@ import { session } from "@infrastructure/api";
 export type AppDeploymentLogsWs_StreamLogs_Req = {
     data: {
         projectID: string;
+        env: string;
         appID: string;
         deploymentID: string;
     };
@@ -33,9 +34,9 @@ export class AppDeploymentLogsWsApi extends BaseWebSocketApi {
         }
 
         try {
-            const { projectID, appID, deploymentID } = request.data;
+            const { projectID, env, appID, deploymentID } = request.data;
             const url = this.client.buildUrl(
-                `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(
+                `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(
                     appID,
                 )}/deployments/${encodeURIComponent(deploymentID)}/logs`,
                 {

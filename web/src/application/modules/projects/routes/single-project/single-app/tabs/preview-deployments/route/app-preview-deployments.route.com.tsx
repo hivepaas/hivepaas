@@ -21,15 +21,17 @@ import { AppPreviewDeploymentsTableDefs } from "../building-blocks";
 const EMPTY_PROJECT_ENVS: readonly ProjectEnvEntity[] = [];
 
 export function AppPreviewDeploymentsRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const { navigate } = useAppNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data: appData, isLoading: isLoadingApp } = ProjectAppsQueries.useFindOneById({
         projectID: projectId,
+        env,
         appID: appId,
     });
     const isChildApp = Boolean(appData?.data.parentApp);
@@ -38,6 +40,7 @@ export function AppPreviewDeploymentsRoute() {
         AppPreviewsQueries.useFindManyPaginated(
             {
                 projectID: projectId,
+                env,
                 appID: appId,
                 pagination,
                 sorting,
@@ -57,9 +60,12 @@ export function AppPreviewDeploymentsRoute() {
 
     const { mutate: preparePreview, isPending: isPreparing } = AppPreviewsCommands.usePrepareCreate({
         onSuccess: response => {
-            navigate.modules(ROUTE.projects.single.apps.single.previewDeployments.create.$route(projectId, appId), {
-                state: { preparedPreview: response.data },
-            });
+            navigate.modules(
+                ROUTE.projects.single.apps.single.previewDeployments.create.$route(projectId, env, appId),
+                {
+                    state: { preparedPreview: response.data },
+                },
+            );
         },
     });
 
@@ -70,7 +76,7 @@ export function AppPreviewDeploymentsRoute() {
     if (isChildApp) {
         return (
             <Navigate
-                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId)}
+                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId)}
                 replace
             />
         );
@@ -97,6 +103,7 @@ export function AppPreviewDeploymentsRoute() {
 
                                         preparePreview({
                                             projectID: projectId,
+                                            env,
                                             appID: appId,
                                         });
                                     }}

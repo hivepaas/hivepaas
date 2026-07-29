@@ -187,17 +187,19 @@ function InstancesTableSkeleton() {
 }
 
 export function AppInstancesRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const [search, setSearch] = useState("");
     const [expandedErrorIds, setExpandedErrorIds] = useState<Set<string>>(() => new Set());
     const now = useCurrentTime();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data, isFetching, isLoading } = AppServiceTasksQueries.useFindMany(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         {
@@ -236,6 +238,7 @@ export function AppInstancesRoute() {
                         <AppLink.Basic
                             to={ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(
                                 projectId,
+                                env,
                                 appId,
                             )}
                             className="text-sm font-medium text-primary underline-offset-4 hover:underline"

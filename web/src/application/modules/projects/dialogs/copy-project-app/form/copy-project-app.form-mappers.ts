@@ -3,7 +3,7 @@ import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import type { CopyProjectAppFormInput, CopyProjectAppFormOutput } from "../schemas";
 
-type CopyProjectAppPayload = Omit<ProjectApps_Copy_Req["data"], "projectID" | "appID">;
+type CopyProjectAppPayload = Omit<ProjectApps_Copy_Req["data"], "projectID" | "appID" | "env">;
 
 export function mapPreparedCopyToFormInput(data: ProjectApps_PrepareCopy_Res["data"]): CopyProjectAppFormInput {
     return {

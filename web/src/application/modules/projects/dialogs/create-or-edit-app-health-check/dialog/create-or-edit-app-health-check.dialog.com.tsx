@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import type { AppHealthChecks_REST_Payload, AppHealthChecks_Upsert_Payload } from "~/projects/api/services";
 import { AppHealthChecksCommands } from "~/projects/data/commands";
@@ -84,6 +85,7 @@ function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): A
 }
 
 export function CreateOrEditAppHealthCheckDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppHealthCheckDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -132,6 +134,7 @@ export function CreateOrEditAppHealthCheckDialog() {
         if (state.mode === "edit") {
             updateHealthCheck({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 healthCheckID: state.healthCheck.id,
                 payload: {
@@ -147,6 +150,7 @@ export function CreateOrEditAppHealthCheckDialog() {
         if (state.mode === "open") {
             createHealthCheck({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 payload,
             });

@@ -2,7 +2,7 @@ import type { AppFeatureSettings, AppFeatureToggleSettings } from "~/projects/do
 
 import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 
-export type AppFeatureSettings_FindOne_Req = ApiRequestBase<{ projectID: string; appID: string }>;
+export type AppFeatureSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
 export type AppFeatureSettings_FindOne_Res = ApiResponseBase<AppFeatureSettings>;
 
 export type AppFeatureSettings_UpdatePayload = {
@@ -16,6 +16,7 @@ export type AppFeatureSettings_UpdatePayload = {
 
 export type AppFeatureSettings_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     payload: AppFeatureSettings_UpdatePayload;
 }>;

@@ -5,7 +5,7 @@ import { type AppHttpSettings_FindOne_Res } from "../../../api/services";
 import { QK } from "../../constants/projects.query-keys";
 
 function useFindOne(
-    request: { projectID: string; appID: string },
+    request: { projectID: string; env: string; appID: string },
     options: Omit<UseQueryOptions<AppHttpSettings_FindOne_Res>, "queryKey" | "queryFn"> = {},
 ) {
     const { queries } = useAppHttpSettingsApi();

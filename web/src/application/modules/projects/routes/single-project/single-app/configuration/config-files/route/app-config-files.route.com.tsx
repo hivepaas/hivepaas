@@ -16,9 +16,10 @@ import { PermissionTooltipAction } from "@application/shared/permissions";
 import { Button, DataTable } from "@/components/ui";
 
 export function AppConfigFilesRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { navigate } = useAppNavigate();
@@ -28,6 +29,7 @@ export function AppConfigFilesRoute() {
         AppConfigFilesQueries.useFindManyPaginated(
             {
                 projectID: projectId,
+                env,
                 appID: appId,
                 pagination,
                 sorting,
@@ -36,7 +38,7 @@ export function AppConfigFilesRoute() {
             APP_CONFIGURATION_QUERY_OPTIONS,
         );
 
-    const columns = useMemo(() => AppConfigFilesTableDefs.columns(projectId, appId), [projectId, appId]);
+    const columns = useMemo(() => AppConfigFilesTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -53,6 +55,7 @@ export function AppConfigFilesRoute() {
                                     navigate.modules(
                                         ROUTE.projects.single.apps.single.configuration.configFiles.create.$route(
                                             projectId,
+                                            env,
                                             appId,
                                         ),
                                     );

@@ -7,7 +7,8 @@ const ProjectEnvFormSchema = z.object({
         .string()
         .trim()
         .min(1, "Environment name is required")
-        .max(50, "Environment name must be 50 characters or less"),
+        .max(50, "Environment name must be 50 characters or less")
+        .regex(/^[a-z][a-z0-9-]*$/, "Environment name must be lowercase (letters, numbers, hyphens)"),
     color: z.string(),
 });
 
@@ -30,6 +31,7 @@ export const ProjectGeneralFormSchema = z.object({
     ownerId: z.string().min(1, "Project owner is required"),
     envs: z
         .array(ProjectEnvFormSchema)
+        .min(1, "At least 1 environment is required")
         .max(MAX_PROJECT_ENVS, `Maximum ${MAX_PROJECT_ENVS} environments`)
         .superRefine((envs, ctx) => {
             const names = new Set<string>();

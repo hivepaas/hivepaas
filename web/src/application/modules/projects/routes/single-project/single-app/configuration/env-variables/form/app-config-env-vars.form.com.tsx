@@ -82,8 +82,9 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
     { defaultValues, inheritedValues, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<AppConfigEnvVarsFormRef>,
 ) {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -122,6 +123,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
         invariant(projectId, "projectId must be defined");
         invariant(appId, "appId must be defined");
 
+        invariant(env, "env must be defined");
         const values = methods.getValues();
 
         if (section === "buildtime") {
@@ -134,6 +136,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
             setFinalValuesSectionTitle("Build Time Env Variables");
             computeEnvVars({
                 projectID: projectId,
+                env,
                 appID: appId,
                 buildtimeEnvVars,
             });
@@ -150,6 +153,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
         setFinalValuesSectionTitle("Runtime Env Variables");
         computeEnvVars({
             projectID: projectId,
+            env,
             appID: appId,
             runtimeEnvVars,
             sharedEnvVars,

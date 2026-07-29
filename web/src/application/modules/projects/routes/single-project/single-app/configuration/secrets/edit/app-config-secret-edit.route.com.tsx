@@ -4,9 +4,15 @@ import invariant from "tiny-invariant";
 import { AppSecretFormRoute } from "../form-route";
 
 export function AppConfigSecretEditRoute() {
-    const { id: projectId, appId, secretId } = useParams<{ id: string; appId: string; secretId: string }>();
+    const {
+        id: projectId,
+        env,
+        appId,
+        secretId,
+    } = useParams<{ id: string; env: string; appId: string; secretId: string }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(secretId, "secretId must be defined");
 
@@ -14,6 +20,7 @@ export function AppConfigSecretEditRoute() {
         <AppSecretFormRoute
             mode="edit"
             projectId={projectId}
+            env={env}
             appId={appId}
             secretId={secretId}
         />

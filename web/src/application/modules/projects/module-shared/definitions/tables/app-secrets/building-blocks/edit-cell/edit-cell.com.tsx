@@ -7,7 +7,7 @@ import type { AppSecret } from "~/projects/domain";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
-function View({ projectId, appId, secret }: Props) {
+function View({ projectId, env, appId, secret }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
@@ -17,7 +17,12 @@ function View({ projectId, appId, secret }: Props) {
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
                 navigate.modules(
-                    ROUTE.projects.single.apps.single.configuration.secrets.edit.$route(projectId, appId, secret.id),
+                    ROUTE.projects.single.apps.single.configuration.secrets.edit.$route(
+                        projectId,
+                        env,
+                        appId,
+                        secret.id,
+                    ),
                 );
             }}
         >
@@ -29,6 +34,7 @@ function View({ projectId, appId, secret }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     secret: AppSecret;
 }

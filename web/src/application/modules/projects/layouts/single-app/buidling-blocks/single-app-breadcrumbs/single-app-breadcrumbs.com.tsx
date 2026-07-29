@@ -37,6 +37,7 @@ function View({ app, appRoute, parentApp, project, items = [] }: Props) {
                             <AppLink.Modules
                                 to={ROUTE.projects.single.apps.single.configuration.general.$route(
                                     project.id,
+                                    parentApp.env,
                                     parentApp.id,
                                 )}
                             >
@@ -83,6 +84,7 @@ interface Props {
     parentApp?: {
         id: string;
         name: string;
+        env: string;
     } | null;
     project: {
         id: string;

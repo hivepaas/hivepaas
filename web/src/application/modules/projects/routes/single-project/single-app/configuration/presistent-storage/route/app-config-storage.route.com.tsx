@@ -17,17 +17,19 @@ import { StorageMountsProvider, useStorageMounts } from "../context";
 type StorageMountWithId = AppStorageMount & { _id: string };
 
 function AppConfigStorageContent() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const { mounts, removeMount } = useStorageMounts();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -43,6 +45,7 @@ function AppConfigStorageContent() {
         }
 
         invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
         invariant(appId, "appId must be defined");
 
         const mountsWithoutIds = nextMounts.map(({ _id, ...mount }) => mount);
@@ -50,6 +53,7 @@ function AppConfigStorageContent() {
         try {
             await update({
                 projectID: projectId,
+                env,
                 appID: appId,
                 payload: {
                     mounts: mountsWithoutIds,
@@ -69,13 +73,18 @@ function AppConfigStorageContent() {
         }
 
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(projectId, appId),
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(projectId, env, appId),
         );
     };
 
     const handleEditMount = (mount: StorageMountWithId) => {
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$route(projectId, appId, mount._id),
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$route(
+                projectId,
+                env,
+                appId,
+                mount._id,
+            ),
         );
     };
 
@@ -123,14 +132,16 @@ export function AppConfigStorageListRoute() {
 }
 
 export function AppConfigStorageRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data, isLoading, error, refetch } = AppStorageSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { ProjectAppSecretsCommands } from "~/projects/data/commands";
 
@@ -54,6 +55,7 @@ function getSwarmRef(values: CreateOrEditAppSecretFormOutput) {
 }
 
 export function CreateOrEditAppSecretDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppSecretDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -104,6 +106,7 @@ export function CreateOrEditAppSecretDialog() {
         if (state.mode === "edit") {
             updateAppSecret({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 secretID: state.secret.id,
                 updateVer: state.secret.updateVer,
@@ -118,6 +121,7 @@ export function CreateOrEditAppSecretDialog() {
         if (state.mode === "open" && value !== undefined) {
             createAppSecret({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 name: values.name,
                 value,

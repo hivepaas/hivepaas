@@ -5,6 +5,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type AppDataFiles_UploadLocal_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     fileKind: string;
     files: File[];
@@ -16,6 +17,7 @@ export type AppDataFiles_UploadLocal_Res = ApiResponseBase<{
 
 export type AppDataFiles_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     fileKind: string;
     filePath: string;
@@ -25,6 +27,7 @@ export type AppDataFiles_CreateOne_Req = ApiRequestBase<{
 
 export type AppDataFiles_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -35,6 +38,7 @@ export type AppDataFiles_FindManyPaginated_Res = ApiResponsePaginated<AppDataFil
 
 export type AppDataFiles_GetDownloadUrl_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     dataFileID: string;
 }>;
@@ -45,6 +49,7 @@ export type AppDataFiles_GetDownloadUrl_Res = ApiResponseBase<{
 
 export type AppDataFiles_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     dataFileID: string;
     deletePermanently: boolean;

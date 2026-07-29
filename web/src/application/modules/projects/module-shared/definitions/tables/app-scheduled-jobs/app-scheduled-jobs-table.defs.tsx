@@ -25,7 +25,7 @@ function formatSchedule(scheduledJob: AppScheduledJob) {
     return "-";
 }
 
-function createColumns(projectId: string, appId: string): ColumnDef<AppScheduledJob>[] {
+function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppScheduledJob>[] {
     return [
         {
             id: "view",
@@ -37,6 +37,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppScheduled
             cell: ({ row: { original } }) => (
                 <EditCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     scheduledJob={original}
                 />
@@ -56,6 +57,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppScheduled
             cell: ({ row: { original } }) => (
                 <ViewTasksCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     scheduledJob={original}
                 />
@@ -102,6 +104,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppScheduled
             cell: ({ row: { original } }) => (
                 <MenuCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     scheduledJob={original}
                 />

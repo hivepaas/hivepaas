@@ -17,11 +17,11 @@ export class AppTerminalApi extends BaseApi {
         request: AppTerminal_GetInfo_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppTerminal_GetInfo_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/terminal/info`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/terminal/info`, {
                     signal,
                 }),
             ).pipe(

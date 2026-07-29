@@ -22,12 +22,12 @@ export class AppContainerSettingsApi extends BaseApi {
         req: AppContainerSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppContainerSettings_FindOne_Res, Error>> {
-        const { projectID, appID } = req.data;
+        const { projectID, env, appID } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/container-settings`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/container-settings`, {
                     params: query.build(),
                     signal,
                 }),
@@ -43,11 +43,11 @@ export class AppContainerSettingsApi extends BaseApi {
         req: AppContainerSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppContainerSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, env, appID, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/container-settings`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/container-settings`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -61,11 +61,11 @@ export class AppContainerSettingsApi extends BaseApi {
         req: AppContainerSettings_CheckPort_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppContainerSettings_CheckPort_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, env, appID, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/container/check-port`, payload, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/container/check-port`, payload, {
                     signal,
                 }),
             ).pipe(

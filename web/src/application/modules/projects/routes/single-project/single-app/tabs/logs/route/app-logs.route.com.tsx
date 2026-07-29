@@ -18,17 +18,19 @@ const AGGREGATION_TAB_ID = "aggregation";
 const DEFAULT_LOG_LINES = 100;
 
 export function AppLogsRoute() {
-    const { id: projectID, appId: appID } = useParams<{ id: string; appId: string }>();
+    const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
     const [activeTab, setActiveTab] = useState(AGGREGATION_TAB_ID);
     const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
         [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(),
     }));
 
     invariant(projectID, "projectID must be defined");
+    invariant(env, "env must be defined");
     invariant(appID, "appID must be defined");
 
     const { data: infoResponse, isLoading: isInfoLoading } = AppLogsQueries.useGetInfo({
         projectID,
+        env,
         appID,
     });
     const isLogsEnabled = infoResponse?.data.enabled ?? true;
@@ -183,6 +185,7 @@ export function AppLogsRoute() {
                                 <AppLogsViewer
                                     tabID={tab.id}
                                     projectID={projectID}
+                                    env={env}
                                     appID={appID}
                                     tabLabel={tab.label}
                                     taskId={tab.taskId}
@@ -207,7 +210,11 @@ export function AppLogsRoute() {
                 <p className="text-base">
                     Logs feature is disabled, enable it in{" "}
                     <AppLink.Basic
-                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectID, appID)}
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectID,
+                            env,
+                            appID,
+                        )}
                         className="text-primary underline-offset-4 hover:underline"
                     >
                         Feature Settings

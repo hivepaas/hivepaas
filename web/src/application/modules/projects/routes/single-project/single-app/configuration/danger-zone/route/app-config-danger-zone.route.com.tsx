@@ -15,15 +15,17 @@ import { PermissionTooltipAction } from "@application/shared/permissions";
 import { Button } from "@/components/ui/button";
 
 export function AppConfigDangerZoneRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const { actions: confirmAction } = useConfirmAppDangerActionDialog();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data, isLoading, error, refetch } = ProjectAppsQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -56,6 +58,7 @@ export function AppConfigDangerZoneRoute() {
 
     const target = {
         projectId,
+        env,
         appId,
         appName: app.name,
         updateVer: app.updateVer,

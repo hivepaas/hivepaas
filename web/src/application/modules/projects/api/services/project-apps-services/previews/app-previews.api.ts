@@ -21,13 +21,13 @@ export class AppPreviewsApi extends BaseApi {
         request: AppPreviews_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppPreviews_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting, getStats } = request.data;
+        const { projectID, env, appID, search, pagination, sorting, getStats } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/previews`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/previews`, {
                     params: {
                         ...query.build(),
                         ...(getStats === undefined ? {} : { getStats }),
@@ -46,10 +46,12 @@ export class AppPreviewsApi extends BaseApi {
         request: AppPreviews_PrepareCreate_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppPreviews_PrepareCreate_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/previews/prepare`, {}, { signal })).pipe(
+            from(
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/previews/prepare`, {}, { signal }),
+            ).pipe(
                 map(this.validator.prepareCreate),
                 map(response => Ok(response)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -58,11 +60,11 @@ export class AppPreviewsApi extends BaseApi {
     }
 
     async createOne(request: AppPreviews_CreateOne_Req): Promise<Result<AppPreviews_CreateOne_Res, Error>> {
-        const { projectID, appID, repoRef, customSubdomain, noStart } = request.data;
+        const { projectID, env, appID, repoRef, customSubdomain, noStart } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/previews`, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/previews`, {
                     repoRef,
                     customSubdomain,
                     noStart,

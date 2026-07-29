@@ -19,7 +19,7 @@ import type { AppPreviewDeploymentFormOutput } from "../schemas";
 
 type PreparedPreview = AppPreviews_PrepareCreate_Res["data"];
 
-export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPreparedPreview }: Props) {
+export function AppPreviewDeploymentFormRoute({ projectId, appId, env, initialPreparedPreview }: Props) {
     const { navigate } = useAppNavigate();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const [preparedPreview, setPreparedPreview] = useState<PreparedPreview | undefined>(initialPreparedPreview);
@@ -27,7 +27,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
     const preparedCredentialId = preparedPreview?.repoCredentials?.id;
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -51,6 +51,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
     const deploymentSettingsQuery = AppDeploymentSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         {
@@ -78,9 +79,10 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
         hasRequestedPrepareRef.current = true;
         preparePreview({
             projectID: projectId,
+            env,
             appID: appId,
         });
-    }, [appId, preparePreview, preparedPreview, projectId]);
+    }, [appId, env, preparePreview, preparedPreview, projectId]);
 
     function onSubmit(values: AppPreviewDeploymentFormOutput) {
         if (!canWrite) {
@@ -89,6 +91,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
 
         createPreview({
             projectID: projectId,
+            env,
             appID: appId,
             repoRef: values.repoRef,
             customSubdomain: values.customSubdomain,
@@ -109,6 +112,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
             {preparedPreview && (
                 <AppPreviewDeploymentForm
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     preparedPreview={preparedPreview}
                     isGitCredentialTypeResolved={isGitCredentialTypeResolved}
@@ -124,6 +128,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, initialPrepare
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     initialPreparedPreview?: PreparedPreview;
 }

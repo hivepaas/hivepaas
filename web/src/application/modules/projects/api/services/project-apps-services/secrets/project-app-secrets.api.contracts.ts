@@ -8,6 +8,7 @@ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } 
  */
 export type AppSecrets_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -21,6 +22,7 @@ export type AppSecrets_FindManyPaginated_Res = ApiResponsePaginated<AppSecret>;
  */
 export type AppSecrets_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     secretID: string;
 }>;
@@ -32,6 +34,7 @@ export type AppSecrets_FindOneById_Res = ApiResponseBase<AppSecret>;
  */
 export type AppSecrets_GetDownloadToken_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     secretID: string;
 }>;
@@ -45,6 +48,7 @@ export type AppSecrets_GetDownloadToken_Res = ApiResponseBase<{
  */
 export type AppSecrets_BuildDownloadUrl_Req = {
     projectID: string;
+    env: string;
     appID: string;
     secretID: string;
     token: string;
@@ -56,6 +60,7 @@ export type AppSecrets_BuildDownloadUrl_Req = {
  */
 export type AppSecrets_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     name: string;
     value: string;
@@ -72,6 +77,7 @@ export type AppSecrets_CreateOne_Res = ApiResponseBase<{
  */
 export type AppSecrets_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     secretID: string;
 }>;
@@ -86,6 +92,7 @@ export type AppSecrets_DeleteOne_Res = ApiResponseBase<{
 export type AppSecrets_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
+        env: string;
         appID: string;
         secretID: string;
         updateVer: number;

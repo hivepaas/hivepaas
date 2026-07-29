@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { AppConfigFilesCommands } from "~/projects/data/commands";
 
@@ -54,6 +55,7 @@ function getSwarmRef(values: CreateOrEditAppConfigFileFormOutput) {
 }
 
 export function CreateOrEditAppConfigFileDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppConfigFileDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -104,6 +106,7 @@ export function CreateOrEditAppConfigFileDialog() {
         if (state.mode === "edit") {
             updateAppConfigFile({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 configFileID: state.configFile.id,
                 updateVer: state.configFile.updateVer,
@@ -118,6 +121,7 @@ export function CreateOrEditAppConfigFileDialog() {
         if (state.mode === "open" && content !== undefined) {
             createAppConfigFile({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 name: values.name,
                 content,

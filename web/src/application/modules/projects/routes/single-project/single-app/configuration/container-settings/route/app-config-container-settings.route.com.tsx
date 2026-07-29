@@ -138,16 +138,18 @@ function mapFormValuesToPayload(
 }
 
 export function AppConfigContainerSettingsRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const formRef = useRef<AppConfigContainerSettingsFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data, isLoading } = AppContainerSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -174,9 +176,11 @@ export function AppConfigContainerSettingsRoute() {
         }
 
         invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
         invariant(appId, "appId must be defined");
         update({
             projectID: projectId,
+            env,
             appID: appId,
             payload: mapFormValuesToPayload(values, data?.data),
         });

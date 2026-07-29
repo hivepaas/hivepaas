@@ -18,16 +18,18 @@ import { DeploymentSummaryCard, DeploymentSummaryCardSkeleton, useDeploymentCurr
 import { showDeploymentCancelToast } from "../utils";
 
 export function AppDeploymentsRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const { pagination, setPagination, sorting, search, setSearch } = useTableState();
     const { navigate } = useAppNavigate();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data: { data: deployments, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
         AppDeploymentsQueries.useFindManyPaginated({
             projectID: projectId,
+            env,
             appID: appId,
             pagination,
             sorting,
@@ -56,6 +58,7 @@ export function AppDeploymentsRoute() {
                         <AppLink.Basic
                             to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
                                 projectId,
+                                env,
                                 appId,
                             )}
                             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
@@ -87,6 +90,7 @@ export function AppDeploymentsRoute() {
                                     navigate.modules(
                                         ROUTE.projects.single.apps.single.deployments.details.$route(
                                             projectId,
+                                            env,
                                             appId,
                                             deployment.id,
                                         ),
@@ -95,6 +99,7 @@ export function AppDeploymentsRoute() {
                                 onCancel={deploymentID => {
                                     cancelDeployment({
                                         projectID: projectId,
+                                        env,
                                         appID: appId,
                                         deploymentID,
                                     });

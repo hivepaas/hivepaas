@@ -34,7 +34,7 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, search, pagination, sorting } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -42,7 +42,7 @@ export class AppSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/secrets`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/secrets`, {
                     params: query.build(),
                     signal,
                 }),
@@ -61,11 +61,11 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_FindOneById_Res, Error>> {
-        const { projectID, appID, secretID } = request.data;
+        const { projectID, env, appID, secretID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/secrets/${secretID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/secrets/${secretID}`, {
                     signal,
                 }),
             ).pipe(
@@ -83,11 +83,11 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_GetDownloadToken_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_GetDownloadToken_Res, Error>> {
-        const { projectID, appID, secretID } = request.data;
+        const { projectID, env, appID, secretID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/secrets/${secretID}/download-token`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/secrets/${secretID}/download-token`, {
                     signal,
                 }),
             ).pipe(
@@ -102,10 +102,10 @@ export class AppSecretsApi extends BaseApi {
      * Build app secret download URL
      */
     buildDownloadUrl(request: AppSecrets_BuildDownloadUrl_Req): string {
-        const { projectID, appID, secretID, token, viewInline } = request;
+        const { projectID, env, appID, secretID, token, viewInline } = request;
         const baseUrl = EnvConfig.API_URL.endsWith("/") ? EnvConfig.API_URL : `${EnvConfig.API_URL}/`;
         const url = new URL(
-            `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/secrets/${encodeURIComponent(secretID)}/download`,
+            `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(appID)}/secrets/${encodeURIComponent(secretID)}/download`,
             baseUrl,
         );
 
@@ -122,7 +122,7 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_CreateOne_Res, Error>> {
-        const { projectID, appID, name, value, base64, swarmRef } = request.data;
+        const { projectID, env, appID, name, value, base64, swarmRef } = request.data;
 
         const json = {
             key: JsonTransformer.string({
@@ -138,7 +138,7 @@ export class AppSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/secrets`, json, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/secrets`, json, {
                     signal,
                 }),
             ).pipe(
@@ -153,10 +153,10 @@ export class AppSecretsApi extends BaseApi {
      * Delete an app secret
      */
     async deleteOne(request: AppSecrets_DeleteOne_Req): Promise<Result<AppSecrets_DeleteOne_Res, Error>> {
-        const { projectID, appID, secretID } = request.data;
+        const { projectID, env, appID, secretID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/apps/${appID}/secrets/${secretID}`)).pipe(
+            from(this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/secrets/${secretID}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -170,7 +170,7 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_UpdateOne_Res, Error>> {
-        const { projectID, appID, secretID, updateVer, name, value, base64, swarmRef } = request.data;
+        const { projectID, env, appID, secretID, updateVer, name, value, base64, swarmRef } = request.data;
 
         const json = {
             updateVer,
@@ -186,7 +186,7 @@ export class AppSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/secrets/${secretID}`, json, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/secrets/${secretID}`, json, {
                     signal,
                 }),
             ).pipe(

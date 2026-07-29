@@ -5,6 +5,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type AppDeployments_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -15,6 +16,7 @@ export type AppDeployments_FindManyPaginated_Res = ApiResponsePaginated<AppDeplo
 
 export type AppDeployments_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     deploymentID: string;
 }>;
@@ -23,6 +25,7 @@ export type AppDeployments_FindOneById_Res = ApiResponseBase<AppDeployment>;
 
 export type AppDeployments_Cancel_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     deploymentID: string;
 }>;

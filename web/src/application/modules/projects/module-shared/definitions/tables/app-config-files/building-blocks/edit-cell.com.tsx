@@ -7,7 +7,7 @@ import type { AppConfigFile } from "~/projects/domain";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
-function View({ projectId, appId, configFile }: Props) {
+function View({ projectId, env, appId, configFile }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
@@ -19,6 +19,7 @@ function View({ projectId, appId, configFile }: Props) {
                 navigate.modules(
                     ROUTE.projects.single.apps.single.configuration.configFiles.edit.$route(
                         projectId,
+                        env,
                         appId,
                         configFile.id,
                     ),
@@ -33,6 +34,7 @@ function View({ projectId, appId, configFile }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     configFile: AppConfigFile;
 }

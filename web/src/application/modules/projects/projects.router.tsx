@@ -72,13 +72,13 @@ const LEGACY_PROJECT_PROVIDER_SETTINGS_SOURCE_PATTERNS = {
 
 // eslint-disable-next-line react-refresh/only-export-components
 function SingleAppRouteRedirect() {
-    const { id, appId } = useParams<{ id: string; appId: string }>();
+    const { id, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     return (
         <Navigate
             to={
-                id && appId
-                    ? ROUTE.projects.single.apps.single.configuration.general.$route(id, appId)
+                id && env && appId
+                    ? ROUTE.projects.single.apps.single.configuration.general.$route(id, env, appId)
                     : ROUTE.projects.list.$route
             }
             replace

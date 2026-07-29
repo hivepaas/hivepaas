@@ -22,8 +22,9 @@ interface CheckPortResult {
 }
 
 function View({ domainIndex, readOnly = false }: ContainerPortProps) {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { control } = useFormContext<
@@ -53,10 +54,11 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
         }
 
         const port = containerPort.value;
-        if (!port || !projectId || !appId) return;
+        if (!port || !projectId || !env || !appId) return;
 
         checkPort({
             projectID: projectId,
+            env,
             appID: appId,
             payload: { port, timeout: CHECK_PORT_TIMEOUT },
         });

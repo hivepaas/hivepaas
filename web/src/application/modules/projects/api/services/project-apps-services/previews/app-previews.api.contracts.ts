@@ -5,6 +5,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type AppPreviews_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -16,6 +17,7 @@ export type AppPreviews_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppD
 
 export type AppPreviews_PrepareCreate_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -28,6 +30,7 @@ export type AppPreviews_PrepareCreate_Res = ApiResponseBase<{
 
 export type AppPreviews_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     repoRef: string;
     customSubdomain: string;

@@ -20,12 +20,12 @@ export class AppNetworkSettingsApi extends BaseApi {
         req: AppNetworkSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppNetworkSettings_FindOne_Res, Error>> {
-        const { projectID, appID } = req.data;
+        const { projectID, env, appID } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/network-settings`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/network-settings`, {
                     params: query.build(),
                     signal,
                 }),
@@ -41,11 +41,11 @@ export class AppNetworkSettingsApi extends BaseApi {
         req: AppNetworkSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppNetworkSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, env, appID, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/network-settings`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/network-settings`, payload, {
                     signal,
                 }),
             ).pipe(

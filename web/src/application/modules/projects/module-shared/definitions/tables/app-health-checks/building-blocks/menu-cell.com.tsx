@@ -12,7 +12,7 @@ import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-function View({ projectId, appId, healthCheck }: Props) {
+function View({ projectId, env, appId, healthCheck }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateAppHealthCheckStatusDialog();
     const { canWrite, canDelete } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -82,7 +82,7 @@ function View({ projectId, appId, healthCheck }: Props) {
                             cancelText="Cancel"
                             description="Are you sure you want to remove this health check?"
                             onConfirm={() => {
-                                deleteOne({ projectID: projectId, appID: appId, healthCheckID: healthCheck.id });
+                                deleteOne({ projectID: projectId, env, appID: appId, healthCheckID: healthCheck.id });
                             }}
                         >
                             <Button
@@ -120,6 +120,7 @@ function View({ projectId, appId, healthCheck }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     healthCheck: AppHealthCheck;
 }

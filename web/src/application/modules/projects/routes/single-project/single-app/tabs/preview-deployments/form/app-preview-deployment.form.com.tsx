@@ -27,6 +27,7 @@ type PreparedPreview = AppPreviews_PrepareCreate_Res["data"];
 
 export function AppPreviewDeploymentForm({
     projectId,
+    env,
     appId,
     preparedPreview,
     isGitCredentialTypeResolved,
@@ -132,6 +133,7 @@ export function AppPreviewDeploymentForm({
                                 <AppLink.Modules
                                     to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
                                         projectId,
+                                        env,
                                         appId,
                                     )}
                                     className="font-medium text-primary underline-offset-4 hover:underline"
@@ -267,6 +269,7 @@ export function AppPreviewDeploymentForm({
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     preparedPreview: PreparedPreview;
     isGitCredentialTypeResolved: boolean;

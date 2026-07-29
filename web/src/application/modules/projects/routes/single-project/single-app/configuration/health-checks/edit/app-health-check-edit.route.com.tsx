@@ -6,15 +6,18 @@ import { AppHealthCheckFormRoute } from "../form-route";
 export function AppHealthCheckEditRoute() {
     const {
         id: projectId,
+        env,
         appId,
         healthCheckId,
     } = useParams<{
         id: string;
+        env: string;
         appId: string;
         healthCheckId: string;
     }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(healthCheckId, "healthCheckId must be defined");
 
@@ -22,6 +25,7 @@ export function AppHealthCheckEditRoute() {
         <AppHealthCheckFormRoute
             mode="edit"
             projectId={projectId}
+            env={env}
             appId={appId}
             healthCheckId={healthCheckId}
         />

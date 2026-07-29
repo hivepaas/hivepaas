@@ -6,15 +6,18 @@ import { AppScheduledJobFormRoute } from "../form-route";
 export function AppScheduledJobEditRoute() {
     const {
         id: projectId,
+        env,
         appId,
         scheduledJobId,
     } = useParams<{
         id: string;
+        env: string;
         appId: string;
         scheduledJobId: string;
     }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(scheduledJobId, "scheduledJobId must be defined");
 
@@ -22,6 +25,7 @@ export function AppScheduledJobEditRoute() {
         <AppScheduledJobFormRoute
             mode="edit"
             projectId={projectId}
+            env={env}
             appId={appId}
             scheduledJobId={scheduledJobId}
         />

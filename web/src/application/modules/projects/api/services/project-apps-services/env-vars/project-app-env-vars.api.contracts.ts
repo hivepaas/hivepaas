@@ -18,6 +18,7 @@ export type EnvVarWireItem = {
  */
 export type ProjectAppEnvVars_FindOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -33,6 +34,7 @@ export type ProjectAppEnvVars_FindOne_Res = ApiResponseBase<
  */
 export type ProjectAppEnvVars_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     updateVer: number;
     buildtime: ProjectBuildtimeEnvVar[];
@@ -49,6 +51,7 @@ export type ProjectAppEnvVars_UpdateOne_Res = ApiResponseBase<{
  */
 export type ProjectAppEnvVars_Compute_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     buildtimeEnvVars?: EnvVarWireItem[];
     runtimeEnvVars?: EnvVarWireItem[];

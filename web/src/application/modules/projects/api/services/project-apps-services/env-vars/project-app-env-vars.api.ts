@@ -30,11 +30,11 @@ export class ProjectAppEnvVarsApi extends BaseApi {
         request: ProjectAppEnvVars_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAppEnvVars_FindOne_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/env-vars`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/env-vars`, {
                     signal,
                 }),
             ).pipe(
@@ -52,7 +52,7 @@ export class ProjectAppEnvVarsApi extends BaseApi {
         request: ProjectAppEnvVars_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAppEnvVars_UpdateOne_Res, Error>> {
-        const { projectID, appID, updateVer, buildtime, runtime, shared } = request.data;
+        const { projectID, env, appID, updateVer, buildtime, runtime, shared } = request.data;
 
         const json = {
             updateVer,
@@ -72,7 +72,7 @@ export class ProjectAppEnvVarsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/env-vars`, json, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/env-vars`, json, {
                     signal,
                 }),
             ).pipe(
@@ -89,7 +89,7 @@ export class ProjectAppEnvVarsApi extends BaseApi {
         request: ProjectAppEnvVars_Compute_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAppEnvVars_Compute_Res, Error>> {
-        const { projectID, appID, buildtimeEnvVars, runtimeEnvVars, sharedEnvVars } = request.data;
+        const { projectID, env, appID, buildtimeEnvVars, runtimeEnvVars, sharedEnvVars } = request.data;
 
         const json = {
             buildtimeEnvVars: JsonTransformer.array({
@@ -108,7 +108,7 @@ export class ProjectAppEnvVarsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/env-vars/compute`, json, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/env-vars/compute`, json, {
                     signal,
                 }),
             ).pipe(

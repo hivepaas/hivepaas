@@ -4,6 +4,7 @@ import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 
 export type AppServiceTasks_FindMany_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 

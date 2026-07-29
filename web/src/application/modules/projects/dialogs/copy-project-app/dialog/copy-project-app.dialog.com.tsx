@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
@@ -19,6 +20,7 @@ import { useCopyProjectAppDialogState } from "../hooks";
 import type { CopyProjectAppFormOutput } from "../schemas";
 
 export function CopyProjectAppDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCopyProjectAppDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -34,8 +36,8 @@ export function CopyProjectAppDialog() {
         { enabled: open && Boolean(projectId) },
     );
     const prepareQuery = ProjectAppsQueries.usePrepareCopy(
-        { projectID: projectId, appID: appId },
-        { enabled: open && Boolean(projectId && appId) },
+        { projectID: projectId, env: env ?? "", appID: appId },
+        { enabled: open && Boolean(projectId && appId && env) },
     );
     const preparedCopy = prepareQuery.data?.data;
     const defaultValues = useMemo(() => {
@@ -89,6 +91,7 @@ export function CopyProjectAppDialog() {
 
         copyProjectApp({
             projectID: projectId,
+            env: env ?? "",
             appID: appId,
             ...mapCopyProjectAppFormToPayload(values),
         });

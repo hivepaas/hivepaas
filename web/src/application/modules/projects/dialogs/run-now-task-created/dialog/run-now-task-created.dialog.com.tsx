@@ -34,6 +34,7 @@ export function RunNowTaskCreatedDialog() {
         navigate.modules(
             ROUTE.projects.single.apps.single.scheduledJobTasks.details.$route(
                 state.projectId,
+                state.env,
                 state.appId,
                 state.scheduledJobId,
                 state.taskId,

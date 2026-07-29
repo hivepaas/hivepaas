@@ -20,12 +20,12 @@ export class AppHttpSettingsApi extends BaseApi {
         req: AppHttpSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHttpSettings_FindOne_Res, Error>> {
-        const { projectID, appID } = req.data;
+        const { projectID, env, appID } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/http-settings`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/http-settings`, {
                     params: query.build(),
                     signal,
                 }),
@@ -41,11 +41,11 @@ export class AppHttpSettingsApi extends BaseApi {
         req: AppHttpSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHttpSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, env, appID, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/http-settings`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/http-settings`, payload, {
                     signal,
                 }),
             ).pipe(

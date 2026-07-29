@@ -12,14 +12,16 @@ import { ROUTE } from "@application/shared/constants";
 import { AppTerminalPanel } from "../building-blocks";
 
 export function AppTerminalRoute() {
-    const { id: projectID, appId: appID } = useParams<{ id: string; appId: string }>();
+    const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
     const [selectedShell, setSelectedShell] = useState("");
 
     invariant(projectID, "projectID must be defined");
+    invariant(env, "env must be defined");
     invariant(appID, "appID must be defined");
 
     const { data: infoResponse, isLoading: isInfoLoading } = AppTerminalQueries.useGetInfo({
         projectID,
+        env,
         appID,
     });
     const isTerminalEnabled = infoResponse?.data.enabled ?? true;
@@ -45,6 +47,7 @@ export function AppTerminalRoute() {
             ) : isTerminalEnabled ? (
                 <AppTerminalPanel
                     projectID={projectID}
+                    env={env}
                     appID={appID}
                     supportedShells={supportedShells}
                     selectedShell={selectedShell}
@@ -54,7 +57,11 @@ export function AppTerminalRoute() {
                 <p className="text-base">
                     Terminal feature is disabled, enable it in{" "}
                     <AppLink.Basic
-                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectID, appID)}
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectID,
+                            env,
+                            appID,
+                        )}
                         className="text-primary underline-offset-4 hover:underline"
                     >
                         Feature Settings

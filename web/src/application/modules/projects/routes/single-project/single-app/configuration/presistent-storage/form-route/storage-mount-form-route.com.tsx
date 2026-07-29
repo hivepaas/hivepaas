@@ -26,7 +26,7 @@ function mountWithoutId(mount: StorageMountWithId): AppStorageMount {
     return rest;
 }
 
-export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props) {
+export function StorageMountFormRoute({ mode, projectId, appId, env, mountId }: Props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { mounts, addMount, updateMount } = useStorageMounts();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -37,6 +37,7 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
     const { data: appData } = AppStorageSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -45,9 +46,12 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
     const updateVer = appData?.data.updateVer ?? 0;
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, appId), {
-            ignorePrevPath: true,
-        });
+        navigate.modules(
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
+            {
+                ignorePrevPath: true,
+            },
+        );
     }
 
     async function persistMounts(nextMounts: StorageMountWithId[], successMessage: string) {
@@ -59,6 +63,7 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
 
         await update({
             projectID: projectId,
+            env,
             appID: appId,
             payload: {
                 mounts: mountsWithoutIds,
@@ -133,6 +138,7 @@ export function StorageMountFormRoute({ mode, projectId, appId, mountId }: Props
 interface Props {
     mode: StorageMountFormRouteMode;
     projectId: string;
+    env: string;
     appId: string;
     mountId?: string;
 }

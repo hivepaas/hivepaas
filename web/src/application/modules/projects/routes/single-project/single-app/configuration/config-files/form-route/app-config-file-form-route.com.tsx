@@ -54,14 +54,14 @@ function getSwarmRef(values: CreateOrEditAppConfigFileFormOutput) {
     };
 }
 
-export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }: Props) {
+export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFileId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -69,6 +69,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
     const detailQuery = AppConfigFilesQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             configFileID: configFileId ?? "",
         },
@@ -104,6 +105,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
         if (isEditMode && configFile) {
             updateAppConfigFile({
                 projectID: projectId,
+                env,
                 appID: appId,
                 configFileID: configFile.id,
                 updateVer: configFile.updateVer,
@@ -118,6 +120,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
         if (!isEditMode && content !== undefined) {
             createAppConfigFile({
                 projectID: projectId,
+                env,
                 appID: appId,
                 name: values.name,
                 content,
@@ -184,6 +187,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, configFileId }:
 interface Props {
     mode: AppConfigFileFormRouteMode;
     projectId: string;
+    env: string;
     appId: string;
     configFileId?: string;
 }

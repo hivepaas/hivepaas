@@ -77,6 +77,7 @@ export function ConfirmAppDangerActionDialog() {
         if (action === AppDangerAction.Delete) {
             deleteApp({
                 projectID: target.projectId,
+                env: target.env,
                 appID: target.appId,
             });
             return;
@@ -84,6 +85,7 @@ export function ConfirmAppDangerActionDialog() {
 
         updateAppStatus({
             projectID: target.projectId,
+            env: target.env,
             appID: target.appId,
             payload: {
                 updateVer: target.updateVer,

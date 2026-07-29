@@ -39,17 +39,20 @@ function isTaskTerminal(status?: EAppScheduledJobTaskStatus): boolean {
 export function AppScheduledJobTaskDetailsRoute() {
     const {
         id: projectId,
+        env,
         appId,
         scheduledJobId,
         taskId,
     } = useParams<{
         id: string;
+        env: string;
         appId: string;
         scheduledJobId: string;
         taskId: string;
     }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(scheduledJobId, "scheduledJobId must be defined");
     invariant(taskId, "taskId must be defined");
@@ -63,6 +66,7 @@ export function AppScheduledJobTaskDetailsRoute() {
     } = AppScheduledJobsQueries.useFindTaskById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             scheduledJobID: scheduledJobId,
             taskID: taskId,
@@ -113,6 +117,7 @@ export function AppScheduledJobTaskDetailsRoute() {
                         onCancel={id => {
                             cancelTask({
                                 projectID: projectId,
+                                env,
                                 appID: appId,
                                 scheduledJobID: scheduledJobId,
                                 taskID: id,
@@ -121,6 +126,7 @@ export function AppScheduledJobTaskDetailsRoute() {
                     >
                         <ScheduledJobTaskLogsViewer
                             projectID={projectId}
+                            env={env}
                             appID={appId}
                             scheduledJobID={scheduledJobId}
                             taskID={taskId}

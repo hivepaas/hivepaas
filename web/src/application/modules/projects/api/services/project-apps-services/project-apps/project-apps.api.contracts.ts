@@ -78,6 +78,7 @@ export interface ProjectApps_CopyBase<TDomainSetting> {
 
 export type ProjectApps_PrepareCopy_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -86,6 +87,7 @@ export type ProjectApps_PrepareCopy_Res = ApiResponseBase<ProjectApps_CopyBase<P
 export type ProjectApps_Copy_Req = ApiRequestBase<
     {
         projectID: string;
+        env: string;
         appID: string;
     } & ProjectApps_CopyBase<ProjectApps_CopyDomainSettingPayload>
 >;
@@ -99,6 +101,7 @@ export type ProjectApps_Copy_Res = ApiResponseBase<{
  */
 export type ProjectApps_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     getStats?: boolean;
 }>;
@@ -110,6 +113,7 @@ export type ProjectApps_FindOneById_Res = ApiResponseBase<ProjectAppDetails>;
  */
 export type ProjectApps_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -123,6 +127,7 @@ export type ProjectApps_DeleteOne_Res = ApiResponseBase<{
 export type ProjectApps_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
+        env: string;
         appID: string;
         updateVer: number;
     } & Partial<
@@ -142,6 +147,7 @@ export type ProjectApps_UpdateOne_Res = ApiResponseBase<{
  */
 export type ProjectApps_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     payload: {
         updateVer: number;
@@ -158,6 +164,7 @@ export type ProjectApps_UpdateStatus_Res = ApiResponseBase<{
  */
 export type ProjectApps_Deploy_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -170,6 +177,7 @@ export type ProjectApps_Deploy_Res = ApiResponseBase<{
  */
 export type ProjectApps_Restart_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -182,6 +190,7 @@ export type ProjectApps_Restart_Res = ApiResponseBase<{
  */
 export type ProjectApps_SetRunning_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     running: boolean;
 }>;

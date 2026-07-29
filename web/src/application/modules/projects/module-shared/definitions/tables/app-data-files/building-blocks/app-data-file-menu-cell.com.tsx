@@ -22,7 +22,7 @@ import type { AppDataFile } from "~/projects/domain";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
-function View({ projectId, appId, dataFile }: Props) {
+function View({ projectId, env, appId, dataFile }: Props) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletePermanently, setDeletePermanently] = useState(false);
@@ -42,6 +42,7 @@ function View({ projectId, appId, dataFile }: Props) {
             setIsDownloading(true);
             const { data } = await queries.getDownloadUrl({
                 projectID: projectId,
+                env,
                 appID: appId,
                 dataFileID: dataFile.id,
             });
@@ -70,6 +71,7 @@ function View({ projectId, appId, dataFile }: Props) {
     function handleDelete() {
         deleteOne({
             projectID: projectId,
+            env,
             appID: appId,
             dataFileID: dataFile.id,
             deletePermanently: isLocalFile || deletePermanently,
@@ -194,6 +196,7 @@ function View({ projectId, appId, dataFile }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     dataFile: AppDataFile;
 }

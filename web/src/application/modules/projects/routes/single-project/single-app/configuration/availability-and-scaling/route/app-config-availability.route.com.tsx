@@ -24,16 +24,18 @@ import { type AppConfigAvailabilitySchemaOutput } from "../schemas";
 import { type AppConfigAvailabilityFormRef } from "../types";
 
 export function AppConfigAvailabilityRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const formRef = useRef<AppConfigAvailabilityFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data, isLoading } = AppServiceSettingsQueries.useFindOne(
         {
             projectID: projectId,
+            env,
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -60,10 +62,12 @@ export function AppConfigAvailabilityRoute() {
         }
 
         invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
         invariant(appId, "appId must be defined");
 
         update({
             projectID: projectId,
+            env,
             appID: appId,
             payload: {
                 updateVer: data?.data.updateVer ?? 0,
@@ -103,7 +107,7 @@ export function AppConfigAvailabilityRoute() {
                 <span className="text-orange-500">Note:</span> If you change the configuration here, please check the
                 application&rsquo;s scheduling results in{" "}
                 <AppLink.Basic
-                    to={ROUTE.projects.single.apps.single.instances.$route(projectId, appId)}
+                    to={ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)}
                     className="text-primary underline-offset-4 hover:underline"
                 >
                     Instances

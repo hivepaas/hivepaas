@@ -11,6 +11,7 @@ const DEPLOYMENT_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)"
 
 export function DeploymentLogsViewer({
     projectID,
+    env,
     appID,
     deploymentID,
     status,
@@ -31,10 +32,11 @@ export function DeploymentLogsViewer({
     const streamRequest = useMemo(
         () => ({
             projectID,
+            env,
             appID,
             deploymentID,
         }),
-        [appID, deploymentID, projectID],
+        [appID, deploymentID, env, projectID],
     );
 
     useEffect(() => {
@@ -169,6 +171,7 @@ export function DeploymentLogsViewer({
 
 interface DeploymentLogsScope {
     projectID: string;
+    env: string;
     appID: string;
     deploymentID: string;
     status: EAppDeploymentStatus;

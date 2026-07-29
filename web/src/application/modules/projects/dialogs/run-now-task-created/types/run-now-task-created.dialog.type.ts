@@ -3,6 +3,7 @@ export interface RunNowTaskCreatedDialogState {
         | {
               mode: "open";
               projectId: string;
+              env: string;
               appId: string;
               scheduledJobId: string;
               taskId: string;
@@ -10,6 +11,7 @@ export interface RunNowTaskCreatedDialogState {
         | {
               mode: "closed";
               projectId: null;
+              env: null;
               appId: null;
               scheduledJobId: null;
               taskId: null;

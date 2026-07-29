@@ -18,9 +18,10 @@ import { isFeatureDisabledException } from "@infrastructure/api";
 import { Button, DataTable } from "@/components/ui";
 
 export function AppScheduledJobsRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { navigate } = useAppNavigate();
@@ -33,6 +34,7 @@ export function AppScheduledJobsRoute() {
     } = AppScheduledJobsQueries.useFindManyPaginated(
         {
             projectID: projectId,
+            env,
             appID: appId,
             pagination,
             sorting,
@@ -42,7 +44,7 @@ export function AppScheduledJobsRoute() {
     );
 
     const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
-    const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, appId), [projectId, appId]);
+    const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
 
     if (isFeatureDisabled) {
         return (
@@ -50,7 +52,11 @@ export function AppScheduledJobsRoute() {
                 <p className="text-base">
                     Scheduled Jobs feature is disabled, enable it in{" "}
                     <AppLink.Basic
-                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId)}
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectId,
+                            env,
+                            appId,
+                        )}
                         className="text-primary underline-offset-4 hover:underline"
                     >
                         Feature Settings
@@ -75,6 +81,7 @@ export function AppScheduledJobsRoute() {
                                     navigate.modules(
                                         ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
                                             projectId,
+                                            env,
                                             appId,
                                         ),
                                     );

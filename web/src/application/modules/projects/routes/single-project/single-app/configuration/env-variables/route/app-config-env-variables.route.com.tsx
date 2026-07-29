@@ -22,11 +22,12 @@ import { type AppConfigEnvVarsFormSchemaOutput } from "../schemas";
 import { type AppConfigEnvVarsFormRef } from "../types";
 
 export function AppConfigEnvVariablesRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const formRef = useRef<AppConfigEnvVarsFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const {
@@ -34,7 +35,10 @@ export function AppConfigEnvVariablesRoute() {
         isLoading: isLoadingEnvVars,
         error: envVarsError,
         refetch: refetchEnvVars,
-    } = ProjectAppEnvVarsQueries.useFindOne({ projectID: projectId, appID: appId }, APP_CONFIGURATION_QUERY_OPTIONS);
+    } = ProjectAppEnvVarsQueries.useFindOne(
+        { projectID: projectId, env, appID: appId },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
 
     const { mutate: update, isPending } = ProjectAppEnvVarsCommands.useUpdateOne({
         onSuccess: () => {
@@ -53,11 +57,13 @@ export function AppConfigEnvVariablesRoute() {
         }
 
         invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
         invariant(appId, "appId must be defined");
         invariant(envVarsData, "envVarsData must be defined");
 
         update({
             projectID: projectId,
+            env,
             appID: appId,
             ...values,
             updateVer: envVarsData.data.updateVer,

@@ -21,13 +21,13 @@ export class AppDeploymentsApi extends BaseApi {
         request: AppDeployments_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDeployments_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/deployments`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/deployments`, {
                     params: query.build(),
                     signal,
                 }),
@@ -43,11 +43,11 @@ export class AppDeploymentsApi extends BaseApi {
         request: AppDeployments_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDeployments_FindOneById_Res, Error>> {
-        const { projectID, appID, deploymentID } = request.data;
+        const { projectID, env, appID, deploymentID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/deployments/${deploymentID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/deployments/${deploymentID}`, {
                     signal,
                 }),
             ).pipe(
@@ -59,11 +59,14 @@ export class AppDeploymentsApi extends BaseApi {
     }
 
     async cancel(request: AppDeployments_Cancel_Req): Promise<Result<AppDeployments_Cancel_Res, Error>> {
-        const { projectID, appID, deploymentID } = request.data;
+        const { projectID, env, appID, deploymentID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/deployments/${deploymentID}/cancel`, {}),
+                this.client.v1.post(
+                    `/projects/${projectID}/${env}/apps/${appID}/deployments/${deploymentID}/cancel`,
+                    {},
+                ),
             ).pipe(
                 map(this.validator.cancel),
                 map(res => Ok(res)),

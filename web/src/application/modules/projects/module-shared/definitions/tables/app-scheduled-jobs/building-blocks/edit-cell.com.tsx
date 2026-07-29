@@ -7,7 +7,7 @@ import type { AppScheduledJob } from "~/projects/domain";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
-function View({ projectId, appId, scheduledJob }: Props) {
+function View({ projectId, env, appId, scheduledJob }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
@@ -19,6 +19,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
                 navigate.modules(
                     ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$route(
                         projectId,
+                        env,
                         appId,
                         scheduledJob.id,
                     ),
@@ -33,6 +34,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     scheduledJob: AppScheduledJob;
 }

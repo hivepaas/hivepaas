@@ -12,7 +12,7 @@ import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-function View({ projectId, appId, secret }: Props) {
+function View({ projectId, env, appId, secret }: Props) {
     const [open, setOpen] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const { queries, helpers } = useProjectAppSecretsApi();
@@ -30,11 +30,13 @@ function View({ projectId, appId, secret }: Props) {
             setIsDownloading(true);
             const { data } = await queries.getDownloadToken({
                 projectID: projectId,
+                env,
                 appID: appId,
                 secretID: secret.id,
             });
             const downloadUrl = helpers.buildDownloadUrl({
                 projectID: projectId,
+                env,
                 appID: appId,
                 secretID: secret.id,
                 token: data.token,
@@ -89,7 +91,7 @@ function View({ projectId, appId, secret }: Props) {
                             cancelText="Cancel"
                             description="Confirm deletion of this item?"
                             onConfirm={() => {
-                                deleteOne({ projectID: projectId, appID: appId, secretID: secret.id });
+                                deleteOne({ projectID: projectId, env, appID: appId, secretID: secret.id });
                             }}
                         >
                             <Button
@@ -127,6 +129,7 @@ function View({ projectId, appId, secret }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     secret: AppSecret;
 }

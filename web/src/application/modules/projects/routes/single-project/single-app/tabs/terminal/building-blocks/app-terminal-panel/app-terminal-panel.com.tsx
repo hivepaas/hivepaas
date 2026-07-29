@@ -19,6 +19,7 @@ const TERMINAL_SCROLLBACK = 10_000;
 
 export function AppTerminalPanel({
     projectID,
+    env,
     appID,
     supportedShells,
     selectedShell,
@@ -115,6 +116,7 @@ export function AppTerminalPanel({
             .open(
                 {
                     projectID,
+                    env,
                     appID,
                     shell: selectedShell,
                     width,
@@ -168,7 +170,7 @@ export function AppTerminalPanel({
                     setWebSocketReadyState(WebSocket.CLOSED);
                 }
             });
-    }, [appID, canConnect, closeConnection, fitTerminal, projectID, selectedShell, sendCurrentResize, streams]);
+    }, [appID, canConnect, closeConnection, env, fitTerminal, projectID, selectedShell, sendCurrentResize, streams]);
 
     useEffect(() => {
         const element = terminalElementRef.current;
@@ -380,6 +382,7 @@ interface TerminalStatus {
 
 interface AppTerminalPanelProps {
     projectID: string;
+    env: string;
     appID: string;
     supportedShells: string[];
     selectedShell: string;

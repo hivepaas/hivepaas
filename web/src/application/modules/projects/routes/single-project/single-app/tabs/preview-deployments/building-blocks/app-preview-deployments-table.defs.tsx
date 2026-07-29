@@ -72,7 +72,11 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                     asChild
                 >
                     <AppLink.Modules
-                        to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, original.id)}
+                        to={ROUTE.projects.single.apps.single.configuration.general.$route(
+                            projectId,
+                            original.env,
+                            original.id,
+                        )}
                         ignorePrevPath
                     >
                         <Eye className="size-4" />

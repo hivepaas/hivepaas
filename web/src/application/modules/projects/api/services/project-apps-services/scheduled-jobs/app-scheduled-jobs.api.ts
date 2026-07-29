@@ -87,13 +87,13 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/sched-jobs`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/sched-jobs`, {
                     params: query.build(),
                     signal,
                 }),
@@ -109,11 +109,11 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_FindOneById_Res, Error>> {
-        const { projectID, appID, scheduledJobID } = request.data;
+        const { projectID, env, appID, scheduledJobID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}`, {
                     signal,
                 }),
             ).pipe(
@@ -128,13 +128,13 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobTasks_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobTasks_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, scheduledJobID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, scheduledJobID, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks`, {
                     params: query.build(),
                     signal,
                 }),
@@ -150,12 +150,12 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobTasks_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobTasks_FindOneById_Res, Error>> {
-        const { projectID, appID, scheduledJobID, taskID } = request.data;
+        const { projectID, env, appID, scheduledJobID, taskID } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.get(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}`,
                     { signal },
                 ),
             ).pipe(
@@ -170,12 +170,12 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobTasks_GetLogs_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobTasks_GetLogs_Res, Error>> {
-        const { projectID, appID, scheduledJobID, taskID } = request.data;
+        const { projectID, env, appID, scheduledJobID, taskID } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.get(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}/logs`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}/logs`,
                     {
                         params: buildAppScheduledJobTaskLogsQueryParams({ ...request.data, follow: false }),
                         signal,
@@ -193,13 +193,17 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_CreateOne_Res, Error>> {
-        const { projectID, appID, payload } = request.data;
+        const { projectID, env, appID, payload } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/sched-jobs`, toUpsertPayload(payload), {
-                    signal,
-                }),
+                this.client.v1.post(
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs`,
+                    toUpsertPayload(payload),
+                    {
+                        signal,
+                    },
+                ),
             ).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
@@ -212,12 +216,12 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_UpdateOne_Res, Error>> {
-        const { projectID, appID, scheduledJobID, payload } = request.data;
+        const { projectID, env, appID, scheduledJobID, payload } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}`,
                     toUpsertPayload(payload),
                     { signal },
                 ),
@@ -232,12 +236,12 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_UpdateStatus_Res, Error>> {
-        const { projectID, appID, scheduledJobID, payload } = request.data;
+        const { projectID, env, appID, scheduledJobID, payload } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/status`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/status`,
                     payload,
                     {
                         signal,
@@ -251,10 +255,12 @@ export class AppScheduledJobsApi extends BaseApi {
     }
 
     async deleteOne(request: AppScheduledJobs_DeleteOne_Req): Promise<Result<AppScheduledJobs_DeleteOne_Res, Error>> {
-        const { projectID, appID, scheduledJobID } = request.data;
+        const { projectID, env, appID, scheduledJobID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}`)).pipe(
+            from(
+                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}`),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -265,12 +271,12 @@ export class AppScheduledJobsApi extends BaseApi {
         request: AppScheduledJobs_RunNow_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppScheduledJobs_RunNow_Res, Error>> {
-        const { projectID, appID, scheduledJobID } = request.data;
+        const { projectID, env, appID, scheduledJobID } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.post(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/exec`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/exec`,
                     {},
                     { signal },
                 ),
@@ -285,12 +291,12 @@ export class AppScheduledJobsApi extends BaseApi {
     async cancelTask(
         request: AppScheduledJobTasks_Cancel_Req,
     ): Promise<Result<AppScheduledJobTasks_Cancel_Res, Error>> {
-        const { projectID, appID, scheduledJobID, taskID } = request.data;
+        const { projectID, env, appID, scheduledJobID, taskID } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.post(
-                    `/projects/${projectID}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}/cancel`,
+                    `/projects/${projectID}/${env}/apps/${appID}/sched-jobs/${scheduledJobID}/tasks/${taskID}/cancel`,
                     {},
                 ),
             ).pipe(

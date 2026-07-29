@@ -9,12 +9,12 @@ import { useConditionalModule } from "@application/shared/permissions";
 import { UploadAppDataFileForm } from "../form";
 import type { UploadAppDataFileFormValues } from "../schemas";
 
-export function AppDataFileFormRoute({ projectId, appId }: Props) {
+export function AppDataFileFormRoute({ projectId, appId, env }: Props) {
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -41,6 +41,7 @@ export function AppDataFileFormRoute({ projectId, appId }: Props) {
         if (values["uploadMethod"] === "local") {
             uploadLocal({
                 projectID: projectId,
+                env,
                 appID: appId,
                 fileKind: values["fileKind"],
                 files: values["files"],
@@ -52,6 +53,7 @@ export function AppDataFileFormRoute({ projectId, appId }: Props) {
             }
             createOne({
                 projectID: projectId,
+                env,
                 appID: appId,
                 fileKind: values["fileKind"],
                 filePath: values["filePath"],
@@ -83,5 +85,6 @@ export function AppDataFileFormRoute({ projectId, appId }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
 }

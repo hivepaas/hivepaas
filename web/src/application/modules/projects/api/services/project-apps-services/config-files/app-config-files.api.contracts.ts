@@ -8,6 +8,7 @@ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } 
  */
 export type AppConfigFiles_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -21,6 +22,7 @@ export type AppConfigFiles_FindManyPaginated_Res = ApiResponsePaginated<AppConfi
  */
 export type AppConfigFiles_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     configFileID: string;
 }>;
@@ -32,6 +34,7 @@ export type AppConfigFiles_FindOneById_Res = ApiResponseBase<AppConfigFile>;
  */
 export type AppConfigFiles_GetDownloadToken_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     configFileID: string;
 }>;
@@ -45,6 +48,7 @@ export type AppConfigFiles_GetDownloadToken_Res = ApiResponseBase<{
  */
 export type AppConfigFiles_BuildDownloadUrl_Req = {
     projectID: string;
+    env: string;
     appID: string;
     configFileID: string;
     token: string;
@@ -56,6 +60,7 @@ export type AppConfigFiles_BuildDownloadUrl_Req = {
  */
 export type AppConfigFiles_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     name: string;
     content: string;
@@ -72,6 +77,7 @@ export type AppConfigFiles_CreateOne_Res = ApiResponseBase<{
  */
 export type AppConfigFiles_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     configFileID: string;
 }>;
@@ -86,6 +92,7 @@ export type AppConfigFiles_DeleteOne_Res = ApiResponseBase<{
 export type AppConfigFiles_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
+        env: string;
         appID: string;
         configFileID: string;
         updateVer: number;

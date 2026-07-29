@@ -23,7 +23,7 @@ export class AppLogsWsApi extends BaseWebSocketApi {
         handlers: AppLogsWsHandlers,
         signal?: AbortSignal,
     ): Result<AppLogsWs_StreamLogs_Res, Error> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
         const accessToken = session.getToken();
 
         if (!accessToken) {
@@ -32,7 +32,7 @@ export class AppLogsWsApi extends BaseWebSocketApi {
 
         try {
             const url = this.client.buildUrl(
-                `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/logs`,
+                `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(appID)}/logs`,
                 buildAppLogsQueryParams({ ...request.data, follow: true }),
             );
 

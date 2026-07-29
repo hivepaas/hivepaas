@@ -25,14 +25,14 @@ export class AppDataFilesApi extends BaseApi {
         request: AppDataFiles_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDataFiles_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, pagination, sorting, search } = request.data;
+        const { projectID, env, appID, pagination, sorting, search } = request.data;
         const query = this.queryBuilder.getInstance();
 
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/data-files`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/data-files`, {
                     params: query.build(),
                     signal,
                 }),
@@ -48,13 +48,16 @@ export class AppDataFilesApi extends BaseApi {
         request: AppDataFiles_GetDownloadUrl_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDataFiles_GetDownloadUrl_Res, Error>> {
-        const { projectID, appID, dataFileID } = request.data;
+        const { projectID, env, appID, dataFileID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/data-files/${dataFileID}/download-url`, {
-                    signal,
-                }),
+                this.client.v1.get(
+                    `/projects/${projectID}/${env}/apps/${appID}/data-files/${dataFileID}/download-url`,
+                    {
+                        signal,
+                    },
+                ),
             ).pipe(
                 map(this.validator.getDownloadUrl),
                 map(response => Ok(response)),
@@ -64,11 +67,11 @@ export class AppDataFilesApi extends BaseApi {
     }
 
     async deleteOne(request: AppDataFiles_DeleteOne_Req): Promise<Result<AppDataFiles_DeleteOne_Res, Error>> {
-        const { projectID, appID, dataFileID, deletePermanently } = request.data;
+        const { projectID, env, appID, dataFileID, deletePermanently } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.delete(`/projects/${projectID}/apps/${appID}/data-files/${dataFileID}`, {
+                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/data-files/${dataFileID}`, {
                     params: { deletePermanently },
                 }),
             ).pipe(
@@ -113,12 +116,12 @@ export class AppDataFilesApi extends BaseApi {
         request: AppDataFiles_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDataFiles_CreateOne_Res, Error>> {
-        const { projectID, appID, fileKind, filePath, storageID, bucket } = request.data;
+        const { projectID, env, appID, fileKind, filePath, storageID, bucket } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.post(
-                    `/projects/${projectID}/apps/${appID}/data-files`,
+                    `/projects/${projectID}/${env}/apps/${appID}/data-files`,
                     {
                         fileType: "data-file",
                         fileKind,

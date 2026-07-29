@@ -7,7 +7,7 @@ import type { AppHealthCheck } from "~/projects/domain";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
-function View({ projectId, appId, healthCheck }: Props) {
+function View({ projectId, env, appId, healthCheck }: Props) {
     const { navigate } = useAppNavigate();
 
     return (
@@ -19,6 +19,7 @@ function View({ projectId, appId, healthCheck }: Props) {
                 navigate.modules(
                     ROUTE.projects.single.apps.single.configuration.healthChecks.edit.$route(
                         projectId,
+                        env,
                         appId,
                         healthCheck.id,
                     ),
@@ -33,6 +34,7 @@ function View({ projectId, appId, healthCheck }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     healthCheck: AppHealthCheck;
 }

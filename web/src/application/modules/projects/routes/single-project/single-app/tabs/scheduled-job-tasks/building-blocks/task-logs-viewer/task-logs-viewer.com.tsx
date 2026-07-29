@@ -11,6 +11,7 @@ const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
 export function ScheduledJobTaskLogsViewer({
     projectID,
+    env,
     appID,
     scheduledJobID,
     taskID,
@@ -32,11 +33,12 @@ export function ScheduledJobTaskLogsViewer({
     const streamRequest = useMemo(
         () => ({
             projectID,
+            env,
             appID,
             scheduledJobID,
             taskID,
         }),
-        [appID, projectID, scheduledJobID, taskID],
+        [appID, env, projectID, scheduledJobID, taskID],
     );
 
     useEffect(() => {
@@ -172,6 +174,7 @@ export function ScheduledJobTaskLogsViewer({
 
 interface ScheduledJobTaskLogsScope {
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     taskID: string;

@@ -31,14 +31,16 @@ function getPreparedPreviewFromState(state: unknown): PreparedPreview | undefine
 }
 
 export function AppPreviewDeploymentCreateRoute() {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const location = useLocation();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
     const { data: appData, isLoading: isLoadingApp } = ProjectAppsQueries.useFindOneById({
         projectID: projectId,
+        env,
         appID: appId,
     });
 
@@ -49,7 +51,7 @@ export function AppPreviewDeploymentCreateRoute() {
     if (appData?.data.parentApp) {
         return (
             <Navigate
-                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId)}
+                to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId)}
                 replace
             />
         );
@@ -58,6 +60,7 @@ export function AppPreviewDeploymentCreateRoute() {
     return (
         <AppPreviewDeploymentFormRoute
             projectId={projectId}
+            env={env}
             appId={appId}
             initialPreparedPreview={getPreparedPreviewFromState(location.state)}
         />

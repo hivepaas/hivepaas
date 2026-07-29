@@ -14,6 +14,7 @@ const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
 export function AppLogsViewer({
     tabID,
     projectID,
+    env,
     appID,
     tabLabel,
     taskId,
@@ -50,13 +51,14 @@ export function AppLogsViewer({
     const request = useMemo<AppLogs_GetLogs_Req["data"]>(
         () => ({
             projectID,
+            env,
             appID,
             taskId,
             tail: hasTimeFilter ? undefined : lines,
             since,
             duration,
         }),
-        [appID, duration, hasTimeFilter, lines, projectID, since, taskId],
+        [appID, duration, env, hasTimeFilter, lines, projectID, since, taskId],
     );
 
     const { refetch: refreshLogs, isFetching: isRefreshPending } = AppLogsQueries.useGetLogs(
@@ -249,6 +251,7 @@ function toLogsViewerFrames(frames: AppLogFrame[]): LogsViewerFrame[] {
 interface AppLogsViewerProps {
     tabID: string;
     projectID: string;
+    env: string;
     appID: string;
     tabLabel: string;
     taskId?: string;

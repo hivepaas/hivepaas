@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 
@@ -14,6 +15,7 @@ import { useUpdateAppScheduledJobStatusDialogState } from "../hooks";
 import type { UpdateAppScheduledJobStatusFormOutput } from "../schemas";
 
 export function UpdateAppScheduledJobStatusDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useUpdateAppScheduledJobStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -26,6 +28,7 @@ export function UpdateAppScheduledJobStatusDialog() {
     const { data, isLoading } = AppScheduledJobsQueries.useFindOneById(
         {
             projectID: projectId,
+            env: env ?? "",
             appID: appId,
             scheduledJobID: scheduledJobId,
         },
@@ -52,6 +55,7 @@ export function UpdateAppScheduledJobStatusDialog() {
 
         updateStatus({
             projectID: state.projectId,
+            env: env ?? "",
             appID: state.appId,
             scheduledJobID: state.scheduledJobId,
             payload: {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
@@ -83,6 +84,7 @@ function mapFormValuesToPayload(
 }
 
 export function CreateOrEditAppScheduledJobDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppScheduledJobDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -97,6 +99,7 @@ export function CreateOrEditAppScheduledJobDialog() {
     const { data: detailData, isLoading: isDetailLoading } = AppScheduledJobsQueries.useFindOneById(
         {
             projectID: projectId ?? "",
+            env: env ?? "",
             appID: appId ?? "",
             scheduledJobID: scheduledJobId,
         },
@@ -147,6 +150,7 @@ export function CreateOrEditAppScheduledJobDialog() {
 
             updateScheduledJob({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 scheduledJobID: state.scheduledJobId,
                 payload: {
@@ -161,6 +165,7 @@ export function CreateOrEditAppScheduledJobDialog() {
         if (state.mode === "open") {
             createScheduledJob({
                 projectID: projectId,
+                env: env ?? "",
                 appID: appId,
                 payload,
             });

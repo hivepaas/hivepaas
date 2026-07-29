@@ -16,7 +16,7 @@ import { SingleAppBreadcrumbs } from "../buidling-blocks";
 import { AppAccessLinksDropdown } from "./building-blocks";
 import { SingleAppHeaderSkeleton } from "./single-app-header.skeleton.com";
 
-function View({ projectId, appId }: Props) {
+function View({ projectId, env, appId }: Props) {
     const { scheduledJobId, taskId } = useParams<{
         scheduledJobId?: string;
         taskId?: string;
@@ -26,10 +26,11 @@ function View({ projectId, appId }: Props) {
         data: app,
         isLoading: isLoadingApp,
         error: errorApp,
-    } = ProjectAppsQueries.useFindOneById({ projectID: projectId, appID: appId, getStats: true });
+    } = ProjectAppsQueries.useFindOneById({ projectID: projectId, env, appID: appId, getStats: true });
     const { data: scheduledJobResponse } = AppScheduledJobsQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             scheduledJobID: scheduledJobId ?? "",
         },
@@ -69,15 +70,15 @@ function View({ projectId, appId }: Props) {
     const isChildApp = Boolean(appData.parentApp);
     const isAppRunning = (appData.stats?.runningTasks ?? 0) > 0;
     const startStopText = isAppRunning ? "Stop" : "Start";
-    const appEnv = project.envs.find(env => env.name === appData.env);
-    const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId);
+    const appEnv = project.envs.find(projectEnv => projectEnv.name === appData.env);
+    const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId);
     const scheduledJobName = scheduledJobResponse?.data.name.trim();
     const scheduledJobTasksLabel = scheduledJobName ? `${scheduledJobName} Tasks` : "Scheduled Job Tasks";
     const taskBreadcrumbItems = scheduledJobId
         ? [
               {
                   label: "Scheduled Jobs",
-                  to: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
+                  to: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
               },
               {
                   label: scheduledJobTasksLabel,
@@ -85,6 +86,7 @@ function View({ projectId, appId }: Props) {
                       ? {
                             to: ROUTE.projects.single.apps.single.scheduledJobTasks.$route(
                                 projectId,
+                                env,
                                 appId,
                                 scheduledJobId,
                             ),
@@ -101,50 +103,50 @@ function View({ projectId, appId }: Props) {
           ]
         : [];
     const configurationActivePathPrefixes = [
-        ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId),
-        ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, appId),
+        ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, env, appId),
     ];
 
     const links = [
         {
-            route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
             label: "Settings",
             activePathPrefixes: configurationActivePathPrefixes,
         },
         {
-            route: ROUTE.projects.single.apps.single.instances.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId),
             label: "Instances",
-            activePathPrefixes: [ROUTE.projects.single.apps.single.instances.$route(projectId, appId)],
+            activePathPrefixes: [ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)],
         },
         {
-            route: ROUTE.projects.single.apps.single.deployments.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId),
             label: "Deployments",
-            activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, appId)],
+            activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId)],
         },
         {
-            route: ROUTE.projects.single.apps.single.logs.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.logs.$route(projectId, env, appId),
             label: "Logs",
         },
         {
-            route: ROUTE.projects.single.apps.single.terminal.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.terminal.$route(projectId, env, appId),
             label: "Terminal",
         },
         ...(!isChildApp
             ? [
                   {
-                      route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, appId),
+                      route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, env, appId),
                       label: "Preview Deployments",
                   },
               ]
@@ -195,7 +197,7 @@ function View({ projectId, appId }: Props) {
                         confirmText="Re-deploy"
                         cancelText="Cancel"
                         onConfirm={() => {
-                            deploy({ projectID: projectId, appID: appId });
+                            deploy({ projectID: projectId, env, appID: appId });
                         }}
                     >
                         <Button
@@ -214,7 +216,7 @@ function View({ projectId, appId }: Props) {
                         confirmText="Restart"
                         cancelText="Cancel"
                         onConfirm={() => {
-                            restart({ projectID: projectId, appID: appId });
+                            restart({ projectID: projectId, env, appID: appId });
                         }}
                     >
                         <Button
@@ -234,7 +236,7 @@ function View({ projectId, appId }: Props) {
                             confirmText="Stop"
                             cancelText="Cancel"
                             onConfirm={() => {
-                                setRunning({ projectID: projectId, appID: appId, running: false });
+                                setRunning({ projectID: projectId, env, appID: appId, running: false });
                             }}
                         >
                             <Button
@@ -254,7 +256,7 @@ function View({ projectId, appId }: Props) {
                             isLoading={isSettingRunning}
                             disabled={isAppActionPending && !isSettingRunning}
                             onClick={() => {
-                                setRunning({ projectID: projectId, appID: appId, running: true });
+                                setRunning({ projectID: projectId, env, appID: appId, running: true });
                             }}
                         >
                             <Power className="size-4 text-orange-600" />
@@ -269,6 +271,7 @@ function View({ projectId, appId }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
 }
 

@@ -15,7 +15,7 @@ function createHook() {
 
         const queries = useMemo(
             () => ({
-                findOne: async (request: { projectID: string; appID: string }, signal?: AbortSignal) => {
+                findOne: async (request: { projectID: string; env: string; appID: string }, signal?: AbortSignal) => {
                     const result = await api.projects.apps.featureSettings.$.findOne({ data: request }, signal);
                     return match(result, {
                         Ok: _ => _,

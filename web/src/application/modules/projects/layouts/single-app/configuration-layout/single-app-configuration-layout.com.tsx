@@ -17,9 +17,10 @@ interface TabItem {
 }
 
 function View({ children }: PropsWithChildren) {
-    const { id: projectId, appId } = useParams<{ id: string; appId: string }>();
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     invariant(projectId, "Project id must be defined");
+    invariant(env, "Environment must be defined");
     invariant(appId, "App id must be defined");
 
     const location = useLocation();
@@ -27,67 +28,67 @@ function View({ children }: PropsWithChildren) {
     const tabs: TabItem[] = [
         {
             label: "General",
-            route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
         },
         {
             label: "Deployment Settings",
-            route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, env, appId),
         },
         {
             label: "HTTP Settings",
-            route: ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, env, appId),
         },
         {
             label: "Env Variables",
-            route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, env, appId),
         },
         {
             label: "Secrets",
-            route: ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, env, appId),
         },
         {
             label: "Config Files",
-            route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, env, appId),
         },
         {
             label: "Data Files",
-            route: ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, env, appId),
         },
         {
             label: "Container Settings",
-            route: ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, env, appId),
         },
         {
             label: "Availability & Scaling",
-            route: ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, env, appId),
         },
         {
             label: "Persistent Storage",
-            route: ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
         },
         {
             label: "Networks",
-            route: ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
         },
         {
             label: "Resources",
-            route: ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
         },
         {
             label: "Health Checks",
-            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, env, appId),
         },
         {
             label: "Scheduled Jobs",
-            route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
         },
         {
             label: "Feature Settings",
-            route: ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, env, appId),
         },
         {
             label: "Danger Zone",
-            route: ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, appId),
+            route: ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, env, appId),
         },
     ];
 

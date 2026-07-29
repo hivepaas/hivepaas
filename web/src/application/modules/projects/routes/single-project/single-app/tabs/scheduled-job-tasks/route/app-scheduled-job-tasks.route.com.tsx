@@ -24,10 +24,12 @@ import {
 export function AppScheduledJobTasksRoute() {
     const {
         id: projectId,
+        env,
         appId,
         scheduledJobId,
     } = useParams<{
         id: string;
+        env: string;
         appId: string;
         scheduledJobId: string;
     }>();
@@ -35,12 +37,14 @@ export function AppScheduledJobTasksRoute() {
     const { navigate } = useAppNavigate();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(scheduledJobId, "scheduledJobId must be defined");
 
     const { data: { data: tasks, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
         AppScheduledJobsQueries.useFindTasksManyPaginated({
             projectID: projectId,
+            env,
             appID: appId,
             scheduledJobID: scheduledJobId,
             pagination,
@@ -68,7 +72,11 @@ export function AppScheduledJobTasksRoute() {
                     search={{ value: search, onChange: setSearch }}
                     renderActions={
                         <AppLink.Basic
-                            to={ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId)}
+                            to={ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(
+                                projectId,
+                                env,
+                                appId,
+                            )}
                             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
                         >
                             Go to Scheduled Jobs
@@ -98,6 +106,7 @@ export function AppScheduledJobTasksRoute() {
                                     navigate.modules(
                                         ROUTE.projects.single.apps.single.scheduledJobTasks.details.$route(
                                             projectId,
+                                            env,
                                             appId,
                                             scheduledJobId,
                                             task.id,
@@ -107,6 +116,7 @@ export function AppScheduledJobTasksRoute() {
                                 onCancel={taskID => {
                                     cancelTask({
                                         projectID: projectId,
+                                        env,
                                         appID: appId,
                                         scheduledJobID: scheduledJobId,
                                         taskID,

@@ -4,7 +4,7 @@ import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
 import { type AppDeploymentSettings } from "../../../../domain/apps/deployment-settings";
 
-export type AppDeploymentSettings_FindOne_Req = ApiRequestBase<{ projectID: string; appID: string }>;
+export type AppDeploymentSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
 export type AppDeploymentSettings_FindOne_Res = ApiResponseBase<AppDeploymentSettings>;
 
 type AppDeploymentSettings_UpdateBasePayload = {
@@ -60,6 +60,7 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
 
 export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     updateVer: number;
     payload: AppDeploymentSettings_UpdateImagePayload | AppDeploymentSettings_UpdateRepoPayload;

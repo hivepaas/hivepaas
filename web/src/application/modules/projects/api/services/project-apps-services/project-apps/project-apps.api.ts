@@ -45,15 +45,13 @@ export class ProjectAppsApi extends BaseApi {
 
         const query = this.queryBuilder.getInstance();
 
-        query
-            .pagination(pagination)
-            .sorting(sorting)
-            .search(search)
-            .filterBy({ env: [env] });
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        const basePath = env ? `/projects/${projectID}/${env}/apps` : `/projects/${projectID}/apps`;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps`, {
+                this.client.v1.get(basePath, {
                     params: {
                         ...query.build(),
                         ...(getStats === undefined ? {} : { getStats }),
@@ -75,11 +73,11 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindOneById_Res, Error>> {
-        const { projectID, appID, getStats } = request.data;
+        const { projectID, env, appID, getStats } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}`, {
                     params: getStats === undefined ? undefined : { getStats },
                     signal,
                 }),
@@ -95,11 +93,11 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_PrepareCopy_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_PrepareCopy_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/copy/prepare`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/copy/prepare`, {
                     signal,
                 }),
             ).pipe(
@@ -111,11 +109,11 @@ export class ProjectAppsApi extends BaseApi {
     }
 
     async copy(request: ProjectApps_Copy_Req, signal?: AbortSignal): Promise<Result<ProjectApps_Copy_Res, Error>> {
-        const { projectID, appID, ...json } = request.data;
+        const { projectID, env, appID, ...json } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/copy`, json, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/copy`, json, {
                     signal,
                 }),
             ).pipe(
@@ -153,7 +151,7 @@ export class ProjectAppsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps`, json, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps`, json, {
                     signal,
                 }),
             ).pipe(
@@ -168,10 +166,10 @@ export class ProjectAppsApi extends BaseApi {
      * Delete a project app
      */
     async deleteOne(request: ProjectApps_DeleteOne_Req): Promise<Result<ProjectApps_DeleteOne_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/apps/${appID}`)).pipe(
+            from(this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -185,7 +183,7 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_UpdateOne_Res, Error>> {
-        const { projectID, appID, updateVer, name, note, tags, status } = request.data;
+        const { projectID, env, appID, updateVer, name, note, tags, status } = request.data;
 
         const json: Record<string, unknown> = {
             updateVer,
@@ -205,7 +203,7 @@ export class ProjectAppsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}`, json, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -222,11 +220,11 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_UpdateStatus_Res, Error>> {
-        const { projectID, appID, payload } = request.data;
+        const { projectID, env, appID, payload } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/status`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/status`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -240,10 +238,10 @@ export class ProjectAppsApi extends BaseApi {
      * Deploy a project app using existing deployment settings
      */
     async deploy(request: ProjectApps_Deploy_Req): Promise<Result<ProjectApps_Deploy_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/deploy`, {})).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/deploy`, {})).pipe(
                 map(this.validator.deploy),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -255,10 +253,10 @@ export class ProjectAppsApi extends BaseApi {
      * Restart a project app
      */
     async restart(request: ProjectApps_Restart_Req): Promise<Result<ProjectApps_Restart_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/restart`, {})).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/restart`, {})).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -269,10 +267,10 @@ export class ProjectAppsApi extends BaseApi {
      * Set a project app running status
      */
     async setRunning(request: ProjectApps_SetRunning_Req): Promise<Result<ProjectApps_SetRunning_Res, Error>> {
-        const { projectID, appID, running } = request.data;
+        const { projectID, env, appID, running } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/apps/${appID}/running-status`, { running })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/running-status`, { running })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -8,6 +8,7 @@ export type AppDangerAction = (typeof AppDangerAction)[keyof typeof AppDangerAct
 
 export interface ConfirmAppDangerActionTarget {
     projectId: string;
+    env: string;
     appId: string;
     appName: string;
     updateVer: number;

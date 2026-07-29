@@ -39,15 +39,18 @@ function isDeploymentTerminal(status?: EAppDeploymentStatus): boolean {
 export function AppDeploymentDetailsRoute() {
     const {
         id: projectId,
+        env,
         appId,
         deploymentId,
     } = useParams<{
         id: string;
+        env: string;
         appId: string;
         deploymentId: string;
     }>();
 
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
     invariant(deploymentId, "deploymentId must be defined");
 
@@ -60,6 +63,7 @@ export function AppDeploymentDetailsRoute() {
     } = AppDeploymentsQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             deploymentID: deploymentId,
         },
@@ -109,6 +113,7 @@ export function AppDeploymentDetailsRoute() {
                         onCancel={id => {
                             cancelDeployment({
                                 projectID: projectId,
+                                env,
                                 appID: appId,
                                 deploymentID: id,
                             });
@@ -116,6 +121,7 @@ export function AppDeploymentDetailsRoute() {
                     >
                         <DeploymentLogsViewer
                             projectID={projectId}
+                            env={env}
                             appID={appId}
                             deploymentID={deploymentId}
                             status={deployment.status}

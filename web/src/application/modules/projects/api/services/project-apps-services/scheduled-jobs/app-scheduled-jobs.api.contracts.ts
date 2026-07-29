@@ -106,6 +106,7 @@ export type AppScheduledJobs_Upsert_Payload = {
 
 export type AppScheduledJobs_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -116,6 +117,7 @@ export type AppScheduledJobs_FindManyPaginated_Res = ApiResponsePaginated<AppSch
 
 export type AppScheduledJobs_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
 }>;
@@ -124,6 +126,7 @@ export type AppScheduledJobs_FindOneById_Res = ApiResponseBase<AppScheduledJob>;
 
 export type AppScheduledJobs_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     payload: AppScheduledJobs_Upsert_Payload;
 }>;
@@ -134,6 +137,7 @@ export type AppScheduledJobs_CreateOne_Res = ApiResponseBase<{
 
 export type AppScheduledJobs_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     payload: AppScheduledJobs_Upsert_Payload & {
@@ -147,6 +151,7 @@ export type AppScheduledJobs_UpdateOne_Res = ApiResponseBase<{
 
 export type AppScheduledJobs_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     payload: {
@@ -164,6 +169,7 @@ export type AppScheduledJobs_UpdateStatus_Res = ApiResponseBase<{
 
 export type AppScheduledJobs_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
 }>;
@@ -174,6 +180,7 @@ export type AppScheduledJobs_DeleteOne_Res = ApiResponseBase<{
 
 export type AppScheduledJobs_RunNow_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
 }>;
@@ -186,6 +193,7 @@ export type AppScheduledJobs_RunNow_Res = ApiResponseBase<{
 
 export type AppScheduledJobTasks_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     pagination?: PaginationState;
@@ -197,6 +205,7 @@ export type AppScheduledJobTasks_FindManyPaginated_Res = ApiResponsePaginated<Ap
 
 export type AppScheduledJobTasks_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     taskID: string;
@@ -206,6 +215,7 @@ export type AppScheduledJobTasks_FindOneById_Res = ApiResponseBase<AppScheduledJ
 
 export type AppScheduledJobTasks_GetLogs_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     taskID: string;
@@ -219,6 +229,7 @@ export type AppScheduledJobTasks_GetLogs_Res = ApiResponseBase<AppScheduledJobTa
 
 export type AppScheduledJobTasks_Cancel_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     scheduledJobID: string;
     taskID: string;

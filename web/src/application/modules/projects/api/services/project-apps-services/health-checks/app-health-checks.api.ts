@@ -47,13 +47,13 @@ export class AppHealthChecksApi extends BaseApi {
         request: AppHealthChecks_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHealthChecks_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/healthchecks`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/healthchecks`, {
                     params: query.build(),
                     signal,
                 }),
@@ -69,11 +69,11 @@ export class AppHealthChecksApi extends BaseApi {
         request: AppHealthChecks_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHealthChecks_FindOneById_Res, Error>> {
-        const { projectID, appID, healthCheckID } = request.data;
+        const { projectID, env, appID, healthCheckID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/healthchecks/${healthCheckID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`, {
                     signal,
                 }),
             ).pipe(
@@ -88,13 +88,17 @@ export class AppHealthChecksApi extends BaseApi {
         request: AppHealthChecks_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHealthChecks_CreateOne_Res, Error>> {
-        const { projectID, appID, payload } = request.data;
+        const { projectID, env, appID, payload } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/healthchecks`, toUpsertPayload(payload), {
-                    signal,
-                }),
+                this.client.v1.post(
+                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks`,
+                    toUpsertPayload(payload),
+                    {
+                        signal,
+                    },
+                ),
             ).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
@@ -107,12 +111,12 @@ export class AppHealthChecksApi extends BaseApi {
         request: AppHealthChecks_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHealthChecks_UpdateOne_Res, Error>> {
-        const { projectID, appID, healthCheckID, payload } = request.data;
+        const { projectID, env, appID, healthCheckID, payload } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/apps/${appID}/healthchecks/${healthCheckID}`,
+                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`,
                     toUpsertPayload(payload),
                     { signal },
                 ),
@@ -127,12 +131,12 @@ export class AppHealthChecksApi extends BaseApi {
         request: AppHealthChecks_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppHealthChecks_UpdateStatus_Res, Error>> {
-        const { projectID, appID, healthCheckID, payload } = request.data;
+        const { projectID, env, appID, healthCheckID, payload } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/apps/${appID}/healthchecks/${healthCheckID}/status`,
+                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}/status`,
                     payload,
                     { signal },
                 ),
@@ -144,10 +148,12 @@ export class AppHealthChecksApi extends BaseApi {
     }
 
     async deleteOne(request: AppHealthChecks_DeleteOne_Req): Promise<Result<AppHealthChecks_DeleteOne_Res, Error>> {
-        const { projectID, appID, healthCheckID } = request.data;
+        const { projectID, env, appID, healthCheckID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/apps/${appID}/healthchecks/${healthCheckID}`)).pipe(
+            from(
+                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

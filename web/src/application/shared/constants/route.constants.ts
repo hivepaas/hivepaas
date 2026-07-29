@@ -464,202 +464,223 @@ export const ROUTE = {
                 $route: (id: string) => `/projects/${id}/apps/`,
 
                 single: {
-                    $pattern: "projects/:id/apps/:appId",
+                    $pattern: "projects/:id/:env/apps/:appId",
 
                     configuration: {
-                        $pattern: "projects/:id/apps/:appId/configuration",
+                        $pattern: "projects/:id/:env/apps/:appId/configuration",
 
                         general: {
-                            $pattern: "projects/:id/apps/:appId/general",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/general/`,
+                            $pattern: "projects/:id/:env/apps/:appId/general",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/general/`,
                         },
 
                         deploymentSettings: {
-                            $pattern: "projects/:id/apps/:appId/deployment-settings",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/deployment-settings/`,
+                            $pattern: "projects/:id/:env/apps/:appId/deployment-settings",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/deployment-settings/`,
                         },
 
                         containerSettings: {
-                            $pattern: "projects/:id/apps/:appId/container-settings",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/container-settings/`,
+                            $pattern: "projects/:id/:env/apps/:appId/container-settings",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/container-settings/`,
                         },
 
                         httpSettings: {
-                            $pattern: "projects/:id/apps/:appId/http-settings",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/http-settings/`,
+                            $pattern: "projects/:id/:env/apps/:appId/http-settings",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/http-settings/`,
                         },
 
                         healthChecks: {
-                            $pattern: "projects/:id/apps/:appId/health-checks",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/health-checks/`,
+                            $pattern: "projects/:id/:env/apps/:appId/health-checks",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/health-checks/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/health-checks/create",
-                                $route: (id: string, appId: string) =>
-                                    `/projects/${id}/apps/${appId}/health-checks/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/health-checks/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/health-checks/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/apps/:appId/health-checks/:healthCheckId/edit",
-                                $route: (id: string, appId: string, healthCheckId: string) =>
-                                    `/projects/${id}/apps/${appId}/health-checks/${healthCheckId}/edit/`,
+                                $pattern: "projects/:id/:env/apps/:appId/health-checks/:healthCheckId/edit",
+                                $route: (id: string, env: string, appId: string, healthCheckId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/health-checks/${healthCheckId}/edit/`,
                             },
                         },
 
                         scheduledJobs: {
-                            $pattern: "projects/:id/apps/:appId/sched-jobs",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/sched-jobs/`,
+                            $pattern: "projects/:id/:env/apps/:appId/sched-jobs",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/sched-jobs/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/sched-jobs/create",
-                                $route: (id: string, appId: string) =>
-                                    `/projects/${id}/apps/${appId}/sched-jobs/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/apps/:appId/sched-jobs/:scheduledJobId/edit",
-                                $route: (id: string, appId: string, scheduledJobId: string) =>
-                                    `/projects/${id}/apps/${appId}/sched-jobs/${scheduledJobId}/edit/`,
+                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
+                                $route: (id: string, env: string, appId: string, scheduledJobId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/${scheduledJobId}/edit/`,
                             },
                         },
 
                         envVariables: {
-                            $pattern: "projects/:id/apps/:appId/env-variables",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/env-variables/`,
+                            $pattern: "projects/:id/:env/apps/:appId/env-variables",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/env-variables/`,
                         },
 
                         secrets: {
-                            $pattern: "projects/:id/apps/:appId/secrets",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/`,
+                            $pattern: "projects/:id/:env/apps/:appId/secrets",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/secrets/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/secrets/create",
-                                $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/secrets/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/secrets/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/secrets/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/apps/:appId/secrets/:secretId/edit",
-                                $route: (id: string, appId: string, secretId: string) =>
-                                    `/projects/${id}/apps/${appId}/secrets/${secretId}/edit/`,
+                                $pattern: "projects/:id/:env/apps/:appId/secrets/:secretId/edit",
+                                $route: (id: string, env: string, appId: string, secretId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/secrets/${secretId}/edit/`,
                             },
                         },
 
                         configFiles: {
-                            $pattern: "projects/:id/apps/:appId/config-files",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/config-files/`,
+                            $pattern: "projects/:id/:env/apps/:appId/config-files",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/config-files/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/config-files/create",
-                                $route: (id: string, appId: string) =>
-                                    `/projects/${id}/apps/${appId}/config-files/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/config-files/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/config-files/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/apps/:appId/config-files/:configFileId/edit",
-                                $route: (id: string, appId: string, configFileId: string) =>
-                                    `/projects/${id}/apps/${appId}/config-files/${configFileId}/edit/`,
+                                $pattern: "projects/:id/:env/apps/:appId/config-files/:configFileId/edit",
+                                $route: (id: string, env: string, appId: string, configFileId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/config-files/${configFileId}/edit/`,
                             },
                         },
 
                         dataFiles: {
-                            $pattern: "projects/:id/apps/:appId/data-files",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/data-files/`,
+                            $pattern: "projects/:id/:env/apps/:appId/data-files",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/data-files/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/data-files/create",
-                                $route: (id: string, appId: string) =>
-                                    `/projects/${id}/apps/${appId}/data-files/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/data-files/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/data-files/create/`,
                             },
                         },
 
                         availabilityAndScaling: {
-                            $pattern: "projects/:id/apps/:appId/availability-and-scaling",
-                            $route: (id: string, appId: string) =>
-                                `/projects/${id}/apps/${appId}/availability-and-scaling/`,
+                            $pattern: "projects/:id/:env/apps/:appId/availability-and-scaling",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/availability-and-scaling/`,
                         },
 
                         presistentStorage: {
-                            $pattern: "projects/:id/apps/:appId/presistent-storage",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/presistent-storage/`,
+                            $pattern: "projects/:id/:env/apps/:appId/presistent-storage",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/presistent-storage/`,
 
                             create: {
-                                $pattern: "projects/:id/apps/:appId/presistent-storage/create",
-                                $route: (id: string, appId: string) =>
-                                    `/projects/${id}/apps/${appId}/presistent-storage/create/`,
+                                $pattern: "projects/:id/:env/apps/:appId/presistent-storage/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/presistent-storage/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/apps/:appId/presistent-storage/:mountId/edit",
-                                $route: (id: string, appId: string, mountId: string) =>
-                                    `/projects/${id}/apps/${appId}/presistent-storage/${mountId}/edit/`,
+                                $pattern: "projects/:id/:env/apps/:appId/presistent-storage/:mountId/edit",
+                                $route: (id: string, env: string, appId: string, mountId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/presistent-storage/${mountId}/edit/`,
                             },
                         },
 
                         networks: {
-                            $pattern: "projects/:id/apps/:appId/networks",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/networks/`,
+                            $pattern: "projects/:id/:env/apps/:appId/networks",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/networks/`,
                         },
 
                         resources: {
-                            $pattern: "projects/:id/apps/:appId/resources",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/resources/`,
+                            $pattern: "projects/:id/:env/apps/:appId/resources",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/resources/`,
                         },
 
                         featureSettings: {
-                            $pattern: "projects/:id/apps/:appId/feature-settings",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/feature-settings/`,
+                            $pattern: "projects/:id/:env/apps/:appId/feature-settings",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/feature-settings/`,
                         },
 
                         dangerZone: {
-                            $pattern: "projects/:id/apps/:appId/danger-zone",
-                            $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/danger-zone/`,
+                            $pattern: "projects/:id/:env/apps/:appId/danger-zone",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/danger-zone/`,
                         },
                     },
 
                     instances: {
-                        $pattern: "projects/:id/apps/:appId/instances",
-                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/instances/`,
+                        $pattern: "projects/:id/:env/apps/:appId/instances",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/instances/`,
                     },
 
                     deployments: {
-                        $pattern: "projects/:id/apps/:appId/deployments",
-                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/deployments/`,
+                        $pattern: "projects/:id/:env/apps/:appId/deployments",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/deployments/`,
                         details: {
-                            $pattern: "projects/:id/apps/:appId/deployments/:deploymentId",
-                            $route: (id: string, appId: string, deploymentId: string) =>
-                                `/projects/${id}/apps/${appId}/deployments/${deploymentId}/`,
+                            $pattern: "projects/:id/:env/apps/:appId/deployments/:deploymentId",
+                            $route: (id: string, env: string, appId: string, deploymentId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/deployments/${deploymentId}/`,
                         },
                     },
 
                     scheduledJobTasks: {
-                        $pattern: "projects/:id/apps/:appId/sched-jobs/:scheduledJobId/tasks",
-                        $route: (id: string, appId: string, scheduledJobId: string) =>
-                            `/projects/${id}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/`,
+                        $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks",
+                        $route: (id: string, env: string, appId: string, scheduledJobId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/`,
                         details: {
-                            $pattern: "projects/:id/apps/:appId/sched-jobs/:scheduledJobId/tasks/:taskId",
-                            $route: (id: string, appId: string, scheduledJobId: string, taskId: string) =>
-                                `/projects/${id}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/${taskId}/`,
+                            $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks/:taskId",
+                            $route: (id: string, env: string, appId: string, scheduledJobId: string, taskId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/${taskId}/`,
                         },
                     },
 
                     logs: {
-                        $pattern: "projects/:id/apps/:appId/logs",
-                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/logs/`,
+                        $pattern: "projects/:id/:env/apps/:appId/logs",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/logs/`,
                     },
 
                     terminal: {
-                        $pattern: "projects/:id/apps/:appId/terminal",
-                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/terminal/`,
+                        $pattern: "projects/:id/:env/apps/:appId/terminal",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/terminal/`,
                     },
 
                     previewDeployments: {
-                        $pattern: "projects/:id/apps/:appId/preview-deployments",
-                        $route: (id: string, appId: string) => `/projects/${id}/apps/${appId}/preview-deployments/`,
+                        $pattern: "projects/:id/:env/apps/:appId/preview-deployments",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/preview-deployments/`,
 
                         create: {
-                            $pattern: "projects/:id/apps/:appId/preview-deployments/create",
-                            $route: (id: string, appId: string) =>
-                                `/projects/${id}/apps/${appId}/preview-deployments/create/`,
+                            $pattern: "projects/:id/:env/apps/:appId/preview-deployments/create",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/preview-deployments/create/`,
                         },
                     },
                 },

@@ -19,7 +19,7 @@ function getStorageLabel(file: AppDataFile): string {
     return `${label.slice(0, MAX_STORAGE_LABEL_LENGTH - 3)}...`;
 }
 
-function createColumns(projectId: string, appId: string): ColumnDef<AppDataFile>[] {
+function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppDataFile>[] {
     return [
         {
             accessorKey: "name",
@@ -76,6 +76,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppDataFile>
             cell: ({ row: { original } }) => (
                 <AppDataFileMenuCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     dataFile={original}
                 />

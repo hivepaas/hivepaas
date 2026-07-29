@@ -32,12 +32,12 @@ export class AppDeploymentSettingsApi extends BaseApi {
         req: AppDeploymentSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDeploymentSettings_FindOne_Res, Error>> {
-        const { projectID, appID } = req.data;
+        const { projectID, env, appID } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/deployment-settings`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/deployment-settings`, {
                     params: query.build(),
                     signal,
                 }),
@@ -53,7 +53,7 @@ export class AppDeploymentSettingsApi extends BaseApi {
         req: AppDeploymentSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppDeploymentSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, updateVer, payload } = req.data;
+        const { projectID, env, appID, updateVer, payload } = req.data;
         const json =
             payload.activeMethod === EAppDeploymentMethod.Repo
                 ? {
@@ -77,7 +77,7 @@ export class AppDeploymentSettingsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/deployment-settings`, json, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/deployment-settings`, json, {
                     signal,
                 }),
             ).pipe(

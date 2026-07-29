@@ -7,6 +7,7 @@ export interface AppTerminalInfo {
 
 export type AppTerminal_GetInfo_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -21,6 +22,7 @@ export interface AppTerminalResizeMessage {
 export type AppTerminalWs_Open_Req = {
     data: {
         projectID: string;
+        env: string;
         appID: string;
         shell: string;
         width?: number;

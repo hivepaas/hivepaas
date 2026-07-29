@@ -17,11 +17,11 @@ export class AppServiceTasksApi extends BaseApi {
         request: AppServiceTasks_FindMany_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppServiceTasks_FindMany_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/service-tasks`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/service-tasks`, {
                     signal,
                 }),
             ).pipe(

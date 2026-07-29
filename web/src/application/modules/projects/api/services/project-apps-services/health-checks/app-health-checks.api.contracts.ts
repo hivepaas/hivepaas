@@ -46,6 +46,7 @@ export type AppHealthChecks_Upsert_Payload = {
 
 export type AppHealthChecks_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -56,6 +57,7 @@ export type AppHealthChecks_FindManyPaginated_Res = ApiResponsePaginated<AppHeal
 
 export type AppHealthChecks_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     healthCheckID: string;
 }>;
@@ -64,6 +66,7 @@ export type AppHealthChecks_FindOneById_Res = ApiResponseBase<AppHealthCheck>;
 
 export type AppHealthChecks_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     payload: AppHealthChecks_Upsert_Payload;
 }>;
@@ -74,6 +77,7 @@ export type AppHealthChecks_CreateOne_Res = ApiResponseBase<{
 
 export type AppHealthChecks_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     healthCheckID: string;
     payload: AppHealthChecks_Upsert_Payload & {
@@ -87,6 +91,7 @@ export type AppHealthChecks_UpdateOne_Res = ApiResponseBase<{
 
 export type AppHealthChecks_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     healthCheckID: string;
     payload: {
@@ -104,6 +109,7 @@ export type AppHealthChecks_UpdateStatus_Res = ApiResponseBase<{
 
 export type AppHealthChecks_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     healthCheckID: string;
 }>;

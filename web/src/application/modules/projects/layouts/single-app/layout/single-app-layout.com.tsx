@@ -14,14 +14,15 @@ import { isHttp404Exception } from "@infrastructure/api";
 import { SingleAppHeader } from "../header";
 
 export function SingleAppLayout({ children }: PropsWithChildren) {
-    const { id, appId } = useParams<{ id: string; appId: string }>();
+    const { id, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
     invariant(id, "Project id must be defined");
+    invariant(env, "Environment must be defined");
     invariant(appId, "App id must be defined");
 
     const { profile } = useProfileContext();
     const { canRead } = useConditionalProject({ projectId: id });
-    const { error, refetch } = ProjectAppsQueries.useFindOneById({ projectID: id, appID: appId });
+    const { error, refetch } = ProjectAppsQueries.useFindOneById({ projectID: id, env, appID: appId });
     const {
         data: projectData,
         error: projectError,
@@ -64,6 +65,7 @@ export function SingleAppLayout({ children }: PropsWithChildren) {
         <div className="flex flex-col gap-5">
             <SingleAppHeader
                 projectId={id}
+                env={env}
                 appId={appId}
             />
             {children}

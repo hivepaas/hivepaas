@@ -132,14 +132,14 @@ function buildCommandOutputPayload(
     };
 }
 
-export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobId }: Props) {
+export function AppScheduledJobFormRoute({ mode, projectId, appId, env, scheduledJobId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -147,6 +147,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
     const { data: detailData, isLoading: isDetailLoading } = AppScheduledJobsQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             scheduledJobID: scheduledJobId ?? "",
         },
@@ -184,6 +185,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
 
             updateScheduledJob({
                 projectID: projectId,
+                env,
                 appID: appId,
                 scheduledJobID: scheduledJobId,
                 payload: {
@@ -197,6 +199,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
 
         createScheduledJob({
             projectID: projectId,
+            env,
             appID: appId,
             payload,
         });
@@ -250,6 +253,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, scheduledJobI
 interface Props {
     mode: AppScheduledJobFormRouteMode;
     projectId: string;
+    env: string;
     appId: string;
     scheduledJobId?: string;
 }

@@ -20,12 +20,12 @@ export class AppStorageSettingsApi extends BaseApi {
         req: AppStorageSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppStorageSettings_FindOne_Res, Error>> {
-        const { projectID, appID } = req.data;
+        const { projectID, env, appID } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/storage-settings?getMounts=true`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/storage-settings?getMounts=true`, {
                     params: query.build(),
                     signal,
                 }),
@@ -41,11 +41,11 @@ export class AppStorageSettingsApi extends BaseApi {
         req: AppStorageSettings_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppStorageSettings_UpdateOne_Res, Error>> {
-        const { projectID, appID, payload } = req.data;
+        const { projectID, env, appID, payload } = req.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/storage-settings`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/storage-settings`, payload, {
                     signal,
                 }),
             ).pipe(

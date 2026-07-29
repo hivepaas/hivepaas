@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { AppHealthChecksCommands, AppHealthChecksQueries } from "~/projects/data";
 
@@ -14,6 +15,7 @@ import { useUpdateAppHealthCheckStatusDialogState } from "../hooks";
 import type { UpdateAppHealthCheckStatusFormOutput } from "../schemas";
 
 export function UpdateAppHealthCheckStatusDialog() {
+    const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useUpdateAppHealthCheckStatusDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -26,6 +28,7 @@ export function UpdateAppHealthCheckStatusDialog() {
     const { data, isLoading } = AppHealthChecksQueries.useFindOneById(
         {
             projectID: projectId,
+            env: env ?? "",
             appID: appId,
             healthCheckID: healthCheckId,
         },
@@ -52,6 +55,7 @@ export function UpdateAppHealthCheckStatusDialog() {
 
         updateStatus({
             projectID: state.projectId,
+            env: env ?? "",
             appID: state.appId,
             healthCheckID: state.healthCheckId,
             payload: {

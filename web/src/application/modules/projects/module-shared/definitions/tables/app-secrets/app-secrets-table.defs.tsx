@@ -6,7 +6,7 @@ import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
 import { EditCell, MenuCell } from "./building-blocks";
 
-function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[] {
+function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppSecret>[] {
     return [
         {
             id: "view",
@@ -23,6 +23,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
                 return (
                     <EditCell
                         projectId={projectId}
+                        env={env}
                         appId={appId}
                         secret={original}
                     />
@@ -93,6 +94,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppSecret>[]
                 return (
                     <MenuCell
                         projectId={projectId}
+                        env={env}
                         appId={appId}
                         secret={original}
                     />

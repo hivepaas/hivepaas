@@ -33,7 +33,7 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_FindManyPaginated_Res, Error>> {
-        const { projectID, appID, search, pagination, sorting } = request.data;
+        const { projectID, env, appID, search, pagination, sorting } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -41,7 +41,7 @@ export class AppConfigFilesApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/config-files`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/config-files`, {
                     params: query.build(),
                     signal,
                 }),
@@ -60,11 +60,11 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_FindOneById_Res, Error>> {
-        const { projectID, appID, configFileID } = request.data;
+        const { projectID, env, appID, configFileID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/config-files/${configFileID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/config-files/${configFileID}`, {
                     signal,
                 }),
             ).pipe(
@@ -82,13 +82,16 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_GetDownloadToken_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_GetDownloadToken_Res, Error>> {
-        const { projectID, appID, configFileID } = request.data;
+        const { projectID, env, appID, configFileID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/config-files/${configFileID}/download-token`, {
-                    signal,
-                }),
+                this.client.v1.get(
+                    `/projects/${projectID}/${env}/apps/${appID}/config-files/${configFileID}/download-token`,
+                    {
+                        signal,
+                    },
+                ),
             ).pipe(
                 map(this.validator.getDownloadToken),
                 map(res => Ok(res)),
@@ -101,10 +104,10 @@ export class AppConfigFilesApi extends BaseApi {
      * Build app config file download URL
      */
     buildDownloadUrl(request: AppConfigFiles_BuildDownloadUrl_Req): string {
-        const { projectID, appID, configFileID, token, viewInline } = request;
+        const { projectID, env, appID, configFileID, token, viewInline } = request;
         const baseUrl = EnvConfig.API_URL.endsWith("/") ? EnvConfig.API_URL : `${EnvConfig.API_URL}/`;
         const url = new URL(
-            `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/config-files/${encodeURIComponent(configFileID)}/download`,
+            `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(appID)}/config-files/${encodeURIComponent(configFileID)}/download`,
             baseUrl,
         );
 
@@ -121,7 +124,7 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_CreateOne_Res, Error>> {
-        const { projectID, appID, name, content, base64, swarmRef } = request.data;
+        const { projectID, env, appID, name, content, base64, swarmRef } = request.data;
 
         const json = {
             name: JsonTransformer.string({
@@ -136,7 +139,7 @@ export class AppConfigFilesApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/apps/${appID}/config-files`, json, {
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/config-files`, json, {
                     signal,
                 }),
             ).pipe(
@@ -151,10 +154,12 @@ export class AppConfigFilesApi extends BaseApi {
      * Delete an app config file
      */
     async deleteOne(request: AppConfigFiles_DeleteOne_Req): Promise<Result<AppConfigFiles_DeleteOne_Res, Error>> {
-        const { projectID, appID, configFileID } = request.data;
+        const { projectID, env, appID, configFileID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/apps/${appID}/config-files/${configFileID}`)).pipe(
+            from(
+                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/config-files/${configFileID}`),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -168,7 +173,7 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_UpdateOne_Res, Error>> {
-        const { projectID, appID, configFileID, updateVer, name, content, base64, swarmRef } = request.data;
+        const { projectID, env, appID, configFileID, updateVer, name, content, base64, swarmRef } = request.data;
 
         const json = {
             updateVer,
@@ -184,7 +189,7 @@ export class AppConfigFilesApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/apps/${appID}/config-files/${configFileID}`, json, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/config-files/${configFileID}`, json, {
                     signal,
                 }),
             ).pipe(

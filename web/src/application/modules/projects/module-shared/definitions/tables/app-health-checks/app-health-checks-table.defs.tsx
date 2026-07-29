@@ -15,7 +15,7 @@ function HealthCheckTypeBadge({ type }: { type: AppHealthCheck["healthcheckType"
     return <Badge className="bg-purple-500 text-white hover:bg-purple-500/90">GRPC</Badge>;
 }
 
-function createColumns(projectId: string, appId: string): ColumnDef<AppHealthCheck>[] {
+function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppHealthCheck>[] {
     return [
         {
             id: "view",
@@ -27,6 +27,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppHealthChe
             cell: ({ row: { original } }) => (
                 <EditCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     healthCheck={original}
                 />
@@ -95,6 +96,7 @@ function createColumns(projectId: string, appId: string): ColumnDef<AppHealthChe
             cell: ({ row: { original } }) => (
                 <MenuCell
                     projectId={projectId}
+                    env={env}
                     appId={appId}
                     healthCheck={original}
                 />

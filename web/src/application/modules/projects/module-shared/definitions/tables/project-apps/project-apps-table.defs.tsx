@@ -24,6 +24,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                 return (
                     <ActionsCell
                         projectId={projectId}
+                        env={original.env}
                         appId={original.id}
                     />
                 );

@@ -34,9 +34,9 @@ export class AppTerminalWsApi extends BaseWebSocketApi {
         }
 
         try {
-            const { projectID, appID, shell, width, height } = request.data;
+            const { projectID, env, appID, shell, width, height } = request.data;
             const url = this.client.buildUrl(
-                `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(appID)}/terminal`,
+                `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(appID)}/terminal`,
                 {
                     shell,
                     w: width,

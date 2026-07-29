@@ -85,14 +85,14 @@ function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): A
     };
 }
 
-export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId }: Props) {
+export function AppHealthCheckFormRoute({ mode, projectId, appId, env, healthCheckId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -100,6 +100,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
     const detailQuery = AppHealthChecksQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             healthCheckID: healthCheckId ?? "",
         },
@@ -133,6 +134,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
         if (isEditMode && healthCheck) {
             updateHealthCheck({
                 projectID: projectId,
+                env,
                 appID: appId,
                 healthCheckID: healthCheck.id,
                 payload: {
@@ -148,6 +150,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
         if (!isEditMode) {
             createHealthCheck({
                 projectID: projectId,
+                env,
                 appID: appId,
                 payload,
             });
@@ -198,6 +201,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, healthCheckId 
 interface Props {
     mode: AppHealthCheckFormRouteMode;
     projectId: string;
+    env: string;
     appId: string;
     healthCheckId?: string;
 }

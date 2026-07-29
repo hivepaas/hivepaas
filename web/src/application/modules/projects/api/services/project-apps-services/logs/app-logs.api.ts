@@ -31,11 +31,11 @@ export class AppLogsApi extends BaseApi {
     }
 
     async getInfo(request: AppLogs_GetInfo_Req, signal?: AbortSignal): Promise<Result<AppLogs_GetInfo_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/logs/info`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs/info`, {
                     signal,
                 }),
             ).pipe(
@@ -47,11 +47,11 @@ export class AppLogsApi extends BaseApi {
     }
 
     async getLogs(request: AppLogs_GetLogs_Req, signal?: AbortSignal): Promise<Result<AppLogs_GetLogs_Res, Error>> {
-        const { projectID, appID } = request.data;
+        const { projectID, env, appID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/${appID}/logs`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs`, {
                     params: buildAppLogsQueryParams({ ...request.data, follow: false }),
                     signal,
                 }),

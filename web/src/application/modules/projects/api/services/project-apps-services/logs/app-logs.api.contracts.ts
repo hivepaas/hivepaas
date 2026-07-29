@@ -14,6 +14,7 @@ export interface AppLogTask {
 
 export type AppLogs_GetInfo_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
 }>;
 
@@ -24,6 +25,7 @@ export type AppLogs_GetInfo_Res = ApiResponseBase<{
 
 export type AppLogs_GetLogs_Req = ApiRequestBase<{
     projectID: string;
+    env: string;
     appID: string;
     taskId?: string;
     follow?: boolean;

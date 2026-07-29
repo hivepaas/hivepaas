@@ -54,14 +54,14 @@ function getSwarmRef(values: CreateOrEditAppSecretFormOutput) {
     };
 }
 
-export function AppSecretFormRoute({ mode, projectId, appId, secretId }: Props) {
+export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }
@@ -69,6 +69,7 @@ export function AppSecretFormRoute({ mode, projectId, appId, secretId }: Props) 
     const detailQuery = ProjectAppSecretsQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             appID: appId,
             secretID: secretId ?? "",
         },
@@ -104,6 +105,7 @@ export function AppSecretFormRoute({ mode, projectId, appId, secretId }: Props) 
         if (isEditMode && secret) {
             updateAppSecret({
                 projectID: projectId,
+                env,
                 appID: appId,
                 secretID: secret.id,
                 updateVer: secret.updateVer,
@@ -118,6 +120,7 @@ export function AppSecretFormRoute({ mode, projectId, appId, secretId }: Props) 
         if (!isEditMode && value !== undefined) {
             createAppSecret({
                 projectID: projectId,
+                env,
                 appID: appId,
                 name: values.name,
                 value,
@@ -184,6 +187,7 @@ export function AppSecretFormRoute({ mode, projectId, appId, secretId }: Props) 
 interface Props {
     mode: AppSecretFormRouteMode;
     projectId: string;
+    env: string;
     appId: string;
     secretId?: string;
 }

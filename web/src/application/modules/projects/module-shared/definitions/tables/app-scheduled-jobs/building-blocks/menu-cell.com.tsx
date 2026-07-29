@@ -13,7 +13,7 @@ import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-function View({ projectId, appId, scheduledJob }: Props) {
+function View({ projectId, env, appId, scheduledJob }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateAppScheduledJobStatusDialog();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialog();
@@ -22,7 +22,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
     const { mutate: runNow, isPending: isRunning } = AppScheduledJobsCommands.useRunNow({
         onSuccess: response => {
             setOpen(false);
-            runNowTaskCreatedDialog.actions.open(projectId, appId, scheduledJob.id, response.data.task.id);
+            runNowTaskCreatedDialog.actions.open(projectId, env, appId, scheduledJob.id, response.data.task.id);
         },
     });
 
@@ -38,7 +38,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
             return;
         }
 
-        runNow({ projectID: projectId, appID: appId, scheduledJobID: scheduledJob.id });
+        runNow({ projectID: projectId, env, appID: appId, scheduledJobID: scheduledJob.id });
     }
 
     function handleChangeStatus() {
@@ -128,7 +128,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
                             cancelText="Cancel"
                             description="Are you sure you want to remove this scheduled job?"
                             onConfirm={() => {
-                                deleteOne({ projectID: projectId, appID: appId, scheduledJobID: scheduledJob.id });
+                                deleteOne({ projectID: projectId, env, appID: appId, scheduledJobID: scheduledJob.id });
                             }}
                         >
                             <Button
@@ -166,6 +166,7 @@ function View({ projectId, appId, scheduledJob }: Props) {
 
 interface Props {
     projectId: string;
+    env: string;
     appId: string;
     scheduledJob: AppScheduledJob;
 }

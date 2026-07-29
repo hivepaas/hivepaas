@@ -23,7 +23,7 @@ export class AppScheduledJobTaskLogsWsApi extends BaseWebSocketApi {
         handlers: AppScheduledJobTaskLogsWsHandlers,
         signal?: AbortSignal,
     ): Result<AppScheduledJobTaskLogsWs_StreamLogs_Res, Error> {
-        const { projectID, appID, scheduledJobID, taskID } = request.data;
+        const { projectID, env, appID, scheduledJobID, taskID } = request.data;
         const accessToken = session.getToken();
 
         if (!accessToken) {
@@ -32,7 +32,7 @@ export class AppScheduledJobTaskLogsWsApi extends BaseWebSocketApi {
 
         try {
             const url = this.client.buildUrl(
-                `projects/${encodeURIComponent(projectID)}/apps/${encodeURIComponent(
+                `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(
                     appID,
                 )}/sched-jobs/${encodeURIComponent(scheduledJobID)}/tasks/${encodeURIComponent(taskID)}/logs`,
                 buildAppScheduledJobTaskLogsQueryParams({

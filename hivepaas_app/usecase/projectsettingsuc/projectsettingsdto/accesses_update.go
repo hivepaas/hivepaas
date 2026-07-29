@@ -9,14 +9,20 @@ import (
 )
 
 type UpdateUserAccessesReq struct {
-	ProjectID       string             `json:"-"`
-	UserAccesses    []*UserAccessReq   `json:"userAccesses"`
-	EnvUserAccesses [][]*UserAccessReq `json:"envUserAccesses"`
+	ProjectID       string                `json:"-"`
+	UserAccesses    []*UserAccessReq      `json:"userAccesses"`
+	EnvUserAccesses []*EnvUserAccessesReq `json:"envUserAccesses"`
+	UpdateVer       int                   `json:"updateVer"`
 }
 
 type UserAccessReq struct {
 	ID     string             `json:"id"`
 	Access base.AccessActions `json:"access"`
+}
+
+type EnvUserAccessesReq struct {
+	Name         string           `json:"name"`
+	UserAccesses []*UserAccessReq `json:"userAccesses"`
 }
 
 func NewUpdateUserAccessesReq() *UpdateUserAccessesReq {

@@ -72,6 +72,28 @@ func DeleteWhereNotInIf[T any](cond bool, queryStr string, slice ...T) DeleteQue
 	return DeleteWhereNotIn(queryStr, slice...)
 }
 
+func DeleteWhereGroup(opts ...DeleteQueryOption) DeleteQueryOption {
+	return func(query *bun.DeleteQuery) *bun.DeleteQuery {
+		return query.WhereGroup(" AND ", func(query *bun.DeleteQuery) *bun.DeleteQuery {
+			for _, opt := range opts {
+				query = opt(query)
+			}
+			return query
+		})
+	}
+}
+
+func DeleteWhereOrGroup(opts ...DeleteQueryOption) DeleteQueryOption {
+	return func(query *bun.DeleteQuery) *bun.DeleteQuery {
+		return query.WhereGroup(" OR ", func(query *bun.DeleteQuery) *bun.DeleteQuery {
+			for _, opt := range opts {
+				query = opt(query)
+			}
+			return query
+		})
+	}
+}
+
 func DeleteWithForceDelete() DeleteQueryOption {
 	return func(query *bun.DeleteQuery) *bun.DeleteQuery {
 		return query.ForceDelete()

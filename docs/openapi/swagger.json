@@ -34528,7 +34528,7 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -34546,7 +34546,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -39266,6 +39266,36 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.EnvUserAccessesReq" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "userAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "name", "userAccesses" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.EnvUserAccessesResp" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "userAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "name", "userAccesses" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.EnvVarsResp" : {
         "properties" : {
           "buildtimeEnvVars" : {
@@ -39362,33 +39392,6 @@
         "required" : [ "access", "email", "fullName", "id", "photo", "role", "username" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp" : {
-        "properties" : {
-          "access" : {
-            "$ref" : "#/components/schemas/base.AccessActions"
-          },
-          "email" : {
-            "type" : "string"
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "photo" : {
-            "type" : "string"
-          },
-          "role" : {
-            "type" : "string"
-          },
-          "username" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "access", "email", "fullName", "id", "photo", "role", "username" ],
-        "type" : "object"
-      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateProjectEnvVarsReq" : {
         "properties" : {
           "buildtimeEnvVars" : {
@@ -39421,6 +39424,15 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesReq" : {
         "properties" : {
+          "envUserAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.EnvUserAccessesReq"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
           "userAccesses" : {
             "items" : {
               "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessReq"
@@ -39428,7 +39440,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "userAccesses" ],
+        "required" : [ "envUserAccesses", "updateVer", "userAccesses" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UpdateUserAccessesResp" : {
@@ -39452,6 +39464,33 @@
         "required" : [ "access", "id" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessResp" : {
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/base.AccessActions"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "email", "fullName", "id", "photo", "role", "username" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessesDataResp" : {
         "properties" : {
           "currentUserActions" : {
@@ -39459,10 +39498,7 @@
           },
           "envUserAccesses" : {
             "items" : {
-              "items" : {
-                "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp"
-              },
-              "type" : "array"
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.EnvUserAccessesResp"
             },
             "type" : "array"
           },
@@ -39473,16 +39509,19 @@
             "type" : "array"
           },
           "ownerAccess" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp"
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessResp"
+          },
+          "updateVer" : {
+            "type" : "integer"
           },
           "userAccesses" : {
             "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.ProjectUserAccessResp"
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectsettingsuc_projectsettingsdto.UserAccessResp"
             },
             "type" : "array"
           }
         },
-        "required" : [ "currentUserActions", "envUserAccesses", "moduleUserAccesses", "ownerAccess", "userAccesses" ],
+        "required" : [ "currentUserActions", "envUserAccesses", "moduleUserAccesses", "ownerAccess", "updateVer", "userAccesses" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_projectuc_projectdto.CreateProjectReq" : {

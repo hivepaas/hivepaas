@@ -22,7 +22,7 @@ func (p *manager) UpdateACLPermissions(
 	return nil
 }
 
-func (p *manager) RemoveACLPermissions(
+func (p *manager) DeleteACLPermissions(
 	ctx context.Context,
 	db database.IDB,
 	perms []*base.PermissionResource,
@@ -34,7 +34,7 @@ func (p *manager) RemoveACLPermissions(
 	return nil
 }
 
-func (p *manager) RemoveACLPermissionsBySubjects(
+func (p *manager) DeleteACLPermissionsBySubjects(
 	ctx context.Context,
 	db database.IDB,
 	subjectType base.SubjectType,
@@ -47,7 +47,7 @@ func (p *manager) RemoveACLPermissionsBySubjects(
 	return nil
 }
 
-func (p *manager) RemoveACLPermissionsByObjects(
+func (p *manager) DeleteACLPermissionsByObjects(
 	ctx context.Context,
 	db database.IDB,
 	objectIDs []string,
@@ -59,7 +59,7 @@ func (p *manager) RemoveACLPermissionsByObjects(
 	return nil
 }
 
-func (p *manager) RemoveACLPermissionsOfUsers(
+func (p *manager) DeleteACLPermissionsOfUsers(
 	ctx context.Context,
 	db database.IDB,
 	userIDs []string,

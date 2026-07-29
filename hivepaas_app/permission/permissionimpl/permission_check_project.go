@@ -69,14 +69,20 @@ func (p *manager) LoadProjectAccesses(
 	projectID string,
 	projectEnvIDs []string,
 	makeAdjustment bool,
-	extraLoadOpts ...bunex.SelectQueryOption,
 ) (
 	modPerms []*entity.ACLPermission,
 	projectPerms []*entity.ACLPermission,
 	envPerms map[string][]*entity.ACLPermission,
 	err error,
 ) {
-	perms, err := p.loadProjectAccessPerms(ctx, db, projectID, projectEnvIDs, extraLoadOpts...)
+	perms, err := p.LoadProjectRawAccesses(ctx, db, projectID, projectEnvIDs,
+		bunex.SelectRelation("SubjectUser",
+			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
+		),
+		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subj_id"),
+		bunex.SelectWhere("users.deleted_at IS NULL"),
+		// bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),
+	)
 	if err != nil {
 		return nil, nil, nil, apperrors.Wrap(err)
 	}
@@ -130,9 +136,15 @@ func (p *manager) LoadProjectAccessUsers(
 	db database.IDB,
 	projectID string,
 	projectEnvIDs []string,
-	extraLoadOpts ...bunex.SelectQueryOption,
 ) (userPerms []*entity.ACLPermission, err error) {
-	perms, err := p.loadProjectAccessPerms(ctx, db, projectID, projectEnvIDs, extraLoadOpts...)
+	perms, err := p.LoadProjectRawAccesses(ctx, db, projectID, projectEnvIDs,
+		bunex.SelectRelation("SubjectUser",
+			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
+		),
+		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subj_id"),
+		bunex.SelectWhere("users.deleted_at IS NULL"),
+		// bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),
+	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -146,7 +158,7 @@ func (p *manager) LoadProjectAccessUsers(
 	return gofn.MapValues(mapPerms), nil
 }
 
-func (p *manager) loadProjectAccessPerms(
+func (p *manager) LoadProjectRawAccesses(
 	ctx context.Context,
 	db database.IDB,
 	projectID string,
@@ -176,12 +188,6 @@ func (p *manager) loadProjectAccessPerms(
 			bunex.SelectWhereOr("(acl_permission.res_type = ? AND acl_permission.res_id = ?)",
 				string(base.ResourceTypeModule), string(base.ResourceModuleProject)),
 		),
-		bunex.SelectRelation("SubjectUser",
-			bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
-		),
-		bunex.SelectJoin("JOIN users ON users.id = acl_permission.subj_id"),
-		bunex.SelectWhere("users.deleted_at IS NULL"),
-		// bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),
 	}
 	loadOpts = append(loadOpts, extraLoadOpts...)
 

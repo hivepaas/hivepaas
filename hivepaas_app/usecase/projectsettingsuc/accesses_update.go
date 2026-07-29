@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
@@ -44,7 +45,8 @@ func (uc *UC) UpdateUserAccesses(
 }
 
 type updateUserAccessesData struct {
-	Project *entity.Project
+	Project         *entity.Project
+	CurrentAccesses map[string]*entity.ACLPermission
 }
 
 func (uc *UC) loadUserAccessesForUpdate(
@@ -56,14 +58,25 @@ func (uc *UC) loadUserAccessesForUpdate(
 	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectRelation("Accesses",
-			bunex.SelectWhere("acl_permission.subj_type = ?", base.SubjectTypeUser),
-		),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+	if project.UpdateVer != req.UpdateVer {
+		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+	}
 	data.Project = project
+
+	// Loads all current accesses
+	currAccesses, err := uc.permissionManager.LoadProjectRawAccesses(ctx, db, project.ID, nil)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	data.CurrentAccesses = make(map[string]*entity.ACLPermission, len(currAccesses))
+	for _, access := range currAccesses {
+		data.CurrentAccesses[access.SubjectID+"/"+access.ResourceID] = access
+	}
 
 	return nil
 }
@@ -74,31 +87,41 @@ func (uc *UC) prepareUpdatingUserAccesses(
 	persistingData *persistingProjectData,
 ) {
 	project := data.Project
+	currAccesses := data.CurrentAccesses
 	timeNow := timeutil.NowUTC()
+	upsertingACLs := make(map[string]*entity.ACLPermission, len(currAccesses))
 
-	newAccessesByUserID := make(map[string]*projectsettingsdto.UserAccessReq)
-	for _, accessReq := range req.UserAccesses {
-		newAccessesByUserID[accessReq.ID] = accessReq
-	}
-
-	// Accesses to delete
-	for _, access := range project.Accesses {
-		if _, exists := newAccessesByUserID[access.SubjectID]; !exists {
-			access.DeletedAt = timeNow
-			persistingData.UpsertingACLPermissions = append(persistingData.UpsertingACLPermissions, access)
+	for _, envAccesses := range req.EnvUserAccesses {
+		projectEnvID := projecthelper.CalcProjectEnvID(project.ID, envAccesses.Name)
+		for _, accessReq := range envAccesses.UserAccesses {
+			key := accessReq.ID + "/" + projectEnvID
+			currAccess := currAccesses[key]
+			if currAccess == nil {
+				currAccess = &entity.ACLPermission{
+					SubjectType:  base.SubjectTypeUser,
+					SubjectID:    accessReq.ID,
+					ResourceType: base.ResourceTypeProjectEnv,
+					ResourceID:   projectEnvID,
+					Actions:      accessReq.Access,
+					CreatedAt:    timeNow,
+					UpdatedAt:    timeNow,
+				}
+				currAccesses[key] = currAccess
+			} else if !currAccess.Actions.Equal(accessReq.Access) {
+				currAccess.Actions = accessReq.Access
+				currAccess.UpdatedAt = timeNow
+			}
+			upsertingACLs[key] = currAccess
 		}
 	}
-	// Accesses to update or insert
-	for _, accessReq := range newAccessesByUserID {
-		persistingData.UpsertingACLPermissions =
-			append(persistingData.UpsertingACLPermissions, &entity.ACLPermission{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    accessReq.ID,
-				ResourceType: base.ResourceTypeProject,
-				ResourceID:   project.ID,
-				Actions:      accessReq.Access,
-				CreatedAt:    timeNow,
-				UpdatedAt:    timeNow,
-			})
+	if len(upsertingACLs) == 0 {
+		return
 	}
+	for _, access := range upsertingACLs {
+		persistingData.UpsertingACLPermissions = append(persistingData.UpsertingACLPermissions, access)
+	}
+
+	project.UpdatedAt = timeNow
+	project.UpdateVer++
+	persistingData.UpsertingProjects = append(persistingData.UpsertingProjects, project)
 }

@@ -34,7 +34,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	appIDs := []string{app.ID}
 
 	// ACL permissions related to the app
-	err := s.permissionManager.RemoveACLPermissionsByObjects(ctx, db, appIDs)
+	err := s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, appIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

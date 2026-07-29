@@ -34,7 +34,7 @@ func (s *service) PersistUserData(ctx context.Context, db database.IDB,
 	}
 
 	// Remove accesses
-	err = s.permissionManager.RemoveACLPermissions(ctx, db, persistingData.DeletingAccesses)
+	err = s.permissionManager.DeleteACLPermissions(ctx, db, persistingData.DeletingAccesses)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

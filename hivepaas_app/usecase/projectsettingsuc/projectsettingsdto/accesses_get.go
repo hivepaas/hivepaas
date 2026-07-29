@@ -33,16 +33,22 @@ type GetUserAccessesResp struct {
 }
 
 type UserAccessesDataResp struct {
-	OwnerAccess        *ProjectUserAccessResp     `json:"ownerAccess"`
-	UserAccesses       []*ProjectUserAccessResp   `json:"userAccesses"`
-	EnvUserAccesses    [][]*ProjectUserAccessResp `json:"envUserAccesses"`
-	ModuleUserAccesses []*ModuleUserAccessResp    `json:"moduleUserAccesses"`
-	CurrentUserActions *CurrentUserActionsResp    `json:"currentUserActions"`
+	OwnerAccess        *UserAccessResp         `json:"ownerAccess"`
+	UserAccesses       []*UserAccessResp       `json:"userAccesses"`
+	EnvUserAccesses    []*EnvUserAccessesResp  `json:"envUserAccesses"`
+	ModuleUserAccesses []*ModuleUserAccessResp `json:"moduleUserAccesses"`
+	CurrentUserActions *CurrentUserActionsResp `json:"currentUserActions"`
+	UpdateVer          int                     `json:"updateVer"`
 }
 
-type ProjectUserAccessResp struct {
+type UserAccessResp struct {
 	*basedto.UserBaseResp
 	Access base.AccessActions `json:"access"`
+}
+
+type EnvUserAccessesResp struct {
+	Name         string            `json:"name"`
+	UserAccesses []*UserAccessResp `json:"userAccesses"`
 }
 
 type ModuleUserAccessResp struct {
@@ -69,27 +75,28 @@ func TransformUserAccesses(input *UserAccessesTransformInput) *UserAccessesDataR
 		UserAccesses:       TransformUserAccessesOnProject(input),
 		EnvUserAccesses:    TransformUserAccessesOnProjectEnvs(input),
 		ModuleUserAccesses: TransformUserAccessesOnModule(input),
+		UpdateVer:          input.Project.UpdateVer,
 	}
 	TransformCurrentUserActions(input, resp)
 	return resp
 }
 
-func TransformOwnerAccessOnProject(input *UserAccessesTransformInput) *ProjectUserAccessResp {
-	return &ProjectUserAccessResp{
+func TransformOwnerAccessOnProject(input *UserAccessesTransformInput) *UserAccessResp {
+	return &UserAccessResp{
 		UserBaseResp: projectdto.TransformProjectOwner(input.Project),
 		Access:       base.NewFullAccessActions(),
 	}
 }
 
-func TransformUserAccessesOnProject(input *UserAccessesTransformInput) []*ProjectUserAccessResp {
+func TransformUserAccessesOnProject(input *UserAccessesTransformInput) []*UserAccessResp {
 	perms := input.ProjectPermissions
 	slices.SortStableFunc(perms, func(a, b *entity.ACLPermission) int {
 		return strings.Compare(a.SubjectUser.FullName, b.SubjectUser.FullName)
 	})
 
-	resp := make([]*ProjectUserAccessResp, 0, len(perms))
+	resp := make([]*UserAccessResp, 0, len(perms))
 	for _, access := range perms {
-		resp = append(resp, &ProjectUserAccessResp{
+		resp = append(resp, &UserAccessResp{
 			UserBaseResp: basedto.TransformUserBase(access.SubjectUser),
 			Access:       access.Actions,
 		})
@@ -97,22 +104,25 @@ func TransformUserAccessesOnProject(input *UserAccessesTransformInput) []*Projec
 	return resp
 }
 
-func TransformUserAccessesOnProjectEnvs(input *UserAccessesTransformInput) (resp [][]*ProjectUserAccessResp) {
-	resp = make([][]*ProjectUserAccessResp, 0, len(input.Project.ProjectEnvs))
+func TransformUserAccessesOnProjectEnvs(input *UserAccessesTransformInput) (resp []*EnvUserAccessesResp) {
+	resp = make([]*EnvUserAccessesResp, 0, len(input.Project.ProjectEnvs))
 	for _, env := range input.Project.ProjectEnvs {
 		perms := input.EnvPermissions[env.ID]
 		slices.SortStableFunc(perms, func(a, b *entity.ACLPermission) int {
 			return strings.Compare(a.SubjectUser.FullName, b.SubjectUser.FullName)
 		})
 
-		envResp := make([]*ProjectUserAccessResp, 0, len(perms))
+		envResp := make([]*UserAccessResp, 0, len(perms))
 		for _, access := range perms {
-			envResp = append(envResp, &ProjectUserAccessResp{
+			envResp = append(envResp, &UserAccessResp{
 				UserBaseResp: basedto.TransformUserBase(access.SubjectUser),
 				Access:       access.Actions,
 			})
 		}
-		resp = append(resp, envResp)
+		resp = append(resp, &EnvUserAccessesResp{
+			Name:         env.Name,
+			UserAccesses: envResp,
+		})
 	}
 	return resp
 }

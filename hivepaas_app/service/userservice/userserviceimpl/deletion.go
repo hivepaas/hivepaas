@@ -20,7 +20,7 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 	userIDs := []string{user.ID}
 
 	// ACL permissions having the user ID as subject ID
-	err = s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
+	err = s.permissionManager.DeleteACLPermissionsBySubjects(ctx, db, base.SubjectTypeUser, userIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

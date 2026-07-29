@@ -15,15 +15,20 @@ type Manager interface {
 
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
-	RemoveACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error
-	RemoveACLPermissionsBySubjects(ctx context.Context, db database.IDB,
+	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error
+	DeleteACLPermissionsBySubjects(ctx context.Context, db database.IDB,
 		subjectType base.SubjectType, subjectIDs []string) error
-	RemoveACLPermissionsByObjects(ctx context.Context, db database.IDB, objectIDs []string) error
-	RemoveACLPermissionsOfUsers(ctx context.Context, db database.IDB, userIDs []string) error
+	DeleteACLPermissionsByObjects(ctx context.Context, db database.IDB, objectIDs []string) error
+	DeleteACLPermissionsOfUsers(ctx context.Context, db database.IDB, userIDs []string) error
 
+	// Project permissions
+	LoadProjectRawAccesses(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,
+		extraOpts ...bunex.SelectQueryOption) ([]*entity.ACLPermission, error)
 	LoadProjectAccesses(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,
-		makeAdjustment bool, extraLoadOpts ...bunex.SelectQueryOption) (modPerms []*entity.ACLPermission,
-		projectPerms []*entity.ACLPermission, envPerms map[string][]*entity.ACLPermission, err error)
-	LoadProjectAccessUsers(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,
-		extraLoadOpts ...bunex.SelectQueryOption) (userPerms []*entity.ACLPermission, err error)
+		makeAdjustment bool) (modPerms []*entity.ACLPermission, projectPerms []*entity.ACLPermission,
+		envPerms map[string][]*entity.ACLPermission, err error)
+	LoadProjectAccessUsers(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string) (
+		userPerms []*entity.ACLPermission, err error)
+	DeleteProjectAccesses(ctx context.Context, db database.IDB, projectID string,
+		extraOpts ...bunex.DeleteQueryOption) error
 }

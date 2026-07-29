@@ -18,6 +18,7 @@ type Manager interface {
 	RemoveACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error
 	RemoveACLPermissionsBySubjects(ctx context.Context, db database.IDB,
 		subjectType base.SubjectType, subjectIDs []string) error
+	RemoveACLPermissionsByObjects(ctx context.Context, db database.IDB, objectIDs []string) error
 	RemoveACLPermissionsOfUsers(ctx context.Context, db database.IDB, userIDs []string) error
 
 	LoadProjectAccesses(ctx context.Context, db database.IDB, projectID string, projectEnvIDs []string,

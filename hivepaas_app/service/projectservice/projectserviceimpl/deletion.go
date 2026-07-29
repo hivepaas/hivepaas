@@ -33,8 +33,8 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	// Delete ref resources in DB
 	projectIDs := []string{project.ID}
 
-	// ACL permissions having the project ID as subject ID
-	err := s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeProject, projectIDs)
+	// ACL permissions related to the project
+	err := s.permissionManager.RemoveACLPermissionsByObjects(ctx, db, projectIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -117,8 +117,8 @@ func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, project
 	// Delete ref resources in DB
 	projectEnvIDs := []string{projectEnv.ID}
 
-	// ACL permissions having the project env ID as subject ID
-	err := s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeProjectEnv, projectEnvIDs)
+	// ACL permissions related to the project env
+	err := s.permissionManager.RemoveACLPermissionsByObjects(ctx, db, projectEnvIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

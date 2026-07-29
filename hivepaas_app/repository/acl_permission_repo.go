@@ -29,6 +29,8 @@ type ACLPermissionRepo interface {
 		opts ...bunex.DeleteQueryOption) error
 	DeleteBySubjects(ctx context.Context, db database.IDB, subjectType base.SubjectType, subjectIDs []string,
 		opts ...bunex.DeleteQueryOption) error
+	DeleteByObjects(ctx context.Context, db database.IDB, objectIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -188,6 +190,22 @@ func (repo *aclPermissionRepo) DeleteBySubjects(ctx context.Context, db database
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).
 		Where("subj_type = ?", subjectType).
 		Where("subj_id IN (?)", bun.List(subjectIDs))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (repo *aclPermissionRepo) DeleteByObjects(ctx context.Context, db database.IDB, objectIDs []string,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).
+		Where("(subj_id IN (?) OR res_id IN (?))", bun.List(objectIDs), bun.List(objectIDs))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

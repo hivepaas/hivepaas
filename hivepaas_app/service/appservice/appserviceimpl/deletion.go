@@ -33,8 +33,8 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	// Delete ref resources in DB
 	appIDs := []string{app.ID}
 
-	// ACL permissions having the app ID as subject ID
-	err := s.permissionManager.RemoveACLPermissionsBySubjects(ctx, db, base.SubjectTypeApp, appIDs)
+	// ACL permissions related to the app
+	err := s.permissionManager.RemoveACLPermissionsByObjects(ctx, db, appIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

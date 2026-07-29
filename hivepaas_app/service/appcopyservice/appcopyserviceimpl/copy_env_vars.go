@@ -15,9 +15,11 @@ func (s *service) applyEnvVars(
 	data *appCopyData,
 ) (err error) {
 	app := data.TargetApp
-	envResp, err := s.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
-		App:  app,
-		Sort: true,
+	envResp, err := s.envVarService.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
+		App: app,
+		BuildOptions: envvarservice.EnvBuildOptions{
+			Sort: true,
+		},
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -27,7 +29,9 @@ func (s *service) applyEnvVars(
 	var errs []string
 	for _, env := range envResp.EnvVars {
 		envVars = append(envVars, env.ToString("="))
-		errs = append(errs, env.Errors...)
+		for _, e := range env.Errors {
+			errs = append(errs, e.ErrorWithApp(app.Name))
+		}
 	}
 
 	if len(errs) > 0 {

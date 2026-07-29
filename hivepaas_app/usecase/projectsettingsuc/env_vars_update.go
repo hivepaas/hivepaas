@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
 )
 
@@ -23,27 +24,22 @@ func (uc *UC) UpdateProjectEnvVars(
 	auth *basedto.Auth,
 	req *projectsettingsdto.UpdateProjectEnvVarsReq,
 ) (*projectsettingsdto.UpdateProjectEnvVarsResp, error) {
-	var data *updateProjectEnvVarsData
-	var persistingData *persistingProjectData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &updateProjectEnvVarsData{}
+		data := &updateProjectEnvVarsData{}
 		err := uc.loadProjectEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		persistingData = &persistingProjectData{}
+		persistingData := &persistingProjectData{}
 		uc.prepareUpdatingProjectEnvVars(req, data, persistingData)
-
-		// TODO: Do we need to re-apply the ENVs to the apps?
-
-		// TODO: how to make sure the changes not break apps
-		// if they use any of ENVs within the project.
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+
+		// TODO: validate the env vars changes
 
 		return nil
 	})
@@ -51,7 +47,39 @@ func (uc *UC) UpdateProjectEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &projectsettingsdto.UpdateProjectEnvVarsResp{}, nil
+	resp := &projectsettingsdto.UpdateProjectEnvVarsResp{
+		Meta: &basedto.Meta{},
+	}
+
+	// Apply the changes to every project envs and their apps
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			bunex.SelectFor("UPDATE OF project"),
+			bunex.SelectRelation("ProjectEnvs.Apps"),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		err = uc.projectService.ApplyEnvVarChangesToEnvs(ctx, db, &envvarservice.BuildEnvVarsInProjectReq{
+			Project: project,
+			BuildOptions: envvarservice.EnvBuildOptions{
+				Sort: true,
+			},
+		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		// NOTE: just show user a message instead of failing the request?
+		resp.Meta.Warning = "Project updated successfully, but failed to apply changes to app: " + err.Error()
+	}
+
+	return resp, nil
 }
 
 type updateProjectEnvVarsData struct {

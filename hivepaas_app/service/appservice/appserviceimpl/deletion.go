@@ -15,7 +15,7 @@ import (
 
 func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error {
 	// Delete all child apps and their resources
-	if app.ParentID == "" {
+	if !app.IsChildApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, "", nil,
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			bunex.SelectWhere("app.parent_id = ?", app.ID),

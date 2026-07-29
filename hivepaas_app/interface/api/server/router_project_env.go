@@ -81,7 +81,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		envVarGroup := projectEnvGroup.Group("/env-vars")
 		envVarGroup.GET("", projectEnvSettingsHandler.GetEnvVars)
 		envVarGroup.PUT("", projectEnvSettingsHandler.UpdateEnvVars)
-		envVarGroup.POST("/compute", projectEnvSettingsHandler.ComputeEnvVars)
+		envVarGroup.POST("/compute", projectEnvSettingsHandler.BuildEnvVars)
 	}
 
 	{ // Git credentials group

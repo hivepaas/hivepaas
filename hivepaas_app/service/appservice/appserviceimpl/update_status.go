@@ -29,7 +29,7 @@ func (s *service) SetAppStatus(
 	recursive bool,
 ) error {
 	// Update status of all child apps
-	if app.ParentID == "" && recursive {
+	if !app.IsChildApp() && recursive {
 		childApps, _, err := s.appRepo.List(ctx, db, "", nil,
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			bunex.SelectWhere("app.parent_id = ?", app.ID),

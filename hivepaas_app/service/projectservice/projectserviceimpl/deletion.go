@@ -97,7 +97,7 @@ func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, project
 	// Remove all apps
 	var wg sync.WaitGroup
 	for _, app := range projectEnv.Apps {
-		if app.ParentID != "" {
+		if app.IsChildApp() {
 			continue
 		}
 		app.ProjectEnv = projectEnv

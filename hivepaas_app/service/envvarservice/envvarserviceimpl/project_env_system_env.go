@@ -7,10 +7,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeSystemEnvVarsInProjectEnv(
+func (s *service) BuildSystemEnvVarsInProjectEnv(
 	ctx context.Context,
 	_ database.IDB,
-	_ *envvarservice.ComputeSystemEnvVarsInProjectEnvReq,
+	_ *envvarservice.BuildSystemEnvVarsInProjectEnvReq,
 ) ([]*envvarservice.EnvVar, error) {
 	return nil, nil
 }

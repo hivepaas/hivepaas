@@ -106,6 +106,8 @@ type ReqParsingErrorHandler interface {
 type Meta struct {
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message,omitempty"`
+	Warning string `json:"warning,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
 // ListMeta metadata of list api

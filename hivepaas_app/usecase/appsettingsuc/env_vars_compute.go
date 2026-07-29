@@ -45,14 +45,18 @@ func (uc *UC) ComputeAppEnvVars(
 		}
 	}
 
-	computedVars, err := uc.envVarService.ComputeEnvVarsInApp(ctx, uc.db,
-		&envvarservice.ComputeEnvVarsInAppReq{
-			App:            app,
-			OverridingVars: envVars,
+	computedVars, err := uc.envVarService.BuildEnvVarsInApp(ctx, uc.db, &envvarservice.BuildEnvVarsInAppReq{
+		App:            app,
+		OverridingVars: envVars,
+		LoadOptions: envvarservice.EnvLoadOptions{
+			BuildPhase: len(req.BuildtimeEnvVars) > 0,
+		},
+		BuildOptions: envvarservice.EnvBuildOptions{
 			BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
 			MaskSecrets:    true,
 			Sort:           true,
-		})
+		},
+	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

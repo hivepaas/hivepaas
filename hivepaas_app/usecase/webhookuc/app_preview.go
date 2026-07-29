@@ -20,7 +20,7 @@ func (uc *UC) createAppPreview(
 	repoRef string,
 	webhookID string,
 ) error {
-	if app.ParentID != "" { // The app is already a preview app, skips it
+	if app.IsChildApp() { // The app is already a preview app, skips it
 		return nil
 	}
 	var createResp *apppreviewservice.CreatePreviewResp
@@ -76,7 +76,7 @@ func (uc *UC) deleteAppPreview(
 	app *entity.App,
 	expectedRef string,
 ) error {
-	if app.ParentID == "" { // must be a preview app to be deleted
+	if !app.IsChildApp() { // must be a preview app to be deleted
 		return nil
 	}
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)

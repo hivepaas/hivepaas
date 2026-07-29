@@ -78,7 +78,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		envVarGroup := appGroup.Group("/:appID/env-vars")
 		envVarGroup.GET("", appSettingsHandler.GetEnvVars)
 		envVarGroup.PUT("", appSettingsHandler.UpdateEnvVars)
-		envVarGroup.POST("/compute", appSettingsHandler.ComputeEnvVars)
+		envVarGroup.POST("/compute", appSettingsHandler.BuildEnvVars)
 	}
 
 	{ // Secrets

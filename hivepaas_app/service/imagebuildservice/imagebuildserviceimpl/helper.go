@@ -53,9 +53,14 @@ func (s *service) calcBuildEnvVars(
 	db database.IDB,
 	data *imageBuildData,
 ) (map[string]*string, error) {
-	envResp, err := s.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
-		App:            data.App,
-		BuildPhaseOnly: true,
+	envResp, err := s.envVarService.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
+		App: data.App,
+		LoadOptions: envvarservice.EnvLoadOptions{
+			BuildPhase: true,
+		},
+		BuildOptions: envvarservice.EnvBuildOptions{
+			BuildPhaseOnly: true,
+		},
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

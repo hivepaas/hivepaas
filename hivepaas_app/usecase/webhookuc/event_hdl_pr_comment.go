@@ -85,7 +85,7 @@ func (uc *UC) processWebhookEventPRComment(
 		wg.Go(func() {
 			switch prCommentEvent.previewCmd {
 			case previewCmdDeploy:
-				if app.ParentID == "" {
+				if !app.IsChildApp() {
 					_ = uc.createAppPreview(ctx, app, prCommentEvent, repoRef, data.WebhookSetting.ID)
 				} else {
 					// TODO: find the SHA of the head commit of the PR (change id)

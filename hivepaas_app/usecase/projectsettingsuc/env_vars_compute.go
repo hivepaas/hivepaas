@@ -35,12 +35,17 @@ func (uc *UC) ComputeProjectEnvVars(
 		}
 	}
 
-	computedVars, err := uc.envVarService.ComputeEnvVarsInProject(ctx, uc.db, &envvarservice.ComputeEnvVarsInProjectReq{
+	computedVars, err := uc.envVarService.BuildEnvVarsInProject(ctx, uc.db, &envvarservice.BuildEnvVarsInProjectReq{
 		Project:        project,
 		OverridingVars: envVars,
-		BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
-		MaskSecrets:    true,
-		Sort:           true,
+		LoadOptions: envvarservice.EnvLoadOptions{
+			BuildPhase: len(req.BuildtimeEnvVars) > 0,
+		},
+		BuildOptions: envvarservice.EnvBuildOptions{
+			BuildPhaseOnly: len(req.BuildtimeEnvVars) > 0,
+			MaskSecrets:    true,
+			Sort:           true,
+		},
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

@@ -46,7 +46,7 @@ func (s *service) BuildCommandEnvVars(
 		return targetVars, nil
 	}
 
-	envResp, err := s.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
+	envResp, err := s.envVarService.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
 		App:            app,
 		TargetVars:     targetVarKeys,
 		OverridingVars: targetVars,

@@ -20,9 +20,9 @@ var (
 )
 
 type processRefsData struct {
-	EnvStore    map[string]*envvarservice.EnvVar
-	SecretStore map[string]*entity.Setting
-	MaskSecrets bool
+	EnvStore     map[string]*envvarservice.EnvVar
+	SecretStore  map[string]*entity.Setting
+	BuildOptions envvarservice.EnvBuildOptions
 
 	ExternalRefsData     map[string]map[string]*envvarservice.EnvVar
 	ExternalRefsLoadFunc func(refName string) (map[string]*envvarservice.EnvVar, error)
@@ -59,25 +59,34 @@ func (s *service) processRefsRecursively(
 			return match
 		}
 		refName, varName := parseEnvRef(match) // env form: ${VAR} or ${secrets.NAME} or ${an_app.VAR}
-		if refName == secretRefPrefix {
+		if refName == secretRefPrefix {        //nolint:nestif
 			refSecret, exists := data.SecretStore[varName]
 			if !exists {
-				env.Errors = append(env.Errors, fmt.Sprintf("secret '%s' not found", varName))
+				env.Errors = append(env.Errors, &envvarservice.ParseError{
+					Type: envvarservice.ParseErrorSecretMissing,
+					Name: varName,
+				})
 				return match
 			}
 			secret, err := refSecret.AsSecret()
 			if err != nil {
-				env.Errors = append(env.Errors, fmt.Sprintf("failed to parse secret '%s'", varName))
+				env.Errors = append(env.Errors, &envvarservice.ParseError{
+					Type: envvarservice.ParseErrorSecretFailure,
+					Name: varName,
+				})
 				return match
 			}
 			env.AddRefSecret(secret)
 
-			if data.MaskSecrets {
+			if data.BuildOptions.MaskSecrets {
 				return secretMask
 			}
 			value, err := secret.Value.GetPlain()
 			if err != nil {
-				env.Errors = append(env.Errors, fmt.Sprintf("failed to decrypt secret '%s'", varName))
+				env.Errors = append(env.Errors, &envvarservice.ParseError{
+					Type: envvarservice.ParseErrorSecretFailure,
+					Name: varName,
+				})
 				return match
 			}
 			return value
@@ -101,7 +110,10 @@ func (s *service) processRefsRecursively(
 			}
 			val, exists := externalVars[varName]
 			if !exists {
-				env.Errors = append(env.Errors, fmt.Sprintf("env '%s.%s' not found", refName, varName))
+				env.Errors = append(env.Errors, &envvarservice.ParseError{
+					Type: envvarservice.ParseErrorVarMissing,
+					Name: fmt.Sprintf("%s.%s", refName, varName),
+				})
 				return match
 			}
 			return val.Value
@@ -109,14 +121,17 @@ func (s *service) processRefsRecursively(
 
 		// Prevent infinite loop due to circular references
 		if _, exists := visitingMap[varName]; exists {
-			env.Errors = append(env.Errors, fmt.Sprintf("circular references detected at '%s'", varName))
+			gErr = apperrors.Wrap(apperrors.ErrEnvVarCircularReference).WithParam("Name", varName)
 			return match
 		}
 		visitingMap[varName] = struct{}{}
 
 		refEnv, exists := data.EnvStore[varName]
 		if !exists {
-			env.Errors = append(env.Errors, fmt.Sprintf("env '%s' not found", varName))
+			env.Errors = append(env.Errors, &envvarservice.ParseError{
+				Type: envvarservice.ParseErrorVarMissing,
+				Name: varName,
+			})
 			return match
 		}
 		if err := s.processRefsRecursively(refEnv, data, sharedEnv, visitingMap); err != nil {

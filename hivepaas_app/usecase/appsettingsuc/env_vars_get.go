@@ -43,8 +43,8 @@ func (uc *UC) GetAppEnvVars(
 		App:  app,
 		Vars: settings,
 	}
-	input.SystemVars, err = uc.envVarService.ComputeSystemEnvVarsInApp(ctx, uc.db,
-		&envvarservice.ComputeSystemEnvVarsInAppReq{App: app})
+	input.SystemVars, err = uc.envVarService.BuildSystemEnvVarsInApp(ctx, uc.db,
+		&envvarservice.BuildSystemEnvVarsInAppReq{App: app})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -54,8 +54,8 @@ func (uc *UC) GetAppEnvVars(
 		parentApp.Project = app.Project
 		parentApp.ProjectEnv = app.ProjectEnv
 		parentApp.ProjectEnv.Project = app.Project
-		input.ParentSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInApp(ctx, uc.db,
-			&envvarservice.ComputeSystemEnvVarsInAppReq{App: parentApp})
+		input.ParentSystemVars, err = uc.envVarService.BuildSystemEnvVarsInApp(ctx, uc.db,
+			&envvarservice.BuildSystemEnvVarsInAppReq{App: parentApp})
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -63,14 +63,14 @@ func (uc *UC) GetAppEnvVars(
 
 	projectEnv := app.ProjectEnv
 	projectEnv.Project = app.Project
-	input.EnvSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInProjectEnv(ctx, uc.db,
-		&envvarservice.ComputeSystemEnvVarsInProjectEnvReq{ProjectEnv: projectEnv})
+	input.EnvSystemVars, err = uc.envVarService.BuildSystemEnvVarsInProjectEnv(ctx, uc.db,
+		&envvarservice.BuildSystemEnvVarsInProjectEnvReq{ProjectEnv: projectEnv})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	input.ProjectSystemVars, err = uc.envVarService.ComputeSystemEnvVarsInProject(ctx, uc.db,
-		&envvarservice.ComputeSystemEnvVarsInProjectReq{Project: app.Project})
+	input.ProjectSystemVars, err = uc.envVarService.BuildSystemEnvVarsInProject(ctx, uc.db,
+		&envvarservice.BuildSystemEnvVarsInProjectReq{Project: app.Project})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -96,7 +96,7 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.Tags = gofn.MapSlice(app.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.Stats = TransformAppStats(app, input)
 	resp.AccessLinks = TransformAppAccessLinks(app)
-	if app.ParentID != "" {
+	if app.IsChildApp() {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
 		resp.ParentApp = nil

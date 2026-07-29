@@ -87,7 +87,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// ComputeEnvVars Computes app env vars
+// BuildEnvVars Computes app env vars
 // @Summary Computes app env vars
 // @Description Computes app env vars
 // @Tags    app_settings
@@ -101,7 +101,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/compute [post]
-func (h *Handler) ComputeEnvVars(ctx *gin.Context) {
+func (h *Handler) BuildEnvVars(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)

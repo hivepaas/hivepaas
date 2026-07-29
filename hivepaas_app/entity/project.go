@@ -53,6 +53,7 @@ func (p *Project) GetName() string {
 
 func (p *Project) GetObjectScope() *base.ObjectScope {
 	return &base.ObjectScope{
+		ScopeType: base.ObjectScopeProject,
 		ProjectID: p.ID,
 	}
 }
@@ -104,4 +105,18 @@ func (p *Project) GetOrCreateEnv(env string) *ProjectEnv {
 	}
 	p.ProjectEnvs = append(p.ProjectEnvs, projectEnv)
 	return projectEnv
+}
+
+func (p *Project) GetAppsOfEnv(envID string, includeChildApps bool) (res []*App) {
+	res = make([]*App, 0, 5) //nolint:mnd
+	for _, app := range p.Apps {
+		if !includeChildApps && app.IsChildApp() {
+			continue
+		}
+		if app.ProjectEnvID != envID {
+			continue
+		}
+		res = append(res, app)
+	}
+	return res
 }

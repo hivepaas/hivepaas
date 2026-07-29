@@ -58,10 +58,11 @@ type ProjectAppResp struct {
 }
 
 type ProjectEnvResp struct {
-	ID     string             `json:"id"`
-	Name   string             `json:"name"`
-	Status base.ProjectStatus `json:"status"`
-	Color  string             `json:"color"`
+	ID        string             `json:"id"`
+	Name      string             `json:"name"`
+	Status    base.ProjectStatus `json:"status"`
+	Color     string             `json:"color"`
+	UpdateVer int                `json:"updateVer"`
 }
 
 type ProjectUserAccessResp struct {

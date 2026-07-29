@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
 
@@ -23,27 +24,22 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 	auth *basedto.Auth,
 	req *projectenvsettingsdto.UpdateProjectEnvEnvVarsReq,
 ) (*projectenvsettingsdto.UpdateProjectEnvEnvVarsResp, error) {
-	var data *updateProjectEnvVarsData
-	var persistingData *persistingProjectEnvData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &updateProjectEnvVarsData{}
-		err := uc.loadProjectEnvVarsForUpdate(ctx, db, req, data)
+		data := &updateProjectEnvVarsData{}
+		err := uc.loadProjectEnvEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		persistingData = &persistingProjectEnvData{}
-		uc.prepareUpdatingProjectEnvVars(req, data, persistingData)
-
-		// TODO: Do we need to re-apply the ENVs to the apps?
-
-		// TODO: how to make sure the changes not break apps
-		// if they use any of ENVs within the project.
+		persistingData := &persistingProjectEnvData{}
+		uc.prepareUpdatingProjectEnvEnvVars(req, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+
+		// TODO: validate the env vars changes
 
 		return nil
 	})
@@ -51,23 +47,58 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &projectenvsettingsdto.UpdateProjectEnvEnvVarsResp{}, nil
+	resp := &projectenvsettingsdto.UpdateProjectEnvEnvVarsResp{
+		Meta: &basedto.Meta{},
+	}
+
+	// Apply the changes to every belonging apps
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
+			bunex.SelectFor("UPDATE OF project_env"),
+			bunex.SelectRelation("Apps",
+				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		err = uc.projectService.ApplyEnvVarChangesToApps(ctx, db, &envvarservice.BuildEnvVarsInProjectEnvReq{
+			ProjectEnv: projectEnv,
+			BuildOptions: envvarservice.EnvBuildOptions{
+				Sort: true,
+			},
+		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		// NOTE: just show user a message instead of failing the request?
+		resp.Meta.Warning = "Project env updated successfully, but failed to apply changes to app: " + err.Error()
+	}
+
+	return resp, nil
 }
 
 type updateProjectEnvVarsData struct {
-	Project        *entity.Project
+	ProjectEnv     *entity.ProjectEnv
 	EnvVarsSetting *entity.Setting
 }
 
-func (uc *UC) loadProjectEnvVarsForUpdate(
+func (uc *UC) loadProjectEnvEnvVarsForUpdate(
 	ctx context.Context,
 	db database.Tx,
 	req *projectenvsettingsdto.UpdateProjectEnvEnvVarsReq,
 	data *updateProjectEnvVarsData,
 ) error {
-	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
-		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		bunex.SelectFor("UPDATE OF project"),
+	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
+		bunex.SelectFor("UPDATE OF project_env"),
+		bunex.SelectRelation("Apps",
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeEnvVar),
 		),
@@ -75,8 +106,8 @@ func (uc *UC) loadProjectEnvVarsForUpdate(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.Project = project
-	data.EnvVarsSetting = project.GetSettingByType(base.SettingTypeEnvVar)
+	data.ProjectEnv = projectEnv
+	data.EnvVarsSetting = projectEnv.GetSettingByType(base.SettingTypeEnvVar)
 
 	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
@@ -85,20 +116,20 @@ func (uc *UC) loadProjectEnvVarsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingProjectEnvVars(
+func (uc *UC) prepareUpdatingProjectEnvEnvVars(
 	req *projectenvsettingsdto.UpdateProjectEnvEnvVarsReq,
 	data *updateProjectEnvVarsData,
 	persistingData *persistingProjectEnvData,
 ) {
-	project := data.Project
+	projectEnv := data.ProjectEnv
 	setting := data.EnvVarsSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {
 		setting = &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeProject,
-			ObjectID:  project.ID,
+			Scope:     base.ObjectScopeProjectEnv,
+			ObjectID:  projectEnv.ID,
 			Type:      base.SettingTypeEnvVar,
 			CreatedAt: timeNow,
 			Version:   entity.CurrentEnvVarsVersion,

@@ -106,7 +106,7 @@ func (s *service) loadAppDataForCreatingPreview(
 		return apperrors.Wrap(err)
 	}
 	// The app must not be a child app
-	if app.ParentID != "" {
+	if app.IsChildApp() {
 		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
 	}
 

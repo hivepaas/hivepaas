@@ -10,20 +10,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeSharedEnvVarsInApp(
+func (s *service) BuildSharedEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	buildPhase bool,
-	skipLoadingSecrets bool,
-	maskSecrets bool,
+	buildOptions envvarservice.EnvBuildOptions,
 ) ([]*envvarservice.EnvVar, error) {
-	resp, err := s.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
-		App:                app,
-		SkipLoadingSecrets: skipLoadingSecrets,
-		MaskSecrets:        maskSecrets,
-		BuildPhaseOnly:     buildPhase,
-		SharedVarsOnly:     true,
+	buildOptions.SharedVarsOnly = true
+	buildOptions.SkipLoadingSecrets = true
+	resp, err := s.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
+		App:          app,
+		BuildOptions: buildOptions,
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -31,15 +28,13 @@ func (s *service) ComputeSharedEnvVarsInApp(
 	return resp.EnvVars, nil
 }
 
-func (s *service) computeSharedEnvVarsInApp(
+func (s *service) buildSharedEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
 	projectID string,
 	projectEnvID string,
 	appKey string,
-	buildPhase bool,
-	skipLoadingSecrets bool,
-	maskSecrets bool,
+	buildOptions envvarservice.EnvBuildOptions,
 ) ([]*envvarservice.EnvVar, error) {
 	listOpts := []bunex.SelectQueryOption{
 		// bunex.SelectWhere("app.status = ?", base.AppStatusActive),
@@ -53,5 +48,5 @@ func (s *service) computeSharedEnvVarsInApp(
 	if len(apps) == 0 {
 		return nil, apperrors.NewNotFound("App")
 	}
-	return s.ComputeSharedEnvVarsInApp(ctx, db, apps[0], buildPhase, skipLoadingSecrets, maskSecrets)
+	return s.BuildSharedEnvVarsInApp(ctx, db, apps[0], buildOptions)
 }

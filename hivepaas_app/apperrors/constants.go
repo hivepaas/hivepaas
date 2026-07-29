@@ -142,6 +142,7 @@ var (
 	ErrInheritedSettingNonUpdatable         = NewErr(ErrNonEditable, "ERR_INHERITED_SETTING_NON_UPDATABLE")
 	ErrSettingTypeUnsupported               = NewErr(ErrUnsupported, "ERR_SETTING_TYPE_UNSUPPORTED")
 	ErrEnvVarContainInvalidReference        = NewErr(ErrValueInvalid, "ERR_ENV_VAR_CONTAIN_INVALID_REFERENCE")
+	ErrEnvVarCircularReference              = NewErr(ErrValueInvalid, "ERR_ENV_VAR_CIRCULAR_REFERENCE")
 	ErrSharedEnvVarContainExternalReference = NewErr(ErrValueInvalid, "ERR_SHARED_ENV_VAR_CONTAIN_EXTERNAL_REFERENCE")
 	ErrEnvVarExternalReferenceIsNotAllowed  = NewErr(ErrValueInvalid, "ERR_ENV_VAR_EXTERNAL_REFERENCE_IS_NOT_ALLOWED")
 	ErrDomainInUse                          = NewErr(ErrInUse, "ERR_DOMAIN_IN_USE")

@@ -49,7 +49,7 @@ func (uc *UC) processWebhookEventPRSynchronized(
 
 	var wg sync.WaitGroup
 	for _, app := range apps {
-		if app.ParentID == "" { // The app is not a preview, skip it. Just recheck for safety.
+		if !app.IsChildApp() { // The app is not a preview, skip it. Just recheck for safety.
 			continue
 		}
 		wg.Go(func() {

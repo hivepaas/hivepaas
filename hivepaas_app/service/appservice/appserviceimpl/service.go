@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -22,6 +23,7 @@ func New(
 	taskRepo repository.TaskRepo,
 
 	clusterService clusterservice.Service,
+	envVarService envvarservice.Service,
 	traefikService traefikservice.Service,
 
 	dockerManager docker.Manager,
@@ -39,6 +41,7 @@ func New(
 		taskRepo:       taskRepo,
 
 		clusterService: clusterService,
+		envVarService:  envVarService,
 		traefikService: traefikService,
 
 		dockerManager:     dockerManager,
@@ -58,6 +61,7 @@ type service struct {
 	taskRepo       repository.TaskRepo
 
 	clusterService clusterservice.Service
+	envVarService  envvarservice.Service
 	traefikService traefikservice.Service
 
 	dockerManager     docker.Manager

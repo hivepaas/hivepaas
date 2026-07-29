@@ -2,10 +2,8 @@ package appsettingsuc
 
 import (
 	"context"
-	"strings"
 	"time"
 
-	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -26,16 +24,14 @@ func (uc *UC) UpdateAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppEnvVarsReq,
 ) (*appsettingsdto.UpdateAppEnvVarsResp, error) {
-	var data *updateAppEnvVarsData
-	var persistingData *persistingAppData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &updateAppEnvVarsData{}
+		data := &updateAppEnvVarsData{}
 		err := uc.loadAppEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		persistingData = &persistingAppData{}
+		persistingData := &persistingAppData{}
 		uc.prepareUpdatingAppEnvVars(req, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
@@ -43,17 +39,50 @@ func (uc *UC) UpdateAppEnvVars(
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyAppEnvVars(ctx, db, data)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+		// TODO: validate the changes
+
 		return nil
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appsettingsdto.UpdateAppEnvVarsResp{}, nil
+	resp := &appsettingsdto.UpdateAppEnvVarsResp{
+		Meta: &basedto.Meta{},
+	}
+
+	// Apply the changes to every belonging apps
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			bunex.SelectFor("UPDATE OF app"),
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ProjectEnv"),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		err = uc.appService.ApplyEnvVarChanges(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
+			App: app,
+			BuildOptions: envvarservice.EnvBuildOptions{
+				Sort: true,
+			},
+		})
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		// NOTE: just show user a message instead of failing the request?
+		resp.Meta.Warning = "Configuration updated successfully, but failed to apply changes: " + err.Error()
+	}
+
+	return resp, nil
 }
 
 type updateAppEnvVarsData struct {
@@ -130,57 +159,4 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 	setting.MustSetData(envVars)
 
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-}
-
-func (uc *UC) applyAppEnvVars(
-	ctx context.Context,
-	db database.Tx,
-	data *updateAppEnvVarsData,
-) error {
-	app := data.App
-	computedVars, err := uc.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
-		App:  app,
-		Sort: true,
-	})
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	// Validate to make sure build-time env vars are valid
-	_, err = uc.envVarService.ComputeEnvVarsInApp(ctx, db, &envvarservice.ComputeEnvVarsInAppReq{
-		App:            app,
-		BuildPhaseOnly: true,
-	})
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	envVars := make([]string, 0, len(computedVars.EnvVars))
-	var errors []string
-	for _, env := range computedVars.EnvVars {
-		envVars = append(envVars, env.ToString("="))
-		errors = append(errors, env.Errors...)
-	}
-
-	if len(errors) > 0 {
-		return apperrors.Wrap(apperrors.ErrEnvVarContainInvalidReference).WithDisplayLevelHigh().
-			WithExtraDetail("%s", strings.Join(errors, "\n"))
-	}
-
-	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	if service.Spec.TaskTemplate.ContainerSpec == nil {
-		service.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
-	}
-	service.Spec.TaskTemplate.ContainerSpec.Env = envVars
-
-	_, err = uc.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	return nil
 }

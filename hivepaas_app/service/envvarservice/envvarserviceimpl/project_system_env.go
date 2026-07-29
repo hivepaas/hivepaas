@@ -10,10 +10,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-func (s *service) ComputeSystemEnvVarsInProject(
+func (s *service) BuildSystemEnvVarsInProject(
 	ctx context.Context,
 	_ database.IDB,
-	req *envvarservice.ComputeSystemEnvVarsInProjectReq,
+	req *envvarservice.BuildSystemEnvVarsInProjectReq,
 ) ([]*envvarservice.EnvVar, error) {
 	result := []*envvarservice.EnvVar{
 		{

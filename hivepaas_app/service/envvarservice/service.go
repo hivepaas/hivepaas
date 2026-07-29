@@ -11,20 +11,20 @@ type Service interface {
 	HasRef(v string) bool
 	HasSecretRef(v string) bool
 
-	ComputeEnvVarsInProject(ctx context.Context, db database.IDB, req *ComputeEnvVarsInProjectReq) (
-		*ComputeEnvVarsInProjectResp, error)
-	ComputeSystemEnvVarsInProject(ctx context.Context, db database.IDB, req *ComputeSystemEnvVarsInProjectReq) (
+	BuildEnvVarsInProject(ctx context.Context, db database.IDB, req *BuildEnvVarsInProjectReq) (
+		*BuildEnvVarsInProjectResp, error)
+	BuildSystemEnvVarsInProject(ctx context.Context, db database.IDB, req *BuildSystemEnvVarsInProjectReq) (
 		[]*EnvVar, error)
 
-	ComputeEnvVarsInProjectEnv(ctx context.Context, db database.IDB, req *ComputeEnvVarsInProjectEnvReq) (
-		*ComputeEnvVarsInProjectEnvResp, error)
-	ComputeSystemEnvVarsInProjectEnv(ctx context.Context, db database.IDB, req *ComputeSystemEnvVarsInProjectEnvReq) (
+	BuildEnvVarsInProjectEnv(ctx context.Context, db database.IDB, req *BuildEnvVarsInProjectEnvReq) (
+		*BuildEnvVarsInProjectEnvResp, error)
+	BuildSystemEnvVarsInProjectEnv(ctx context.Context, db database.IDB, req *BuildSystemEnvVarsInProjectEnvReq) (
 		[]*EnvVar, error)
 
-	ComputeEnvVarsInApp(ctx context.Context, db database.IDB, req *ComputeEnvVarsInAppReq) (
-		*ComputeEnvVarsInAppResp, error)
-	ComputeSharedEnvVarsInApp(ctx context.Context, db database.IDB, app *entity.App, buildPhase bool,
-		skipLoadingSecrets bool, maskSecrets bool) ([]*EnvVar, error)
-	ComputeSystemEnvVarsInApp(ctx context.Context, db database.IDB, req *ComputeSystemEnvVarsInAppReq) (
+	BuildEnvVarsInApp(ctx context.Context, db database.IDB, req *BuildEnvVarsInAppReq) (
+		*BuildEnvVarsInAppResp, error)
+	BuildSharedEnvVarsInApp(ctx context.Context, db database.IDB, app *entity.App, options EnvBuildOptions) (
+		[]*EnvVar, error)
+	BuildSystemEnvVarsInApp(ctx context.Context, db database.IDB, req *BuildSystemEnvVarsInAppReq) (
 		[]*EnvVar, error)
 }

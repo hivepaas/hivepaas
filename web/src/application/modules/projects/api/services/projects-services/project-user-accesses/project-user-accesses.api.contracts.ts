@@ -19,14 +19,21 @@ export interface ProjectUserAccessBase {
     access: ProjectUserAccessActions;
 }
 
+export interface EnvUserAccessesData {
+    name: string;
+    userAccesses: ProjectUserAccessBase[];
+}
+
 export interface ProjectUserAccessesData {
     ownerAccess: ProjectUserAccessBase;
     userAccesses: ProjectUserAccessBase[];
+    envUserAccesses: EnvUserAccessesData[];
     moduleUserAccesses: ProjectUserAccessBase[];
     currentUserActions: {
         canUpdateProjectUserAccesses: boolean;
         canViewModuleUserAccesses: boolean;
     };
+    updateVer: number;
 }
 
 /**
@@ -43,9 +50,13 @@ export type ProjectUserAccesses_FindOne_Res = ApiResponseBase<ProjectUserAccesse
  */
 export type ProjectUserAccesses_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
-    userAccesses: {
-        id: string;
-        access: ProjectUserAccessActions;
+    updateVer: number;
+    envUserAccesses: {
+        name: string;
+        userAccesses: {
+            id: string;
+            access: ProjectUserAccessActions;
+        }[];
     }[];
 }>;
 

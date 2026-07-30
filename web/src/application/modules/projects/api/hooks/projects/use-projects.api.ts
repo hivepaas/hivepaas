@@ -4,9 +4,11 @@ import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
     Projects_CreateOne_Req,
+    Projects_DeleteEnv_Req,
     Projects_DeleteOne_Req,
     Projects_FindManyPaginated_Req,
     Projects_FindOneById_Req,
+    Projects_UpdateEnvStatus_Req,
     Projects_UpdateOne_Req,
     Projects_UpdatePhoto_Req,
     Projects_UpdateStatus_Req,
@@ -167,6 +169,46 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to update project photo",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Update a project env status
+                 */
+                updateEnvStatus: async (data: Projects_UpdateEnvStatus_Req["data"]) => {
+                    const result = await api.projects.$.updateEnvStatus({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update environment status",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Delete a project env
+                 */
+                deleteEnv: async (data: Projects_DeleteEnv_Req["data"]) => {
+                    const result = await api.projects.$.deleteEnv({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to delete environment",
                                 error,
                             });
 

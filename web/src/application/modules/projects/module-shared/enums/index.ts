@@ -24,6 +24,7 @@ export * from "./e.mount-type";
 export * from "./e.port-config-protocol";
 export * from "./e.port-config-publish-mode";
 export * from "./e.project-app-status";
+export * from "./e.project-env-status";
 export * from "./e.project-secret-status";
 export * from "./e.project-status";
 export * from "./e.repo-type";

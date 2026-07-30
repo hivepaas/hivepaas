@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { EProjectEnvStatus } from "~/projects/module-shared/enums";
 
 const MAX_PROJECT_ENVS = 10;
 
 const ProjectEnvFormSchema = z.object({
+    id: z.string().optional(),
     name: z
         .string()
         .trim()
@@ -10,6 +12,8 @@ const ProjectEnvFormSchema = z.object({
         .max(50, "Environment name must be 50 characters or less")
         .regex(/^[a-z][a-z0-9-]*$/, "Environment name must be lowercase (letters, numbers, hyphens)"),
     color: z.string(),
+    status: z.nativeEnum(EProjectEnvStatus).optional(),
+    updateVer: z.number().optional(),
 });
 
 const ProjectPhotoUploadSchema = z

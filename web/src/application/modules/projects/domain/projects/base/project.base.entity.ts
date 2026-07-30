@@ -1,4 +1,4 @@
-import type { EProjectStatus } from "~/projects/module-shared/enums";
+import type { EProjectEnvStatus, EProjectStatus } from "~/projects/module-shared/enums";
 
 export interface ProjectBaseEntity {
     id: string;
@@ -16,6 +16,9 @@ export interface ProjectBaseEntity {
 }
 
 export interface ProjectEnvEntity {
+    id?: string;
     name: string;
     color: string;
+    status?: EProjectEnvStatus;
+    updateVer?: number;
 }

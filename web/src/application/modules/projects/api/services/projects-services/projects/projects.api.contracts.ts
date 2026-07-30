@@ -1,6 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type ProjectBaseEntity, type ProjectDetailsEntity } from "~/projects/domain";
-import type { EProjectStatus } from "~/projects/module-shared/enums";
+import type { EProjectEnvStatus, EProjectStatus } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -87,5 +87,33 @@ export type Projects_UpdatePhoto_Req = ApiRequestBase<{
 }>;
 
 export type Projects_UpdatePhoto_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Update project env status
+ */
+export type Projects_UpdateEnvStatus_Req = ApiRequestBase<{
+    projectID: string;
+    envName: string;
+    payload: {
+        updateVer?: number;
+        status: EProjectEnvStatus;
+    };
+}>;
+
+export type Projects_UpdateEnvStatus_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Delete project env
+ */
+export type Projects_DeleteEnv_Req = ApiRequestBase<{
+    projectID: string;
+    envName: string;
+}>;
+
+export type Projects_DeleteEnv_Res = ApiResponseBase<{
     type: "success";
 }>;

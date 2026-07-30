@@ -77,7 +77,7 @@ function View({ projectId }: Props) {
     ];
 
     function openProjectUserAccessesDialog() {
-        projectUserAccessesDialog.actions.open(project.id, project.name);
+        projectUserAccessesDialog.actions.open(project.id, project.name, project.envs);
     }
 
     return (

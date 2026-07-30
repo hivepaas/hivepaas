@@ -44,15 +44,16 @@ export class ProjectUserAccessesApi extends BaseApi {
         request: ProjectUserAccesses_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectUserAccesses_UpdateOne_Res, Error>> {
-        const { projectID, userAccesses } = request.data;
+        const { projectID, updateVer, envUserAccesses } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.put(
                     `/projects/${projectID}/user-accesses`,
                     {
-                        userAccesses: JsonTransformer.array({
-                            data: userAccesses,
+                        updateVer,
+                        envUserAccesses: JsonTransformer.array({
+                            data: envUserAccesses,
                         }),
                     },
                     {

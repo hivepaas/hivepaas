@@ -4,12 +4,16 @@ import type {
     ProjectsApiValidator,
     Projects_CreateOne_Req,
     Projects_CreateOne_Res,
+    Projects_DeleteEnv_Req,
+    Projects_DeleteEnv_Res,
     Projects_DeleteOne_Req,
     Projects_DeleteOne_Res,
     Projects_FindManyPaginated_Req,
     Projects_FindManyPaginated_Res,
     Projects_FindOneById_Req,
     Projects_FindOneById_Res,
+    Projects_UpdateEnvStatus_Req,
+    Projects_UpdateEnvStatus_Res,
     Projects_UpdateOne_Req,
     Projects_UpdateOne_Res,
     Projects_UpdatePhoto_Req,
@@ -213,6 +217,41 @@ export class ProjectsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update a project env status
+     */
+    async updateEnvStatus(
+        request: Projects_UpdateEnvStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<Projects_UpdateEnvStatus_Res, Error>> {
+        const { projectID, envName, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}/${envName}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Delete a project env
+     */
+    async deleteEnv(request: Projects_DeleteEnv_Req): Promise<Result<Projects_DeleteEnv_Res, Error>> {
+        const { projectID, envName } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`/projects/${projectID}/${envName}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

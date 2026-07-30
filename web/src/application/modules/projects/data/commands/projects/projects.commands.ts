@@ -3,8 +3,12 @@ import { useProjectsApi } from "~/projects/api/hooks";
 import type {
     Projects_CreateOne_Req,
     Projects_CreateOne_Res,
+    Projects_DeleteEnv_Req,
+    Projects_DeleteEnv_Res,
     Projects_DeleteOne_Req,
     Projects_DeleteOne_Res,
+    Projects_UpdateEnvStatus_Req,
+    Projects_UpdateEnvStatus_Res,
     Projects_UpdateOne_Req,
     Projects_UpdateOne_Res,
     Projects_UpdatePhoto_Req,
@@ -172,10 +176,84 @@ function useUpdatePhoto({ onSuccess, ...options }: UpdatePhotoOptions = {}) {
     });
 }
 
+/**
+ * Update a project env status command
+ */
+type UpdateEnvStatusReq = Projects_UpdateEnvStatus_Req["data"];
+type UpdateEnvStatusRes = Projects_UpdateEnvStatus_Res;
+type UpdateEnvStatusOptions = Omit<UseMutationOptions<UpdateEnvStatusRes, Error, UpdateEnvStatusReq>, "mutationFn">;
+
+function useUpdateEnvStatus({ onSuccess, ...options }: UpdateEnvStatusOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateEnvStatus,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Delete a project env command
+ */
+type DeleteEnvReq = Projects_DeleteEnv_Req["data"];
+type DeleteEnvRes = Projects_DeleteEnv_Res;
+type DeleteEnvOptions = Omit<UseMutationOptions<DeleteEnvRes, Error, DeleteEnvReq>, "mutationFn">;
+
+function useDeleteEnv({ onSuccess, ...options }: DeleteEnvOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deleteEnv,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectsCommands = Object.freeze({
     useCreateOne,
     useDeleteOne,
     useUpdateOne,
     useUpdateStatus,
     useUpdatePhoto,
+    useUpdateEnvStatus,
+    useDeleteEnv,
 });

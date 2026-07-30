@@ -31,8 +31,7 @@ func NewGetDeploymentReq() *GetDeploymentReq {
 func (req *GetDeploymentReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
-		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateID(&req.DeploymentID, true, "deploymentId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

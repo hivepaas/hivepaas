@@ -47,8 +47,7 @@ func NewCreateAppReq() *CreateAppReq {
 func (req *CreateAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, true,
-		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

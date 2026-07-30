@@ -33,8 +33,7 @@ func NewListAppBaseReq() *ListAppBaseReq {
 func (req *ListAppBaseReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	validators = append(validators, basedto.ValidateStr(&req.ProjectEnvID, false,
-		base.ProjectEnvMinLen, base.ProjectEnvMaxLen, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, false, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllAppStatuses, "status")...)

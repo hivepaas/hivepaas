@@ -18,8 +18,12 @@ func (s *service) SetProjectEnvStatus(
 	status base.ProjectStatus,
 	recursive bool,
 ) error {
+	if projectEnv.Status == status {
+		return nil
+	}
+
 	var targetAppStatus base.AppStatus
-	switch projectEnv.Status {
+	switch status {
 	case base.ProjectStatusActive:
 		targetAppStatus = base.AppStatusActive
 	case base.ProjectStatusDisabled:
@@ -45,12 +49,8 @@ func (s *service) SetProjectEnvStatus(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		return nil
 	}
 
-	if projectEnv.Status == status {
-		return nil
-	}
 	projectEnv.Status = status
 	projectEnv.UpdatedAt = timeutil.NowUTC()
 	projectEnv.UpdateVer++

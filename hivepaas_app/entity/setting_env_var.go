@@ -33,6 +33,13 @@ type EnvVar struct {
 	IsSystem  bool   `json:"system,omitempty"`
 }
 
+func (e *EnvVar) Equal(e2 *EnvVar) bool {
+	if e == nil || e2 == nil {
+		return e == nil && e2 == nil
+	}
+	return *e == *e2
+}
+
 func (s *EnvVars) GetType() base.SettingType {
 	return base.SettingTypeEnvVar
 }

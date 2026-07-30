@@ -31,9 +31,10 @@ type EnvVarResp struct {
 
 func TransformEnvVar(env *entity.EnvVar) *EnvVarResp {
 	return &EnvVarResp{
-		Key:       env.Key,
-		Value:     env.Value,
-		IsLiteral: env.IsLiteral,
-		IsSystem:  env.IsSystem,
+		Key:        env.Key,
+		Value:      env.Value,
+		IsLiteral:  env.IsLiteral,
+		IsSystem:   env.IsSystem,
+		IsReadOnly: env.IsSystem,
 	}
 }

@@ -23,7 +23,7 @@ func (s *service) BuildSystemEnvVarsInApp(
 		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id"),
 		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeSetting),
 		bunex.SelectWhere("settings.object_id = ?", req.App.ID),
-		bunex.SelectWhereIn("res_link.dst_type IN (?)", base.ResourceTypePort),
+		bunex.SelectWhereIn("res_link.dst_type IN (?)", base.ResourceTypePort, base.ResourceTypeDomain),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -47,6 +47,20 @@ func (s *service) BuildSystemEnvVarsInApp(
 		},
 		{
 			EnvVar: &entity.EnvVar{
+				Key:      base.AppSystemEnvVarDomain,
+				Value:    gofn.Head(httpResLinks.GetDstIDByDstType(base.ResourceTypeDomain)),
+				IsShared: true,
+			},
+		},
+		{
+			EnvVar: &entity.EnvVar{
+				Key:      base.AppSystemEnvVarEnv,
+				Value:    req.App.ProjectEnv.Name,
+				IsShared: true,
+			},
+		},
+		{
+			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarName,
 				Value:    req.App.Name,
 				IsShared: true,
@@ -56,13 +70,6 @@ func (s *service) BuildSystemEnvVarsInApp(
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarID,
 				Value:    req.App.ID,
-				IsShared: true,
-			},
-		},
-		{
-			EnvVar: &entity.EnvVar{
-				Key:      base.AppSystemEnvVarEnv,
-				Value:    req.App.ProjectEnv.Name,
 				IsShared: true,
 			},
 		},

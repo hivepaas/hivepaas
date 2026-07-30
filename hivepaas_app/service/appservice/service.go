@@ -7,7 +7,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
 type Service interface {
@@ -31,8 +30,6 @@ type Service interface {
 	DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error
 	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, recursive bool) error
 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
-
-	ApplyEnvVarChanges(ctx context.Context, db database.IDB, req *envvarservice.BuildEnvVarsInAppReq) error
 
 	ExecuteInTx(ctx context.Context, app *entity.App, requireUpdateVerMatch bool, fn func(database.Tx) error) error
 }

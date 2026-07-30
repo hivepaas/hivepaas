@@ -19,24 +19,30 @@ type UpdateAppEnvVarsReq struct {
 }
 
 type AppEnvVarsBaseReq struct {
-	BuildtimeEnvVars []*basedto.EnvVarReq `json:"buildtimeEnvVars"`
 	RuntimeEnvVars   []*basedto.EnvVarReq `json:"runtimeEnvVars"`
 	SharedEnvVars    []*basedto.EnvVarReq `json:"sharedEnvVars"`
+	BuildtimeEnvVars []*basedto.EnvVarReq `json:"buildtimeEnvVars"`
 }
 
 func (req *AppEnvVarsBaseReq) modifyRequest() error {
-	for _, env := range req.BuildtimeEnvVars {
-		env.Key = strings.TrimSpace(env.Key)
-		env.Value = strings.TrimSpace(env.Value)
-	}
 	for _, env := range req.RuntimeEnvVars {
 		env.Key = strings.TrimSpace(env.Key)
 		env.Value = strings.TrimSpace(env.Value)
 	}
-	for _, env := range req.SharedEnvVars {
+	for _, env := range req.BuildtimeEnvVars {
 		env.Key = strings.TrimSpace(env.Key)
 		env.Value = strings.TrimSpace(env.Value)
 	}
+
+	adjSharedEnvVars := make([]*basedto.EnvVarReq, 0, len(req.SharedEnvVars))
+	for _, env := range req.SharedEnvVars {
+		env.Key = strings.TrimSpace(env.Key)
+		env.Value = strings.TrimSpace(env.Value)
+		if base.IsAppSharedEnvSettable(env.Key) {
+			adjSharedEnvVars = append(adjSharedEnvVars, env)
+		}
+	}
+	req.SharedEnvVars = adjSharedEnvVars
 	return nil
 }
 
@@ -48,9 +54,9 @@ func (req *AppEnvVarsBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 
-	res = append(res, basedto.ValidateEnvVarsReq(req.BuildtimeEnvVars, field+"buildtimeEnvVars")...)
 	res = append(res, basedto.ValidateEnvVarsReq(req.RuntimeEnvVars, field+"runtimeEnvVars")...)
 	res = append(res, basedto.ValidateEnvVarsReq(req.SharedEnvVars, field+"sharedEnvVars")...)
+	res = append(res, basedto.ValidateEnvVarsReq(req.BuildtimeEnvVars, field+"buildtimeEnvVars")...)
 
 	allSharedEnvs := make(map[string]struct{}, len(req.SharedEnvVars))
 	for _, env := range req.SharedEnvVars {
@@ -67,6 +73,24 @@ func (req *AppEnvVarsBaseReq) validate(field string) (res []vld.Validator) {
 		if !base.IsAppRuntimeEnvAllowed(env.Key) {
 			res = append(res, vld.Must(false).OnError(
 				vld.SetField("runtimeEnvVars", nil),
+				vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
+				vld.SetParam("Value", env.Key),
+			))
+		}
+	}
+	for _, env := range req.SharedEnvVars {
+		if !base.IsAppSharedEnvAllowed(env.Key) {
+			res = append(res, vld.Must(false).OnError(
+				vld.SetField("sharedEnvVars", nil),
+				vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
+				vld.SetParam("Value", env.Key),
+			))
+		}
+	}
+	for _, env := range req.BuildtimeEnvVars {
+		if !base.IsAppBuildEnvAllowed(env.Key) {
+			res = append(res, vld.Must(false).OnError(
+				vld.SetField("buildtimeEnvVars", nil),
 				vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
 				vld.SetParam("Value", env.Key),
 			))

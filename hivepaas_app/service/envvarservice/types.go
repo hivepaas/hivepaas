@@ -74,6 +74,21 @@ func NewStaticEnvLoadFunc(vars []*EnvVar, secrets []*entity.Setting) EnvLoadFunc
 	}
 }
 
+type AppEnvVarData struct {
+	App     *entity.App
+	EnvVars []*EnvVar
+	Secrets []*entity.Setting
+}
+
+func (e *AppEnvVarData) Errors() (res []string) {
+	for _, env := range e.EnvVars {
+		for _, err := range env.Errors {
+			res = append(res, err.ErrorWithApp(e.App.Name))
+		}
+	}
+	return res
+}
+
 type EnvBuildOptions struct {
 	SkipLoadingVars    bool
 	SkipLoadingSecrets bool

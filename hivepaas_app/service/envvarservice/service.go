@@ -27,4 +27,13 @@ type Service interface {
 		[]*EnvVar, error)
 	BuildSystemEnvVarsInApp(ctx context.Context, db database.IDB, req *BuildSystemEnvVarsInAppReq) (
 		[]*EnvVar, error)
+
+	BuildEnvVarsForAllAppsInProject(ctx context.Context, db database.IDB, req *BuildEnvVarsInProjectReq,
+		transaction bool, concurrency bool) ([]*AppEnvVarData, error)
+	BuildEnvVarsForAllAppsInProjectEnv(ctx context.Context, db database.IDB, req *BuildEnvVarsInProjectEnvReq,
+		transaction bool, concurrency bool) ([]*AppEnvVarData, error)
+	BuildEnvVarsForAllAppsInApp(ctx context.Context, db database.IDB, req *BuildEnvVarsInAppReq,
+		transaction bool, concurrency bool) ([]*AppEnvVarData, error)
+	ApplyEnvVarsForApps(ctx context.Context, db database.IDB, appEnvData []*AppEnvVarData,
+		transaction bool, concurrency bool) map[int]error
 }

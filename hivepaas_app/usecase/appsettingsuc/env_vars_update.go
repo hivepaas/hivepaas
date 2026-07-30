@@ -2,6 +2,8 @@ package appsettingsuc
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -12,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envvarhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -24,6 +27,7 @@ func (uc *UC) UpdateAppEnvVars(
 	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppEnvVarsReq,
 ) (*appsettingsdto.UpdateAppEnvVarsResp, error) {
+	var buildData []*envvarservice.AppEnvVarData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data := &updateAppEnvVarsData{}
 		err := uc.loadAppEnvVarsForUpdate(ctx, db, req, data)
@@ -34,12 +38,20 @@ func (uc *UC) UpdateAppEnvVars(
 		persistingData := &persistingAppData{}
 		uc.prepareUpdatingAppEnvVars(req, data, persistingData)
 
+		if !data.BuildVarsChange && !data.RuntimeVarsChange {
+			return nil
+		}
+
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		// TODO: validate the changes
+		// Build and validate the env var changes
+		buildData, err = uc.buildAppEnvVars(ctx, db, data)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 
 		return nil
 	})
@@ -51,35 +63,15 @@ func (uc *UC) UpdateAppEnvVars(
 		Meta: &basedto.Meta{},
 	}
 
-	// Apply the changes to every belonging apps
-	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			bunex.SelectFor("UPDATE OF app"),
-			bunex.SelectRelation("Project",
-				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			),
-			bunex.SelectRelation("ProjectEnv"),
-		)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		err = uc.appService.ApplyEnvVarChanges(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
-			App: app,
-			BuildOptions: envvarservice.EnvBuildOptions{
-				Sort: true,
-			},
-		})
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		// NOTE: just show user a message instead of failing the request?
-		resp.Meta.Warning = "Configuration updated successfully, but failed to apply changes: " + err.Error()
+	// Apply the changes to the app and child apps
+	errMap := uc.envVarService.ApplyEnvVarsForApps(ctx, uc.db, buildData, true, true)
+	if len(errMap) == 0 {
+		return resp, nil
+	}
+	// NOTE: just show user a message instead of failing the request?
+	resp.Meta.Warning = "Configuration updated successfully, but failed to apply changes:"
+	for i, e := range errMap {
+		resp.Meta.Warning += fmt.Sprintf("\nApp '%v': ", buildData[i].App.Name) + e.Error()
 	}
 
 	return resp, nil
@@ -88,6 +80,12 @@ func (uc *UC) UpdateAppEnvVars(
 type updateAppEnvVarsData struct {
 	App            *entity.App
 	EnvVarsSetting *entity.Setting
+
+	CurrRuntimeVars []*entity.EnvVar
+	CurrBuildVars   []*entity.EnvVar
+
+	RuntimeVarsChange bool
+	BuildVarsChange   bool
 }
 
 func (uc *UC) loadAppEnvVarsForUpdate(
@@ -102,7 +100,7 @@ func (uc *UC) loadAppEnvVarsForUpdate(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
-		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("ProjectEnv.Apps"),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeEnvVar),
 		),
@@ -111,10 +109,30 @@ func (uc *UC) loadAppEnvVarsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.EnvVarsSetting = app.GetSettingByType(base.SettingTypeEnvVar)
-
-	if data.EnvVarsSetting != nil && data.EnvVarsSetting.UpdateVer != req.UpdateVer {
+	setting := app.GetSettingByType(base.SettingTypeEnvVar)
+	if setting != nil && setting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+	}
+
+	data.RuntimeVarsChange = true
+	data.BuildVarsChange = true
+	data.EnvVarsSetting = setting
+
+	if setting == nil {
+		return nil
+	}
+
+	// Calculate current data to detect changes
+	envVars, err := setting.AsEnvVars()
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	for _, env := range envVars.Data {
+		if env.IsBuild {
+			data.CurrBuildVars = append(data.CurrBuildVars, env)
+		} else {
+			data.CurrRuntimeVars = append(data.CurrRuntimeVars, env)
+		}
 	}
 
 	return nil
@@ -144,19 +162,82 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 	setting.ExpireAt = time.Time{}
 	setting.Status = base.SettingStatusActive
 
-	envVars := &entity.EnvVars{
-		Data: make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars)+len(req.RuntimeEnvVars)+len(req.SharedEnvVars)),
-	}
-	for _, env := range req.BuildtimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
+	newBuildVars := make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars))
+	newRuntimeVars := make([]*entity.EnvVar, 0, len(req.RuntimeEnvVars))
+	for _, env := range req.SharedEnvVars {
+		newRuntimeVars = append(newRuntimeVars, env.ToEntity(base.EnvVarKindShared))
 	}
 	for _, env := range req.RuntimeEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindRuntime))
+		newRuntimeVars = append(newRuntimeVars, env.ToEntity(base.EnvVarKindRuntime))
 	}
-	for _, env := range req.SharedEnvVars {
-		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindShared))
+	for _, env := range req.BuildtimeEnvVars {
+		newBuildVars = append(newBuildVars, env.ToEntity(base.EnvVarKindBuild))
 	}
+
+	envVars := &entity.EnvVars{
+		Data: make([]*entity.EnvVar, 0, len(newRuntimeVars)+len(newBuildVars)),
+	}
+	envVars.Data = append(envVars.Data, newRuntimeVars...)
+	envVars.Data = append(envVars.Data, newBuildVars...)
 	setting.MustSetData(envVars)
 
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
+
+	// Detect changes
+	data.RuntimeVarsChange = !envvarhelper.Equal(data.CurrRuntimeVars, newRuntimeVars)
+	data.BuildVarsChange = !envvarhelper.Equal(data.CurrBuildVars, newBuildVars)
+}
+
+func (uc *UC) buildAppEnvVars(
+	ctx context.Context,
+	db database.IDB,
+	data *updateAppEnvVarsData,
+) (runtimeData []*envvarservice.AppEnvVarData, err error) {
+	if data.RuntimeVarsChange {
+		// Validate the runtime env vars changes
+		runtimeData, err = uc.envVarService.BuildEnvVarsForAllAppsInApp(ctx, db,
+			&envvarservice.BuildEnvVarsInAppReq{
+				App:          data.App,
+				LoadOptions:  envvarservice.EnvLoadOptions{},
+				BuildOptions: envvarservice.EnvBuildOptions{},
+			}, true, true)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		var errors []string
+		for _, appData := range runtimeData {
+			errors = append(errors, appData.Errors()...)
+		}
+		if len(errors) > 0 {
+			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
+				WithExtraDetail(strings.Join(errors, "\n")) //nolint:govet
+		}
+	}
+
+	if data.BuildVarsChange {
+		// Validate the build-time env vars changes
+		buildtimeData, err := uc.envVarService.BuildEnvVarsForAllAppsInApp(ctx, db,
+			&envvarservice.BuildEnvVarsInAppReq{
+				App: data.App,
+				LoadOptions: envvarservice.EnvLoadOptions{
+					BuildPhase: true,
+				},
+				BuildOptions: envvarservice.EnvBuildOptions{
+					BuildPhaseOnly: true,
+				},
+			}, true, true)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		var errors []string
+		for _, appData := range buildtimeData {
+			errors = append(errors, appData.Errors()...)
+		}
+		if len(errors) > 0 {
+			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
+				WithExtraDetail(strings.Join(errors, "\n")) //nolint:govet
+		}
+	}
+
+	return runtimeData, nil
 }

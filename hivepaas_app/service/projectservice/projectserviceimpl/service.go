@@ -5,7 +5,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -26,7 +25,6 @@ func New(
 	userRepo repository.UserRepo,
 
 	appService appservice.Service,
-	envVarService envvarservice.Service,
 	networkService networkservice.Service,
 
 	dockerManager docker.Manager,
@@ -47,7 +45,6 @@ func New(
 		userRepo:       userRepo,
 
 		appService:     appService,
-		envVarService:  envVarService,
 		networkService: networkService,
 
 		dockerManager:     dockerManager,
@@ -70,7 +67,6 @@ type service struct {
 	userRepo       repository.UserRepo
 
 	appService     appservice.Service
-	envVarService  envvarservice.Service
 	networkService networkservice.Service
 
 	dockerManager     docker.Manager

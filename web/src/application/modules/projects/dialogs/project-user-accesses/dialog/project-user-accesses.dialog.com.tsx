@@ -230,6 +230,15 @@ function EnvUserAccessRow({
                     label="Read"
                 />
                 <AccessCheckbox
+                    id={`${envName}-${user.id}-execute`}
+                    checked={user.access.execute}
+                    disabled={!canUpdateProjectAccess}
+                    label="Execute"
+                    onCheckedChange={checked => {
+                        onChangeAccess(user.id, "execute", checked === true);
+                    }}
+                />
+                <AccessCheckbox
                     id={`${envName}-${user.id}-write`}
                     checked={user.access.write}
                     disabled={!canUpdateProjectAccess}
@@ -258,8 +267,8 @@ function EnvUserAccessRow({
                                 type="button"
                                 variant="link"
                                 className="size-7 p-0 text-foreground"
-                                aria-label="Toggle write and delete access"
-                                title="Toggle write and delete access"
+                                aria-label="Toggle execute, write and delete access"
+                                title="Toggle execute, write and delete access"
                                 disabled={isDenied || !canUpdateProjectAccess}
                                 onClick={() => {
                                     onToggleAll(user.id);
@@ -523,12 +532,13 @@ export function ProjectUserAccessesDialog() {
                                 return user;
                             }
 
-                            const shouldCheck = !(user.access.write && user.access.delete);
+                            const shouldCheck = !(user.access.execute && user.access.write && user.access.delete);
 
                             return {
                                 ...user,
                                 access: {
                                     ...user.access,
+                                    execute: shouldCheck,
                                     write: shouldCheck,
                                     delete: shouldCheck,
                                 },
@@ -541,7 +551,12 @@ export function ProjectUserAccessesDialog() {
         setHasChanges(true);
     }
 
-    function handleChangeAccess(envName: string, userId: string, key: "write" | "delete", checked: boolean) {
+    function handleChangeAccess(
+        envName: string,
+        userId: string,
+        key: "execute" | "write" | "delete",
+        checked: boolean,
+    ) {
         if (!canUpdateProjectAccess) {
             return;
         }
@@ -665,6 +680,12 @@ export function ProjectUserAccessesDialog() {
                                                     label="Read"
                                                 />
                                                 <AccessCheckbox
+                                                    id={`owner-${ownerAccess.id}-execute`}
+                                                    checked={ownerAccess.access.execute}
+                                                    disabled
+                                                    label="Execute"
+                                                />
+                                                <AccessCheckbox
                                                     id={`owner-${ownerAccess.id}-write`}
                                                     checked={ownerAccess.access.write}
                                                     disabled
@@ -781,6 +802,12 @@ export function ProjectUserAccessesDialog() {
                                                                 label="Read"
                                                             />
                                                             <AccessCheckbox
+                                                                id={`module-${user.id}-execute`}
+                                                                checked={user.access.execute}
+                                                                disabled
+                                                                label="Execute"
+                                                            />
+                                                            <AccessCheckbox
                                                                 id={`module-${user.id}-write`}
                                                                 checked={user.access.write}
                                                                 disabled
@@ -798,7 +825,7 @@ export function ProjectUserAccessesDialog() {
                                                                 rel="noreferrer"
                                                                 className="text-sm font-medium text-primary hover:underline"
                                                             >
-                                                                Go to Settings
+                                                                Settings
                                                             </a>
                                                         </div>
                                                     </div>
@@ -859,7 +886,7 @@ interface EnvAccessSectionProps {
     onSearchUser: (envName: string, query: string) => void;
     onAdd: (envName: string) => void;
     onToggleAll: (envName: string, userId: string) => void;
-    onChangeAccess: (envName: string, userId: string, key: "write" | "delete", checked: boolean) => void;
+    onChangeAccess: (envName: string, userId: string, key: "execute" | "write" | "delete", checked: boolean) => void;
     onRemoveUser: (envName: string, userId: string) => void;
 }
 
@@ -868,6 +895,6 @@ interface EnvUserAccessRowProps {
     user: ProjectUserAccessBase;
     canUpdateProjectAccess: boolean;
     onToggleAll: (userId: string) => void;
-    onChangeAccess: (userId: string, key: "write" | "delete", checked: boolean) => void;
+    onChangeAccess: (userId: string, key: "execute" | "write" | "delete", checked: boolean) => void;
     onRemove: (userId: string) => void;
 }

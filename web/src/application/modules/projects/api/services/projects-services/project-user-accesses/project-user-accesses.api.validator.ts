@@ -23,15 +23,22 @@ const UserAccessSchema = z.object({
     access: AccessActionsSchema,
 });
 
+const EnvUserAccessesSchema = z.object({
+    name: z.string(),
+    userAccesses: z.array(UserAccessSchema),
+});
+
 const FindOneSchema = z.object({
     data: z.object({
         ownerAccess: UserAccessSchema,
         userAccesses: z.array(UserAccessSchema),
+        envUserAccesses: z.array(EnvUserAccessesSchema),
         moduleUserAccesses: z.array(UserAccessSchema),
         currentUserActions: z.object({
             canUpdateProjectUserAccesses: z.boolean(),
             canViewModuleUserAccesses: z.boolean(),
         }),
+        updateVer: z.number(),
     }),
     meta: BaseMetaApiSchema.nullable(),
 });

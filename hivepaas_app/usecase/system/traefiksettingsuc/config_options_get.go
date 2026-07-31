@@ -18,10 +18,7 @@ func (uc *UC) GetConfigOptions(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData, err := traefiksettingsdto.TransformConfigOptions(traefikSvc)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
+	respData := traefiksettingsdto.TransformConfigOptions(traefikSvc)
 
 	return &traefiksettingsdto.GetConfigOptionsResp{
 		Data: respData,

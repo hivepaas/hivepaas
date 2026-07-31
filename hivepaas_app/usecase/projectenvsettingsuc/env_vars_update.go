@@ -205,7 +205,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 		}
 		if len(errors) > 0 {
 			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
-				WithExtraDetail(strings.Join(errors, "\n")) //nolint:govet
+				WithExtraDetail("%s", strings.Join(errors, "\n"))
 		}
 	}
 
@@ -230,7 +230,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 		}
 		if len(errors) > 0 {
 			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
-				WithExtraDetail(strings.Join(errors, "\n")) //nolint:govet
+				WithExtraDetail("%s", strings.Join(errors, "\n"))
 		}
 	}
 

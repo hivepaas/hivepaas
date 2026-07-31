@@ -21,6 +21,14 @@ func TestValidateWithGitCli(t *testing.T) {
 	runGit := func(dir string, args ...string) {
 		cmd := exec.Command("git", args...)
 		cmd.Dir = dir
+		cmd.Env = append(os.Environ(),
+			"GIT_AUTHOR_NAME=Test User",
+			"GIT_AUTHOR_EMAIL=test@example.com",
+			"GIT_COMMITTER_NAME=Test User",
+			"GIT_COMMITTER_EMAIL=test@example.com",
+			"GIT_CONFIG_NOSYSTEM=1",
+			"GIT_CONFIG_GLOBAL=/dev/null",
+		)
 		err := cmd.Run()
 		if err != nil {
 			t.Fatalf("failed to run git command %v: %v", args, err)
@@ -28,8 +36,6 @@ func TestValidateWithGitCli(t *testing.T) {
 	}
 
 	runGit(repoDir, "init", "-b", "main")
-	runGit(repoDir, "config", "user.name", "Test User")
-	runGit(repoDir, "config", "user.email", "test@example.com")
 
 	// Commit 1 on branch main
 	err := os.WriteFile(filepath.Join(repoDir, "file1.txt"), []byte("commit 1"), 0644)

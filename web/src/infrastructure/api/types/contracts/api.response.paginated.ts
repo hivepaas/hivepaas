@@ -3,6 +3,8 @@ import { type Prettify } from "@infrastructure/utility-types";
 interface Meta {
     code?: string;
     message?: string;
+    warning?: string;
+    error?: string;
 }
 
 interface PagingMeta extends Meta {

@@ -74,7 +74,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue/queueimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappdeploy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskhealthcheck"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/tasksystemupdate"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/updaterimpl"
@@ -108,11 +108,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc"
@@ -167,7 +167,7 @@ var Provides = []any{
 	taskdummy.NewExecutor,
 	taskappdeploy.NewExecutor,
 	taskschedjobexec.NewExecutor,
-	taskhealthcheck.NewExecutor,
+	taskperiodicjobexec.NewExecutor,
 
 	// Updater
 	updaterimpl.New,
@@ -241,7 +241,7 @@ var Provides = []any{
 	traefikuc.New,
 	hpappuc.New,
 	schedjobuc.New,
-	healthcheckuc.New,
+	periodicjobuc.New,
 	taskuc.New,
 	emailuc.New,
 	webhookuc.New,
@@ -334,8 +334,8 @@ var Provides = []any{
 	cacherepository.NewTaskControlRepo,
 	cacherepository.NewDeploymentInfoRepo,
 	cacherepository.NewLoginAttemptRepo,
-	cacherepository.NewHealthcheckNotifEventRepo,
-	cacherepository.NewHealthcheckSettingsRepo,
+	cacherepository.NewHealthcheckStateRepo,
+	cacherepository.NewPeriodicSettingsRepo,
 	cacherepository.NewGithubAppManifestRepo,
 
 	// Agent

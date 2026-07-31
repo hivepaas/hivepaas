@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
@@ -37,7 +38,7 @@ func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 
 	req := schedjobdto.NewListSchedJobTaskReq()
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -83,7 +84,7 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -130,7 +131,7 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 	req := schedjobdto.NewCancelSchedJobTaskReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -176,7 +177,7 @@ func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
 	req := schedjobdto.NewGetSchedJobTaskLogsReq()
 	req.TaskID = taskID
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -35,18 +35,18 @@ type UpdateServiceSettingsReq struct {
 }
 
 type ServiceSettingsBaseReq struct {
-	AppSettings         HivePaaSAppSettingsReq         `json:"appSettings"`
-	WorkerSettings      HivePaaSWorkerSettingsReq      `json:"workerSettings"`
-	TaskSettings        HivePaaSTaskSettingsReq        `json:"taskSettings"`
-	HealthcheckSettings HivePaaSHealthcheckSettingsReq `json:"healthcheckSettings"`
+	AppSettings      HivePaaSAppSettingsReq      `json:"appSettings"`
+	WorkerSettings   HivePaaSWorkerSettingsReq   `json:"workerSettings"`
+	TaskSettings     HivePaaSTaskSettingsReq     `json:"taskSettings"`
+	PeriodicSettings HivePaaSPeriodicSettingsReq `json:"periodicSettings"`
 }
 
 func (req *ServiceSettingsBaseReq) ToEntity() *entity.HivePaaSService {
 	return &entity.HivePaaSService{
-		AppSettings:         *req.AppSettings.ToEntity(),
-		WorkerSettings:      *req.WorkerSettings.ToEntity(),
-		TaskSettings:        *req.TaskSettings.ToEntity(),
-		HealthcheckSettings: *req.HealthcheckSettings.ToEntity(),
+		AppSettings:      *req.AppSettings.ToEntity(),
+		WorkerSettings:   *req.WorkerSettings.ToEntity(),
+		TaskSettings:     *req.TaskSettings.ToEntity(),
+		PeriodicSettings: *req.PeriodicSettings.ToEntity(),
 	}
 }
 
@@ -57,7 +57,7 @@ func (req *ServiceSettingsBaseReq) validate(field string) (res []vld.Validator) 
 	res = append(res, req.AppSettings.validate(field+"appSettings")...)
 	res = append(res, req.WorkerSettings.validate(field+"workerSettings")...)
 	res = append(res, req.TaskSettings.validate(field+"taskSettings")...)
-	res = append(res, req.HealthcheckSettings.validate(field+"healthcheckSettings")...)
+	res = append(res, req.PeriodicSettings.validate(field+"periodicSettings")...)
 	return res
 }
 
@@ -134,17 +134,17 @@ func (req *HivePaaSTaskSettingsReq) validate(field string) (res []vld.Validator)
 	return res
 }
 
-type HivePaaSHealthcheckSettingsReq struct {
+type HivePaaSPeriodicSettingsReq struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
 }
 
-func (req *HivePaaSHealthcheckSettingsReq) ToEntity() *entity.HivePaaSHealthcheckSettings {
-	return &entity.HivePaaSHealthcheckSettings{
+func (req *HivePaaSPeriodicSettingsReq) ToEntity() *entity.HivePaaSPeriodicSettings {
+	return &entity.HivePaaSPeriodicSettings{
 		BaseInterval: req.BaseInterval,
 	}
 }
 
-func (req *HivePaaSHealthcheckSettingsReq) validate(field string) (res []vld.Validator) {
+func (req *HivePaaSPeriodicSettingsReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}

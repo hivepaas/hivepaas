@@ -56,6 +56,7 @@ type Setting struct {
 
 	BelongToUser         *User            `bun:"rel:belongs-to,join:object_id=id" json:"belongToUser,omitempty"`
 	BelongToProject      *Project         `bun:"rel:belongs-to,join:object_id=id" json:"belongToProject,omitempty"`
+	BelongToProjectEnv   *ProjectEnv      `bun:"rel:belongs-to,join:object_id=id" json:"belongToProjectEnv,omitempty"`
 	BelongToApp          *App             `bun:"rel:belongs-to,join:object_id=id" json:"belongToApp,omitempty"`
 	AccessibleByProjects []*SharedSetting `bun:"rel:has-many,join:id=setting_id" json:"accessibleByProjects,omitempty"` //nolint:lll
 	Tasks                []*Task          `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`

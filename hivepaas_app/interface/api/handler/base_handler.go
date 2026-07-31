@@ -23,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -479,27 +480,27 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		if projectID == "" || appID == "" {
 			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId or appId")
 		}
-		req.Scope = base.NewObjectScopeApp(appID, "", projectID, "")
+		req.Scope = entity.NewObjectScopeApp(appID, "", projectID, "")
 	case base.ObjectScopeProjectEnv:
 		projectID, projectEnv := ctx.PostForm("projectId"), ctx.PostForm("projectEnv")
 		if projectID == "" || projectEnv == "" {
 			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId or projectEnv")
 		}
-		req.Scope = base.NewObjectScopeProjectEnv(projectID, projectEnv)
+		req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnv)
 	case base.ObjectScopeProject:
 		projectID := ctx.PostForm("projectId")
 		if projectID == "" {
 			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "projectId")
 		}
-		req.Scope = base.NewObjectScopeProject(projectID)
+		req.Scope = entity.NewObjectScopeProject(projectID)
 	case base.ObjectScopeUser:
 		userID := ctx.PostForm("userId")
 		if userID == "" {
 			return apperrors.Wrap(apperrors.ErrParamMissing).WithParam("Name", "userId")
 		}
-		req.Scope = base.NewObjectScopeUser(userID)
+		req.Scope = entity.NewObjectScopeUser(userID)
 	case base.ObjectScopeGlobal, "global":
-		req.Scope = base.NewObjectScopeGlobal()
+		req.Scope = entity.NewObjectScopeGlobal()
 	default:
 		return apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scope)
 	}

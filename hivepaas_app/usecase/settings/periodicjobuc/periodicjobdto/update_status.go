@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -9,22 +9,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-type UpdateHealthcheckStatusReq struct {
+type UpdatePeriodicJobStatusReq struct {
 	settings.UpdateSettingStatusReq
 }
 
-func NewUpdateHealthcheckStatusReq() *UpdateHealthcheckStatusReq {
-	return &UpdateHealthcheckStatusReq{}
+func NewUpdatePeriodicJobStatusReq() *UpdatePeriodicJobStatusReq {
+	return &UpdatePeriodicJobStatusReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateHealthcheckStatusReq) Validate() apperrors.ValidationErrors {
+func (req *UpdatePeriodicJobStatusReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateHealthcheckStatusResp struct {
+type UpdatePeriodicJobStatusResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

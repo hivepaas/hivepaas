@@ -18,7 +18,7 @@ type TaskQueue interface {
 	StopAllSchedulers() error  // pause the scheduler
 
 	RegisterExecutor(typ base.TaskType, execFunc TaskExecFunc)
-	RegisterHealthcheckExecutor(execFunc HealthcheckExecFunc)
+	RegisterPeriodicExecutor(execFunc PeriodicExecFunc)
 
 	ScheduleTask(ctx context.Context, tasks ...*entity.Task) error
 	UnscheduleTask(ctx context.Context, tasks ...*entity.Task) error

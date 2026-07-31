@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -21,7 +22,7 @@ func (uc *UC) InitOAuthProvider(
 	ctx context.Context,
 	req *sessiondto.InitOAuthProviderReq,
 ) error {
-	setting, err := uc.settingRepo.GetByID(ctx, uc.db, base.NewObjectScopeGlobal(), "", req.Provider, true)
+	setting, err := uc.settingRepo.GetByID(ctx, uc.db, entity.NewObjectScopeGlobal(), "", req.Provider, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

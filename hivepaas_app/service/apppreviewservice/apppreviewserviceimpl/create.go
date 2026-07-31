@@ -184,7 +184,7 @@ func (s *service) onCopyAppSetting(
 		return nil, nil
 	case base.SettingTypeEnvVar:
 		return nil, nil
-	case base.SettingTypeHealthcheck:
+	case base.SettingTypePeriodicJob:
 		return nil, nil
 	case base.SettingTypeSchedJob:
 		return nil, nil

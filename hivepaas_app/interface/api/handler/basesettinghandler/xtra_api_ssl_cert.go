@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
@@ -16,7 +17,7 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 	var itemID string
 	var err error
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeWrite, "itemID")

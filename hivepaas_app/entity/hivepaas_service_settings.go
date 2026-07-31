@@ -22,10 +22,10 @@ func (s *hivePaaSServiceParser) New() SettingData {
 }
 
 type HivePaaSService struct {
-	AppSettings         HivePaaSAppSettings         `json:"appSettings"`
-	WorkerSettings      HivePaaSWorkerSettings      `json:"workerSettings"`
-	TaskSettings        HivePaaSTaskSettings        `json:"taskSettings"`
-	HealthcheckSettings HivePaaSHealthcheckSettings `json:"healthcheckSettings"`
+	AppSettings      HivePaaSAppSettings      `json:"appSettings"`
+	WorkerSettings   HivePaaSWorkerSettings   `json:"workerSettings"`
+	TaskSettings     HivePaaSTaskSettings     `json:"taskSettings"`
+	PeriodicSettings HivePaaSPeriodicSettings `json:"periodicSettings"`
 }
 
 type HivePaaSAppSettings struct {
@@ -43,7 +43,7 @@ type HivePaaSTaskSettings struct {
 	TaskCreateInterval timeutil.Duration `json:"taskCreateInterval"`
 }
 
-type HivePaaSHealthcheckSettings struct {
+type HivePaaSPeriodicSettings struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
 }
 

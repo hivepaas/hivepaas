@@ -7,7 +7,7 @@ import (
 
 func FindSettingsByScope(
 	settings []*entity.Setting,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	typ base.SettingType,
 	kind *string,
 ) (res []*entity.Setting) {

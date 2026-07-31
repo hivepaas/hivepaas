@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -9,12 +9,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-type ListHealthcheckReq struct {
+type ListPeriodicJobReq struct {
 	settings.ListSettingReq
 }
 
-func NewListHealthcheckReq() *ListHealthcheckReq {
-	return &ListHealthcheckReq{
+func NewListPeriodicJobReq() *ListPeriodicJobReq {
+	return &ListPeriodicJobReq{
 		ListSettingReq: settings.ListSettingReq{
 			Paging: basedto.Paging{
 				// Default paging if unset by client
@@ -24,24 +24,24 @@ func NewListHealthcheckReq() *ListHealthcheckReq {
 	}
 }
 
-func (req *ListHealthcheckReq) Validate() apperrors.ValidationErrors {
+func (req *ListPeriodicJobReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.ListSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type ListHealthcheckResp struct {
+type ListPeriodicJobResp struct {
 	Meta *basedto.ListMeta  `json:"meta"`
-	Data []*HealthcheckResp `json:"data"`
+	Data []*PeriodicJobResp `json:"data"`
 }
 
-func TransformHealthchecks(
+func TransformPeriodicJobs(
 	settings []*entity.Setting,
 	refObjects *entity.RefObjects,
-) ([]*HealthcheckResp, error) {
-	resp := make([]*HealthcheckResp, 0, len(settings))
+) ([]*PeriodicJobResp, error) {
+	resp := make([]*PeriodicJobResp, 0, len(settings))
 	for _, setting := range settings {
-		item, err := TransformHealthcheck(setting, refObjects)
+		item, err := TransformPeriodicJob(setting, refObjects)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

@@ -20,6 +20,7 @@ import (
 
 const (
 	defaultConcurrency        = 5
+	defaultPeriodicInterval   = 1 * time.Second
 	taskHighPriorityLookAhead = 1 * time.Second
 	taskLowPriorityDelay      = 500 * time.Millisecond
 )
@@ -51,9 +52,9 @@ type Config struct {
 	TaskCreateInterval  time.Duration
 	TaskCanScheduleFunc func(*entity.Task) bool
 
-	// Healthcheck: a special kind of task
-	HealthcheckBaseInterval time.Duration
-	HealthcheckFunc         func(ctx context.Context) error
+	// Periodic: a special kind of task
+	PeriodicBaseInterval time.Duration
+	PeriodicExecFunc     func(ctx context.Context) error
 }
 
 type jobData struct {
@@ -125,32 +126,39 @@ func (s *Server) Start() error {
 		}
 	})
 
-	// Start a job to periodically do health check
+	// Start a job to execute periodic tasks
 	s.wg.Go(func() {
-		interval := s.config.HealthcheckBaseInterval
+		interval := s.config.PeriodicBaseInterval
+		if interval <= 0 {
+			interval = defaultPeriodicInterval
+		}
 		timeNow := time.Now()
 		wait := timeNow.Truncate(interval).Add(interval).Sub(timeNow)
 
 		timer := time.NewTimer(wait)
-		defer timer.Stop()
-
 		select {
 		case <-ctx.Done():
+			timer.Stop()
 			return
 		case <-timer.C:
 		}
 
-		_, err := s.scheduler.NewJob(
-			gocron.DurationJob(interval),
-			gocron.NewTask(func() {
-				err := s.config.HealthcheckFunc(ctx)
-				if err != nil {
-					s.config.Logger.Errorf("failed to execute healthcheck task: %v", err)
+		if err := s.config.PeriodicExecFunc(ctx); err != nil {
+			s.config.Logger.Errorf("failed to execute periodic job: %v", err)
+		}
+
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := s.config.PeriodicExecFunc(ctx); err != nil {
+					s.config.Logger.Errorf("failed to execute periodic job: %v", err)
 				}
-			}),
-		)
-		if err != nil {
-			s.config.Logger.Errorf("failed to schedule healthcheck task: %v", err)
+			}
 		}
 	})
 

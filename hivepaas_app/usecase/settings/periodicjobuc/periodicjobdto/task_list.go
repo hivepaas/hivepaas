@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -10,7 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
 )
 
-type ListHealthcheckTaskReq struct {
+type ListPeriodicJobTaskReq struct {
 	settings.BaseSettingReq
 	JobID  string            `json:"-"`
 	Status []base.TaskStatus `json:"-" mapstructure:"status"`
@@ -18,8 +18,8 @@ type ListHealthcheckTaskReq struct {
 	Paging basedto.Paging    `json:"-"`
 }
 
-func NewListHealthcheckTaskReq() *ListHealthcheckTaskReq {
-	return &ListHealthcheckTaskReq{
+func NewListPeriodicJobTaskReq() *ListPeriodicJobTaskReq {
+	return &ListPeriodicJobTaskReq{
 		Paging: basedto.Paging{
 			// Default paging if unset by client
 			Sort: basedto.Orders{{Direction: basedto.DirectionDesc, ColumnName: "created_at"}},
@@ -27,7 +27,7 @@ func NewListHealthcheckTaskReq() *ListHealthcheckTaskReq {
 	}
 }
 
-func (req *ListHealthcheckTaskReq) Validate() apperrors.ValidationErrors {
+func (req *ListPeriodicJobTaskReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
@@ -35,7 +35,7 @@ func (req *ListHealthcheckTaskReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type ListHealthcheckTaskResp struct {
+type ListPeriodicJobTaskResp struct {
 	Meta *basedto.ListMeta   `json:"meta"`
 	Data []*taskdto.TaskResp `json:"data"`
 }

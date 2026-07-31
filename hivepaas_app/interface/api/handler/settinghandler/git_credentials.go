@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
 
@@ -32,7 +33,7 @@ func (h *Handler) ListGitCredential(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListGitCredentialReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return

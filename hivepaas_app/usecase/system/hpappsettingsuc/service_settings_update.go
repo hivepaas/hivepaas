@@ -147,7 +147,7 @@ func (uc *UC) loadServiceSettingsForUpdate(
 	if newSettings.WorkerSettings.Concurrency != currSettings.WorkerSettings.Concurrency ||
 		newSettings.TaskSettings.TaskCheckInterval != currSettings.TaskSettings.TaskCheckInterval ||
 		newSettings.TaskSettings.TaskCreateInterval != currSettings.TaskSettings.TaskCreateInterval ||
-		newSettings.HealthcheckSettings.BaseInterval != currSettings.HealthcheckSettings.BaseInterval {
+		newSettings.PeriodicSettings.BaseInterval != currSettings.PeriodicSettings.BaseInterval {
 		data.workerSvcChanges = true
 		data.mainSvcChanges = true
 	}

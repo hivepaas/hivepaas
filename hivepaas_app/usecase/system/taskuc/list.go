@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
@@ -30,7 +31,7 @@ func (uc *UC) ListTask(
 		default:
 			return nil, apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
 		}
-		setting, err := uc.settingRepo.GetSingle(ctx, uc.db, base.NewObjectScopeGlobal(), settingType, false,
+		setting, err := uc.settingRepo.GetSingle(ctx, uc.db, entity.NewObjectScopeGlobal(), settingType, false,
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
@@ -40,7 +41,7 @@ func (uc *UC) ListTask(
 	}
 
 	listResp, err := uc.taskService.ListTask(ctx, uc.db, &taskservice.ListTaskReq{
-		Scope:     base.NewObjectScopeGlobal(),
+		Scope:     entity.NewObjectScopeGlobal(),
 		TargetIDs: targetIDs,
 		Statuses:  req.Status,
 		Search:    req.Search,

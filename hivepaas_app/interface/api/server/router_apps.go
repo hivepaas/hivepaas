@@ -134,17 +134,17 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		schedJobGroup.GET("/:itemID/tasks/:taskID/logs", appSettingsHandler.GetAppSchedJobTaskLogs)
 	}
 
-	{ // Health checks
-		healthcheckGroup := appGroup.Group("/:appID/healthchecks")
-		healthcheckGroup.GET("", appSettingsHandler.ListAppHealthcheck)
-		healthcheckGroup.GET("/:itemID", appSettingsHandler.GetAppHealthcheck)
-		healthcheckGroup.POST("", appSettingsHandler.CreateAppHealthcheck)
-		healthcheckGroup.PUT("/:itemID", appSettingsHandler.UpdateAppHealthcheck)
-		healthcheckGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppHealthcheckStatus)
-		healthcheckGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppHealthcheck)
+	{ // Periodic jobs
+		periodicJobGroup := appGroup.Group("/:appID/periodic-jobs")
+		periodicJobGroup.GET("", appSettingsHandler.ListAppPeriodicJob)
+		periodicJobGroup.GET("/:itemID", appSettingsHandler.GetAppPeriodicJob)
+		periodicJobGroup.POST("", appSettingsHandler.CreateAppPeriodicJob)
+		periodicJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppPeriodicJob)
+		periodicJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppPeriodicJobStatus)
+		periodicJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppPeriodicJob)
 
-		// Healthcheck task group
-		healthcheckGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppHealthcheckTask)
+		// Periodic job task group
+		periodicJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppPeriodicJobTask)
 	}
 
 	{ // App containers

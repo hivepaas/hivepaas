@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -65,11 +64,11 @@ type EnvLoadOptions struct {
 	BuildPhase bool
 }
 
-type EnvLoadFunc func(context.Context, database.IDB, *base.ObjectScope, EnvLoadOptions) (
+type EnvLoadFunc func(context.Context, database.IDB, *entity.ObjectScope, EnvLoadOptions) (
 	[]*EnvVar, []*entity.Setting, error)
 
 func NewStaticEnvLoadFunc(vars []*EnvVar, secrets []*entity.Setting) EnvLoadFunc {
-	return func(context.Context, database.IDB, *base.ObjectScope, EnvLoadOptions) ([]*EnvVar, []*entity.Setting, error) {
+	return func(context.Context, database.IDB, *entity.ObjectScope, EnvLoadOptions) ([]*EnvVar, []*entity.Setting, error) {
 		return vars, secrets, nil
 	}
 }

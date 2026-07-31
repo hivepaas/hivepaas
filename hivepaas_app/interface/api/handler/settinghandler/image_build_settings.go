@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
@@ -90,7 +91,7 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 	}
 
 	req := imagebuildsettingsdto.NewGetRepoCacheInfoReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -127,7 +128,7 @@ func (h *Handler) ClearRepoCache(ctx *gin.Context) {
 	}
 
 	req := imagebuildsettingsdto.NewClearRepoCacheReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

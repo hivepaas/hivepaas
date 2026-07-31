@@ -197,7 +197,7 @@ func (e *Executor) loadSchedJobData(
 		data.Project = targetApp.Project
 	}
 
-	var scope *base.ObjectScope
+	var scope *entity.ObjectScope
 	if targetApp != nil {
 		scope = targetApp.GetObjectScope()
 	}

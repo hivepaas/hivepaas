@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
@@ -34,7 +35,7 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListGitCredentialReq()
-	req.Scope = base.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProject(projectID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -73,7 +74,7 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListRepoReq()
-	req.Scope = base.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProject(projectID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
@@ -115,7 +116,7 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListBranchReq()
-	req.Scope = base.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProject(projectID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
@@ -157,7 +158,7 @@ func (h *Handler) ListGitPullRequest(ctx *gin.Context) {
 	}
 
 	req := gitcredentialdto.NewListPullRequestReq()
-	req.Scope = base.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProject(projectID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)

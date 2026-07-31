@@ -27,7 +27,7 @@ type GetDownloadURLResp struct {
 
 type UploadReq struct {
 	Items           []*UploadItemReq
-	Scope           *base.ObjectScope
+	Scope           *entity.ObjectScope
 	FileType        base.FileType
 	FileKind        base.FileKind
 	StorageType     base.FileStorageType

@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	vld "github.com/tiendc/go-validator"
@@ -8,21 +8,21 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-type DeleteHealthcheckReq struct {
+type DeletePeriodicJobReq struct {
 	settings.DeleteSettingReq
 }
 
-func NewDeleteHealthcheckReq() *DeleteHealthcheckReq {
-	return &DeleteHealthcheckReq{}
+func NewDeletePeriodicJobReq() *DeletePeriodicJobReq {
+	return &DeletePeriodicJobReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *DeleteHealthcheckReq) Validate() apperrors.ValidationErrors {
+func (req *DeletePeriodicJobReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.DeleteSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type DeleteHealthcheckResp struct {
+type DeletePeriodicJobResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

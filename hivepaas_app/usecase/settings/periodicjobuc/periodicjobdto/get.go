@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	"encoding/json"
@@ -17,36 +17,39 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-type GetHealthcheckReq struct {
+type GetPeriodicJobReq struct {
 	settings.GetSettingReq
 }
 
-func NewGetHealthcheckReq() *GetHealthcheckReq {
-	return &GetHealthcheckReq{}
+func NewGetPeriodicJobReq() *GetPeriodicJobReq {
+	return &GetPeriodicJobReq{}
 }
 
-func (req *GetHealthcheckReq) Validate() apperrors.ValidationErrors {
+func (req *GetPeriodicJobReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.GetSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetHealthcheckResp struct {
+type GetPeriodicJobResp struct {
 	Meta *basedto.Meta    `json:"meta"`
-	Data *HealthcheckResp `json:"data"`
+	Data *PeriodicJobResp `json:"data"`
+}
+
+type PeriodicJobResp struct {
+	*settings.BaseSettingResp
+	Interval     timeutil.Duration         `json:"interval"`
+	MaxRetry     int                       `json:"maxRetry"`
+	RetryDelay   timeutil.Duration         `json:"retryDelay"`
+	Timeout      timeutil.Duration         `json:"timeout"`
+	Notification *PeriodicNotificationResp `json:"notification"`
+	Healthcheck  *HealthcheckResp          `json:"healthcheck"`
 }
 
 type HealthcheckResp struct {
-	*settings.BaseSettingResp
-	HealthcheckType base.HealthcheckType         `json:"healthcheckType"`
-	Interval        timeutil.Duration            `json:"interval"`
-	MaxRetry        int                          `json:"maxRetry"`
-	RetryDelay      timeutil.Duration            `json:"retryDelay"`
-	Timeout         timeutil.Duration            `json:"timeout"`
-	SaveResultTasks bool                         `json:"saveResultTasks"`
-	REST            *HealthcheckRESTResp         `json:"rest"`
-	GRPC            *HealthcheckGRPCResp         `json:"grpc"`
-	Notification    *HealthcheckNotificationResp `json:"notification"`
+	HealthcheckType base.HealthcheckType `json:"healthcheckType"`
+	REST            *HealthcheckRESTResp `json:"rest"`
+	GRPC            *HealthcheckGRPCResp `json:"grpc"`
 }
 
 type HealthcheckRESTResp struct {
@@ -76,16 +79,16 @@ type HealthcheckGRPCResp struct {
 	ReturnStatus base.HealthcheckGRPCStatus  `json:"returnStatus"`
 }
 
-type HealthcheckNotificationResp struct {
+type PeriodicNotificationResp struct {
 	*basedto.BaseEventNotificationResp
 	MinSendInterval timeutil.Duration `json:"minSendInterval"`
 }
 
-func TransformHealthcheck(
+func TransformPeriodicJob(
 	setting *entity.Setting,
 	refObjects *entity.RefObjects,
-) (resp *HealthcheckResp, err error) {
-	config := setting.MustAsHealthcheck()
+) (resp *PeriodicJobResp, err error) {
+	config := setting.MustAsPeriodicJob()
 	if err = copier.Copy(&resp, config); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -95,10 +98,20 @@ func TransformHealthcheck(
 		return nil, apperrors.Wrap(err)
 	}
 
-	TransformHealthcheckREST(config.REST, resp.REST)
+	TransformHealthcheck(config.Healthcheck, resp.Healthcheck)
 
-	resp.Notification = TransformHealthcheckNotification(config.Notification, refObjects)
+	resp.Notification = TransformPeriodicNotification(config.Notification, refObjects)
 	return resp, nil
+}
+
+func TransformHealthcheck(
+	config *entity.PeriodicHealthcheck,
+	resp *HealthcheckResp,
+) {
+	if config == nil || resp == nil {
+		return
+	}
+	TransformHealthcheckREST(config.REST, resp.REST)
 }
 
 func TransformHealthcheckREST(
@@ -128,14 +141,14 @@ func TransformHealthcheckREST(
 	}
 }
 
-func TransformHealthcheckNotification(
-	config *entity.HealthcheckNotification,
+func TransformPeriodicNotification(
+	config *entity.PeriodicNotification,
 	refObjects *entity.RefObjects,
-) *HealthcheckNotificationResp {
+) *PeriodicNotificationResp {
 	if config == nil {
 		return nil
 	}
-	return &HealthcheckNotificationResp{
+	return &PeriodicNotificationResp{
 		BaseEventNotificationResp: basedto.TransformBaseEventNotification(config.BaseEventNotification, refObjects),
 		MinSendInterval:           config.MinSendInterval,
 	}

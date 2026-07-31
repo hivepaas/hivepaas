@@ -29,14 +29,15 @@ func (s *service) doHealthcheckREST(
 	ctx context.Context,
 	data *healthcheckData,
 ) (err error) {
+	periodicJob := data.PeriodicSetting.MustAsPeriodicJob()
 	healthchk := data.Healthcheck.REST
 	if data.Output.REST == nil {
-		data.Output.REST = &entity.TaskHealthcheckOutputREST{}
+		data.Output.REST = &entity.TaskPeriodicHealthcheckOutputREST{}
 	}
 
 	reqCtx := ctx
-	if data.Healthcheck.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(ctx, data.Healthcheck.Timeout.ToDuration())
+	if periodicJob.Timeout > 0 {
+		ctx, cancel := context.WithTimeout(ctx, periodicJob.Timeout.ToDuration())
 		defer cancel()
 		reqCtx = ctx
 	}

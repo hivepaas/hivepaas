@@ -1,4 +1,4 @@
-package healthcheckuc
+package periodicjobuc
 
 import (
 	"context"
@@ -6,15 +6,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
 )
 
-func (uc *UC) ListHealthcheckTask(
+func (uc *UC) ListPeriodicJobTask(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *healthcheckdto.ListHealthcheckTaskReq,
-) (*healthcheckdto.ListHealthcheckTaskResp, error) {
+	req *periodicjobdto.ListPeriodicJobTaskReq,
+) (*periodicjobdto.ListPeriodicJobTaskResp, error) {
 	req.Type = currentSettingType
 	jobSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.JobID, false)
 	if err != nil {
@@ -36,7 +36,7 @@ func (uc *UC) ListHealthcheckTask(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &healthcheckdto.ListHealthcheckTaskResp{
+	return &periodicjobdto.ListPeriodicJobTaskResp{
 		Meta: &basedto.ListMeta{Page: listResp.PagingMeta},
 		Data: resp,
 	}, nil

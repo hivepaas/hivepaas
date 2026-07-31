@@ -1,4 +1,4 @@
-package healthcheckuc
+package periodicjobuc
 
 import (
 	"context"
@@ -6,19 +6,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 )
 
-func (uc *UC) UpdateHealthcheckStatus(
+func (uc *UC) UpdatePeriodicJobStatus(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *healthcheckdto.UpdateHealthcheckStatusReq,
-) (*healthcheckdto.UpdateHealthcheckStatusResp, error) {
+	req *periodicjobdto.UpdatePeriodicJobStatusReq,
+) (*periodicjobdto.UpdatePeriodicJobStatusResp, error) {
 	req.Type = currentSettingType
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &healthcheckdto.UpdateHealthcheckStatusResp{}, nil
+	return &periodicjobdto.UpdatePeriodicJobStatusResp{}, nil
 }

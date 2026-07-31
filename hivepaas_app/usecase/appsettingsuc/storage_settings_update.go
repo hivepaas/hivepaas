@@ -111,7 +111,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 
 	// Load project storage settings to make sure these app settings comply with
-	storageSetting, err := uc.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(app.ProjectID),
+	storageSetting, err := uc.settingRepo.GetSingle(ctx, db, entity.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil {
 		return apperrors.Wrap(err)

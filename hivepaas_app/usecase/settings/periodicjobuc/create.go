@@ -1,4 +1,4 @@
-package healthcheckuc
+package periodicjobuc
 
 import (
 	"context"
@@ -7,19 +7,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 )
 
-func (uc *UC) CreateHealthcheck(
+func (uc *UC) CreatePeriodicJob(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *healthcheckdto.CreateHealthcheckReq,
-) (*healthcheckdto.CreateHealthcheckResp, error) {
+	req *periodicjobdto.CreatePeriodicJobReq,
+) (*periodicjobdto.CreatePeriodicJobResp, error) {
 	req.Type = currentSettingType
-	healthcheck := req.ToEntity()
+	periodicJob := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,
-		VerifyingRefIDs: healthcheck.GetRefObjectIDs(),
+		VerifyingRefIDs: periodicJob.GetRefObjectIDs(),
 		Version:         currentSettingVersion,
 		PrepareCreation: func(
 			ctx context.Context,
@@ -27,7 +27,8 @@ func (uc *UC) CreateHealthcheck(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			if err := pData.Setting.SetData(healthcheck); err != nil {
+			pData.Setting.Kind = string(req.Kind)
+			if err := pData.Setting.SetData(periodicJob); err != nil {
 				return apperrors.Wrap(err)
 			}
 			return nil
@@ -37,7 +38,7 @@ func (uc *UC) CreateHealthcheck(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &healthcheckdto.CreateHealthcheckResp{
+	return &periodicjobdto.CreatePeriodicJobResp{
 		Data: resp.Data,
 	}, nil
 }

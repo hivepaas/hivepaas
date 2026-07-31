@@ -78,7 +78,7 @@ func (uc *UC) loadJoinNodeData(
 	req *nodedto.JoinNodeReq,
 	data *joinNodeData,
 ) error {
-	sshKeySetting, err := uc.SettingRepo.GetByID(ctx, db, base.NewObjectScopeGlobal(), base.SettingTypeSSHKey,
+	sshKeySetting, err := uc.SettingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(), base.SettingTypeSSHKey,
 		req.SSHKey.ID, true)
 	if err != nil {
 		return apperrors.Wrap(err)

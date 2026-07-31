@@ -9,16 +9,20 @@ import (
 
 func NewRefObjects() *RefObjects {
 	return &RefObjects{
-		RefSettings: make(map[string]*Setting),
-		RefApps:     make(map[string]*App),
-		RefUsers:    make(map[string]*User),
+		RefSettings:    make(map[string]*Setting, 5), //nolint:mnd
+		RefApps:        make(map[string]*App, 2),     //nolint:mnd
+		RefProjects:    make(map[string]*Project),
+		RefProjectEnvs: make(map[string]*ProjectEnv),
+		RefUsers:       make(map[string]*User),
 	}
 }
 
 type RefObjects struct {
-	RefSettings map[string]*Setting
-	RefApps     map[string]*App
-	RefUsers    map[string]*User
+	RefSettings    map[string]*Setting    `json:"settings"`
+	RefApps        map[string]*App        `json:"apps"`
+	RefProjects    map[string]*Project    `json:"projects"`
+	RefProjectEnvs map[string]*ProjectEnv `json:"projectEnvs"`
+	RefUsers       map[string]*User       `json:"users"`
 }
 
 func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
@@ -26,22 +30,17 @@ func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
 		return
 	}
 
-	if r.RefSettings == nil {
-		r.RefSettings = make(map[string]*Setting, len(refObjects.RefSettings))
-	}
 	for _, refSetting := range refObjects.RefSettings {
 		r.RefSettings[refSetting.ID] = refSetting
-	}
-
-	if r.RefApps == nil {
-		r.RefApps = make(map[string]*App, len(refObjects.RefApps))
 	}
 	for _, refApp := range refObjects.RefApps {
 		r.RefApps[refApp.ID] = refApp
 	}
-
-	if r.RefUsers == nil {
-		r.RefUsers = make(map[string]*User, len(refObjects.RefUsers))
+	for _, refProject := range refObjects.RefProjects {
+		r.RefProjects[refProject.ID] = refProject
+	}
+	for _, refProjectEnv := range refObjects.RefProjectEnvs {
+		r.RefProjectEnvs[refProjectEnv.ID] = refProjectEnv
 	}
 	for _, refUser := range refObjects.RefUsers {
 		r.RefUsers[refUser.ID] = refUser
@@ -49,13 +48,16 @@ func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
 }
 
 type RefObjectIDs struct {
-	RefSettingIDs []string
-	RefAppIDs     []string
-	RefUserIDs    []string
+	RefSettingIDs    []string `json:"settingIds"`
+	RefAppIDs        []string `json:"appIds"`
+	RefProjectIDs    []string `json:"projectIds"`
+	RefProjectEnvIDs []string `json:"projectEnvIds"`
+	RefUserIDs       []string `json:"userIds"`
 }
 
 func (r *RefObjectIDs) HasData() bool {
-	return len(r.RefSettingIDs) > 0 || len(r.RefAppIDs) > 0 || len(r.RefUserIDs) > 0
+	return len(r.RefSettingIDs) > 0 || len(r.RefAppIDs) > 0 ||
+		len(r.RefProjectIDs) > 0 || len(r.RefProjectEnvIDs) > 0 || len(r.RefUserIDs) > 0
 }
 
 func (r *RefObjectIDs) AddRefIDs(refIDs *RefObjectIDs) {
@@ -64,6 +66,8 @@ func (r *RefObjectIDs) AddRefIDs(refIDs *RefObjectIDs) {
 	}
 	r.RefSettingIDs = append(r.RefSettingIDs, refIDs.RefSettingIDs...)
 	r.RefAppIDs = append(r.RefAppIDs, refIDs.RefAppIDs...)
+	r.RefProjectIDs = append(r.RefProjectIDs, refIDs.RefProjectIDs...)
+	r.RefProjectEnvIDs = append(r.RefProjectEnvIDs, refIDs.RefProjectEnvIDs...)
 	r.RefUserIDs = append(r.RefUserIDs, refIDs.RefUserIDs...)
 }
 
@@ -83,6 +87,16 @@ func (r *RefObjectIDs) GetRecursiveRefObjectIDs(refObjects *RefObjects) *RefObje
 			res.RefAppIDs = append(res.RefAppIDs, appID)
 		}
 	}
+	for _, projectID := range newRefIDs.RefProjectIDs {
+		if !gofn.Contain(r.RefProjectIDs, projectID) {
+			res.RefProjectIDs = append(res.RefProjectIDs, projectID)
+		}
+	}
+	for _, projectEnvID := range newRefIDs.RefProjectEnvIDs {
+		if !gofn.Contain(r.RefProjectEnvIDs, projectEnvID) {
+			res.RefProjectEnvIDs = append(res.RefProjectEnvIDs, projectEnvID)
+		}
+	}
 	for _, userID := range newRefIDs.RefUserIDs {
 		if !gofn.Contain(r.RefUserIDs, userID) {
 			res.RefUserIDs = append(res.RefUserIDs, userID)
@@ -92,7 +106,8 @@ func (r *RefObjectIDs) GetRecursiveRefObjectIDs(refObjects *RefObjects) *RefObje
 }
 
 func (r *RefObjectIDs) GetResourceLinks(srcType base.ResourceType, srcID string) []*ResLink {
-	resLinks := make([]*ResLink, 0, len(r.RefSettingIDs)+len(r.RefAppIDs)+len(r.RefUserIDs))
+	resLinks := make([]*ResLink, 0, len(r.RefSettingIDs)+len(r.RefAppIDs)+len(r.RefProjectIDs)+
+		len(r.RefProjectEnvIDs)+len(r.RefUserIDs))
 	timeNow := timeutil.NowUTC()
 	for _, refSettingID := range r.RefSettingIDs {
 		resLinks = append(resLinks, &ResLink{
@@ -110,6 +125,26 @@ func (r *RefObjectIDs) GetResourceLinks(srcType base.ResourceType, srcID string)
 			SrcID:     srcID,
 			DstType:   base.ResourceTypeApp,
 			DstID:     refAppID,
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		})
+	}
+	for _, refProjectID := range r.RefProjectIDs {
+		resLinks = append(resLinks, &ResLink{
+			SrcType:   srcType,
+			SrcID:     srcID,
+			DstType:   base.ResourceTypeProject,
+			DstID:     refProjectID,
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		})
+	}
+	for _, refProjectEnvID := range r.RefProjectEnvIDs {
+		resLinks = append(resLinks, &ResLink{
+			SrcType:   srcType,
+			SrcID:     srcID,
+			DstType:   base.ResourceTypeProjectEnv,
+			DstID:     refProjectEnvID,
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		})

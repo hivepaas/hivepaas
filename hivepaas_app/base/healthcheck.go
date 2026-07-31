@@ -13,6 +13,13 @@ var (
 	AllHealthcheckTypes = []HealthcheckType{HealthcheckTypeREST, HealthcheckTypeGRPC}
 )
 
+type HealthcheckState string
+
+const (
+	HealthcheckStateSuccess HealthcheckState = "success"
+	HealthcheckStateFailure HealthcheckState = "failure"
+)
+
 type HealthcheckGRPCVersion string
 
 const (

@@ -16,9 +16,9 @@ import (
 )
 
 type BaseSettingReq struct {
-	Type  base.SettingType  `json:"-" mapstructure:"-"`
-	Kind  string            `json:"-" mapstructure:"-"`
-	Scope *base.ObjectScope `json:"-" mapstructure:"-"`
+	Type  base.SettingType    `json:"-" mapstructure:"-"`
+	Kind  string              `json:"-" mapstructure:"-"`
+	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
 }
 
 type BaseSettingResp struct {

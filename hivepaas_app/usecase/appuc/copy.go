@@ -129,7 +129,7 @@ func (uc *UC) onCopyAppSetting(
 		return gofn.If(req.CopyConfigFiles.Copy, setting, nil), nil
 	case base.SettingTypeEnvVar:
 		return gofn.If(req.CopyEnvVars.Copy, setting, nil), nil
-	case base.SettingTypeHealthcheck:
+	case base.SettingTypePeriodicJob:
 		return gofn.If(req.CopyHealthChecks.Copy, setting, nil), nil
 	case base.SettingTypeSchedJob:
 		return gofn.If(req.CopySchedJobs.Copy, setting, nil), nil

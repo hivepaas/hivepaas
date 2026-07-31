@@ -58,8 +58,8 @@ func (s *service) initRootProjectMainApp(
 			TaskCheckInterval:  timeutil.Duration(cfg.Tasks.Queue.TaskCheckInterval),
 			TaskCreateInterval: timeutil.Duration(cfg.Tasks.Queue.TaskCreateInterval),
 		},
-		HealthcheckSettings: entity.HivePaaSHealthcheckSettings{
-			BaseInterval: timeutil.Duration(cfg.Tasks.Healthcheck.BaseInterval),
+		PeriodicSettings: entity.HivePaaSPeriodicSettings{
+			BaseInterval: timeutil.Duration(cfg.Tasks.Periodic.BaseInterval),
 		},
 	}
 	dbServiceSetting.MustSetData(serviceSetting)

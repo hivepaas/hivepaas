@@ -224,6 +224,6 @@ func (uc *UC) preparePersistingProjectNotificationDefault(
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	setting.MustSetData(entity.NewNotificationDefaultForScope(base.NewObjectScopeProject(project.ID)))
+	setting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeProject(project.ID)))
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }

@@ -16,7 +16,7 @@ import (
 func (s *service) LoadReferenceObjects(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	inSettings ...*entity.Setting,
@@ -31,7 +31,7 @@ func (s *service) LoadReferenceObjects(
 func (s *service) LoadReferenceObjectsByIDs(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	refIDs *entity.RefObjectIDs,
@@ -50,13 +50,28 @@ func (s *service) LoadReferenceObjectsByIDs(
 		}
 	}
 
-	// Make sure the current app id is in the list
-	if scope != nil && scope.IsAppScope() && !gofn.Contain(refIDs.RefAppIDs, scope.AppID) {
-		refIDs.RefAppIDs = append(refIDs.RefAppIDs, scope.AppID)
-	}
 	// Load ref apps
 	if len(refIDs.RefAppIDs) > 0 {
-		refObjects.RefApps, err = s.LoadReferenceApps(ctx, db, requireActive, errorIfUnavail, refIDs.RefAppIDs)
+		refObjects.RefApps, err = s.LoadReferenceApps(ctx, db, requireActive, errorIfUnavail,
+			refIDs.RefAppIDs)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
+	// Load ref projects
+	if len(refIDs.RefProjectIDs) > 0 {
+		refObjects.RefProjects, err = s.LoadReferenceProjects(ctx, db, requireActive, errorIfUnavail,
+			refIDs.RefProjectIDs)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
+	// Load ref project envs
+	if len(refIDs.RefProjectEnvIDs) > 0 {
+		refObjects.RefProjectEnvs, err = s.LoadReferenceProjectEnvs(ctx, db, requireActive, errorIfUnavail,
+			refIDs.RefProjectEnvIDs)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -90,7 +105,7 @@ func (s *service) LoadReferenceObjectsByIDs(
 func (s *service) LoadReferenceSettings(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	requireActive bool,
 	errorIfUnavail bool,
 	settingIDs []string,
@@ -135,6 +150,7 @@ func (s *service) LoadReferenceApps(
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
+		bunex.SelectRelation("ProjectEnv"),
 	}
 	if requireActive {
 		opts = append(opts, bunex.SelectWhere("app.status = ?", base.AppStatusActive))
@@ -147,21 +163,105 @@ func (s *service) LoadReferenceApps(
 	appMap = entityutil.SliceToIDMap(apps)
 
 	for _, id := range appIDs {
-		app, exists := appMap[id]
-		if errorIfUnavail && !exists {
-			return nil, apperrors.NewNotFound("App").
-				WithMsgLog("app %s not found or inactive", id)
+		app := appMap[id]
+		if (requireActive || errorIfUnavail) && app == nil {
+			return nil, apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", id)
 		}
 		if app == nil {
 			continue
 		}
-		if requireActive && app.Project != nil && app.Project.Status != base.ProjectStatusActive {
-			app.Project = nil
-		}
 		if errorIfUnavail && app.Project == nil {
-			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", app.ProjectID)
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).
+				WithParam("Name", app.ProjectID)
+		}
+		if errorIfUnavail && app.ProjectEnv == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).
+				WithParam("Name", app.ProjectEnvID)
+		}
+		if requireActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
+			return nil, apperrors.Wrap(apperrors.ErrProjectInactive).
+				WithParam("Name", app.ProjectID)
+		}
+		if requireActive && app.ProjectEnv != nil && app.ProjectEnv.Status != base.ProjectStatusActive {
+			return nil, apperrors.Wrap(apperrors.ErrProjectEnvInactive).
+				WithParam("Name", app.ProjectEnvID)
 		}
 	}
 
 	return appMap, nil
+}
+
+func (s *service) LoadReferenceProjects(
+	ctx context.Context,
+	db database.IDB,
+	requireActive bool,
+	errorIfUnavail bool,
+	projectIDs []string,
+) (projectMap map[string]*entity.Project, err error) {
+	projectIDs = gofn.ToSet(projectIDs)
+	opts := []bunex.SelectQueryOption{
+		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+	}
+	if requireActive {
+		opts = append(opts, bunex.SelectWhere("project.status = ?", base.ProjectStatusActive))
+	}
+
+	projects, err := s.projectRepo.ListByIDs(ctx, db, projectIDs, opts...)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	projectMap = entityutil.SliceToIDMap(projects)
+
+	for _, id := range projectIDs {
+		project := projectMap[id]
+		if (requireActive || errorIfUnavail) && project == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", id)
+		}
+	}
+
+	return projectMap, nil
+}
+
+func (s *service) LoadReferenceProjectEnvs(
+	ctx context.Context,
+	db database.IDB,
+	requireActive bool,
+	errorIfUnavail bool,
+	projectEnvIDs []string,
+) (projectEnvMap map[string]*entity.ProjectEnv, err error) {
+	projectEnvIDs = gofn.ToSet(projectEnvIDs)
+	opts := []bunex.SelectQueryOption{
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	}
+	if requireActive {
+		opts = append(opts, bunex.SelectWhere("project_env.status = ?", base.ProjectStatusActive))
+	}
+
+	projectEnvs, err := s.projectEnvRepo.ListByIDs(ctx, db, projectEnvIDs, opts...)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	projectEnvMap = entityutil.SliceToIDMap(projectEnvs)
+
+	for _, id := range projectEnvIDs {
+		projectEnv := projectEnvMap[id]
+		if (requireActive || errorIfUnavail) && projectEnv == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", id)
+		}
+		if projectEnv == nil {
+			continue
+		}
+		if errorIfUnavail && projectEnv.Project == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).
+				WithParam("Name", projectEnv.ProjectID)
+		}
+		if requireActive && (projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive) {
+			return nil, apperrors.Wrap(apperrors.ErrProjectInactive).
+				WithParam("Name", projectEnv.ProjectID)
+		}
+	}
+
+	return projectEnvMap, nil
 }

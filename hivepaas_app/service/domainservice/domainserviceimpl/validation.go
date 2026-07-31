@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/domainhelper"
@@ -18,7 +19,7 @@ func (s *service) VerifyProjectDomains(
 	domains []string,
 ) error {
 	// Load domain settings in project
-	domainSetting, err := s.settingRepo.GetSingle(ctx, db, base.NewObjectScopeProject(projectID),
+	domainSetting, err := s.settingRepo.GetSingle(ctx, db, entity.NewObjectScopeProject(projectID),
 		base.SettingTypeDomainSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)

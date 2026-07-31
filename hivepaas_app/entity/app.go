@@ -56,12 +56,16 @@ func (app *App) IsChildApp() bool {
 	return app.ParentID != ""
 }
 
-func (app *App) GetObjectScope() *base.ObjectScope {
-	return &base.ObjectScope{
+func (app *App) GetObjectScope() *ObjectScope {
+	return &ObjectScope{
 		ScopeType:    base.ObjectScopeApp,
+		App:          app,
 		AppID:        app.ID,
+		ParentApp:    app.ParentApp,
 		ParentAppID:  app.ParentID,
+		Project:      app.Project,
 		ProjectID:    app.ProjectID,
+		ProjectEnv:   app.ProjectEnv,
 		ProjectEnvID: app.ProjectEnvID,
 	}
 }

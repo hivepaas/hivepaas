@@ -1,4 +1,4 @@
-package healthcheckuc
+package periodicjobuc
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	currentSettingType    = base.SettingTypeHealthcheck
-	currentSettingVersion = entity.CurrentHealthcheckVersion
+	currentSettingType    = base.SettingTypePeriodicJob
+	currentSettingVersion = entity.CurrentPeriodicJobVersion
 )
 
 type UC struct {

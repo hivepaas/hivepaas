@@ -49,7 +49,7 @@ func (uc *UC) GetAppStorageSettings(
 	}
 
 	// Load project storage settings to make sure these app settings comply with
-	storageSetting, err := uc.settingRepo.GetSingle(ctx, uc.db, base.NewObjectScopeProject(app.ProjectID),
+	storageSetting, err := uc.settingRepo.GetSingle(ctx, uc.db, entity.NewObjectScopeProject(app.ProjectID),
 		base.SettingTypeStorageSettings, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return nil, apperrors.Wrap(err)

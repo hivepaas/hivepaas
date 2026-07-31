@@ -26,7 +26,7 @@ type GetTaskResp struct {
 }
 
 type ListTaskReq struct {
-	Scope     *base.ObjectScope
+	Scope     *entity.ObjectScope
 	TargetIDs []string
 	Statuses  []base.TaskStatus
 	Search    string

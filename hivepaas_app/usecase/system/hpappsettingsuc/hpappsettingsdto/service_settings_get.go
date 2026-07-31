@@ -29,10 +29,10 @@ type GetServiceSettingsResp struct {
 
 type ServiceSettingsResp struct {
 	*settings.BaseSettingResp
-	AppSettings         HivePaaSAppSettingsResp         `json:"appSettings"`
-	WorkerSettings      HivePaaSWorkerSettingsResp      `json:"workerSettings"`
-	TaskSettings        HivePaaSTaskSettingsResp        `json:"taskSettings"`
-	HealthcheckSettings HivePaaSHealthcheckSettingsResp `json:"healthcheckSettings"`
+	AppSettings      HivePaaSAppSettingsResp      `json:"appSettings"`
+	WorkerSettings   HivePaaSWorkerSettingsResp   `json:"workerSettings"`
+	TaskSettings     HivePaaSTaskSettingsResp     `json:"taskSettings"`
+	PeriodicSettings HivePaaSPeriodicSettingsResp `json:"periodicSettings"`
 }
 
 type HivePaaSAppSettingsResp struct {
@@ -50,7 +50,7 @@ type HivePaaSTaskSettingsResp struct {
 	TaskCreateInterval timeutil.Duration `json:"taskCreateInterval"`
 }
 
-type HivePaaSHealthcheckSettingsResp struct {
+type HivePaaSPeriodicSettingsResp struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
 }
 

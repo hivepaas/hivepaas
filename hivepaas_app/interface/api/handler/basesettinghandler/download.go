@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc/secretdto"
@@ -41,7 +42,7 @@ func (h *Handler) Download(
 		o(options)
 	}
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		itemID, err = h.GetParamGlobalSettings(ctx, "itemID")

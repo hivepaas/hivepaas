@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
@@ -19,10 +20,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc/imservicedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc/notificationdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc/oauthdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc/registryauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -61,7 +62,7 @@ func (h *Handler) DeleteSetting(
 		o(options)
 	}
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeDelete, "itemID")
@@ -148,11 +149,6 @@ func (h *Handler) DeleteSetting(
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.GithubAppUC.DeleteGithubApp(reqCtx, auth, r) }
 
-	case base.ResourceTypeHealthcheck:
-		r := healthcheckdto.NewDeleteHealthcheckReq()
-		r.Scope, r.ID = scope, itemID
-		req, ucFunc = r, func() (any, error) { return h.HealthcheckUC.DeleteHealthcheck(reqCtx, auth, r) }
-
 	case base.ResourceTypeIMService:
 		r := imservicedto.NewDeleteIMServiceReq()
 		r.Scope, r.ID = scope, itemID
@@ -167,6 +163,11 @@ func (h *Handler) DeleteSetting(
 		r := oauthdto.NewDeleteOAuthReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.OAuthUC.DeleteOAuth(reqCtx, auth, r) }
+
+	case base.ResourceTypePeriodicJob:
+		r := periodicjobdto.NewDeletePeriodicJobReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.PeriodicJobUC.DeletePeriodicJob(reqCtx, auth, r) }
 
 	case base.ResourceTypeRegistryAuth:
 		r := registryauthdto.NewDeleteRegistryAuthReq()

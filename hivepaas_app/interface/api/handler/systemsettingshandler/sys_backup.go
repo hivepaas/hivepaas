@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
@@ -33,7 +34,7 @@ func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewGetSystemBackupReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -71,7 +72,7 @@ func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewUpdateSystemBackupReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -109,7 +110,7 @@ func (h *Handler) ExecuteBackup(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewExecuteSystemBackupReq()
-	req.Scope = base.NewObjectScopeGlobal()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

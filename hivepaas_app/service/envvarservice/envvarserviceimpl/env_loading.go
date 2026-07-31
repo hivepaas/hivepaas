@@ -14,7 +14,7 @@ import (
 func (s *service) DefaultEnvLoad(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	options envvarservice.EnvLoadOptions,
 ) (envVars []*envvarservice.EnvVar, secrets []*entity.Setting, err error) {
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,

@@ -30,7 +30,7 @@ func (s *service) initDefaultNotificationSettings(
 		CreatedAt:       timeNow,
 		UpdatedAt:       timeNow,
 	}
-	notifSetting.MustSetData(entity.NewNotificationDefaultForScope(base.NewObjectScopeGlobal()))
+	notifSetting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeGlobal()))
 
 	err = s.settingRepo.Insert(ctx, db, notifSetting)
 	if err != nil {

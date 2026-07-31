@@ -156,7 +156,7 @@ func (s *Setting) MustAsNotification() *Notification {
 	return gofn.Must(s.AsNotification())
 }
 
-func NewNotificationDefaultForScope(scope *base.ObjectScope) *Notification {
+func NewNotificationDefaultForScope(scope *ObjectScope) *Notification {
 	notif := &Notification{
 		ViaEmail: &NotificationViaEmail{
 			Enabled:    true,

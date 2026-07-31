@@ -23,12 +23,12 @@ const (
 	SettingTypeEmail              SettingType = "email"
 	SettingTypeEnvVar             SettingType = "env-var"
 	SettingTypeGithubApp          SettingType = "github-app"
-	SettingTypeHealthcheck        SettingType = "healthcheck"
 	SettingTypeImageBuildSettings SettingType = "image-build-settings"
 	SettingTypeIMService          SettingType = "im-service"
 	SettingTypeHivePaaSService    SettingType = "hivepaas-service"
 	SettingTypeNotification       SettingType = "notification"
 	SettingTypeOAuth              SettingType = "oauth"
+	SettingTypePeriodicJob        SettingType = "periodic-job"
 	SettingTypeProject            SettingType = "project"
 	SettingTypeRegistryAuth       SettingType = "registry-auth"
 	SettingTypeRepoWebhook        SettingType = "repo-webhook"
@@ -47,7 +47,7 @@ const (
 var (
 	AllAppSettingTypes = []SettingType{SettingTypeApp, SettingTypeAppDeployment,
 		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeConfigFile,
-		SettingTypeSchedJob, SettingTypeHealthcheck}
+		SettingTypeSchedJob, SettingTypePeriodicJob}
 
 	AllProjectSettingTypes = []SettingType{SettingTypeProject, SettingTypeEnvVar, SettingTypeSecret}
 )

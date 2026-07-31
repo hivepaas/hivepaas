@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -24,14 +23,14 @@ func (s *service) sslGetNotification(
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
 
-	var scope *base.ObjectScope
+	var scope *entity.ObjectScope
 	switch {
 	case sslSetting.BelongToApp != nil:
 		scope = sslSetting.BelongToApp.GetObjectScope()
 	case sslSetting.BelongToProject != nil:
 		scope = sslSetting.BelongToProject.GetObjectScope()
 	default:
-		scope = base.NewObjectScopeGlobal()
+		scope = entity.NewObjectScopeGlobal()
 	}
 
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,

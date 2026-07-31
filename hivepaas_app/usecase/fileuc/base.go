@@ -20,7 +20,7 @@ type baseFileData struct {
 func (uc *UC) loadScopeData(
 	ctx context.Context,
 	db database.IDB,
-	scope *base.ObjectScope,
+	scope *entity.ObjectScope,
 	data *baseFileData,
 ) (err error) {
 	requireActive := !scope.NotRequireActive

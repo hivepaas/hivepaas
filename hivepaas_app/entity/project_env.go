@@ -44,10 +44,13 @@ func (p *ProjectEnv) GetName() string {
 	return p.Name
 }
 
-func (p *ProjectEnv) GetObjectScope() *base.ObjectScope {
-	return &base.ObjectScope{
+func (p *ProjectEnv) GetObjectScope() *ObjectScope {
+	return &ObjectScope{
 		ScopeType:    base.ObjectScopeProjectEnv,
+		ProjectEnv:   p,
 		ProjectEnvID: p.ID,
+		Project:      p.Project,
+		ProjectID:    p.ProjectID,
 	}
 }
 

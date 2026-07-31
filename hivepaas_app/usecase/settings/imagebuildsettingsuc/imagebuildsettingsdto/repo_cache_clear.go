@@ -4,12 +4,12 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 type ClearRepoCacheReq struct {
-	Scope *base.ObjectScope `json:"-" mapstructure:"-"`
+	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
 }
 
 func NewClearRepoCacheReq() *ClearRepoCacheReq {

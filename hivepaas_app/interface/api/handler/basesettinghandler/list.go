@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
@@ -19,10 +20,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc/imservicedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc/notificationdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc/oauthdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc/registryauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -60,7 +61,7 @@ func (h *Handler) ListSetting(
 		o(options)
 	}
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
@@ -146,11 +147,6 @@ func (h *Handler) ListSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.GithubAppUC.ListGithubApp(reqCtx, auth, r) }
 
-	case base.ResourceTypeHealthcheck:
-		r := healthcheckdto.NewListHealthcheckReq()
-		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.HealthcheckUC.ListHealthcheck(reqCtx, auth, r) }
-
 	case base.ResourceTypeIMService:
 		r := imservicedto.NewListIMServiceReq()
 		r.Scope = scope
@@ -165,6 +161,11 @@ func (h *Handler) ListSetting(
 		r := oauthdto.NewListOAuthReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.OAuthUC.ListOAuth(reqCtx, auth, r) }
+
+	case base.ResourceTypePeriodicJob:
+		r := periodicjobdto.NewListPeriodicJobReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.PeriodicJobUC.ListPeriodicJob(reqCtx, auth, r) }
 
 	case base.ResourceTypeRegistryAuth:
 		r := registryauthdto.NewListRegistryAuthReq()

@@ -1,4 +1,4 @@
-package healthcheckdto
+package periodicjobdto
 
 import (
 	"encoding/json"
@@ -25,33 +25,65 @@ const (
 	grpcServiceMaxLen = 255
 )
 
-type CreateHealthcheckReq struct {
+type CreatePeriodicJobReq struct {
 	settings.CreateSettingReq
-	*HealthcheckBaseReq
+	*PeriodicJobBaseReq
 }
 
-type HealthcheckBaseReq struct {
-	Name            string                      `json:"name"`
-	HealthcheckType base.HealthcheckType        `json:"healthcheckType"`
-	Interval        timeutil.Duration           `json:"interval"`
-	MaxRetry        int                         `json:"maxRetry"`
-	RetryDelay      timeutil.Duration           `json:"retryDelay"`
-	Timeout         timeutil.Duration           `json:"timeout"`
-	SaveResultTasks bool                        `json:"saveResultTasks"`
-	REST            *HealthcheckRESTReq         `json:"rest"`
-	GRPC            *HealthcheckGRPCReq         `json:"grpc"`
-	Notification    *HealthcheckNotificationReq `json:"notification"`
+type PeriodicJobBaseReq struct {
+	Name         string                   `json:"name"`
+	Kind         base.PeriodicKind        `json:"kind"`
+	Interval     timeutil.Duration        `json:"interval"`
+	MaxRetry     int                      `json:"maxRetry"`
+	RetryDelay   timeutil.Duration        `json:"retryDelay"`
+	Timeout      timeutil.Duration        `json:"timeout"`
+	Notification *PeriodicNotificationReq `json:"notification"`
+	Healthcheck  *HealthcheckReq          `json:"healthcheck"`
 }
 
-func (req *HealthcheckBaseReq) ToEntity() *entity.Healthcheck {
-	res := &entity.Healthcheck{
+func (req *PeriodicJobBaseReq) ToEntity() *entity.PeriodicJob {
+	res := &entity.PeriodicJob{
+		Interval:     req.Interval,
+		MaxRetry:     req.MaxRetry,
+		RetryDelay:   req.RetryDelay,
+		Timeout:      req.Timeout,
+		Notification: req.Notification.ToEntity(),
+	}
+	switch req.Kind {
+	case base.PeriodicKindHealthCheck:
+		res.Healthcheck = req.Healthcheck.ToEntity()
+	case base.PeriodicKindPlaceholder:
+	}
+	return res
+}
+
+func (req *PeriodicJobBaseReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllPeriodicKinds,
+		field+"periodicKind")...)
+	switch req.Kind {
+	case base.PeriodicKindHealthCheck:
+		res = append(res, basedto.ValidateCond(req.Healthcheck != nil, field+"healthcheck")...)
+		res = append(res, req.Healthcheck.validate(field+"healthcheck")...)
+	case base.PeriodicKindPlaceholder:
+	}
+	return res
+}
+
+type HealthcheckReq struct {
+	HealthcheckType base.HealthcheckType `json:"healthcheckType"`
+	REST            *HealthcheckRESTReq  `json:"rest"`
+	GRPC            *HealthcheckGRPCReq  `json:"grpc"`
+}
+
+func (req *HealthcheckReq) ToEntity() *entity.PeriodicHealthcheck {
+	if req == nil {
+		return nil
+	}
+	res := &entity.PeriodicHealthcheck{
 		HealthcheckType: req.HealthcheckType,
-		Interval:        req.Interval,
-		MaxRetry:        req.MaxRetry,
-		RetryDelay:      req.RetryDelay,
-		Timeout:         req.Timeout,
-		SaveResultTasks: req.SaveResultTasks,
-		Notification:    req.Notification.ToEntity(),
 	}
 	switch req.HealthcheckType {
 	case base.HealthcheckTypeREST:
@@ -62,7 +94,7 @@ func (req *HealthcheckBaseReq) ToEntity() *entity.Healthcheck {
 	return res
 }
 
-func (req *HealthcheckBaseReq) validate(field string) (res []vld.Validator) {
+func (req *HealthcheckReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
@@ -212,33 +244,33 @@ func (req *HealthcheckGRPCReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
-type HealthcheckNotificationReq struct {
+type PeriodicNotificationReq struct {
 	*basedto.BaseEventNotificationReq
 	MinSendInterval timeutil.Duration `json:"minSendInterval"`
 }
 
-func (req *HealthcheckNotificationReq) ToEntity() *entity.HealthcheckNotification {
+func (req *PeriodicNotificationReq) ToEntity() *entity.PeriodicNotification {
 	if req == nil {
 		return nil
 	}
-	return &entity.HealthcheckNotification{
+	return &entity.PeriodicNotification{
 		BaseEventNotification: req.BaseEventNotificationReq.ToEntity(),
 		MinSendInterval:       req.MinSendInterval,
 	}
 }
 
-func NewCreateHealthcheckReq() *CreateHealthcheckReq {
-	return &CreateHealthcheckReq{}
+func NewCreatePeriodicJobReq() *CreatePeriodicJobReq {
+	return &CreatePeriodicJobReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateHealthcheckReq) Validate() apperrors.ValidationErrors {
+func (req *CreatePeriodicJobReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type CreateHealthcheckResp struct {
+type CreatePeriodicJobResp struct {
 	Meta *basedto.Meta         `json:"meta"`
 	Data *basedto.ObjectIDResp `json:"data"`
 }

@@ -1,4 +1,4 @@
-package healthcheckuc
+package periodicjobuc
 
 import (
 	"context"
@@ -6,26 +6,26 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 )
 
-func (uc *UC) ListHealthcheck(
+func (uc *UC) ListPeriodicJob(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *healthcheckdto.ListHealthcheckReq,
-) (*healthcheckdto.ListHealthcheckResp, error) {
+	req *periodicjobdto.ListPeriodicJobReq,
+) (*periodicjobdto.ListPeriodicJobResp, error) {
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData, err := healthcheckdto.TransformHealthchecks(resp.Data, resp.RefObjects)
+	respData, err := periodicjobdto.TransformPeriodicJobs(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &healthcheckdto.ListHealthcheckResp{
+	return &periodicjobdto.ListPeriodicJobResp{
 		Meta: resp.Meta,
 		Data: respData,
 	}, nil

@@ -3,7 +3,6 @@ package settingservice
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -11,10 +10,11 @@ import (
 type Service interface {
 	PersistSettingData(ctx context.Context, db database.IDB, data *PersistingSettingData) error
 
-	LoadReferenceObjects(ctx context.Context, db database.IDB, scope *base.ObjectScope, requireActive bool,
+	LoadReferenceObjects(ctx context.Context, db database.IDB, scope *entity.ObjectScope, requireActive bool,
 		errorIfUnavail bool, inSettings ...*entity.Setting) (*entity.RefObjects, error)
-	LoadReferenceObjectsByIDs(ctx context.Context, db database.IDB, scope *base.ObjectScope, requireActive bool,
+	LoadReferenceObjectsByIDs(ctx context.Context, db database.IDB, scope *entity.ObjectScope, requireActive bool,
 		errorIfUnavail bool, refIDs *entity.RefObjectIDs) (*entity.RefObjects, error)
+	LoadScopeObject(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
 
 	// Default settings
 	InitDefaults(ctx context.Context, db database.IDB) error

@@ -8,8 +8,8 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
@@ -25,14 +25,14 @@ func (e *Executor) sendNotification(
 		return nil
 	}
 
-	var scope *base.ObjectScope
+	var scope *entity.ObjectScope
 	switch {
 	case data.App != nil:
 		scope = data.App.GetObjectScope()
 	case data.Project != nil:
 		scope = data.Project.GetObjectScope()
 	default:
-		scope = base.NewObjectScopeGlobal()
+		scope = entity.NewObjectScopeGlobal()
 	}
 
 	isSucceeded := data.Task.IsDone()

@@ -8,10 +8,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 type UploadReq struct {
-	Scope       *base.ObjectScope
+	Scope       *entity.ObjectScope
 	FileType    base.FileType
 	FileKind    base.FileKind
 	StorageType base.FileStorageType

@@ -27,19 +27,18 @@ type taskQueue struct {
 	client      *gocronqueue.Client
 	redisClient rediscache.Client
 
-	settingRepo               repository.SettingRepo
-	taskRepo                  repository.TaskRepo
-	taskInfoRepo              cacherepository.TaskInfoRepo
-	healthcheckNotifEventRepo cacherepository.HealthcheckNotifEventRepo
-	healthcheckSettingsRepo   cacherepository.HealthcheckSettingsRepo
+	settingRepo          repository.SettingRepo
+	taskRepo             repository.TaskRepo
+	taskInfoRepo         cacherepository.TaskInfoRepo
+	periodicSettingsRepo cacherepository.PeriodicSettingsRepo
 
 	schedJobService schedjobservice.Service
 	settingService  settingservice.Service
 	startupService  startupservice.Service
 	taskService     taskservice.Service
 
-	taskExecutorMap     map[base.TaskType]gocronqueue.TaskExecFunc
-	healthcheckExecutor queue.HealthcheckExecFunc
+	taskExecutorMap  map[base.TaskType]gocronqueue.TaskExecFunc
+	periodicExecutor queue.PeriodicExecFunc
 }
 
 func New(
@@ -50,27 +49,25 @@ func New(
 	settingRepo repository.SettingRepo,
 	taskRepo repository.TaskRepo,
 	cacheTaskInfoRepo cacherepository.TaskInfoRepo,
-	healthcheckSettingsRepo cacherepository.HealthcheckSettingsRepo,
-	healthcheckNotifEventRepo cacherepository.HealthcheckNotifEventRepo,
+	periodicSettingsRepo cacherepository.PeriodicSettingsRepo,
 	schedJobService schedjobservice.Service,
 	taskService taskservice.Service,
 	settingService settingservice.Service,
 	startupService startupservice.Service,
 ) queue.TaskQueue {
 	return &taskQueue{
-		db:                        db,
-		config:                    config,
-		logger:                    logger,
-		redisClient:               redisClient,
-		settingRepo:               settingRepo,
-		taskRepo:                  taskRepo,
-		taskInfoRepo:              cacheTaskInfoRepo,
-		healthcheckSettingsRepo:   healthcheckSettingsRepo,
-		healthcheckNotifEventRepo: healthcheckNotifEventRepo,
-		schedJobService:           schedJobService,
-		taskService:               taskService,
-		settingService:            settingService,
-		startupService:            startupService,
+		db:                   db,
+		config:               config,
+		logger:               logger,
+		redisClient:          redisClient,
+		settingRepo:          settingRepo,
+		taskRepo:             taskRepo,
+		taskInfoRepo:         cacheTaskInfoRepo,
+		periodicSettingsRepo: periodicSettingsRepo,
+		schedJobService:      schedJobService,
+		taskService:          taskService,
+		settingService:       settingService,
+		startupService:       startupService,
 	}
 }
 
@@ -91,17 +88,17 @@ func (q *taskQueue) Start() (err error) {
 	if runWorker {
 		q.logger.Infof("starting task queue worker...")
 		q.server, err = gocronqueue.NewServer(&gocronqueue.Config{
-			TaskMap:                 q.taskExecutorMap,
-			RedisClient:             q.redisClient,
-			Logger:                  q.logger,
-			Concurrency:             lpSettings.WorkerSettings.Concurrency,
-			TaskCheckInterval:       lpSettings.TaskSettings.TaskCheckInterval.ToDuration(),
-			TaskCheckFunc:           q.findSchedulingTasks,
-			TaskCreateInterval:      lpSettings.TaskSettings.TaskCreateInterval.ToDuration(),
-			TaskCreateFunc:          q.doCreateTasksForJobs,
-			TaskCanScheduleFunc:     q.canScheduleTask,
-			HealthcheckBaseInterval: lpSettings.HealthcheckSettings.BaseInterval.ToDuration(),
-			HealthcheckFunc:         q.doHealthcheck,
+			TaskMap:              q.taskExecutorMap,
+			RedisClient:          q.redisClient,
+			Logger:               q.logger,
+			Concurrency:          lpSettings.WorkerSettings.Concurrency,
+			TaskCheckInterval:    lpSettings.TaskSettings.TaskCheckInterval.ToDuration(),
+			TaskCheckFunc:        q.findSchedulingTasks,
+			TaskCreateInterval:   lpSettings.TaskSettings.TaskCreateInterval.ToDuration(),
+			TaskCreateFunc:       q.doCreateTasksForJobs,
+			TaskCanScheduleFunc:  q.canScheduleTask,
+			PeriodicBaseInterval: lpSettings.PeriodicSettings.BaseInterval.ToDuration(),
+			PeriodicExecFunc:     q.doPeriodicJob,
 		})
 		if err != nil {
 			return apperrors.Wrap(err)

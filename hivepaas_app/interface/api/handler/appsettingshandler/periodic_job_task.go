@@ -7,15 +7,16 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc/healthcheckdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 )
 
-// ListAppHealthcheckTask Lists healthcheck tasks
-// @Summary Lists healthcheck tasks
-// @Description Lists healthcheck tasks
+// ListAppPeriodicJobTask Lists periodic job's tasks
+// @Summary Lists periodic job's tasks
+// @Description Lists periodic job's tasks
 // @Tags    app_settings
 // @Produce json
-// @Id      listAppHealthcheckTask
+// @Id      listAppPeriodicJobTask
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
@@ -24,26 +25,26 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} healthcheckdto.ListHealthcheckTaskResp
+// @Success 200 {object} periodicjobdto.ListPeriodicJobTaskResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/healthchecks/{itemID}/tasks [get]
-func (h *Handler) ListAppHealthcheckTask(ctx *gin.Context) {
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID}/tasks [get]
+func (h *Handler) ListAppPeriodicJobTask(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := healthcheckdto.NewListHealthcheckTaskReq()
+	req := periodicjobdto.NewListPeriodicJobTaskReq()
 	req.JobID = jobID
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.HealthcheckUC.ListHealthcheckTask(h.RequestCtx(ctx), auth, req)
+	resp, err := h.PeriodicJobUC.ListPeriodicJobTask(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

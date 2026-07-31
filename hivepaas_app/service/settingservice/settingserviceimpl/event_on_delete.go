@@ -14,9 +14,9 @@ func (s *service) OnDelete(
 	db database.IDB,
 	event *settingservice.DeleteEvent,
 ) (err error) {
-	// Remove healthcheck cache if the update may relate
-	if event.Setting.IsTypeIn(base.SettingTypeHealthcheck, base.SettingTypeIMService, base.SettingTypeEmail) {
-		err = s.healthcheckSettingsRepo.Del(ctx)
+	// Remove periodic jobs cache as the update may relate
+	if event.Setting.IsTypeIn(base.SettingTypePeriodicJob, base.SettingTypeIMService, base.SettingTypeEmail) {
+		err = s.periodicSettingsRepo.Del(ctx)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

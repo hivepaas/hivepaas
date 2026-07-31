@@ -7,7 +7,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
@@ -148,7 +147,7 @@ func (s *service) loadInheritedVarDataInApp(
 	secretStore map[string]*entity.Setting,
 ) (inheritedVars []*envvarservice.EnvVar, inheritedSecrets []*entity.Setting, err error) {
 	app := req.App
-	defaultLoadFunc := func(context.Context, database.IDB, *base.ObjectScope, envvarservice.EnvLoadOptions) (
+	defaultLoadFunc := func(context.Context, database.IDB, *entity.ObjectScope, envvarservice.EnvLoadOptions) (
 		[]*envvarservice.EnvVar, []*entity.Setting, error) {
 		app.ProjectEnv.Project = app.Project
 		if app.ParentApp != nil { // the app has a parent app, loads data from the parent

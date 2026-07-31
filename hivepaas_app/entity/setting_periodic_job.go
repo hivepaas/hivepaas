@@ -9,28 +9,31 @@ import (
 )
 
 const (
-	CurrentHealthcheckVersion = 1
+	CurrentPeriodicJobVersion = 1
 )
 
-var _ = registerSettingParser(base.SettingTypeHealthcheck, &healthcheckParser{})
+var _ = registerSettingParser(base.SettingTypePeriodicJob, &periodicJobParser{})
 
-type healthcheckParser struct {
+type periodicJobParser struct {
 }
 
-func (s *healthcheckParser) New() SettingData {
-	return &Healthcheck{}
+func (s *periodicJobParser) New() SettingData {
+	return &PeriodicJob{}
 }
 
-type Healthcheck struct {
-	HealthcheckType base.HealthcheckType     `json:"healthcheckType"`
-	Interval        timeutil.Duration        `json:"interval"`
-	MaxRetry        int                      `json:"maxRetry,omitempty"`
-	RetryDelay      timeutil.Duration        `json:"retryDelay,omitempty"`
-	Timeout         timeutil.Duration        `json:"timeout,omitempty"`
-	SaveResultTasks bool                     `json:"saveResultTasks,omitempty"`
-	REST            *HealthcheckREST         `json:"rest,omitempty"`
-	GRPC            *HealthcheckGRPC         `json:"grpc,omitempty"`
-	Notification    *HealthcheckNotification `json:"notification,omitempty"`
+type PeriodicJob struct {
+	Interval     timeutil.Duration     `json:"interval"`
+	MaxRetry     int                   `json:"maxRetry,omitempty"`
+	RetryDelay   timeutil.Duration     `json:"retryDelay,omitempty"`
+	Timeout      timeutil.Duration     `json:"timeout,omitempty"`
+	Healthcheck  *PeriodicHealthcheck  `json:"healthcheck,omitempty"`
+	Notification *PeriodicNotification `json:"notification,omitempty"`
+}
+
+type PeriodicHealthcheck struct {
+	HealthcheckType base.HealthcheckType `json:"healthcheckType"`
+	REST            *HealthcheckREST     `json:"rest,omitempty"`
+	GRPC            *HealthcheckGRPC     `json:"grpc,omitempty"`
 }
 
 type HealthcheckREST struct {
@@ -60,16 +63,16 @@ type HealthcheckGRPC struct {
 	ReturnStatus base.HealthcheckGRPCStatus  `json:"returnStatus"`
 }
 
-type HealthcheckNotification struct {
+type PeriodicNotification struct {
 	*BaseEventNotification
 	MinSendInterval timeutil.Duration `json:"minSendInterval,omitempty"`
 }
 
-func (s *Healthcheck) GetType() base.SettingType {
-	return base.SettingTypeHealthcheck
+func (s *PeriodicJob) GetType() base.SettingType {
+	return base.SettingTypePeriodicJob
 }
 
-func (s *Healthcheck) GetRefObjectIDs() *RefObjectIDs {
+func (s *PeriodicJob) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
@@ -77,30 +80,30 @@ func (s *Healthcheck) GetRefObjectIDs() *RefObjectIDs {
 	return refIDs
 }
 
-func (s *Healthcheck) GetResourceLinks(setting *Setting) []*ResLink {
+func (s *PeriodicJob) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *Healthcheck) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentHealthcheckVersion {
+func (s *PeriodicJob) Migrate(setting *Setting) (hasChange bool, err error) {
+	if setting.Version == CurrentPeriodicJobVersion {
 		return false, nil
 	}
-	if setting.Version > CurrentHealthcheckVersion {
+	if setting.Version > CurrentPeriodicJobVersion {
 		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
 
-	setting.Version = CurrentHealthcheckVersion
+	setting.Version = CurrentPeriodicJobVersion
 	setting.UpdateVer++
 	setting.MustSetData(s)
 	return true, nil
 }
 
-func (s *Setting) AsHealthcheck() (*Healthcheck, error) {
-	return parseSettingAs[*Healthcheck](s)
+func (s *Setting) AsPeriodicJob() (*PeriodicJob, error) {
+	return parseSettingAs[*PeriodicJob](s)
 }
 
-func (s *Setting) MustAsHealthcheck() *Healthcheck {
-	return gofn.Must(s.AsHealthcheck())
+func (s *Setting) MustAsPeriodicJob() *PeriodicJob {
+	return gofn.Must(s.AsPeriodicJob())
 }

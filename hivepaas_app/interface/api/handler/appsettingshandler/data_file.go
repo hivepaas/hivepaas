@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
@@ -34,7 +35,7 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 	}
 
 	req := filedto.NewCreateFileReq()
-	req.Scope = base.NewObjectScopeApp(appID, "", projectID, projectEnvID)
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnvID)
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

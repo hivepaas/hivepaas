@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
@@ -20,7 +21,7 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	var auth *basedto.Auth
 	var err error
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "")
@@ -127,7 +128,7 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	var err error
 	var itemID string
 
-	scope := &base.ObjectScope{ScopeType: scopeType}
+	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeGlobal:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "itemID")

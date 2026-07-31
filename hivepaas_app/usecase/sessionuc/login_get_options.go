@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
@@ -21,7 +22,7 @@ func (uc *UC) GetLoginOptions(
 	ctx context.Context,
 	req *sessiondto.GetLoginOptionsReq,
 ) (*sessiondto.GetLoginOptionsResp, error) {
-	settings, _, err := uc.settingRepo.List(ctx, uc.db, base.NewObjectScopeGlobal(), nil,
+	settings, _, err := uc.settingRepo.List(ctx, uc.db, entity.NewObjectScopeGlobal(), nil,
 		bunex.SelectWhere("setting.type = ? OR setting.type = ?",
 			base.SettingTypeOAuth, base.SettingTypeGithubApp),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),

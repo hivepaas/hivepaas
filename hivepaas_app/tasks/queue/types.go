@@ -5,7 +5,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
@@ -83,19 +82,20 @@ func (t *TaskExecData) OnPostTransaction(fn func()) {
 
 type TaskExecFunc func(context.Context, database.Tx, *TaskExecData) error
 
-type HealthcheckExecData struct {
-	HealthcheckSetting *entity.Setting
-	Healthcheck        *entity.Healthcheck
-	Task               *entity.Task
-	Project            *entity.Project
-	App                *entity.App
+type PeriodicExecData struct {
+	PeriodicSetting *entity.Setting
+	Task            *entity.Task
+	Project         *entity.Project
+	App             *entity.App
 
 	// RefObjects can be used as a cache to store objects
-	RefObjects    *entity.RefObjects
-	NotifEventMap map[string]*cacheentity.HealthcheckNotifEvent
+	RefObjects *entity.RefObjects
+
+	// SaveTask save task to DB if true, the executor should set this value
+	SaveTask bool
 }
 
-func (t *HealthcheckExecData) AddRefObjects(refObjects *entity.RefObjects) {
+func (t *PeriodicExecData) AddRefObjects(refObjects *entity.RefObjects) {
 	if t.RefObjects == nil {
 		t.RefObjects = refObjects
 	} else {
@@ -103,4 +103,4 @@ func (t *HealthcheckExecData) AddRefObjects(refObjects *entity.RefObjects) {
 	}
 }
 
-type HealthcheckExecFunc func(context.Context, *HealthcheckExecData) error
+type PeriodicExecFunc func(context.Context, *PeriodicExecData) error

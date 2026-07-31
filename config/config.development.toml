@@ -53,8 +53,8 @@ app_path = "/var/lib/hivepaas"
     task_check_interval = "1h"
     task_create_interval = "1h"
 
-[tasks.healthcheck]
-    base_interval = "30s"
+[tasks.periodic]
+    base_interval = "1s"
 
 [agent]
     secret_token = "abc123"

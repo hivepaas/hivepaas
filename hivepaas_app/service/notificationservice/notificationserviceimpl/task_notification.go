@@ -8,6 +8,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bbpool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -104,7 +105,7 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		return nil
 	}
 
-	var scope *base.ObjectScope
+	var scope *entity.ObjectScope
 	switch {
 	case data.ScopeApp != nil:
 		scope = data.ScopeApp.GetObjectScope()
@@ -115,7 +116,7 @@ func (s *service) loadDefaultNotificationSourceSettings(
 	case data.ScopeUser != nil:
 		scope = data.ScopeUser.GetObjectScope()
 	default:
-		scope = base.NewObjectScopeGlobal()
+		scope = entity.NewObjectScopeGlobal()
 	}
 
 	settings, _, err := s.settingRepo.List(ctx, db, scope, nil,

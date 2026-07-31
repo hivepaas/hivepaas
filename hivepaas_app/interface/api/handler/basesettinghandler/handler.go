@@ -18,11 +18,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/healthcheckuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc"
@@ -57,7 +57,7 @@ type Handler struct {
 	GithubAppUC          *githubappuc.UC
 	AccessTokenUC        *accesstokenuc.UC
 	SchedJobUC           *schedjobuc.UC
-	HealthcheckUC        *healthcheckuc.UC
+	PeriodicJobUC        *periodicjobuc.UC
 	SecretUC             *secretuc.UC
 	ConfigFileUC         *configfileuc.UC
 	EmailUC              *emailuc.UC
@@ -94,7 +94,7 @@ func New(
 	githubAppUC *githubappuc.UC,
 	accessTokenUC *accesstokenuc.UC,
 	schedJobUC *schedjobuc.UC,
-	healthcheckUC *healthcheckuc.UC,
+	periodicJobUC *periodicjobuc.UC,
 	secretUC *secretuc.UC,
 	configFileUC *configfileuc.UC,
 	emailUC *emailuc.UC,
@@ -130,7 +130,7 @@ func New(
 		GithubAppUC:          githubAppUC,
 		AccessTokenUC:        accessTokenUC,
 		SchedJobUC:           schedJobUC,
-		HealthcheckUC:        healthcheckUC,
+		PeriodicJobUC:        periodicJobUC,
 		SecretUC:             secretUC,
 		ConfigFileUC:         configFileUC,
 		EmailUC:              emailUC,

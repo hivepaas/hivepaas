@@ -17,14 +17,15 @@ func (s *service) doHealthcheckGRPC(
 	ctx context.Context,
 	data *healthcheckData,
 ) (err error) {
+	periodicJob := data.PeriodicSetting.MustAsPeriodicJob()
 	healthchk := data.Healthcheck.GRPC
 	if data.Output.GRPC == nil {
-		data.Output.GRPC = &entity.TaskHealthcheckOutputGRPC{}
+		data.Output.GRPC = &entity.TaskPeriodicHealthcheckOutputGRPC{}
 	}
 
 	reqCtx := ctx
-	if data.Healthcheck.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(ctx, data.Healthcheck.Timeout.ToDuration())
+	if periodicJob.Timeout > 0 {
+		ctx, cancel := context.WithTimeout(ctx, periodicJob.Timeout.ToDuration())
 		defer cancel()
 		reqCtx = ctx
 	}

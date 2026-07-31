@@ -33,6 +33,7 @@ type ServiceSettingsResp struct {
 	WorkerSettings   HivePaaSWorkerSettingsResp   `json:"workerSettings"`
 	TaskSettings     HivePaaSTaskSettingsResp     `json:"taskSettings"`
 	PeriodicSettings HivePaaSPeriodicSettingsResp `json:"periodicSettings"`
+	ProxySettings    HivePaaSProxySettingsResp    `json:"proxySettings"`
 }
 
 type HivePaaSAppSettingsResp struct {
@@ -52,6 +53,11 @@ type HivePaaSTaskSettingsResp struct {
 
 type HivePaaSPeriodicSettingsResp struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
+}
+
+type HivePaaSProxySettingsResp struct {
+	ProxyProvider string   `json:"proxyProvider,omitempty"`
+	TrustedIPs    []string `json:"trustedIPs,omitempty"`
 }
 
 type ServiceSettingsTransformInput struct {

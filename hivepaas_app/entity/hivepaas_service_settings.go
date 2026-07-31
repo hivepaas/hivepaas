@@ -26,6 +26,7 @@ type HivePaaSService struct {
 	WorkerSettings   HivePaaSWorkerSettings   `json:"workerSettings"`
 	TaskSettings     HivePaaSTaskSettings     `json:"taskSettings"`
 	PeriodicSettings HivePaaSPeriodicSettings `json:"periodicSettings"`
+	ProxySettings    HivePaaSProxySettings    `json:"proxySettings"`
 }
 
 type HivePaaSAppSettings struct {
@@ -45,6 +46,11 @@ type HivePaaSTaskSettings struct {
 
 type HivePaaSPeriodicSettings struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
+}
+
+type HivePaaSProxySettings struct {
+	ProxyProvider string   `json:"proxyProvider,omitempty"`
+	TrustedIPs    []string `json:"trustedIPs,omitempty"`
 }
 
 func (s *HivePaaSService) GetType() base.SettingType {

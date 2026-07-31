@@ -34630,7 +34630,7 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -34648,7 +34648,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -47969,6 +47969,36 @@
         "required" : [ "baseInterval" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSProxySettingsReq" : {
+        "properties" : {
+          "proxyProvider" : {
+            "type" : "string"
+          },
+          "trustedIPs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "proxyProvider", "trustedIPs" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSProxySettingsResp" : {
+        "properties" : {
+          "proxyProvider" : {
+            "type" : "string"
+          },
+          "trustedIPs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "proxyProvider", "trustedIPs" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSTaskSettingsReq" : {
         "properties" : {
           "taskCheckInterval" : {
@@ -48070,6 +48100,9 @@
           "periodicSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSPeriodicSettingsResp"
           },
+          "proxySettings" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSProxySettingsResp"
+          },
           "size" : {
             "type" : "integer"
           },
@@ -48092,7 +48125,7 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSWorkerSettingsResp"
           }
         },
-        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "periodicSettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateHttpSettingsReq" : {
@@ -48127,6 +48160,9 @@
           "periodicSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSPeriodicSettingsReq"
           },
+          "proxySettings" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSProxySettingsReq"
+          },
           "taskSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSTaskSettingsReq"
           },
@@ -48137,7 +48173,7 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.HivePaaSWorkerSettingsReq"
           }
         },
-        "required" : [ "appSettings", "periodicSettings", "taskSettings", "updateVer", "workerSettings" ],
+        "required" : [ "appSettings", "periodicSettings", "proxySettings", "taskSettings", "updateVer", "workerSettings" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_system_hpappsettingsuc_hpappsettingsdto.UpdateServiceSettingsResp" : {
@@ -50382,9 +50418,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

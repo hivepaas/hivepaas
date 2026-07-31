@@ -1,7 +1,9 @@
 package hpappsettingsdto
 
 import (
+	"strings"
 	"time"
+	"unicode"
 
 	vld "github.com/tiendc/go-validator"
 
@@ -39,6 +41,7 @@ type ServiceSettingsBaseReq struct {
 	WorkerSettings   HivePaaSWorkerSettingsReq   `json:"workerSettings"`
 	TaskSettings     HivePaaSTaskSettingsReq     `json:"taskSettings"`
 	PeriodicSettings HivePaaSPeriodicSettingsReq `json:"periodicSettings"`
+	ProxySettings    HivePaaSProxySettingsReq    `json:"proxySettings"`
 }
 
 func (req *ServiceSettingsBaseReq) ToEntity() *entity.HivePaaSService {
@@ -47,7 +50,15 @@ func (req *ServiceSettingsBaseReq) ToEntity() *entity.HivePaaSService {
 		WorkerSettings:   *req.WorkerSettings.ToEntity(),
 		TaskSettings:     *req.TaskSettings.ToEntity(),
 		PeriodicSettings: *req.PeriodicSettings.ToEntity(),
+		ProxySettings:    *req.ProxySettings.ToEntity(),
 	}
+}
+
+func (req *ServiceSettingsBaseReq) modifyRequest() (err error) {
+	if err = req.ProxySettings.modifyRequest(); err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
 }
 
 func (req *ServiceSettingsBaseReq) validate(field string) (res []vld.Validator) {
@@ -58,6 +69,7 @@ func (req *ServiceSettingsBaseReq) validate(field string) (res []vld.Validator) 
 	res = append(res, req.WorkerSettings.validate(field+"workerSettings")...)
 	res = append(res, req.TaskSettings.validate(field+"taskSettings")...)
 	res = append(res, req.PeriodicSettings.validate(field+"periodicSettings")...)
+	res = append(res, req.ProxySettings.validate(field+"proxySettings")...)
 	return res
 }
 
@@ -153,8 +165,40 @@ func (req *HivePaaSPeriodicSettingsReq) validate(field string) (res []vld.Valida
 	return res
 }
 
+type HivePaaSProxySettingsReq struct {
+	ProxyProvider string   `json:"proxyProvider"`
+	TrustedIPs    []string `json:"trustedIPs"`
+}
+
+func (req *HivePaaSProxySettingsReq) ToEntity() *entity.HivePaaSProxySettings {
+	return &entity.HivePaaSProxySettings{
+		ProxyProvider: req.ProxyProvider,
+		TrustedIPs:    req.TrustedIPs,
+	}
+}
+
+//nolint:unparam
+func (req *HivePaaSProxySettingsReq) modifyRequest() error {
+	if req == nil {
+		return nil
+	}
+	req.ProxyProvider = strings.ToLower(strings.TrimSpace(req.ProxyProvider))
+	req.TrustedIPs = strings.FieldsFunc(strings.Join(req.TrustedIPs, ","), func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	})
+	return nil
+}
+
+func (req *HivePaaSProxySettingsReq) validate(_ string) (res []vld.Validator) {
+	return res
+}
+
 func NewUpdateServiceSettingsReq() *UpdateServiceSettingsReq {
 	return &UpdateServiceSettingsReq{}
+}
+
+func (req *UpdateServiceSettingsReq) ModifyRequest() error {
+	return req.modifyRequest()
 }
 
 // Validate implements interface basedto.ReqValidator

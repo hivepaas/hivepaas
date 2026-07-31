@@ -12,6 +12,10 @@ import {
     useConfirmAppDangerActionDialogState,
 } from "~/projects/dialogs/confirm-app-danger-action";
 import {
+    ConfirmEnvDangerActionDialog,
+    useConfirmEnvDangerActionDialogState,
+} from "~/projects/dialogs/confirm-env-danger-action";
+import {
     ConfirmProjectDangerActionDialog,
     useConfirmProjectDangerActionDialogState,
 } from "~/projects/dialogs/confirm-project-danger-action";
@@ -81,6 +85,7 @@ function View() {
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
+    const confirmEnvDangerActionDialog = useConfirmEnvDangerActionDialogState();
     const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
@@ -111,6 +116,7 @@ function View() {
         runNowTaskCreatedDialog.destroy();
         quickInstallSslCertDialog.destroy();
         confirmAppDangerActionDialog.destroy();
+        confirmEnvDangerActionDialog.destroy();
         confirmProjectDangerActionDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
@@ -143,6 +149,7 @@ function View() {
             <RunNowTaskCreatedDialog />
             <QuickInstallSslCertDialog />
             <ConfirmAppDangerActionDialog />
+            <ConfirmEnvDangerActionDialog />
             <ConfirmProjectDangerActionDialog />
             <UpdateBasicAuthStatusDialog />
             <UpdateRegistryAuthStatusDialog />

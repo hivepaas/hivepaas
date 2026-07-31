@@ -59,6 +59,7 @@ func ValidateStrNotIn[T ~string](s *T, required bool, minLen, maxLen int, unallo
 				vld.StrNotIn(s, unallowedValues...).OnError(
 					vld.SetField(field, nil),
 					vld.SetCustomKey("ERR_VLD_VALUE_UNALLOWED"),
+					vld.SetParam("Value", *s),
 				))
 		}
 	}

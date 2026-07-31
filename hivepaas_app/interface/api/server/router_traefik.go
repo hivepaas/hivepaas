@@ -18,5 +18,9 @@ func (s *HTTPServer) registerTraefikRoutes(systemGroup *gin.RouterGroup) *gin.Ro
 	traefikGroup.GET("/service-settings", traefikHandler.GetServiceSettings)
 	traefikGroup.PUT("/service-settings", traefikHandler.UpdateServiceSettings)
 
+	// Config options
+	traefikGroup.GET("/config-options", traefikHandler.GetConfigOptions)
+	traefikGroup.PUT("/config-options", traefikHandler.UpdateConfigOptions)
+
 	return traefikGroup
 }

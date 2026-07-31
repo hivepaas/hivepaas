@@ -120,6 +120,12 @@ func (uc *UC) applyServiceSettingsToTraefikService(
 		Replicas: new(uint64(data.NewSettings.AppSettings.Replicas)), //nolint:gosec
 	}
 
+	if traefikService.Spec.UpdateConfig == nil {
+		traefikService.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	traefikService.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	traefikService.Spec.UpdateConfig.MaxFailureRatio = 0.5
+
 	_, err := uc.dockerManager.ServiceUpdate(ctx, traefikService.ID, &traefikService.Version, &traefikService.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)

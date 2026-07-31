@@ -181,6 +181,12 @@ func (uc *UC) applyServiceSettingsToMainService(
 	}
 	mainAppSvc.Spec.TaskTemplate.ForceUpdate++
 
+	if mainAppSvc.Spec.UpdateConfig == nil {
+		mainAppSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	mainAppSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	mainAppSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
+
 	_, err := uc.dockerManager.ServiceUpdate(ctx, mainAppSvc.ID, &mainAppSvc.Version, &mainAppSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -200,6 +206,12 @@ func (uc *UC) applyServiceSettingsToWorkerService(
 		Replicas: new(uint64(data.NewSettings.WorkerSettings.Replicas)), //nolint:gosec
 	}
 	workerSvc.Spec.TaskTemplate.ForceUpdate++
+
+	if workerSvc.Spec.UpdateConfig == nil {
+		workerSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	workerSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	workerSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
 	if err != nil {

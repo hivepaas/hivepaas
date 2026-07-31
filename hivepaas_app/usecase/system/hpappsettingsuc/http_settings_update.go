@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -174,6 +175,12 @@ func (uc *UC) applyHttpSettings(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+
+	if service.Spec.UpdateConfig == nil {
+		service.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	service.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	service.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
 	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {

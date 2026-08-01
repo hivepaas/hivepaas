@@ -16,11 +16,10 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	projectGroup.GET("", projectHandler.ListProject)
 	projectGroup.POST("", projectHandler.CreateProject)
 	projectGroup.PUT("/:projectID", projectHandler.UpdateProject)
-	// Status Update
 	projectGroup.PUT("/:projectID/status", projectHandler.UpdateProjectStatus)
+	projectGroup.DELETE("/:projectID", projectHandler.DeleteProject)
 	// Photo Update
 	projectGroup.PUT("/:projectID/photo", projectHandler.UpdateProjectPhoto)
-	projectGroup.DELETE("/:projectID", projectHandler.DeleteProject)
 
 	// Settings import
 	projectGroup.POST("/:projectID/settings-import", projectSettingsHandler.ImportSettings)

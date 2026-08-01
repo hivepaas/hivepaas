@@ -1,14 +1,17 @@
-package projectuc
+package appuc
 
 import (
 	"context"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -16,97 +19,121 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
-func (uc *UC) UpdateProjectPhoto(
+func (uc *UC) UpdateAppPhoto(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *projectdto.UpdateProjectPhotoReq,
-) (*projectdto.UpdateProjectPhotoResp, error) {
+	req *appdto.UpdateAppPhotoReq,
+) (*appdto.UpdateAppPhotoResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		profileData := &updateProjectPhotoData{}
-		err := uc.loadProjectPhotoDataForUpdate(ctx, db, req, profileData)
+		appData := &updateAppPhotoData{}
+		err := uc.loadAppPhotoDataForUpdate(ctx, db, req, appData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		persistingData := &persistingProjectPhotoData{}
-		err = uc.preparePersistingProjectPhoto(ctx, db, req.ProjectPhotoReq, profileData.Project, persistingData)
+		persistingData := &persistingAppPhotoData{}
+		err = uc.preparePersistingAppPhoto(ctx, db, req.AppPhotoReq, appData.App, appData, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		return uc.persistProjectPhotoData(ctx, db, persistingData)
+		return uc.persistAppPhotoData(ctx, db, persistingData)
 	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &projectdto.UpdateProjectPhotoResp{}, nil
+	return &appdto.UpdateAppPhotoResp{}, nil
 }
 
-type updateProjectPhotoData struct {
-	Project *entity.Project
+type updateAppPhotoData struct {
+	App        *entity.App
+	PresetIcon string
 }
 
-type persistingProjectPhotoData struct {
-	UpdatingProject          *entity.Project
+type persistingAppPhotoData struct {
+	UpdatingApp              *entity.App
 	UpsertingBinObjects      []*entity.BinObject
 	HardDeletingBinObjectIDs []string
 }
 
-func (uc *UC) loadProjectPhotoDataForUpdate(
+func (uc *UC) loadAppPhotoDataForUpdate(
 	ctx context.Context,
 	db database.IDB,
-	req *projectdto.UpdateProjectPhotoReq,
-	data *updateProjectPhotoData,
+	req *appdto.UpdateAppPhotoReq,
+	data *updateAppPhotoData,
 ) error {
-	project, err := uc.projectRepo.GetByID(ctx, db, req.ID,
-		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+	app, err := uc.appRepo.GetByID(ctx, db, req.ProjectID, req.AppID,
+		bunex.SelectFor("UPDATE OF app"),
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("PhotoData"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.Project = project
+	data.App = app
+
+	if req.IsPresetIcon {
+		data.PresetIcon, err = uc.parseAndVerifyPresetIcon(req.FileName)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
 
 	return nil
 }
 
-func (uc *UC) preparePersistingProjectPhoto(
+func (uc *UC) parseAndVerifyPresetIcon(fileName string) (string, error) {
+	presetIcon := filepath.Base(fileName)
+	if filepath.Ext(presetIcon) == "" {
+		presetIcon += ".svg"
+	}
+	stat, err := fs.Stat(assets.GetIconsFS(), presetIcon)
+	if err != nil || stat.IsDir() {
+		return "", apperrors.NewNotFound("Preset icon")
+	}
+	return presetIcon, nil
+}
+
+func (uc *UC) preparePersistingAppPhoto(
 	ctx context.Context,
 	db database.IDB,
-	req *projectdto.ProjectPhotoReq,
-	project *entity.Project,
-	persistingData *persistingProjectPhotoData,
+	req *appdto.AppPhotoReq,
+	app *entity.App,
+	data *updateAppPhotoData,
+	persistingData *persistingAppPhotoData,
 ) error {
 	if !req.IsChanged() {
 		return nil
 	}
 	timeNow := timeutil.NowUTC()
-	photoData := project.PhotoData
+	photoData := app.PhotoData
 
 	if photoData != nil && photoData.ID != "" {
-		// Project photo may take a remarkable space, so we hard-delete it if unused
-		projects, _, err := uc.projectRepo.List(ctx, db, nil,
-			bunex.SelectWhere("project.photo = ?", photoData.ID),
-			bunex.SelectWhere("project.id != ?", project.ID),
+		// App photo may take a remarkable space, so we hard-delete it if unused
+		apps, _, err := uc.appRepo.List(ctx, db, "", nil,
+			bunex.SelectWhere("app.photo = ?", photoData.ID),
+			bunex.SelectWhere("app.id != ?", app.ID),
 			bunex.SelectLimit(1),
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		if len(projects) == 0 {
+		if len(apps) == 0 {
 			persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
 		}
 	}
 
-	if req.Delete {
-		project.Photo = ""
-	} else {
+	switch {
+	case req.Delete:
+		app.Photo = ""
+	case req.IsPresetIcon:
+		app.Photo = filepath.Join(config.Current.HttpPathStaticIcons(), data.PresetIcon)
+	default:
 		photoData = &entity.BinObject{
 			ID:          gofn.Must(ulid.NewStringULID()),
 			Type:        base.BinObjectTypeObjectIcon,
@@ -118,20 +145,20 @@ func (uc *UC) preparePersistingProjectPhoto(
 			UpdatedAt:   timeNow,
 		}
 		persistingData.UpsertingBinObjects = append(persistingData.UpsertingBinObjects, photoData)
-		project.Photo = photoData.ID
+		app.Photo = photoData.ID
 	}
 
-	project.UpdatedAt = timeNow
-	persistingData.UpdatingProject = project
+	app.UpdatedAt = timeNow
+	persistingData.UpdatingApp = app
 	return nil
 }
 
-func (uc *UC) persistProjectPhotoData(
+func (uc *UC) persistAppPhotoData(
 	ctx context.Context,
 	db database.IDB,
-	persistingData *persistingProjectPhotoData,
+	persistingData *persistingAppPhotoData,
 ) error {
-	err := uc.projectRepo.Update(ctx, db, persistingData.UpdatingProject,
+	err := uc.appRepo.Update(ctx, db, persistingData.UpdatingApp,
 		bunex.UpdateColumns("updated_at", "photo"),
 	)
 	if err != nil {

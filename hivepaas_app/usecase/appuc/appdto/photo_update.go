@@ -1,4 +1,4 @@
-package projectdto
+package appdto
 
 import (
 	"encoding/base64"
@@ -17,28 +17,31 @@ const (
 	projectPhotoMaxSize = 300 * 1024 // 300KB
 )
 
-type UpdateProjectPhotoReq struct {
-	ID string `json:"-"`
-	*ProjectPhotoReq
+type UpdateAppPhotoReq struct {
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+	*AppPhotoReq
 }
 
-type ProjectPhotoReq struct {
-	Delete     bool   `json:"delete"`
-	FileName   string `json:"fileName"`
-	DataBase64 string `json:"dataBase64"`
+type AppPhotoReq struct {
+	Delete       bool   `json:"delete"`
+	IsPresetIcon bool   `json:"isPresetIcon"`
+	FileName     string `json:"fileName"`
+	DataBase64   string `json:"dataBase64"`
 
 	// NOTE: Use locally only
 	DataBytes []byte `json:"-"`
 }
 
-func (req *ProjectPhotoReq) IsChanged() bool {
+func (req *AppPhotoReq) IsChanged() bool {
 	if req == nil {
 		return false
 	}
 	return req.Delete || req.FileName != ""
 }
 
-func (req *ProjectPhotoReq) modifyRequest() error {
+func (req *AppPhotoReq) modifyRequest() error {
 	if req != nil && req.DataBase64 != "" {
 		dataBase64 := req.DataBase64
 		// Image base64 from FE can be in form: `data:image/png;base64,<data-in-base64>`
@@ -50,8 +53,11 @@ func (req *ProjectPhotoReq) modifyRequest() error {
 	return nil
 }
 
-func (req *ProjectPhotoReq) validate(field string) []vld.Validator {
+func (req *AppPhotoReq) validate(field string) []vld.Validator {
 	if req == nil || req.FileName == "" {
+		return nil
+	}
+	if req.IsPresetIcon {
 		return nil
 	}
 	if field != "" {
@@ -76,20 +82,23 @@ func (req *ProjectPhotoReq) validate(field string) []vld.Validator {
 	}
 }
 
-func NewUpdateProjectPhotoReq() *UpdateProjectPhotoReq {
-	return &UpdateProjectPhotoReq{}
+func NewUpdateAppPhotoReq() *UpdateAppPhotoReq {
+	return &UpdateAppPhotoReq{}
 }
 
-func (req *UpdateProjectPhotoReq) ModifyRequest() error {
+func (req *UpdateAppPhotoReq) ModifyRequest() error {
 	return req.modifyRequest()
 }
 
-func (req *UpdateProjectPhotoReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateAppPhotoReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateProjectPhotoResp struct {
+type UpdateAppPhotoResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

@@ -3,8 +3,6 @@ package useruc
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math/rand"
 	"path/filepath"
 	"time"
 
@@ -13,7 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -156,33 +153,29 @@ func (uc *UC) preparePersistingUserPhoto(
 	}
 	photoData := user.PhotoData
 
+	if photoData != nil && photoData.ID != "" {
+		// User photo may take a remarkable space, so we hard-delete it
+		persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
+	}
+
 	if req.Delete {
-		if photoData != nil && photoData.ID != "" {
-			// User photo may take a remarkable space, so we hard-delete it
-			persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
-		}
 		user.Photo = ""
-		user.PhotoID = ""
 		return
 	}
 
-	if photoData == nil {
-		photoData = &entity.BinObject{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			CreatedAt: timeNow,
-		}
+	photoData = &entity.BinObject{
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Type:        base.BinObjectTypeObjectIcon,
+		Status:      base.BinObjectStatusActive,
+		Name:        req.FileName,
+		ContentType: fileutil.TypeByExtension(filepath.Ext(req.FileName)),
+		Data:        req.DataBytes,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
-	photoData.UpdatedAt = timeNow
-	photoData.Type = base.BinObjectTypeUserPhoto
-	photoData.Status = base.BinObjectStatusActive
-	photoData.Name = req.FileName
-	photoData.ContentType = fileutil.TypeByExtension(filepath.Ext(req.FileName))
-	photoData.Data = req.DataBytes
-	persistingData.UpsertingBinObjects = append(persistingData.UpsertingBinObjects, photoData)
 
-	user.PhotoID = photoData.ID
-	user.Photo = fmt.Sprintf("%v/images/%v-%v", config.Current.HTTPServer.BasePath,
-		user.PhotoID, rand.Int31n(1000)) //nolint
+	user.Photo = photoData.ID
+	persistingData.UpsertingBinObjects = append(persistingData.UpsertingBinObjects, photoData)
 }
 
 func (uc *UC) persistUserProfileData(

@@ -11,7 +11,7 @@ import (
 var (
 	UserUpsertingConflictCols = []string{"id"}
 	UserUpsertingUpdateCols   = []string{"username", "email", "role", "status", "full_name", "position",
-		"photo", "photo_id", "notes", "security_option", "totp_secret", "password", "access_expire_at",
+		"photo", "notes", "security_option", "totp_secret", "password", "access_expire_at",
 		"last_access", "updated_at", "deleted_at"}
 	UserDefaultExcludeColumns = []string{"notes", "password"}
 )
@@ -25,7 +25,6 @@ type User struct {
 	FullName string          `json:"fullName,omitempty"`
 	Position string          `bun:",nullzero" json:"position,omitempty"`
 	Photo    string          `bun:",nullzero" json:"photo,omitempty"`
-	PhotoID  string          `bun:",nullzero" json:"photoId,omitempty"`
 	Notes    string          `bun:",nullzero" json:"notes,omitempty"`
 
 	SecurityOption base.UserSecurityOption `json:"securityOption"`
@@ -38,7 +37,7 @@ type User struct {
 	DeletedAt      time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 	LastAccess     time.Time `bun:",nullzero" json:"lastAccess,omitzero"`
 
-	PhotoData *BinObject       `bun:"rel:has-one,join:photo_id=id" json:"photoData,omitempty"`
+	PhotoData *BinObject       `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
 	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=subj_id" json:"accesses,omitempty"`
 }
 

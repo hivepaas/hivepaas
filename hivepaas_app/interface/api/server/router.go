@@ -132,7 +132,7 @@ func (s *HTTPServer) registerRoutes() {
 	// Serve the static files from the "dist-dashboard" directory at the root URL "/"
 	s.engine.Use(StaticServe("/", localFile("./dist-dashboard", true, "")))
 	// Serve icons
-	s.engine.Use(StaticServe("/static/icons",
+	s.engine.Use(StaticServe(s.config.HttpPathStaticIcons(),
 		embedFile(http.FS(assets.GetIconsFS()), "public, max-age=864000")))
 	// Final redirection to redirect any path to `/next=<path>` in case no matching static file found
 	s.engine.Use(StaticServeRedirect("/"))

@@ -44,7 +44,7 @@ func (cfg *Config) DashboardAppDeploymentDetailsURL(appID, projectID, deployment
 
 func (cfg *Config) DashboardGlobalSchedTaskDetailsURL(schedJobID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "settings", "sched-jobs", schedJobID,
-		"tasks", taskID)) // TODO: update this
+		"tasks", taskID)) // TODO (high): update this
 }
 
 func (cfg *Config) DashboardAppSchedTaskDetailsURL(projectID, appID, schedJobID, taskID string) string {
@@ -54,7 +54,7 @@ func (cfg *Config) DashboardAppSchedTaskDetailsURL(projectID, appID, schedJobID,
 
 func (cfg *Config) DashboardProjectSchedTaskDetailsURL(projectID, schedJobID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "sched-jobs", schedJobID,
-		"tasks", taskID)) // TODO: update this
+		"tasks", taskID)) // TODO (high): update this
 }
 
 // Github Apps
@@ -71,18 +71,18 @@ func (cfg *Config) DashboardProjectGithubAppsURL(projectID string) string {
 
 func (cfg *Config) DashboardAppHealthcheckDetailsURL(appID, projectID, healthcheckID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "apps", appID,
-		"healthcheck", healthcheckID, "tasks", taskID)) // TODO: update this
+		"healthcheck", healthcheckID, "tasks", taskID)) // TODO (high): update this
 }
 
 func (cfg *Config) DashboardProjectHealthcheckDetailsURL(projectID, healthcheckID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "healthcheck", healthcheckID,
-		"tasks", taskID)) // TODO: update this
+		"tasks", taskID)) // TODO (high): update this
 }
 
 // Tasks
 
 func (cfg *Config) DashboardTaskDetailsURL(taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID)) // TODO: update this
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID)) // TODO (high): update this
 }
 
 /// BACK-END
@@ -182,6 +182,12 @@ func (cfg *Config) DataPathSystemCacheRepos() LocalPath {
 
 func (cfg *Config) DataPathFiles() LocalPath {
 	return "files"
+}
+
+/// STATIC ICONS
+
+func (cfg *Config) HttpPathStaticIcons() string {
+	return "/static/icons/"
 }
 
 /// DIRS TO CREATE AT STARTUP

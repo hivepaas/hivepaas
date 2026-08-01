@@ -52,7 +52,8 @@ func (req *PeriodicJobBaseReq) ToEntity() *entity.PeriodicJob {
 	switch req.Kind {
 	case base.PeriodicKindHealthCheck:
 		res.Healthcheck = req.Healthcheck.ToEntity()
-	case base.PeriodicKindPlaceholder:
+	default:
+		// Do nothing
 	}
 	return res
 }
@@ -67,7 +68,8 @@ func (req *PeriodicJobBaseReq) validate(field string) (res []vld.Validator) {
 	case base.PeriodicKindHealthCheck:
 		res = append(res, basedto.ValidateCond(req.Healthcheck != nil, field+"healthcheck")...)
 		res = append(res, req.Healthcheck.validate(field+"healthcheck")...)
-	case base.PeriodicKindPlaceholder:
+	default:
+		// Do nothing
 	}
 	return res
 }

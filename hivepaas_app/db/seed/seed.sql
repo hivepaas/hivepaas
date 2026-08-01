@@ -29,13 +29,13 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WA1', 'tiendc', 'tiendc@gmail.com', 'admin', 'ac
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO projects (id, name, key, status, owner_id, created_at, updated_at)
+INSERT INTO projects (id, name, key, status, owner_id, photo, created_at, updated_at)
 VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1', 'Project A', 'project_a', 'active', '01JAB9XED0GTXBSQDFVYAJ8WA1',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/apache.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WB2', 'Project B', 'project_b', 'active', '01JAB9XED0GTXBSQDFVYAJ8WA1',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/argo.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WB3', 'Project C', 'project_c', 'disabled', '01JAB9XED0GTXBSQDFVYAJ8WA1',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+        NULL, '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO project_envs (id, project_id, name, key, status, color, index, created_at, updated_at)
@@ -51,17 +51,17 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WB1:dev', '01JAB9XED0GTXBSQDFVYAJ8WB1', 'develop
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO apps (id, project_id, project_env_id, name, global_key, key, status, created_at, updated_at)
+INSERT INTO apps (id, project_id, project_env_id, name, global_key, key, status, photo, created_at, updated_at)
 VALUES ('01JAB9XED0GTXBSQDFVYAJ8WD1', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:dev', 'Backend', 'project_a_dev_backend', 'backend', 'active',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/dart.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WD2', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:dev', 'Frontend', 'project_a_dev_frontend', 'frontend', 'active',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/debian.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WD3', '01JAB9XED0GTXBSQDFVYAJ8WB1', '01JAB9XED0GTXBSQDFVYAJ8WB1:prod', 'Postgres', 'project_a_prod_db', 'db', 'active',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/postgresql.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WD5', '01JAB9XED0GTXBSQDFVYAJ8WB2', '01JAB9XED0GTXBSQDFVYAJ8WB2:dev', 'Backend', 'project_b_dev_backend', 'backend', 'active',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        '/static/icons/denon.svg', '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WD6', '01JAB9XED0GTXBSQDFVYAJ8WB2', '01JAB9XED0GTXBSQDFVYAJ8WB2:dev', 'Frontend', 'project_b_staging_frontend', 'frontend', 'active',
-        '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+        NULL, '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tags (object_id, tag, index)

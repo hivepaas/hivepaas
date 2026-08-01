@@ -58,7 +58,8 @@ func (e *Executor) execute(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-	case base.PeriodicKindPlaceholder:
+	default:
+		// Do nothing
 	}
 
 	return nil

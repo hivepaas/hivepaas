@@ -3,12 +3,11 @@ package base
 type BinObjectType string
 
 const (
-	BinObjectTypeUserPhoto    BinObjectType = "user-photo"
-	BinObjectTypeProjectPhoto BinObjectType = "project-photo"
+	BinObjectTypeObjectIcon BinObjectType = "icon"
 )
 
 var (
-	AllBinObjectTypes = []BinObjectType{BinObjectTypeUserPhoto, BinObjectTypeProjectPhoto}
+	AllBinObjectTypes = []BinObjectType{BinObjectTypeObjectIcon}
 )
 
 type BinObjectStatus string

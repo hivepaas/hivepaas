@@ -12,7 +12,7 @@ import (
 var (
 	AppUpsertingConflictCols = []string{"id"}
 	AppUpsertingUpdateCols   = []string{"name", "key", "global_key", "project_id", "project_env_id", "parent_id",
-		"service_id", "status", "note", "update_ver", "updated_at", "deleted_at"}
+		"service_id", "status", "photo", "note", "update_ver", "updated_at", "deleted_at"}
 	AppDefaultExcludeColumns = []string{"note"}
 )
 
@@ -26,6 +26,7 @@ type App struct {
 	ParentID     string         `bun:",nullzero" json:"parentId,omitempty"`
 	ServiceID    string         `bun:",nullzero" json:"serviceId"`
 	Status       base.AppStatus `json:"status"`
+	Photo        string         `bun:",nullzero" json:"photo,omitempty"`
 	Note         string         `bun:",nullzero" json:"note,omitempty"`
 	UpdateVer    int            `json:"updateVer"`
 
@@ -33,6 +34,7 @@ type App struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
+	PhotoData   *BinObject  `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
 	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"project"`
 	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"projectEnv"`
 	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`

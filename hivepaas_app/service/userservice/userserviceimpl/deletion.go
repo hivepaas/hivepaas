@@ -52,8 +52,8 @@ func (s *service) DeleteUser(ctx context.Context, db database.IDB, user *entity.
 	}
 
 	// User photo
-	if user.PhotoID != "" {
-		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{user.PhotoID})
+	if user.Photo != "" {
+		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{user.Photo})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

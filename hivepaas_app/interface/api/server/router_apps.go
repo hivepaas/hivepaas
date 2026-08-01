@@ -25,9 +25,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
 		appGroup.PUT("/:appID", appHandler.UpdateApp)
-		appGroup.DELETE("/:appID", appHandler.DeleteApp)
-		// Status Update
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
+		appGroup.DELETE("/:appID", appHandler.DeleteApp)
+		// Photo Update
+		appGroup.PUT("/:appID/photo", appHandler.UpdateAppPhoto)
+		appGroup.POST("/:appID/photo-detect", appHandler.DetectAppPhoto)
 	}
 
 	{ // Copy

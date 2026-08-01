@@ -70,8 +70,8 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	}
 
 	// Project photo
-	if project.PhotoID != "" {
-		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{project.PhotoID})
+	if project.Photo != "" {
+		err = s.binObjectRepo.DeleteByIDs(ctx, db, []string{project.Photo})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

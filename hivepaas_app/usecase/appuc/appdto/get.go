@@ -42,11 +42,12 @@ type GetAppResp struct {
 type AppResp struct {
 	ID        string                      `json:"id"`
 	Name      string                      `json:"name"`
-	Project   *projectdto.ProjectBaseResp `json:"project"`
+	Project   *projectdto.ProjectBaseResp `json:"project" copy:"-"` // manual copy
 	ParentApp *AppBaseResp                `json:"parentApp"`
 	Key       string                      `json:"key"`
 	Status    base.AppStatus              `json:"status"`
 	Env       string                      `json:"env"`
+	Photo     string                      `json:"photo"`
 	Note      string                      `json:"note"`
 	Tags      []string                    `json:"tags" copy:"-"` // manual copy AppTag -> string
 	UpdateVer int                         `json:"updateVer"`
@@ -78,6 +79,7 @@ type AppBaseResp struct {
 	Key    string         `json:"key"`
 	Status base.AppStatus `json:"status"`
 	Env    string         `json:"env"`
+	Photo  string         `json:"photo"`
 }
 
 type AppTransformationInput struct {
@@ -91,6 +93,8 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	if err = copier.Copy(&resp, &app); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+	resp.Project = projectdto.TransformProjectBase(app.Project)
+	resp.Photo = basedto.TransformObjectIcon(app.Photo)
 	resp.Env = app.ProjectEnv.Name
 	resp.Tags = gofn.MapSlice(app.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.Stats = TransformAppStats(app, input)
@@ -140,6 +144,7 @@ func TransformAppBase(app *entity.App) *AppBaseResp {
 		Key:    app.Key,
 		Status: app.Status,
 		Env:    app.ProjectEnv.Name,
+		Photo:  basedto.TransformObjectIcon(app.Photo),
 	}
 }
 

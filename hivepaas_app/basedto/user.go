@@ -23,7 +23,7 @@ func TransformUserBase(user *entity.User) *UserBaseResp {
 		Username: user.Username,
 		Email:    user.Email,
 		FullName: user.FullName,
-		Photo:    user.Photo,
+		Photo:    TransformObjectIcon(user.Photo),
 		Role:     user.Role,
 	}
 }

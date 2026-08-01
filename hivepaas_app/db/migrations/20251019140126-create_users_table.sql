@@ -10,8 +10,7 @@ CREATE TABLE IF NOT EXISTS users
                         (status IN ('active','pending','disabled')),
     full_name       VARCHAR(100) NOT NULL DEFAULT '',
     position        VARCHAR(100) NULL,
-    photo           VARCHAR(255) NULL,
-    photo_id        VARCHAR(100) NULL,
+    photo           VARCHAR(500) NULL,
     notes           VARCHAR(10000) NULL,
 
     security_option VARCHAR NOT NULL CONSTRAINT chk_security_option CHECK

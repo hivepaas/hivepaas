@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS apps
     service_id     VARCHAR(100) NULL,
     status         VARCHAR NOT NULL CONSTRAINT chk_status CHECK
                         (status IN ('active','disabled','deleting')),
+    photo          VARCHAR(500) NULL,
     note           VARCHAR(10000) NULL,
     update_ver     INT4 NOT NULL DEFAULT 1,
 

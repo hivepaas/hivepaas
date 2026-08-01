@@ -33,9 +33,11 @@ func (uc *UC) GetBinObjectData(
 	extraHeaders := map[string]string{}
 
 	switch binObject.Type {
-	case base.BinObjectTypeUserPhoto, base.BinObjectTypeProjectPhoto:
+	case base.BinObjectTypeObjectIcon:
 		extraHeaders["Cache-Control"] = fmt.Sprintf("public, max-age=%v",
 			int(defaultImageCacheMaxAge.Seconds()))
+	default:
+		// Do nothing
 	}
 
 	return &binobjectdto.GetBinObjectDataResp{

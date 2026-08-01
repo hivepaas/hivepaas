@@ -46,6 +46,7 @@ func TransformUser(user *entity.User) (resp *UserResp, err error) {
 		return nil, apperrors.Wrap(err)
 	}
 	resp.MfaTotpActivated = user.TotpSecret != ""
+	resp.Photo = basedto.TransformObjectIcon(user.Photo)
 	return resp, nil
 }
 

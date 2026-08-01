@@ -15,8 +15,9 @@ import (
 type UC struct {
 	db *database.DB
 
-	appRepo     repository.AppRepo
-	projectRepo repository.ProjectRepo
+	appRepo       repository.AppRepo
+	binObjectRepo repository.BinObjectRepo
+	projectRepo   repository.ProjectRepo
 
 	appCopyService       appcopyservice.Service
 	appService           appservice.Service
@@ -32,6 +33,7 @@ func New(
 	db *database.DB,
 
 	appRepo repository.AppRepo,
+	binObjectRepo repository.BinObjectRepo,
 	projectRepo repository.ProjectRepo,
 
 	appCopyService appcopyservice.Service,
@@ -46,8 +48,9 @@ func New(
 	return &UC{
 		db: db,
 
-		appRepo:     appRepo,
-		projectRepo: projectRepo,
+		appRepo:       appRepo,
+		binObjectRepo: binObjectRepo,
+		projectRepo:   projectRepo,
 
 		appCopyService:       appCopyService,
 		appService:           appService,

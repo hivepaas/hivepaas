@@ -82,6 +82,7 @@ func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
 	if err = copier.Copy(&resp, &project); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+	resp.Photo = basedto.TransformObjectIcon(project.Photo)
 	resp.Envs, err = TransformProjectEnvs(project.ProjectEnvs)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -149,11 +150,14 @@ func TransformProjectsBase(projects []*entity.Project) []*ProjectBaseResp {
 }
 
 func TransformProjectBase(project *entity.Project) *ProjectBaseResp {
+	if project == nil {
+		return nil
+	}
 	return &ProjectBaseResp{
 		ID:     project.ID,
 		Name:   project.Name,
 		Key:    project.Key,
-		Photo:  project.Photo,
+		Photo:  basedto.TransformObjectIcon(project.Photo),
 		Status: project.Status,
 	}
 }

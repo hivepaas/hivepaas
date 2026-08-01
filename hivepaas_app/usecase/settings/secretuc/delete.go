@@ -23,9 +23,9 @@ func (uc *UC) DeleteSecret(
 			data *settings.DeleteSettingData,
 			pData *settings.PersistingSettingDeletionData,
 		) error {
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				// Delete the related secret in docker swarm
-				err := uc.ClusterService.DeleteSecretForApp(ctx, db, data.ScopeApp, data.Setting.MustAsSecret())
+				err := uc.ClusterService.DeleteSecretForApp(ctx, db, req.Scope.App, data.Setting.MustAsSecret())
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

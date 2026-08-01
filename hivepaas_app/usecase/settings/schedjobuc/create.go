@@ -32,7 +32,7 @@ func (uc *UC) CreateSchedJob(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
 				return apperrors.Wrap(err)
 			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {

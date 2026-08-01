@@ -23,14 +23,14 @@ func (uc *UC) UpdateConfigFileStatus(
 			data *settings.UpdateSettingStatusData,
 			pData *settings.PersistingSettingStatusData,
 		) (err error) {
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				configFile := pData.Setting.MustAsConfigFile()
 				if pData.Setting.IsActive() {
 					// Create a config in docker swarm for the app
-					_, err = uc.ClusterService.CreateConfigForApp(ctx, db, data.ScopeApp, configFile)
+					_, err = uc.ClusterService.CreateConfigForApp(ctx, db, req.Scope.App, configFile)
 				} else {
 					// Delete the related config in docker swarm
-					err = uc.ClusterService.DeleteConfigForApp(ctx, db, data.ScopeApp, configFile)
+					err = uc.ClusterService.DeleteConfigForApp(ctx, db, req.Scope.App, configFile)
 				}
 				if err != nil {
 					return apperrors.Wrap(err)

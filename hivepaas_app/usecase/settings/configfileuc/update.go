@@ -36,9 +36,9 @@ func (uc *UC) UpdateConfigFile(
 				}
 			}
 
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				// Update the related configs in docker swarm
-				err := uc.ClusterService.UpdateConfigForApp(ctx, db, data.ScopeApp, oldConfigFile, updatedConfigFile)
+				err := uc.ClusterService.UpdateConfigForApp(ctx, db, req.Scope.App, oldConfigFile, updatedConfigFile)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

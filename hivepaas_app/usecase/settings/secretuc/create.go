@@ -27,9 +27,9 @@ func (uc *UC) CreateSecret(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				// Create a secret in docker swarm
-				_, err := uc.ClusterService.CreateSecretForApp(ctx, db, data.ScopeApp, secret)
+				_, err := uc.ClusterService.CreateSecretForApp(ctx, db, req.Scope.App, secret)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

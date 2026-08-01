@@ -23,9 +23,9 @@ func (uc *UC) DeleteConfigFile(
 			data *settings.DeleteSettingData,
 			pData *settings.PersistingSettingDeletionData,
 		) error {
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				// Delete the related config in docker swarm
-				err := uc.ClusterService.DeleteConfigForApp(ctx, db, data.ScopeApp, data.Setting.MustAsConfigFile())
+				err := uc.ClusterService.DeleteConfigForApp(ctx, db, req.Scope.App, data.Setting.MustAsConfigFile())
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

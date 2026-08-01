@@ -25,7 +25,7 @@ func (uc *UC) ExecuteSchedJob(
 			db database.IDB,
 			data *settings.GetSettingData,
 		) error {
-			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
 				return apperrors.Wrap(err)
 			}
 			return nil

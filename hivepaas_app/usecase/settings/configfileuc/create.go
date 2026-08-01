@@ -27,9 +27,9 @@ func (uc *UC) CreateConfigFile(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			if data.ScopeApp != nil {
+			if req.Scope.App != nil {
 				// Create a config in docker swarm
-				_, err := uc.ClusterService.CreateConfigForApp(ctx, db, data.ScopeApp, configFile)
+				_, err := uc.ClusterService.CreateConfigForApp(ctx, db, req.Scope.App, configFile)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

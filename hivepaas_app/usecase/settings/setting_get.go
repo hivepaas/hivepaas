@@ -41,11 +41,10 @@ func (uc *BaseUC) GetSetting(
 	auth *basedto.Auth,
 	req *GetSettingReq,
 	data *GetSettingData,
-) (*GetSettingResp, error) {
+) (_ *GetSettingResp, err error) {
 	db := uc.DB
 
-	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
-	if err != nil {
+	if err = uc.SettingService.LoadScopeObject(ctx, db, req.Scope); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 

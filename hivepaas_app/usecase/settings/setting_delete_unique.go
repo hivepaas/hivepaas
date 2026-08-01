@@ -96,8 +96,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	req *DeleteUniqueSettingReq,
 	data *DeleteUniqueSettingData,
 ) (err error) {
-	err = uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
-	if err != nil {
+	if err = uc.SettingService.LoadScopeObject(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

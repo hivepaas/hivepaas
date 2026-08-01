@@ -35,7 +35,7 @@ func (uc *UC) CreateNetwork(
 			if req.Scope.IsProjectScope() {
 				req.Driver = docker.NetworkDriverOverlay
 				req.Attachable = false
-				req.Name = data.ScopeProject.Key + "_" + req.Name
+				req.Name = req.Scope.Project.Key + "_" + req.Name
 			}
 			createResp, err := uc.createNetworkInDocker(ctx, req.CreateNetworkBaseReq)
 			if err != nil {

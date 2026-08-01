@@ -22,7 +22,7 @@ func (uc *UC) UpdateSchedJobStatus(
 			db database.Tx,
 			data *settings.UpdateSettingStatusData,
 		) error {
-			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, data.ScopeApp); err != nil {
+			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
 				return apperrors.Wrap(err)
 			}
 			return nil

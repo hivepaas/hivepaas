@@ -36,7 +36,7 @@ func (uc *UC) CreateVolume(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			if req.Scope.IsProjectScope() {
-				req.Name = data.ScopeProject.Key + "_" + req.Name
+				req.Name = req.Scope.Project.Key + "_" + req.Name
 			}
 			createResp, err := uc.createVolumeInDocker(ctx, req.VolumeBaseReq)
 			if err != nil {

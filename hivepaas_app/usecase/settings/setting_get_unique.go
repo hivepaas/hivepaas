@@ -35,11 +35,10 @@ func (uc *BaseUC) GetUniqueSetting(
 	auth *basedto.Auth,
 	req *GetUniqueSettingReq,
 	data *GetUniqueSettingData,
-) (*GetUniqueSettingResp, error) {
+) (_ *GetUniqueSettingResp, err error) {
 	db := uc.DB
 
-	err := uc.loadSettingScopeData(ctx, db, &req.BaseSettingReq, &data.BaseSettingData)
-	if err != nil {
+	if err = uc.SettingService.LoadScopeObject(ctx, db, req.Scope); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 

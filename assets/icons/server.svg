@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="srvGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="44" height="18" rx="4" fill="url(#srvGrad)"/>
+  <rect x="10" y="36" width="44" height="18" rx="4" fill="url(#srvGrad)"/>
+  <circle cx="18" cy="19" r="2.5" fill="#34D399"/>
+  <circle cx="26" cy="19" r="2.5" fill="#6EE7B7"/>
+  <circle cx="18" cy="45" r="2.5" fill="#34D399"/>
+  <circle cx="26" cy="45" r="2.5" fill="#6EE7B7"/>
+  <line x1="42" y1="19" x2="48" y2="19" stroke="#A7F3D0" stroke-width="2" stroke-linecap="round"/>
+  <line x1="42" y1="45" x2="48" y2="45" stroke="#A7F3D0" stroke-width="2" stroke-linecap="round"/>
+</svg>

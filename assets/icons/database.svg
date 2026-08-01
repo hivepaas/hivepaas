@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="dbTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#dbGrad)" d="M52 14c0 4.4-9 8-20 8S12 18.4 12 14v36c0 4.4 9 8 20 8s20-3.6 20-8V14z"/>
+  <ellipse cx="32" cy="14" rx="20" ry="8" fill="url(#dbTop)"/>
+  <path fill="none" stroke="#93C5FD" stroke-width="2" opacity="0.6" d="M12 26c0 4.4 9 8 20 8s20-3.6 20-8M12 38c0 4.4 9 8 20 8s20-3.6 20-8"/>
+</svg>

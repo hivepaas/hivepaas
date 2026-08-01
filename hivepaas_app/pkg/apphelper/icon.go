@@ -23,7 +23,6 @@ var presetAppIcons = map[string]string{
 	"apachearrow":                  "",
 	"apacheavro":                   "",
 	"apachecassandra":              "",
-	"cassandra":                    "apachecassandra",
 	"apachecloudstack":             "",
 	"apachecordova":                "",
 	"apachecouchdb":                "",
@@ -76,6 +75,7 @@ var presetAppIcons = map[string]string{
 	"caddy":                        "",
 	"cakephp":                      "",
 	"caprover":                     "",
+	"cassandra":                    "apachecassandra",
 	"castro":                       "",
 	"celery":                       "",
 	"centos":                       "",
@@ -236,12 +236,14 @@ var presetAppIcons = map[string]string{
 	"nestjs":                       "",
 	"netlify":                      "",
 	"newrelic":                     "",
+	"next":                         "nextdotjs",
 	"nextdotjs":                    "",
 	"nextjs":                       "nextdotjs",
-	"next":                         "nextdotjs",
 	"nginx":                        "",
 	"nginxproxymanager":            "",
 	"nobaralinux":                  "",
+	"node":                         "javascript",
+	"nodejs":                       "javascript",
 	"nuxt":                         "",
 	"nuxtjs":                       "nuxt",
 	"octanerender":                 "",
@@ -399,8 +401,29 @@ var presetAppIcons = map[string]string{
 	"ziggo":                        "",
 }
 
+//nolint:goconst
+var genericCategoryIcons = map[string]string{
+	"auth":     "key",
+	"backend":  "server",
+	"browser":  "",
+	"bucket":   "storage",
+	"data":     "database",
+	"database": "",
+	"db":       "database",
+	"frontend": "browser",
+	"key":      "",
+	"mq":       "queue",
+	"pubsub":   "queue",
+	"queue":    "",
+	"rdbms":    "database",
+	"s3":       "storage",
+	"server":   "",
+	"sql":      "database",
+	"storage":  "",
+}
+
 // DetectAppIcon automatically infers the preset app icon name based on appName and imageName.
-// It prioritizes tokens from imageName first, and falls back to tokens from appName.
+// It prioritizes specific brand/technology icons first, falling back to generic category icons.
 func DetectAppIcon(appName, imageName string) string {
 	// Strip registry server domain and organization/user namespace
 	// (e.g. "docker.io/bitnami/postgresql:15" -> "postgresql:15")
@@ -418,7 +441,7 @@ func DetectAppIcon(appName, imageName string) string {
 		return r == ',' || r == ':' || r == '/' || r == '-' || r == '_' || unicode.IsSpace(r)
 	})
 
-	// Match tokens against presetAppIcons map
+	// Pass 1: Match tokens against primary brand/technology presetAppIcons map
 	for _, field := range fields {
 		if val, exists := presetAppIcons[field]; exists {
 			if val == "" {
@@ -427,5 +450,16 @@ func DetectAppIcon(appName, imageName string) string {
 			return val
 		}
 	}
+
+	// Pass 2: Fallback to generic category icons if no primary brand icon matched
+	for _, field := range fields {
+		if val, exists := genericCategoryIcons[field]; exists {
+			if val == "" {
+				val = field
+			}
+			return val
+		}
+	}
+
 	return ""
 }

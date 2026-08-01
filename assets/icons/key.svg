@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="keyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#keyGrad)" d="M26 12a14 14 0 0 0-13.8 16.3L4 36.5A3 3 0 0 0 4 41v5a3 3 0 0 0 3 3h5v-3h3v-3h3v-3h2.5l3.8-3.8A14 14 0 1 0 26 12zm-4 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+</svg>

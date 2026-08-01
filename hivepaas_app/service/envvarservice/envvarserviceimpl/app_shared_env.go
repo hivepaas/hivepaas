@@ -37,9 +37,14 @@ func (s *service) buildSharedEnvVarsInApp(
 	buildOptions envvarservice.EnvBuildOptions,
 ) ([]*envvarservice.EnvVar, error) {
 	listOpts := []bunex.SelectQueryOption{
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		// bunex.SelectWhere("app.status = ?", base.AppStatusActive),
 		bunex.SelectWhere("app.key = ?", appKey),
 		bunex.SelectWhere("app.project_env_id = ?", projectEnvID),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	}
 	apps, _, err := s.appRepo.List(ctx, db, projectID, nil, listOpts...)
 	if err != nil {

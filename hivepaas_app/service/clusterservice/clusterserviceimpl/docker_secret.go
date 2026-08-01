@@ -11,7 +11,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -59,7 +58,8 @@ func (s *service) createSwarmSecret(
 	secret *entity.Secret,
 ) (ref *entity.SwarmSecretRef, err error) {
 	swarmRef := secret.SwarmRef
-	if swarmRef == nil || swarmRef.File == nil {
+	// Only create an item in docker if it is configured to mount to file system
+	if swarmRef == nil || swarmRef.File == nil || swarmRef.File.Name == "" {
 		return nil, nil
 	}
 
@@ -69,7 +69,7 @@ func (s *service) createSwarmSecret(
 	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, secretDefaultFileMode)
 
 	// Create the secret in docker swarm
-	secretName := app.Key + "_" + strings.ToLower(secret.Key)
+	secretName := app.GlobalKey + "_" + strings.ToLower(secret.Key)
 	secretBytes, err := secret.ValueAsBytes()
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -184,21 +184,7 @@ func (s *service) DeleteSecretForApp(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.DeleteSecretForApp(ctx, db, childApp, secret)
-			if err != nil {
-				return apperrors.Wrap(err)
-			}
-		}
-	} else {
-		// This is a child app, we may need to restore the inherited secret having the same name as this
-		inheritedSecretSetting, err := s.settingRepo.GetByName(ctx, db, app.GetObjectScope(),
-			base.SettingTypeSecret, secret.Key, false)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
-		}
-		if inheritedSecretSetting != nil {
-			err = s.addSwarmSecretsToService(ctx, db, app,
-				[]*entity.SwarmSecretRef{inheritedSecretSetting.MustAsSecret().SwarmRef})
+			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, secret.SwarmRef)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -331,7 +317,7 @@ func (s *service) deleteOrphanSwarmSecret(
 
 func (s *service) SecretRemove(
 	ctx context.Context,
-	secretID string,
+	secretID string, // secret id in docker
 	retryMax int,
 	retryDelay time.Duration,
 ) (err error) {
@@ -365,7 +351,7 @@ func (s *service) SecretRemove(
 
 func (s *service) SecretsRemove(
 	ctx context.Context,
-	secretIDs []string,
+	secretIDs []string, // secret ids in docker
 	retryMax int,
 	retryDelay time.Duration,
 ) (err error) {

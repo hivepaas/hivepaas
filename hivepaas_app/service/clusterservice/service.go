@@ -36,13 +36,13 @@ type Service interface {
 	SecretsRemove(ctx context.Context, secretIDs []string, retryMax int, retryDelay time.Duration) error
 
 	// Docker config
-	CreateConfigForApp(ctx context.Context, db database.IDB, app *entity.App, secret *entity.ConfigFile) (
+	CreateConfigForApp(ctx context.Context, db database.IDB, app *entity.App, config *entity.ConfigFile) (
 		*entity.SwarmConfigRef, error)
 	CreateConfigsForApp(ctx context.Context, db database.IDB, app *entity.App, configs []*entity.ConfigFile) (
 		[]*entity.SwarmConfigRef, error)
 	UpdateConfigForApp(ctx context.Context, db database.IDB, app *entity.App,
-		oldSecret, newSecret *entity.ConfigFile) error
-	DeleteConfigForApp(ctx context.Context, db database.IDB, app *entity.App, secret *entity.ConfigFile) error
+		oldConfig, newConfig *entity.ConfigFile) error
+	DeleteConfigForApp(ctx context.Context, db database.IDB, app *entity.App, config *entity.ConfigFile) error
 	ConfigRemove(ctx context.Context, configID string, retryMax int, retryDelay time.Duration) error
 	ConfigsRemove(ctx context.Context, configIDs []string, retryMax int, retryDelay time.Duration) error
 

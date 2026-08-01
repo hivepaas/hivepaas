@@ -149,7 +149,6 @@ func (s *service) loadInheritedVarDataInApp(
 	app := req.App
 	defaultLoadFunc := func(context.Context, database.IDB, *entity.ObjectScope, envvarservice.EnvLoadOptions) (
 		[]*envvarservice.EnvVar, []*entity.Setting, error) {
-		app.ProjectEnv.Project = app.Project
 		if app.ParentApp != nil { // the app has a parent app, loads data from the parent
 			parentApp := app.ParentApp
 			parentApp.ProjectEnv = app.ProjectEnv

@@ -30,11 +30,19 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		}
 	}
 
+	// TODO (high): remove secrets, config in docker
+
+	// Remove service for the app in docker swarm
+	err := s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+		return apperrors.Wrap(err)
+	}
+
 	// Delete ref resources in DB
 	appIDs := []string{app.ID}
 
 	// ACL permissions related to the app
-	err := s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, appIDs)
+	err = s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, appIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -72,12 +80,6 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	// Deployments
 	err = s.deploymentRepo.DeleteAllByApps(ctx, db, appIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	// Remove service for the app in docker swarm
-	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
 

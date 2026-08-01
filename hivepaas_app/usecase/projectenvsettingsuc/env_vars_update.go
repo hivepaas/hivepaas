@@ -3,7 +3,6 @@ package projectenvsettingsuc
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -38,7 +37,7 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 		persistingData := &persistingProjectEnvData{}
 		uc.prepareUpdatingProjectEnvEnvVars(req, data, persistingData)
 
-		if !data.BuildVarsChange && !data.RuntimeVarsChange {
+		if !data.HasChanges {
 			return nil
 		}
 
@@ -48,7 +47,7 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 		}
 
 		// Build and validate the env var changes
-		buildData, err = uc.buildProjectEnvEnvVars(ctx, db, data)
+		buildData, err = uc.buildProjectEnvEnvVars(ctx, db, data, true)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -78,12 +77,10 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 }
 
 type updateProjectEnvVarsData struct {
-	ProjectEnv     *entity.ProjectEnv
-	EnvVarsSetting *entity.Setting
-
-	CurrRuntimeVars []*entity.EnvVar
-	CurrBuildVars   []*entity.EnvVar
-
+	ProjectEnv        *entity.ProjectEnv
+	EnvVarsSetting    *entity.Setting
+	CurrVars          []*entity.EnvVar
+	HasChanges        bool
 	RuntimeVarsChange bool
 	BuildVarsChange   bool
 }
@@ -112,25 +109,14 @@ func (uc *UC) loadProjectEnvEnvVarsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	data.RuntimeVarsChange = true
-	data.BuildVarsChange = true
 	data.EnvVarsSetting = setting
-
-	if setting == nil {
-		return nil
-	}
-
-	// Calculate current data to detect changes
-	envVars, err := setting.AsEnvVars()
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	for _, env := range envVars.Data {
-		if env.IsBuild {
-			data.CurrBuildVars = append(data.CurrBuildVars, env)
-		} else {
-			data.CurrRuntimeVars = append(data.CurrRuntimeVars, env)
+	if setting != nil {
+		// Calculate current data to detect changes
+		envVars, err := setting.AsEnvVars()
+		if err != nil {
+			return apperrors.Wrap(err)
 		}
+		data.CurrVars = envVars.Data
 	}
 
 	return nil
@@ -160,79 +146,52 @@ func (uc *UC) prepareUpdatingProjectEnvEnvVars(
 	setting.ExpireAt = time.Time{}
 	setting.Status = base.SettingStatusActive
 
-	newRuntimeVars := make([]*entity.EnvVar, 0, len(req.RuntimeEnvVars))
-	newBuildVars := make([]*entity.EnvVar, 0, len(req.BuildtimeEnvVars))
+	envVars := &entity.EnvVars{
+		Data: make([]*entity.EnvVar, 0, len(req.RuntimeEnvVars)+len(req.BuildtimeEnvVars)),
+	}
 	for _, env := range req.RuntimeEnvVars {
-		newRuntimeVars = append(newRuntimeVars, env.ToEntity(base.EnvVarKindRuntime))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindRuntime))
 	}
 	for _, env := range req.BuildtimeEnvVars {
-		newBuildVars = append(newBuildVars, env.ToEntity(base.EnvVarKindBuild))
+		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
 	}
-
-	envVars := &entity.EnvVars{
-		Data: make([]*entity.EnvVar, 0, len(newRuntimeVars)+len(newBuildVars)),
-	}
-	envVars.Data = append(envVars.Data, newRuntimeVars...)
-	envVars.Data = append(envVars.Data, newBuildVars...)
 	setting.MustSetData(envVars)
 
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 
-	// Detect changes
-	data.RuntimeVarsChange = !envvarhelper.Equal(data.CurrRuntimeVars, newRuntimeVars)
-	data.BuildVarsChange = !envvarhelper.Equal(data.CurrBuildVars, newBuildVars)
+	// Detect changes in content
+	data.RuntimeVarsChange, _, data.BuildVarsChange = envvarhelper.CalcContentChanges(envVars.Data, data.CurrVars)
+	// Detect any change even the order of the items
+	data.HasChanges = data.RuntimeVarsChange || data.BuildVarsChange
+	if !data.HasChanges {
+		data.HasChanges = envvarhelper.Equal(envVars.Data, data.CurrVars)
+	}
 }
 
 func (uc *UC) buildProjectEnvEnvVars(
 	ctx context.Context,
 	db database.IDB,
 	data *updateProjectEnvVarsData,
-) (runtimeData []*envvarservice.AppEnvVarData, err error) {
+	inTx bool,
+) (appEnvVarData []*envvarservice.AppEnvVarData, err error) {
+	scope := data.ProjectEnv.GetObjectScope()
+	transaction := !inTx // When in Tx, must not open new transactions
+	concurrency := !inTx // When in Tx, concurrency may cause runtime crash
+
 	if data.RuntimeVarsChange {
-		// Validate the runtime env vars changes
-		runtimeData, err = uc.envVarService.BuildEnvVarsForAllAppsInProjectEnv(ctx, db,
-			&envvarservice.BuildEnvVarsInProjectEnvReq{
-				ProjectEnv:   data.ProjectEnv,
-				LoadOptions:  envvarservice.EnvLoadOptions{},
-				BuildOptions: envvarservice.EnvBuildOptions{},
-			}, true, true)
+		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false,
+			transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		var errors []string
-		for _, appData := range runtimeData {
-			errors = append(errors, appData.Errors()...)
-		}
-		if len(errors) > 0 {
-			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
-				WithExtraDetail("%s", strings.Join(errors, "\n"))
-		}
 	}
-
 	if data.BuildVarsChange {
-		// Validate the build-time env vars changes
-		buildTimeData, err := uc.envVarService.BuildEnvVarsForAllAppsInProjectEnv(ctx, db,
-			&envvarservice.BuildEnvVarsInProjectEnvReq{
-				ProjectEnv: data.ProjectEnv,
-				LoadOptions: envvarservice.EnvLoadOptions{
-					BuildPhase: true,
-				},
-				BuildOptions: envvarservice.EnvBuildOptions{
-					BuildPhaseOnly: true,
-				},
-			}, true, true)
+		// For build phase env vars, just validate them
+		_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true,
+			transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		var errors []string
-		for _, appData := range buildTimeData {
-			errors = append(errors, appData.Errors()...)
-		}
-		if len(errors) > 0 {
-			return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
-				WithExtraDetail("%s", strings.Join(errors, "\n"))
-		}
 	}
-
-	return runtimeData, nil
+	return appEnvVarData, nil
 }

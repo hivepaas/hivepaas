@@ -176,6 +176,9 @@ func (s *service) loadExternalRefEnvData(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+	if data.ExternalRefsData == nil {
+		data.ExternalRefsData = make(map[string]map[string]*envvarservice.EnvVar)
+	}
 	data.ExternalRefsData[appKey] = refData
 	return refData, nil
 }

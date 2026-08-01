@@ -2,11 +2,75 @@ package envvarserviceimpl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
+
+func (s *service) BuildEnvVarsForAllAppsInScope(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	buildPhase bool,
+	transaction bool,
+	concurrency bool,
+) (appEnvVarData []*envvarservice.AppEnvVarData, err error) {
+	switch scope.ScopeType {
+	case base.ObjectScopeApp:
+		appEnvVarData, err = s.BuildEnvVarsForAllAppsInApp(ctx, db,
+			&envvarservice.BuildEnvVarsInAppReq{
+				App: scope.App,
+				LoadOptions: envvarservice.EnvLoadOptions{
+					BuildPhase: buildPhase,
+				},
+				BuildOptions: envvarservice.EnvBuildOptions{
+					BuildPhaseOnly: buildPhase,
+				},
+			}, transaction, concurrency)
+	case base.ObjectScopeProjectEnv:
+		appEnvVarData, err = s.BuildEnvVarsForAllAppsInProjectEnv(ctx, db,
+			&envvarservice.BuildEnvVarsInProjectEnvReq{
+				ProjectEnv: scope.ProjectEnv,
+				LoadOptions: envvarservice.EnvLoadOptions{
+					BuildPhase: buildPhase,
+				},
+				BuildOptions: envvarservice.EnvBuildOptions{
+					BuildPhaseOnly: buildPhase,
+				},
+			}, transaction, concurrency)
+	case base.ObjectScopeProject:
+		appEnvVarData, err = s.BuildEnvVarsForAllAppsInProject(ctx, db,
+			&envvarservice.BuildEnvVarsInProjectReq{
+				Project: scope.Project,
+				LoadOptions: envvarservice.EnvLoadOptions{
+					BuildPhase: buildPhase,
+				},
+				BuildOptions: envvarservice.EnvBuildOptions{
+					BuildPhaseOnly: buildPhase,
+				},
+			}, transaction, concurrency)
+	case base.ObjectScopeUser, base.ObjectScopeGlobal:
+		// Do nothing
+	}
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	var errors []string
+	for _, appData := range appEnvVarData {
+		errors = append(errors, appData.Errors()...)
+	}
+	if len(errors) > 0 {
+		return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
+			WithExtraDetail("%s", strings.Join(errors, "\n"))
+	}
+
+	return appEnvVarData, nil
+}
 
 func (s *service) BuildEnvVarsForAllAppsInProject(
 	ctx context.Context,

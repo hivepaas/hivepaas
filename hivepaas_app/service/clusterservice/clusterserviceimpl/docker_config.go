@@ -11,7 +11,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -59,7 +58,8 @@ func (s *service) createSwarmConfig(
 	config *entity.ConfigFile,
 ) (ref *entity.SwarmConfigRef, err error) {
 	swarmRef := config.SwarmRef
-	if swarmRef == nil || swarmRef.File == nil {
+	// Only create an item in docker if it is configured to mount to file system
+	if swarmRef == nil || swarmRef.File == nil || swarmRef.File.Name == "" {
 		return nil, nil
 	}
 
@@ -69,7 +69,7 @@ func (s *service) createSwarmConfig(
 	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, configDefaultFileMode)
 
 	// Create the config in docker swarm
-	configName := app.Key + "_" + strings.ToLower(config.Name)
+	configName := app.GlobalKey + "_" + strings.ToLower(config.Name)
 	configResp, err := s.dockerManager.ConfigCreate(ctx, configName, config.ContentAsBytes(),
 		func(opts *client.ConfigCreateOptions) {
 			opts.Spec.Labels = map[string]string{
@@ -179,21 +179,7 @@ func (s *service) DeleteConfigForApp(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.DeleteConfigForApp(ctx, db, childApp, config)
-			if err != nil {
-				return apperrors.Wrap(err)
-			}
-		}
-	} else {
-		// This is a child app, we may need to restore the inherited config having the same name as this
-		inheritedConfigSetting, err := s.settingRepo.GetByName(ctx, db, app.GetObjectScope(),
-			base.SettingTypeConfigFile, config.Name, false)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
-		}
-		if inheritedConfigSetting != nil {
-			err = s.addSwarmConfigsToService(ctx, db, app,
-				[]*entity.SwarmConfigRef{inheritedConfigSetting.MustAsConfigFile().SwarmRef})
+			err = s.removeSwarmConfigFromService(ctx, childApp.ServiceID, config.SwarmRef)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

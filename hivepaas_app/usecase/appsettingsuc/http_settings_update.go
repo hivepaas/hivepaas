@@ -2,6 +2,7 @@ package appsettingsuc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -24,8 +25,9 @@ func (uc *UC) UpdateAppHttpSettings(
 	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppHttpSettingsReq,
 ) (*appsettingsdto.UpdateAppHttpSettingsResp, error) {
+	var data *updateAppHttpSettingsData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &updateAppHttpSettingsData{}
+		data = &updateAppHttpSettingsData{}
 		err := uc.loadAppHttpSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -49,7 +51,17 @@ func (uc *UC) UpdateAppHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appsettingsdto.UpdateAppHttpSettingsResp{}, nil
+	resp := &appsettingsdto.UpdateAppHttpSettingsResp{
+		Meta: &basedto.Meta{},
+	}
+
+	if err = uc.applyAppEnvVars(ctx, uc.db, data, false); err != nil {
+		// NOTE: just show user a message instead of failing the request?
+		resp.Meta.Warning = "Configuration updated successfully, but failed to apply env var changes:\n" +
+			err.Error()
+	}
+
+	return resp, nil
 }
 
 type updateAppHttpSettingsData struct {
@@ -57,6 +69,9 @@ type updateAppHttpSettingsData struct {
 	HttpSetting     *entity.Setting
 	NewHttpSettings *entity.AppHttpSettings
 	RefObjects      *entity.RefObjects
+
+	PortChanged   bool
+	DomainChanged bool
 }
 
 func (uc *UC) loadAppHttpSettingsForUpdate(
@@ -111,6 +126,23 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 
+	// Detect some changes
+	var oldPort, newPort int
+	var oldDomain, newDomain string
+	if data.HttpSetting != nil {
+		oldHttpSettings := data.HttpSetting.MustAsAppHttpSettings()
+		oldPort = oldHttpSettings.Port
+		if oldHttpSettings.ExposePublicly && len(oldHttpSettings.Domains) > 0 && oldHttpSettings.Domains[0].Enabled {
+			oldDomain = oldHttpSettings.Domains[0].Domain
+		}
+	}
+	newPort = newHttpSettings.Port
+	if newHttpSettings.ExposePublicly && len(newHttpSettings.Domains) > 0 && newHttpSettings.Domains[0].Enabled {
+		oldDomain = newHttpSettings.Domains[0].Domain
+	}
+	data.PortChanged = oldPort != newPort
+	data.DomainChanged = oldDomain != newDomain
+
 	return nil
 }
 
@@ -146,6 +178,7 @@ func (uc *UC) applyAppHttpSettings(
 	ctx context.Context,
 	data *updateAppHttpSettingsData,
 ) error {
+	app := data.App
 	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -162,13 +195,13 @@ func (uc *UC) applyAppHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	inspect, err := uc.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
+	inspect, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	service := &inspect.Service
 
-	err = uc.traefikService.ApplyAppConfig(ctx, data.App, service, &traefikservice.AppConfigData{
+	err = uc.traefikService.ApplyAppConfig(ctx, app, service, &traefikservice.AppConfigData{
 		HttpSettings: appHttpSettings,
 		RefObjects:   data.RefObjects,
 	})
@@ -176,7 +209,7 @@ func (uc *UC) applyAppHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, data.App, service, data.HttpSetting)
+	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, service, data.HttpSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -187,4 +220,52 @@ func (uc *UC) applyAppHttpSettings(
 	}
 
 	return nil
+}
+
+func (uc *UC) applyAppEnvVars(
+	ctx context.Context,
+	db database.IDB,
+	data *updateAppHttpSettingsData,
+	inTx bool,
+) error {
+	if !data.PortChanged && !data.DomainChanged {
+		return nil
+	}
+
+	transaction := !inTx // When in Tx, must not open new transactions
+	concurrency := !inTx // When in Tx, concurrency may cause runtime crash
+
+	// When port and domain change, we need to update env vars of the apps in the env
+	// as port/domain are in shared env vars.
+
+	// Loads all apps in the env
+	apps, _, err := uc.appRepo.List(ctx, db, data.App.ProjectID, nil,
+		bunex.SelectWhere("app.project_env_id = ?", data.App.ProjectEnvID),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	projectEnv := data.App.ProjectEnv
+	projectEnv.Project = data.App.Project
+	projectEnv.Apps = apps
+
+	affectingAppEnvData, err := uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db,
+		projectEnv.GetObjectScope(), false, transaction, concurrency)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	// Apply the changes of env vars to the related apps
+	errMap := uc.envVarService.ApplyEnvVarsForApps(ctx, db, affectingAppEnvData, transaction, concurrency)
+	if len(errMap) == 0 {
+		return nil
+	}
+
+	var warning string
+	for i, e := range errMap {
+		warning += fmt.Sprintf("\nApp '%v': %v", affectingAppEnvData[i].App.Name, e.Error())
+	}
+
+	return apperrors.Wrap(apperrors.ErrActionFailed).WithExtraDetail("%s", warning)
 }

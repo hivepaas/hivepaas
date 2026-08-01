@@ -37,7 +37,9 @@ func (e *EnvVar) Equal(e2 *EnvVar) bool {
 	if e == nil || e2 == nil {
 		return e == nil && e2 == nil
 	}
-	return *e == *e2
+	// NOTE: skip IsSystem comparing
+	return e.Key == e2.Key && e.Value == e2.Value && e.IsBuild == e2.IsBuild &&
+		e.IsShared == e2.IsShared && e.IsLiteral == e2.IsLiteral
 }
 
 func (s *EnvVars) GetType() base.SettingType {

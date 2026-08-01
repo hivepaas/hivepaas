@@ -85,6 +85,40 @@ func (l *localFileSystem) CacheControlHeader() string {
 	return l.cacheControl
 }
 
+type embedFileSystem struct {
+	http.FileSystem
+	cacheControl string
+}
+
+func embedFile(fs http.FileSystem, cacheControl string) *embedFileSystem {
+	return &embedFileSystem{
+		FileSystem:   fs,
+		cacheControl: cacheControl,
+	}
+}
+
+func (e *embedFileSystem) Exists(prefix string, filepath string) bool {
+	for _, v := range notStaticPrefixes {
+		if strings.HasPrefix(filepath, v) {
+			return false
+		}
+	}
+	p := strings.TrimPrefix(filepath, prefix)
+	if p == "" || p == "/" {
+		return false
+	}
+	f, err := e.Open(p)
+	if err != nil {
+		return false
+	}
+	_ = f.Close()
+	return true
+}
+
+func (e *embedFileSystem) CacheControlHeader() string {
+	return e.cacheControl
+}
+
 func StaticServeRedirect(urlPrefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestPath := c.Request.URL.Path

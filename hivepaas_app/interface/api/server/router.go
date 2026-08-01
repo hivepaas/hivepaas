@@ -7,6 +7,7 @@ import (
 	swaggoFiles "github.com/swaggo/files"
 	swaggoGin "github.com/swaggo/gin-swagger"
 
+	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appactionhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
@@ -129,8 +130,10 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.Use(StaticServe(s.config.HttpPathSslAcme(),
 		localFile(s.config.DataPathSslAcme().AbsPath(), false, "")))
 	// Serve the static files from the "dist-dashboard" directory at the root URL "/"
-	s.engine.Use(StaticServe("/",
-		localFile("./dist-dashboard", true, "")))
+	s.engine.Use(StaticServe("/", localFile("./dist-dashboard", true, "")))
+	// Serve icons
+	s.engine.Use(StaticServe("/static/icons",
+		embedFile(http.FS(assets.GetIconsFS()), "public, max-age=864000")))
 	// Final redirection to redirect any path to `/next=<path>` in case no matching static file found
 	s.engine.Use(StaticServeRedirect("/"))
 

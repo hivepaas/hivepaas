@@ -30,8 +30,7 @@ func (s *service) sslNotifyForExpiration(
 	s.sslBuildExpiringNotificationMsgData(item, data)
 	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		ScopeProject:    item.Setting.BelongToProject,
-		ScopeApp:        item.Setting.BelongToApp,
+		Scope:           item.Setting.GetObjectScope(),
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSSLExpiringNotification,

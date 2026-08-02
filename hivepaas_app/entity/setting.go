@@ -215,3 +215,31 @@ func (s *Setting) Copy(genID bool) (*Setting, error) {
 	}
 	return cp, nil
 }
+
+func (s *Setting) GetObjectScope() *ObjectScope {
+	switch s.Scope {
+	case base.ObjectScopeApp:
+		if s.BelongToApp != nil {
+			return s.BelongToApp.GetObjectScope()
+		}
+		return nil
+	case base.ObjectScopeProject:
+		if s.BelongToProject != nil {
+			return s.BelongToProject.GetObjectScope()
+		}
+		return nil
+	case base.ObjectScopeProjectEnv:
+		if s.BelongToProjectEnv != nil {
+			return s.BelongToProjectEnv.GetObjectScope()
+		}
+		return nil
+	case base.ObjectScopeUser:
+		if s.BelongToUser != nil {
+			return s.BelongToUser.GetObjectScope()
+		}
+		return nil
+	case base.ObjectScopeGlobal:
+		return NewObjectScopeGlobal()
+	}
+	return nil
+}

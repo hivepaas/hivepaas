@@ -35,8 +35,7 @@ func (s *service) notifyForDeployment(
 	s.buildDeploymentNotifMsgData(data)
 	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: data.Deployment.IsDone(),
-		ScopeProject:    data.Project,
-		ScopeApp:        data.App,
+		Scope:           data.App.GetObjectScope(),
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateAppDeploymentNotification,

@@ -8,7 +8,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bbpool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -105,20 +104,7 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		return nil
 	}
 
-	var scope *entity.ObjectScope
-	switch {
-	case data.ScopeApp != nil:
-		scope = data.ScopeApp.GetObjectScope()
-	case data.ScopeProjectEnv != nil:
-		scope = data.ScopeProjectEnv.GetObjectScope()
-	case data.ScopeProject != nil:
-		scope = data.ScopeProject.GetObjectScope()
-	case data.ScopeUser != nil:
-		scope = data.ScopeUser.GetObjectScope()
-	default:
-		scope = entity.NewObjectScopeGlobal()
-	}
-
+	scope := data.Scope
 	settings, _, err := s.settingRepo.List(ctx, db, scope, nil,
 		bunex.SelectWhereIn("setting.type IN (?)", settingTypes...),
 		bunex.SelectWhere("setting.is_default IS TRUE"),
@@ -182,7 +168,7 @@ func (s *service) notifyForTaskResultViaEmail(
 		return apperrors.NewMissing("Sender email account")
 	}
 
-	userMap, err := s.userService.LoadNotificationUsers(ctx, db, data.ScopeProject,
+	userMap, err := s.userService.LoadNotificationUsers(ctx, db, data.Scope.Project,
 		viaEmail.ToProjectMembers, viaEmail.ToProjectOwners, viaEmail.ToAllAdmins)
 	if err != nil {
 		return apperrors.Wrap(err)

@@ -48,8 +48,7 @@ func (e *Executor) sendNotification(
 	e.buildNotificationMsgData(data)
 	_, err = e.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		ScopeProject:    data.Project,
-		ScopeApp:        data.App,
+		Scope:           scope,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSchedTaskNotification,

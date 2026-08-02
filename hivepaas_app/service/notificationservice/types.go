@@ -42,10 +42,7 @@ func (d *BaseTemplateData) GetTitle() string {
 
 type TaskResultNotificationReq struct {
 	ActionSucceeded bool
-	ScopeProject    *entity.Project
-	ScopeProjectEnv *entity.ProjectEnv
-	ScopeApp        *entity.App
-	ScopeUser       *entity.User
+	Scope           *entity.ObjectScope
 	RefObjects      *entity.RefObjects
 
 	Notification *entity.Notification

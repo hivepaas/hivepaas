@@ -54,8 +54,7 @@ func (s *service) sendNotification(
 	s.buildNotificationMsgData(data)
 	req := &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: data.Task.IsDone(),
-		ScopeProject:    data.Project,
-		ScopeApp:        data.App,
+		Scope:           scope,
 		RefObjects:      data.RefObjects,
 
 		Notification: notification,

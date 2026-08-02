@@ -1,4 +1,4 @@
-package docker
+package dockerhelper
 
 import (
 	"strings"
@@ -14,9 +14,10 @@ func ContainerCommandBuild(cmd []string, args []string) string {
 }
 
 func ContainerCommandApply(contSpec *swarm.ContainerSpec, cmd string) {
+	contSpec.Command = nil
 	if cmd == "" {
-		contSpec.Command = nil
+		contSpec.Args = nil
 	} else {
-		contSpec.Command = gofn.Must(executil.CmdSplit(cmd))
+		contSpec.Args = gofn.Must(executil.CmdSplit(cmd))
 	}
 }

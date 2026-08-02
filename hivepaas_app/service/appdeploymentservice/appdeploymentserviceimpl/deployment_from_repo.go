@@ -11,11 +11,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 const (
@@ -205,7 +205,7 @@ func (s *service) repoDeployStepServiceApply(
 	contSpec := spec.TaskTemplate.ContainerSpec
 	contSpec.Image = data.DeploymentOutput.ImageTags[0]
 	contSpec.Dir = deployment.Settings.WorkingDir
-	docker.ContainerCommandApply(contSpec, deployment.Settings.Command)
+	dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 		func(options *client.ServiceUpdateOptions) {

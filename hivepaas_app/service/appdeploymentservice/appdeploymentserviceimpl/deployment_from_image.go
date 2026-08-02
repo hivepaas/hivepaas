@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -141,7 +142,7 @@ func (s *service) imageDeployStepServiceApply(
 	contSpec := spec.TaskTemplate.ContainerSpec
 	contSpec.Image = imageSource.Image
 	contSpec.Dir = deployment.Settings.WorkingDir
-	docker.ContainerCommandApply(contSpec, deployment.Settings.Command)
+	dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 		func(options *client.ServiceUpdateOptions) {

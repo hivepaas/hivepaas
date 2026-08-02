@@ -9,8 +9,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type GetAppDeploymentSettingsReq struct {
@@ -89,7 +89,7 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 
 	if input.ServiceSpec != nil && input.ServiceSpec.TaskTemplate.ContainerSpec != nil {
 		resp.WorkingDir = input.ServiceSpec.TaskTemplate.ContainerSpec.Dir
-		resp.Command = docker.ContainerCommandBuild(input.ServiceSpec.TaskTemplate.ContainerSpec.Command,
+		resp.Command = dockerhelper.ContainerCommandBuild(input.ServiceSpec.TaskTemplate.ContainerSpec.Command,
 			input.ServiceSpec.TaskTemplate.ContainerSpec.Args)
 	}
 

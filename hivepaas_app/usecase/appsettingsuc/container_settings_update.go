@@ -100,7 +100,7 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 	containerSpec.Labels = dockerhelper.ApplyUserLabels(containerSpec.Labels, req.ContainerLabels)
 	containerSpec.Image = req.Image
-	containerSpec.Command = gofn.If(req.Command == "", nil, gofn.Must(executil.CmdSplit(req.Command)))
+	dockerhelper.ContainerCommandApply(containerSpec, req.Command)
 	containerSpec.Dir = req.WorkingDir
 	containerSpec.Hostname = req.Hostname
 	containerSpec.User = req.User

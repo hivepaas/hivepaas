@@ -30,7 +30,7 @@ func (s *service) initRootProjectTraefikApp(
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeGlobal,
+		Scope:     base.HivepaasScope,
 		Type:      base.SettingTypeTraefikService,
 		Status:    base.SettingStatusActive,
 		Name:      "Service settings",

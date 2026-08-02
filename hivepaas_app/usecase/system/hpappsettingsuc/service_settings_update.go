@@ -3,6 +3,8 @@ package hpappsettingsuc
 import (
 	"context"
 	"errors"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -15,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/traefikhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
@@ -78,6 +81,12 @@ func (uc *UC) UpdateServiceSettings(
 				return uc.hpAppService.RestartHpAppSwarmService(ctx)
 			}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
 		}
+		err = errors.Join(err, e)
+	}
+
+	// Apply trusted IPs to traefik if configured
+	if req.ProxySettings.ProxyProvider != "" {
+		e := uc.applyTrustedIPsToTraefik(ctx, req.ProxySettings.TrustedIPs)
 		err = errors.Join(err, e)
 	}
 
@@ -169,6 +178,35 @@ func (uc *UC) loadServiceSettingsForUpdate(
 	return nil
 }
 
+func (uc *UC) prepareUpdatingServiceSettings(
+	data *updateServiceSettingsData,
+	persistingData *persistingSettingsData,
+) {
+	setting := data.Setting
+	setting.MustSetData(data.NewSettings)
+	setting.UpdateVer++
+	setting.UpdatedAt = timeutil.NowUTC()
+
+	persistingData.Settings = append(persistingData.Settings, setting)
+}
+
+type persistingSettingsData struct {
+	Settings []*entity.Setting
+}
+
+func (uc *UC) persistSettingsData(
+	ctx context.Context,
+	db database.IDB,
+	persistingData *persistingSettingsData,
+) error {
+	err := uc.settingRepo.UpsertMulti(ctx, db, persistingData.Settings,
+		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (uc *UC) applyServiceSettingsToMainService(
 	ctx context.Context,
 	data *updateServiceSettingsData,
@@ -220,31 +258,72 @@ func (uc *UC) applyServiceSettingsToWorkerService(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingServiceSettings(
-	data *updateServiceSettingsData,
-	persistingData *persistingSettingsData,
-) {
-	setting := data.Setting
-	setting.MustSetData(data.NewSettings)
-	setting.UpdateVer++
-	setting.UpdatedAt = timeutil.NowUTC()
-
-	persistingData.Settings = append(persistingData.Settings, setting)
-}
-
-type persistingSettingsData struct {
-	Settings []*entity.Setting
-}
-
-func (uc *UC) persistSettingsData(
+func (uc *UC) applyTrustedIPsToTraefik(
 	ctx context.Context,
-	db database.IDB,
-	persistingData *persistingSettingsData,
+	trustedIPs []string,
 ) error {
-	err := uc.settingRepo.UpsertMulti(ctx, db, persistingData.Settings,
-		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
+	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+	if traefikSvc == nil {
+		return nil
+	}
+
+	if traefikSvc.Spec.TaskTemplate.ContainerSpec == nil {
+		traefikSvc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
+	}
+
+	sort.Strings(trustedIPs)
+	trustedIPsStr := strings.Join(trustedIPs, ",")
+	epWeb := "--entrypoints.web.forwardedheaders.trustedips="
+	epWebsecure := "--entrypoints.websecure.forwardedheaders.trustedips="
+	hasEpWebTrustedIPs := false
+	hasEpWebsecureTrustedIPs := false
+
+	existingArgs := traefikSvc.Spec.TaskTemplate.ContainerSpec.Args
+	newArgs := make([]string, 0, len(existingArgs)+2) //nolint:mnd
+	for _, arg := range existingArgs {
+		key, _, valid := traefikhelper.ParseCommandArg(arg)
+		if !valid {
+			newArgs = append(newArgs, arg)
+			continue
+		}
+		if strings.HasPrefix(key, epWeb) {
+			hasEpWebTrustedIPs = true
+			if trustedIPsStr != "" {
+				newArgs = append(newArgs, epWeb+trustedIPsStr)
+			}
+			continue
+		}
+		if strings.HasPrefix(key, epWebsecure) {
+			hasEpWebsecureTrustedIPs = true
+			if trustedIPsStr != "" {
+				newArgs = append(newArgs, epWebsecure+trustedIPsStr)
+			}
+			continue
+		}
+	}
+
+	if !hasEpWebTrustedIPs && trustedIPsStr != "" {
+		newArgs = append(newArgs, epWeb+trustedIPsStr)
+	}
+	if !hasEpWebsecureTrustedIPs && trustedIPsStr != "" {
+		newArgs = append(newArgs, epWebsecure+trustedIPsStr)
+	}
+
+	traefikSvc.Spec.TaskTemplate.ContainerSpec.Args = newArgs
+
+	if traefikSvc.Spec.UpdateConfig == nil {
+		traefikSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+	}
+	traefikSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+	traefikSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
+
+	_, err = uc.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	return nil
 }

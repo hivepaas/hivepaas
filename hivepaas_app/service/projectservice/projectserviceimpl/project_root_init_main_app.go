@@ -37,7 +37,7 @@ func (s *service) initRootProjectMainApp(
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeGlobal,
+		Scope:     base.HivepaasScope,
 		Type:      base.SettingTypeHivePaaSService,
 		Status:    base.SettingStatusActive,
 		Name:      "Service settings",

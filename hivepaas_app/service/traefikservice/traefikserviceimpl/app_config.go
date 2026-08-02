@@ -34,9 +34,10 @@ var (
 
 type appConfigData struct {
 	*traefikservice.AppConfigData
-	app      *entity.App
-	confData *AppTraefikConfig
-	hasCerts bool
+	app        *entity.App
+	confData   *AppTraefikConfig
+	traefikSvc *swarm.Service
+	hasCerts   bool
 }
 
 type AppTraefikConfig struct {
@@ -62,6 +63,10 @@ func (s *service) ApplyAppConfig(
 		AppConfigData: cfgData,
 		app:           app,
 	}
+	err := s.loadAppConfigData(ctx, data)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 	httpSettings := data.HttpSettings
 
 	// 1. Calculate labels and TLS certs
@@ -81,7 +86,7 @@ func (s *service) ApplyAppConfig(
 	}
 
 	// 2. Apply Labels
-	err := s.updateSwarmServiceLabels(service, labels)
+	err = s.updateSwarmServiceLabels(service, labels)
 	if err != nil {
 		return err
 	}
@@ -97,6 +102,18 @@ func (s *service) ApplyAppConfig(
 		_ = os.Remove(app.TraefikConfigPath())
 	}
 
+	return nil
+}
+
+func (s *service) loadAppConfigData(
+	ctx context.Context,
+	data *appConfigData,
+) error {
+	traefikSvc, err := s.GetTraefikSwarmService(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.traefikSvc = traefikSvc
 	return nil
 }
 
@@ -147,7 +164,7 @@ func (s *service) collectDomainConfig(
 	}
 
 	// Client config
-	s.createClientConfig(domain.ClientConfig, routerName, labels, &middlewares)
+	s.createClientConfig(domain.ClientConfig, routerName, labels, &middlewares, data)
 
 	// Header config
 	s.createHeaderConfig(domain.HeaderConfig, routerName, labels, &middlewares)
@@ -225,7 +242,7 @@ func (s *service) collectPathConfig(
 	}
 
 	// Client config for path
-	s.createClientConfig(pathCfg.ClientConfig, pathRouterName, labels, &pathMiddlewares)
+	s.createClientConfig(pathCfg.ClientConfig, pathRouterName, labels, &pathMiddlewares, data)
 
 	// Header config for path
 	s.createHeaderConfig(pathCfg.HeaderConfig, pathRouterName, labels, &pathMiddlewares)
@@ -299,6 +316,7 @@ func (s *service) createClientConfig(
 	routerName string,
 	labels map[string]string,
 	middlewares *[]string,
+	data *appConfigData,
 ) {
 	if clientCfg == nil || !clientCfg.Enabled {
 		return
@@ -321,8 +339,23 @@ func (s *service) createClientConfig(
 		mwNameIp := fmt.Sprintf("%s-allowed-ips", routerName)
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.ipallowlist.sourcerange", mwNameIp)] =
 			strings.Join(clientCfg.AllowedIPs, ",")
+		if s.hasTraefikTrustedIPs(data.traefikSvc) {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.ipallowlist.ipstrategy.depth", mwNameIp)] = "2"
+		}
 		*middlewares = append(*middlewares, mwNameIp+middlewareProvider)
 	}
+}
+
+func (s *service) hasTraefikTrustedIPs(traefikSvc *swarm.Service) bool {
+	if traefikSvc == nil || traefikSvc.Spec.TaskTemplate.ContainerSpec == nil {
+		return false
+	}
+	for _, arg := range traefikSvc.Spec.TaskTemplate.ContainerSpec.Args {
+		if strings.Contains(arg, "forwardedheaders.trustedips") {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *service) createHeaderConfig(

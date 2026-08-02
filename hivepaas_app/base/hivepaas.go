@@ -27,6 +27,7 @@ const (
 )
 
 const (
+	HivepaasScope       = "hivepaas"
 	HivepaasProjectName = "HivePaaS"
 	HivepaasProjectKey  = "hivepaas"
 )

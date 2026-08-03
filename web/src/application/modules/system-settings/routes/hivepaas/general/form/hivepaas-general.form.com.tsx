@@ -2,10 +2,12 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
+import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { type FieldPath, FormProvider, useController, useForm, useFormContext } from "react-hook-form";
+import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { HivePaaSServiceSettings } from "~/system-settings/domain";
 
@@ -13,6 +15,15 @@ import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
+import {
+    type HivePaaSProxyProviderValue,
+    PROXY_PROVIDER_IP_URLS,
+    PROXY_PROVIDER_OPTIONS,
+    PROXY_PROVIDER_SELECT_UNSPECIFIED,
+    PROXY_PROVIDER_UNSPECIFIED,
+    proxyProviderToSelectValue,
+    selectValueToProxyProvider,
+} from "../hivepaas-general.constants";
 import {
     type HivePaaSGeneralFormInput,
     type HivePaaSGeneralFormOutput,
@@ -132,6 +143,105 @@ function RunWorkerInMainAppField() {
     );
 }
 
+function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const {
+        field,
+        fieldState: { error },
+    } = useController({ control, name: "proxySettings.proxyProvider" });
+
+    const selectValue = proxyProviderToSelectValue(field.value);
+
+    return (
+        <InfoBlock
+            title={
+                <LabelWithInfo
+                    label="Proxy Provider"
+                    content="Select the reverse proxy provider in front of HivePaaS to help configure trusted client IPs."
+                />
+            }
+        >
+            <>
+                <Select
+                    value={selectValue}
+                    onValueChange={value => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        field.onChange(selectValueToProxyProvider(value));
+                    }}
+                    disabled={readOnly}
+                >
+                    <SelectTrigger className="max-w-[280px]">
+                        <SelectValue placeholder="select provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {PROXY_PROVIDER_OPTIONS.map(option => (
+                            <SelectItem
+                                key={option.label}
+                                value={
+                                    option.value === PROXY_PROVIDER_UNSPECIFIED
+                                        ? PROXY_PROVIDER_SELECT_UNSPECIFIED
+                                        : option.value
+                                }
+                            >
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <FieldError errors={[error]} />
+            </>
+        </InfoBlock>
+    );
+}
+
+function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const {
+        field,
+        fieldState: { error, invalid },
+    } = useController({ control, name: "proxySettings.trustedIPsText" });
+    const proxyProvider = useWatch({ control, name: "proxySettings.proxyProvider" });
+    const showIPsUrl = PROXY_PROVIDER_IP_URLS[proxyProvider as Exclude<HivePaaSProxyProviderValue, "">];
+
+    return (
+        <InfoBlock
+            title={
+                <LabelWithInfo
+                    label="Trusted IPs"
+                    content="IP addresses or CIDR ranges trusted to set forwarded headers. One entry per line."
+                />
+            }
+        >
+            <div className="flex w-full max-w-[560px] items-start gap-3">
+                <div className="min-w-0 flex-1">
+                    <Textarea
+                        {...field}
+                        onChange={field.onChange}
+                        placeholder={"1.2.3.4\n2001:0DC8:1005:2F43:0BCD:FFFF"}
+                        className="min-h-[150px] h-[180px] resize-y"
+                        aria-invalid={invalid}
+                        disabled={readOnly}
+                    />
+                    <FieldError errors={[error]} />
+                </div>
+                {showIPsUrl ? (
+                    <a
+                        className="shrink-0 pt-2 text-sm text-blue-500 hover:text-blue-600"
+                        href={showIPsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Show IPs
+                    </a>
+                ) : null}
+            </div>
+        </InfoBlock>
+    );
+}
+
 export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
@@ -242,14 +352,20 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
                         />
                     </div>
 
-                    <SectionHeader>Health Check Configuration</SectionHeader>
+                    <SectionHeader>Periodic Job Configuration</SectionHeader>
                     <div className="flex flex-col gap-6 px-3">
                         <DurationField
-                            name="healthcheckSettings.baseInterval"
+                            name="periodicSettings.baseInterval"
                             label="Base Interval"
-                            content="Base interval for HivePaaS health checks."
+                            content="Base interval for HivePaaS periodic jobs."
                             placeholder="15s"
                         />
+                    </div>
+
+                    <SectionHeader>Proxy Configuration</SectionHeader>
+                    <div className="flex flex-col gap-6 px-3">
+                        <ProxyProviderField readOnly={readOnly} />
+                        <TrustedIPsField readOnly={readOnly} />
                     </div>
                 </fieldset>
 
@@ -266,7 +382,7 @@ type NumberFieldPath = Extract<
 
 type DurationFieldPath = Extract<
     FieldPath<SchemaInput>,
-    "taskSettings.taskCheckInterval" | "taskSettings.taskCreateInterval" | "healthcheckSettings.baseInterval"
+    "taskSettings.taskCheckInterval" | "taskSettings.taskCreateInterval" | "periodicSettings.baseInterval"
 >;
 
 type NumberFieldProps = {

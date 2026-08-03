@@ -14,7 +14,7 @@ export * from "./network-settings";
 export * from "./resource-settings";
 export * from "./storage-settings";
 export * from "./http-settings";
-export * from "./health-checks";
+export * from "./periodic-jobs";
 export * from "./scheduled-jobs";
 export * from "./logs";
 export * from "./terminal";

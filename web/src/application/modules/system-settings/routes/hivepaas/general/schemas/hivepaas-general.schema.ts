@@ -1,9 +1,13 @@
 import { z } from "zod";
 
+import { PROXY_PROVIDER_UNSPECIFIED } from "../hivepaas-general.constants";
+
 const appReplicasSchema = z.number().int().min(1).max(100);
 const workerReplicasSchema = z.number().int().min(0).max(100);
 const workerConcurrencySchema = z.number().int().min(1).max(100);
 const durationSchema = z.string().trim().min(1);
+
+const proxyProviderSchema = z.enum(["", "cloudflare", "fastly", "aws-cloudfront", "imperva"]);
 
 export const HivePaaSGeneralFormSchema = z
     .object({
@@ -19,8 +23,12 @@ export const HivePaaSGeneralFormSchema = z
             taskCheckInterval: durationSchema,
             taskCreateInterval: durationSchema,
         }),
-        healthcheckSettings: z.object({
+        periodicSettings: z.object({
             baseInterval: durationSchema,
+        }),
+        proxySettings: z.object({
+            proxyProvider: proxyProviderSchema,
+            trustedIPsText: z.string(),
         }),
     })
     .superRefine((values, ctx) => {
@@ -49,7 +57,11 @@ export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
         taskCheckInterval: "10m",
         taskCreateInterval: "10m",
     },
-    healthcheckSettings: {
+    periodicSettings: {
         baseInterval: "15s",
+    },
+    proxySettings: {
+        proxyProvider: PROXY_PROVIDER_UNSPECIFIED,
+        trustedIPsText: "",
     },
 };

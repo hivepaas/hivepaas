@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const EnvVarFormItemSchema = z.object({
     key: z.string().min(1, "Key is required"),
-    value: z.string().min(1, "Value is required"),
+    value: z.string(),
     isLiteral: z.boolean(),
     isSystem: z.boolean(),
     isReadOnly: z.boolean(),

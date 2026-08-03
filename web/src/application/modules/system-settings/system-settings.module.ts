@@ -5,6 +5,7 @@ export {
     SystemSettingsHivePaaSGeneralRoute,
     SystemSettingsHivePaaSHttpSettingsRoute,
     SystemSettingsTraefikGeneralRoute,
+    SystemSettingsTraefikConfigOptionsRoute,
     SystemSettingsDataBackupActionsRoute,
     SystemSettingsDataBackupBackupFilesRoute,
     SystemSettingsDataBackupConfigurationRoute,

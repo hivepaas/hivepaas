@@ -2,6 +2,7 @@ export const QK = {
     "system-settings.hivepaas.service-settings.find-one": "system-settings.hivepaas.service-settings.find-one",
     "system-settings.hivepaas.http-settings.find-one": "system-settings.hivepaas.http-settings.find-one",
     "system-settings.traefik.service-settings.find-one": "system-settings.traefik.service-settings.find-one",
+    "system-settings.traefik.config-options.find-one": "system-settings.traefik.config-options.find-one",
     "system-settings.backup.find-one": "system-settings.backup.find-one",
     "system-settings.backup-files.find-many-paginated": "system-settings.backup-files.find-many-paginated",
     "system-settings.backup-files.find-one-by-id": "system-settings.backup-files.find-one-by-id",

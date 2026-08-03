@@ -22,6 +22,10 @@ function View({ children }: PropsWithChildren) {
             label: "General",
             route: ROUTE.systemSettings.traefik.general.$route,
         },
+        {
+            label: "Config Options",
+            route: ROUTE.systemSettings.traefik.configOptions.$route,
+        },
     ];
 
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;

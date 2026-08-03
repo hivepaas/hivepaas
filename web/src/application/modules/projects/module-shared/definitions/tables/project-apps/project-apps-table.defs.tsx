@@ -109,6 +109,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                     <MenuCell
                         projectId={projectId}
                         appId={original.id}
+                        appEnv={original.env}
                     />
                 );
             },

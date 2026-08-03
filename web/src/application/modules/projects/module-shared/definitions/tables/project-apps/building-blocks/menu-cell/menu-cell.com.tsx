@@ -8,7 +8,7 @@ import { useCopyProjectAppDialog } from "~/projects/dialogs/copy-project-app";
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 
-function View({ projectId, appId }: Props) {
+function View({ projectId, appId, appEnv }: Props) {
     const [open, setOpen] = useState(false);
     const copyProjectAppDialog = useCopyProjectAppDialog();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -18,7 +18,7 @@ function View({ projectId, appId }: Props) {
             return;
         }
 
-        copyProjectAppDialog.actions.open(projectId, appId);
+        copyProjectAppDialog.actions.open(projectId, appId, appEnv);
         setOpen(false);
     }
 
@@ -57,6 +57,7 @@ function View({ projectId, appId }: Props) {
 interface Props {
     projectId: string;
     appId: string;
+    appEnv: string;
 }
 
 export const MenuCell = React.memo(View);

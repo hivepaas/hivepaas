@@ -17,8 +17,13 @@ export interface HivePaaSTaskSettings {
     taskCreateInterval: string;
 }
 
-export interface HivePaaSHealthcheckSettings {
+export interface HivePaaSPeriodicSettings {
     baseInterval: string;
+}
+
+export interface HivePaaSProxySettings {
+    proxyProvider: string;
+    trustedIPs: string[];
 }
 
 export interface HivePaaSServiceSettings extends SettingsBaseEntity {
@@ -26,5 +31,6 @@ export interface HivePaaSServiceSettings extends SettingsBaseEntity {
     appSettings: HivePaaSAppSettings;
     workerSettings: HivePaaSWorkerSettings;
     taskSettings: HivePaaSTaskSettings;
-    healthcheckSettings: HivePaaSHealthcheckSettings;
+    periodicSettings: HivePaaSPeriodicSettings;
+    proxySettings: HivePaaSProxySettings;
 }

@@ -5,7 +5,7 @@ import { type CopyProjectAppDialogOptions, type CopyProjectAppDialogState } from
 type State = CopyProjectAppDialogState & CopyProjectAppDialogOptions;
 
 interface Actions {
-    open: (projectId: string, appId: string, options?: CopyProjectAppDialogOptions) => void;
+    open: (projectId: string, appId: string, appEnv: string, options?: CopyProjectAppDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -20,12 +20,13 @@ export const useCopyProjectAppDialogState = create<State & Actions>()(set => ({
 
     props: {},
 
-    open: (projectId, appId, options = {}) => {
+    open: (projectId, appId, appEnv, options = {}) => {
         set({
             state: {
                 mode: "open",
                 projectId,
                 appId,
+                appEnv,
             },
             ...options,
         });

@@ -17,7 +17,7 @@ function View({ projectId, env, appId, healthCheck }: Props) {
             className="h-8 w-8 text-link hover:opacity-50"
             onClick={() => {
                 navigate.modules(
-                    ROUTE.projects.single.apps.single.configuration.healthChecks.edit.$route(
+                    ROUTE.projects.single.apps.single.configuration.periodicJobs.edit.$route(
                         projectId,
                         env,
                         appId,

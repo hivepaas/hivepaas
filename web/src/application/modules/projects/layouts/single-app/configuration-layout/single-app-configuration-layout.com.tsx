@@ -75,8 +75,8 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
         },
         {
-            label: "Health Checks",
-            route: ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, env, appId),
+            label: "Periodic Jobs",
+            route: ROUTE.projects.single.apps.single.configuration.periodicJobs.$route(projectId, env, appId),
         },
         {
             label: "Scheduled Jobs",

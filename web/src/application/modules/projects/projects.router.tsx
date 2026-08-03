@@ -150,6 +150,43 @@ interface ProjectWebhookSourcesRouteRedirectProps {
     target: "list" | "create" | "edit";
 }
 
+interface HealthChecksLegacyRedirectProps {
+    target: "list" | "create" | "edit";
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function HealthChecksLegacyRedirect({ target }: HealthChecksLegacyRedirectProps) {
+    const { id, env, appId, healthCheckId } = useParams<{
+        id: string;
+        env: string;
+        appId: string;
+        healthCheckId: string;
+    }>();
+
+    if (!id || !env || !appId) {
+        return (
+            <Navigate
+                to={ROUTE.projects.list.$route}
+                replace
+            />
+        );
+    }
+
+    const to =
+        target === "create"
+            ? ROUTE.projects.single.apps.single.configuration.periodicJobs.create.$route(id, env, appId)
+            : target === "edit" && healthCheckId
+              ? ROUTE.projects.single.apps.single.configuration.periodicJobs.edit.$route(id, env, appId, healthCheckId)
+              : ROUTE.projects.single.apps.single.configuration.periodicJobs.$route(id, env, appId);
+
+    return (
+        <Navigate
+            to={to}
+            replace
+        />
+    );
+}
+
 export const projectsRouter: RouteObject = {
     lazy: async () => {
         const { ProjectsDialogsContainer } = await getLazyComponents();
@@ -1128,6 +1165,21 @@ export const projectsRouter: RouteObject = {
                 },
             ],
         },
+        /**
+         * Legacy redirects — old /health-checks paths -> /periodic-jobs
+         */
+        {
+            path: "projects/:id/:env/apps/:appId/health-checks",
+            element: <HealthChecksLegacyRedirect target="list" />,
+        },
+        {
+            path: "projects/:id/:env/apps/:appId/health-checks/create",
+            element: <HealthChecksLegacyRedirect target="create" />,
+        },
+        {
+            path: "projects/:id/:env/apps/:appId/health-checks/:healthCheckId/edit",
+            element: <HealthChecksLegacyRedirect target="edit" />,
+        },
         {
             lazy: async () => {
                 const { SingleAppLayout } = await getLazyComponents();
@@ -1305,27 +1357,27 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.periodicJobs.$pattern,
                             lazy: async () => {
-                                const { AppHealthChecksRoute } = await getLazyComponents();
+                                const { AppPeriodicJobsRoute } = await getLazyComponents();
 
-                                return { Component: AppHealthChecksRoute };
+                                return { Component: AppPeriodicJobsRoute };
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.create.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.periodicJobs.create.$pattern,
                             lazy: async () => {
-                                const { AppHealthCheckCreateRoute } = await getLazyComponents();
+                                const { AppPeriodicJobHealthCheckCreateRoute } = await getLazyComponents();
 
-                                return { Component: AppHealthCheckCreateRoute };
+                                return { Component: AppPeriodicJobHealthCheckCreateRoute };
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.healthChecks.edit.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.periodicJobs.edit.$pattern,
                             lazy: async () => {
-                                const { AppHealthCheckEditRoute } = await getLazyComponents();
+                                const { AppPeriodicJobHealthCheckEditRoute } = await getLazyComponents();
 
-                                return { Component: AppHealthCheckEditRoute };
+                                return { Component: AppPeriodicJobHealthCheckEditRoute };
                             },
                         },
                         {

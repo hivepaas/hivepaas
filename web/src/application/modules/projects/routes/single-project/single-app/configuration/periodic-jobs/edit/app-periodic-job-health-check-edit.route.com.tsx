@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { AppHealthCheckFormRoute } from "../form-route";
 
-export function AppHealthCheckEditRoute() {
+export function AppPeriodicJobHealthCheckEditRoute() {
     const {
         id: projectId,
         env,

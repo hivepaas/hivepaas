@@ -493,21 +493,21 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/http-settings/`,
                         },
 
-                        healthChecks: {
-                            $pattern: "projects/:id/:env/apps/:appId/health-checks",
+                        periodicJobs: {
+                            $pattern: "projects/:id/:env/apps/:appId/periodic-jobs",
                             $route: (id: string, env: string, appId: string) =>
-                                `/projects/${id}/${env}/apps/${appId}/health-checks/`,
+                                `/projects/${id}/${env}/apps/${appId}/periodic-jobs/`,
 
                             create: {
-                                $pattern: "projects/:id/:env/apps/:appId/health-checks/create",
+                                $pattern: "projects/:id/:env/apps/:appId/periodic-jobs/create",
                                 $route: (id: string, env: string, appId: string) =>
-                                    `/projects/${id}/${env}/apps/${appId}/health-checks/create/`,
+                                    `/projects/${id}/${env}/apps/${appId}/periodic-jobs/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/:env/apps/:appId/health-checks/:healthCheckId/edit",
+                                $pattern: "projects/:id/:env/apps/:appId/periodic-jobs/:healthCheckId/edit",
                                 $route: (id: string, env: string, appId: string, healthCheckId: string) =>
-                                    `/projects/${id}/${env}/apps/${appId}/health-checks/${healthCheckId}/edit/`,
+                                    `/projects/${id}/${env}/apps/${appId}/periodic-jobs/${healthCheckId}/edit/`,
                             },
                         },
 

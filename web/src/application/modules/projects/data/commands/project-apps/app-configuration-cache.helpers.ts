@@ -62,10 +62,10 @@ export function invalidateSingleAppConfigurationQueries(queryClient: QueryClient
         queryKey: [QK["projects.apps.config-files.$.find-one-by-id"]],
     });
     void queryClient.invalidateQueries({
-        queryKey: [QK["projects.apps.health-checks.$.find-many-paginated"]],
+        queryKey: [QK["projects.apps.periodic-jobs.$.find-many-paginated"]],
     });
     void queryClient.invalidateQueries({
-        queryKey: [QK["projects.apps.health-checks.$.find-one-by-id"]],
+        queryKey: [QK["projects.apps.periodic-jobs.$.find-one-by-id"]],
     });
     void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]],

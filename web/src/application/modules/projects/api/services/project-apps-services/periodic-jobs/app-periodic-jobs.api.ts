@@ -53,8 +53,8 @@ export class AppHealthChecksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/healthchecks`, {
-                    params: query.build(),
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/periodic-jobs`, {
+                    params: { ...query.build(), kind: "healthcheck" },
                     signal,
                 }),
             ).pipe(
@@ -73,7 +73,7 @@ export class AppHealthChecksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`, {
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/periodic-jobs/${healthCheckID}`, {
                     signal,
                 }),
             ).pipe(
@@ -93,7 +93,7 @@ export class AppHealthChecksApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.post(
-                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks`,
+                    `/projects/${projectID}/${env}/apps/${appID}/periodic-jobs`,
                     toUpsertPayload(payload),
                     {
                         signal,
@@ -116,7 +116,7 @@ export class AppHealthChecksApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`,
+                    `/projects/${projectID}/${env}/apps/${appID}/periodic-jobs/${healthCheckID}`,
                     toUpsertPayload(payload),
                     { signal },
                 ),
@@ -136,7 +136,7 @@ export class AppHealthChecksApi extends BaseApi {
         return lastValueFrom(
             from(
                 this.client.v1.put(
-                    `/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}/status`,
+                    `/projects/${projectID}/${env}/apps/${appID}/periodic-jobs/${healthCheckID}/status`,
                     payload,
                     { signal },
                 ),
@@ -152,7 +152,7 @@ export class AppHealthChecksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/healthchecks/${healthCheckID}`),
+                this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}/periodic-jobs/${healthCheckID}`),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),

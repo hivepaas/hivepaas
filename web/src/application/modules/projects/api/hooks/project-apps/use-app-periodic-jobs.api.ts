@@ -14,7 +14,7 @@ import type {
 import { useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
-    return function useAppHealthChecksApi() {
+    return function useAppPeriodicJobsApi() {
         const { api } = use(ProjectsApiContext);
         const { notifyError } = useApiErrorNotifications();
 
@@ -24,7 +24,7 @@ function createHook() {
                     data: AppHealthChecks_FindManyPaginated_Req["data"],
                     signal?: AbortSignal,
                 ) => {
-                    const result = await api.projects.apps.healthChecks.$.findManyPaginated({ data }, signal);
+                    const result = await api.projects.apps.periodicJobs.$.findManyPaginated({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,
@@ -34,7 +34,7 @@ function createHook() {
                     });
                 },
                 findOneById: async (data: AppHealthChecks_FindOneById_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.projects.apps.healthChecks.$.findOneById({ data }, signal);
+                    const result = await api.projects.apps.periodicJobs.$.findOneById({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,
@@ -50,7 +50,7 @@ function createHook() {
         const mutations = useMemo(
             () => ({
                 createOne: async (data: AppHealthChecks_CreateOne_Req["data"]) => {
-                    const result = await api.projects.apps.healthChecks.$.createOne({ data });
+                    const result = await api.projects.apps.periodicJobs.$.createOne({ data });
 
                     return match(result, {
                         Ok: _ => _,
@@ -61,7 +61,7 @@ function createHook() {
                     });
                 },
                 updateOne: async (data: AppHealthChecks_UpdateOne_Req["data"]) => {
-                    const result = await api.projects.apps.healthChecks.$.updateOne({ data });
+                    const result = await api.projects.apps.periodicJobs.$.updateOne({ data });
 
                     return match(result, {
                         Ok: _ => _,
@@ -72,7 +72,7 @@ function createHook() {
                     });
                 },
                 updateStatus: async (data: AppHealthChecks_UpdateStatus_Req["data"]) => {
-                    const result = await api.projects.apps.healthChecks.$.updateStatus({ data });
+                    const result = await api.projects.apps.periodicJobs.$.updateStatus({ data });
 
                     return match(result, {
                         Ok: _ => _,
@@ -83,7 +83,7 @@ function createHook() {
                     });
                 },
                 deleteOne: async (data: AppHealthChecks_DeleteOne_Req["data"]) => {
-                    const result = await api.projects.apps.healthChecks.$.deleteOne({ data });
+                    const result = await api.projects.apps.periodicJobs.$.deleteOne({ data });
 
                     return match(result, {
                         Ok: _ => _,
@@ -104,4 +104,4 @@ function createHook() {
     };
 }
 
-export const useAppHealthChecksApi = createHook();
+export const useAppPeriodicJobsApi = createHook();

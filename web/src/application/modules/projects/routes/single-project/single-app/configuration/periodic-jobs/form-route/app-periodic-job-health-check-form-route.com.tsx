@@ -92,7 +92,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, env, healthChe
     const isEditMode = mode === "edit";
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.healthChecks.$route(projectId, env, appId), {
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.periodicJobs.$route(projectId, env, appId), {
             ignorePrevPath: true,
         });
     }

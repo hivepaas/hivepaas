@@ -1,5 +1,5 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAppHealthChecksApi } from "~/projects/api/hooks/project-apps";
+import { useAppPeriodicJobsApi } from "~/projects/api/hooks/project-apps";
 import type {
     AppHealthChecks_CreateOne_Req,
     AppHealthChecks_CreateOne_Res,
@@ -18,7 +18,7 @@ type CreateOneRes = AppHealthChecks_CreateOne_Res;
 type CreateOneOptions = Omit<UseMutationOptions<CreateOneRes, Error, CreateOneReq>, "mutationFn">;
 
 function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
-    const { mutations } = useAppHealthChecksApi();
+    const { mutations } = useAppPeriodicJobsApi();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -39,7 +39,7 @@ type UpdateOneRes = AppHealthChecks_UpdateOne_Res;
 type UpdateOneOptions = Omit<UseMutationOptions<UpdateOneRes, Error, UpdateOneReq>, "mutationFn">;
 
 function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
-    const { mutations } = useAppHealthChecksApi();
+    const { mutations } = useAppPeriodicJobsApi();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -60,7 +60,7 @@ type UpdateStatusRes = AppHealthChecks_UpdateStatus_Res;
 type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
 function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
-    const { mutations } = useAppHealthChecksApi();
+    const { mutations } = useAppPeriodicJobsApi();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -81,7 +81,7 @@ type DeleteOneRes = AppHealthChecks_DeleteOne_Res;
 type DeleteOneOptions = Omit<UseMutationOptions<DeleteOneRes, Error, DeleteOneReq>, "mutationFn">;
 
 function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
-    const { mutations } = useAppHealthChecksApi();
+    const { mutations } = useAppPeriodicJobsApi();
     const queryClient = useQueryClient();
 
     return useMutation({

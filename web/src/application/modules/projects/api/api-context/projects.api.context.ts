@@ -214,7 +214,7 @@ function createApi() {
                 featureSettings: {
                     $: new AppFeatureSettingsApi(appFeatureSettingsApiValidator),
                 },
-                healthChecks: {
+                periodicJobs: {
                     $: new AppHealthChecksApi(appHealthChecksApiValidator),
                 },
                 scheduledJobs: {

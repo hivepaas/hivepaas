@@ -93,10 +93,10 @@ export const QK = {
      */
     "projects.apps.http-settings.$.find-one": "projects.apps.http-settings.$.find-one",
     /*
-     * Project App Health Checks
+     * Project App Periodic Jobs (health checks)
      */
-    "projects.apps.health-checks.$.find-many-paginated": "projects.apps.health-checks.$.find-many-paginated",
-    "projects.apps.health-checks.$.find-one-by-id": "projects.apps.health-checks.$.find-one-by-id",
+    "projects.apps.periodic-jobs.$.find-many-paginated": "projects.apps.periodic-jobs.$.find-many-paginated",
+    "projects.apps.periodic-jobs.$.find-one-by-id": "projects.apps.periodic-jobs.$.find-one-by-id",
     /*
      * Project App Scheduled Jobs
      */

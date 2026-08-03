@@ -18,8 +18,13 @@ const HivePaaSTaskSettingsSchema = z.object({
     taskCreateInterval: z.string(),
 });
 
-const HivePaaSHealthcheckSettingsSchema = z.object({
+const HivePaaSPeriodicSettingsSchema = z.object({
     baseInterval: z.string(),
+});
+
+const HivePaaSProxySettingsSchema = z.object({
+    proxyProvider: z.preprocess(value => value ?? "", z.string()),
+    trustedIPs: z.preprocess(value => value ?? [], z.array(z.string())),
 });
 
 export const HivePaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
@@ -27,5 +32,6 @@ export const HivePaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit
     appSettings: HivePaaSAppSettingsSchema,
     workerSettings: HivePaaSWorkerSettingsSchema,
     taskSettings: HivePaaSTaskSettingsSchema,
-    healthcheckSettings: HivePaaSHealthcheckSettingsSchema,
+    periodicSettings: HivePaaSPeriodicSettingsSchema,
+    proxySettings: HivePaaSProxySettingsSchema,
 });

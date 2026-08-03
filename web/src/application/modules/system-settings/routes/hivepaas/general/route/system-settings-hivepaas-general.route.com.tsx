@@ -16,6 +16,7 @@ import { isValidationException } from "@infrastructure/api";
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { HivePaaSGeneralForm } from "../form";
+import { splitTrustedIPsText } from "../hivepaas-general.constants";
 import type { HivePaaSGeneralFormOutput } from "../schemas";
 import type { HivePaaSGeneralFormRef } from "../types";
 
@@ -36,8 +37,12 @@ function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: nu
             taskCheckInterval: values.taskSettings.taskCheckInterval,
             taskCreateInterval: values.taskSettings.taskCreateInterval,
         },
-        healthcheckSettings: {
-            baseInterval: values.healthcheckSettings.baseInterval,
+        periodicSettings: {
+            baseInterval: values.periodicSettings.baseInterval,
+        },
+        proxySettings: {
+            proxyProvider: values.proxySettings.proxyProvider,
+            trustedIPs: splitTrustedIPsText(values.proxySettings.trustedIPsText),
         },
     };
 }

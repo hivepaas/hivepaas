@@ -19,8 +19,12 @@ export type HivePaaSServiceSettings_UpdateOne_Payload = {
         taskCheckInterval: string;
         taskCreateInterval: string;
     };
-    healthcheckSettings: {
+    periodicSettings: {
         baseInterval: string;
+    };
+    proxySettings: {
+        proxyProvider: string;
+        trustedIPs: string[];
     };
 };
 

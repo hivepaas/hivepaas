@@ -19,6 +19,7 @@ type TaskQueue interface {
 
 	RegisterExecutor(typ base.TaskType, execFunc TaskExecFunc)
 	RegisterPeriodicExecutor(execFunc PeriodicExecFunc)
+	ExecuteTaskType(ctx context.Context, db database.Tx, typ base.TaskType, execData *TaskExecData) error
 
 	ScheduleTask(ctx context.Context, tasks ...*entity.Task) error
 	UnscheduleTask(ctx context.Context, tasks ...*entity.Task) error

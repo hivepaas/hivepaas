@@ -8,11 +8,12 @@ const (
 	TaskTypeSchedJobExec TaskType = "task:sched-job-exec"
 	TaskTypePeriodicExec TaskType = "task:periodic-exec"
 	TaskTypeSystemUpdate TaskType = "task:system-update"
+	TaskTypeWorkflow     TaskType = "task:workflow"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeSchedJobExec, TaskTypePeriodicExec,
-		TaskTypeSystemUpdate}
+		TaskTypeSystemUpdate, TaskTypeWorkflow}
 )
 
 type TaskStatus string

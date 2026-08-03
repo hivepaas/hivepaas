@@ -76,6 +76,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskworkflow"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/tasksystemupdate"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/updaterimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc"
@@ -168,6 +169,7 @@ var Provides = []any{
 	taskappdeploy.NewExecutor,
 	taskschedjobexec.NewExecutor,
 	taskperiodicjobexec.NewExecutor,
+	taskworkflow.NewExecutor,
 
 	// Updater
 	updaterimpl.New,

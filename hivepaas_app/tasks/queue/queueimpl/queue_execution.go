@@ -29,15 +29,33 @@ const (
 )
 
 func (q *taskQueue) RegisterExecutor(typ base.TaskType, execFunc queue.TaskExecFunc) {
+	if q.rawExecutors == nil {
+		q.rawExecutors = make(map[base.TaskType]queue.TaskExecFunc)
+	}
+	q.rawExecutors[typ] = execFunc
+
 	if !q.isWorkerMode() {
 		return
 	}
 	if q.taskExecutorMap == nil {
-		q.taskExecutorMap = make(map[base.TaskType]gocronqueue.TaskExecFunc, 5) //nolint:mnd
+		q.taskExecutorMap = make(map[base.TaskType]gocronqueue.TaskExecFunc, 10) //nolint:mnd
 	}
 	q.taskExecutorMap[typ] = func(taskID string, payload string) time.Time {
 		return q.executeTask(context.Background(), taskID, payload, execFunc)
 	}
+}
+
+func (q *taskQueue) ExecuteTaskType(
+	ctx context.Context,
+	db database.Tx,
+	typ base.TaskType,
+	execData *queue.TaskExecData,
+) error {
+	execFunc, exists := q.rawExecutors[typ]
+	if !exists {
+		return apperrors.Wrap(apperrors.ErrNotFound).WithMsgLog("executor for task type %s not found", typ)
+	}
+	return execFunc(ctx, db, execData)
 }
 
 //nolint:gocognit
@@ -169,11 +187,9 @@ func (q *taskQueue) loadTask(
 	case base.TaskTypeSchedJobExec:
 		shouldCancelTask = task.TargetJob == nil || !task.TargetJob.IsActive()
 	case base.TaskTypePeriodicExec:
-		// Do nothing
+	case base.TaskTypeWorkflow:
 	case base.TaskTypeSystemUpdate:
-		// Do nothing
 	case base.TaskTypeDummy:
-		// Do nothing
 	}
 	if shouldCancelTask {
 		task.Status = base.TaskStatusCanceled

@@ -38,6 +38,7 @@ type taskQueue struct {
 	taskService     taskservice.Service
 
 	taskExecutorMap  map[base.TaskType]gocronqueue.TaskExecFunc
+	rawExecutors     map[base.TaskType]queue.TaskExecFunc
 	periodicExecutor queue.PeriodicExecFunc
 }
 

@@ -57,6 +57,16 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		cloudStorageGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCloudStorage)
 	}
 
+	{ // Command pipes group
+		commandPipeGroup := projectEnvGroup.Group("/command-pipes")
+		commandPipeGroup.GET("/:itemID", projectEnvSettingsHandler.GetCommandPipe)
+		commandPipeGroup.GET("", projectEnvSettingsHandler.ListCommandPipe)
+		commandPipeGroup.POST("", projectEnvSettingsHandler.CreateCommandPipe)
+		commandPipeGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateCommandPipe)
+		commandPipeGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateCommandPipeStatus)
+		commandPipeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCommandPipe)
+	}
+
 	{ // Command templates group
 		commandTemplateGroup := projectEnvGroup.Group("/command-templates")
 		commandTemplateGroup.GET("/:itemID", projectEnvSettingsHandler.GetCommandTemplate)

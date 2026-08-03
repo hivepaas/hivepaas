@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc/commandpipedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
@@ -123,6 +124,11 @@ func (h *Handler) CreateSetting(
 		r := volumedto.NewCreateVolumeReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ClusterVolumeUC.CreateVolume(reqCtx, auth, r) }
+
+	case base.ResourceTypeCommandPipe:
+		r := commandpipedto.NewCreateCommandPipeReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.CommandPipeUC.CreateCommandPipe(reqCtx, auth, r) }
 
 	case base.ResourceTypeCommandTemplate:
 		r := commandtemplatedto.NewCreateCommandTemplateReq()

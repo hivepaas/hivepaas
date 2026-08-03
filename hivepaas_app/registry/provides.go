@@ -103,6 +103,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc"
@@ -233,6 +234,7 @@ var Provides = []any{
 	imserviceuc.New,
 	registryauthuc.New,
 	basicauthuc.New,
+	commandpipeuc.New,
 	commandtemplateuc.New,
 	sslprovideruc.New,
 	sslcertuc.New,

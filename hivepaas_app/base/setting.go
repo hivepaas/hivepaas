@@ -17,6 +17,7 @@ const (
 	SettingTypeClusterNetwork     SettingType = "cluster-network"
 	SettingTypeClusterNode        SettingType = "cluster-node"
 	SettingTypeClusterVolume      SettingType = "cluster-volume"
+	SettingTypeCommandPipe        SettingType = "command-pipe"
 	SettingTypeCommandTemplate    SettingType = "command-template"
 	SettingTypeConfigFile         SettingType = "config-file"
 	SettingTypeDomainSettings     SettingType = "domain-settings"

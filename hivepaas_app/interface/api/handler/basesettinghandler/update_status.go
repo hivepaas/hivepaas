@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc/commandpipedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
@@ -114,6 +115,11 @@ func (h *Handler) UpdateSettingStatus(
 		r := volumedto.NewUpdateVolumeStatusReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.ClusterVolumeUC.UpdateVolumeStatus(reqCtx, auth, r) }
+
+	case base.ResourceTypeCommandPipe:
+		r := commandpipedto.NewUpdateCommandPipeStatusReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.CommandPipeUC.UpdateCommandPipeStatus(reqCtx, auth, r) }
 
 	case base.ResourceTypeCommandTemplate:
 		r := commandtemplatedto.NewUpdateCommandTemplateStatusReq()

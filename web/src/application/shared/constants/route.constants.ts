@@ -374,6 +374,11 @@ export const ROUTE = {
                 $pattern: "system/traefik/general",
                 $route: "/system/traefik/general/",
             },
+
+            configOptions: {
+                $pattern: "system/traefik/config-options",
+                $route: "/system/traefik/config-options/",
+            },
         },
 
         dataBackup: {

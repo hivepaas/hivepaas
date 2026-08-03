@@ -5,3 +5,4 @@ export * from "./system-ssl-renewal.queries";
 export * from "./hivepaas-service-settings.queries";
 export * from "./hivepaas-http-settings.queries";
 export * from "./traefik-service-settings.queries";
+export * from "./traefik-config-options.queries";

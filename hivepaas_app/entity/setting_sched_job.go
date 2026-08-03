@@ -274,22 +274,6 @@ func (s *SchedJob) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *SchedJob) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSchedJobVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSchedJobVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSchedJobVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *Setting) AsSchedJob() (*SchedJob, error) {
 	return parseSettingAs[*SchedJob](s)
 }

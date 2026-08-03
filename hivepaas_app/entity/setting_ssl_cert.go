@@ -63,22 +63,6 @@ func (s *SSLCert) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *SSLCert) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSSLCertVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSSLCertVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSSLCertVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *SSLCert) Decrypt() error {
 	_, err := s.PrivateKey.GetPlain()
 	if err != nil {

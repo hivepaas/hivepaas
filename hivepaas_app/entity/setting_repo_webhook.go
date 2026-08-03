@@ -37,22 +37,6 @@ func (s *RepoWebhook) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *RepoWebhook) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentRepoWebhookVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentRepoWebhookVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentRepoWebhookVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *RepoWebhook) Decrypt() error {
 	return nil
 }

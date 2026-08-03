@@ -55,22 +55,6 @@ func (s *SSLProvider) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *SSLProvider) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSSLProviderVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSSLProviderVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSSLProviderVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *SSLProvider) Decrypt() error {
 	if s.ZeroSSL != nil {
 		_, err := s.ZeroSSL.EABHmacKey.GetPlain()

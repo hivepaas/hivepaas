@@ -122,22 +122,6 @@ func (s *AcmeDnsProvider) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *AcmeDnsProvider) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentAcmeDnsProviderVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentAcmeDnsProviderVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentAcmeDnsProviderVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 //nolint:gocognit
 func (s *AcmeDnsProvider) Decrypt() error {
 	if s.Azure != nil {

@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -63,22 +62,6 @@ func (s *HivePaaSService) GetRefObjectIDs() *RefObjectIDs {
 
 func (s *HivePaaSService) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
-}
-
-func (s *HivePaaSService) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentHivePaaSServiceVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentHivePaaSServiceVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentHivePaaSServiceVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsHivePaaSService() (*HivePaaSService, error) {

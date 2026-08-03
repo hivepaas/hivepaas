@@ -41,22 +41,6 @@ func (s *RegistryAuth) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *RegistryAuth) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentRegistryAuthVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentRegistryAuthVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentRegistryAuthVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *RegistryAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {

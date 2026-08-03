@@ -43,22 +43,6 @@ func (s *CloudStorage) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *CloudStorage) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentCloudStorageVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentCloudStorageVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentCloudStorageVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *CloudStorage) Decrypt() error {
 	if s.S3 != nil {
 		_, err := s.S3.SecretKey.GetPlain()

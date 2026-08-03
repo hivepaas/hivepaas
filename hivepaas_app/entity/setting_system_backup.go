@@ -67,22 +67,6 @@ func (s *SystemBackup) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *SystemBackup) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSystemBackupVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSystemBackupVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSystemBackupVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *SystemBackup) Decrypt() error {
 	_, err := s.Encryption.Secret.GetPlain()
 	if err != nil {

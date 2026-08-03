@@ -44,22 +44,6 @@ func (s *GithubApp) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *GithubApp) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentGithubAppVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentGithubAppVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentGithubAppVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *GithubApp) Decrypt() error {
 	_, err := s.ClientSecret.GetPlain()
 	if err != nil {

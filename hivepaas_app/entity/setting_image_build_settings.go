@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
@@ -60,22 +59,6 @@ func (s *ImageBuildSettings) GetRefObjectIDs() *RefObjectIDs {
 
 func (s *ImageBuildSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
-}
-
-func (s *ImageBuildSettings) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentImageBuildSettingsVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentImageBuildSettingsVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentImageBuildSettingsVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsImageBuildSettings() (*ImageBuildSettings, error) {

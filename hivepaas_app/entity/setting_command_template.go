@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
@@ -58,22 +57,6 @@ func (s *CommandTemplate) GetRefObjectIDs() *RefObjectIDs {
 
 func (s *CommandTemplate) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
-}
-
-func (s *CommandTemplate) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentCommandTemplateVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentCommandTemplateVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentCommandTemplateVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsCommandTemplate() (*CommandTemplate, error) {

@@ -67,22 +67,6 @@ func (s *Email) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *Email) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentEmailVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentEmailVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentEmailVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *Email) Decrypt() error {
 	if s.SMTP != nil {
 		_, err := s.SMTP.Password.GetPlain()

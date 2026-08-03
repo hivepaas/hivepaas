@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
@@ -62,22 +61,6 @@ func (s *StorageSettings) GetRefObjectIDs() *RefObjectIDs {
 
 func (s *StorageSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
-}
-
-func (s *StorageSettings) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentStorageSettingsVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentStorageSettingsVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentStorageSettingsVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsStorageSettings() (*StorageSettings, error) {

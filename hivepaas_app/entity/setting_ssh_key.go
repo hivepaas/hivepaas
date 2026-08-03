@@ -39,22 +39,6 @@ func (s *SSHKey) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *SSHKey) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSSHKeyVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSSHKeyVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSSHKeyVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *SSHKey) Decrypt() error {
 	_, err := s.PrivateKey.GetPlain()
 	if err != nil {

@@ -1,0 +1,21 @@
+package entity
+
+import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+)
+
+func (s *BasicAuth) Migrate(setting *Setting) (hasChange bool, err error) {
+	if setting.Version == CurrentBasicAuthVersion {
+		return false, nil
+	}
+	if setting.Version > CurrentBasicAuthVersion {
+		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
+	}
+
+	// TODO: add migration if we make any change
+
+	setting.Version = CurrentBasicAuthVersion
+	setting.UpdateVer++
+	setting.MustSetData(s)
+	return true, nil
+}

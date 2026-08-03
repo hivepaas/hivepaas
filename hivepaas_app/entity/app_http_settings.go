@@ -6,7 +6,6 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -219,22 +218,6 @@ func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	})
 
 	return resLinks
-}
-
-func (s *AppHttpSettings) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentAppHttpSettingsVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentAppHttpSettingsVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentAppHttpSettingsVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsAppHttpSettings() (*AppHttpSettings, error) {

@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
@@ -111,22 +110,6 @@ func (s *EnvVars) GetSystemEnvs(kind base.EnvVarKind) []*EnvVar {
 		}
 	}
 	return res
-}
-
-func (s *EnvVars) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentEnvVarsVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentEnvVarsVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentEnvVarsVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsEnvVars() (*EnvVars, error) {

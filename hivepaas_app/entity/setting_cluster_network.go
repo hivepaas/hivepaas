@@ -3,7 +3,6 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
@@ -33,22 +32,6 @@ func (s *ClusterNetwork) GetRefObjectIDs() *RefObjectIDs {
 
 func (s *ClusterNetwork) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
-}
-
-func (s *ClusterNetwork) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentClusterNetworkVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentClusterNetworkVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentClusterNetworkVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
 }
 
 func (s *Setting) AsClusterNetwork() (*ClusterNetwork, error) {

@@ -56,22 +56,6 @@ func (s *Secret) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *Secret) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentSecretVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentSecretVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentSecretVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *Secret) Decrypt() error {
 	_, err := s.Value.GetPlain()
 	if err != nil {

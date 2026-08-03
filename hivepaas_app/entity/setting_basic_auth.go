@@ -37,22 +37,6 @@ func (s *BasicAuth) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-func (s *BasicAuth) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentBasicAuthVersion {
-		return false, nil
-	}
-	if setting.Version > CurrentBasicAuthVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
-	}
-
-	// TODO: add migration if we make any change
-
-	setting.Version = CurrentBasicAuthVersion
-	setting.UpdateVer++
-	setting.MustSetData(s)
-	return true, nil
-}
-
 func (s *BasicAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {

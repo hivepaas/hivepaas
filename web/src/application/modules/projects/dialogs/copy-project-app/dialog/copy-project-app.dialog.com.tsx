@@ -20,7 +20,7 @@ import { useCopyProjectAppDialogState } from "../hooks";
 import type { CopyProjectAppFormOutput } from "../schemas";
 
 export function CopyProjectAppDialog() {
-    const { env } = useParams<{ env: string }>();
+    const { env: routeEnv } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCopyProjectAppDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -28,6 +28,7 @@ export function CopyProjectAppDialog() {
     const open = state.mode !== "closed";
     const projectId = state.projectId ?? "";
     const appId = state.appId ?? "";
+    const resolvedEnv = (state.mode === "open" ? state.appEnv : undefined) ?? routeEnv ?? "";
     const selectedEnv = useSelectedProjectEnv(projectId);
     const setSelectedEnv = useProjectEnvFilterStore(store => store.setSelectedEnv);
 
@@ -36,13 +37,14 @@ export function CopyProjectAppDialog() {
         { enabled: open && Boolean(projectId) },
     );
     const prepareQuery = ProjectAppsQueries.usePrepareCopy(
-        { projectID: projectId, env: env ?? "", appID: appId },
-        { enabled: open && Boolean(projectId && appId && env) },
+        { projectID: projectId, env: resolvedEnv, appID: appId },
+        { enabled: open && Boolean(projectId && appId && resolvedEnv) },
     );
     const preparedCopy = prepareQuery.data?.data;
     const defaultValues = useMemo(() => {
         return preparedCopy ? mapPreparedCopyToFormInput(preparedCopy) : null;
     }, [preparedCopy]);
+
     const projectEnvs = projectData?.data.envs ?? [];
 
     const { mutate: copyProjectApp, isPending } = ProjectAppsCommands.useCopy({
@@ -91,7 +93,7 @@ export function CopyProjectAppDialog() {
 
         copyProjectApp({
             projectID: projectId,
-            env: env ?? "",
+            env: resolvedEnv,
             appID: appId,
             ...mapCopyProjectAppFormToPayload(values),
         });

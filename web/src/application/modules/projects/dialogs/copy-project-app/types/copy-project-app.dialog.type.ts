@@ -4,6 +4,7 @@ export interface CopyProjectAppDialogState {
               mode: "open";
               projectId: string;
               appId: string;
+              appEnv: string;
           }
         | {
               mode: "closed";

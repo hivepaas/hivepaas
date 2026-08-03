@@ -37,6 +37,7 @@ func (s *service) CreateDeploymentAndTask(
 			Timeout:  timeutil.Duration(base.DeploymentTimeoutDefault),
 		},
 		Version:   entity.CurrentTaskVersion,
+		RunAt:     timeNow,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}

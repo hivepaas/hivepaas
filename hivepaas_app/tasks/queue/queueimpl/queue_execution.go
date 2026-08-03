@@ -35,7 +35,7 @@ func (q *taskQueue) RegisterExecutor(typ base.TaskType, execFunc queue.TaskExecF
 	if q.taskExecutorMap == nil {
 		q.taskExecutorMap = make(map[base.TaskType]gocronqueue.TaskExecFunc, 5) //nolint:mnd
 	}
-	q.taskExecutorMap[typ] = func(taskID string, payload string) *time.Time {
+	q.taskExecutorMap[typ] = func(taskID string, payload string) time.Time {
 		return q.executeTask(context.Background(), taskID, payload, execFunc)
 	}
 }
@@ -46,7 +46,7 @@ func (q *taskQueue) executeTask(
 	taskID string,
 	_ string,
 	executorFunc func(context.Context, database.Tx, *queue.TaskExecData) error,
-) (rescheduleAt *time.Time) {
+) (rescheduleAt time.Time) {
 	var taskData *queue.TaskExecData
 	err := transaction.Execute(ctx, q.db, func(db database.Tx) (err error) {
 		task, err := q.loadTask(ctx, db, taskID)
@@ -105,7 +105,7 @@ func (q *taskQueue) executeTask(
 				}
 				if task.CanRetry() {
 					task.RetryAt = task.EndedAt.Add(task.NextRetryDelay())
-					rescheduleAt = &task.RetryAt
+					rescheduleAt = task.RetryAt
 				} else {
 					task.RetryAt = time.Time{}
 				}

@@ -2,7 +2,6 @@ package systemcleanupuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -25,7 +24,8 @@ func (uc *UC) ExecuteSystemCleanup(
 		return nil, apperrors.Wrap(err)
 	}
 
-	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, time.Time{}, timeutil.NowUTC())
+	timeNow := timeutil.NowUTC()
+	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, timeNow, timeNow)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

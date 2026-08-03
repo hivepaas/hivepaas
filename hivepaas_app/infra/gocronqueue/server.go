@@ -29,7 +29,7 @@ var (
 	ErrTaskExecutorNotFound = errors.New("task executor not found")
 )
 
-type TaskExecFunc func(taskID string, payload string) *time.Time
+type TaskExecFunc func(taskID string, payload string) (reschedAt time.Time)
 
 type Server struct {
 	config     *Config
@@ -256,11 +256,14 @@ func (s *Server) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 }
 
 func (s *Server) scheduleTask(task *entity.Task, runAt time.Time) error {
+	if runAt.IsZero() {
+		return nil
+	}
 	if !s.shouldSchedule(task, runAt) {
 		return nil
 	}
 	var startAt gocron.OneTimeJobStartAtOption
-	if runAt.IsZero() || runAt.Before(timeutil.NowUTC()) {
+	if !runAt.After(timeutil.NowUTC()) {
 		startAt = gocron.OneTimeJobStartImmediately()
 	} else {
 		startAt = gocron.OneTimeJobStartDateTime(runAt)
@@ -328,8 +331,8 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 			ErrTaskExecutorNotFound, task.Type)
 	}
 	rescheduleAt := execFunc(task.ID, task.Args)
-	if rescheduleAt != nil {
-		err := s.scheduleTask(task, *rescheduleAt)
+	if !rescheduleAt.IsZero() {
+		err := s.scheduleTask(task, rescheduleAt)
 		if err == nil {
 			rescheduled = true
 		}

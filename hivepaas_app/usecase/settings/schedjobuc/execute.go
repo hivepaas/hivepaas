@@ -2,7 +2,6 @@ package schedjobuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -35,7 +34,8 @@ func (uc *UC) ExecuteSchedJob(
 		return nil, apperrors.Wrap(err)
 	}
 
-	task, err := uc.schedJobService.CreateSchedJobTask(resp.Data, time.Time{}, timeutil.NowUTC())
+	timeNow := timeutil.NowUTC()
+	task, err := uc.schedJobService.CreateSchedJobTask(resp.Data, timeNow, timeNow)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

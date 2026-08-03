@@ -120,15 +120,11 @@ func (t *Task) GetDuration() time.Duration {
 	return t.EndedAt.Sub(t.StartedAt)
 }
 
-func (t *Task) ShouldRunAt() (runAt time.Time) {
-	runAt = t.RunAt
+func (t *Task) ShouldRunAt() time.Time {
 	if t.Status == base.TaskStatusFailed {
-		runAt = t.RetryAt
+		return t.RetryAt
 	}
-	if !runAt.IsZero() && runAt.Before(timeutil.NowUTC()) {
-		runAt = time.Time{}
-	}
-	return runAt
+	return t.RunAt
 }
 
 func (t *Task) GetRuns() ([]*TaskRun, error) {

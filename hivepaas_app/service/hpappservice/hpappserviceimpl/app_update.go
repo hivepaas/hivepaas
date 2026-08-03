@@ -52,6 +52,7 @@ func (s *service) UpdateSystemVersion(
 			Timeout: timeutil.Duration(defaultSystemUpdateTimeout),
 		},
 		Version:   entity.CurrentTaskVersion,
+		RunAt:     timeNow,
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}

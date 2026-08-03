@@ -12,13 +12,17 @@ import (
 )
 
 const (
-	missedTaskPeriod = 10 * time.Minute
+	missedTaskPeriodMax = 1 * time.Hour
 )
 
 func (q *taskQueue) findSchedulingTasks(
 	ctx context.Context,
 ) ([]*entity.Task, error) {
 	timeNow := timeutil.NowUTC()
+	missedTaskPeriod := q.config.Tasks.Queue.TaskCheckInterval
+	if missedTaskPeriod > missedTaskPeriodMax {
+		missedTaskPeriod = missedTaskPeriodMax
+	}
 	scanFrom := timeNow.Add(-missedTaskPeriod)
 	scanTo := timeNow.Add(q.config.Tasks.Queue.TaskCheckInterval)
 	tasks, _, err := q.taskRepo.List(ctx, q.db, "", nil,
@@ -28,7 +32,7 @@ func (q *taskQueue) findSchedulingTasks(
 			// Not-started tasks
 			bunex.SelectWhereGroup(
 				bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
-				bunex.SelectWhere("((task.run_at IS NULL AND task.created_at >= ?) "+
+				bunex.SelectWhere("((task.run_at IS NOT NULL AND task.created_at >= ?) "+
 					"OR (task.run_at >= ? AND task.run_at < ?))", scanFrom, scanFrom, scanTo),
 			),
 			// Failed tasks need retry
@@ -73,15 +77,13 @@ func (q *taskQueue) shouldScheduleMissedTask(
 		if task.TargetID != missedTask.TargetID || task.ID == missedTask.ID {
 			continue
 		}
+		// task and missedTask have the same task target
 		runAt := task.ShouldRunAt()
 		if runAt.IsZero() {
-			runAt = timeNow
+			continue
 		}
+		// If the task having the same target as the missedTask was executed later
 		if task.IsNotStarted() && runAt.Before(timeNow) && runAt.After(missedTask.RunAt) {
-			return false
-		}
-		// The next run is near, so ignore the missed task?
-		if runAt.Sub(timeNow) < timeNow.Sub(missedTask.RunAt) {
 			return false
 		}
 	}

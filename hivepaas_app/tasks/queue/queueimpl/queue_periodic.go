@@ -72,6 +72,7 @@ func (q *taskQueue) doPeriodicJob(
 					Timeout:    periodicJob.Timeout,
 				},
 				Version:   entity.CurrentTaskVersion,
+				RunAt:     timeNow,
 				StartedAt: timeNow,
 				CreatedAt: timeNow,
 				UpdatedAt: timeNow,

@@ -127,6 +127,7 @@ func (s *Setting) SetData(data SettingData) error {
 		return apperrors.Wrap(err)
 	}
 	s.Data = reflectutil.UnsafeBytesToStr(b)
+	s.Size = int64(len(s.Data))
 	s.parsedData = data
 	return nil
 }

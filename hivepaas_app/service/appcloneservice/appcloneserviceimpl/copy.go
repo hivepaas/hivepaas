@@ -1,4 +1,4 @@
-package appcopyserviceimpl
+package appcloneserviceimpl
 
 import (
 	"context"
@@ -17,12 +17,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 )
 
 type appCopyData struct {
-	*appcopyservice.AppCopyReq
+	*appcloneservice.AppCloneReq
 
 	TargetApp     *entity.App
 	SrcService    *swarm.Service
@@ -36,15 +36,15 @@ type appCopyData struct {
 	TimeNow time.Time
 }
 
-func (s *service) CopyApp(
+func (s *service) CloneApp(
 	ctx context.Context,
 	db database.Tx,
-	req *appcopyservice.AppCopyReq,
-) (resp *appcopyservice.AppCopyResp, err error) {
-	resp = &appcopyservice.AppCopyResp{}
+	req *appcloneservice.AppCloneReq,
+) (resp *appcloneservice.AppCloneResp, err error) {
+	resp = &appcloneservice.AppCloneResp{}
 	data := &appCopyData{
-		AppCopyReq: req,
-		TimeNow:    timeutil.NowUTC(),
+		AppCloneReq: req,
+		TimeNow:     timeutil.NowUTC(),
 	}
 
 	defer func() {

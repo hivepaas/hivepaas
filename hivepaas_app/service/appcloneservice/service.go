@@ -1,4 +1,4 @@
-package appcopyservice
+package appcloneservice
 
 import (
 	"context"
@@ -7,5 +7,5 @@ import (
 )
 
 type Service interface {
-	CopyApp(ctx context.Context, db database.Tx, req *AppCopyReq) (*AppCopyResp, error)
+	CloneApp(ctx context.Context, db database.Tx, req *AppCloneReq) (*AppCloneResp, error)
 }

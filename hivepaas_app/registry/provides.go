@@ -39,7 +39,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice/agentserviceimpl"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice/appcopyserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice/appcloneserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
@@ -296,7 +296,7 @@ var Provides = []any{
 	repocheckoutserviceimpl.New,
 	imagebuildserviceimpl.New,
 	agentserviceimpl.New,
-	appcopyserviceimpl.New,
+	appcloneserviceimpl.New,
 	apppreviewserviceimpl.New,
 	schedjobexecserviceimpl.New,
 

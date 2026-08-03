@@ -2,7 +2,7 @@ package apppreviewserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -14,7 +14,7 @@ type service struct {
 	deploymentRepo repository.DeploymentRepo
 	taskRepo       repository.TaskRepo
 
-	appCopyService       appcopyservice.Service
+	appCloneService      appcloneservice.Service
 	appDeploymentService appdeploymentservice.Service
 	appService           appservice.Service
 	domainService        domainservice.Service
@@ -25,7 +25,7 @@ func New(
 	deploymentRepo repository.DeploymentRepo,
 	taskRepo repository.TaskRepo,
 
-	appCopyService appcopyservice.Service,
+	appCloneService appcloneservice.Service,
 	appDeploymentService appdeploymentservice.Service,
 	appService appservice.Service,
 	domainService domainservice.Service,
@@ -35,7 +35,7 @@ func New(
 		deploymentRepo: deploymentRepo,
 		taskRepo:       taskRepo,
 
-		appCopyService:       appCopyService,
+		appCloneService:      appCloneService,
 		appDeploymentService: appDeploymentService,
 		appService:           appService,
 		domainService:        domainService,

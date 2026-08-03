@@ -3,7 +3,7 @@ package appuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
@@ -19,7 +19,7 @@ type UC struct {
 	binObjectRepo repository.BinObjectRepo
 	projectRepo   repository.ProjectRepo
 
-	appCopyService       appcopyservice.Service
+	appCloneService      appcloneservice.Service
 	appService           appservice.Service
 	clusterService       clusterservice.Service
 	containerExecService containerexecservice.Service
@@ -36,7 +36,7 @@ func New(
 	binObjectRepo repository.BinObjectRepo,
 	projectRepo repository.ProjectRepo,
 
-	appCopyService appcopyservice.Service,
+	appCloneService appcloneservice.Service,
 	appService appservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
@@ -52,7 +52,7 @@ func New(
 		binObjectRepo: binObjectRepo,
 		projectRepo:   projectRepo,
 
-		appCopyService:       appCopyService,
+		appCloneService:      appCloneService,
 		appService:           appService,
 		clusterService:       clusterService,
 		containerExecService: containerExecService,

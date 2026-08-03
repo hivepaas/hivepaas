@@ -1,4 +1,4 @@
-package appcopyserviceimpl
+package appcloneserviceimpl
 
 import (
 	"context"

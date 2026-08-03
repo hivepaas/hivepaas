@@ -1,8 +1,8 @@
-package appcopyserviceimpl
+package appcloneserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
@@ -46,7 +46,7 @@ func New(
 	traefikService traefikservice.Service,
 
 	dockerManager docker.Manager,
-) appcopyservice.Service {
+) appcloneservice.Service {
 	return &service{
 		taskQueue: taskQueue,
 

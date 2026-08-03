@@ -1,4 +1,4 @@
-package appcopyservice
+package appcloneservice
 
 import (
 	"github.com/moby/moby/api/types/swarm"
@@ -6,7 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
-type AppCopyReq struct {
+type AppCloneReq struct {
 	SrcProject    *entity.Project
 	SrcApp        *entity.App
 	TargetProject *entity.Project
@@ -16,7 +16,7 @@ type AppCopyReq struct {
 	OnCopyService func(targetSvc, srcSvc *swarm.Service) error
 }
 
-type AppCopyResp struct {
+type AppCloneResp struct {
 	TargetApp     *entity.App
 	TargetService *swarm.Service
 	OnCleanup     func(error) error

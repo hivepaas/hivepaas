@@ -15,7 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcopyservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 )
 
@@ -49,7 +49,7 @@ func (s *service) CreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
-	copyResp, err := s.appCopyService.CopyApp(ctx, db, &appcopyservice.AppCopyReq{
+	copyResp, err := s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
 		SrcProject:    data.Project,
 		SrcApp:        data.App,
 		TargetProject: data.Project,

@@ -789,6 +789,22 @@ export const ROUTE = {
                     },
                 },
 
+                commandPipes: {
+                    $pattern: "projects/:id/provider-settings/command-pipes",
+                    $route: (id: string) => `/projects/${id}/provider-settings/command-pipes/`,
+
+                    create: {
+                        $pattern: "projects/:id/provider-settings/command-pipes/create",
+                        $route: (id: string) => `/projects/${id}/provider-settings/command-pipes/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/provider-settings/command-pipes/:commandPipeId/edit",
+                        $route: (id: string, commandPipeId: string) =>
+                            `/projects/${id}/provider-settings/command-pipes/${commandPipeId}/edit/`,
+                    },
+                },
+
                 commandTemplates: {
                     $pattern: "projects/:id/provider-settings/command-templates",
                     $route: (id: string) => `/projects/${id}/provider-settings/command-templates/`,

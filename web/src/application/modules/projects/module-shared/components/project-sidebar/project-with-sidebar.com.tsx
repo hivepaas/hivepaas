@@ -71,6 +71,10 @@ function createProviderConfigurationTabs(projectId: string): TabItem[] {
             route: ROUTE.projects.single.providerConfiguration.cloudStorages.$route(projectId),
         },
         {
+            label: "Command Pipes",
+            route: ROUTE.projects.single.providerConfiguration.commandPipes.$route(projectId),
+        },
+        {
             label: "Command Templates",
             route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
         },

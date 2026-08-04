@@ -722,6 +722,36 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.commandPipes.$pattern,
+                            lazy: async () => {
+                                const { ProjectCommandPipesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectCommandPipesRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.commandPipes.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectCommandPipeCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectCommandPipeCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.commandPipes.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectCommandPipeEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectCommandPipeEditRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.commandTemplates.$pattern,
                             lazy: async () => {
                                 const { ProjectCommandTemplatesRoute } = await getLazyComponents();

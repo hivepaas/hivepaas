@@ -13,7 +13,7 @@ import (
 
 func (s *service) applyAppHttpSettings(
 	ctx context.Context,
-	data *appCopyData,
+	data *appCloneData,
 ) error {
 	app := data.TargetApp
 	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)

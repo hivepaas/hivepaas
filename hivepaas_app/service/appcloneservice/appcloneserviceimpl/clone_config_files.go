@@ -12,7 +12,7 @@ import (
 func (s *service) applySwarmConfigFiles(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	app := data.TargetApp
 	configSettings := app.GetSettingsByType(base.SettingTypeConfigFile)

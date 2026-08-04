@@ -11,10 +11,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
-func (s *service) copySwarmService(
+func (s *service) cloneSwarmService(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	targetApp := data.TargetApp
 	srcSvcRes, err := s.dockerManager.ServiceInspect(ctx, data.SrcApp.ServiceID)
@@ -97,7 +97,7 @@ func (s *service) copySwarmService(
 
 	// TODO Update mounts
 
-	err = data.OnCopyService(targetSvc, srcSvc)
+	err = data.OnCloneService(targetSvc, srcSvc)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -107,7 +107,7 @@ func (s *service) copySwarmService(
 
 func (s *service) createSwarmService(
 	ctx context.Context,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	containerSpec := data.TargetService.Spec.TaskTemplate.ContainerSpec
 	currImage := containerSpec.Image
@@ -145,7 +145,7 @@ func (s *service) createSwarmService(
 
 func (s *service) applyFinalContainerSettings(
 	ctx context.Context,
-	data *appCopyData,
+	data *appCloneData,
 ) error {
 	inspect, err := s.dockerManager.ServiceInspect(ctx, data.TargetApp.ServiceID)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 func (s *service) applySchedJobSettings(
 	ctx context.Context,
 	db database.Tx,
-	data *appCopyData,
+	data *appCloneData,
 ) error {
 	app := data.TargetApp
 	jobSettings := app.GetSettingsByType(base.SettingTypeSchedJob)

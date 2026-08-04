@@ -37,13 +37,13 @@ func (uc *UC) CopyApp(
 			SrcProject:    data.Project,
 			SrcApp:        data.App,
 			TargetProject: data.Project,
-			OnCopyApp: func(targetApp, srcApp *entity.App) error {
+			OnCloneApp: func(targetApp, srcApp *entity.App) error {
 				return uc.onCopyApp(req, targetApp, srcApp)
 			},
-			OnCopySetting: func(targetApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
+			OnCloneSetting: func(targetApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
 				return uc.onCopyAppSetting(req, setting)
 			},
-			OnCopyService: func(targetSvc, srcSvc *swarm.Service) error {
+			OnCloneService: func(targetSvc, srcSvc *swarm.Service) error {
 				return uc.onCopyAppService(req, targetSvc, srcSvc)
 			},
 		})

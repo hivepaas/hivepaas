@@ -12,7 +12,7 @@ import (
 func (s *service) applySwarmSecrets(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	app := data.TargetApp
 	secretSettings := app.GetSettingsByType(base.SettingTypeSecret)

@@ -12,7 +12,7 @@ import (
 func (s *service) applyEnvVars(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	app := data.TargetApp
 	envResp, err := s.envVarService.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{

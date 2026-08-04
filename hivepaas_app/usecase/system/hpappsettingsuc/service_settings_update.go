@@ -303,6 +303,7 @@ func (uc *UC) applyTrustedIPsToTraefik(
 			}
 			continue
 		}
+		newArgs = append(newArgs, arg) // keeps other args
 	}
 
 	if !hasEpWebTrustedIPs && trustedIPsStr != "" {

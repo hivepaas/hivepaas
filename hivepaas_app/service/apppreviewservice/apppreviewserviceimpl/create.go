@@ -53,14 +53,14 @@ func (s *service) CreatePreview(
 		SrcProject:    data.Project,
 		SrcApp:        data.App,
 		TargetProject: data.Project,
-		OnCopyApp: func(targetApp, srcApp *entity.App) error {
+		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			data.PreviewApp = targetApp
 			return s.onCopyApp(targetApp, srcApp, data)
 		},
-		OnCopySetting: func(targetApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
+		OnCloneSetting: func(targetApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
 			return s.onCopyAppSetting(ctx, db, setting, data)
 		},
-		OnCopyService: func(targetSvc, srcSvc *swarm.Service) error {
+		OnCloneService: func(targetSvc, srcSvc *swarm.Service) error {
 			return s.onCopyAppService(targetSvc, srcSvc, data)
 		},
 	})

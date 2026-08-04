@@ -11,9 +11,9 @@ type AppCloneReq struct {
 	SrcApp        *entity.App
 	TargetProject *entity.Project
 
-	OnCopyApp     func(targetApp, srcApp *entity.App) error
-	OnCopySetting func(targetApp *entity.App, s *entity.Setting) (*entity.Setting, error)
-	OnCopyService func(targetSvc, srcSvc *swarm.Service) error
+	OnCloneApp     func(targetApp, srcApp *entity.App) error
+	OnCloneSetting func(targetApp *entity.App, s *entity.Setting) (*entity.Setting, error)
+	OnCloneService func(targetSvc, srcSvc *swarm.Service) error
 }
 
 type AppCloneResp struct {

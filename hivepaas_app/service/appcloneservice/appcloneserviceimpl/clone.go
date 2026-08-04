@@ -21,7 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 )
 
-type appCopyData struct {
+type appCloneData struct {
 	*appcloneservice.AppCloneReq
 
 	TargetApp     *entity.App
@@ -42,7 +42,7 @@ func (s *service) CloneApp(
 	req *appcloneservice.AppCloneReq,
 ) (resp *appcloneservice.AppCloneResp, err error) {
 	resp = &appcloneservice.AppCloneResp{}
-	data := &appCopyData{
+	data := &appCloneData{
 		AppCloneReq: req,
 		TimeNow:     timeutil.NowUTC(),
 	}
@@ -54,17 +54,17 @@ func (s *service) CloneApp(
 		_ = s.cleanupOnFail(ctx, data, err)
 	}()
 
-	err = s.copyApp(ctx, db, data)
+	err = s.cloneApp(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.copyAppSettings(ctx, db, data)
+	err = s.cloneAppSettings(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.copySwarmService(ctx, db, data)
+	err = s.cloneSwarmService(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -117,10 +117,10 @@ func (s *service) CloneApp(
 	return resp, nil
 }
 
-func (s *service) copyApp(
+func (s *service) cloneApp(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	timeNow := timeutil.NowUTC()
 	targetApp := &entity.App{
@@ -133,7 +133,7 @@ func (s *service) copyApp(
 	}
 	data.TargetApp = targetApp
 
-	err = data.OnCopyApp(targetApp, data.SrcApp)
+	err = data.OnCloneApp(targetApp, data.SrcApp)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -164,10 +164,10 @@ func (s *service) copyApp(
 	return nil
 }
 
-func (s *service) copyAppSettings(
+func (s *service) cloneAppSettings(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	appSettings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeApp),
@@ -187,7 +187,7 @@ func (s *service) copyAppSettings(
 		cpSetting.CreatedAt = data.TimeNow
 		cpSetting.UpdatedAt = data.TimeNow
 		cpSetting.UpdateVer = 0
-		st, err := data.OnCopySetting(targetApp, cpSetting)
+		st, err := data.OnCloneSetting(targetApp, cpSetting)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -231,7 +231,7 @@ func (s *service) copyAppSettings(
 func (s *service) persistAppData(
 	ctx context.Context,
 	db database.IDB,
-	data *appCopyData,
+	data *appCloneData,
 ) (err error) {
 	app := data.TargetApp
 	err = s.appRepo.Upsert(ctx, db, app,
@@ -258,7 +258,7 @@ func (s *service) persistAppData(
 
 func (s *service) cleanupOnFail(
 	ctx context.Context,
-	data *appCopyData,
+	data *appCloneData,
 	err error,
 ) error {
 	if err == nil {

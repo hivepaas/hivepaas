@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"sync"
 
+	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice"
@@ -29,9 +30,9 @@ func (s *service) GetTemplate(
 
 	switch name { //nolint
 	case emailservice.TemplateNamePasswordReset:
-		tpl, err = template.ParseFiles("config/email/templates/password_reset.html")
+		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/templates/password_reset.html")
 	case emailservice.TemplateNameUserInvite:
-		tpl, err = template.ParseFiles("config/email/templates/user_invite.html")
+		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/templates/user_invite.html")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

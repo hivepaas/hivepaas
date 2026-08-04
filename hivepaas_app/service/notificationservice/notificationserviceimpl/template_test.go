@@ -4,22 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	htmltemplate "html/template"
-	"path/filepath"
 	"testing"
 	texttemplate "text/template"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
 
 func TestDiscordAppDeploymentTemplate(t *testing.T) {
-	// Locate template file relative to this test file
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "app_deployment_notification.tpl")
-
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -92,8 +89,7 @@ func TestDiscordAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestDiscordHealthcheckTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "healthcheck_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -122,8 +118,7 @@ func TestDiscordHealthcheckTemplate(t *testing.T) {
 }
 
 func TestDiscordSchedTaskTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "sched_task_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -150,8 +145,7 @@ func TestDiscordSchedTaskTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLExpiringTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "ssl_expiring_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -178,8 +172,7 @@ func TestDiscordSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLRenewalTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "ssl_renewal_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -206,8 +199,7 @@ func TestDiscordSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestDiscordSystemUpdateTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "discord", "templates", "system_update_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -231,8 +223,7 @@ func TestDiscordSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestSlackAppDeploymentTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "app_deployment_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -302,8 +293,7 @@ func TestSlackAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestSlackHealthcheckTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "healthcheck_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -332,8 +322,7 @@ func TestSlackHealthcheckTemplate(t *testing.T) {
 }
 
 func TestSlackSchedTaskTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "sched_task_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -360,8 +349,7 @@ func TestSlackSchedTaskTemplate(t *testing.T) {
 }
 
 func TestSlackSSLExpiringTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "ssl_expiring_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -388,8 +376,7 @@ func TestSlackSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestSlackSSLRenewalTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "ssl_renewal_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -416,8 +403,7 @@ func TestSlackSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestSlackSystemUpdateTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "slack", "templates", "system_update_notification.tpl")
-	tpl, err := texttemplate.ParseFiles(tplPath)
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -441,8 +427,7 @@ func TestSlackSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestTelegramAppDeploymentTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "app_deployment_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -499,8 +484,7 @@ func TestTelegramAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestTelegramHealthcheckTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "healthcheck_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -526,8 +510,7 @@ func TestTelegramHealthcheckTemplate(t *testing.T) {
 }
 
 func TestTelegramSchedTaskTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "sched_task_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -551,8 +534,7 @@ func TestTelegramSchedTaskTemplate(t *testing.T) {
 }
 
 func TestTelegramSSLExpiringTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "ssl_expiring_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -576,8 +558,7 @@ func TestTelegramSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestTelegramSSLRenewalTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "ssl_renewal_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -601,8 +582,7 @@ func TestTelegramSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestTelegramSystemUpdateTemplate(t *testing.T) {
-	tplPath := filepath.Join("..", "..", "..", "..", "config", "telegram", "templates", "system_update_notification.tpl")
-	tpl, err := htmltemplate.ParseFiles(tplPath)
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}

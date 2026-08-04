@@ -4,6 +4,7 @@ import type {
     ProjectApps_Copy_Res,
     ProjectApps_CreateOne_Res,
     ProjectApps_Deploy_Res,
+    ProjectApps_DetectPhoto_Res,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Res,
     ProjectApps_PrepareCopy_Res,
@@ -104,6 +105,13 @@ const FindOneByIdSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const DetectPhotoSchema = z.object({
+    data: z.object({
+        url: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class ProjectAppsApiValidator {
     /**
      * Validate and transform find many project apps paginated API response
@@ -161,6 +169,18 @@ export class ProjectAppsApiValidator {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
+        });
+
+        return {
+            data,
+            meta,
+        };
+    };
+
+    detectPhoto = (response: AxiosResponse): ProjectApps_DetectPhoto_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: DetectPhotoSchema,
         });
 
         return {

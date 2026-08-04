@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Avatar } from "@components/ui/avatar";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
@@ -33,6 +34,15 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => (
+                <div className="flex items-center gap-2">
+                    <Avatar
+                        name={original.name}
+                        src={original.photo}
+                    />
+                    <span>{original.name}</span>
+                </div>
+            ),
         },
         {
             accessorKey: "key",

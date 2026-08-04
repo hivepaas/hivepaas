@@ -7,12 +7,14 @@ import type {
     ProjectApps_CreateOne_Req,
     ProjectApps_DeleteOne_Req,
     ProjectApps_Deploy_Req,
+    ProjectApps_DetectPhoto_Req,
     ProjectApps_FindManyPaginated_Req,
     ProjectApps_FindOneById_Req,
     ProjectApps_PrepareCopy_Req,
     ProjectApps_Restart_Req,
     ProjectApps_SetRunning_Req,
     ProjectApps_UpdateOne_Req,
+    ProjectApps_UpdatePhoto_Req,
     ProjectApps_UpdateStatus_Req,
 } from "~/projects/api/services";
 
@@ -248,6 +250,40 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to set project app running status",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                updatePhoto: async (data: ProjectApps_UpdatePhoto_Req["data"]) => {
+                    const result = await api.projects.apps.$.updatePhoto({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to update project app photo",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                detectPhoto: async (data: ProjectApps_DetectPhoto_Req["data"]) => {
+                    const result = await api.projects.apps.$.detectPhoto({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to detect project app icon",
                                 error,
                             });
 

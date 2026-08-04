@@ -198,3 +198,35 @@ export type ProjectApps_SetRunning_Req = ApiRequestBase<{
 export type ProjectApps_SetRunning_Res = ApiResponseBase<{
     type: "success";
 }>;
+
+/**
+ * Update project app photo
+ */
+export type ProjectAppPhotoPayload =
+    | { fileName: string; dataBase64: string }
+    | { fileName: string; isPresetIcon: true }
+    | { delete: true };
+
+export type ProjectApps_UpdatePhoto_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    photo: ProjectAppPhotoPayload;
+}>;
+
+export type ProjectApps_UpdatePhoto_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Detect project app photo
+ */
+export type ProjectApps_DetectPhoto_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+}>;
+
+export type ProjectApps_DetectPhoto_Res = ApiResponseBase<{
+    url: string;
+}>;

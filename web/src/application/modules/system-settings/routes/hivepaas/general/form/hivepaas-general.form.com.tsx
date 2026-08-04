@@ -2,7 +2,6 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
@@ -11,18 +10,14 @@ import { type FieldPath, FormProvider, useController, useForm, useFormContext, u
 import { useUpdateEffect } from "react-use";
 import type { HivePaaSServiceSettings } from "~/system-settings/domain";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
 import {
-    type HivePaaSProxyProviderValue,
+    type HivePaaSKnownProxyProvider,
     PROXY_PROVIDER_IP_URLS,
     PROXY_PROVIDER_OPTIONS,
-    PROXY_PROVIDER_SELECT_UNSPECIFIED,
-    PROXY_PROVIDER_UNSPECIFIED,
-    proxyProviderToSelectValue,
-    selectValueToProxyProvider,
 } from "../hivepaas-general.constants";
 import {
     type HivePaaSGeneralFormInput,
@@ -147,52 +142,34 @@ function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const {
         field,
-        fieldState: { error },
+        fieldState: { error, invalid },
     } = useController({ control, name: "proxySettings.proxyProvider" });
-
-    const selectValue = proxyProviderToSelectValue(field.value);
 
     return (
         <InfoBlock
             title={
                 <LabelWithInfo
                     label="Proxy Provider"
-                    content="Select the reverse proxy provider in front of HivePaaS to help configure trusted client IPs."
+                    content="Select or enter the reverse proxy provider in front of HivePaaS to help configure trusted client IPs."
                 />
             }
         >
-            <>
-                <Select
-                    value={selectValue}
-                    onValueChange={value => {
-                        if (readOnly) {
-                            return;
-                        }
-
-                        field.onChange(selectValueToProxyProvider(value));
-                    }}
-                    disabled={readOnly}
-                >
-                    <SelectTrigger className="max-w-[280px]">
-                        <SelectValue placeholder="select provider" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {PROXY_PROVIDER_OPTIONS.map(option => (
-                            <SelectItem
-                                key={option.label}
-                                value={
-                                    option.value === PROXY_PROVIDER_UNSPECIFIED
-                                        ? PROXY_PROVIDER_SELECT_UNSPECIFIED
-                                        : option.value
-                                }
-                            >
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <FieldError errors={[error]} />
-            </>
+            <FieldGroup>
+                <Field>
+                    <EditableCombobox
+                        options={PROXY_PROVIDER_OPTIONS}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="select provider"
+                        aria-invalid={invalid}
+                        className="max-w-[280px]"
+                        inputClassName="max-w-[280px]"
+                        allowClear
+                        disabled={readOnly}
+                    />
+                    <FieldError errors={[error]} />
+                </Field>
+            </FieldGroup>
         </InfoBlock>
     );
 }
@@ -204,7 +181,7 @@ function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
         fieldState: { error, invalid },
     } = useController({ control, name: "proxySettings.trustedIPsText" });
     const proxyProvider = useWatch({ control, name: "proxySettings.proxyProvider" });
-    const showIPsUrl = PROXY_PROVIDER_IP_URLS[proxyProvider as Exclude<HivePaaSProxyProviderValue, "">];
+    const showIPsUrl = PROXY_PROVIDER_IP_URLS[proxyProvider as HivePaaSKnownProxyProvider];
 
     return (
         <InfoBlock
@@ -239,6 +216,22 @@ function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
                 ) : null}
             </div>
         </InfoBlock>
+    );
+}
+
+function ProxyConfigurationSection({ readOnly }: { readOnly: boolean }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const proxyProvider = useWatch({ control, name: "proxySettings.proxyProvider" });
+    const hasProxyProvider = proxyProvider.trim() !== "";
+
+    return (
+        <>
+            <SectionHeader>Proxy Configuration</SectionHeader>
+            <div className="flex flex-col gap-6 px-3">
+                <ProxyProviderField readOnly={readOnly} />
+                {hasProxyProvider ? <TrustedIPsField readOnly={readOnly} /> : null}
+            </div>
+        </>
     );
 }
 
@@ -362,11 +355,7 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
                         />
                     </div>
 
-                    <SectionHeader>Proxy Configuration</SectionHeader>
-                    <div className="flex flex-col gap-6 px-3">
-                        <ProxyProviderField readOnly={readOnly} />
-                        <TrustedIPsField readOnly={readOnly} />
-                    </div>
+                    <ProxyConfigurationSection readOnly={readOnly} />
                 </fieldset>
 
                 {children}

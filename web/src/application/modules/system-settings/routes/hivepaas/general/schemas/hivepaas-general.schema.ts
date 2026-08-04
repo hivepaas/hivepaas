@@ -1,13 +1,9 @@
 import { z } from "zod";
 
-import { PROXY_PROVIDER_UNSPECIFIED } from "../hivepaas-general.constants";
-
 const appReplicasSchema = z.number().int().min(1).max(100);
 const workerReplicasSchema = z.number().int().min(0).max(100);
 const workerConcurrencySchema = z.number().int().min(1).max(100);
 const durationSchema = z.string().trim().min(1);
-
-const proxyProviderSchema = z.enum(["", "cloudflare", "fastly", "aws-cloudfront", "imperva"]);
 
 export const HivePaaSGeneralFormSchema = z
     .object({
@@ -27,7 +23,7 @@ export const HivePaaSGeneralFormSchema = z
             baseInterval: durationSchema,
         }),
         proxySettings: z.object({
-            proxyProvider: proxyProviderSchema,
+            proxyProvider: z.string(),
             trustedIPsText: z.string(),
         }),
     })
@@ -61,7 +57,7 @@ export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
         baseInterval: "15s",
     },
     proxySettings: {
-        proxyProvider: PROXY_PROVIDER_UNSPECIFIED,
+        proxyProvider: "",
         trustedIPsText: "",
     },
 };
